@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -39,6 +40,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
@@ -251,6 +253,29 @@ class ReturnToHandEffectHandlerTest {
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(19);
             verify(gameOutcomeService).checkWinCondition(gd);
+        }
+
+        @Test
+        @DisplayName("As a resolution step, the controller's life loss is the next step after the bounce")
+        void controllerLifeLossIsNextStepWhenResolvingAsStep() {
+            Card card = createCard("Vapor Snag");
+            Permanent target = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player2Id).add(target);
+            gd.playerLifeTotals.put(player2Id, 20);
+
+            ReturnToHandEffect effect = ReturnToHandEffect.targetAndControllerLosesLife(1);
+            StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), target.getId());
+            entry.setResolvingEffectIndex(0);
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+            when(permanentRemovalService.removePermanentToHand(gd, target)).thenReturn(true);
+
+            handler.resolve(gd, entry, effect);
+
+            assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
+            assertThat(entry.getEffectsToResolve())
+                    .containsExactly(effect, new PlayersLoseLifeEffect(Map.of(player2Id, 1)));
         }
 
         @Test

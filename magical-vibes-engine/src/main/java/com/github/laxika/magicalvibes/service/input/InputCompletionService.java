@@ -59,6 +59,10 @@ public class InputCompletionService {
     private ObjectProvider<StackResolutionService> stackResolutionService;
     @Autowired
     @Lazy
+    private com.github.laxika.magicalvibes.service.effect.entryfx.LoseLifeEqualToLifeTotalAsEntersEffectHandler
+            loseLifeAsEntersHandler;
+    @Autowired
+    @Lazy
     private WarpWorldService warpWorldService;
     @Autowired
     @Lazy
@@ -66,6 +70,9 @@ public class InputCompletionService {
     @Autowired
     @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
+    @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.GameOutcomeService gameOutcomeService;
     @Autowired
     @Lazy
     private com.github.laxika.magicalvibes.service.PermanentAuctionService permanentAuctionService;
@@ -315,6 +322,14 @@ public class InputCompletionService {
         gameData.deathReplacementsCanRerunEffect = false;
         if (resumeSuspendedInteraction(gameData)) return;
         if (continueDamageAwaitingDeparture(gameData)) return;
+        if (loseLifeAsEntersHandler != null && loseLifeAsEntersHandler.resolveAfterDepartureQuestions(gameData)) {
+            processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (gameOutcomeService != null) {
+            gameOutcomeService.resumeLossReplacement(gameData);
+            if (gameData.status == GameStatus.FINISHED) return;
+        }
         if (gameData.pendingEffectResolutionEntry == null) {
             stateBasedActionService.performStateBasedActions(gameData);
         }

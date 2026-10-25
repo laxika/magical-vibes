@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessSacrificeNonlandOrDiscardEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -36,11 +37,16 @@ import org.springframework.stereotype.Component;
  * {@link PendingInteraction.ColorChoice} list-pick is begun; the chosen mode then runs a sacrifice or
  * discard sub-choice (each re-runs this handler on completion via
  * {@link GameData#rerunCurrentEffectAfterInteraction}), or applies the life loss inline.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: a run changes nothing before its loss (asking the player or starting
+ * a sub-choice changes nothing yet), so a Lich's Duel Mastery that loss would sacrifice is asked about (CR 616.1)
+ * before any life is lost, and the run is resolved again with that choice.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class LoseLifeUnlessSacrificeNonlandOrDiscardEffectHandler implements NormalEffectHandlerBean {
+public class LoseLifeUnlessSacrificeNonlandOrDiscardEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInputService playerInputService;
@@ -81,9 +87,6 @@ public class LoseLifeUnlessSacrificeNonlandOrDiscardEffectHandler implements Nor
 
         if (!state.active) {
             // Fresh entry: offer the pruned penalty options (life is always available).
-            state.reset();
-            state.active = true;
-
             List<String> options = availableOptions(gameData, playerId, lifeLoss, excludedPermanentId);
             if (options.size() == 1) {
                 // Only "lose life" is possible — no choice to make.
@@ -93,6 +96,8 @@ public class LoseLifeUnlessSacrificeNonlandOrDiscardEffectHandler implements Nor
                 return;
             }
 
+            state.reset();
+            state.active = true;
             gameData.rerunCurrentEffectAfterInteraction = true;
             String prompt = sourceName + " — lose " + lifeLoss
                     + " life unless you sacrifice a nonland permanent or discard a card.";
@@ -104,10 +109,9 @@ public class LoseLifeUnlessSacrificeNonlandOrDiscardEffectHandler implements Nor
         }
 
         if (state.chosenMode != null) {
-            // The affected player just picked a penalty option — apply it.
-            String mode = state.chosenMode;
-            state.chosenMode = null;
-            applyMode(gameData, entry, sourceName, lifeLoss, playerId, mode, state, excludedPermanentId);
+            // The affected player just picked a penalty option — apply it. The mode stays set until the life is
+            // lost, so a rerun after the Mastery's question loses it again.
+            applyMode(gameData, entry, sourceName, lifeLoss, playerId, state.chosenMode, state, excludedPermanentId);
             return;
         }
 
@@ -122,6 +126,7 @@ public class LoseLifeUnlessSacrificeNonlandOrDiscardEffectHandler implements Nor
     private void applyMode(GameData gameData, StackEntry entry, String sourceName, int lifeLoss,
             UUID playerId, String mode, TormentState state, UUID excludedPermanentId) {
         if (ChoiceContext.TormentPenaltyChoice.SACRIFICE.equals(mode)) {
+            state.chosenMode = null;
             List<UUID> nonlandIds = nonlandPermanentIds(gameData, playerId, excludedPermanentId);
             if (nonlandIds.isEmpty()) {
                 finish(gameData, state);
@@ -135,6 +140,7 @@ public class LoseLifeUnlessSacrificeNonlandOrDiscardEffectHandler implements Nor
         }
 
         if (ChoiceContext.TormentPenaltyChoice.DISCARD.equals(mode)) {
+            state.chosenMode = null;
             List<Card> hand = gameData.playerHands.get(playerId);
             if (hand == null || hand.isEmpty()) {
                 finish(gameData, state);

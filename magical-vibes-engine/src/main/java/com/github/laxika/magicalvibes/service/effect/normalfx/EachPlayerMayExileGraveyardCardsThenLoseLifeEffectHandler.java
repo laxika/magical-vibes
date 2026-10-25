@@ -7,21 +7,27 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayExileGraveyardCardsThenLoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-/** Resolves the APNAP graveyard choice and remaining-graveyard life loss. */
+/**
+ * Resolves the APNAP graveyard choice and remaining-graveyard life loss. The losses follow the exile (CR 608.2c) as
+ * one {@link PlayersLoseLifeEffect} step, so the Lich's Duel Mastery sacrifices that replace them are asked about
+ * (CR 616.1) after the exile and before any life is lost, without exiling again.
+ */
 @Component
 @RequiredArgsConstructor
 public class EachPlayerMayExileGraveyardCardsThenLoseLifeEffectHandler
         implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final LifeSupport lifeSupport;
     private final EachPlayerMayExileGraveyardCardsSupport eachPlayerMayExileGraveyardCardsSupport;
 
     @Override
@@ -72,12 +78,17 @@ public class EachPlayerMayExileGraveyardCardsThenLoseLifeEffectHandler
     }
 
     private void applyLifeLossForRemainingCards(GameData gameData, StackEntry entry) {
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             int remainingCards = graveyard == null ? 0 : graveyard.size();
             if (remainingCards > 0) {
-                lifeSupport.applyLifeLoss(gameData, playerId, remainingCards, entry.getCard().getName());
+                losses.put(playerId, remainingCards);
             }
+        }
+        if (!losses.isEmpty()) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new PlayersLoseLifeEffect(losses)));
         }
     }
 

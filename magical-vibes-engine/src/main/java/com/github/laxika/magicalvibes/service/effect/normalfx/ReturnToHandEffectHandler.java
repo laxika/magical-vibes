@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -290,7 +292,15 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (controllerId != null && e.lifeLoss() > 0) {
-            lifeSupport.applyLifeLoss(gameData, controllerId, e.lifeLoss(), entry.getCard().getName());
+            // CR 608.2c: "its controller loses N life" follows the bounce, which can take away a replacement the
+            // Lich's Duel Mastery sacrifice replacing the loss would have. As a step of its own, that sacrifice asks
+            // its CR 616.1 questions without bouncing again.
+            if (entry.getResolvingEffectIndex() >= 0) {
+                entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                        List.of(new PlayersLoseLifeEffect(Map.of(controllerId, e.lifeLoss()))));
+            } else {
+                lifeSupport.applyLifeLoss(gameData, controllerId, e.lifeLoss(), entry.getCard().getName());
+            }
         }
     }
 

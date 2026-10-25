@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.effect.ToymakersTrapEffect;
@@ -17,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -27,8 +30,6 @@ public class ToymakersTrapEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
-    private final LifeSupport lifeSupport;
-    private final PlayerInteractionSupport playerInteractionSupport;
     private final InputCompletionService inputCompletionService;
     private final GameLogService gameLogService;
 
@@ -108,8 +109,11 @@ public class ToymakersTrapEffectHandler implements NormalEffectHandlerBean {
             // are asked before the Trap leaves (CR 616.1).
             entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(new SacrificeSelfEffect()));
         } else {
-            lifeSupport.applyLifeLoss(gameData, context.opponentId(), guessedNumber, context.sourceCard().getName());
-            playerInteractionSupport.applyDrawCards(gameData, context.controllerId(), 1);
+            // The loss and then the draw (CR 608.2c) are the steps the parked resolution resumes with, so a Lich's
+            // Duel Mastery sacrifice replacing the loss is asked about (CR 616.1) before any life is lost.
+            entry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(
+                    new PlayersLoseLifeEffect(Map.of(context.opponentId(), guessedNumber)),
+                    new DrawCardEffect(1)));
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

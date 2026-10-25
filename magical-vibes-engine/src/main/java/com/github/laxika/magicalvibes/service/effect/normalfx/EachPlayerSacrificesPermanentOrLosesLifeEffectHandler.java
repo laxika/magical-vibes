@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanentOrLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -17,7 +18,9 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +35,6 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final LifeSupport lifeSupport;
     private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -121,17 +123,25 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler
                 DepartureBatch.of(StepDepartureSupport.sacrifices(sacrificeIds)), this);
     }
 
-    /** The players who chose (or had) to lose life lose it, after the sacrifices, and the choices are cleared. */
+    /**
+     * The players who chose (or had) to lose life lose it after the sacrifices, as the next step (CR 608.2c), with the
+     * amounts fixed now (CR 608.2h): the sacrifices can take away a replacement the Lich's Duel Mastery sacrifice that
+     * replaces a loss would have, so that sacrifice asks its CR 616.1 questions in the loss step, before any life is
+     * lost. The choices are cleared.
+     */
     @Override
     public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
         var sacrificeEffect = (EachPlayerSacrificesPermanentOrLosesLifeEffect) effect;
         EachPlayerSacrificeOrLoseLifeState state = gameData.eachPlayerSacrificeOrLoseLife;
-        String sourceName = entry.getCard().getName();
-        for (UUID playerId : List.copyOf(state.lifeLossPlayerIds)) {
-            lifeSupport.applyLifeLoss(gameData, playerId,
-                    lifeLoss(gameData, entry, sacrificeEffect, playerId), sourceName);
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
+        for (UUID playerId : state.lifeLossPlayerIds) {
+            losses.put(playerId, lifeLoss(gameData, entry, sacrificeEffect, playerId));
         }
         state.reset();
+        if (!losses.isEmpty()) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new PlayersLoseLifeEffect(losses)));
+        }
     }
 
     private void applyChoice(GameData gameData, StackEntry entry,

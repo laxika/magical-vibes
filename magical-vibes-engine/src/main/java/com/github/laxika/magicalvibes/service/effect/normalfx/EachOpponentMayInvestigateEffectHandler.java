@@ -60,6 +60,8 @@ public class EachOpponentMayInvestigateEffectHandler implements NormalEffectHand
         } else {
             lifeSupport.applyLifeLoss(gameData, ability.controllerId(), 1,
                     ability.sourceCard().getName());
+            // The next prompt or the Clues follow the loss and must not happen twice.
+            gameData.deathReplacementsCanRerunEffect = false;
         }
 
         List<UUID> remaining = new ArrayList<>(effect.remainingOpponentIds());

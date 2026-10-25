@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.VillainousChoiceState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentFacesGenesisVillainousChoiceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -17,13 +18,18 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /** Resolves Genesis of the Daleks's targeted villainous choice. */
 @Component
 @RequiredArgsConstructor
 public class TargetOpponentFacesGenesisVillainousChoiceEffectHandler implements NormalEffectHandlerBean {
+
+    /** The progress mark of the step resolved again after the Dalek choice's life loss step. */
+    private static final String AFTER_LIFE_LOSS = "__after_life_loss";
 
     private static final PermanentAllOfPredicate DALEK_CREATURE = new PermanentAllOfPredicate(List.of(
             new PermanentIsCreaturePredicate(), new PermanentHasSubtypePredicate(CardSubtype.DALEK)));
@@ -33,7 +39,6 @@ public class TargetOpponentFacesGenesisVillainousChoiceEffectHandler implements 
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final DestroyAllPermanentsEffectHandler destroyAllPermanentsEffectHandler;
-    private final LifeSupport lifeSupport;
     private final VillainousChoiceSupport villainousChoiceSupport;
 
     @Override
@@ -53,8 +58,22 @@ public class TargetOpponentFacesGenesisVillainousChoiceEffectHandler implements 
         if (state.chosenMode != null) {
             String chosen = state.chosenMode;
             state.chosenMode = null;
+            if (AFTER_LIFE_LOSS.equals(chosen)) {
+                finish(gameData);
+                return;
+            }
             if (TargetOpponentFacesGenesisVillainousChoiceEffect.DESTROY_DALEKS.equals(chosen)) {
-                resolveDalekChoice(gameData, entry);
+                Map<UUID, Integer> losses = resolveDalekChoice(gameData, entry);
+                if (!losses.isEmpty()) {
+                    // The losses follow the destruction as a step of their own, so the Lich's Duel Mastery
+                    // sacrifices that replace them ask their CR 616.1 questions before any life is lost without
+                    // destroying again; this step is resolved again after it to finish (or repeat) the choice.
+                    state.chosenMode = AFTER_LIFE_LOSS;
+                    gameData.rerunCurrentEffectAfterInteraction = false;
+                    entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                            List.of(new PlayersLoseLifeEffect(losses), effect));
+                    return;
+                }
             } else {
                 destroyAllPermanentsEffectHandler.resolve(gameData, entry,
                         new DestroyAllPermanentsEffect(NON_DALEK_CREATURE));
@@ -87,20 +106,23 @@ public class TargetOpponentFacesGenesisVillainousChoiceEffectHandler implements 
         gameData.rerunCurrentEffectAfterInteraction = false;
     }
 
-    private void resolveDalekChoice(GameData gameData, StackEntry entry) {
+    /** Destroys every Dalek creature and returns the life each opponent then loses (CR 608.2h: fixed now). */
+    private Map<UUID, Integer> resolveDalekChoice(GameData gameData, StackEntry entry) {
         destroyAllPermanentsEffectHandler.resolve(gameData, entry,
                 new DestroyAllPermanentsEffect(DALEK_CREATURE));
 
         int totalPower = gameData.creatureSubtypeDeathPowerThisTurn.values().stream()
                 .mapToInt(subtypePowers -> subtypePowers.getOrDefault(CardSubtype.DALEK, 0))
                 .sum();
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         if (totalPower <= 0) {
-            return;
+            return losses;
         }
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(entry.getControllerId()) && gameData.playerIds.contains(playerId)) {
-                lifeSupport.applyLifeLoss(gameData, playerId, totalPower, entry.getCard().getName());
+                losses.put(playerId, totalPower);
             }
         }
+        return losses;
     }
 }

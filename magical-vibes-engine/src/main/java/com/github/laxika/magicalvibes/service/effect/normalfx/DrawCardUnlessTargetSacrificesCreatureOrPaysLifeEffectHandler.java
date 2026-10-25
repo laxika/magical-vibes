@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessTargetSacrificesCreatureOrPaysLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -21,11 +22,16 @@ import org.springframework.stereotype.Component;
  * Resolves the target opponent's three-way choice for Indulgent Tormentor. The sacrifice choice
  * uses the existing permanent-choice path and re-enters this handler after the chosen creature is
  * sacrificed.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: a run changes nothing before its life payment or its sacrifice
+ * (asking the player changes nothing yet, and a run that draws removes nothing), so a Lich's Duel Mastery the payment
+ * would sacrifice (paying life is losing it, CR 119.4) is asked about (CR 616.1) before any life is paid, and the
+ * run is resolved again with that choice.
  */
 @Component
 @RequiredArgsConstructor
 public class DrawCardUnlessTargetSacrificesCreatureOrPaysLifeEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
@@ -63,9 +69,8 @@ public class DrawCardUnlessTargetSacrificesCreatureOrPaysLifeEffectHandler
         }
 
         if (state.chosenMode != null) {
-            String chosenMode = state.chosenMode;
-            state.chosenMode = null;
-            applyChoice(gameData, entry, e, targetPlayerId, chosenMode);
+            // The chosen mode stays set until the life is paid, so a rerun after the Mastery's question pays again.
+            applyChoice(gameData, entry, e, targetPlayerId, state.chosenMode);
             return;
         }
 

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
@@ -93,6 +95,7 @@ import com.github.laxika.magicalvibes.model.effect.UbaMaskDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -131,6 +134,9 @@ public class DrawService {
     @org.springframework.beans.factory.annotation.Autowired
     @Lazy
     private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private DepartureService departureService;
     private final GameQueryService gameQueryService;
     private final ExileService exileService;
     private final GameLogService gameLogService;
@@ -810,7 +816,7 @@ public class DrawService {
                             .text(" makes " + gameData.playerIdToName.get(playerId) + " draw a card instead.")
                             .build());
                 }
-                if (!performEmptyHandReplacementDraw(gameData, extraDrawer)) {
+                if (!performEmptyHandReplacementDraw(gameData, extraDrawer, playerId)) {
                     performDrawCard(gameData, extraDrawer);
                 }
                 return;
@@ -868,7 +874,7 @@ public class DrawService {
         // Blood Scrivener: if you would draw a card while you have no cards in hand, instead you
         // draw two cards and you lose 1 life. The hand is checked as the draw would happen, so only
         // the first draw of a multi-card draw sees an empty hand.
-        if (performEmptyHandReplacementDraw(gameData, playerId)) {
+        if (performEmptyHandReplacementDraw(gameData, playerId, playerId)) {
             return;
         }
 
@@ -1561,7 +1567,16 @@ public class DrawService {
                 ConditionContext.forPermanent(permanent, controllerId));
     }
 
-    private boolean performEmptyHandReplacementDraw(GameData gameData, UUID playerId) {
+    /**
+     * Blood Scrivener's "instead you draw two cards and you lose 1 life". The life loss is part of the modified draw,
+     * so the Lich's Duel Mastery sacrifice that replaces it asks its CR 616.1 questions before anything of that draw
+     * happens (CR 616.1f): the draw is then put back as the next draw of its instruction and waits like a draw paused
+     * for a replacement choice, and once every answer is in it is drawn again, the sacrifice performing the answered
+     * batch.
+     *
+     * @param drawingPlayerId the player whose draw this is the next of, put back while a question is open
+     */
+    private boolean performEmptyHandReplacementDraw(GameData gameData, UUID playerId, UUID drawingPlayerId) {
         if (!isHandEmpty(gameData, playerId)) {
             return false;
         }
@@ -1573,12 +1588,25 @@ public class DrawService {
         if (sources.isEmpty()) {
             return false;
         }
+        DepartureIntent sacrifice = gameQueryService.canPlayerLoseLife(gameData, playerId)
+                ? lifeSupport.lifeLossSacrifice(gameData, playerId) : null;
+        if (sacrifice != null
+                && departureService.askBeforeEvent(gameData, DepartureBatch.of(List.of(sacrifice)))) {
+            if (gameData.currentDrawDoublingApplied.contains(drawingPlayerId)) {
+                gameData.drawsFromAppliedDoubling.merge(drawingPlayerId, 1, Integer::sum);
+            }
+            gameData.pendingCardDraws.addFirst(drawingPlayerId);
+            return true;
+        }
         // Each unused replacement adds one draw to the first still-empty-hand draw.
         for (int i = 0; i <= sources.size(); i++) {
             performDrawCard(gameData, playerId);
         }
         for (Card source : sources) {
             lifeSupport.applyLifeLoss(gameData, playerId, 1, source.getName());
+        }
+        if (sacrifice != null) {
+            DepartureService.discardAnsweredEventBatch(gameData, sacrifice);
         }
         return true;
     }

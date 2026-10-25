@@ -7,8 +7,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsOrLosesLifeEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
@@ -21,11 +25,17 @@ import org.springframework.stereotype.Component;
  *
  * <p>Selections use the deferred {@link EachPlayerRummageState} discard flow shared with the other
  * each-player discard effects.</p>
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: each run changes nothing before its losses (a selection is only
+ * recorded), and a discard prompt ends it, so before anything changes the run asks, through
+ * {@link LifeSupport#askBeforeLifeLosses}, the Lich's Duel Mastery sacrifices (CR 616.1) of the losses it reaches
+ * before the next prompt (the first loss closes the window).</p>
  */
 @Component
 @RequiredArgsConstructor
-public class EachPlayerDiscardsOrLosesLifeEffectHandler implements NormalEffectHandlerBean {
+public class EachPlayerDiscardsOrLosesLifeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
+    private final GameQueryService gameQueryService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final LifeSupport lifeSupport;
     private final ObjectProvider<CardChoiceHandlerService> cardChoiceHandlerServiceProvider;
@@ -53,6 +63,19 @@ public class EachPlayerDiscardsOrLosesLifeEffectHandler implements NormalEffectH
     private void beginNextPlayer(GameData gameData, StackEntry entry, EachPlayerDiscardsOrLosesLifeEffect effect) {
         EachPlayerRummageState state = gameData.eachPlayerRummage;
         UUID controllerId = entry.getControllerId();
+
+        Map<UUID, Integer> lossesBeforeNextPrompt = new LinkedHashMap<>();
+        for (UUID playerId : state.remaining) {
+            List<Card> hand = gameData.playerHands.get(playerId);
+            boolean emptyHand = hand == null || hand.isEmpty();
+            if (emptyHand && !playerId.equals(controllerId)) {
+                lossesBeforeNextPrompt.put(playerId, effect.lifeLoss());
+            } else if (!emptyHand && (playerId.equals(controllerId)
+                    || !gameQueryService.isDiscardPrevented(gameData, playerId))) {
+                break;
+            }
+        }
+        lifeSupport.askBeforeLifeLosses(gameData, lossesBeforeNextPrompt);
 
         while (!state.remaining.isEmpty()) {
             UUID playerId = state.remaining.pollFirst();

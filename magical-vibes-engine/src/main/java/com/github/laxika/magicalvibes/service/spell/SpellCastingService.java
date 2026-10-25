@@ -2307,6 +2307,22 @@ public class SpellCastingService {
         }
     }
 
+    /**
+     * Plots again the card {@link #plotCardFromHand} stopped before paying its plot cost (a special action,
+     * CR 116.2k), once every death replacement asked about the Lich's Duel Mastery its Phyrexian mana paid with life
+     * would sacrifice is chosen, while the card is still in its owner's hand.
+     */
+    public void plotAfterLifeCostAnswers(GameData gameData, GameData.PlotReplay replay) {
+        List<Card> hand = gameData.playerHands.getOrDefault(replay.player().getId(), List.of());
+        for (int i = 0; i < hand.size(); i++) {
+            if (hand.get(i).getId().equals(replay.cardId())) {
+                plotCardFromHand(gameData, replay.player(), i, null, null);
+                return;
+            }
+        }
+        throw new IllegalStateException("The card to plot left its owner's hand");
+    }
+
     private void plotCardFromHand(GameData gameData, Player player, int cardIndex,
                                   UUID targetId, List<UUID> targetIds) {
         if (gameData.status != GameStatus.RUNNING) {
@@ -2341,6 +2357,12 @@ public class SpellCastingService {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         if (pool == null || !plotCost.canPay(pool, modifier)) {
             throw new IllegalStateException("Not enough mana to pay plot cost");
+        }
+        if (plotCost.hasPhyrexianMana() && plotCost.payPhyrexianManaAuto(new ManaPool(pool), modifier) > 0
+                && askCostSacrificesFirst(gameData, player, withLifePaymentSacrifice(gameData, player, Set.of(), 1))) {
+            gameData.pendingDeathReplacementChoiceReplay = new GameData.PlotReplay(player, card.getId());
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            return;
         }
         payManaCostWithPhyrexianAlternatives(gameData, playerId, plotCost, pool, modifier);
 
@@ -5661,6 +5683,10 @@ public class SpellCastingService {
         }
         if (commandCast) {
             validateCommanderTaxLifePayment(gameData, playerId, card);
+            // The tax paid with life is paid before the other costs are validated, so its Lich's Duel Mastery
+            // sacrifice is asked here, before anything is paid (CR 601.2h, CR 119.4).
+            askCastCostSacrificesFirst(gameData, player, fromGraveyard, castStart, Set.of(),
+                    commanderTaxLife(gameData, card) > 0 ? 1 : 0);
         }
         hand.remove(cardIndex);
         if (commandCast) gameData.pendingCommandCasts.put(card.getId(), gameData.commandCastCardId);
@@ -5811,7 +5837,17 @@ public class SpellCastingService {
                             && !usingSharedColorDiscardAlternativeCost && !usingCollectEvidenceAlternativeCost
                             ? alternateHandCast : null,
                     alternateCostSacrificePermanentIds, casualtyCreatureIds, imposedSacrificePermanentIds,
-                    List.of(), List.of()));
+                    List.of(), List.of()), castLifePayments(gameData, player, castCharacteristics, additionalCosts,
+                    paymentCostSelection, 0, kicked ? kickerEffect : null, buyback ? buybackEffect : null,
+                    !usingAlternateCost, phyrexianLifeCount, effectiveXValue,
+                    castingCostService.getCastCostModifier(gameData, playerId, card) + targetingTax
+                            + (hasXCost ? 0 : perTargetCost),
+                    perTargetManaCost + alternativeAdditionalManaSuffix(additionalCosts, paymentCostSelection)
+                            + (kickerManaFoldedIntoSpellCost ? kickerEffect.cost() : "") + escalateManaSuffix,
+                    usingAlternateCost && !usingWebSlingingCost && !usingBestowCost
+                            && !usingSharedColorDiscardAlternativeCost && !usingCollectEvidenceAlternativeCost
+                            ? alternateHandCast : null,
+                    targetingLifeTax > 0 ? 1 : 0));
             // Clear the previous cast's grants before this cast's payment can grant new counters.
             gameData.spellAdditionalEnterCounters.remove(card.getId());
             int waterbendAdditionalGenericCost = waterbendCostPaid
@@ -6252,7 +6288,18 @@ public class SpellCastingService {
                             && !usingSharedColorDiscardAlternativeCost && !usingCollectEvidenceAlternativeCost
                             ? alternateHandCast : null,
                     alternateCostSacrificePermanentIds, casualtyCreatureIds, imposedSacrificePermanentIds,
-                    pendingSpliceCosts, spliceCostPermanentIds));
+                    pendingSpliceCosts, spliceCostPermanentIds), castLifePayments(gameData, player,
+                    castCharacteristics, additionalCosts, paymentCostSelection, resolvedXValue,
+                    kicked ? kickerEffect : null, buyback ? buybackEffect : null, !usingAlternateCost,
+                    phyrexianLifeCount, resolvedXValue,
+                    castingCostService.getCastCostModifier(gameData, playerId, card) + targetingTax
+                            + (hasXCost ? 0 : perTargetCost),
+                    perTargetManaCost + alternativeAdditionalManaSuffix(additionalCosts, paymentCostSelection)
+                            + escalateManaSuffix,
+                    usingAlternateCost && !usingWebSlingingCost && !usingBestowCost
+                            && !usingSharedColorDiscardAlternativeCost && !usingCollectEvidenceAlternativeCost
+                            ? alternateHandCast : null,
+                    (perTargetLifeCost > 0 ? 1 : 0) + (targetingLifeTax > 0 ? 1 : 0)));
 
             int waterbendAdditionalGenericCost = waterbendCostPaid
                     ? additionalCosts.waterbendCost().effectiveAmount(resolvedXValue) : 0;
@@ -8906,13 +8953,193 @@ public class SpellCastingService {
      */
     private void askCastCostSacrificesFirst(GameData gameData, Player player, boolean cannotBeMadeAgain,
                                             CastStartState castStart, Set<UUID> sacrificeIds) {
-        if (sacrificeIds.isEmpty() || cannotBeMadeAgain
+        askCastCostSacrificesFirst(gameData, player, cannotBeMadeAgain, castStart, sacrificeIds, 0);
+    }
+
+    /**
+     * {@link #askCastCostSacrificesFirst(GameData, Player, boolean, CastStartState, Set)} for a cast that also makes
+     * {@code lifePayments} separate life payments: paying life is losing it (CR 119.4), so the Lich's Duel Masteries
+     * those payments would sacrifice instead ({@link #withLifePaymentSacrifice}) are asked about with the cost's
+     * sacrifices.
+     */
+    private void askCastCostSacrificesFirst(GameData gameData, Player player, boolean cannotBeMadeAgain,
+                                            CastStartState castStart, Set<UUID> sacrificeIds, int lifePayments) {
+        Set<UUID> asked = withLifePaymentSacrifice(gameData, player, sacrificeIds, lifePayments);
+        if (asked.isEmpty() || cannotBeMadeAgain
                 || !castStart.equals(CastStartState.of(gameData, player.getId()))) {
             return;
         }
-        if (askCostSacrificesFirst(gameData, player, sacrificeIds)) {
+        if (askCostSacrificesFirst(gameData, player, asked)) {
             throw new CastStoppedForCostSacrificeAnswers();
         }
+    }
+
+    /**
+     * {@code sacrificeIds} and the Lich's Duel Mastery sacrifices that {@code lifePayments} separate life payments by
+     * {@code player} would cause instead of losing that life (CR 119.4,
+     * {@link LifeSupport#successiveLifeLossSacrifices}).
+     */
+    private Set<UUID> withLifePaymentSacrifice(GameData gameData, Player player, Set<UUID> sacrificeIds,
+                                               int lifePayments) {
+        List<DepartureIntent> sacrifices = lifePayments > 0
+                ? lifeSupport.successiveLifeLossSacrifices(gameData, player.getId(), lifePayments) : List.of();
+        if (sacrifices.isEmpty()) {
+            return sacrificeIds;
+        }
+        Set<UUID> ids = new java.util.LinkedHashSet<>(sacrificeIds);
+        sacrifices.forEach(sacrifice -> ids.add(sacrifice.permanentId()));
+        return ids;
+    }
+
+    /**
+     * How many separate life payments a validated cast from hand makes as part of its total cost, read from the same
+     * request fields its payments read: a "pay X life" or "pay N life" additional cost, an "or pay life" cost paid
+     * with life, kicker and buyback life costs, its mana cost's Phyrexian symbols paid with life
+     * ({@link #phyrexianLifePayment}, when {@code paysManaCost}), an alternative cost's life ({@code alternateCast})
+     * and {@code otherPayments} (a targeting or per-target life cost).
+     */
+    private int castLifePayments(GameData gameData, Player player, Card card,
+                                 AdditionalSpellCostService.ExtractedCosts costs,
+                                 AdditionalSpellCostService.CostSelection selection, int xLife, KickerEffect kicker,
+                                 BuybackEffect buybackEffect, boolean paysManaCost, Integer phyrexianLifeCount,
+                                 int xValue, int additionalGenericCost, String additionalManaCost,
+                                 AlternateHandCast alternateCast, int otherPayments) {
+        int life = gameData.getLife(player.getId());
+        int payments = otherPayments;
+        if (alternateCast != null
+                && alternateCast.getCost(LifeCastingCost.class).map(LifeCastingCost::amount).orElse(0) > 0) {
+            payments++;
+        }
+        if (costs.payXLife() && xLife > 0) {
+            payments++;
+        }
+        if (costs.payLifeCost() != null && costs.payLifeCost().effectiveAmount(life) > 0) {
+            payments++;
+        }
+        if (costs.payLifeOrPayManaCost() != null && Boolean.TRUE.equals(selection.payLifeForAdditionalCost())) {
+            payments++;
+        }
+        if (costs.payLifeOrSacrificePermanentCost() != null && selection.sacrificePermanentId() == null
+                && costs.payLifeOrSacrificePermanentCost().lifeAmount() > 0) {
+            payments++;
+        }
+        if (costs.discardCardOrPayLifeCost() != null && selection.discardHandCardIndex() == null
+                && costs.discardCardOrPayLifeCost().lifeAmount() > 0) {
+            payments++;
+        }
+        if (costs.sacrificeCreatureOrDiscardCardOrPayLifeCost() != null && selection.sacrificePermanentId() == null
+                && selection.discardHandCardIndex() == null
+                && costs.sacrificeCreatureOrDiscardCardOrPayLifeCost().lifeAmount() > 0) {
+            payments++;
+        }
+        if (kicker != null && kicker.hasLifeCost() && kicker.lifeCost().effectiveAmount(life) > 0) {
+            payments++;
+        }
+        if (buybackEffect != null && buybackEffect.hasLifeCost()
+                && buybackEffect.lifeCost().effectiveAmount(life) > 0) {
+            payments++;
+        }
+        if (paysManaCost && card.getManaCost() != null && phyrexianLifePayment(gameData, player.getId(),
+                card.getManaCost() + additionalManaCost, phyrexianLifeCount, xValue, additionalGenericCost) > 0) {
+            payments++;
+        }
+        if (paysManaCost && paysLifeEqualToManaValueInsteadOfManaCost(gameData, player.getId(), card, xValue,
+                additionalGenericCost)) {
+            payments++;
+        }
+        return payments;
+    }
+
+    /**
+     * How many life payments paying {@code card}'s mana cost from a zone other than the hand makes
+     * ({@link #paySpellManaCostFromNonHandZone}): its Phyrexian symbols paid with life
+     * ({@link #phyrexianLifePayment}), of {@code replacementManaCost} when one replaces the mana cost.
+     */
+    public int nonHandManaCostLifePayments(GameData gameData, UUID playerId, Card card, int xValue,
+                                           String replacementManaCost) {
+        String manaCost = replacementManaCost != null ? replacementManaCost : card.getManaCost();
+        return manaCost != null && phyrexianLifePayment(gameData, playerId, manaCost, null, xValue,
+                castingCostService.getCastCostModifier(gameData, playerId, card)) > 0 ? 1 : 0;
+    }
+
+    /**
+     * Whether the mana payment of a cast from hand would fall back to a permanent's "pay life equal to its mana
+     * value rather than pay its mana cost" alternative ({@link #computeSpellManaPaymentInternal}): the pool can't pay
+     * the mana cost and {@code additionalGenericCost}, and that alternative is the affordable one. Leaving out cost
+     * reductions the payment applies later only makes the mana cost look less payable, so a Lich's Duel Mastery
+     * question this predicts may go unused, never unasked.
+     */
+    private boolean paysLifeEqualToManaValueInsteadOfManaCost(GameData gameData, UUID playerId, Card card,
+                                                              int xValue, int additionalGenericCost) {
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        if (pool == null || card.getManaValue() <= 0) {
+            return false;
+        }
+        ManaCost cost = new ManaCost(card.getManaCost());
+        if (cost.canPayWithAdditionalGenericCost(pool, cost.hasX() ? xValue : 0, additionalGenericCost)) {
+            return false;
+        }
+        CastingCostService.AlternativeCostSelection alternative = castingCostService
+                .findAffordableAlternativeCostSelection(gameData, playerId, card, pool, additionalGenericCost,
+                        Zone.HAND);
+        return alternative != null && alternative.nonManaCost() instanceof AlternativeSpellCost nonManaCost
+                && nonManaCost.kind() == AlternativeSpellCost.Kind.PAY_LIFE_EQUAL_TO_SPELL_MANA_VALUE;
+    }
+
+    /**
+     * How many separate life payments a validated cast from a graveyard makes, read the way
+     * {@link #payFlashbackOrGraveyardCastCost} and {@link #payGraveyardCastAdditionalCosts} pay them: a targeting life
+     * cost, a printed flashback cost's life ({@code flashbackPaid}), a graveyard-cast permission's life
+     * ({@code graveyardCast}) and life equal to the spell's mana value ({@code paysLifeEqualToManaValue}).
+     */
+    private static int graveyardCastLifePayments(Card card, int targetingLifeTax, FlashbackCast flashbackPaid,
+                                                 GraveyardCast graveyardCast, boolean paysLifeEqualToManaValue) {
+        int payments = targetingLifeTax > 0 ? 1 : 0;
+        if (flashbackPaid != null
+                && flashbackPaid.getCost(LifeCastingCost.class).map(LifeCastingCost::amount).orElse(0) > 0) {
+            payments++;
+        }
+        if (graveyardCast != null
+                && graveyardCast.getCost(LifeCastingCost.class).map(LifeCastingCost::amount).orElse(0) > 0) {
+            payments++;
+        }
+        if (paysLifeEqualToManaValue && card.getManaValue() > 0) {
+            payments++;
+        }
+        return payments;
+    }
+
+    /**
+     * The life the Phyrexian symbols of {@code manaCost} (with black mana payable with life, K'rrik) would be paid
+     * with now: twice {@code phyrexianLifeCount} when the player chose it, or what the automatic payment
+     * ({@link ManaCost#payPhyrexianManaAuto}) takes from life on a copy of the pool, which keeps the mana the rest of
+     * the cost and {@code additionalGenericCost} need. Leaving out cost reductions the payment applies later only
+     * makes this pay more with life, so a Lich's Duel Mastery question it predicts may go unused, never unasked.
+     */
+    private int phyrexianLifePayment(GameData gameData, UUID playerId, String manaCost, Integer phyrexianLifeCount,
+                                     int xValue, int additionalGenericCost) {
+        return manaCost == null ? 0 : phyrexianLifePayment(gameData, playerId, new ManaCost(manaCost),
+                phyrexianLifeCount, xValue, additionalGenericCost);
+    }
+
+    private int phyrexianLifePayment(GameData gameData, UUID playerId, ManaCost manaCost, Integer phyrexianLifeCount,
+                                     int xValue, int additionalGenericCost) {
+        ManaCost cost = manaCost;
+        if (gameQueryService.canPayBlackManaWithLife(gameData, playerId)) {
+            cost = cost.withBlackManaAsPhyrexian();
+        }
+        if (!cost.hasPhyrexianMana()) {
+            return 0;
+        }
+        if (phyrexianLifeCount != null) {
+            return 2 * Math.max(0, Math.min(phyrexianLifeCount, cost.getPhyrexianManaCount()));
+        }
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        if (pool == null) {
+            return 2 * cost.getPhyrexianManaCount();
+        }
+        int restDemand = Math.max(0, (cost.hasX() ? xValue : 0) + additionalGenericCost);
+        return cost.payPhyrexianManaAuto(new ManaPool(pool), restDemand);
     }
 
     /**
@@ -8924,6 +9151,25 @@ public class SpellCastingService {
      */
     public boolean askMorphSacrificeCostFirst(GameData gameData, Player player, List<UUID> sacrificeIds) {
         return askCostSacrificesFirst(gameData, player, new java.util.LinkedHashSet<>(sacrificeIds));
+    }
+
+    /**
+     * CR 616.1 and CR 702.37e: once the costs of turning a face-down permanent face up are validated and before any
+     * is paid (or revealed), asks the death replacement questions of the Lich's Duel Masteries its life payments would
+     * sacrifice instead (paying life is losing it, CR 119.4): a morph cost's life ({@code lifeCost}) and the Phyrexian
+     * symbols of {@code faceUpManaCost} paid with life ({@link #phyrexianLifePayment}). When one is asked, the caller
+     * stops and turns it face up again once every answer is in; the life payments' sacrifices then consume the
+     * answers.
+     *
+     * @return whether a question was asked
+     */
+    public boolean askTurnFaceUpLifeCostsFirst(GameData gameData, Player player, LifeCastingCost lifeCost,
+                                               String faceUpManaCost, int xValue) {
+        int payments = (lifeCost != null && lifeCost.amount() > 0 ? 1 : 0)
+                + (faceUpManaCost != null
+                        && phyrexianLifePayment(gameData, player.getId(), faceUpManaCost, null, xValue, 0) > 0 ? 1 : 0);
+        Set<UUID> asked = withLifePaymentSacrifice(gameData, player, Set.of(), payments);
+        return !asked.isEmpty() && askCostSacrificesFirst(gameData, player, asked);
     }
 
     /**
@@ -10910,7 +11156,12 @@ public class SpellCastingService {
                 isGraveyardCast && !isHarmonize && !isDisturb ? graveyardCastOpt.orElseThrow() : null,
                 isGrantedCyclingGraveyardCast ? filteredGraveyardAdditionalCosts : List.of(),
                 effectiveXValue, sacrificePermanentId, additionalCostSacrificePermanentIds, tapPermanentIds,
-                costReductionSacrificeIds));
+                costReductionSacrificeIds), graveyardCastLifePayments(card, targetingLifeTax,
+                paysPrintedFlashbackCosts ? flashbackOpt.get() : null,
+                isGraveyardCast ? graveyardCastOpt.orElseThrow() : null,
+                isGrantedCyclingGraveyardCast && filteredGraveyardPermission.isPresent()
+                        && filteredGraveyardPermission.get().permission().alternateCost()
+                        instanceof PayLifeEqualToSpellManaValueCost));
         if (!costReductionSacrificeIds.isEmpty()) {
             additionalCost += expectedSacrificeCostReduction - paySacrificeCreaturesForCostReduction(
                     gameData, player, card, card, costReductionSacrificeIds);
@@ -11980,6 +12231,44 @@ public class SpellCastingService {
                                            boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard,
                                            boolean flashforwardCast,
                                            Zone sourceZoneOverride, boolean fromBattlefield, List<CounterType> chosenCounterTypes) {
+        try {
+            playCardFromExileInternalOnce(gameData, player, exileCardId, xValue, targetId,
+                    exileCounterCostPermanentIds, convokeCreatureIds, waterbendPermanentIds, waterbendPaid, targetIds,
+                    resolutionCast, autoPass, copy, putOnBottomOfOwnersLibraryInsteadOfGraveyard, flashforwardCast,
+                    sourceZoneOverride, fromBattlefield, chosenCounterTypes);
+        } catch (CastStoppedForCostSacrificeAnswers stopped) {
+            gameData.pendingDeathReplacementChoiceReplay = new GameData.ExileCastReplay(player, exileCardId, xValue,
+                    targetId, immutableCopy(exileCounterCostPermanentIds), immutableCopy(convokeCreatureIds),
+                    immutableCopy(waterbendPermanentIds), waterbendPaid, immutableCopy(targetIds), autoPass, copy,
+                    putOnBottomOfOwnersLibraryInsteadOfGraveyard, flashforwardCast, sourceZoneOverride,
+                    fromBattlefield, immutableCopy(chosenCounterTypes));
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
+        }
+    }
+
+    /**
+     * Casts again the spell from exile that {@link #askCastCostSacrificesFirst} stopped before its life payments,
+     * once every death replacement it asked about is chosen.
+     */
+    public void completeExileCastAfterCostSacrificeAnswers(GameData gameData, GameData.ExileCastReplay replay) {
+        playCardFromExileInternal(gameData, replay.player(), replay.exileCardId(), replay.xValue(),
+                replay.targetId(), replay.exileCounterCostPermanentIds(), replay.convokeCreatureIds(),
+                replay.waterbendPermanentIds(), replay.waterbendPaid(), replay.targetIds(), false, replay.autoPass(),
+                replay.copy(), replay.putOnBottomOfOwnersLibraryInsteadOfGraveyard(), replay.flashforwardCast(),
+                replay.sourceZoneOverride(), replay.fromBattlefield(), replay.chosenCounterTypes());
+    }
+
+    private void playCardFromExileInternalOnce(GameData gameData, Player player, UUID exileCardId, Integer xValue,
+                                               UUID targetId, List<UUID> exileCounterCostPermanentIds,
+                                               List<UUID> convokeCreatureIds, List<UUID> waterbendPermanentIds,
+                                               boolean waterbendPaid, List<UUID> targetIds,
+                                               boolean resolutionCast, boolean autoPass,
+                                               boolean copy,
+                                               boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard,
+                                               boolean flashforwardCast,
+                                               Zone sourceZoneOverride, boolean fromBattlefield,
+                                               List<CounterType> chosenCounterTypes) {
+        CastStartState castStart = CastStartState.of(gameData, player.getId());
         int effectiveXValue = xValue != null ? xValue : 0;
         if (exileCounterCostPermanentIds == null) exileCounterCostPermanentIds = List.of();
         if (convokeCreatureIds == null) convokeCreatureIds = List.of();
@@ -12376,6 +12665,17 @@ public class SpellCastingService {
         }
         // Pay mana cost — unless this card was granted a free play (e.g. Oracle's Vault), in which
         // case it is cast without paying its mana cost. If anyManaType, any mana can pay for any color.
+        boolean paysExileManaValueLife = !waterbendCast && !playWithoutPaying
+                && (manaValueLifeAlternative || useManaValueLifeAlternative || sourceManaValueLifeAlternative);
+        ManaCost exileManaCost = waterbendCast || playWithoutPaying || paysExileManaValueLife ? null
+                : !flashforwardCast && castForForetell ? gameData.foretoldCardCosts.get(exileCardId)
+                : flashforwardManaCost != null ? new ManaCost(flashforwardManaCost)
+                : card.getManaCost() != null ? new ManaCost(card.getManaCost()) : null;
+        askCastCostSacrificesFirst(gameData, player, resolutionCast, castStart, Set.of(),
+                (paysExileManaValueLife && card.getManaValue() > 0 ? 1 : 0)
+                        + (exileManaCost != null && phyrexianLifePayment(gameData, playerId, exileManaCost, null,
+                        effectiveXValue, castingCostService.getCastCostModifier(gameData, playerId, card)) > 0
+                        ? 1 : 0));
         List<ManaColor> convokeContributions = waterbendCast ? List.of() : applyConvokeOrImprovise(
                 gameData, playerId, card, convokeCreatureIds, sourceZone);
         int phyrexianManaPaidWithLife = 0;
@@ -13238,6 +13538,8 @@ public class SpellCastingService {
             if (pool == null || !plotCost.canPay(pool)) {
                 throw new IllegalStateException("Not enough mana to pay plot cost");
             }
+            askCastCostSacrificesFirst(gameData, player, false, castStart, Set.of(),
+                    plotCost.hasPhyrexianMana() && plotCost.payPhyrexianManaAuto(new ManaPool(pool), 0) > 0 ? 1 : 0);
             payManaCostWithPhyrexianAlternatives(gameData, playerId, plotCost, pool, 0);
             deck.removeFirst();
             markCardPlotted(gameData, playerId, card);
@@ -13407,7 +13709,15 @@ public class SpellCastingService {
         validateExileCounterCost(gameData, player, card, additionalCounterCost, counterCostPermanentIds);
         Set<UUID> topLibrarySacrificedIds = new java.util.LinkedHashSet<>();
         addCastingCostSacrificeIds(topLibrarySacrificedIds, topLibraryAdditionalCosts, topLibrarySacrificeIds);
-        askCastCostSacrificesFirst(gameData, player, false, castStart, topLibrarySacrificedIds);
+        int topLibraryLifePayments = (useManaValueLifeAlternative && card.getManaValue() > 0 ? 1 : 0)
+                + (onlyDiscardOrPayLifeWithEmptyHand
+                        && additionalCosts.discardCardOrPayLifeCost().lifeAmount() > 0 ? 1 : 0)
+                + (!freeTopPlay && !useManaValueLifeAlternative && !castFaceDown && card.getManaCost() != null
+                        && phyrexianLifePayment(gameData, playerId, card.getManaCost() + additionalLibraryManaCost,
+                        null, effectiveXValue, castingCostService.getCastCostModifier(gameData, playerId, card)) > 0
+                        ? 1 : 0);
+        askCastCostSacrificesFirst(gameData, player, false, castStart, topLibrarySacrificedIds,
+                topLibraryLifePayments);
 
         gameData.spellAdditionalEnterCounters.remove(card.getId());
         Set<Keyword> permissionGrantedKeywords = Set.of();

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -66,13 +69,20 @@ public class ExileTargetPlayerGraveyardCardsEffectHandler implements NormalEffec
                     targetPlayerName, exiledCount);
         }
 
+        int lifeGain = exiledCount * exileEffect.lifeGainPerExiledCard();
         if (exiledCount > 0 && targetPlayerIsLegal && exileEffect.lifeLossPerExiledCard() > 0) {
-            lifeSupport.applyLifeLoss(gameData, targetPlayerId,
-                    exiledCount * exileEffect.lifeLossPerExiledCard(), entry.getCard().getName());
-        }
-        if (exiledCount > 0 && exileEffect.lifeGainPerExiledCard() > 0) {
-            lifeSupport.applyGainLife(gameData, entry.getControllerId(),
-                    exiledCount * exileEffect.lifeGainPerExiledCard(), entry.getCard().getName());
+            // CR 608.2c: "that player loses 1 life and you gain 1 life" follows the exile, the loss first. As steps
+            // of their own, a Lich's Duel Mastery sacrifice replacing the loss asks its CR 616.1 questions without
+            // exiling again.
+            List<CardEffect> steps = new ArrayList<>();
+            steps.add(new PlayersLoseLifeEffect(
+                    Map.of(targetPlayerId, exiledCount * exileEffect.lifeLossPerExiledCard())));
+            if (lifeGain > 0) {
+                steps.add(new GainLifeEffect(lifeGain));
+            }
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, steps);
+        } else if (lifeGain > 0) {
+            lifeSupport.applyGainLife(gameData, entry.getControllerId(), lifeGain, entry.getCard().getName());
         }
     }
 }

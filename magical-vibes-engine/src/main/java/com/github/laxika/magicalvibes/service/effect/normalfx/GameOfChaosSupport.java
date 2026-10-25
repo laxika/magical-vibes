@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -32,23 +33,20 @@ public class GameOfChaosSupport {
      * Performs one Game of Chaos coin flip from the spell controller's perspective at the given life
      * {@code stake}, applies the life swap, logs it, and checks for a game-ending life total.
      *
+     * <p>The flip's result is kept in {@link GameData#gameOfChaosFlipControllerWins} until the life changes are made.
+     * Before them, the Lich's Duel Mastery sacrifice the loser's loss would cause is asked about (CR 616.1); when that
+     * stops the caller, it is resolved or answered again and uses the kept result instead of flipping again.
+     *
      * @return the player who decides whether to flip again (the controller on a win, the opponent on
      *         a loss), or {@code null} if the game ended as a result of this flip.
      */
     public UUID flipRound(GameData gameData, String sourceName, UUID controllerId, UUID opponentId, int stake) {
-        CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, controllerId);
-        boolean controllerWins = result.heads();
-        String controllerName = gameData.playerIdToName.get(controllerId);
-
-        gameLogService.append(gameData, GameLog.text(sourceName + ": " + controllerName
-                + (controllerWins ? " wins" : " loses") + " the flip (stakes " + stake + ")"
-                + coinFlipService.replacementDetails(result) + "."));
-
-        if (controllerWins && result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
-        } else if (result.isActualCoinFlip()) {
-            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+        if (gameData.gameOfChaosFlipControllerWins == null) {
+            gameData.gameOfChaosFlipControllerWins = flip(gameData, sourceName, controllerId, stake);
         }
+        boolean controllerWins = gameData.gameOfChaosFlipControllerWins;
+        lifeSupport.askBeforeLifeLosses(gameData, Map.of(controllerWins ? opponentId : controllerId, stake));
+        gameData.gameOfChaosFlipControllerWins = null;
 
         UUID decidingPlayer;
         if (controllerWins) {
@@ -66,6 +64,24 @@ public class GameOfChaosSupport {
             return null;
         }
         return decidingPlayer;
+    }
+
+    /** Flips the coin, logs the result and checks the coin flip triggers; {@code true} when the controller wins. */
+    private boolean flip(GameData gameData, String sourceName, UUID controllerId, int stake) {
+        CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, controllerId);
+        boolean controllerWins = result.heads();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+
+        gameLogService.append(gameData, GameLog.text(sourceName + ": " + controllerName
+                + (controllerWins ? " wins" : " loses") + " the flip (stakes " + stake + ")"
+                + coinFlipService.replacementDetails(result) + "."));
+
+        if (controllerWins && result.isActualCoinFlip()) {
+            triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
+        } else if (result.isActualCoinFlip()) {
+            triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, controllerId);
+        }
+        return controllerWins;
     }
 
     /** Queues the repeating "flip again?" prompt for the deciding player with the doubled stake. */

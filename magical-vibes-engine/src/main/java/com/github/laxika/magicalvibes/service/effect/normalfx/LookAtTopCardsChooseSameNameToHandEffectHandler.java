@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseSameNameToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport.TopCardsResult;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -26,7 +28,6 @@ public class LookAtTopCardsChooseSameNameToHandEffectHandler implements NormalEf
 
     private final LibraryRevealSupport libraryRevealSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,7 +52,7 @@ public class LookAtTopCardsChooseSameNameToHandEffectHandler implements NormalEf
         List<Card> topCards = result.topCards();
         if (topCards.size() == 1) {
             gameData.addCardToHand(result.controllerId(), topCards.getFirst());
-            lifeSupport.applyLifeLoss(gameData, result.controllerId(), 1, entry.getCard().getName());
+            loseLifeAsNextStep(entry, 1);
             return;
         }
 
@@ -93,6 +94,17 @@ public class LookAtTopCardsChooseSameNameToHandEffectHandler implements NormalEf
             }
         }
 
-        lifeSupport.applyLifeLoss(gameData, controllerId, cardsPutIntoHand, entry.getCard().getName());
+        loseLifeAsNextStep(entry, cardsPutIntoHand);
+    }
+
+    /**
+     * CR 608.2c: the loss follows putting the cards into hand. As a step of its own, a Lich's Duel Mastery sacrifice
+     * replacing it asks its CR 616.1 questions without moving any card again.
+     */
+    private static void loseLifeAsNextStep(StackEntry entry, int amount) {
+        if (amount > 0) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new LoseLifeEffect(amount, LoseLifeRecipient.CONTROLLER)));
+        }
     }
 }

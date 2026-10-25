@@ -96,10 +96,12 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -139,6 +141,23 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ForcedCostOrElseEffectHandler forcedCostOrElseEffectHandler;
     private final LifeSupport lifeSupport;
     private final TriggerCollectionService triggerCollectionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
+
+    /**
+     * Runs {@code payment}, the completion of {@code player} accepting {@code ability}, whose life payments
+     * ({@code lifePayments}, each payer's total) change nothing before them but mana payments, which can't change what
+     * the Lich's Duel Mastery sacrifice a payment causes can be replaced with (paying life is losing it, CR 119.4). That
+     * sacrifice's CR 616.1 questions are asked before anything is paid, and the answer is completed again with them
+     * once chosen; the window is then closed, so nothing after the questions happens twice.
+     */
+    private void payLifeAskingDeathReplacementsFirst(GameData gameData, Player player, PendingMayAbility ability,
+                                                     Map<UUID, Integer> lifePayments, Runnable payment) {
+        permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                gameData, player, ability, true, () -> {
+                    lifeSupport.askBeforeLifeLossesThatFollowAChange(gameData, lifePayments);
+                    payment.run();
+                });
+    }
 
     /**
      * Arcum's Whistle: the active player may pay {X} (X = the target creature's mana value).
@@ -219,18 +238,29 @@ public class MayPenaltyChoiceHandlerService {
                     || (gameQueryService.canPlayerLifeChange(gameData, player.getId())
                             && gameData.getLife(player.getId()) >= lifeCost);
             if (cost.canPayResolutionCost(pool) && canPayLife) {
-                cost.payResolutionCost(pool);
-                triggerCollectionService.checkTaxPaymentTriggers(
-                        gameData, player.getId(), ability.sourceControllerId(), cost.getManaValue());
+                StackEntry paidFor = targetEntry;
+                Runnable payment = () -> {
+                    cost.payResolutionCost(pool);
+                    triggerCollectionService.checkTaxPaymentTriggers(
+                            gameData, player.getId(), ability.sourceControllerId(), cost.getManaValue());
+                    if (lifeCost > 0) {
+                        lifeSupport.applyLifePayment(gameData, player.getId(), lifeCost,
+                                ability.sourceCard().getName());
+                    }
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            player.getUsername() + " pays " + costText + ". ", paidFor.getCard(), " is not countered."));
+                    log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), costText);
+                    counterSupport.resolvePaidRider(gameData, ability.sourceCard(), ability.sourceControllerId(),
+                            player.getId(), onPaidEffects);
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                };
                 if (lifeCost > 0) {
-                    lifeSupport.applyLifePayment(gameData, player.getId(), lifeCost,
-                            ability.sourceCard().getName());
+                    payLifeAskingDeathReplacementsFirst(gameData, player, ability,
+                            Map.of(player.getId(), lifeCost), payment);
+                } else {
+                    payment.run();
                 }
-                gameLogService.append(gameData, GameLog.textCardText(
-                        player.getUsername() + " pays " + costText + ". ", targetEntry.getCard(), " is not countered."));
-                log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), costText);
-                counterSupport.resolvePaidRider(gameData, ability.sourceCard(), ability.sourceControllerId(),
-                        player.getId(), onPaidEffects);
+                return;
             } else {
                 counterSpell(gameData, player, ability.sourceCard(), ability.sourceControllerId(), targetEntry,
                         costText, exileIfCountered, onNotPaidEffects);
@@ -1243,9 +1273,15 @@ public class MayPenaltyChoiceHandlerService {
                 && gameData.getLife(targetPlayerId) >= effect.lifeCost();
 
         if (accepted && canPay) {
-            lifeSupport.applyLifePayment(gameData, targetPlayerId, effect.lifeCost(),
-                    ability.sourceCard().getName());
-            log.info("Game {} - {} pays {} life to keep their hand ({})", gameData.id, player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+            payLifeAskingDeathReplacementsFirst(gameData, player, ability, Map.of(targetPlayerId, effect.lifeCost()),
+                    () -> {
+                        lifeSupport.applyLifePayment(gameData, targetPlayerId, effect.lifeCost(),
+                                ability.sourceCard().getName());
+                        log.info("Game {} - {} pays {} life to keep their hand ({})", gameData.id,
+                                player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+                        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    });
+            return;
         } else {
             // Declined (or can no longer pay) — discard the whole hand.
             discardHandUnlessPaysLifeEffectHandler.discardTargetHand(gameData, casterId, targetPlayerId, ability.sourceCard());
@@ -1266,14 +1302,20 @@ public class MayPenaltyChoiceHandlerService {
 
         boolean canPay = gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)
                 && gameData.getLife(targetPlayerId) >= effect.lifeCost();
-        boolean paid = accepted && canPay;
-        if (paid) {
-            lifeSupport.applyLifePayment(gameData, targetPlayerId, effect.lifeCost(),
-                    ability.sourceCard().getName());
+        if (accepted && canPay) {
+            payLifeAskingDeathReplacementsFirst(gameData, player, ability, Map.of(targetPlayerId, effect.lifeCost()),
+                    () -> {
+                        lifeSupport.applyLifePayment(gameData, targetPlayerId, effect.lifeCost(),
+                                ability.sourceCard().getName());
+                        revealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler.afterCardDecision(
+                                gameData, ability, effect, targetPlayerId, true);
+                        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    });
+            return;
         }
 
         revealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler.afterCardDecision(
-                gameData, ability, effect, targetPlayerId, paid);
+                gameData, ability, effect, targetPlayerId, false);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1288,16 +1330,22 @@ public class MayPenaltyChoiceHandlerService {
 
         boolean canPay = gameQueryService.canPlayerLoseLife(gameData, payingPlayerId)
                 && gameData.getLife(payingPlayerId) >= effect.lifeCost();
-        boolean paid = accepted && canPay;
-        if (paid) {
-            lifeSupport.applyLifePayment(gameData, payingPlayerId, effect.lifeCost(),
-                    ability.sourceCard().getName());
-            log.info("Game {} - {} pays {} life to save their creature ({})", gameData.id,
-                    player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+        if (accepted && canPay) {
+            payLifeAskingDeathReplacementsFirst(gameData, player, ability, Map.of(payingPlayerId, effect.lifeCost()),
+                    () -> {
+                        lifeSupport.applyLifePayment(gameData, payingPlayerId, effect.lifeCost(),
+                                ability.sourceCard().getName());
+                        log.info("Game {} - {} pays {} life to save their creature ({})", gameData.id,
+                                player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+                        destroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler.afterCreatureDecision(
+                                gameData, ability, effect, true);
+                        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    });
+            return;
         }
 
         destroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHandler.afterCreatureDecision(
-                gameData, ability, effect, paid);
+                gameData, ability, effect, false);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1345,10 +1393,15 @@ public class MayPenaltyChoiceHandlerService {
                 && gameData.getLife(payingPlayerId) >= effect.lifeCost();
 
         if (accepted && canPay) {
-            lifeSupport.applyLifePayment(gameData, payingPlayerId, effect.lifeCost(),
-                    ability.sourceCard().getName());
-            log.info("Game {} - {} pays {} life to keep their permanent ({})", gameData.id,
-                    player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+            payLifeAskingDeathReplacementsFirst(gameData, player, ability, Map.of(payingPlayerId, effect.lifeCost()),
+                    () -> {
+                        lifeSupport.applyLifePayment(gameData, payingPlayerId, effect.lifeCost(),
+                                ability.sourceCard().getName());
+                        log.info("Game {} - {} pays {} life to keep their permanent ({})", gameData.id,
+                                player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+                        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    });
+            return;
         } else {
             // Declined (or can no longer pay) — the thief puts that card onto the battlefield.
             stealDyingOpponentPermanentUnlessPaysLifeEffectHandler.stealPermanent(
@@ -1371,10 +1424,15 @@ public class MayPenaltyChoiceHandlerService {
                 && gameData.getLife(payingPlayerId) >= effect.lifeCost();
 
         if (accepted && canPay) {
-            lifeSupport.applyLifePayment(gameData, payingPlayerId, effect.lifeCost(),
-                    ability.sourceCard().getName());
-            log.info("Game {} - {} pays {} life to avoid the tap ({})", gameData.id,
-                    player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+            payLifeAskingDeathReplacementsFirst(gameData, player, ability, Map.of(payingPlayerId, effect.lifeCost()),
+                    () -> {
+                        lifeSupport.applyLifePayment(gameData, payingPlayerId, effect.lifeCost(),
+                                ability.sourceCard().getName());
+                        log.info("Game {} - {} pays {} life to avoid the tap ({})", gameData.id,
+                                player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+                        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    });
+            return;
         } else {
             // Declined (or can no longer pay) — tap the creature.
             UUID abilityControllerId = ability.sourceControllerId();
@@ -1408,14 +1466,18 @@ public class MayPenaltyChoiceHandlerService {
                         && gameData.getLife(payingPlayerId) >= lifeCost);
 
         if (accepted && canPay) {
-            if (lifeCost > 0) {
-                lifeSupport.applyLifePayment(gameData, payingPlayerId, lifeCost,
-                        ability.sourceCard().getName());
-            }
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + lifeCost + " life. (", ability.sourceCard(), ")"));
-            log.info("Game {} - {} pays {} life to save their creature ({})", gameData.id,
-                    player.getUsername(), lifeCost, ability.sourceCard().getName());
+            payLifeAskingDeathReplacementsFirst(gameData, player, ability, Map.of(payingPlayerId, lifeCost), () -> {
+                if (lifeCost > 0) {
+                    lifeSupport.applyLifePayment(gameData, payingPlayerId, lifeCost,
+                            ability.sourceCard().getName());
+                }
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " pays " + lifeCost + " life. (", ability.sourceCard(), ")"));
+                log.info("Game {} - {} pays {} life to save their creature ({})", gameData.id,
+                        player.getUsername(), lifeCost, ability.sourceCard().getName());
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            });
+            return;
         } else {
             // Declined (or can no longer pay) — destroy the creature; it can't be regenerated.
             destroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler.destroyTargetCreature(
@@ -1902,11 +1964,48 @@ public class MayPenaltyChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * An accepted cost that pays life (a life cost, or a mana cost with life or Phyrexian mana in it) asks the Lich's
+     * Duel Mastery sacrifice the payment would cause before anything of the answer happens
+     * ({@link #payLifeAskingDeathReplacementsFirst}).
+     */
     public void handleForcedCostOrElseOptionalChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         ForcedCostOrElseEffect effect = ability.effects().stream()
                 .filter(e -> e instanceof ForcedCostOrElseEffect)
                 .map(e -> (ForcedCostOrElseEffect) e)
                 .findFirst().orElseThrow();
+        Map<UUID, Integer> lifePayments = accepted ? acceptedForcedCostLifePayments(gameData, ability, effect) : Map.of();
+        if (!lifePayments.isEmpty()) {
+            payLifeAskingDeathReplacementsFirst(gameData, player, ability, lifePayments,
+                    () -> completeForcedCostOrElseOptionalChoice(gameData, player, true, ability, effect));
+            return;
+        }
+        completeForcedCostOrElseOptionalChoice(gameData, player, accepted, ability, effect);
+    }
+
+    /** The life an accepted forced cost will make its payer pay, or an empty map when it pays none. */
+    private Map<UUID, Integer> acceptedForcedCostLifePayments(GameData gameData, PendingMayAbility ability,
+                                                              ForcedCostOrElseEffect effect) {
+        UUID payerId = ability.controllerId();
+        int lifeAmount = 0;
+        if (effect.forcedCost() instanceof PayLifeCost payLifeCost) {
+            lifeAmount = effectiveLifeAmount(gameData, payerId, ability, payLifeCost);
+            if (lifeAmount > 0 && (!gameQueryService.canPlayerLifeChange(gameData, payerId)
+                    || gameData.getLife(payerId) < lifeAmount)) {
+                lifeAmount = 0;
+            }
+        } else if (effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayManaCost payCost
+                && canPayManaCost(gameData, payerId, ability, payCost)) {
+            ManaCost cost = new ManaCost(ability.manaCost(), payCost.forCumulativeUpkeep());
+            lifeAmount = payCost.lifeAmount() + (cost.hasPhyrexianMana()
+                    ? cost.payPhyrexianManaAuto(new ManaPool(gameData.playerManaPools.get(payerId)), 0)
+                    : 0);
+        }
+        return lifeAmount > 0 ? Map.of(payerId, lifeAmount) : Map.of();
+    }
+
+    private void completeForcedCostOrElseOptionalChoice(GameData gameData, Player player, boolean accepted,
+                                                        PendingMayAbility ability, ForcedCostOrElseEffect effect) {
 
         UUID decidingPlayerId = ability.controllerId();
         UUID sourceControllerId = forcedCostSourceControllerId(gameData, ability, effect);

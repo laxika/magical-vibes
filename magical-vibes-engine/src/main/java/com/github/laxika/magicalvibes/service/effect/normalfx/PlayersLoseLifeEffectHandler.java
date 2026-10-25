@@ -38,6 +38,8 @@ public class PlayersLoseLifeEffectHandler implements NormalEffectHandlerBean, As
                 losses.put(playerId, amount);
             }
         });
-        lifeSupport.applyLifeLosses(gameData, losses, entry.getCard().getName());
+        // An ability without a source card (the rad counters' inherent trigger, CR 728.1) is named by its description.
+        String sourceName = entry.getCard() != null ? entry.getCard().getName() : entry.getDescription();
+        lifeSupport.applyLifeLosses(gameData, losses, sourceName);
     }
 }

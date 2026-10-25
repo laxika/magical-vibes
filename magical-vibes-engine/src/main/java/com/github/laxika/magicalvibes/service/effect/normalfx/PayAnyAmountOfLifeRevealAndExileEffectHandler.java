@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeRevealAndExileEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PayAnyAmountOfLifeRevealAndExileEffectHandler implements NormalEffectHandlerBean {
+public class PayAnyAmountOfLifeRevealAndExileEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
     private final PlayerInteractionSupport playerInteractionSupport;
@@ -49,15 +50,16 @@ public class PayAnyAmountOfLifeRevealAndExileEffectHandler implements NormalEffe
         // Re-entry after the controller chose how much life to pay.
         if (gameData.chosenXValue != null) {
             int paid = gameData.chosenXValue;
-            gameData.chosenXValue = null;
 
             if (paid <= 0) {
+                gameData.chosenXValue = null;
                 gameLogService.append(gameData, GameLog.text(playerName + " pays no life for " + cardName + "."));
                 log.info("Game {} - {} pays 0 life for {}", gameData.id, playerName, cardName);
                 return;
             }
 
             lifeSupport.applyLifePayment(gameData, controllerId, paid, cardName);
+            gameData.chosenXValue = null;
             gameLogService.append(gameData, GameLog.text(playerName + " pays " + paid + " life for " + cardName + "."));
             log.info("Game {} - {} pays {} life for {}", gameData.id, playerName, paid, cardName);
             playerInteractionSupport.beginRevealCardsChooseDiscard(gameData, entry, paid, 1,

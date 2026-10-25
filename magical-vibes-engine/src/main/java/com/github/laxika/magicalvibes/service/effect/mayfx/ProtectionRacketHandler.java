@@ -12,10 +12,12 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ProtectionRacketEffectHandler;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /** Completes one opponent's Protection Racket payment choice. */
@@ -28,6 +30,7 @@ public class ProtectionRacketHandler implements MayEffectHandlerBean {
     private final InputCompletionService inputCompletionService;
     private final LifeSupport lifeSupport;
     private final ProtectionRacketEffectHandler effectHandler;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,9 +45,16 @@ public class ProtectionRacketHandler implements MayEffectHandlerBean {
         Card topCard = library == null || library.isEmpty() ? null : library.getFirst();
         if (topCard != null && topCard.getId().equals(effect.revealedCardId())) {
             boolean paid = accepted && effectHandler.canPayLife(gameData, opponentId, effect.manaValue());
+            if (paid) {
+                // Paying life is losing it (CR 119.4): a Lich's Duel Mastery sacrifice it causes is asked about first.
+                if (permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                        gameData, player, ability, true, () -> lifeSupport.applyLifePayment(
+                                gameData, opponentId, effect.manaValue(), ability.sourceCard().getName()))) {
+                    return;
+                }
+            }
             library.removeFirst();
             if (paid) {
-                lifeSupport.applyLifePayment(gameData, opponentId, effect.manaValue(), ability.sourceCard().getName());
                 exileService.exileCard(gameData, effect.abilityControllerId(), topCard);
                 gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " pays " + effect.manaValue() + " life and exiles ")

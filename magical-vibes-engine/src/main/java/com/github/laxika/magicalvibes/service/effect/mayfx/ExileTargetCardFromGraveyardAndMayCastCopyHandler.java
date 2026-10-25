@@ -211,9 +211,12 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * "If you do, you lose N life": the loss follows the cast (CR 608.2c). It is a step of its own of the parked
+     * resolution that offered the cast, so a Lich's Duel Mastery sacrifice replacing it has its death replacements
+     * chosen before any life is lost (CR 616.1).
+     */
     public void applyLifeLoss(GameData gameData, Player player, Card copy, int amount) {
-        if (amount > 0) {
-            lifeSupport.applyLifeLoss(gameData, player.getId(), amount, copy.getName());
-        }
+        lifeSupport.loseLifeAsStepOfParkedResolution(gameData, Map.of(player.getId(), amount), copy.getName());
     }
 }

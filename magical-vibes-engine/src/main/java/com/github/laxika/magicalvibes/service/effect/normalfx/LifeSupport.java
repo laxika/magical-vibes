@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.LichDuelMasteryLifeLossReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NefariousLichLifeGainReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnduringAngelLifeTotalReplacementEffect;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -35,6 +36,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -275,6 +277,35 @@ public class LifeSupport {
     }
 
     /**
+     * Makes the players of {@code losses} lose that life as a step of its own of the resolution that is parked while a
+     * choice it offered is completed ("you may cast the copy. If you do, you lose 2 life"): the loss follows the cast
+     * (CR 608.2c), and as a resolving step a Lich's Duel Mastery sacrifice replacing it has its death replacements
+     * chosen before any life is lost (CR 616.1). The step goes right after the step being resolved while the
+     * resolution is still running, and otherwise at the parked resolution's next step. With no resolution to add it
+     * to, the losses happen at once.
+     */
+    public void loseLifeAsStepOfParkedResolution(GameData gameData, Map<UUID, Integer> losses, String sourceName) {
+        Map<UUID, Integer> positive = new LinkedHashMap<>();
+        losses.forEach((playerId, amount) -> {
+            if (amount > 0) {
+                positive.merge(playerId, amount, Integer::sum);
+            }
+        });
+        if (positive.isEmpty()) {
+            return;
+        }
+        StackEntry parked = gameData.pendingEffectResolutionEntry;
+        if (parked == null) {
+            applyLifeLosses(gameData, positive, sourceName);
+            return;
+        }
+        int index = gameData.effectResolutionDepth > 0
+                ? parked.getResolvingEffectIndex() + 1
+                : gameData.pendingEffectResolutionIndex;
+        parked.insertEffectsToResolve(index, List.of(new PlayersLoseLifeEffect(positive)));
+    }
+
+    /**
      * Makes each player of {@code losses} lose that much life, in order, as the life losses of one effect. First
      * asks, through {@link #askBeforeLifeLosses}, every question the sacrifices those losses would cause need, so
      * a resolving effect whose later loss would ask can still be stopped and resolved again.
@@ -336,6 +367,62 @@ public class LifeSupport {
         askBeforeLifeLosses(gameData, losses);
     }
 
+    /**
+     * For a life total a game-loss replacement is about to set to {@code newLife} (The Golden Throne, Exquisite
+     * Archangel, Lich's Mirror): asks the questions of the Lich's Duel Mastery sacrifice the change would cause
+     * (CR 616.1f) before the replacement changes anything. Inside a rerun window this stops the resolving effect like
+     * {@link #askBeforeLifeTotalsChange}; otherwise the question is asked through {@link DepartureService#askBeforeEvent}
+     * and the answered batch waits for the life change's sacrifice. While that question is still open, this keeps
+     * reporting it.
+     *
+     * @return {@code true} when a question is open and the replacement must stop for now
+     */
+    public boolean askBeforeLossReplacementLifeTotal(GameData gameData, UUID playerId, int newLife) {
+        int loss = lifeLossOfSettingLifeTotal(gameData, playerId, newLife);
+        if (loss <= 0) {
+            return false;
+        }
+        if (gameData.deathReplacementsCanRerunEffect) {
+            askBeforeLifeLosses(gameData, Map.of(playerId, loss));
+            return false;
+        }
+        DepartureIntent sacrifice = gameQueryService.canPlayerLoseLife(gameData, playerId)
+                ? lifeLossSacrifice(gameData, playerId) : null;
+        if (sacrifice == null) {
+            return false;
+        }
+        DepartureBatch pending = gameData.pendingDepartureBatch;
+        if (pending != null && pending.isAwaitingAnswer() && pending.intents().equals(List.of(sacrifice))) {
+            return true;
+        }
+        return departureService.askBeforeEvent(gameData, DepartureBatch.of(List.of(sacrifice)));
+    }
+
+    /**
+     * {@link #askBeforeLifeLosses} for a resolving effect that makes {@code playerId} gain {@code gain} life and then
+     * lose {@code loss} life (Sapling of Colfenor). A gain a replacement turns into a loss puts a Lich's Duel Mastery
+     * shield into its controller's hand first, so the loss that follows can be the one the Mastery's sacrifice
+     * replaces ({@link #successiveLifeLossSacrifices}). Does nothing outside the window.
+     */
+    public void askBeforeLifeGainThenLoss(GameData gameData, UUID playerId, int gain, int loss) {
+        if (!gameData.deathReplacementsCanRerunEffect || !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
+            return;
+        }
+        int gainAsLoss = gain > 0 ? lifeLossOfSettingLifeTotal(gameData, playerId,
+                SaturatingMath.add(gameData.getLife(playerId), gain)) : 0;
+        int losses = (gainAsLoss > 0 ? 1 : 0) + (loss > 0 ? 1 : 0);
+        if (losses == 0) {
+            return;
+        }
+        List<Permanent> masteries = successiveLifeLossSacrifices(gameData, playerId, losses).stream()
+                .map(sacrifice -> gameQueryService.findPermanentById(gameData, sacrifice.permanentId()))
+                .filter(Objects::nonNull)
+                .toList();
+        if (!masteries.isEmpty()) {
+            permanentRemovalService.askDeathReplacementsBeforeRemoval(gameData, masteries);
+        }
+    }
+
     /** The life {@link #applySetLifeTotal} would make {@code playerId} lose now on its way to {@code newLife}. */
     private int lifeLossOfSettingLifeTotal(GameData gameData, UUID playerId, int newLife) {
         if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
@@ -364,6 +451,33 @@ public class LifeSupport {
      */
     public void askBeforeLifeLossesThatFollowAChange(GameData gameData, Map<UUID, Integer> losses) {
         askBeforeLifeLosses(gameData, losses);
+        closeDeathReplacementRerunWindow(gameData);
+    }
+
+    /**
+     * {@link #askBeforeLifeLossesThatFollowAChange} for {@code times} life losses (or payments) of {@code amount} that
+     * {@code playerId} suffers one after another (each card Sylvan Library or Moonlight Bargain is paid for): each
+     * loss puts one of the Lich's Duel Mastery shields left into its controller's hand, so the losses beyond those
+     * shields are the ones that sacrifice a Mastery ({@link #replaceLifeLossWithShield}). Their questions are asked
+     * before the change that precedes the losses, and the rerun window is then closed.
+     */
+    public void askBeforeRepeatedLifeLossesThatFollowAChange(GameData gameData, UUID playerId, int amount, int times) {
+        if (gameData.deathReplacementsCanRerunEffect && amount > 0 && times > 0
+                && gameQueryService.canPlayerLoseLife(gameData, playerId)) {
+            List<Permanent> masters = lifeLossShieldSources(gameData, playerId);
+            long shields = masters.stream()
+                    .mapToLong(source -> gameData.exiledCards.stream()
+                            .filter(entry -> isShieldOf(entry, source, playerId))
+                            .count())
+                    .sum();
+            List<Permanent> sacrificed = masters.stream()
+                    .filter(source -> !gameQueryService.cantBeSacrificed(gameData, source))
+                    .limit(Math.max(0, times - shields))
+                    .toList();
+            if (!sacrificed.isEmpty()) {
+                permanentRemovalService.askDeathReplacementsBeforeRemoval(gameData, sacrificed);
+            }
+        }
         closeDeathReplacementRerunWindow(gameData);
     }
 
@@ -579,6 +693,44 @@ public class LifeSupport {
                 .orElse(null);
     }
 
+    /**
+     * {@link #lifeLossSacrifice} for {@code amount} life that {@code playerId} is about to lose or pay (paying life is
+     * losing it, CR 119.4), or {@code null} when that loss wouldn't happen: no positive amount, or a player who can't
+     * lose life. A payment that asks this before any of its costs is paid (CR 601.2h) adds the intent to the batch it
+     * asks with {@link DepartureService#askBeforePayment}, and the life payment's sacrifice consumes the answers.
+     */
+    public DepartureIntent lifeLossSacrifice(GameData gameData, UUID playerId, int amount) {
+        if (amount <= 0 || !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
+            return null;
+        }
+        return lifeLossSacrifice(gameData, playerId);
+    }
+
+    /**
+     * The Lich's Duel Mastery sacrifices that {@code losses} separate life losses or payments of {@code playerId},
+     * made one after another, would cause ({@link #replaceLifeLossWithShield}), without changing the game: each loss
+     * first puts one of the shields left into its controller's hand, and each loss beyond those shields sacrifices
+     * the next Mastery that can be sacrificed. Empty for a player who can't lose life. A payment of several life costs
+     * asks these before any of its costs is paid (CR 601.2h), so the sacrifice a later payment causes once an earlier
+     * one has used the last shield is asked too.
+     */
+    public List<DepartureIntent> successiveLifeLossSacrifices(GameData gameData, UUID playerId, int losses) {
+        if (losses <= 0 || !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
+            return List.of();
+        }
+        List<Permanent> masters = lifeLossShieldSources(gameData, playerId);
+        long shields = masters.stream()
+                .mapToLong(source -> gameData.exiledCards.stream()
+                        .filter(entry -> isShieldOf(entry, source, playerId))
+                        .count())
+                .sum();
+        return masters.stream()
+                .filter(source -> !gameQueryService.cantBeSacrificed(gameData, source))
+                .limit(Math.max(0, losses - shields))
+                .map(source -> DepartureIntent.sacrifice(source.getId()))
+                .toList();
+    }
+
     private List<Permanent> lifeLossShieldSources(GameData gameData, UUID playerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
@@ -591,11 +743,15 @@ public class LifeSupport {
 
     private static ExiledCardEntry shieldFor(GameData gameData, Permanent source, UUID playerId) {
         return gameData.exiledCards.stream()
-                .filter(entry -> source.getId().equals(entry.sourcePermanentId())
-                        && playerId.equals(entry.ownerId())
-                        && entry.faceDown())
+                .filter(entry -> isShieldOf(entry, source, playerId))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private static boolean isShieldOf(ExiledCardEntry entry, Permanent source, UUID playerId) {
+        return source.getId().equals(entry.sourcePermanentId())
+                && playerId.equals(entry.ownerId())
+                && entry.faceDown();
     }
 
     UUID resolveSpellOrAbilityControllerId(GameData gameData) {

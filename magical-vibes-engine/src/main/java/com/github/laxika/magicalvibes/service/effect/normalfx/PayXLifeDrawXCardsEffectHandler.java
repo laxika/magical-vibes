@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeDrawXCardsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,12 +17,14 @@ import java.util.UUID;
 
 /**
  * Resolves {@link PayXLifeDrawXCardsEffect}: prompts the controller for X (capped at their current
- * life total), pays that much life, then draws that many cards. Necrologia.
+ * life total), pays that much life, then draws that many cards. Necrologia. The payment is the first change of the
+ * rerun that answers the X prompt, and paying life is losing it (CR 119.4), so a Lich's Duel Mastery sacrifice it
+ * causes is asked about first and the payment is made again with the same X.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PayXLifeDrawXCardsEffectHandler implements NormalEffectHandlerBean {
+public class PayXLifeDrawXCardsEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
     private final PlayerInteractionSupport playerInteractionSupport;
@@ -42,15 +45,16 @@ public class PayXLifeDrawXCardsEffectHandler implements NormalEffectHandlerBean 
         // Re-entry after the player chose X.
         if (gameData.chosenXValue != null) {
             int chosenValue = gameData.chosenXValue;
-            gameData.chosenXValue = null;
 
             if (chosenValue == 0) {
+                gameData.chosenXValue = null;
                 gameLogService.append(gameData, GameLog.text(playerName + " pays 0 life for " + cardName + " and draws no cards."));
                 log.info("Game {} - {} chooses X=0 for {}", gameData.id, playerName, cardName);
                 return;
             }
 
             lifeSupport.applyLifePayment(gameData, controllerId, chosenValue, cardName);
+            gameData.chosenXValue = null;
             gameLogService.append(gameData, GameLog.text(playerName + " pays " + chosenValue + " life for " + cardName + " and draws " + chosenValue + " cards."));
             log.info("Game {} - {} pays {} life and draws {} for {}", gameData.id, playerName,
                     chosenValue, chosenValue, cardName);

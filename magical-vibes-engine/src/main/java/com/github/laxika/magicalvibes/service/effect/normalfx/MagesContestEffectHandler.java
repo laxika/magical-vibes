@@ -8,17 +8,23 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MagesContestEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves the life auction and conditional counterspell of Mages' Contest. */
+/**
+ * Resolves the life auction and conditional counterspell of Mages' Contest. The high bidder's life loss replaced by
+ * Lich's Duel Mastery's sacrifice has that sacrifice's death replacements chosen before anything changes (CR 616.1):
+ * the bid that ends the auction asks them before it is recorded, and the same bid is answered again.
+ */
 @Component
 @RequiredArgsConstructor
-public class MagesContestEffectHandler implements NormalEffectHandlerBean {
+public class MagesContestEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
@@ -47,6 +53,9 @@ public class MagesContestEffectHandler implements NormalEffectHandlerBean {
             if (!entry.getControllerId().equals(target.getControllerId())) {
                 order.add(target.getControllerId());
             }
+            // With no one else to bid, the opening bid of 1 stands at once.
+            lifeSupport.askBeforeLifeLossesThatFollowAChange(gameData,
+                    order.size() == 1 ? Map.of(order.getFirst(), 1) : Map.of());
             lifeBidAuctionSupport.begin(gameData, order, 1);
             promptNextBidderOrFinish(gameData, entry, cardName);
             return;
@@ -54,6 +63,10 @@ public class MagesContestEffectHandler implements NormalEffectHandlerBean {
 
         if (gameData.chosenXValue != null) {
             int bid = gameData.chosenXValue;
+            if (findTargetSpell(gameData, entry.getTargetId()) != null) {
+                lifeSupport.askBeforeLifeLossesThatFollowAChange(gameData,
+                        lifeBidAuctionSupport.lifeLossIfBidEndsAuction(gameData, bid));
+            }
             gameData.chosenXValue = null;
             UUID bidder = state.currentBidderId;
             String bidderName = gameData.playerIdToName.get(bidder);

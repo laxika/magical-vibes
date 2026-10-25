@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.VillainousChoiceState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /** Resolves This Is How It Ends's target-owner villainous choice. */
@@ -30,10 +32,12 @@ import java.util.UUID;
 public class ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffectHandler
         implements NormalEffectHandlerBean {
 
+    /** The progress mark of the step resolved again after the chosen life loss step. */
+    private static final String AFTER_LIFE_LOSS = "__after_life_loss";
+
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final LifeSupport lifeSupport;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final VillainousChoiceSupport villainousChoiceSupport;
@@ -71,9 +75,16 @@ public class ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffectHandler
         if (state.chosenMode != null) {
             String chosen = state.chosenMode;
             state.chosenMode = null;
-            if (ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect.LOSE_LIFE_OPTION.equals(chosen)) {
-                lifeSupport.applyLifeLoss(gameData, ownerId, 5, entry.getCard().getName());
+            if (AFTER_LIFE_LOSS.equals(chosen)) {
                 finish(gameData);
+            } else if (ShuffleTargetCreatureThenOwnerFacesVillainousChoiceEffect.LOSE_LIFE_OPTION.equals(chosen)) {
+                // The loss follows the shuffle as a step of its own, so the Lich's Duel Mastery sacrifice that
+                // replaces it asks its CR 616.1 questions before any life is lost without shuffling again; this
+                // step is resolved again after it to finish (or repeat) the choice.
+                state.chosenMode = AFTER_LIFE_LOSS;
+                gameData.rerunCurrentEffectAfterInteraction = false;
+                entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                        new PlayersLoseLifeEffect(Map.of(ownerId, 5)), effect));
             } else {
                 beginCreatureChoice(gameData, entry, ownerId);
             }

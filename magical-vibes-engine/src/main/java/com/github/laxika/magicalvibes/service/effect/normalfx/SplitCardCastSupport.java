@@ -83,6 +83,9 @@ public class SplitCardCastSupport {
     private final MayCastHandlerService mayCastHandlerService;
     private final PotentialManaService potentialManaService;
     private final CastingCostService castingCostService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.DepartureService departureService;
 
     public SplitCardCastSupport(GameLogService gameLogService,
                                 PlayerInputService playerInputService,
@@ -477,6 +480,46 @@ public class SplitCardCastSupport {
                 "Choose a target for " + targeting.cardToCast().getName() + ".");
     }
 
+    /**
+     * CR 601.2h and CR 616.1: before a prepared cast pays its mana cost, asks the death replacement questions of the
+     * Lich's Duel Mastery that paying life for it would sacrifice instead (paying life is losing it, CR 119.4): life
+     * equal to its mana value from exile, or Phyrexian mana paid with life
+     * ({@link SpellCastingService#nonHandManaCostLifePayments}). When one is asked, nothing is paid and the cast is
+     * put on the stack again once every answer is in ({@link #putOnStackAfterLifeCostAnswers}); the life payment's
+     * sacrifice consumes the answers. Nothing is asked inside a rerun window, whose completion asks as the Mastery
+     * leaves.
+     *
+     * @return {@code true} when the cast stopped to ask
+     */
+    private boolean askCastLifePaymentFirst(GameData gameData, SplitCardCast.Targeting targeting,
+                                            SplitCardCast.ExileCast exileCast) {
+        if (gameData.deathReplacementsCanRerunEffect) {
+            return false;
+        }
+        SplitCardCast cast = targeting.cast();
+        Card card = targeting.cardToCast();
+        int payments = cast.sourceZone() == Zone.EXILE && exileCast != null && exileCast.payLifeEqualToManaValue()
+                ? (card.getManaValue() > 0 ? 1 : 0)
+                : spellCastingService.nonHandManaCostLifePayments(gameData, cast.controllerId(), card,
+                        targeting.xValue(), cast.sourceZone() == Zone.EXILE ? null : cast.alternativeManaCost());
+        List<com.github.laxika.magicalvibes.model.DepartureIntent> sacrifices = payments > 0
+                ? lifeSupport.successiveLifeLossSacrifices(gameData, cast.controllerId(), payments) : List.of();
+        if (sacrifices.isEmpty() || !departureService.askBeforePayment(gameData,
+                com.github.laxika.magicalvibes.model.DepartureBatch.of(sacrifices))) {
+            return false;
+        }
+        gameData.pendingDeathReplacementChoiceReplay = new GameData.SplitCastPaymentReplay(targeting);
+        return true;
+    }
+
+    /**
+     * Puts the prepared cast {@link #askCastLifePaymentFirst} stopped on the stack again, paying its cost, once every
+     * death replacement it asked about is chosen.
+     */
+    public void putOnStackAfterLifeCostAnswers(GameData gameData, GameData.SplitCastPaymentReplay replay) {
+        putOnStack(gameData, replay.targeting());
+    }
+
     private void putOnStack(GameData gameData, SplitCardCast.Targeting targeting) {
         SplitCardCast cast = targeting.cast();
         Card card = targeting.cardToCast();
@@ -528,6 +571,9 @@ public class SplitCardCastSupport {
             entry.setCopy(exileCast.copy());
             entry.setCastCopy(exileCast.copy());
             entry.setPutOnBottomOfOwnersLibraryInsteadOfGraveyard(exileCast.putOnLibraryBottomInsteadOfGraveyard());
+        }
+        if (cast.payManaCost() && askCastLifePaymentFirst(gameData, targeting, exileCast)) {
+            return;
         }
         if (cast.payManaCost()) {
             try {
@@ -588,7 +634,9 @@ public class SplitCardCastSupport {
         exileCastTargetSupport.queueAfterSuccessfulCast(gameData, card, controllerId,
                 cast.sourcePermanentId(), cast.afterSuccessfulCastEffect());
         if (exileCast != null && exileCast.lifeLossOnCast() > 0) {
-            lifeSupport.applyLifeLoss(gameData, controllerId, exileCast.lifeLossOnCast(), card.getName());
+            // "If you do, you lose N life" follows the cast as a step of its own (CR 608.2c, CR 616.1).
+            lifeSupport.loseLifeAsStepOfParkedResolution(gameData,
+                    Map.of(controllerId, exileCast.lifeLossOnCast()), card.getName());
         }
         if (cast.revealedCast() != null && cast.revealedCast().cardsToBottom() != null) {
             putOnLibraryBottom(gameData, cast.ownerId(), cast.revealedCast().cardsToBottom());

@@ -370,10 +370,9 @@ public class PermanentChoiceSpellHandlerService {
                             ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard());
                     exileCastTargetSupport.queueAfterSuccessfulCast(gameData, ect.cardToCast(), ect.controllerId(),
                             ect.sourcePermanentId(), ect.afterSuccessfulCastEffect());
-                    if (ect.lifeLossAfterCast() > 0) {
-                        lifeSupport.applyLifeLoss(gameData, ect.controllerId(), ect.lifeLossAfterCast(),
-                                ect.cardToCast().getName());
-                    }
+                    // "If you do, you lose N life" follows the cast as a step of its own (CR 608.2c, CR 616.1).
+                    lifeSupport.loseLifeAsStepOfParkedResolution(gameData,
+                            Map.of(ect.controllerId(), ect.lifeLossAfterCast()), ect.cardToCast().getName());
                 } catch (IllegalStateException ex) {
                     if (gameData.outsideGamePlayPermissions.contains(ect.cardToCast().getId())) {
                         gameData.outsideGamePlayPermissions.remove(ect.cardToCast().getId());
@@ -579,9 +578,9 @@ public class PermanentChoiceSpellHandlerService {
                         card.getId(), ect.xValue(), chosen, ect.copy());
                 exileCastTargetSupport.queueAfterSuccessfulCast(gameData, card, ect.controllerId(),
                         ect.sourcePermanentId(), ect.afterSuccessfulCastEffect());
-                if (ect.lifeLossAfterCast() > 0) {
-                    lifeSupport.applyLifeLoss(gameData, ect.controllerId(), ect.lifeLossAfterCast(), card.getName());
-                }
+                // "If you do, you lose N life" follows the cast as a step of its own (CR 608.2c, CR 616.1).
+                lifeSupport.loseLifeAsStepOfParkedResolution(gameData,
+                        Map.of(ect.controllerId(), ect.lifeLossAfterCast()), card.getName());
             } catch (IllegalStateException ex) {
                 gameData.removeFromExile(card.getId());
             }

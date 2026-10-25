@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreepingDreadEffect;
-import java.util.ArrayList;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +23,6 @@ import org.springframework.stereotype.Component;
 public class CreepingDreadEffectHandler implements NormalEffectHandlerBean {
 
     private final com.github.laxika.magicalvibes.service.input.PlayerInputService playerInputService;
-    private final LifeSupport lifeSupport;
 
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
@@ -75,7 +76,7 @@ public class CreepingDreadEffectHandler implements NormalEffectHandlerBean {
     private void finish(GameData gameData, StackEntry entry, CreepingDreadState state) {
         UUID controllerId = state.controllerId;
         Set<CardType> controllerTypes = state.discardedCardTypes.get(controllerId);
-        List<UUID> lifeLossPlayers = new ArrayList<>();
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         if (controllerTypes != null && !controllerTypes.isEmpty()) {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 if (playerId.equals(controllerId)) {
@@ -83,7 +84,7 @@ public class CreepingDreadEffectHandler implements NormalEffectHandlerBean {
                 }
                 Set<CardType> opponentTypes = state.discardedCardTypes.get(playerId);
                 if (opponentTypes != null && controllerTypes.stream().anyMatch(opponentTypes::contains)) {
-                    lifeLossPlayers.add(playerId);
+                    losses.put(playerId, 3);
                 }
             }
         }
@@ -92,8 +93,11 @@ public class CreepingDreadEffectHandler implements NormalEffectHandlerBean {
         state.reset();
         cardChoiceHandlerService.discardCollectedCards(gameData, selectedDiscards, controllerId);
         gameData.rerunCurrentEffectAfterInteraction = false;
-        for (UUID playerId : lifeLossPlayers) {
-            lifeSupport.applyLifeLoss(gameData, playerId, 3, entry.getCard().getName());
+        // CR 608.2c: the losses follow the discards. As a step of their own, a Lich's Duel Mastery sacrifice
+        // replacing one of them asks its CR 616.1 questions without redoing the discards.
+        if (!losses.isEmpty()) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new PlayersLoseLifeEffect(losses)));
         }
     }
 }

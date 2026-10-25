@@ -13,15 +13,24 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import java.util.*;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Sapling of Colfenor's attack trigger: reveals the top card of its controller's library; a creature card makes them
+ * gain life equal to its toughness, lose life equal to its power, and then go to their hand.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: the card stays in the library until after the life changes, so the
+ * Lich's Duel Mastery sacrifice that replaces the loss is asked about (CR 616.1) before anything changes.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RevealTopCardCreatureGainToughnessLosePowerToHandEffectHandler implements NormalEffectHandlerBean {
+public class RevealTopCardCreatureGainToughnessLosePowerToHandEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
     private final GameLogService gameLogService;
@@ -45,15 +54,12 @@ public class RevealTopCardCreatureGainToughnessLosePowerToHandEffectHandler impl
             return;
         }
 
-        // Reveal the top card. It only leaves the library if it's a creature card.
+        // Reveal the top card. It only leaves the library if it's a creature card, after the life changes.
         Card topCard = deck.getFirst();
-        gameLogService.append(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
-
         if (!topCard.hasType(CardType.CREATURE)) {
+            gameLogService.append(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
             return;
         }
-
-        deck.removeFirst();
 
         int toughness = topCard.getToughness() != null ? topCard.getToughness() : 0;
         int power = topCard.getPower() != null ? topCard.getPower() : 0;
@@ -68,7 +74,13 @@ public class RevealTopCardCreatureGainToughnessLosePowerToHandEffectHandler impl
             }
         }
 
-        // Gain life equal to toughness, then lose life equal to power, then put it into hand.
+        // Nothing has changed yet: a Lich's Duel Mastery sacrifice the gain (when a replacement turns it into a loss)
+        // or the loss will cause is asked about (CR 616.1) before the gain, which closes the window the loss would
+        // ask in.
+        lifeSupport.askBeforeLifeGainThenLoss(gameData, controllerId, toughness, power);
+        gameLogService.append(gameData, GameLog.builder().text(playerName + " reveals ").card(topCard).text(" from the top of their library (" + sourceName + ").").build());
+
+        // Gain life equal to toughness, then lose life equal to power, then put it into hand (CR 608.2c).
         if (toughness > 0) {
             lifeSupport.applyGainLife(gameData, controllerId, toughness, sourceName,
                     entry.getCard(), entry.getEntryType());
@@ -77,6 +89,7 @@ public class RevealTopCardCreatureGainToughnessLosePowerToHandEffectHandler impl
             lifeSupport.applyLifeLoss(gameData, controllerId, power, sourceName);
         }
 
+        deck.remove(topCard);
         gameData.addCardToHand(controllerId, topCard);
         gameLogService.append(gameData, GameLog.builder().text(playerName + " puts ").card(topCard).text(" into their hand (" + sourceName + ").").build());
 

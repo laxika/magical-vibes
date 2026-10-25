@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -268,12 +269,21 @@ public class DepartureService {
      * replacements, then its CR 616.1 death replacements. Nothing has changed when this returns. When a question is
      * opened, the batch waits in {@link GameData#pendingDepartureBatch} and the caller must pause its event; once
      * {@link #continueAskingBeforeEvent} reports every answer in, the caller performs the same batch through
-     * {@link #departNow}, which continues the answered batch in its place. Nothing is asked while another batch or a
-     * replay window's answers are waiting.
+     * {@link #departNow}, which continues the answered batch in its place. An earlier event's answered batch that is
+     * still waiting to be performed (all combat damage is dealt at once, CR 510.2) is set aside in
+     * {@link GameData#answeredEventDepartureBatches} so this one can ask; nothing is asked while a question is open or
+     * a replay window's answers are waiting.
      *
      * @return {@code true} when a question is open
      */
     public boolean askBeforeEvent(GameData gameData, DepartureBatch batch) {
+        DepartureBatch earlier = gameData.pendingDepartureBatch;
+        if (earlier != null && gameData.pendingDeathReplacementChoiceReplay == null && !earlier.isAwaitingAnswer()
+                && !earlier.isStateBased() && !earlier.isOwnedByResolutionStep()
+                && !earlier.intents().equals(batch.intents())) {
+            gameData.answeredEventDepartureBatches.add(earlier);
+            gameData.pendingDepartureBatch = null;
+        }
         if (gameData.pendingDepartureBatch != null || gameData.pendingDeathReplacementChoiceReplay != null
                 || batch.intents().stream().anyMatch(intent ->
                 gameData.chosenDeathReplacementsForRerun.containsKey(intent.permanentId()))) {
@@ -287,6 +297,7 @@ public class DepartureService {
      * didn't perform it (the replacement no longer applied), so it doesn't hold up later state-based checks.
      */
     public static void discardAnsweredEventBatch(GameData gameData, DepartureIntent intent) {
+        gameData.answeredEventDepartureBatches.removeIf(batch -> batch.intents().equals(List.of(intent)));
         DepartureBatch pending = gameData.pendingDepartureBatch;
         if (pending != null && !pending.isAwaitingAnswer() && !pending.isStateBased()
                 && !pending.isOwnedByResolutionStep() && pending.intents().equals(List.of(intent))) {
@@ -436,10 +447,16 @@ public class DepartureService {
     }
 
     /**
-     * The answered pending batch a rerun of the caller that asked it continues, or {@code null}. A stale one with
-     * other intents is dropped.
+     * The answered pending batch a rerun of the caller that asked it continues, or the answered batch an earlier event
+     * set aside with the same intents, or {@code null}. A stale pending one with other intents is dropped.
      */
     private static DepartureBatch answeredRerunBatch(GameData gameData, DepartureBatch batch) {
+        for (DepartureBatch setAside : gameData.answeredEventDepartureBatches) {
+            if (setAside.intents().equals(batch.intents())) {
+                gameData.answeredEventDepartureBatches.remove(setAside);
+                return setAside;
+            }
+        }
         DepartureBatch pending = gameData.pendingDepartureBatch;
         if (pending == null || pending.isAwaitingAnswer() || pending.isStateBased()
                 || pending.isOwnedByResolutionStep()) {
@@ -634,6 +651,7 @@ public class DepartureService {
             }
             batch = batch.awaitingAnswer(departing.intent().permanentId());
         }
+        batch = askPlanarLifeLossSacrifices(gameData, batch, questions);
         if (questions.isEmpty()) {
             return batch.withStage(DepartureStage.PERFORM);
         }
@@ -654,10 +672,58 @@ public class DepartureService {
         return batch;
     }
 
+    /**
+     * CR 616.1f for a face-up plane's "instead exile it and that creature's controller loses N life" (The Doctor's
+     * Tomb): the loss is part of the modified event, so the Lich's Duel Mastery sacrifice that replaces it
+     * ({@link PermanentRemovalService#planarLifeLossSacrifice}) has its own death replacements chosen in this choose
+     * stage, once the dying creature's replacement is known (it has none to choose, or its controller chose the
+     * plane's). The Mastery is not one of the batch's intents; its answer waits in the batch and is handed to its
+     * sacrifice when the batch is performed.
+     */
+    private DepartureBatch askPlanarLifeLossSacrifices(GameData gameData, DepartureBatch batch,
+                                                       Map<Departing, List<DeathExileReplacement>> questions) {
+        DepartureBatch choosing = batch;
+        Set<UUID> leavingIds = new HashSet<>();
+        batch.intents().forEach(intent -> leavingIds.add(intent.permanentId()));
+        for (Departing departing : inApnapOrder(gameData, locate(gameData, choosing, intent ->
+                !choosing.survivorIds().contains(intent.permanentId())))) {
+            UUID dyingId = departing.intent().permanentId();
+            if (isUnaffected(gameData, departing) || choosing.awaitingAnswerIds().contains(dyingId)) {
+                continue;
+            }
+            Permanent mastery = permanentRemovalService.planarLifeLossSacrifice(gameData, departing.permanent(),
+                    departing.controllerId(), choosing.replacementAnswers().get(dyingId),
+                    permanentRemovalService.deathExileReplacementOptions(gameData, departing.permanent()));
+            if (mastery == null || leavingIds.contains(mastery.getId())
+                    || batch.replacementAnswers().containsKey(mastery.getId())
+                    || batch.awaitingAnswerIds().contains(mastery.getId())) {
+                continue;
+            }
+            List<DeathExileReplacement> options = permanentRemovalService.deathExileReplacementOptions(gameData, mastery);
+            if (options.size() <= 1) {
+                continue;
+            }
+            DepartureIntent sacrifice = DepartureIntent.sacrifice(mastery.getId());
+            questions.put(new Departing(sacrifice, mastery, gameQueryService.findPermanentController(
+                    gameData, mastery.getId())), options);
+            batch = batch.awaitingAnswer(mastery.getId());
+        }
+        return batch;
+    }
+
     private DepartureBatch perform(GameData gameData, DepartureBatch batch, Map<UUID, List<UUID>> cardIds,
                                    Hooks hooks) {
         // Something now changes, so a caller stopped later can't be run again from the start.
         gameData.deathReplacementsCanRerunEffect = false;
+        // An answer for a permanent that isn't leaving with the batch (a Lich's Duel Mastery a plane's life loss
+        // sacrifices) waits for that permanent's own departure, which consumes it.
+        Set<UUID> intentIds = new HashSet<>();
+        batch.intents().forEach(intent -> intentIds.add(intent.permanentId()));
+        batch.replacementAnswers().forEach((permanentId, answer) -> {
+            if (!intentIds.contains(permanentId)) {
+                gameData.chosenDeathReplacementsForRerun.put(permanentId, answer);
+            }
+        });
         hooks.beforePerform().run();
         DepartureBatch saving = batch;
         for (Departing survivor : locate(gameData, saving,

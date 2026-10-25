@@ -2339,6 +2339,28 @@ public class PermanentRemovalService {
             Card sourceCard) {}
 
     /**
+     * The Lich's Duel Mastery that the life loss of a face-up plane's "if a creature would die, instead exile it and
+     * that creature's controller loses N life" (The Doctor's Tomb) would sacrifice instead (CR 614.6) if
+     * {@code dying} died now with {@code chosen} as its controller's choice ({@code null} when nothing was chosen,
+     * then the plane's is the replacement when it is its only option), or {@code null}. Its own death replacements
+     * are chosen inside the same replacement process, before anything happens (CR 616.1f).
+     */
+    public Permanent planarLifeLossSacrifice(GameData gameData, Permanent dying, UUID controllerId,
+                                             DeathExileReplacement chosen, List<DeathExileReplacement> options) {
+        PlanarCreatureExileReplacement planar = gameQueryService.isCreature(gameData, dying)
+                ? planarCreatureExileReplacement(gameData) : null;
+        boolean planarApplies = chosen != null
+                ? chosen.kind() == DeathExileReplacement.Kind.PLANAR
+                : options.size() == 1 && options.getFirst().kind() == DeathExileReplacement.Kind.PLANAR;
+        if (planar == null || !planarApplies || controllerId == null || planar.effect().lifeLoss() <= 0
+                || !gameQueryService.canPlayerLoseLife(gameData, controllerId)) {
+            return null;
+        }
+        var sacrifice = lifeSupport.lifeLossSacrifice(gameData, controllerId);
+        return sacrifice == null ? null : gameQueryService.findPermanentById(gameData, sacrifice.permanentId());
+    }
+
+    /**
      * Checks if the target has an exile replacement effect and applies it if so.
      * Returns true if a replacement was applied (caller should return early), false otherwise.
      *

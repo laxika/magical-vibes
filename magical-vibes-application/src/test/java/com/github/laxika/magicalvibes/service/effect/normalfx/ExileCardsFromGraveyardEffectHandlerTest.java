@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -148,7 +151,8 @@ class ExileCardsFromGraveyardEffectHandlerTest {
             }
 
             @Test
-            @DisplayName("Conditional creature rider makes each opponent lose life and controller gain life")
+            @DisplayName("Conditional creature rider makes each opponent losing life and then the controller gaining "
+                    + "life the next steps")
             void conditionalCreatureRiderAppliesAfterExile() {
                 Card creature = createCard("Grizzly Bears");
                 creature.setType(CardType.CREATURE);
@@ -169,10 +173,12 @@ class ExileCardsFromGraveyardEffectHandlerTest {
                 when(predicateEvaluationService.matchesCardPredicate(
                         eq(creature), eq(effect.conditionalFilter()), eq(source.getId()))).thenReturn(true);
 
+                entry.setResolvingEffectIndex(0);
                 exileCardsFromGraveyardHandler.resolve(gd, entry, effect);
 
-                verify(lifeSupport).applyGainLife(gd, player1Id, 2);
-                verify(lifeSupport).applyLifeLoss(gd, player2Id, 2, source.getName());
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect,
+                        new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(2));
+                verifyNoInteractions(lifeSupport);
             }
 
             @Test

@@ -219,6 +219,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -257,6 +261,9 @@ public class CombatAttackService {
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
+
+    @Autowired @Lazy
+    private DepartureService departureService;
 
     private record AttackerDeclarationPrompt(List<Integer> attackableIndices,
                                              List<Integer> mustAttackIndices,
@@ -688,6 +695,39 @@ public class CombatAttackService {
     }
 
     /**
+     * CR 508.1j and CR 616.1: once an attack declaration's costs are validated and before any is paid, asks the death
+     * replacement questions of the Lich's Duel Mastery that paying {@code lifePayment} life would sacrifice instead
+     * (paying life is losing it, CR 119.4). When one is asked, nothing is declared and {@code replay} is stored; the
+     * declaration is made again once every answer is in ({@link #completeAttackAfterLifeCostAnswers}), and the life
+     * payment's sacrifice consumes the answers.
+     *
+     * @return {@code true} when the declaration stopped to ask
+     */
+    private boolean askAttackLifeCostFirst(GameData gameData, UUID playerId, int lifePayment,
+                                           GameData.AttackDeclarationReplay replay) {
+        DepartureIntent sacrifice = lifePayment > 0
+                ? lifeSupport.lifeLossSacrifice(gameData, playerId, lifePayment) : null;
+        if (sacrifice == null || !departureService.askBeforePayment(gameData, DepartureBatch.of(List.of(sacrifice)))) {
+            return false;
+        }
+        gameData.pendingDeathReplacementChoiceReplay = replay;
+        return true;
+    }
+
+    /**
+     * Declares again the attack {@link #askAttackLifeCostFirst} stopped, once every death replacement it asked about
+     * is chosen: its declaration prompt is active again and answered with the same attackers.
+     */
+    public void completeAttackAfterLifeCostAnswers(GameData gameData, GameData.AttackDeclarationReplay replay) {
+        interactionHandlerRegistry.begin(gameData, replay.declaration());
+        if (!interactionHandlerRegistry.dispatchAnswer(gameData, replay.player(),
+                new InteractionAnswer.AttackersDeclared(replay.attackerIndices(), replay.attackTargets(),
+                        replay.bands()))) {
+            throw new IllegalStateException("The attacker declaration could not be made again");
+        }
+    }
+
+    /**
      * Validates and processes a player's attacker declaration, including any attacking bands
      * (CR 702.22): each entry of {@code bands} is the set of attacker indices grouped into one band.
      */
@@ -908,6 +948,12 @@ public class CombatAttackService {
 
         // --- All validation passed — commit state changes ---
         gameData.interaction.clearAwaitingInput();
+        if (askAttackLifeCostFirst(gameData, playerId, phyrexianLifeCost + attackLifeTaxTotal,
+                new GameData.AttackDeclarationReplay(player, pending, List.copyOf(attackerIndices),
+                        attackTargets == null ? null : new HashMap<>(attackTargets),
+                        bands == null ? null : bands.stream().map(List::copyOf).toList()))) {
+            return CombatResult.DONE;
+        }
         List<Permanent> declaredAttackers = attackerIndices.stream()
                 .map(battlefield::get)
                 .toList();
@@ -944,6 +990,18 @@ public class CombatAttackService {
                             + " life to declare attackers."));
         }
 
+        // A life payment that sacrificed a Lich's Duel Mastery moved the attackers on the battlefield, so they are
+        // found again by permanent.
+        Map<Integer, Integer> movedIndices = movedAttackerIndices(battlefield, attackerIndices, declaredAttackers);
+        List<Integer> committedIndices = attackerIndices.stream()
+                .map(idx -> movedIndices.getOrDefault(idx, idx)).toList();
+        Map<Integer, UUID> committedTargets = new HashMap<>();
+        resolvedTargets.forEach((idx, target) -> committedTargets.put(movedIndices.getOrDefault(idx, idx), target));
+        List<Set<Integer>> committedBands = movedIndices.isEmpty() ? validatedBands : validatedBands.stream()
+                .map(band -> band.stream().map(idx -> movedIndices.getOrDefault(idx, idx))
+                        .collect(Collectors.<Integer>toSet()))
+                .toList();
+
         combatTapCostService.payAttackCosts(gameData, playerId, declaredAttackers);
         declaredAttackers.forEach(attacker -> gameData.declaredAttackerIdsThisCombat.add(attacker.getId()));
 
@@ -952,12 +1010,12 @@ public class CombatAttackService {
         if (declaredAttackers.stream().anyMatch(attacker -> attacker.getCard().isToken())) {
             gameData.playersWhoAttackedWithTokenThisTurn.add(playerId);
         }
-        gameData.creaturesAttackedCountThisTurn.merge(playerId, attackerIndices.size(), Integer::sum);
+        gameData.creaturesAttackedCountThisTurn.merge(playerId, committedIndices.size(), Integer::sum);
         declaredAttackers.forEach(attacker -> gameData.creaturesAttackedWithThisTurn
                 .computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet()).add(attacker.getId()));
         Map<CardSubtype, Integer> subtypeCounts = gameData.creaturesAttackedCountBySubtypeThisTurn
                 .computeIfAbsent(playerId, ignored -> new ConcurrentHashMap<>());
-        for (int idx : attackerIndices) {
+        for (int idx : committedIndices) {
             Permanent attacker = battlefield.get(idx);
             if (gameData.isCommander(attacker.getOriginalCard().getId())) {
                 gameData.playersWhoAttackedWithCommanderThisTurn.add(playerId);
@@ -977,11 +1035,11 @@ public class CombatAttackService {
 
         // Mark creatures as attacking and tap them unless vigilance or a combat permission skips it.
         triggerCollectionService.beginPermanentTapTriggerBatch(gameData);
-        for (int idx : attackerIndices) {
+        for (int idx : committedIndices) {
             Permanent attacker = battlefield.get(idx);
             attacker.setAttacking(true);
             attacker.setAttackedOrBlockedSinceLastUpkeep(true);
-            UUID attackTarget = resolvedTargets.get(idx);
+            UUID attackTarget = committedTargets.get(idx);
             attacker.setAttackTarget(attackTarget);
             // "Attacked you this turn" only counts attacks aimed at the player, not at a planeswalker
             // they control, and has to outlive combat — so it is recorded on GameData, not on the
@@ -1024,19 +1082,36 @@ public class CombatAttackService {
 
         // Assign band membership (CR 702.22): every member of a band shares one band id, which
         // persists for the rest of combat even if banding is later removed (CR 702.22e).
-        for (Set<Integer> band : validatedBands) {
+        for (Set<Integer> band : committedBands) {
             UUID bandId = UUID.randomUUID();
             for (int idx : band) {
                 battlefield.get(idx).setBandId(bandId);
             }
         }
 
-        if (beginEnlistmentChoice(gameData, playerId, battlefield, attackerIndices,
-                resolvedTargets, declaredAttackers)) {
+        if (beginEnlistmentChoice(gameData, playerId, battlefield, committedIndices,
+                committedTargets, declaredAttackers)) {
             return CombatResult.AUTO_PASS_ONLY;
         }
         return finishAttackerDeclaration(gameData, playerId, player.getUsername(), battlefield,
-                attackerIndices, resolvedTargets, declaredAttackers, Map.of(), Map.of());
+                committedIndices, committedTargets, declaredAttackers, Map.of(), Map.of());
+    }
+
+    /**
+     * The new battlefield index of each declared attacker that moved since {@code attackerIndices} were read (a
+     * permanent before it left the battlefield), keyed by its declared index.
+     */
+    private static Map<Integer, Integer> movedAttackerIndices(List<Permanent> battlefield,
+                                                              List<Integer> attackerIndices,
+                                                              List<Permanent> declaredAttackers) {
+        Map<Integer, Integer> moved = new HashMap<>();
+        for (int i = 0; i < attackerIndices.size(); i++) {
+            int current = battlefield.indexOf(declaredAttackers.get(i));
+            if (current != attackerIndices.get(i)) {
+                moved.put(attackerIndices.get(i), current);
+            }
+        }
+        return moved;
     }
 
     /** Completes attack declaration after all Enlist choices have been answered. */

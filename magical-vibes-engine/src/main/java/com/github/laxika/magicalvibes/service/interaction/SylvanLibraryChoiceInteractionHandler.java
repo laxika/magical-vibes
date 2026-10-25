@@ -9,18 +9,22 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /**
  * Handles Sylvan Library's {@link PendingInteraction.SylvanLibraryChoice}: the player selects up to
  * {@code resolveCount} of their cards drawn this turn to put on top of their library; for each of
  * the remaining resolved cards they pay 4 life (forced to top a card instead when they cannot
- * afford it). Card views are re-derived from the player's current hand at prompt time.
+ * afford it). Card views are re-derived from the player's current hand at prompt time. Paying life is losing it
+ * (CR 119.4), so the Lich's Duel Mastery sacrifices the payments would cause once its shields are gone have their
+ * death replacements chosen before any card moves (CR 616.1), and the answer is completed again.
  */
 @Slf4j
 @Component
@@ -34,6 +38,7 @@ public class SylvanLibraryChoiceInteractionHandler
     private final GameQueryService gameQueryService;
     private final LifeSupport lifeSupport;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<PendingInteraction.SylvanLibraryChoice> handledType() {
@@ -55,7 +60,6 @@ public class SylvanLibraryChoiceInteractionHandler
         UUID playerId = interaction.playerId();
         String playerName = gameData.playerIdToName.get(playerId);
         List<Card> hand = gameData.playerHands.get(playerId);
-        List<Card> deck = gameData.playerDecks.get(playerId);
 
         List<UUID> chosenIds = ((InteractionAnswer.CardsChosen) answer).cardIds();
         if (chosenIds == null) {
@@ -76,6 +80,32 @@ public class SylvanLibraryChoiceInteractionHandler
         }
 
         gameData.interaction.clearAwaitingInput();
+
+        int payments = interaction.resolveCount() - toppedIds.size();
+        boolean canPay = gameData.getLife(playerId) >= LIFE_PER_CARD
+                && gameQueryService.canPlayerLifeChange(gameData, playerId);
+        if (permanentChoiceHandlerServiceProvider.getObject().runAskingDeathReplacementsFirst(gameData, () -> {
+            lifeSupport.askBeforeRepeatedLifeLossesThatFollowAChange(
+                    gameData, playerId, LIFE_PER_CARD, canPay ? payments : 0);
+            topAndPay(gameData, interaction, toppedIds);
+        }, new GameData.InteractionAnswerReplay(player, interaction, answer))) {
+            return;
+        }
+
+        log.info("Game {} - Sylvan Library: {} put {} card(s) on top, resolved {} total",
+                gameData.id, playerName, toppedIds.size(), interaction.resolveCount());
+
+        // The forced-top fallback and the 4-life payments can end the game, and the resumed
+        // resolution may queue a may ability — both handled by the shared epilogue.
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void topAndPay(GameData gameData, PendingInteraction.SylvanLibraryChoice interaction,
+                           List<UUID> toppedIds) {
+        UUID playerId = interaction.playerId();
+        String playerName = gameData.playerIdToName.get(playerId);
+        List<Card> hand = gameData.playerHands.get(playerId);
+        List<Card> deck = gameData.playerDecks.get(playerId);
 
         // Put the chosen cards on top of the library (first chosen ends up nearest the top).
         List<Card> topped = new ArrayList<>();
@@ -108,13 +138,6 @@ public class SylvanLibraryChoiceInteractionHandler
                 }
             }
         }
-
-        log.info("Game {} - Sylvan Library: {} put {} card(s) on top, resolved {} total",
-                gameData.id, playerName, topped.size(), interaction.resolveCount());
-
-        // The forced-top fallback and the 4-life payments can end the game, and the resumed
-        // resolution may queue a may ability — both handled by the shared epilogue.
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private static Card removeFromHand(List<Card> hand, UUID id) {

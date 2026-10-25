@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -81,6 +83,8 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
+import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
@@ -130,6 +134,12 @@ public class CombatBlockService {
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
+
+    @Autowired @Lazy
+    private DepartureService departureService;
+
+    @Autowired @Lazy
+    private TurnProgressionService turnProgressionService;
 
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.input.InputCompletionService inputCompletionService;
@@ -408,6 +418,34 @@ public class CombatBlockService {
                 payment.declaringPlayerName(), assignments, true);
     }
 
+    /**
+     * CR 509.1f and CR 616.1: once a block declaration's costs are validated and before any is paid, asks the death
+     * replacement questions of the Lich's Duel Mastery that paying {@code lifePayment} life would sacrifice instead
+     * (paying life is losing it, CR 119.4). When one is asked, nothing is declared and {@code replay} is stored; the
+     * declaration is made again once every answer is in ({@link #completeBlocksAfterLifeCostAnswers}), and the life
+     * payment's sacrifice consumes the answers.
+     *
+     * @return {@code true} when the declaration stopped to ask
+     */
+    private boolean askBlockLifeCostFirst(GameData gameData, UUID defenderId, int lifePayment,
+                                          GameData.BlockDeclarationReplay replay) {
+        DepartureIntent sacrifice = lifePayment > 0
+                ? lifeSupport.lifeLossSacrifice(gameData, defenderId, lifePayment) : null;
+        if (sacrifice == null || !departureService.askBeforePayment(gameData, DepartureBatch.of(List.of(sacrifice)))) {
+            return false;
+        }
+        gameData.pendingDeathReplacementChoiceReplay = replay;
+        return true;
+    }
+
+    /**
+     * Declares again the blocks {@link #askBlockLifeCostFirst} stopped, once every death replacement it asked about is
+     * chosen, with their costs accepted.
+     */
+    public void completeBlocksAfterLifeCostAnswers(GameData gameData, GameData.BlockDeclarationReplay replay) {
+        turnProgressionService.handleCombatResult(completeBlockCostPayment(gameData, replay.blocks(), true), gameData);
+    }
+
     /** Processes Camouflage's randomly assigned blocks through the normal blocker pipeline. */
     public CombatResult declareCamouflageBlockers(GameData gameData, List<BlockerAssignment> blockerAssignments) {
         UUID activeId = gameData.activePlayerId;
@@ -610,15 +648,30 @@ public class CombatBlockService {
         }
 
         gameData.interaction.clearAwaitingInput();
+        if (declaration != null && askBlockLifeCostFirst(gameData, defenderId, blockLifeTaxTotal,
+                new GameData.BlockDeclarationReplay(new PayBlockCostsEffect(declaration,
+                        blockerAssignments.stream().map(BlockerAssignment::blockerIndex).toList(),
+                        blockerAssignments.stream().map(BlockerAssignment::attackerIndex).toList(), playerName)))) {
+            return CombatResult.DONE;
+        }
 
         // Pay the block tax now that all validation has passed.
         if (blockTaxTotal > 0) {
             combatAttackService.payGenericMana(gameData.playerManaPools.get(defenderId), blockTaxTotal);
         }
         if (blockLifeTaxTotal > 0) {
+            Map<Integer, Permanent> blockersByIndex = new HashMap<>();
+            blockerAssignments.forEach(assignment -> blockersByIndex.put(assignment.blockerIndex(),
+                    defenderBattlefield.get(assignment.blockerIndex())));
             lifeSupport.applyLifePayment(gameData, defenderId, blockLifeTaxTotal, "block tax");
             gameLogService.append(gameData, GameLog.text(
                     playerName + " pays " + blockLifeTaxTotal + " life to declare blockers."));
+            // Sacrificing a Lich's Duel Mastery instead moved the blockers on the battlefield.
+            blockerAssignments = blockerAssignments.stream()
+                    .map(assignment -> new BlockerAssignment(
+                            defenderBattlefield.indexOf(blockersByIndex.get(assignment.blockerIndex())),
+                            assignment.attackerIndex()))
+                    .toList();
         }
 
         combatTapCostService.payBlockCosts(gameData, defenderId, attackerBattlefield, declaredBlockers);

@@ -30,8 +30,8 @@ public class LookAtTargetPlayerTopCardMayGraveyardHandler implements MayEffectHa
                 .map(e -> (LookAtTargetPlayerTopCardMayGraveyardEffect) e)
                 .findFirst().orElse(null);
         if (eyeSpy != null) {
-            mayMiscHandlerService.handleLookAtTargetPlayerTopCardChoice(gameData, accepted,
-                    eyeSpy.libraryOwnerId(), player.getId(), eyeSpy.lifeCost());
+            mayMiscHandlerService.handleLookAtTargetPlayerTopCardChoice(gameData, player, accepted, ability,
+                    eyeSpy.libraryOwnerId(), eyeSpy.lifeCost());
         }
     }
 }

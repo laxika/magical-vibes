@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardAndBoostEquippedCreatureByManaValueEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -21,7 +23,6 @@ public class RevealDrawnCardAndBoostEquippedCreatureByManaValueEffectHandler imp
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -60,8 +61,11 @@ public class RevealDrawnCardAndBoostEquippedCreatureByManaValueEffectHandler imp
                     .build());
         }
 
+        // CR 608.2c: the loss follows the boost. As a step of its own, a Lich's Duel Mastery sacrifice replacing it
+        // asks its CR 616.1 questions without boosting the creature again.
         if (manaValue > 0) {
-            lifeSupport.applyLifeLoss(gameData, entry.getControllerId(), manaValue, entry.getCard().getName());
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new LoseLifeEffect(manaValue, LoseLifeRecipient.CONTROLLER)));
         }
     }
 }

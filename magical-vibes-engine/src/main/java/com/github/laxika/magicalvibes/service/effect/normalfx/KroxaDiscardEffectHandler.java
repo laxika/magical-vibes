@@ -8,11 +8,14 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KroxaDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,9 @@ import org.springframework.stereotype.Component;
  * order, then all chosen cards are discarded simultaneously (CR 608.2f); opponents who did not
  * discard a nonland card then lose 3 life. Choices are deferred through {@link EachPlayerRummageState}
  * and the handler re-runs after each completed selection via {@code rerunCurrentEffectAfterInteraction}.
+ * The losses follow the discards (CR 608.2c) as one {@link PlayersLoseLifeEffect} step, so the Lich's Duel
+ * Mastery sacrifices that replace them are asked about (CR 616.1) after the discards and before any life is
+ * lost, without discarding again.
  */
 @Component
 @RequiredArgsConstructor
@@ -31,7 +37,6 @@ public class KroxaDiscardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final PlayerInteractionSupport playerInteractionSupport;
-    private final LifeSupport lifeSupport;
     private final ObjectProvider<CardChoiceHandlerService> cardChoiceHandlerServiceProvider;
 
     @Override
@@ -103,11 +108,16 @@ public class KroxaDiscardEffectHandler implements NormalEffectHandlerBean {
         state.reset();
         gameData.discardCausedByOpponent = false;
 
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID playerId : opponents) {
             if (discardedCounts.getOrDefault(playerId, 0) > 0 && discardedNonland.contains(playerId)) {
                 continue;
             }
-            lifeSupport.applyLifeLoss(gameData, playerId, 3, entry.getCard().getName());
+            losses.put(playerId, 3);
+        }
+        if (!losses.isEmpty()) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new PlayersLoseLifeEffect(losses)));
         }
     }
 }

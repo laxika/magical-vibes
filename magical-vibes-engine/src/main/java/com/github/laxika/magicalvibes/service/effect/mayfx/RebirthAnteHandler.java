@@ -10,10 +10,14 @@ import com.github.laxika.magicalvibes.model.effect.RebirthAnteEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /**
@@ -31,6 +35,7 @@ public class RebirthAnteHandler implements MayEffectHandlerBean {
     private final LifeSupport lifeSupport;
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,8 +57,9 @@ public class RebirthAnteHandler implements MayEffectHandlerBean {
 
         boolean decisionsPending = gameData.pendingMayAbilities.stream()
                 .anyMatch(pending -> pending.effects().stream().anyMatch(RebirthAnteEffect.class::isInstance));
-        if (!decisionsPending) {
-            applyAcceptedAntes(gameData, ability);
+        if (!decisionsPending && permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                gameData, player, ability, accepted, () -> applyAcceptedAntes(gameData, ability))) {
+            return;
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -64,6 +70,16 @@ public class RebirthAnteHandler implements MayEffectHandlerBean {
      * accepted antes are performed together once the last player has decided.
      */
     private void applyAcceptedAntes(GameData gameData, PendingMayAbility ability) {
+        // A life total above 20 becoming 20 is a life loss (CR 119.5) that Lich's Duel Mastery replaces with its
+        // sacrifice, so every such sacrifice is asked about before the first card is anted.
+        Map<UUID, Integer> newLifeTotals = new LinkedHashMap<>();
+        for (UUID playerId : gameData.rebirthAnteAcceptedPlayerIds) {
+            List<Card> library = gameData.playerDecks.get(playerId);
+            if (library != null && !library.isEmpty()) {
+                newLifeTotals.put(playerId, 20);
+            }
+        }
+        lifeSupport.askBeforeLifeTotalsChange(gameData, newLifeTotals);
         for (UUID playerId : List.copyOf(gameData.rebirthAnteAcceptedPlayerIds)) {
             gameData.rebirthAnteAcceptedPlayerIds.remove(playerId);
             List<Card> library = gameData.playerDecks.get(playerId);

@@ -12,12 +12,14 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForbiddenRitualEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +46,6 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInputService playerInputService;
     private final PlayerInteractionSupport playerInteractionSupport;
-    private final LifeSupport lifeSupport;
     private final DestructionSupport destructionSupport;
     private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
@@ -86,18 +87,19 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
         if (state.chosenMode != null) {
             String mode = state.chosenMode;
             state.chosenMode = null;
-            applyOpponentMode(gameData, entry, sourceName, controllerId, opponentId, lifeLoss, mode);
+            applyOpponentMode(gameData, entry, effect, sourceName, controllerId, opponentId, lifeLoss, mode);
             return;
         }
 
         if (!state.controllerSacrificed) {
             // Re-entry after the controller's sacrifice choice completed.
             state.controllerSacrificed = true;
-            offerOpponentPenalty(gameData, entry, sourceName, controllerId, opponentId, lifeLoss);
+            offerOpponentPenalty(gameData, entry, effect, sourceName, controllerId, opponentId, lifeLoss);
             return;
         }
 
-        // Re-entry after the opponent's sacrifice/discard sub-choice — offer the optional repeat.
+        // Re-entry after the opponent's sacrifice/discard sub-choice or life loss step — offer the optional repeat.
+        gameOutcomeService.checkWinCondition(gameData);
         offerRepeatOrFinish(gameData, sourceName, controllerId);
     }
 
@@ -126,7 +128,7 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
                 return;
             }
             state.controllerSacrificed = true;
-            offerOpponentPenalty(gameData, entry, sourceName, controllerId, opponentId, lifeLoss);
+            offerOpponentPenalty(gameData, entry, step, sourceName, controllerId, opponentId, lifeLoss);
             return;
         }
 
@@ -136,7 +138,7 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
                 sourceName + " — sacrifice a nontoken permanent.");
     }
 
-    private void offerOpponentPenalty(GameData gameData, StackEntry unusedEntry, String sourceName,
+    private void offerOpponentPenalty(GameData gameData, StackEntry entry, CardEffect step, String sourceName,
             UUID controllerId, UUID opponentId, int lifeLoss) {
         if (!gameData.playerIds.contains(opponentId)) {
             finish(gameData, gameData.forbiddenRitual);
@@ -145,9 +147,7 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
 
         List<String> options = availableOpponentOptions(gameData, opponentId, lifeLoss);
         if (options.size() == 1) {
-            lifeSupport.applyLifeLoss(gameData, opponentId, lifeLoss, sourceName);
-            gameOutcomeService.checkWinCondition(gameData);
-            offerRepeatOrFinish(gameData, sourceName, controllerId);
+            loseLifeAsStep(gameData, entry, step, opponentId, lifeLoss);
             return;
         }
 
@@ -160,7 +160,7 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
                 options, prompt));
     }
 
-    private void applyOpponentMode(GameData gameData, StackEntry unusedEntry, String sourceName,
+    private void applyOpponentMode(GameData gameData, StackEntry entry, CardEffect step, String sourceName,
             UUID controllerId, UUID opponentId, int lifeLoss, String mode) {
         if (ChoiceContext.ForbiddenRitualPenaltyChoice.SACRIFICE.equals(mode)) {
             List<UUID> permanentIds = anyPermanentIds(gameData, opponentId);
@@ -191,9 +191,20 @@ public class ForbiddenRitualEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        lifeSupport.applyLifeLoss(gameData, opponentId, lifeLoss, sourceName);
-        gameOutcomeService.checkWinCondition(gameData);
-        offerRepeatOrFinish(gameData, sourceName, controllerId);
+        loseLifeAsStep(gameData, entry, step, opponentId, lifeLoss);
+    }
+
+    /**
+     * "Unless that player sacrifices a permanent or discards a card, they lose 2 life": the opponent who chose (or had)
+     * to lose the life loses it as the next step, after the controller's sacrifice (CR 608.2c), so the Lich's Duel
+     * Mastery sacrifice that replaces the loss asks its CR 616.1 questions before any life is lost without redoing the
+     * sacrifice. {@code step} is resolved again after it, from the saved progress, to offer the repeat.
+     */
+    private void loseLifeAsStep(GameData gameData, StackEntry entry, CardEffect step, UUID opponentId,
+            int lifeLoss) {
+        gameData.rerunCurrentEffectAfterInteraction = false;
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                new PlayersLoseLifeEffect(Map.of(opponentId, lifeLoss)), step));
     }
 
     private void offerRepeatOrFinish(GameData gameData, String sourceName,

@@ -9,11 +9,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
@@ -81,10 +83,6 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
                 lifeSupport.applyGainLife(gameData, controllerId, e.creatureLifeGain(),
                         entry.getCard().getName(), entry.getCard(), entry.getEntryType());
             }
-            if (e.creatureLifeLossToGraveyardOwner() > 0 && graveyardOwnerId != null) {
-                lifeSupport.applyLifeLoss(gameData, graveyardOwnerId,
-                        e.creatureLifeLossToGraveyardOwner(), entry.getCard().getName());
-            }
         } else if (e.noncreaturePowerBoost() != 0 || e.noncreatureToughnessBoost() != 0) {
             // Noncreature card exiled: boost source permanent
             UUID sourcePermanentId = entry.getSourcePermanentId();
@@ -106,6 +104,13 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
             insertDrawEffect(entry, effect, e.creatureCardsToDraw());
         } else if (!isCreatureCard && e.noncreatureCardsToDraw() > 0) {
             insertDrawEffect(entry, effect, e.noncreatureCardsToDraw());
+        }
+        // CR 608.2c: the graveyard owner's loss follows the exile, the counters and the gain. As a step of its own
+        // (before the draw), a Lich's Duel Mastery sacrifice replacing it asks its CR 616.1 questions without
+        // exiling again.
+        if (isCreatureCard && e.creatureLifeLossToGraveyardOwner() > 0 && graveyardOwnerId != null) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                    new PlayersLoseLifeEffect(Map.of(graveyardOwnerId, e.creatureLifeLossToGraveyardOwner()))));
         }
     }
 

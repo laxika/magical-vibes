@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyLifeForTokensEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.UUID;
@@ -23,12 +24,14 @@ import org.springframework.stereotype.Component;
  * <p>The flow is driven one player at a time and re-runs on every X-value choice (the engine
  * re-runs the current effect while an X-value choice is active). Each prompt is an
  * {@link PendingInteraction.XValueChoice} for the amount of life (0 through the chooser's current
- * life total). Progress lives on {@link GameData#eachPlayerPayLife}.
+ * life total). Progress lives on {@link GameData#eachPlayerPayLife}. A payment is the first change of the rerun that
+ * answers its prompt, and paying life is losing it (CR 119.4), so a Lich's Duel Mastery sacrifice it causes is asked
+ * about first and the payment is made again with the same amount.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffectHandlerBean {
+public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
@@ -67,15 +70,16 @@ public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffect
 
         if (gameData.chosenXValue != null) {
             int amount = gameData.chosenXValue;
-            gameData.chosenXValue = null;
             UUID playerId = state.currentPlayerId;
             String playerName = gameData.playerIdToName.get(playerId);
 
             if (amount > 0) {
                 lifeSupport.applyLifePayment(gameData, playerId, amount, cardName);
+                gameData.chosenXValue = null;
                 state.lifePaid.merge(playerId, amount, Integer::sum);
                 state.paidThisRound = true;
             } else {
+                gameData.chosenXValue = null;
                 gameLogService.append(gameData, GameLog.text(playerName + " pays no life for " + cardName + "."));
             }
             state.playersActedThisRound++;

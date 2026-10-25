@@ -10,8 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDiscardOrLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -23,13 +25,14 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves an APNAP "discard a card or lose life" choice for every player. Players choose in APNAP
  * order, the chosen cards are discarded together, and life is lost by every player who did not
- * discard once all players have chosen, including players with an empty hand (CR 101.4).
+ * discard once all players have chosen, including players with an empty hand (CR 101.4). The losses
+ * follow the discards (CR 608.2c) as one {@link PlayersLoseLifeEffect} step, so the Lich's Duel Mastery
+ * sacrifices that replace them are asked about (CR 616.1) after the discards and before any life is lost,
+ * without discarding again.
  */
 @Component
 @RequiredArgsConstructor
 public class EachPlayerMayDiscardOrLoseLifeEffectHandler implements NormalEffectHandlerBean {
-
-    private final LifeSupport lifeSupport;
 
     @Autowired
     @Lazy
@@ -117,8 +120,13 @@ public class EachPlayerMayDiscardOrLoseLifeEffectHandler implements NormalEffect
             }
         }
         lifeLossPlayers.removeIf(discarded::containsKey);
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID playerId : lifeLossPlayers) {
-            lifeSupport.applyLifeLoss(gameData, playerId, lifeEffect.lifeLoss(), entry.getCard().getName());
+            losses.put(playerId, lifeEffect.lifeLoss());
+        }
+        if (!losses.isEmpty()) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new PlayersLoseLifeEffect(losses)));
         }
     }
 

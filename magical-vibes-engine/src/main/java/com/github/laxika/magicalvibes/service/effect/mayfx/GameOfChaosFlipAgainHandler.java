@@ -9,8 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.GameOfChaosFlipAgainEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GameOfChaosSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /**
@@ -25,14 +27,25 @@ public class GameOfChaosFlipAgainHandler implements MayEffectHandlerBean {
     private final GameOfChaosSupport gameOfChaosSupport;
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return GameOfChaosFlipAgainEffect.class;
     }
 
+    /**
+     * An accepted answer flips and swaps life. The flip's result is kept until the swap
+     * ({@link GameOfChaosSupport#flipRound}), so the loser's Lich's Duel Mastery sacrifice is asked about (CR 616.1)
+     * before any life changes and the same answer is completed again without flipping again.
+     */
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                gameData, player, ability, accepted, () -> answer(gameData, player, accepted, ability));
+    }
+
+    private void answer(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         GameOfChaosFlipAgainEffect e = (GameOfChaosFlipAgainEffect) ability.effects().getFirst();
         String sourceName = ability.sourceCard().getName();
 

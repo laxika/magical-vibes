@@ -778,6 +778,29 @@ public class MayAbilityHandlerService {
                 ability.sourceCard(), "'s ability."));
     }
 
+    /**
+     * Completes a resolution-time "you may" answer again (a "pay {M} or N life", "pay {M} and N life" or K'rrik
+     * payment) once the Lich's Duel Mastery sacrifice its life payment would cause has had its death replacements
+     * chosen.
+     */
+    public void completeResolutionTimeMayChoiceAgain(GameData gameData, Player player, boolean accepted,
+                                                     PendingMayAbility ability) {
+        handleResolutionTimeMayChoice(gameData, player, accepted, ability);
+    }
+
+    /**
+     * Pays {@code amount} life for {@code ability}, the first change its accepted answer makes. Paying life is losing
+     * it (CR 119.4), which Lich's Duel Mastery can replace with its sacrifice; that sacrifice's death replacements
+     * are then chosen before the payment (CR 616.1), and the answer is completed again.
+     *
+     * @return {@code true} when the payment stopped to ask
+     */
+    private boolean payLifeAskingDeathReplacementsFirst(GameData gameData, Player player, PendingMayAbility ability,
+                                                        int amount) {
+        return permanentChoiceHandlerService.answerAskingDeathReplacementsFirst(gameData, player, ability, true,
+                () -> lifeSupport.applyLifePayment(gameData, player.getId(), amount, ability.sourceCard().getName()));
+    }
+
     private void handleResolutionTimeMayChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         gameData.resolvingMayEffectFromStack = false;
         MayPayManaEffect anyPlayerMayPay = ability.effects().stream()
@@ -837,8 +860,9 @@ public class MayAbilityHandlerService {
                     boolean canPayLife = gameQueryService.canPlayerLifeChange(gameData, player.getId())
                             && gameData.getLife(player.getId()) >= ability.lifeCost();
                     if (canPayLife) {
-                        lifeSupport.applyLifePayment(gameData, player.getId(), ability.lifeCost(),
-                                ability.sourceCard().getName());
+                        if (payLifeAskingDeathReplacementsFirst(gameData, player, ability, ability.lifeCost())) {
+                            return;
+                        }
                         paidWithLife = true;
                     }
                 }
@@ -856,12 +880,11 @@ public class MayAbilityHandlerService {
                     int lifeOwed = blackAsLifeCost.payPhyrexianManaAuto(new ManaPool(pool), 0);
                     if (gameQueryService.canPlayerLifeChange(gameData, player.getId())
                             && gameData.getLife(player.getId()) >= lifeOwed) {
+                        if (lifeOwed > 0 && payLifeAskingDeathReplacementsFirst(gameData, player, ability, lifeOwed)) {
+                            return;
+                        }
                         blackAsLifeCost.payPhyrexianManaAuto(pool, 0);
                         blackAsLifeCost.payResolutionCost(pool);
-                        if (lifeOwed > 0) {
-                            lifeSupport.applyLifePayment(gameData, player.getId(), lifeOwed,
-                                    ability.sourceCard().getName());
-                        }
                         paidWithLife = true;
                     }
                 }
@@ -877,13 +900,13 @@ public class MayAbilityHandlerService {
                     return;
                 }
                 if (!paidWithLife) {
+                    if (ability.additionalLifeCost() > 0 && payLifeAskingDeathReplacementsFirst(
+                            gameData, player, ability, ability.additionalLifeCost())) {
+                        return;
+                    }
                     cost.payResolutionCost(pool);
                     triggerCollectionService.checkTaxPaymentTriggers(
                             gameData, player.getId(), ability.sourceControllerId(), cost.getManaValue());
-                    if (ability.additionalLifeCost() > 0) {
-                        lifeSupport.applyLifePayment(gameData, player.getId(), ability.additionalLifeCost(),
-                                ability.sourceCard().getName());
-                    }
                 }
             }
             markOncePerTurnTriggerOnAcceptance(gameData, ability);

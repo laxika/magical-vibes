@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsCreatureOrLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -20,14 +21,15 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves an APNAP discard flow followed by life loss for noncreature discards. The chosen cards are
- * discarded together once every player has chosen (CR 101.4).
+ * discarded together once every player has chosen (CR 101.4). The losses follow the discards (CR 608.2c)
+ * as one {@link PlayersLoseLifeEffect} step, so the Lich's Duel Mastery sacrifices that replace them are
+ * asked about (CR 616.1) after the discards and before any life is lost, without discarding again.
  */
 @Component
 @RequiredArgsConstructor
 public class EachPlayerDiscardsCreatureOrLosesLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInteractionSupport playerInteractionSupport;
-    private final LifeSupport lifeSupport;
 
     @Autowired
     @Lazy
@@ -91,18 +93,19 @@ public class EachPlayerDiscardsCreatureOrLosesLifeEffectHandler implements Norma
                         EachPlayerDiscardsCreatureOrLosesLifeState state) {
         Map<UUID, List<Card>> discarded =
                 cardChoiceHandlerService.discardDeferredSelections(gameData, entry.getControllerId());
-        List<UUID> lifeLossPlayers = new ArrayList<>();
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (discarded.getOrDefault(playerId, List.of()).stream()
                     .noneMatch(card -> card.hasType(CardType.CREATURE))) {
-                lifeLossPlayers.add(playerId);
+                losses.put(playerId, effect.lifeLoss());
             }
         }
 
         state.reset();
         gameData.rerunCurrentEffectAfterInteraction = false;
-        for (UUID playerId : lifeLossPlayers) {
-            lifeSupport.applyLifeLoss(gameData, playerId, effect.lifeLoss(), entry.getCard().getName());
+        if (!losses.isEmpty()) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new PlayersLoseLifeEffect(losses)));
         }
     }
 

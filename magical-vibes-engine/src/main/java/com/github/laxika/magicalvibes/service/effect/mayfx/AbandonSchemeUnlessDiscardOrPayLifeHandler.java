@@ -10,9 +10,11 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AbandonSchemeUnles
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SchemeAbandonSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,6 +30,7 @@ public class AbandonSchemeUnlessDiscardOrPayLifeHandler implements MayEffectHand
     private final SchemeAbandonSupport schemeAbandonSupport;
     private final LifeSupport lifeSupport;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,7 +57,12 @@ public class AbandonSchemeUnlessDiscardOrPayLifeHandler implements MayEffectHand
 
         boolean payLife = accepted ? canPayLife : canDiscard && canPayLife;
         if (payLife) {
-            lifeSupport.applyLifePayment(gameData, controllerId, effect.lifeCost(), ability.sourceCard().getName());
+            // Paying life is losing it (CR 119.4): a Lich's Duel Mastery sacrifice it causes is asked about first.
+            if (permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                    gameData, player, ability, accepted, () -> lifeSupport.applyLifePayment(
+                            gameData, controllerId, effect.lifeCost(), ability.sourceCard().getName()))) {
+                return;
+            }
         } else {
             schemeAbandonSupport.abandon(gameData, ability.sourceCard(), ability.sourcePermanentId());
         }

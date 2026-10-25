@@ -55,6 +55,9 @@ public class FixedLifeTotalLossReplacer implements LossReplacer {
                 .mapToInt(ReplaceControllerLossWithExileAndLifeTotalEffect::lifeTotal)
                 .findFirst()
                 .orElseThrow();
+        if (LossReplacer.askBeforeLifeTotal(lifeSupport, gameData, losingPlayerId, reason, lifeTotal)) {
+            return true;
+        }
         if (!permanentRemovalService.removePermanentToExile(gameData, source)) {
             return false;
         }

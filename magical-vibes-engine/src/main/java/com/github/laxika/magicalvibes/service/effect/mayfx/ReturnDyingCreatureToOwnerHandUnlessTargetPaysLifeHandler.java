@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerHan
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /** Completes Athreos's targeted choice to pay life or return the dead creature. */
@@ -20,6 +22,7 @@ public class ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeHandler implement
     private final ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffectHandler effectHandler;
     private final LifeSupport lifeSupport;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,7 +39,12 @@ public class ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeHandler implement
 
         UUID playerId = ability.controllerId();
         if (accepted && effectHandler.canPay(gameData, playerId, effect.lifeCost())) {
-            lifeSupport.applyLifePayment(gameData, playerId, effect.lifeCost(), ability.sourceCard().getName());
+            // Paying life is losing it (CR 119.4): a Lich's Duel Mastery sacrifice it causes is asked about first.
+            if (permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                    gameData, player, ability, true, () -> lifeSupport.applyLifePayment(
+                            gameData, playerId, effect.lifeCost(), ability.sourceCard().getName()))) {
+                return;
+            }
         } else {
             effectHandler.returnDyingCard(gameData, effect.dyingCardId(), ability.sourceCard());
         }

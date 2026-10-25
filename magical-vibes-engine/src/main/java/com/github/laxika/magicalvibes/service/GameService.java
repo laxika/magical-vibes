@@ -1633,6 +1633,16 @@ public class GameService {
             if (!manifestedOrCloaked && morphLifeCost != null) {
                 spellCastingService.validateMorphLifeCost(gameData, player, morphLifeCost);
             }
+            if (spellCastingService.askTurnFaceUpLifeCostsFirst(gameData, player,
+                    manifestedOrCloaked ? null : morphLifeCost,
+                    !manifestedOrCloaked && permanent.getCard().getMorphDiscardCost() != null ? null : faceUpCost,
+                    xValue == null ? 0 : xValue)) {
+                gameData.pendingDeathReplacementChoiceReplay = new GameData.TurnFaceUpReplay(player,
+                        permanent.getId(), revealedHandCardIndex, List.copyOf(additionalCostPermanentIds),
+                        xValue, payMorphCost);
+                mutationCoordinator.invalidateAllPlayerViews(gameData);
+                return;
+            }
             RevealCardsFromHandCastingCost morphRevealCost = permanent.getCard().getMorphRevealCost();
             if (!manifestedOrCloaked && morphRevealCost != null) {
                 List<Card> hand = gameData.playerHands.get(player.getId());

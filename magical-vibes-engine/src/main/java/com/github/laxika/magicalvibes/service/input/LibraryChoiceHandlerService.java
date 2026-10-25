@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -174,6 +175,8 @@ public class LibraryChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport exileFreeCastSupport;
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
+    @Autowired @Lazy
+    private PermanentChoiceHandlerService permanentChoiceHandlerService;
 
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -3537,7 +3540,6 @@ public class LibraryChoiceHandlerService {
                 }
             }
         }
-        String playerName = gameData.playerIdToName.get(controllerId);
 
         // Validate before touching interaction state, joining the three checks above: a rejected
         // answer must leave the prompt standing so the player can answer again. Clearing first and
@@ -3556,6 +3558,21 @@ public class LibraryChoiceHandlerService {
 
         // Clear awaiting state
         gameData.interaction.clearAwaitingInput();
+
+        if (!asksSelectionLifeChangeFirst(gameData, player, libraryRevealChoice, cardIds)) {
+            completeLibraryRevealChoice(gameData, player, libraryRevealChoice, cardIds);
+        }
+    }
+
+    /**
+     * Completes a validated library reveal choice ({@link #handleLibraryRevealChoice}).
+     */
+    private void completeLibraryRevealChoice(GameData gameData, Player player,
+                                             PendingInteraction.LibraryRevealChoice libraryRevealChoice,
+                                             List<UUID> cardIds) {
+        UUID controllerId = libraryRevealChoice.playerId();
+        List<Card> allRevealedCards = libraryRevealChoice.allCards();
+        String playerName = gameData.playerIdToName.get(controllerId);
 
         PendingPsychoticEpisodeChoice psychoticEpisodeChoice =
                 gameData.pollPendingInteraction(PendingPsychoticEpisodeChoice.class);
@@ -4447,6 +4464,52 @@ public class LibraryChoiceHandlerService {
 
         log.info("Game {} - {} reveals {} creature cards to hand", gameData.id, playerName, selectedCards.size());
         finishSearchAndResume(gameData);
+    }
+
+    /**
+     * The life a library reveal choice's answer makes a player pay or lose for the cards chosen: Sword-Point
+     * Diplomacy's opponent paying for each card denied, Moonlight Bargain's controller paying for each card kept, or
+     * Search for Blex's controller losing life for the cards put into hand. Paying life is losing it (CR 119.4), and
+     * Lich's Duel Mastery replaces each such loss with its sacrifice once its shields are gone, whose death
+     * replacements are chosen before anything changes (CR 616.1). So when the answer has such a life change, it is
+     * completed in a window that asks those questions before the first card moves, and is answered again once they
+     * are chosen.
+     *
+     * @return {@code true} when the answer was completed here (or stopped to ask)
+     */
+    private boolean asksSelectionLifeChangeFirst(GameData gameData, Player player,
+                                                 PendingInteraction.LibraryRevealChoice choice, List<UUID> cardIds) {
+        int cost = choice.lifeCostPerSelection();
+        if (cost <= 0 || cardIds.isEmpty()) {
+            return false;
+        }
+        UUID payerId;
+        int amount;
+        int times;
+        if (choice.beneficiaryPlayerId() != null) {
+            payerId = gameData.orderedPlayerIds.stream()
+                    .filter(id -> !id.equals(choice.beneficiaryPlayerId()))
+                    .findFirst()
+                    .orElse(null);
+            amount = cost;
+            times = cardIds.size();
+        } else if (choice.selectedToHand() && choice.remainingToGraveyard() && !choice.remainingToExile()
+                && !choice.selectLandsAfterHand() && !choice.selectedToTop() && !choice.selectedToManifest()
+                && !choice.selectedCardMayGoToHandIfBattlefieldDeclined()) {
+            payerId = choice.playerId();
+            amount = choice.payLifePerSelection() ? cost : cost * cardIds.size();
+            times = choice.payLifePerSelection() ? cardIds.size() : 1;
+        } else {
+            return false;
+        }
+        if (payerId == null) {
+            return false;
+        }
+        permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData, () -> {
+            lifeSupport.askBeforeRepeatedLifeLossesThatFollowAChange(gameData, payerId, amount, times);
+            completeLibraryRevealChoice(gameData, player, choice, cardIds);
+        }, new GameData.InteractionAnswerReplay(player, choice, new InteractionAnswer.CardsChosen(cardIds)));
+        return true;
     }
 
     private void applySelectionLifeLoss(GameData gameData, UUID controllerId, int selectedCount,

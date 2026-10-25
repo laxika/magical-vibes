@@ -57,10 +57,14 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ToymakersTrapEffec
 import com.github.laxika.magicalvibes.service.effect.normalfx.ZndrsplatsJudgmentEffectHandler;
 import com.github.laxika.magicalvibes.service.battlefield.DeathReplacementChoicePending;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 /**
@@ -167,6 +171,20 @@ public class PermanentChoiceHandlerService {
             com.github.laxika.magicalvibes.service.spell.SpellCastingService> spellCastingServiceProvider;
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.GameService>
             gameServiceProvider;
+    private final org.springframework.beans.factory.ObjectProvider<
+            com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService> combatAttackServiceProvider;
+    private final org.springframework.beans.factory.ObjectProvider<MayCastHandlerService> mayCastHandlerServiceProvider;
+    private final org.springframework.beans.factory.ObjectProvider<
+            com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport>
+            exileFreeCastQueueSupportProvider;
+    private final org.springframework.beans.factory.ObjectProvider<
+            com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport> splitCardCastSupportProvider;
+    private final org.springframework.beans.factory.ObjectProvider<
+            com.github.laxika.magicalvibes.service.combat.block.CombatBlockService> combatBlockServiceProvider;
+
+    @Autowired
+    @Lazy
+    private InteractionHandlerRegistry interactionHandlerRegistry;
 
     /** Declines a champion choice, so the permanent is sacrificed instead of exiling another one (CR 702.72a). */
     public void handleChampionDeclined(GameData gameData, Player player, boolean accepted) {
@@ -229,10 +247,13 @@ public class PermanentChoiceHandlerService {
      * leaves (CR 616.1), and the same answer is completed again through {@code ability}'s may handler
      * once its controller has chosen. {@code answer} must close the window (an
      * {@link InputCompletionService} epilogue does) before anything that isn't part of that removal.
+     *
+     * @return {@code true} when the answer stopped to ask
      */
-    public void answerAskingDeathReplacementsFirst(GameData gameData, Player player, PendingMayAbility ability,
-                                                   boolean accepted, Runnable answer) {
-        runAskingDeathReplacementsFirst(gameData, answer, new GameData.MayAnswerReplay(player, ability, accepted));
+    public boolean answerAskingDeathReplacementsFirst(GameData gameData, Player player, PendingMayAbility ability,
+                                                      boolean accepted, Runnable answer) {
+        return runAskingDeathReplacementsFirst(gameData, answer,
+                new GameData.MayAnswerReplay(player, ability, accepted));
     }
 
     /**
@@ -288,9 +309,18 @@ public class PermanentChoiceHandlerService {
                     multiPermanentChoiceHandlerServiceProvider.getObject()
                             .completeAskingDeathReplacementsFirst(
                                     gameData, multiReplay.choice(), multiReplay.permanentIds());
+            case GameData.MayAnswerReplay answerReplay
+                    when mayEffectHandlerRegistry.getHandler(answerReplay.ability().effects().getFirst()) == null ->
+                    mayAbilityHandlerServiceProvider.getObject().completeResolutionTimeMayChoiceAgain(
+                            gameData, answerReplay.player(), answerReplay.accepted(), answerReplay.ability());
             case GameData.MayAnswerReplay answerReplay ->
                     mayEffectHandlerRegistry.getHandler(answerReplay.ability().effects().getFirst())
                             .handle(gameData, answerReplay.player(), answerReplay.accepted(), answerReplay.ability());
+            case GameData.InteractionAnswerReplay answerReplay -> {
+                gameData.interaction.beginInteraction(answerReplay.interaction());
+                interactionHandlerRegistry.dispatchAnswer(gameData, answerReplay.player(),
+                        (InteractionAnswer) answerReplay.answer());
+            }
             case GameData.PileChoiceReplay pileReplay ->
                     mayAbilityHandlerServiceProvider.getObject().completeKillingPileChoice(
                             gameData, pileReplay.accepted());
@@ -319,6 +349,35 @@ public class PermanentChoiceHandlerService {
             case GameData.TurnFaceUpReplay turnFaceUpReplay -> payAgainAfterDeathReplacements(gameData,
                     () -> gameServiceProvider.getObject()
                             .completeTurnFaceUpAfterCostSacrificeAnswers(gameData, turnFaceUpReplay));
+            case GameData.ExileCastReplay exileReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> spellCastingServiceProvider.getObject()
+                            .completeExileCastAfterCostSacrificeAnswers(gameData, exileReplay));
+            case GameData.SplitCastPaymentReplay splitReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> splitCardCastSupportProvider.getObject()
+                            .putOnStackAfterLifeCostAnswers(gameData, splitReplay));
+            case GameData.FreeCastLifeCostReplay lifeCostReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> exileFreeCastQueueSupportProvider.getObject()
+                            .completeLifeCostAfterAnswers(gameData, lifeCostReplay));
+            case GameData.PlotReplay plotReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> spellCastingServiceProvider.getObject().plotAfterLifeCostAnswers(gameData, plotReplay));
+            case GameData.MayPaymentReplay mayReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> mayEffectHandlerRegistry.getHandler(mayReplay.ability().effects().getFirst())
+                            .handle(gameData, mayReplay.player(), true, mayReplay.ability()));
+            case GameData.MadnessConvokeReplay convokeReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> mayCastHandlerServiceProvider.getObject().completeMadnessConvokeChoice(
+                            gameData, convokeReplay.player(), convokeReplay.context(), convokeReplay.creatureIds()));
+            case GameData.ManaAbilityLifeCostReplay manaReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> abilityActivationService.activateManaAbilityAgainAfterLifeCostAnswers(gameData, manaReplay));
+            case GameData.ActivationRequestReplay requestReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> abilityActivationService.activateAgainAfterLifeCostAnswers(gameData, requestReplay));
+            case GameData.HandAbilityActivationReplay handReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> abilityActivationService.activateHandAbilityAfterLifeCostAnswers(gameData, handReplay));
+            case GameData.AttackDeclarationReplay attackReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> combatAttackServiceProvider.getObject()
+                            .completeAttackAfterLifeCostAnswers(gameData, attackReplay));
+            case GameData.BlockDeclarationReplay blockReplay -> payAgainAfterDeathReplacements(gameData,
+                    () -> combatBlockServiceProvider.getObject()
+                            .completeBlocksAfterLifeCostAnswers(gameData, blockReplay));
         }
     }
 

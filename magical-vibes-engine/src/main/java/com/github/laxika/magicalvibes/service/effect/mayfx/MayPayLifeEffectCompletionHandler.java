@@ -9,9 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,6 +23,7 @@ public class MayPayLifeEffectCompletionHandler implements MayEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final LifeSupport lifeSupport;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,7 +44,12 @@ public class MayPayLifeEffectCompletionHandler implements MayEffectHandlerBean {
                 && gameData.getLife(playerId) >= effect.lifeCost());
         CardEffect continuation = accepted && canPay ? effect.wrapped() : effect.elseEffect();
         if (accepted && canPay && effect.lifeCost() > 0) {
-            lifeSupport.applyLifePayment(gameData, playerId, effect.lifeCost(), ability.sourceCard().getName());
+            // Paying life is losing it (CR 119.4): a Lich's Duel Mastery sacrifice it causes is asked about first.
+            if (permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                    gameData, player, ability, true, () -> lifeSupport.applyLifePayment(
+                            gameData, playerId, effect.lifeCost(), ability.sourceCard().getName()))) {
+                return;
+            }
         }
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         if (accepted && canPay && pendingEntry != null && pendingEntry.isMarkSourceOncePerTurnOnAcceptance()

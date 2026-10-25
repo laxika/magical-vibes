@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,12 +30,16 @@ public class AdNauseamSupport {
     /**
      * Performs one iteration of the process. Assumes the controller's library is non-empty.
      * Reveals the top card, puts it into hand, and (when its mana value is greater than zero)
-     * makes the controller lose that much life.
+     * makes the controller lose that much life. Moving the card changes neither the loss nor what a Lich's Duel
+     * Mastery sacrifice replacing it can be replaced with, so inside a window that can run this again the
+     * sacrifice's death replacements are chosen before the card moves (CR 616.1).
      */
     public void revealTopCardAndLoseLife(GameData gameData, UUID controllerId, String sourceName) {
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
 
+        lifeSupport.askBeforeLifeLossesThatFollowAChange(gameData,
+                Map.of(controllerId, deck.getFirst().getManaValue()));
         Card topCard = deck.removeFirst();
         int manaValue = topCard.getManaValue();
 

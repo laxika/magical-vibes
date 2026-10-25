@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingLossReplacement;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -74,6 +75,26 @@ public class GameOutcomeService {
             }
         }
         return LossOutcome.LOSES;
+    }
+
+    /**
+     * Resolves again the game loss whose replacement waited for the questions of a Lich's Duel Mastery sacrifice
+     * ({@link GameData#pendingLossReplacement}) once they are answered: the replacement now runs, and its life change's
+     * sacrifice performs the answered batch. A player whose loss is no longer replaced loses.
+     */
+    public void resumeLossReplacement(GameData gameData) {
+        PendingLossReplacement pending = gameData.pendingLossReplacement;
+        if (pending == null || gameData.gameResult != null
+                || gameData.pendingDepartureBatch != null && gameData.pendingDepartureBatch.isAwaitingAnswer()) {
+            return;
+        }
+        gameData.pendingLossReplacement = null;
+        UUID losingPlayerId = pending.playerId();
+        if (resolveLoss(gameData, losingPlayerId, LossReason.valueOf(pending.reason())) == LossOutcome.LOSES) {
+            gameLogService.append(gameData, GameLog.text(
+                    gameData.playerIdToName.get(losingPlayerId) + " loses the game."));
+            declareWinner(gameData, gameQueryService.getOpponentId(gameData, losingPlayerId));
+        }
     }
 
     /**

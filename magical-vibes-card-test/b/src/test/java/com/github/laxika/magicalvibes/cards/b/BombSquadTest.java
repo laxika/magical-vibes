@@ -2,14 +2,18 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DwarvenGrunt;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GravebaneZombie;
+import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.r.Repel;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -123,6 +127,35 @@ class BombSquadTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Dwarven Grunt");
         assertThat(gameData.playerDecks.get(player2.getId())).first().isSameAs(grunt.getCard());
         harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @CardUsed({GravebaneZombie.class, KalitasTraitorOfGhet.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("The detonated creature's death replacement is asked before it is destroyed, then it deals the damage")
+    void asksTheDeathReplacementBeforeTheDestructionAndDealsTheDamageAfter() {
+        addReadyBombSquad(player1);
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        Permanent gravebane = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
+        gravebane.setCounterCount(CounterType.FUSE, 3);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, gravebane.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Gravebane Zombie");
+        assertThat(gravebane.getCounterCount(CounterType.FUSE)).isZero();
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Put it into its owner's library");
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getId()).isEqualTo(gravebane.getCard().getId());
+        harness.assertNotOnBattlefield(player2, "Gravebane Zombie");
+        harness.assertLife(player2, 16);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test

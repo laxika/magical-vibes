@@ -55,6 +55,9 @@ public class ExquisiteArchangelLossReplacer implements LossReplacer {
         if (angels.isEmpty()) {
             return false;
         }
+        if (LossReplacer.askBeforeLifeTotal(lifeSupport, gameData, losingPlayerId, reason, gameData.startingLife())) {
+            return true;
+        }
         if (angels.size() == 1) {
             return applyReplacement(gameData, losingPlayerId, angels.getFirst(), reason);
         }
@@ -76,6 +79,9 @@ public class ExquisiteArchangelLossReplacer implements LossReplacer {
 
     /** Exiles {@code angel} instead of letting the player lose, then resets their life total. */
     public boolean applyReplacement(GameData gameData, UUID losingPlayerId, Permanent angel, LossReason reason) {
+        if (LossReplacer.askBeforeLifeTotal(lifeSupport, gameData, losingPlayerId, reason, gameData.startingLife())) {
+            return true;
+        }
         String playerName = gameData.playerIdToName.get(losingPlayerId);
         String angelName = angel.getCard().getName();
         if (!permanentRemovalService.removePermanentToExile(gameData, angel)) {

@@ -1123,6 +1123,14 @@ public class GameData {
      */
     public DepartureBatch pendingDepartureBatch;
     /**
+     * Answered departures of earlier events of the same damage event set aside so a later event could ask its own
+     * questions (a combat damage step that asked the defending player's Lich's Duel Mastery before a blocker's
+     * "sacrifice it instead"); each waits for its event to perform the same intents.
+     */
+    public final List<DepartureBatch> answeredEventDepartureBatches = new ArrayList<>();
+    /** A game loss whose replacement waits for a departure's answers; {@code null} when none does. */
+    public PendingLossReplacement pendingLossReplacement;
+    /**
      * Entries that reached their "enter as a copy" choice while another copy choice was open, such as
      * the second of two Clones entering together. Each is offered its own choice once {@link #cloneOperation}
      * is free again.
@@ -1850,6 +1858,25 @@ public class GameData {
      * an answered batch the life loss didn't perform is dropped then.
      */
     public AskedLifeLossDeparture askedLifeLossDeparture;
+    /**
+     * The result of Game of Chaos's latest coin flip ({@code true} when the spell's controller won it), kept from the
+     * flip until its life changes are made, so a flip whose loser's Lich's Duel Mastery sacrifice stops it for a
+     * CR 616.1 question is not flipped again when it is resolved or answered again; {@code null} otherwise.
+     */
+    public Boolean gameOfChaosFlipControllerWins;
+    /**
+     * The permanent spell whose resolution stopped before it began, so the Lich's Duel Mastery sacrifice that
+     * replaces the life loss of its "as this enters, you lose life" (Lich) could have its death replacements chosen
+     * before it enters (CR 616.1f); it is resolved once they are answered. {@code null} otherwise.
+     */
+    public UUID spellAwaitingEntryLifeLossDepartureId;
+    /**
+     * A permanent an effect is putting onto the battlefield whose entry stopped before anything of it happened, so
+     * the Lich's Duel Mastery sacrifice that replaces the life loss of its "as this enters, you lose life" (Lich)
+     * could have its death replacements chosen first (CR 616.1f); the entry goes on once they are answered.
+     * {@code null} otherwise.
+     */
+    public BattlefieldEntryRequest entryAwaitingLifeLossDeparture;
     /** The damage events of the effect being resolved, while one of them awaits its player's order. */
     public com.github.laxika.magicalvibes.model.replacement.DamageJournal damageJournal;
     /**
@@ -2928,7 +2955,126 @@ public class GameData {
             permits PermanentChoiceReplay, MultiPermanentChoiceReplay, MayAnswerReplay, ListChoiceReplay,
                     PileChoiceReplay, ActivationCostReplay, SacrificeAbilityReplay, SpellCastReplay,
                     GraveyardCastReplay, LibraryTopCastReplay, TurnFaceUpReplay,
-                    GraveyardAbilityCostReplay, HandAbilityCostReplay {
+                    GraveyardAbilityCostReplay, HandAbilityCostReplay, InteractionAnswerReplay,
+                    HandAbilityActivationReplay, AttackDeclarationReplay, BlockDeclarationReplay,
+                    ActivationRequestReplay, ManaAbilityLifeCostReplay, MayPaymentReplay, MadnessConvokeReplay,
+                    PlotReplay, ExileCastReplay, SplitCastPaymentReplay, FreeCastLifeCostReplay {
+    }
+
+    /**
+     * A permanent's activated ability stopped before it paid anything, so that the Lich's Duel Mastery its Phyrexian
+     * mana paid with life would sacrifice could have its death replacement chosen first (CR 602.2b, CR 616.1): the
+     * activation request to make again once every answer is in. The permanent is named by id;
+     * {@code preResolvedSource} tells whether the request named it directly rather than by its battlefield index.
+     */
+    /**
+     * An accepted "you may cast it" (a madness cast, an artifact cast by paying life equal to its mana value) stopped
+     * before it paid any cost, so that the Lich's Duel Mastery its life payment would sacrifice could have its death
+     * replacement chosen first (CR 601.2h, CR 616.1): the prompt to accept again once every answer is in.
+     */
+    public record MayPaymentReplay(Player player, PendingMayAbility ability) implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * A madness cast paid with convoke stopped before it tapped or paid anything, so that the Lich's Duel Mastery its
+     * life payment would sacrifice could have its death replacement chosen first (CR 601.2h, CR 616.1): the convoke
+     * choice to complete again once every answer is in.
+     */
+    public record MadnessConvokeReplay(Player player, MultiPermanentChoiceContext.MadnessConvoke context,
+                                       java.util.List<UUID> creatureIds) implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * A spell cast from exile (or from outside the game) stopped once its costs were validated and before any was
+     * paid, so that the Lich's Duel Mastery its life payment would sacrifice could have its death replacement chosen
+     * first (CR 601.2h, CR 616.1): the cast request, the card by id, to make again once every answer is in.
+     */
+    public record ExileCastReplay(Player player, UUID exileCardId, Integer xValue, UUID targetId,
+                                  java.util.List<UUID> exileCounterCostPermanentIds,
+                                  java.util.List<UUID> convokeCreatureIds, java.util.List<UUID> waterbendPermanentIds,
+                                  boolean waterbendPaid, java.util.List<UUID> targetIds, boolean autoPass,
+                                  boolean copy, boolean putOnBottomOfOwnersLibraryInsteadOfGraveyard,
+                                  boolean flashforwardCast, Zone sourceZoneOverride, boolean fromBattlefield,
+                                  java.util.List<CounterType> chosenCounterTypes)
+            implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * A prepared free or "you may cast it" cast stopped before it paid its mana cost, so that the Lich's Duel Mastery
+     * the life it pays would sacrifice could have its death replacement chosen first (CR 601.2h, CR 616.1): the
+     * prepared cast with its chosen targets, to put on the stack again once every answer is in.
+     */
+    public record SplitCastPaymentReplay(SplitCardCast.Targeting targeting) implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * A prepared free cast paused before it paid life for its "discard a card or pay life" cost, so that the Lich's
+     * Duel Mastery that payment would sacrifice could have its death replacement chosen first (CR 601.2h, CR 616.1):
+     * the prepared spell, which its completion changes as it pays the cost, and whether the completion checks
+     * "becomes the target of a spell" triggers, as the paused path did.
+     */
+    public record FreeCastLifeCostReplay(StackEntry entry, boolean checksTargetTriggers)
+            implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * Plotting a card from hand (a special action) stopped before it paid its plot cost, so that the Lich's Duel
+     * Mastery its Phyrexian mana paid with life would sacrifice could have its death replacement chosen first
+     * (CR 616.1): the card, by id, to plot again once every answer is in.
+     */
+    public record PlotReplay(Player player, UUID cardId) implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * A mana ability stopped before it paid its life cost, so that the Lich's Duel Mastery that payment would
+     * sacrifice could have its death replacement chosen first (CR 605.3a, CR 616.1): the land tapped for mana by id,
+     * or {@code null} for Channel's "pay 1 life: add {C}".
+     */
+    public record ManaAbilityLifeCostReplay(Player player, UUID permanentId) implements DeathReplacementChoiceReplay {
+    }
+
+    public record ActivationRequestReplay(Player player, UUID permanentId, boolean preResolvedSource,
+                                          int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId,
+                                          Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
+                                          java.util.List<UUID> targetIds, Map<UUID, Integer> damageAssignments,
+                                          java.util.List<Integer> exileXGraveyardCardIndices,
+                                          java.util.List<UUID> exileAnyGraveyardCardIds,
+                                          UUID exileInstantOrSorcerySpellCardId, boolean opponentTargetAlreadyChosen,
+                                          java.util.List<UUID> revealedHandCardIds,
+                                          UUID putExiledCardIntoGraveyardCardId,
+                                          java.util.List<UUID> putBottomLibraryCardIds)
+            implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * A hand card's activated ability stopped once its costs were validated and before any of them was paid, so that
+     * the Lich's Duel Mastery its life payment would sacrifice could have its death replacement chosen first
+     * (CR 602.2b, CR 616.1): the activation request to make again once every answer is in, the card by id.
+     */
+    public record HandAbilityActivationReplay(Player player, UUID cardId, Integer abilityIndex, UUID targetId,
+                                              Integer xValue, java.util.List<UUID> targetIds)
+            implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * An attack declaration stopped once its costs were validated and before any of them was paid, so that the Lich's
+     * Duel Mastery its life payment would sacrifice could have its death replacement chosen first (CR 508.1j, CR 616.1):
+     * the declaration prompt and the declared attackers, to declare again once every answer is in.
+     */
+    public record AttackDeclarationReplay(Player player, PendingInteraction.AttackerDeclaration declaration,
+                                          java.util.List<Integer> attackerIndices, Map<Integer, UUID> attackTargets,
+                                          java.util.List<java.util.List<Integer>> bands)
+            implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * A block declaration stopped once its costs were validated and before any of them was paid, so that the Lich's
+     * Duel Mastery its life payment would sacrifice could have its death replacement chosen first (CR 509.1f,
+     * CR 616.1): the declaration prompt and the declared blocks, to declare again (with the costs accepted) once every
+     * answer is in.
+     */
+    public record BlockDeclarationReplay(com.github.laxika.magicalvibes.model.effect.PayBlockCostsEffect blocks)
+            implements DeathReplacementChoiceReplay {
     }
 
     /**
@@ -3072,6 +3218,10 @@ public class GameData {
      * cost, is copied; every other replay is plain data and is shared.
      */
     private static DeathReplacementChoiceReplay copyDeathReplacementChoiceReplay(DeathReplacementChoiceReplay replay) {
+        if (replay instanceof FreeCastLifeCostReplay lifeCostReplay) {
+            return new FreeCastLifeCostReplay(new StackEntry(lifeCostReplay.entry()),
+                    lifeCostReplay.checksTargetTriggers());
+        }
         if (replay instanceof PermanentChoiceReplay choiceReplay
                 && choiceReplay.choice().context() instanceof PermanentChoiceContext.FreeCastSacrificeCost cost) {
             PendingInteraction.PermanentChoice choice = choiceReplay.choice();
@@ -3121,6 +3271,16 @@ public class GameData {
      * (an "unless that player pays" prompt whose refusal only destroys, e.g. Erosion).
      */
     public record ListChoiceReplay(PendingInteraction.ColorChoice choice, String chosen)
+            implements DeathReplacementChoiceReplay {
+    }
+
+    /**
+     * An answer to a registry-managed interaction to complete again (Sylvan Library's choice, Lim-Dûl's Vault's
+     * "pay 1 life and look again", a library reveal choice that pays life for each card): the player who answered,
+     * the interaction, made active again before the answer is dispatched to it once more, and the answer. The answer
+     * is the engine's interaction answer record, which this module can't name.
+     */
+    public record InteractionAnswerReplay(Player player, PendingInteraction interaction, Object answer)
             implements DeathReplacementChoiceReplay {
     }
     /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
@@ -9399,6 +9559,8 @@ public class GameData {
                 copy.pendingBattlefieldEntryRequests.put(id, request.deepCopy()));
         copy.pendingDepartureBatch = this.pendingDepartureBatch == null
                 ? null : this.pendingDepartureBatch.deepCopy();
+        this.answeredEventDepartureBatches.forEach(batch -> copy.answeredEventDepartureBatches.add(batch.deepCopy()));
+        copy.pendingLossReplacement = this.pendingLossReplacement;
         this.pendingEntryCopyChoices.forEach(choice -> copy.pendingEntryCopyChoices.add(choice.deepCopy()));
         copy.pendingAnyNumberHandPutCardIds.addAll(this.pendingAnyNumberHandPutCardIds);
         copy.holdingHandBattlefieldPuts = this.holdingHandBattlefieldPuts;
@@ -9984,6 +10146,10 @@ public class GameData {
                 ? null : this.suspendedReplacementEvent.copyForSimulation();
         copy.suspendedDamageDepartureStep = this.suspendedDamageDepartureStep;
         copy.askedLifeLossDeparture = this.askedLifeLossDeparture;
+        copy.gameOfChaosFlipControllerWins = this.gameOfChaosFlipControllerWins;
+        copy.spellAwaitingEntryLifeLossDepartureId = this.spellAwaitingEntryLifeLossDepartureId;
+        copy.entryAwaitingLifeLossDeparture = this.entryAwaitingLifeLossDeparture == null
+                ? null : this.entryAwaitingLifeLossDeparture.deepCopy();
         copy.damageJournal = this.damageJournal == null ? null : this.damageJournal.copyForSimulation();
         this.pendingSimultaneousDamage.forEach(pending ->
                 copy.pendingSimultaneousDamage.add(pending.copyForSimulation()));

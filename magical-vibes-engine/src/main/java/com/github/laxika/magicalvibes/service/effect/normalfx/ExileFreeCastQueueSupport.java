@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -87,6 +88,9 @@ public class ExileFreeCastQueueSupport {
     @org.springframework.beans.factory.annotation.Autowired
     @Lazy
     private LifeSupport lifeSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.DepartureService departureService;
 
     // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
     public ExileFreeCastQueueSupport(GameLogService gameLogService,
@@ -708,6 +712,9 @@ public class ExileFreeCastQueueSupport {
                 beginFreeCastDiscard(gameData, entry);
                 return true;
             }
+            if (askFreeCastLifeCostFirst(gameData, entry, discardOrPayLife.lifeAmount(), true)) {
+                return true;
+            }
             spellCastingService.payAdditionalCostsForFreeCast(gameData, entry,
                     AdditionalSpellCostService.CostSelection.none());
             return false;
@@ -1012,9 +1019,66 @@ public class ExileFreeCastQueueSupport {
             beginFreeCastSacrifice(gameData, context.entry(),
                     sacrificeOrDiscardCandidates(gameData, context.entry(), cost), cost.description());
         } else {
+            if (askFreeCastLifeCostFirst(gameData, context.entry(), context.entry().getEffectsToResolve().stream()
+                    .filter(DiscardCardOrPayLifeCost.class::isInstance)
+                    .mapToInt(cost -> ((DiscardCardOrPayLifeCost) cost).lifeAmount())
+                    .sum(), false)) {
+                return;
+            }
             spellCastingService.payAdditionalCostsForFreeCast(gameData, context.entry(),
                     AdditionalSpellCostService.CostSelection.none());
             completeCastAfterDiscard(gameData, context.entry());
+        }
+    }
+
+    /**
+     * CR 601.2h and CR 616.1: before a prepared free cast pays {@code lifeCost} life for its "discard a card or pay
+     * life" cost, asks the death replacement questions of the Lich's Duel Mastery that payment would sacrifice instead
+     * (paying life is losing it, CR 119.4). The cast is made while something resolves, so it is paused, not stopped
+     * and made again, and is completed with the life paid once every answer is in
+     * ({@link #completeLifeCostAfterAnswers}); nothing is asked inside a rerun window, whose completion asks as the
+     * Mastery leaves.
+     *
+     * @return whether the cast paused to ask
+     */
+    private boolean askFreeCastLifeCostFirst(GameData gameData, StackEntry entry, int lifeCost,
+                                             boolean checksTargetTriggers) {
+        if (gameData.deathReplacementsCanRerunEffect || lifeCost <= 0) {
+            return false;
+        }
+        List<com.github.laxika.magicalvibes.model.DepartureIntent> sacrifices =
+                lifeSupport.successiveLifeLossSacrifices(gameData, entry.getControllerId(), 1);
+        if (sacrifices.isEmpty()) {
+            return false;
+        }
+        UUID previousCauseControllerId = gameData.currentlyResolvingControllerId;
+        boolean asked;
+        try {
+            gameData.currentlyResolvingControllerId = entry.getControllerId();
+            asked = departureService.askBeforePayment(gameData,
+                    com.github.laxika.magicalvibes.model.DepartureBatch.of(sacrifices));
+        } finally {
+            gameData.currentlyResolvingControllerId = previousCauseControllerId;
+        }
+        if (asked) {
+            gameData.pendingDeathReplacementChoiceReplay =
+                    new GameData.FreeCastLifeCostReplay(entry, checksTargetTriggers);
+        }
+        return asked;
+    }
+
+    /**
+     * Pays the life cost of the free cast {@link #askFreeCastLifeCostFirst} paused and finishes the cast, once every
+     * death replacement it asked about is chosen.
+     */
+    public void completeLifeCostAfterAnswers(GameData gameData, GameData.FreeCastLifeCostReplay replay) {
+        spellCastingService.payAdditionalCostsForFreeCast(gameData, replay.entry(),
+                AdditionalSpellCostService.CostSelection.none());
+        // The life payment was asked its Mastery's death replacements first (CR 616.1); nothing after it is redone.
+        gameData.deathReplacementsCanRerunEffect = false;
+        completeCastAfterDiscard(gameData, replay.entry());
+        if (replay.checksTargetTriggers()) {
+            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         }
     }
 
@@ -1130,14 +1194,23 @@ public class ExileFreeCastQueueSupport {
         }
     }
 
+    /**
+     * Kefka, Dancing Mad's "Then each player who owns a spell you cast this way loses life equal to its mana value":
+     * the losses follow the casts, together, as a step of their own of the parked resolution (CR 608.2c), so a Lich's
+     * Duel Mastery sacrifice replacing one has its death replacements chosen before any life is lost (CR 616.1).
+     */
     private void applyPendingFreeCastLifeLosses(GameData gameData) {
-        List<PendingFreeCastLifeLoss> losses = new ArrayList<>(gameData.pendingFreeCastLifeLosses);
+        List<PendingFreeCastLifeLoss> pending = new ArrayList<>(gameData.pendingFreeCastLifeLosses);
         gameData.pendingFreeCastLifeLosses.clear();
-        for (PendingFreeCastLifeLoss loss : losses) {
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
+        String sourceName = null;
+        for (PendingFreeCastLifeLoss loss : pending) {
             if (gameData.findExiledCard(loss.cardId()) == null) {
-                lifeSupport.applyLifeLoss(gameData, loss.ownerId(), loss.manaValue(), loss.sourceName());
+                losses.merge(loss.ownerId(), loss.manaValue(), Integer::sum);
+                sourceName = loss.sourceName();
             }
         }
+        lifeSupport.loseLifeAsStepOfParkedResolution(gameData, losses, sourceName);
     }
 
     private void finishFreeCastProcess(GameData gameData) {

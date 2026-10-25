@@ -382,6 +382,15 @@ public class AbilityActivationService {
         // The printed mana ability is still an activated ability, so activation taxes (Oppressive Rays) apply.
         int manaAbilityTax = castingCostService.getActivatedAbilityActivationTax(
                 gameData, playerId, permanent, null, true);
+        int lifePayments = (int) castingCostService.getActivatedAbilityAdditionalCosts(gameData, permanent).stream()
+                .filter(cost -> cost instanceof PayLifeCost lifeCost
+                        && lifeCost.effectiveAmount(gameData.getLife(playerId),
+                                sourceCounterCount(permanent, lifeCost)) > 0)
+                .count();
+        if (askManaAbilityLifeCostFirst(gameData, playerId, lifePayments,
+                new GameData.ManaAbilityLifeCostReplay(player, permanent.getId()))) {
+            return;
+        }
         if (manaAbilityTax > 0) {
             payManaCostForSourceCard(gameData, playerId, permanent.getCard(), "{0}", 0, false, false,
                     manaAbilityTax);
@@ -966,6 +975,64 @@ public class AbilityActivationService {
      * @param player   the player paying life for mana
      * @throws IllegalStateException if the player may not pay life for mana this turn or has less than 1 life
      */
+    /**
+     * CR 605.3a and CR 616.1: before a mana ability (a land tapped for mana), or Channel's "pay 1 life: add {C}",
+     * pays its {@code lifePayments} life costs, asks the death replacement questions of the Lich's Duel Mastery
+     * those payments would sacrifice instead (paying life is losing it, CR 119.4). When one is asked, nothing is
+     * tapped or paid and {@code replay} is stored; the ability is activated again once every answer is in
+     * ({@link #activateManaAbilityAgainAfterLifeCostAnswers}), and the life payment's sacrifice consumes the answers.
+     *
+     * @return {@code true} when the activation stopped to ask
+     */
+    private boolean askManaAbilityLifeCostFirst(GameData gameData, UUID playerId, int lifePayments,
+                                                GameData.ManaAbilityLifeCostReplay replay) {
+        List<com.github.laxika.magicalvibes.model.DepartureIntent> sacrifices = lifePayments > 0
+                ? lifeSupport.successiveLifeLossSacrifices(gameData, playerId, lifePayments) : List.of();
+        if (sacrifices.isEmpty() || !departureService.askBeforePayment(gameData,
+                com.github.laxika.magicalvibes.model.DepartureBatch.of(sacrifices))) {
+            return false;
+        }
+        gameData.pendingDeathReplacementChoiceReplay = replay;
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
+        return true;
+    }
+
+    /**
+     * Activates again the mana ability {@link #askManaAbilityLifeCostFirst} stopped, once every death replacement it
+     * asked about is chosen: the land tapped for mana, or Channel's life paid for {C}. One activated during a payment
+     * prompt asked in front of that prompt, so the prompt is active again while it completes (CR 605.3a).
+     */
+    public void activateManaAbilityAgainAfterLifeCostAnswers(GameData gameData,
+                                                             GameData.ManaAbilityLifeCostReplay replay) {
+        boolean nested = gameData.interaction.activeInteraction() == null
+                && interactionHandlerRegistry.resumeSuspended(gameData);
+        if (nested) {
+            gameData.interaction.openNestedPromptWindow();
+        }
+        try {
+            if (replay.permanentId() == null) {
+                payLifeForColorlessMana(gameData, replay.player());
+                return;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(replay.player().getId(), List.of());
+            int permanentIndex = -1;
+            for (int i = 0; i < battlefield.size(); i++) {
+                if (battlefield.get(i).getId().equals(replay.permanentId())) {
+                    permanentIndex = i;
+                    break;
+                }
+            }
+            if (permanentIndex < 0) {
+                throw new IllegalStateException("The permanent tapped for mana left the battlefield");
+            }
+            tapPermanent(gameData, replay.player(), permanentIndex);
+        } finally {
+            if (nested) {
+                gameData.interaction.closeNestedPromptWindow();
+            }
+        }
+    }
+
     public void payLifeForColorlessMana(GameData gameData, Player player) {
         UUID playerId = player.getId();
         if (!gameData.mayPayLifeForColorlessManaUntilEndOfTurn.contains(playerId)) {
@@ -978,6 +1045,9 @@ public class AbilityActivationService {
         int life = gameData.getLife(playerId);
         if (life < 1) {
             throw new IllegalStateException("Not enough life to pay (need 1, have " + life + ")");
+        }
+        if (askManaAbilityLifeCostFirst(gameData, playerId, 1, new GameData.ManaAbilityLifeCostReplay(player, null))) {
+            return;
         }
 
         lifeSupport.applyLifePayment(gameData, playerId, 1, "Channel");
@@ -2022,8 +2092,13 @@ public class AbilityActivationService {
                                                     List<UUID> graveyardTargetIds) {
         UUID playerId = player.getId();
         int stackSizeBeforeSacrifices = gameData.stack.size();
+        int lifePayment = ability.getEffects().stream()
+                .filter(PayLifeCost.class::isInstance)
+                .mapToInt(effect -> ((PayLifeCost) effect).effectiveAmount(gameData.getLife(playerId)))
+                .sum();
         if (sacrificeChosenCostPermanents(gameData, player, new GameData.GraveyardAbilityCostReplay(player, card,
-                ability, xValue, targetId, graveyardTargetIds == null ? null : List.copyOf(graveyardTargetIds)))) {
+                ability, xValue, targetId, graveyardTargetIds == null ? null : List.copyOf(graveyardTargetIds)),
+                lifePayment)) {
             return;
         }
         if (!isManaAbility(ability)) {
@@ -2240,6 +2315,49 @@ public class AbilityActivationService {
                 handCardIndex, abilityIndex, targetId, xValue, targetIds));
     }
 
+    /**
+     * CR 601.2h, CR 602.2b and CR 616.1: once a hand card's ability's costs are validated and before any is paid, asks
+     * the death replacement questions of the Lich's Duel Mastery that paying its {@code lifePayment} life would
+     * sacrifice instead (paying life is losing it, CR 119.4). When one is asked, the activation stops before anything
+     * is paid and {@code replay} is stored; it is activated again once every answer is in
+     * ({@link #activateHandAbilityAfterLifeCostAnswers}), and the life payment's sacrifice consumes the answers.
+     *
+     * @return {@code true} when the activation stopped to ask
+     */
+    private boolean askHandAbilityLifeCostFirst(GameData gameData, UUID playerId, int lifePayment,
+                                                GameData.HandAbilityActivationReplay replay) {
+        com.github.laxika.magicalvibes.model.DepartureIntent sacrifice = lifePayment > 0
+                ? lifeSupport.lifeLossSacrifice(gameData, playerId, lifePayment) : null;
+        if (sacrifice == null || !departureService.askBeforePayment(gameData,
+                com.github.laxika.magicalvibes.model.DepartureBatch.of(List.of(sacrifice)))) {
+            return false;
+        }
+        gameData.pendingDeathReplacementChoiceReplay = replay;
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
+        return true;
+    }
+
+    /**
+     * Activates again the hand card's ability {@link #askHandAbilityLifeCostFirst} stopped, once every death
+     * replacement it asked about is chosen, while the card is still in its owner's hand.
+     */
+    public void activateHandAbilityAfterLifeCostAnswers(GameData gameData,
+                                                        GameData.HandAbilityActivationReplay replay) {
+        List<Card> hand = gameData.playerHands.getOrDefault(replay.player().getId(), List.of());
+        int handCardIndex = -1;
+        for (int i = 0; i < hand.size(); i++) {
+            if (hand.get(i).getId().equals(replay.cardId())) {
+                handCardIndex = i;
+                break;
+            }
+        }
+        if (handCardIndex < 0) {
+            throw new IllegalStateException("The card whose ability was activated left its owner's hand");
+        }
+        activateHandAbility(gameData, replay.player(), handCardIndex, replay.abilityIndex(), replay.targetId(),
+                replay.xValue(), replay.targetIds());
+    }
+
     private void activateHandAbilityChoosingCosts(GameData gameData, Player player, int handCardIndex,
                                                   Integer abilityIndex, UUID targetId, Integer xValue,
                                                   List<UUID> targetIds) {
@@ -2396,6 +2514,12 @@ public class AbilityActivationService {
                     : 0;
         int activationCostModifier = getHandAbilityActivationCostModifier(
                 gameData, playerId, card, ability, effectiveXValue, -cyclingReduction);
+        if (payLifeCost != null && askHandAbilityLifeCostFirst(gameData, playerId,
+                payLifeCost.effectiveAmount(gameData.getLife(playerId)),
+                new GameData.HandAbilityActivationReplay(player, card.getId(), abilityIndex, targetId, xValue,
+                        targetIds == null ? null : List.copyOf(targetIds)))) {
+            return;
+        }
         ManaPool handManaPool = gameData.playerManaPools.get(playerId);
         int handTreasureManaBefore = handManaPool.getTreasureManaTotal();
         if (abilityCost != null || activationCostModifier > 0) {
@@ -4020,6 +4144,70 @@ public class AbilityActivationService {
                 && gameQueryService.isLand(gameData, battlefield.get(permanentIndex));
     }
 
+    /** What an activation that has paid or logged nothing yet leaves unchanged: its log, mana pool, life and stack. */
+    private record ActivationStartState(int logSize, int mana, int life, int stackSize) {
+        static ActivationStartState of(GameData gameData, UUID playerId) {
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            return new ActivationStartState(gameData.gameLog.size(), pool == null ? 0 : pool.getTotalAllMana(),
+                    gameData.getLife(playerId), gameData.stack.size());
+        }
+    }
+
+    private static <T> List<T> copyOrNull(List<T> list) {
+        return list == null ? null : List.copyOf(list);
+    }
+
+    /**
+     * CR 601.2h, CR 602.2b and CR 616.1: before an activation pays its mana cost, when its Phyrexian symbols would be
+     * paid with life ({@link ManaCost#payPhyrexianManaAuto} on a copy of the pool; paying life is losing it, CR 119.4),
+     * asks the death replacement questions of the Lich's Duel Mastery that payment would sacrifice instead. When one is
+     * asked, the activation stops before anything is paid and {@code replay} is stored; it is activated again once
+     * every answer is in ({@link #activateAgainAfterLifeCostAnswers}), and the life payment's sacrifice consumes the
+     * answers.
+     *
+     * @return {@code true} when the activation stopped to ask
+     */
+    private boolean askPhyrexianLifeFirst(GameData gameData, UUID playerId, ManaCost cost, int xValue,
+                                          int additionalGenericCost, GameData.ActivationRequestReplay replay) {
+        ManaCost payable = gameQueryService.canPayBlackManaWithLife(gameData, playerId)
+                ? cost.withBlackManaAsPhyrexian() : cost;
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        if (!payable.hasPhyrexianMana() || pool == null) {
+            return false;
+        }
+        int restDemand = Math.max(0, (payable.hasX() ? xValue : 0) + additionalGenericCost);
+        if (payable.payPhyrexianManaAuto(new ManaPool(pool), restDemand) <= 0) {
+            return false;
+        }
+        List<com.github.laxika.magicalvibes.model.DepartureIntent> sacrifices =
+                lifeSupport.successiveLifeLossSacrifices(gameData, playerId, 1);
+        if (sacrifices.isEmpty() || !departureService.askBeforePayment(gameData,
+                com.github.laxika.magicalvibes.model.DepartureBatch.of(sacrifices))) {
+            return false;
+        }
+        gameData.pendingDeathReplacementChoiceReplay = replay;
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
+        return true;
+    }
+
+    /**
+     * Activates again the ability {@link #askPhyrexianLifeFirst} stopped, with the same request, once every death
+     * replacement it asked about is chosen.
+     */
+    public void activateAgainAfterLifeCostAnswers(GameData gameData, GameData.ActivationRequestReplay replay) {
+        Permanent source = gameQueryService.findPermanentById(gameData, replay.permanentId());
+        if (source == null) {
+            throw new IllegalStateException("The activated permanent left the battlefield");
+        }
+        activateAbilityInternal(gameData, replay.player(), replay.permanentIndex(), replay.abilityIndex(),
+                replay.xValue(), replay.targetId(), replay.targetZone(), replay.discardCardIndex(),
+                replay.exileGraveyardCardIndex(), replay.targetIds(), replay.damageAssignments(),
+                replay.preResolvedSource() ? source : null, replay.exileXGraveyardCardIndices(),
+                replay.exileAnyGraveyardCardIds(), replay.exileInstantOrSorcerySpellCardId(),
+                replay.opponentTargetAlreadyChosen(), replay.revealedHandCardIds(),
+                replay.putExiledCardIntoGraveyardCardId(), replay.putBottomLibraryCardIds());
+    }
+
     private void activateAbilityInternalImpl(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue,
                                          UUID targetId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
                                          List<UUID> targetIds, Map<UUID, Integer> damageAssignments, Permanent preResolvedSource,
@@ -4034,6 +4222,7 @@ public class AbilityActivationService {
         gameData.trackingActivationLifePaid = true;
 
         UUID playerId = player.getId();
+        ActivationStartState activationStart = ActivationStartState.of(gameData, playerId);
         Permanent permanent = preResolvedSource != null
                 ? preResolvedSource
                 : resolveActivationSource(gameData, playerId, permanentIndex, abilityIndex);
@@ -4918,6 +5107,19 @@ public class AbilityActivationService {
         // graveyard choice), the imprint only exists at this point.
         validateImprintedCopyXValue(gameData, permanent, abilityEffects, effectiveXValue);
 
+        if (effectiveManaCost != null && activationStart.equals(ActivationStartState.of(gameData, playerId))
+                && askPhyrexianLifeFirst(gameData, playerId, effectiveManaCost, effectiveXValue,
+                additionalGenericCost - creatureManaPaymentIds.size(),
+                new GameData.ActivationRequestReplay(player, permanent.getId(), preResolvedSource != null,
+                        permanentIndex, abilityIndex, xValue, targetId, targetZone, discardCardIndex,
+                        exileGraveyardCardIndex, copyOrNull(targetIds),
+                        damageAssignments == null ? null : Map.copyOf(damageAssignments),
+                        copyOrNull(exileXGraveyardCardIndices), copyOrNull(exileAnyGraveyardCardIds),
+                        exileInstantOrSorcerySpellCardId, opponentTargetAlreadyChosen,
+                        copyOrNull(revealedHandCardIds), putExiledCardIntoGraveyardCardId,
+                        copyOrNull(putBottomLibraryCardIds)))) {
+            return;
+        }
         int creatureManaPaymentCount = creatureManaPaymentIds.size();
         if (creatureManaPaymentCount > 0) {
             payCreatureManaPayment(gameData, player, creatureManaPaymentIds);
@@ -8248,22 +8450,41 @@ public class AbilityActivationService {
      */
     private boolean sacrificeChosenCostPermanents(GameData gameData, Player player,
                                                   GameData.DeathReplacementChoiceReplay replay) {
+        return sacrificeChosenCostPermanents(gameData, player, replay, 0);
+    }
+
+    /**
+     * {@link #sacrificeChosenCostPermanents(GameData, Player, GameData.DeathReplacementChoiceReplay)} for an
+     * activation that then pays {@code lifePayment} life: paying life is losing it (CR 119.4), so the Lich's Duel
+     * Mastery that payment would sacrifice instead ({@link LifeSupport#lifeLossSacrifice}) is asked about with the
+     * chosen permanents, and the payment's sacrifice consumes its answers.
+     */
+    private boolean sacrificeChosenCostPermanents(GameData gameData, Player player,
+                                                  GameData.DeathReplacementChoiceReplay replay, int lifePayment) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(player.getId(), List.of());
         List<Permanent> chosen = List.copyOf(gameData.pendingActivationCostSacrificeIds).stream()
                 .map(id -> battlefield.stream().filter(p -> p.getId().equals(id)).findFirst().orElse(null))
                 .filter(Objects::nonNull)
                 .toList();
+        List<com.github.laxika.magicalvibes.model.DepartureIntent> asked = new ArrayList<>(chosen.stream()
+                .map(p -> com.github.laxika.magicalvibes.model.DepartureIntent.sacrifice(p.getId())).toList());
+        com.github.laxika.magicalvibes.model.DepartureIntent lifePaymentSacrifice = lifePayment > 0
+                ? lifeSupport.lifeLossSacrifice(gameData, player.getId(), lifePayment) : null;
+        if (lifePaymentSacrifice != null && !asked.contains(lifePaymentSacrifice)) {
+            asked.add(lifePaymentSacrifice);
+        }
+        if (replay != null && !asked.isEmpty() && departureService.askBeforePayment(gameData,
+                com.github.laxika.magicalvibes.model.DepartureBatch.of(asked))) {
+            gameData.pendingDeathReplacementChoiceReplay = replay;
+            mutationCoordinator.invalidateAllPlayerViews(gameData);
+            return true;
+        }
         if (chosen.isEmpty()) {
             gameData.pendingActivationCostSacrificeIds.clear();
             return false;
         }
         com.github.laxika.magicalvibes.model.DepartureBatch sacrifices = com.github.laxika.magicalvibes.model.DepartureBatch.of(
                 chosen.stream().map(p -> com.github.laxika.magicalvibes.model.DepartureIntent.sacrifice(p.getId())).toList());
-        if (replay != null && departureService.askBeforePayment(gameData, sacrifices)) {
-            gameData.pendingDeathReplacementChoiceReplay = replay;
-            mutationCoordinator.invalidateAllPlayerViews(gameData);
-            return true;
-        }
         gameData.pendingActivationCostSacrificeIds.clear();
         departureService.departNow(gameData, sacrifices,
                 com.github.laxika.magicalvibes.service.battlefield.DepartureService.Hooks.afterEach(

@@ -7,16 +7,27 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMayDiscardOrLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves an opponent-by-opponent discard-or-life-loss effect in APNAP order. */
+/**
+ * Resolves an opponent-by-opponent discard-or-life-loss effect in APNAP order: an opponent with a card in hand is
+ * asked, one without loses the life at once.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: before anything changes, the Lich's Duel Mastery sacrifices the
+ * at-once losses would cause are asked about (CR 616.1) through
+ * {@link LifeSupport#askBeforeLifeLossesThatFollowAChange}, since an earlier opponent's loss closes the window before
+ * a later opponent's.
+ */
 @Component
 @RequiredArgsConstructor
-public class EachOpponentMayDiscardOrLoseLifeEffectHandler implements NormalEffectHandlerBean {
+public class EachOpponentMayDiscardOrLoseLifeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
 
@@ -34,9 +45,18 @@ public class EachOpponentMayDiscardOrLoseLifeEffectHandler implements NormalEffe
             return;
         }
 
-        for (UUID opponentId : apnapOpponents(gameData, controllerId)) {
+        List<UUID> opponents = apnapOpponents(gameData, controllerId);
+        Map<UUID, Integer> lossesAtOnce = new LinkedHashMap<>();
+        for (UUID opponentId : opponents) {
             List<Card> hand = gameData.playerHands.get(opponentId);
             if (hand == null || hand.isEmpty()) {
+                lossesAtOnce.put(opponentId, discardEffect.lifeLoss());
+            }
+        }
+        lifeSupport.askBeforeLifeLossesThatFollowAChange(gameData, lossesAtOnce);
+
+        for (UUID opponentId : opponents) {
+            if (lossesAtOnce.containsKey(opponentId)) {
                 lifeSupport.applyLifeLoss(gameData, opponentId, discardEffect.lifeLoss(),
                         entry.getCard().getName());
                 continue;

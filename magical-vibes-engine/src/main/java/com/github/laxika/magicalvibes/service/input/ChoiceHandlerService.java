@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
 import com.github.laxika.magicalvibes.model.amount.DevotionToColor;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
@@ -1173,7 +1174,7 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.PayAnyAmountOfLifeAsEnters ctx) {
-            handlePayAnyAmountOfLifeAsEnters(gameData, player, colorName, ctx);
+            handlePayAnyAmountOfLifeAsEnters(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.AsEntersCounterTypeChoice ctx) {
@@ -5805,6 +5806,7 @@ public class ChoiceHandlerService {
         }
 
         boolean paid = false;
+        boolean paysLife = false;
         if (ctx.payManaOption().equals(chosen)) {
             ManaCost cost = new ManaCost(ctx.manaCost());
             ManaPool pool = gameData.playerManaPools.get(ctx.payerId());
@@ -5815,15 +5817,30 @@ public class ChoiceHandlerService {
         } else if (ctx.payLifeOption().equals(chosen)
                 && gameQueryService.canPlayerLifeChange(gameData, ctx.payerId())
                 && gameData.getLife(ctx.payerId()) >= ctx.lifeCost()) {
-            lifeSupport.applyLifePayment(gameData, ctx.payerId(), ctx.lifeCost(), ctx.sourceCardName());
-            paid = true;
+            paysLife = true;
         } else if (!ChoiceContext.TargetPlayerManaOrLifePaymentChoice.DECLINE.equals(chosen)) {
             throw new IllegalArgumentException("Invalid mana-or-life payment choice: " + chosen);
         }
 
         gameData.interaction.clearAwaitingInput();
         gameData.rerunCurrentEffectAfterInteraction = false;
+        if (paysLife) {
+            // The payment is this answer's first change, so a Lich's Duel Mastery it would sacrifice (paying life is
+            // losing it, CR 119.4) is asked about before any life is paid (CR 616.1), and the payment is completed
+            // again after.
+            permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
+                    () -> payLifeForTargetPlayerManaOrLifePayment(gameData, ctx),
+                    new GameData.ListChoiceReplay(active, chosen));
+            return;
+        }
         gameData.resolvedMayAccepted = paid;
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void payLifeForTargetPlayerManaOrLifePayment(GameData gameData,
+                                                         ChoiceContext.TargetPlayerManaOrLifePaymentChoice ctx) {
+        lifeSupport.applyLifePayment(gameData, ctx.payerId(), ctx.lifeCost(), ctx.sourceCardName());
+        gameData.resolvedMayAccepted = true;
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -5837,6 +5854,7 @@ public class ChoiceHandlerService {
         }
 
         boolean paid = false;
+        boolean paysLife = false;
         if (ctx.payManaOption().equals(chosen)) {
             ManaCost cost = new ManaCost(ctx.manaCost());
             ManaPool pool = gameData.playerManaPools.get(ctx.affectedPlayerId());
@@ -5847,9 +5865,7 @@ public class ChoiceHandlerService {
         } else if (ctx.payLifeOption().equals(chosen)
                 && gameQueryService.canPlayerLifeChange(gameData, ctx.affectedPlayerId())
                 && gameData.getLife(ctx.affectedPlayerId()) >= ctx.lifeCost()) {
-            lifeSupport.applyLifePayment(
-                    gameData, ctx.affectedPlayerId(), ctx.lifeCost(), ctx.sourceCardName());
-            paid = true;
+            paysLife = true;
         } else if (!ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice.DECLINE.equals(chosen)) {
             throw new IllegalArgumentException("Invalid enchanted-permanent payment choice: " + chosen);
         }
@@ -5858,6 +5874,15 @@ public class ChoiceHandlerService {
         gameData.rerunCurrentEffectAfterInteraction = false;
         if (gameData.pendingEffectResolutionEntry != null) {
             gameData.pendingEffectResolutionIndex++;
+        }
+        if (paysLife) {
+            // The payment is this answer's first change, so a Lich's Duel Mastery it would sacrifice (paying life is
+            // losing it, CR 119.4) is asked about before any life is paid (CR 616.1), and the payment is completed
+            // again after.
+            permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
+                    () -> payLifeForEnchantedPermanent(gameData, ctx),
+                    new GameData.ListChoiceReplay(active, chosen));
+            return;
         }
         if (paid) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -5874,6 +5899,12 @@ public class ChoiceHandlerService {
                                         ChoiceContext.RedistributePlayerLifeTotalsChoice ctx) {
         redistributePlayerLifeTotalsSupport.applyChoice(gameData, chosen, ctx.choices());
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void payLifeForEnchantedPermanent(GameData gameData,
+                                              ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx) {
+        lifeSupport.applyLifePayment(gameData, ctx.affectedPlayerId(), ctx.lifeCost(), ctx.sourceCardName());
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     private void destroyUnpaidEnchantedPermanent(GameData gameData,
@@ -5898,9 +5929,24 @@ public class ChoiceHandlerService {
                     () -> redistributeLifeTotals(gameData, replay.chosen(), redistribution), replay);
             return;
         }
+        if (replay.choice().context() instanceof ChoiceContext.TargetPlayerManaOrLifePaymentChoice payment) {
+            permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
+                    () -> payLifeForTargetPlayerManaOrLifePayment(gameData, payment), replay);
+            return;
+        }
+        if (replay.choice().context() instanceof ChoiceContext.PayAnyAmountOfLifeAsEnters asEnters) {
+            permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
+                    () -> payAnyAmountOfLifeAsEnters(gameData, Integer.parseInt(replay.chosen()), asEnters), replay);
+            return;
+        }
         if (!(replay.choice().context() instanceof ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx)) {
             throw new IllegalStateException("Not a list choice that asks death replacements first: "
                     + replay.choice().context());
+        }
+        if (ctx.payLifeOption().equals(replay.chosen())) {
+            permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
+                    () -> payLifeForEnchantedPermanent(gameData, ctx), replay);
+            return;
         }
         permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
                 () -> destroyUnpaidEnchantedPermanent(gameData, ctx), replay);
@@ -6395,7 +6441,7 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handlePayAnyAmountOfLifeAsEnters(GameData gameData, Player player, String numberName,
+    private void handlePayAnyAmountOfLifeAsEnters(GameData gameData, String numberName,
                                                   ChoiceContext.PayAnyAmountOfLifeAsEnters ctx) {
         PendingInteraction.ColorChoice active =
                 gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
@@ -6406,18 +6452,38 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
+        if (paid > 0) {
+            // The payment is this answer's first change, so a Lich's Duel Mastery it would sacrifice (paying life is
+            // losing it, CR 119.4) is asked about before any life is paid (CR 616.1), and the answer is completed
+            // again after.
+            permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
+                    () -> payAnyAmountOfLifeAsEnters(gameData, paid, ctx),
+                    new GameData.ListChoiceReplay(active, numberName));
+            return;
+        }
+        payAnyAmountOfLifeAsEnters(gameData, paid, ctx);
+    }
+
+    /**
+     * Pays the life chosen as the permanent enters ({@code ctx.controllerId()} chose it) and goes on with its entering.
+     * Closes the death replacement window after the payment, since nothing after it may happen twice.
+     */
+    private void payAnyAmountOfLifeAsEnters(GameData gameData, int paid,
+                                            ChoiceContext.PayAnyAmountOfLifeAsEnters ctx) {
         Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
         if (perm != null) {
             perm.setChosenNumber(paid);
         }
 
         if (paid > 0) {
-            lifeSupport.applyLifePayment(gameData, player.getId(), paid, ctx.card().getName());
+            lifeSupport.applyLifePayment(gameData, ctx.controllerId(), paid, ctx.card().getName());
+            gameData.deathReplacementsCanRerunEffect = false;
         }
 
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
         gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " pays " + paid + " life for ", ctx.card(), "."));
-        log.info("Game {} - {} pays {} life for {}", gameData.id, player.getUsername(), paid, ctx.card().getName());
+                playerName + " pays " + paid + " life for ", ctx.card(), "."));
+        log.info("Game {} - {} pays {} life for {}", gameData.id, playerName, paid, ctx.card().getName());
 
         // The life payment deferred the permanent's ETB triggers (skipped while input was pending).
         battlefieldEntryService.processCreatureETBEffects(gameData, ctx.controllerId(), ctx.card(),
@@ -7886,8 +7952,17 @@ public class ChoiceHandlerService {
 
         int exiledCount = initialExile.size() + revealed.size();
         if (ctx.lifeLossPerExiled() > 0 && exiledCount > 0) {
-            lifeSupport.applyLifeLoss(gameData, controllerId,
-                    exiledCount * ctx.lifeLossPerExiled(), controllerName);
+            int lifeLoss = exiledCount * ctx.lifeLossPerExiled();
+            StackEntry parked = gameData.pendingEffectResolutionEntry;
+            if (parked != null) {
+                // The loss follows the exile (CR 608.2c) as the step the parked resolution resumes with, so the
+                // Lich's Duel Mastery sacrifice that replaces it asks its CR 616.1 questions before any life is lost
+                // without revealing or exiling again.
+                parked.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                        List.of(new PlayersLoseLifeEffect(Map.of(controllerId, lifeLoss))));
+            } else {
+                lifeSupport.applyLifeLoss(gameData, controllerId, lifeLoss, controllerName);
+            }
         }
 
         log.info("Game {} - {} name/reveal-until-named effect: initialExile={}, revealed={}, found={}",

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.IllicitAuctionEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,11 +33,15 @@ import org.springframework.stereotype.Component;
  * {@link GameData#rerunCurrentEffectAfterInteraction}, since the bid is not an X-value choice). Each
  * prompt is an {@link PendingInteraction.IllicitAuctionBidChoice}; the answer arrives on
  * {@link GameData#chosenXValue}. Progress lives on {@link GameData#illicitAuction}.
+ *
+ * <p>The high bidder's life loss replaced by Lich's Duel Mastery's sacrifice has that sacrifice's death replacements
+ * chosen before anything changes (CR 616.1): the bid that ends the auction asks them before it is recorded, and the
+ * same bid is answered again.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean {
+public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
@@ -76,6 +81,10 @@ public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean {
 
         if (gameData.chosenXValue != null) {
             int bid = gameData.chosenXValue;
+            if (gameQueryService.findPermanentById(gameData, entry.getTargetId()) != null) {
+                lifeSupport.askBeforeLifeLossesThatFollowAChange(gameData,
+                        lifeBidAuctionSupport.lifeLossIfBidEndsAuction(gameData, bid));
+            }
             gameData.chosenXValue = null;
             UUID bidder = state.currentBidderId;
             String bidderName = gameData.playerIdToName.get(bidder);

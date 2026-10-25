@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -87,18 +90,20 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
                         card, e.conditionalFilter(), entry.getCard().getId())).count();
         if (conditionalMatchCount > 0) {
             int riderMultiplier = e.conditionalLifePerMatchingCard() ? conditionalMatchCount : 1;
-            if (e.conditionalLifeGain() > 0) {
+            if (e.conditionalLifeLossEachOpponent() > 0) {
+                // CR 608.2c: "each opponent loses N life and you gain N life" follows the exile, the loss first.
+                // As steps of their own, a Lich's Duel Mastery sacrifice replacing a loss asks its CR 616.1
+                // questions without exiling again.
+                List<CardEffect> steps = new ArrayList<>();
+                steps.add(new LoseLifeEffect(e.conditionalLifeLossEachOpponent() * riderMultiplier,
+                        LoseLifeRecipient.EACH_OPPONENT));
+                if (e.conditionalLifeGain() > 0) {
+                    steps.add(new GainLifeEffect(e.conditionalLifeGain() * riderMultiplier));
+                }
+                entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, steps);
+            } else if (e.conditionalLifeGain() > 0) {
                 lifeSupport.applyGainLife(gameData, controllerId,
                         e.conditionalLifeGain() * riderMultiplier);
-            }
-            if (e.conditionalLifeLossEachOpponent() > 0) {
-                for (UUID playerId : gameData.orderedPlayerIds) {
-                    if (!playerId.equals(controllerId)) {
-                        lifeSupport.applyLifeLoss(gameData, playerId,
-                                e.conditionalLifeLossEachOpponent() * riderMultiplier,
-                                entry.getCard().getName());
-                    }
-                }
             }
         }
 

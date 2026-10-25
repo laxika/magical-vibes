@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveRadCountersEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -45,7 +47,10 @@ public class ResolveRadCountersEffectHandler implements NormalEffectHandlerBean 
         if (gameQueryService.radiationLifeLossBecomesLifeGain(gameData, playerId)) {
             lifeSupport.applyGainLife(gameData, playerId, nonlandCards, "rad counters");
         } else {
-            lifeSupport.applyLifeLoss(gameData, playerId, nonlandCards, "rad counters");
+            // CR 728.1: the loss follows the mill. As a step of its own, a Lich's Duel Mastery sacrifice replacing it
+            // asks its CR 616.1 questions without milling again.
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new PlayersLoseLifeEffect(Map.of(playerId, nonlandCards))));
         }
         int remainingRadCounters = Math.max(0,
                 gameData.playerRadCounters.getOrDefault(playerId, 0) - nonlandCards);

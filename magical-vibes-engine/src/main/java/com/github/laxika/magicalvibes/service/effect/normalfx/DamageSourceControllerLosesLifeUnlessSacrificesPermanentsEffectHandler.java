@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
@@ -17,11 +18,18 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves the Archfiend of Spite damage trigger. */
+/**
+ * Resolves the Archfiend of Spite damage trigger: the damaging source's controller loses life unless they sacrifice
+ * that many permanents.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: a run changes nothing before its loss or its sacrifice (asking the
+ * player or starting the sacrifice choice changes nothing yet), so a Lich's Duel Mastery that loss would sacrifice is
+ * asked about (CR 616.1) before any life is lost, and the run is resolved again with that choice.
+ */
 @Component
 @RequiredArgsConstructor
 public class DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private static final String SACRIFICE_SELECTION_PENDING = "__sacrifice_selection_pending";
 
@@ -50,15 +58,15 @@ public class DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffectHand
         }
 
         if (!state.active) {
-            state.reset();
-            state.active = true;
-            state.currentPlayerId = playerId;
             List<UUID> legalIds = legalPermanentIds(gameData, entry, playerId);
             if (legalIds.size() < amount) {
                 loseLife(gameData, state, playerId, amount, entry);
                 return;
             }
 
+            state.reset();
+            state.active = true;
+            state.currentPlayerId = playerId;
             gameData.rerunCurrentEffectAfterInteraction = true;
             String sacrificeOption = sacrificeOption(amount);
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -82,9 +90,8 @@ public class DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffectHand
             return;
         }
 
-        String chosenMode = state.chosenMode;
-        state.chosenMode = null;
-        if (!sacrificeOption(amount).equals(chosenMode)) {
+        // The chosen mode stays set until the loss is done, so a rerun after the Mastery's question loses it again.
+        if (!sacrificeOption(amount).equals(state.chosenMode)) {
             loseLife(gameData, state, playerId, amount, entry);
             return;
         }

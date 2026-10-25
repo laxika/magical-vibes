@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AdNauseamEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class AdNauseamEffectHandler implements NormalEffectHandlerBean {
+public class AdNauseamEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final AdNauseamSupport adNauseamSupport;
     private final GameLogService gameLogService;

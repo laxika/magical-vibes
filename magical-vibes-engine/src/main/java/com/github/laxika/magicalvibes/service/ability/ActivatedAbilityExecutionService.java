@@ -149,6 +149,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -337,9 +338,11 @@ public class ActivatedAbilityExecutionService {
     /**
      * CR 616.1 and CR 601.2h: before the activation pays its sacrifice costs, asks the death replacement questions
      * of every permanent it sacrifices: its source for a sacrifice-self cost, the permanents chosen for its other
-     * sacrifice costs, its granting Equipment, and the source a mana ability sacrifices as it resolves. When one is
-     * asked, the activation stops here, before it taps or pays anything more, and is completed with the same
-     * arguments once every answer is in; its sacrifices then consume the answers.
+     * sacrifice costs, its granting Equipment, the source a mana ability sacrifices as it resolves, and the Lich's
+     * Duel Mastery its life payment or a mana ability's life loss would sacrifice instead
+     * ({@link #lifeLossSacrifices}). When one is asked, the activation stops here, before it taps or pays anything
+     * more, and is completed with the same arguments once every answer is in; its sacrifices then consume the
+     * answers.
      *
      * @return {@code true} when the activation stopped to ask
      */
@@ -363,6 +366,12 @@ public class ActivatedAbilityExecutionService {
                 && !sacrificedIds.contains(ability.getGrantSourcePermanentId())) {
             sacrificedIds.add(ability.getGrantSourcePermanentId());
         }
+        for (DepartureIntent sacrifice : lifeLossSacrifices(gameData, player.getId(), permanent, ability,
+                abilityEffects, replay.xValue())) {
+            if (!sacrificedIds.contains(sacrifice.permanentId())) {
+                sacrificedIds.add(sacrifice.permanentId());
+            }
+        }
         if (sacrificedIds.isEmpty() || !departureService.askBeforePayment(gameData,
                 DepartureBatch.of(sacrificedIds.stream().map(DepartureIntent::sacrifice).toList()))) {
             return false;
@@ -370,6 +379,64 @@ public class ActivatedAbilityExecutionService {
         gameData.pendingDeathReplacementChoiceReplay = replay;
         mutationCoordinator.invalidateAllPlayerViews(gameData);
         return true;
+    }
+
+    /**
+     * The Lich's Duel Mastery sacrifices ({@link LifeSupport#successiveLifeLossSacrifices}) that the activation's
+     * completion would make by losing life: each life payment of its costs (paying life is losing it, CR 119.4),
+     * predicted the way {@link #completeActivationAfterCosts} pays them, and a mana ability's untargeted life loss,
+     * which it resolves there too. Each separate loss uses up a shield before the next one sacrifices.
+     */
+    private List<DepartureIntent> lifeLossSacrifices(GameData gameData, UUID playerId, Permanent permanent,
+                                                     ActivatedAbility ability, List<CardEffect> abilityEffects,
+                                                     int xValue) {
+        // The completion pays its first "pay life" cost, then a per-card-in-hand, a commander identity and an X life
+        // cost, each one a separate payment; count the positive ones.
+        int payments = 0;
+        CardEffect firstLifeCost = abilityEffects.stream()
+                .filter(effect -> effect instanceof PayLifeCost
+                        || effect instanceof PayLifeEqualToCommanderColorIdentityCost)
+                .findFirst().orElse(null);
+        if (firstLifeCost instanceof PayLifeCost payLifeCost) {
+            int sourceCounterCount = payLifeCost.perSourceCounter() == null
+                    ? 0
+                    : permanent.getCounterCount(payLifeCost.perSourceCounter());
+            payments += payLifeCost.effectiveAmount(gameData.getLife(playerId), sourceCounterCount) > 0 ? 1 : 0;
+        } else if (firstLifeCost != null) {
+            payments += ManaProductionSupport.commanderColorIdentity(gameData, playerId).isEmpty() ? 0 : 1;
+        }
+        if (abilityEffects.stream().anyMatch(PayLifeForEachCardInHandCost.class::isInstance)
+                && !gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty()) {
+            payments++;
+        }
+        if (abilityEffects.stream().anyMatch(effect -> effect instanceof CostEffect cost
+                && cost.paysLifeForEachCommanderColorIdentity())
+                && !ManaProductionSupport.commanderColorIdentity(gameData, playerId).isEmpty()) {
+            payments++;
+        }
+        if (abilityEffects.stream().anyMatch(PayXLifeCost.class::isInstance) && xValue > 0) {
+            payments++;
+        }
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
+        losses.put(playerId, payments);
+        if (AbilityActivationService.isManaAbility(ability, abilityEffects)) {
+            for (CardEffect effect : abilityEffects) {
+                if (effect instanceof LoseLifeEffect loss && isNonTargetedLifeLoss(loss)) {
+                    int amount = amountEvaluationService.evaluate(gameData, loss.amount(),
+                            new AmountContext(playerId, permanent, null, xValue, 0));
+                    if (amount <= 0) {
+                        continue;
+                    }
+                    for (UUID victimId : lifeLossRecipients(gameData, playerId, permanent, loss.recipient())) {
+                        losses.merge(victimId, 1, Integer::sum);
+                    }
+                }
+            }
+        }
+        List<DepartureIntent> sacrifices = new ArrayList<>();
+        losses.forEach((victimId, count) -> sacrifices.addAll(count > 0
+                ? lifeSupport.successiveLifeLossSacrifices(gameData, victimId, count) : List.of()));
+        return sacrifices;
     }
 
     /**

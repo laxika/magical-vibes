@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.AnyPlayerMayPayLifeToCounterS
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnyPlayerMayPayLifeToCounterSpellEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /** Handles one player's Dash Hopes life-payment choice. */
@@ -17,6 +19,7 @@ public class AnyPlayerMayPayLifeToCounterSpellHandler implements MayEffectHandle
 
     private final AnyPlayerMayPayLifeToCounterSpellEffectHandler effectHandler;
     private final InputCompletionService inputCompletionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,7 +35,12 @@ public class AnyPlayerMayPayLifeToCounterSpellHandler implements MayEffectHandle
                 .orElseThrow();
 
         if (accepted && effectHandler.canPayLife(gameData, ability.controllerId(), effect.lifeCost())) {
-            effectHandler.payLife(gameData, ability.controllerId(), effect.lifeCost(), ability.sourceCard());
+            // Paying life is losing it (CR 119.4): a Lich's Duel Mastery sacrifice it causes is asked about first.
+            if (permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                    gameData, player, ability, true, () -> effectHandler.payLife(
+                            gameData, ability.controllerId(), effect.lifeCost(), ability.sourceCard()))) {
+                return;
+            }
             effectHandler.counterSpell(gameData, ability.sourceCard(), effect);
         }
 

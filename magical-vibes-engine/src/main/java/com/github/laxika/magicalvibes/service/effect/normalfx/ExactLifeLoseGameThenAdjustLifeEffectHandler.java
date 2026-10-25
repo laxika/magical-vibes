@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExactLifeLoseGameThenAdjustLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -114,10 +116,11 @@ public class ExactLifeLoseGameThenAdjustLifeEffectHandler implements NormalEffec
                 lifeSupport.applyGainLife(gameData, playerId, delta, sourceName);
             }
         } else {
-            int loss = -delta;
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                lifeSupport.applyLifeLoss(gameData, playerId, loss, sourceName);
-            }
+            // The losses follow the game-loss check, which a replacement (Lich's Mirror) can turn into a change of
+            // the battlefield. As a step of their own, every Lich's Duel Mastery sacrifice replacing one of them is
+            // asked about (CR 616.1) without checking the life totals again.
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new LoseLifeEffect(-delta, LoseLifeRecipient.EACH_PLAYER)));
         }
     }
 }

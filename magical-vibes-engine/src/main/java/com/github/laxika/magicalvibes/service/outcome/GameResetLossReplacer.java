@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.outcome;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -64,6 +65,11 @@ public class GameResetLossReplacer implements LossReplacer {
             return false;
         }
 
+        if (masterySurvivesReset(gameData, losingPlayerId)
+                && LossReplacer.askBeforeLifeTotal(lifeSupport, gameData, losingPlayerId, reason, RESET_LIFE_TOTAL)) {
+            return true;
+        }
+
         String playerName = gameData.playerIdToName.get(losingPlayerId);
         String mirrorName = mirror.getCard().getName();
         gameLogService.append(gameData, GameLog.text(
@@ -95,6 +101,16 @@ public class GameResetLossReplacer implements LossReplacer {
                 playerName + " draws " + drawn + (drawn == 1 ? " card" : " cards")
                         + " and their life total becomes " + gameData.getLife(losingPlayerId) + "."));
         return true;
+    }
+
+    /**
+     * Whether the Lich's Duel Mastery whose sacrifice would replace the reset's life loss stays on the battlefield
+     * through the reset: one the player owns is shuffled into their library before their life total changes.
+     */
+    private boolean masterySurvivesReset(GameData gameData, UUID playerId) {
+        DepartureIntent sacrifice = lifeSupport.lifeLossSacrifice(gameData, playerId);
+        return sacrifice != null
+                && !playerId.equals(gameData.stolenCreatures.getOrDefault(sacrifice.permanentId(), playerId));
     }
 
     private Permanent findMirror(GameData gameData, UUID playerId) {

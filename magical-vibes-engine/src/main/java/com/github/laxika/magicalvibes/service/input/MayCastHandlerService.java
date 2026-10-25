@@ -94,6 +94,28 @@ public class MayCastHandlerService {
     private com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
     @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService graveyardTargetingService;
+    @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.DepartureService departureService;
+
+    /**
+     * CR 601.2h and CR 616.1: before an accepted "you may cast it" pays any cost, asks the death replacement
+     * questions of the Lich's Duel Mastery that its {@code lifeCost} life payment would sacrifice instead (paying life
+     * is losing it, CR 119.4). When one is asked, nothing is paid and {@code replay} is stored; the answer is
+     * completed again once every answer is in, and the life payment's sacrifice consumes the answers.
+     *
+     * @return {@code true} when the cast stopped to ask
+     */
+    private boolean askCastLifeCostFirst(GameData gameData, Player player, int lifeCost,
+                                         GameData.DeathReplacementChoiceReplay replay) {
+        List<com.github.laxika.magicalvibes.model.DepartureIntent> sacrifices = lifeCost > 0
+                ? lifeSupport.successiveLifeLossSacrifices(gameData, player.getId(), 1) : List.of();
+        if (sacrifices.isEmpty() || !departureService.askBeforePayment(gameData,
+                com.github.laxika.magicalvibes.model.DepartureBatch.of(sacrifices))) {
+            return false;
+        }
+        gameData.pendingDeathReplacementChoiceReplay = replay;
+        return true;
+    }
     private final AdditionalSpellCostService additionalSpellCostService;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDividedDamageSupport dealDividedDamageSupport;
@@ -2039,6 +2061,9 @@ public class MayCastHandlerService {
                             + " for its madness cost " + costStr + " (choose none to decline).");
             return;
         }
+        if (askCastLifeCostFirst(gameData, player, madnessLifeCost, new GameData.MayPaymentReplay(player, ability))) {
+            return;
+        }
         cost.pay(pool);
         if (madnessLifeCost > 0) {
             lifeSupport.applyLifePayment(gameData, player.getId(), madnessLifeCost,
@@ -2126,6 +2151,10 @@ public class MayCastHandlerService {
         List<ManaColor> contributions = madnessConvokeContributions(gameData, player.getId(), context, creatureIds);
         if (contributions == null) {
             throw new IllegalStateException("The chosen creatures can't pay the madness cost with convoke");
+        }
+        if (askCastLifeCostFirst(gameData, player, context.lifeCost(),
+                new GameData.MadnessConvokeReplay(player, context, List.copyOf(creatureIds)))) {
+            return;
         }
         List<Permanent> convokers = creatureIds.stream()
                 .map(creatureId -> gameQueryService.findPermanentById(gameData, creatureId))
@@ -2497,6 +2526,10 @@ public class MayCastHandlerService {
                 return;
             }
 
+            if (askCastLifeCostFirst(gameData, player, cardToCast.getManaValue(),
+                    new GameData.MayPaymentReplay(player, ability))) {
+                return;
+            }
             if (!payArtifactLifeCastManaTaxes(gameData, player, cardToCast, Zone.HAND)) return;
             hand.remove(handIndex);
             lifeSupport.applyLifePayment(gameData, player.getId(), cardToCast.getManaValue(),
@@ -2519,6 +2552,10 @@ public class MayCastHandlerService {
             return;
         }
 
+        if (askCastLifeCostFirst(gameData, player, graveyardCard.getManaValue(),
+                new GameData.MayPaymentReplay(player, ability))) {
+            return;
+        }
         if (!payArtifactLifeCastManaTaxes(gameData, player, graveyardCard, Zone.GRAVEYARD)) return;
         lifeSupport.applyLifePayment(gameData, player.getId(), graveyardCard.getManaValue(),
                 graveyardCard.getName() + "'s alternate cost");

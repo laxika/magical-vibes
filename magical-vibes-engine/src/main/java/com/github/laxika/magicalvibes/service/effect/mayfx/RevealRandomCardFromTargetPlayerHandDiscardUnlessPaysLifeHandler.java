@@ -12,10 +12,12 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -31,6 +33,7 @@ public class RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeHandler
     private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
     private final RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeEffectHandler effectHandler;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
@@ -60,7 +63,12 @@ public class RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeHandler
                 || (gameQueryService.canPlayerLoseLife(gameData, playerId)
                 && gameData.getLife(playerId) >= lifeCost);
         if (accepted && canPay) {
-            lifeSupport.applyLifePayment(gameData, playerId, lifeCost, ability.sourceCard().getName());
+            // Paying life is losing it (CR 119.4): a Lich's Duel Mastery sacrifice it causes is asked about first.
+            if (permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                    gameData, player, ability, true, () -> lifeSupport.applyLifePayment(
+                            gameData, playerId, lifeCost, ability.sourceCard().getName()))) {
+                return;
+            }
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " pays " + lifeCost + " life. (", ability.sourceCard(), ")"));
             log.info("Game {} - {} pays {} life to keep {} ({})", gameData.id,

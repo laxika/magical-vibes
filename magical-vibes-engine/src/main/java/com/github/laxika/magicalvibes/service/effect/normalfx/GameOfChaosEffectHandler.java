@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GameOfChaosEffect;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -12,10 +13,14 @@ import org.springframework.stereotype.Component;
  * Resolves {@link GameOfChaosEffect}: performs the first coin flip (stakes 1) against the targeted
  * opponent, then queues the repeating "flip again?" prompt (doubled stakes) for the flip's winner.
  * Subsequent flips are driven by {@code GameOfChaosFlipAgainHandler}.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: its only change before the life swap is the coin flip, whose result
+ * {@link GameOfChaosSupport#flipRound} keeps until the swap, so the loser's Lich's Duel Mastery sacrifice can be
+ * asked about (CR 616.1) and the effect resolved again without flipping again.
  */
 @Component
 @RequiredArgsConstructor
-public class GameOfChaosEffectHandler implements NormalEffectHandlerBean {
+public class GameOfChaosEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameOfChaosSupport gameOfChaosSupport;
 

@@ -266,6 +266,11 @@ public class BattlefieldPlacementService {
     }
 
     @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.effect.entryfx.LoseLifeEqualToLifeTotalAsEntersEffectHandler
+            loseLifeAsEntersHandler;
+
+    @Autowired
     void setLandEquilibriumSupport(@Lazy LandEquilibriumSupport support) {
         this.landEquilibriumSupport = support;
     }
@@ -279,6 +284,7 @@ public class BattlefieldPlacementService {
         if (beginUnleashChoice(gameData, request)) return;
         if (beginRiotChoices(gameData, request)) return;
         if (asEntersDiscardSupport.begin(gameData, request)) return;
+        if (loseLifeAsEntersHandler != null && loseLifeAsEntersHandler.askBeforeEntering(gameData, request)) return;
         if (creaturePositioningSupport != null && creaturePositioningSupport.beginEntryChoice(gameData, request)) return;
         UUID controllerId = request.controllerId();
         Permanent permanent = request.permanent();
@@ -715,6 +721,7 @@ public class BattlefieldPlacementService {
 
     /** Determines native entry choices while the batch's physical cards remain in their old zones. */
     public boolean prepareNativeBatchChoices(GameData gameData, BattlefieldEntryRequest request) {
+        if (loseLifeAsEntersHandler != null && loseLifeAsEntersHandler.askBeforeEntering(gameData, request)) return true;
         if (beginAmplifyChoice(gameData, request) || beginUnleashChoice(gameData, request)
                 || beginRiotChoices(gameData, request)) return true;
         UUID controllerId = resolveEnteringController(gameData, request.controllerId(), request.permanent());

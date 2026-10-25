@@ -9,13 +9,18 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveRiderForPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerMayPayManaOrLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -195,13 +200,18 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
         // CR 608.2c: the rider follows the destruction. As a step of its own on this entry it resolves in its own
         // window, so a question it asks before its first change (Lich's Duel Mastery's sacrifice for "its
         // controller loses 2 life") reruns only the rider, never the destruction.
-        if (resolvesAsStep && riderStepHandler.resolvesAsStep(thenEffect)) {
+        // A plain sequence with such a rider among its steps (Parting Thoughts' "you draw X cards and you lose X life")
+        // becomes one rider step per instruction, in order.
+        List<CardEffect> riderSteps = resolvesAsStep ? riderSteps(thenEffect) : List.of();
+        if (!riderSteps.isEmpty()) {
             Map<UUID, UUID> removedControllers = targetControllerId != null && entry.getTargetId() != null
                     ? Map.of(entry.getTargetId(), targetControllerId) : Map.of();
-            List<UUID> riderCardIds = thenEffect instanceof SacrificePermanentsEffect && targetCardId != null
-                    ? List.of(targetCardId) : List.of();
-            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(new ResolveRiderForPlayerEffect(
-                    thenEffect, thenControllerId, thenTargetId, statValue, removedControllers, riderCardIds)));
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, riderSteps.stream()
+                    .<CardEffect>map(rider -> new ResolveRiderForPlayerEffect(rider, thenControllerId, thenTargetId,
+                            statValue, removedControllers,
+                            rider instanceof SacrificePermanentsEffect && targetCardId != null
+                                    ? List.of(targetCardId) : List.of()))
+                    .toList());
             return;
         }
         StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), thenControllerId,
@@ -258,5 +268,29 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
         }
 
         gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * The riders {@code thenEffect} resolves as steps of their own: itself when its handler is marked
+     * ({@link ResolveRiderForPlayerEffectHandler#resolvesAsStep}), the steps of a plain, ordered sequence when one of
+     * them is (the others being effects the resolution loop doesn't special-case, so each resolves the same as a rider
+     * step), or none.
+     */
+    private List<CardEffect> riderSteps(CardEffect thenEffect) {
+        if (riderStepHandler.resolvesAsStep(thenEffect)) {
+            return List.of(thenEffect);
+        }
+        if (!(thenEffect instanceof SequenceEffect sequence) || sequence.simultaneous()
+                || sequence.controllerDrawCount() != 0 || sequence.onlyIfSacrificed() || sequence.optionalTarget()
+                || sequence.steps().stream().noneMatch(riderStepHandler::resolvesAsStep)
+                || !sequence.steps().stream().allMatch(step -> riderStepHandler.resolvesAsStep(step)
+                        || !(step instanceof MayEffect || step instanceof SequenceEffect
+                        || step instanceof ConditionalEffect || step instanceof ConditionalReplacementEffect
+                        || step instanceof MayPayManaEffect || step instanceof MayPayLandDropEffect
+                        || step instanceof MayPayTapPermanentsEffect
+                        || step instanceof TargetPlayerMayPayManaOrLifeEffect))) {
+            return List.of();
+        }
+        return sequence.steps();
     }
 }

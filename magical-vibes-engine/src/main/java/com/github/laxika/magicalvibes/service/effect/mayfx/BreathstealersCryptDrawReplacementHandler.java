@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /**
@@ -39,6 +41,8 @@ public class BreathstealersCryptDrawReplacementHandler implements MayEffectHandl
     private final GraveyardService graveyardService;
     private final TriggerCollectionService triggerCollectionService;
     private final InputCompletionService inputCompletionService;
+
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
@@ -92,8 +96,18 @@ public class BreathstealersCryptDrawReplacementHandler implements MayEffectHandl
         }
     }
 
+    /**
+     * A paid answer pays the life first, so the Lich's Duel Mastery sacrifice that replaces the payment (paying life
+     * is losing it, CR 119.4) is asked about before anything changes (CR 616.1), and the same answer is completed
+     * again with that choice.
+     */
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                gameData, player, ability, accepted, () -> answer(gameData, player, accepted, ability));
+    }
+
+    private void answer(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         BreathstealersCryptDrawReplacementEffect effect = ability.effects().stream()
                 .filter(BreathstealersCryptDrawReplacementEffect.class::isInstance)
                 .map(BreathstealersCryptDrawReplacementEffect.class::cast)

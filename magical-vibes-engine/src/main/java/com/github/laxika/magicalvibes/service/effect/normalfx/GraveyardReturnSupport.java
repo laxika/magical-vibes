@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
@@ -2804,12 +2805,19 @@ public class GraveyardReturnSupport {
     }
 
     /**
-     * Reanimate's rider: the spell's controller loses life equal to the returned card's mana value.
-     * Routed through {@link LifeSupport} so loses-life triggers fire.
+     * Reanimate's rider: the spell's controller loses life equal to the returned card's mana value, after the
+     * return (CR 608.2c). On a resolving entry the loss is a step of its own, so a Lich's Duel Mastery sacrifice
+     * replacing it asks its CR 616.1 questions without returning the card again.
      */
     public void applyLifeLossEqualToManaValue(GameData gameData, StackEntry entry, UUID controllerId, Card card) {
         int manaValue = card.getManaValue();
-        if (manaValue > 0) {
+        if (manaValue <= 0) {
+            return;
+        }
+        if (entry.getResolvingEffectIndex() >= 0) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new PlayersLoseLifeEffect(Map.of(controllerId, manaValue))));
+        } else {
             lifeSupport.applyLifeLoss(gameData, controllerId, manaValue, entry.getCard().getName());
         }
     }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -15,11 +16,15 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-/** Resolves {@link PayXLifeEffect} and stores the chosen amount as the entry's event value. */
+/**
+ * Resolves {@link PayXLifeEffect} and stores the chosen amount as the entry's event value. The payment is the first
+ * change of the rerun that answers the X prompt, and paying life is losing it (CR 119.4), so a Lich's Duel Mastery
+ * sacrifice it causes is asked about first and the payment is made again with the same X.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class PayXLifeEffectHandler implements NormalEffectHandlerBean {
+public class PayXLifeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
     private final GameQueryService gameQueryService;
@@ -39,12 +44,12 @@ public class PayXLifeEffectHandler implements NormalEffectHandlerBean {
 
         if (gameData.chosenXValue != null) {
             int chosenValue = gameData.chosenXValue;
-            gameData.chosenXValue = null;
             entry.setEventValue(chosenValue);
 
             if (chosenValue > 0) {
                 lifeSupport.applyLifePayment(gameData, controllerId, chosenValue, cardName);
             }
+            gameData.chosenXValue = null;
             gameLogService.append(gameData, GameLog.text(
                     playerName + " pays " + chosenValue + " life for " + cardName + "."));
             log.info("Game {} - {} pays {} life for {}", gameData.id, playerName, chosenValue, cardName);

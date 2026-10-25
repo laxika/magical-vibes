@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.VillainousChoiceState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TheMasterGallifreysEndEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /** Resolves The Master's death-triggered exile and villainous choice. */
@@ -31,7 +33,6 @@ public class TheMasterGallifreysEndEffectHandler implements NormalEffectHandlerB
     private final ExileService exileService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInputService playerInputService;
-    private final LifeSupport lifeSupport;
     private final TokenCopySupport tokenCopySupport;
     private final VillainousChoiceSupport villainousChoiceSupport;
 
@@ -84,8 +85,11 @@ public class TheMasterGallifreysEndEffectHandler implements NormalEffectHandlerB
             String chosen = state.chosenMode;
             state.chosenMode = null;
             if (TheMasterGallifreysEndEffect.LOSE_LIFE_OPTION.equals(chosen)) {
+                // The loss follows the exile and the choice (CR 608.2c). As a step of its own, a Lich's Duel Mastery
+                // sacrifice replacing it asks its CR 616.1 questions without the choice being made again.
                 if (state.currentTargetId != null && gameData.playerIds.contains(state.currentTargetId)) {
-                    lifeSupport.applyLifeLoss(gameData, state.currentTargetId, 4, entry.getCard().getName());
+                    entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                            List.of(new PlayersLoseLifeEffect(Map.of(state.currentTargetId, 4))));
                 }
             } else if (TheMasterGallifreysEndEffect.CREATE_TOKEN_OPTION.equals(chosen)) {
                 ExiledCardEntry exiled = gameData.findExiledCard(typed.dyingCardId());

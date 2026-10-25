@@ -13,9 +13,11 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /**
@@ -31,6 +33,7 @@ public class MayPayLifeOrEntersTappedHandler implements MayEffectHandlerBean {
     private final LifeSupport lifeSupport;
     private final InputCompletionService inputCompletionService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,7 +52,12 @@ public class MayPayLifeOrEntersTappedHandler implements MayEffectHandlerBean {
         boolean canPay = gameQueryService.canPlayerLifeChange(gameData, playerId)
                 && gameData.getLife(playerId) >= effect.lifeCost();
         if (accepted && canPay) {
-            lifeSupport.applyLifePayment(gameData, playerId, effect.lifeCost(), ability.sourceCard().getName());
+            // Paying life is losing it (CR 119.4): a Lich's Duel Mastery sacrifice it causes is asked about first.
+            if (permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                    gameData, player, ability, true, () -> lifeSupport.applyLifePayment(
+                            gameData, playerId, effect.lifeCost(), ability.sourceCard().getName()))) {
+                return;
+            }
             log.info("Game {} - {} pays {} life for {}", gameData.id, player.getUsername(),
                     effect.lifeCost(), ability.sourceCard().getName());
         } else {

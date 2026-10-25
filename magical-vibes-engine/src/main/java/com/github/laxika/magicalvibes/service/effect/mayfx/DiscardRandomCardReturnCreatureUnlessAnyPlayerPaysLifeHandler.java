@@ -12,10 +12,12 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -32,6 +34,7 @@ public class DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeHandler
     private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
     private final TriggerCollectionService triggerCollectionService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
@@ -57,7 +60,12 @@ public class DiscardRandomCardReturnCreatureUnlessAnyPlayerPaysLifeHandler
         }
 
         if (accepted && effectHandler.canPayLife(gameData, player.getId(), effect.lifeCost())) {
-            lifeSupport.applyLifePayment(gameData, player.getId(), effect.lifeCost(), ability.sourceCard().getName());
+            // Paying life is losing it (CR 119.4): a Lich's Duel Mastery sacrifice it causes is asked about first.
+            if (permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                    gameData, player, ability, true, () -> lifeSupport.applyLifePayment(
+                            gameData, player.getId(), effect.lifeCost(), ability.sourceCard().getName()))) {
+                return;
+            }
             log.info("Game {} - {} pays {} life to prevent {}'s discarded creature from returning",
                     gameData.id, player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

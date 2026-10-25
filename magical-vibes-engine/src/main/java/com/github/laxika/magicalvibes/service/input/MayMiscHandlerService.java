@@ -104,6 +104,8 @@ public class MayMiscHandlerService {
     private StepTriggerService stepTriggerService;
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.turn.UntapStepService untapStepService;
+    @Autowired @Lazy
+    private PermanentChoiceHandlerService permanentChoiceHandlerService;
 
     /** Setter for manual (non-Spring) construction (tests, AI simulator). */
     public void setTriggerCollectionService(TriggerCollectionService triggerCollectionService) {
@@ -412,8 +414,12 @@ public class MayMiscHandlerService {
 
         if (effect.kind() == DrawReplacementKind.ZURS_WEIRDING) {
             // The choosing player (may-ability controller) pays 2 life; the revealed top card of the
-            // drawing player's library goes into that player's graveyard instead of being drawn.
-            lifeSupport.applyLifePayment(gameData, player.getId(), 2, ability.sourceCard().getName());
+            // drawing player's library goes into that player's graveyard instead of being drawn. Paying life is
+            // losing it (CR 119.4): a Lich's Duel Mastery sacrifice it causes is asked about first.
+            if (permanentChoiceHandlerService.answerAskingDeathReplacementsFirst(gameData, player, ability, true,
+                    () -> lifeSupport.applyLifePayment(gameData, player.getId(), 2, ability.sourceCard().getName()))) {
+                return;
+            }
 
             List<Card> deck = gameData.playerDecks.get(drawingPlayerId);
             if (deck != null && !deck.isEmpty()) {
@@ -535,17 +541,21 @@ public class MayMiscHandlerService {
     /**
      * Eye Spy — the controller may put the looked-at top card into the target
      * player's graveyard. The library/graveyard owner is the targeted player, not
-     * the prompted controller.
+     * the prompted controller. A life cost is paid first; paying life is losing it (CR 119.4), so a Lich's Duel
+     * Mastery sacrifice it causes is asked about before anything changes and {@code ability} is answered again.
      */
-    public void handleLookAtTargetPlayerTopCardChoice(GameData gameData, boolean accepted, UUID libraryOwnerId,
-                                                      UUID controllerId, int lifeCost) {
+    public void handleLookAtTargetPlayerTopCardChoice(GameData gameData, Player player, boolean accepted,
+                                                      PendingMayAbility ability, UUID libraryOwnerId, int lifeCost) {
+        UUID controllerId = player.getId();
         List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
         String ownerName = gameData.playerIdToName.get(libraryOwnerId);
 
         boolean canPayLife = lifeCost <= 0 || gameData.getLife(controllerId) >= lifeCost;
         if (accepted && canPayLife && deck != null && !deck.isEmpty()) {
-            if (lifeCost > 0) {
-                lifeSupport.applyLifePayment(gameData, controllerId, lifeCost, "Eye Spy");
+            if (lifeCost > 0 && permanentChoiceHandlerService.answerAskingDeathReplacementsFirst(
+                    gameData, player, ability, true,
+                    () -> lifeSupport.applyLifePayment(gameData, controllerId, lifeCost, "Eye Spy"))) {
+                return;
             }
             Card topCard = deck.removeFirst();
             graveyardService.addCardToGraveyard(gameData, libraryOwnerId, topCard, Zone.LIBRARY);

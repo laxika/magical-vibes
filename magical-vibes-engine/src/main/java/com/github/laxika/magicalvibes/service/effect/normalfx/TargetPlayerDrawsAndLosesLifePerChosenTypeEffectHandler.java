@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDrawsAndLosesLifePerChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -13,7 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,7 +29,6 @@ public class TargetPlayerDrawsAndLosesLifePerChosenTypeEffectHandler implements 
     private final PlayerInputService playerInputService;
     private final GameQueryService gameQueryService;
     private final DrawService drawService;
-    private final LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -55,6 +57,7 @@ public class TargetPlayerDrawsAndLosesLifePerChosenTypeEffectHandler implements 
         PermanentAllOfPredicate creatureOfChosenType = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentHasSubtypePredicate(chosenSubtype)));
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID targetPlayerId : targetPlayerIds) {
             if (!gameData.playerIds.contains(targetPlayerId)) {
                 continue;
@@ -73,8 +76,13 @@ public class TargetPlayerDrawsAndLosesLifePerChosenTypeEffectHandler implements 
                 entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
                         List.of(new LoseLifeEffect(count, LoseLifeRecipient.TARGET_PLAYER)));
             } else {
-                lifeSupport.applyLifeLoss(gameData, targetPlayerId, count, entry.getCard().getName());
+                losses.put(targetPlayerId, count);
             }
+        }
+        // Several target players lose their life together after the draws, as one step of its own.
+        if (!losses.isEmpty()) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new PlayersLoseLifeEffect(losses)));
         }
     }
 }

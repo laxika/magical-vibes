@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.IllicitAuctionState;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +31,20 @@ public class LifeBidAuctionSupport {
         state.highBid = bid;
         state.highBidderId = state.currentBidderId;
         return true;
+    }
+
+    /**
+     * The life loss the auction ends with when {@code bid} is the current bidder's answer and the bidding then comes
+     * back around to the high bidder ({@link #recordBid} and {@link #advanceToNextBidder}), or no loss when the
+     * bidding goes on. Changes nothing.
+     */
+    public Map<UUID, Integer> lifeLossIfBidEndsAuction(GameData gameData, int bid) {
+        IllicitAuctionState state = gameData.illicitAuction;
+        boolean raises = bid > state.highBid;
+        UUID highBidderId = raises ? state.currentBidderId : state.highBidderId;
+        int highBid = raises ? bid : state.highBid;
+        UUID next = state.order.get((state.index + 1) % state.order.size());
+        return next.equals(highBidderId) ? Map.of(highBidderId, highBid) : Map.of();
     }
 
     public UUID advanceToNextBidder(GameData gameData) {

@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyLandsUnlessAnyPlayerPaysLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -21,8 +22,8 @@ import org.springframework.stereotype.Component;
 public class DestroyLandsUnlessAnyPlayerPaysLifeHandler implements MayEffectHandlerBean {
 
     private final DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler effectHandler;
-    private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
@@ -42,11 +43,16 @@ public class DestroyLandsUnlessAnyPlayerPaysLifeHandler implements MayEffectHand
 
         boolean paid = accepted && effectHandler.canPayLife(gameData, player.getId(), effect.lifeCost());
         if (paid) {
-            int lifeLoss = effect.lifeCost()
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, player.getId());
-            lifeSupport.applyLifePayment(gameData, player.getId(), lifeLoss, ability.sourceCard().getName());
+            // Paying life is losing it (CR 119.4): a Lich's Duel Mastery sacrifice it causes is asked about first.
+            // The payment is the printed amount; a life-loss multiplier (Bloodletter of Aclazotz) applies once, to
+            // the life the payment makes the player lose.
+            if (permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                    gameData, player, ability, true, () -> lifeSupport.applyLifePayment(
+                            gameData, player.getId(), effect.lifeCost(), ability.sourceCard().getName()))) {
+                return;
+            }
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " pays " + lifeLoss + " life to prevent ",
+                    player.getUsername() + " pays " + effect.lifeCost() + " life to prevent ",
                     ability.sourceCard(), "'s land from being destroyed."));
         }
 

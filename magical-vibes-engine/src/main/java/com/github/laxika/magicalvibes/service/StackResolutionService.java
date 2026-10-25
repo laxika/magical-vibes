@@ -164,6 +164,11 @@ public class StackResolutionService {
         this.paradigmService = paradigmService;
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.effect.entryfx.LoseLifeEqualToLifeTotalAsEntersEffectHandler
+            loseLifeAsEntersHandler;
+
     public void resolveTopOfStack(GameData gameData) {
         if (gameData.stack.isEmpty()) return;
         // Everything already on the stack has been through a priority window, so no later trigger
@@ -184,6 +189,11 @@ public class StackResolutionService {
             gameData.mindControllerPlayerId = gameData.wordOfCommandControllerPlayerId;
             gameData.mindControlledPlayerId = gameData.wordOfCommandControlledPlayerId;
             gameData.mindControlUntilEndOfCombat = false;
+        }
+        // CR 616.1f: Lich's "as this enters, you lose life" asks a Lich's Duel Mastery sacrifice's questions before
+        // the permanent enters; the spell stays on the stack and resolves once they are answered.
+        if (loseLifeAsEntersHandler != null && loseLifeAsEntersHandler.askBeforeResolving(gameData, entry)) {
+            return;
         }
         // CR 608.2n: an instant or sorcery stays on the stack until the final part of its resolution,
         // so spells cast while it resolves can still target it.

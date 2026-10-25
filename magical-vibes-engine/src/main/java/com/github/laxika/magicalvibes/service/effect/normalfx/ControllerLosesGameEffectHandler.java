@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ControllerLosesGameEffectHandler implements NormalEffectHandlerBean {
+public class ControllerLosesGameEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameOutcomeService gameOutcomeService;
     private final GameLogService gameLogService;
