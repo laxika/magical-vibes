@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.b.BumpInTheNight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
+import com.github.laxika.magicalvibes.cards.o.OrzhovGuildmage;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,6 +13,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -200,6 +203,79 @@ class LichsDuelMasteryTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    @CardUsed({BumpInTheNight.class, Opalescence.class, WheelOfSunAndMoon.class, KalitasTraitorOfGhet.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("A spell's life loss asks library-or-Kalitas for the animated, shieldless Mastery before any life changes")
+    void spellLifeLossAsksTheDeathReplacementBeforeTheSacrifice() {
+        Permanent mastery = animatedShieldlessMasteryAgainstKalitas();
+        Card bump = new BumpInTheNight();
+        harness.setHand(player1, List.of(bump));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Put it on the bottom of its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.playerDecks.get(player2.getId()).getLast().getId()).isEqualTo(mastery.getCard().getId());
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Bump in the Night");
+        assertThat(zombieTokens(player1)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({OrzhovGuildmage.class, Opalescence.class, WheelOfSunAndMoon.class, KalitasTraitorOfGhet.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("\"Each player loses 1 life\" asks both players' Mastery sacrifices before either player's life changes")
+    void eachPlayerLifeLossAsksEveryMasteryBeforeAnyLifeChanges() {
+        harness.addToBattlefield(player1, new OrzhovGuildmage());
+        Permanent ownMastery = harness.addToBattlefieldAndReturn(player1, new LichsDuelMastery());
+        Permanent ownWheel = harness.addToBattlefieldAndReturn(player1, new WheelOfSunAndMoon());
+        ownWheel.setAttachedTo(player1.getId());
+        harness.addToBattlefield(player2, new KalitasTraitorOfGhet());
+        Permanent opponentMastery = animatedShieldlessMasteryAgainstKalitas();
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player1, "Lich's Duel Mastery");
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player1, "Put it on the bottom of its owner's library");
+
+        harness.assertOnBattlefield(player1, "Lich's Duel Mastery");
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        harness.assertNotOnBattlefield(player1, "Lich's Duel Mastery");
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.playerDecks.get(player1.getId()).getLast().getId()).isEqualTo(ownMastery.getCard().getId());
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
+                .contains(opponentMastery.getCard().getId());
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(zombieTokens(player1)).isEqualTo(1);
+        assertThat(zombieTokens(player2)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     /**
      * Player 2 controls a Mastery without shields that Opalescence makes a creature and that Wheel of Sun and Moon's
      * enchanted player owns; player 1 controls Kalitas. Sacrificing the Mastery then needs its controller's choice
@@ -217,7 +293,11 @@ class LichsDuelMasteryTest extends BaseCardTest {
     }
 
     private long zombieTokens() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
+        return zombieTokens(player1);
+    }
+
+    private long zombieTokens(Player player) {
+        return gd.playerBattlefields.get(player.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .count();
     }

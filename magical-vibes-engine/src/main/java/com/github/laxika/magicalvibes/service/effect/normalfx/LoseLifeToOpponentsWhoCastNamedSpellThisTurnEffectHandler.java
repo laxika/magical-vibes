@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.Map;
+import java.util.LinkedHashMap;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -11,7 +14,7 @@ import org.springframework.stereotype.Component;
 /** Resolves Grim Reminder's name-matching opponent life-loss clause. */
 @Component
 @RequiredArgsConstructor
-public class LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffectHandler implements NormalEffectHandlerBean {
+public class LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
 
@@ -24,6 +27,7 @@ public class LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffectHandler implement
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect loss =
                 (LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect) effect;
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(entry.getControllerId())) {
                 continue;
@@ -31,8 +35,9 @@ public class LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffectHandler implement
             boolean castMatchingSpell = gameData.getSpellsCastThisTurn(playerId).stream()
                     .anyMatch(card -> loss.cardName().equals(card.getName()));
             if (castMatchingSpell) {
-                lifeSupport.applyLifeLoss(gameData, playerId, loss.amount(), entry.getCard().getName());
+                losses.put(playerId, loss.amount());
             }
         }
+        lifeSupport.applyLifeLosses(gameData, losses, entry.getCard().getName());
     }
 }

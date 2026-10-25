@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.Map;
+import java.util.LinkedHashMap;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -11,7 +14,7 @@ import org.springframework.stereotype.Component;
 /** Resolves life loss limited to opponents meeting a poison-counter threshold. */
 @Component
 @RequiredArgsConstructor
-public class EachOpponentWithPoisonCountersLosesLifeEffectHandler implements NormalEffectHandlerBean {
+public class EachOpponentWithPoisonCountersLosesLifeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
 
@@ -24,12 +27,14 @@ public class EachOpponentWithPoisonCountersLosesLifeEffectHandler implements Nor
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         EachOpponentWithPoisonCountersLosesLifeEffect lifeLoss =
                 (EachOpponentWithPoisonCountersLosesLifeEffect) effect;
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(entry.getControllerId())
                     && gameData.playerPoisonCounters.getOrDefault(playerId, 0)
                     >= lifeLoss.minimumPoisonCounters()) {
-                lifeSupport.applyLifeLoss(gameData, playerId, lifeLoss.amount(), entry.getCard().getName());
+                losses.put(playerId, lifeLoss.amount());
             }
         }
+        lifeSupport.applyLifeLosses(gameData, losses, entry.getCard().getName());
     }
 }

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.Map;
+import java.util.LinkedHashMap;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -16,7 +19,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class EachOpponentLosesLifeEqualToCardsInTheirGraveyardEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -35,6 +38,7 @@ public class EachOpponentLosesLifeEqualToCardsInTheirGraveyardEffectHandler
 
         String sourceName = entry.getCard().getName();
         var filter = ((EachOpponentLosesLifeEqualToCardsInTheirGraveyardEffect) effect).filter();
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) {
                 continue;
@@ -48,8 +52,9 @@ public class EachOpponentLosesLifeEqualToCardsInTheirGraveyardEffectHandler
                                     card, filter, null, gameData, playerId))
                             .count();
             if (cardsInGraveyard > 0) {
-                lifeSupport.applyLifeLoss(gameData, playerId, cardsInGraveyard, sourceName);
+                losses.put(playerId, cardsInGraveyard);
             }
         }
+        lifeSupport.applyLifeLosses(gameData, losses, sourceName);
     }
 }

@@ -13,8 +13,11 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import java.util.UUID;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -24,12 +27,15 @@ import org.springframework.stereotype.Component;
  * controller. The {@link DynamicAmount} amount is evaluated once against the stack entry (source-
  * relative amounts use the live source permanent when present, else the last-known snapshot).
  *
- * <p>Every recipient goes through {@link LifeSupport#applyLifeLoss}, which records the amount lost
+ * <p>Every recipient goes through {@link LifeSupport#applyLifeLosses}, which records the amount lost
  * and fires "loses life" triggers. Life loss is never routed through damage plumbing.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: the life losses are its first change, so a Lich's Duel
+ * Mastery one of them would sacrifice instead is asked about (CR 616.1) before any life is lost.
  */
 @Component
 @RequiredArgsConstructor
-public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
+public class LoseLifeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
     private final GameQueryService gameQueryService;
@@ -76,24 +82,43 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = entry.getControllerId();
         String sourceName = entry.getCard().getName();
 
-        switch (e.recipient()) {
-            case CONTROLLER -> lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
-            case OWNER -> lifeSupport.applyLifeLoss(gameData, ownerId, amount, sourceName);
-            case SOURCE_CONTROLLER -> lifeSupport.applyLifeLoss(gameData, sourceControllerId, amount, sourceName);
-            case TARGET_PLAYER, TRIGGERING_PLAYER ->
-                    loseTargetPlayerLife(gameData, entry, e, amount, sourceName, amountContext);
-            case ACTIVE_PLAYER -> loseActivePlayerLife(gameData, entry, amount, sourceName);
-            case TARGET_PERMANENT_CONTROLLER -> loseTargetPermanentControllerLife(gameData, entry, amount, sourceName);
-            case DYING_CREATURE_CONTROLLER -> dyingCreatureControllerLosesLife(gameData, entry, amount, sourceName);
-            case DEFENDING_PLAYER -> defendingPlayerLosesLife(gameData, amount, sourceName, defendingPlayerId);
-            case EACH_PLAYER -> eachPlayerLosesLife(gameData, e, entry, controllerId, amount, sourceName, false);
-            case EACH_OPPONENT -> eachPlayerLosesLife(gameData, e, entry, controllerId, amount, sourceName, true);
-            case EACH_OTHER_PLAYER -> {
-                UUID owner = entry.getCard().getOwnerId() != null
-                        ? entry.getCard().getOwnerId() : controllerId;
-                eachPlayerLosesLife(gameData, e, entry, owner, amount, sourceName, false);
-            }
+        Map<UUID, Integer> losses = switch (e.recipient()) {
+            case CONTROLLER -> single(controllerId, amount);
+            case OWNER -> single(ownerId, amount);
+            case SOURCE_CONTROLLER -> single(sourceControllerId, amount);
+            case TARGET_PLAYER, TRIGGERING_PLAYER -> targetPlayerLosses(gameData, entry, e, amount, amountContext);
+            case ACTIVE_PLAYER -> single(entry.getActivePlayerId() != null
+                    ? entry.getActivePlayerId() : gameData.activePlayerId, amount);
+            case TARGET_PERMANENT_CONTROLLER -> single(targetPermanentControllerId(gameData, entry), amount);
+            // The creature is already in the graveyard by the time the trigger resolves, so the
+            // graveyard pipeline baked its last-known controller onto the trigger's targetId.
+            case DYING_CREATURE_CONTROLLER -> single(entry.getTargetId(), amount);
+            case DEFENDING_PLAYER -> single(defendingPlayerId, amount);
+            case EACH_PLAYER -> eachPlayerLosses(gameData, e, entry, controllerId, amount, false);
+            case EACH_OPPONENT -> eachPlayerLosses(gameData, e, entry, controllerId, amount, true);
+            case EACH_OTHER_PLAYER -> eachPlayerLosses(gameData, e, entry,
+                    entry.getCard().getOwnerId() != null ? entry.getCard().getOwnerId() : controllerId,
+                    amount, false);
+        };
+        int totalLifeLost = lifeSupport.applyLifeLosses(gameData, losses, sourceName);
+
+        boolean targeted = e.recipient() == LoseLifeRecipient.TARGET_PLAYER
+                || e.recipient() == LoseLifeRecipient.TRIGGERING_PLAYER;
+        if (targeted && e.recordTargetLifeLost()) {
+            entry.setEventValue(totalLifeLost);
         }
+        boolean drains = targeted || e.recipient() == LoseLifeRecipient.EACH_PLAYER
+                || e.recipient() == LoseLifeRecipient.EACH_OPPONENT
+                || e.recipient() == LoseLifeRecipient.EACH_OTHER_PLAYER;
+        if (drains && totalLifeLost > 0 && controllerGainsLifeLost(gameData, entry, e)) {
+            UUID gainingPlayerId = e.recipient() == LoseLifeRecipient.EACH_OTHER_PLAYER
+                    && entry.getCard().getOwnerId() != null ? entry.getCard().getOwnerId() : controllerId;
+            lifeSupport.applyGainLife(gameData, gainingPlayerId, totalLifeLost);
+        }
+    }
+
+    private static Map<UUID, Integer> single(UUID playerId, int amount) {
+        return playerId == null ? Map.of() : Map.of(playerId, amount);
     }
 
     private UUID sourcePermanentControllerId(GameData gameData, StackEntry entry) {
@@ -119,24 +144,8 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
                 : gameQueryService.findPermanentController(gameData, attackedTargetId);
     }
 
-    private void defendingPlayerLosesLife(GameData gameData, int amount, String sourceName,
-                                           UUID defendingPlayerId) {
-        if (defendingPlayerId != null) {
-            lifeSupport.applyLifeLoss(gameData, defendingPlayerId, amount, sourceName);
-        }
-    }
-
-    private void dyingCreatureControllerLosesLife(GameData gameData, StackEntry entry, int amount, String sourceName) {
-        // The creature is already in the graveyard by the time the trigger resolves, so the
-        // graveyard pipeline baked its last-known controller onto the trigger's targetId.
-        UUID dyingControllerId = entry.getTargetId();
-        if (dyingControllerId != null) {
-            lifeSupport.applyLifeLoss(gameData, dyingControllerId, amount, sourceName);
-        }
-    }
-
-    private void loseTargetPlayerLife(GameData gameData, StackEntry entry, LoseLifeEffect effect,
-            int amount, String sourceName, AmountContext amountContext) {
+    private Map<UUID, Integer> targetPlayerLosses(GameData gameData, StackEntry entry, LoseLifeEffect effect,
+            int amount, AmountContext amountContext) {
         List<UUID> targetPlayerIds = effect.recipient() == LoseLifeRecipient.TARGET_PLAYER
                 ? entry.targetsForEffect(effect) : List.of();
         if (targetPlayerIds.isEmpty()) {
@@ -146,36 +155,21 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
             }
             targetPlayerIds = targetPlayerId == null ? List.of() : List.of(targetPlayerId);
         }
-        int totalLifeLost = 0;
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID targetPlayerId : targetPlayerIds) {
             if (!gameData.playerIds.contains(targetPlayerId)) continue;
             int targetAmount = targetPlayerIds.size() == 1 ? amount
                     : amountEvaluationService.evaluate(gameData, effect.amount(),
                     amountContext.withTargetPermanentId(targetPlayerId));
-            int lifeBefore = gameData.getLife(targetPlayerId);
-            lifeSupport.applyLifeLoss(gameData, targetPlayerId, targetAmount, sourceName);
-            totalLifeLost += Math.max(0, lifeBefore - gameData.getLife(targetPlayerId));
+            losses.put(targetPlayerId, targetAmount);
         }
-        if (effect.recordTargetLifeLost()) {
-            entry.setEventValue(totalLifeLost);
-        }
-        if (controllerGainsLifeLost(gameData, entry, effect) && totalLifeLost > 0) {
-            lifeSupport.applyGainLife(gameData, entry.getControllerId(), totalLifeLost);
-        }
+        return losses;
     }
 
-    private void loseActivePlayerLife(GameData gameData, StackEntry entry, int amount, String sourceName) {
-        UUID activePlayerId = entry.getActivePlayerId() != null
-                ? entry.getActivePlayerId() : gameData.activePlayerId;
-        if (activePlayerId != null) {
-            lifeSupport.applyLifeLoss(gameData, activePlayerId, amount, sourceName);
-        }
-    }
-
-    private void loseTargetPermanentControllerLife(GameData gameData, StackEntry entry, int amount, String sourceName) {
+    private UUID targetPermanentControllerId(GameData gameData, StackEntry entry) {
         UUID targetId = entry.getTargetId();
         if (targetId == null) {
-            return;
+            return null;
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
         if (controllerId == null) {
@@ -184,9 +178,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         if (controllerId == null && targetId.equals(entry.getTriggeringPermanentId())) {
             controllerId = entry.getTriggeringPermanentControllerId();
         }
-        if (controllerId != null) {
-            lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
-        }
+        return controllerId;
     }
 
     private boolean controlsMatching(GameData gameData, UUID playerId, PermanentPredicate predicate) {
@@ -198,15 +190,15 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
                 .anyMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, predicate));
     }
 
-    private void eachPlayerLosesLife(GameData gameData, LoseLifeEffect e, StackEntry entry,
-            UUID controllerId, int amount, String sourceName, boolean opponentsOnly) {
+    private Map<UUID, Integer> eachPlayerLosses(GameData gameData, LoseLifeEffect e, StackEntry entry,
+            UUID controllerId, int amount, boolean opponentsOnly) {
         // The X-scaled drain (Exsanguinate) short-circuits on non-positive X before touching any
         // life total — preserves the former EachOpponentLosesXLife... early-out.
         if (controllerGainsLifeLost(gameData, entry, e) && amount <= 0) {
-            return;
+            return Map.of();
         }
 
-        int totalLifeLost = 0;
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId) && (opponentsOnly || e.recipient() == LoseLifeRecipient.EACH_OTHER_PLAYER)) {
                 continue;
@@ -216,14 +208,9 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
             if (e.exemptIfControls() != null && controlsMatching(gameData, playerId, e.exemptIfControls())) {
                 continue;
             }
-            int lifeBefore = gameData.getLife(playerId);
-            lifeSupport.applyLifeLoss(gameData, playerId, amount, sourceName);
-            totalLifeLost += Math.max(0, lifeBefore - gameData.getLife(playerId));
+            losses.put(playerId, amount);
         }
-
-        if (controllerGainsLifeLost(gameData, entry, e) && totalLifeLost > 0) {
-            lifeSupport.applyGainLife(gameData, controllerId, totalLifeLost);
-        }
+        return losses;
     }
 
     private boolean controllerGainsLifeLost(GameData gameData, StackEntry entry, LoseLifeEffect effect) {

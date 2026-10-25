@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; the fallback stays until the callers listed in the tenth part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; the fallback stays until the callers listed in the eleventh part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1581,6 +1581,56 @@ Steps add notes here for later steps, under their number.
   `InputCompletionServiceTest`, `DepartureServiceOrphanedStepBatchTest`, `CombatDamageServiceTest`,
   `SimultaneousDamageMechanicTest`, `RedirectedDamageRulesTest`, `CombatDamageAssignmentTest`, `GameDataDeepCopyTest` and
   the `service.effect.normalfx.*Damage*` / `*Life*` tests have the same 107 failures (of 258) as at HEAD.
+
+### Step 13 (eleventh part: Lich's Duel Mastery's sacrifice for the life loss an effect causes)
+
+- Rules: the Mastery replaces its controller's life loss with its sacrifice (CR 614.6, checked), and the sacrifice's own
+  death replacements are chosen inside the same replacement process (CR 616.1f, checked), so before any life is lost.
+  When an effect makes several players lose life at once, the players whose Masteries need an answer choose in APNAP
+  order (CR 616.1 and CR 101.4, checked) before any of the losses happens. The amounts of such an effect are determined
+  once, when it is applied (CR 608.2h, checked), so they are all computed before the first loss. No official ruling
+  covers the Mastery (it is a playtest card).
+- Done: the window shape (first of the tenth part's three options). `LifeSupport` has:
+  - `applyLifeLosses(gameData, Map<UUID, Integer>, sourceName)`: the life losses of one effect, in order, returning the
+    total lost. It first calls `askBeforeLifeLosses`, which inside a rerun window (`deathReplacementsCanRerunEffect`)
+    predicts every Mastery sacrifice (`lifeLossSacrifice`, for a positive amount a player can lose) and asks them all
+    through `PermanentRemovalService.askDeathReplacementsBeforeRemoval` (APNAP order, `rerunsEffect`, the effect is
+    parked and resolved again; the answers wait in `chosenDeathReplacementsForRerun` and the sacrifices'
+    `departNow` choose stage consumes them, even after the window has closed).
+  - Every life total change (life gain, life loss, a life payment, a set life total, the exile-instead-of-paying
+    replacement) and every Mastery shield put into a hand now closes the window (`closeDeathReplacementRerunWindow`),
+    so a loss the prediction missed falls back instead of losing life twice on the rerun.
+- Marked `AsksDeathReplacementsFirst` (their first change is the life loss): `LoseLifeEffectHandler` (now builds the
+  losses as a map and calls `applyLifeLosses`; the drain and `recordTargetLifeLost` read its total), and the multi-player
+  handlers that now call `applyLifeLosses` (`EachPlayerLosesFractionOfLifeRoundedDown` / `RoundedUp`,
+  `EachOpponentWithEmptyHandLosesLife`, `EachOpponentWithPoisonCountersLosesLife`,
+  `LoseLifeToOpponentsWhoCastNamedSpellThisTurn`, `EachOpponentLosesLifeEqualToLifeLostThisTurn`,
+  `EachOpponentDealtCombatDamageByNamedCreatureThisGameLosesLife`, `EachOpponentLosesLifeEqualToCardsInTheirGraveyard`,
+  `EachPlayerLosesLifePerCreatureControlled`, `EachPlayerLosesLifePerPermanentControlled`; their amounts are computed
+  for every player before the first loss, where they used to be computed between losses), and the single-loss handlers
+  `LoseAllButOneLife`, `LoseLifeEqualToTriggeringSpellManaValueDifference`, `DamageSourceControllerLosesLife`,
+  `LoseLifeToOwnerOfTriggeringSpell`, `LoseLifeToOwnerOfTriggeringPermanent`, `SourcePermanentControllerLosesLife`,
+  `TargetSpellControllerLosesLife`, `TargetOpponentLosesLifeEqualToPowerToughnessDifference`,
+  `DrainLifePerControlledPermanent`, `DoubleTargetPlayerLife` and `DoubleControllerLife` (a lone loss asks by itself
+  inside the window through `replaceLifeLossWithShield`'s `departNow`).
+- **Left** (why the fallback still can't be deleted):
+  - Life loss elsewhere: the 111 other files that call `applyLifeLoss` / `applySetLifeTotal` / `applyLifePayment`
+    (`grep -rlE "applyLifeLoss|applySetLifeTotal|applyLifePayment" magical-vibes-engine/src/main | xargs grep -L
+    AsksDeathReplacementsFirst`): handlers that change something first (draw, mill, reveal, exile, then lose life:
+    these need the loss as a step of its own or the pre-ask moved before their first change), the "lose life unless"
+    / "or lose life" choice families and their completions (`MayPenaltyChoiceHandlerService`, `ChoiceHandlerService`,
+    ...), `SetLifeTotalEffectHandler` and the exchange/redistribute handlers, and every life payment (costs:
+    `askBeforePayment`, CR 601.2h, is the shape there). `SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLife` is
+    marked but taps its source before the life loss, so its Mastery question would rerun the tap.
+  - Unchanged from the tenth part: Bomb Squad (parked pending an official ruling), redirected combat damage, and nothing
+    is asked while another departure batch or replay window's answers are pending.
+- Tests: new (both `@FailOnLegacyDepartureFallback`, both fail with the old handlers by reaching the fallback)
+  `LichsDuelMasteryTest.spellLifeLossAsksTheDeathReplacementBeforeTheSacrifice` (Bump in the Night at the controller of
+  an animated, shieldless Mastery under Wheel of Sun and Moon, against Kalitas: life 20 while asked, then the Mastery on
+  the bottom of its library, life still 20) and `LichsDuelMasteryTest.eachPlayerLifeLossAsksEveryMasteryBeforeAnyLifeChanges`
+  (Orzhov Guildmage's "each player loses 1 life" with a Mastery, a Wheel and a Kalitas on each side: both players are
+  asked before either life total or Mastery changes; without `askBeforeLifeLosses` the second Mastery still reaches the
+  fallback). No existing test changed.
 
 ### Step 2
 

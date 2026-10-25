@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.Map;
+import java.util.LinkedHashMap;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -12,7 +15,7 @@ import org.springframework.stereotype.Component;
 /** Resolves life loss limited to opponents with empty hands. */
 @Component
 @RequiredArgsConstructor
-public class EachOpponentWithEmptyHandLosesLifeEffectHandler implements NormalEffectHandlerBean {
+public class EachOpponentWithEmptyHandLosesLifeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
 
@@ -25,11 +28,13 @@ public class EachOpponentWithEmptyHandLosesLifeEffectHandler implements NormalEf
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         EachOpponentWithEmptyHandLosesLifeEffect lifeLoss =
                 (EachOpponentWithEmptyHandLosesLifeEffect) effect;
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(entry.getControllerId())
                     && gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty()) {
-                lifeSupport.applyLifeLoss(gameData, playerId, lifeLoss.amount(), entry.getCard().getName());
+                losses.put(playerId, lifeLoss.amount());
             }
         }
+        lifeSupport.applyLifeLosses(gameData, losses, entry.getCard().getName());
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -14,7 +15,7 @@ import java.util.UUID;
 /** Resolves the Soulgorger Orgg-style "lose all but 1 life" effect. */
 @Component
 @RequiredArgsConstructor
-public class LoseAllButOneLifeEffectHandler implements NormalEffectHandlerBean {
+public class LoseAllButOneLifeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
     private final GameQueryService gameQueryService;

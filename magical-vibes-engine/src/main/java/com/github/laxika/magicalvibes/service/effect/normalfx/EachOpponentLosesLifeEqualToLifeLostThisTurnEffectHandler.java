@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.Map;
+import java.util.LinkedHashMap;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -18,7 +21,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class EachOpponentLosesLifeEqualToLifeLostThisTurnEffectHandler implements NormalEffectHandlerBean {
+public class EachOpponentLosesLifeEqualToLifeLostThisTurnEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
 
@@ -33,12 +36,14 @@ public class EachOpponentLosesLifeEqualToLifeLostThisTurnEffectHandler implement
         if (controllerId == null) return;
 
         String sourceName = entry.getCard().getName();
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) continue;
             int lifeLost = gameData.lifeLostThisTurn.getOrDefault(playerId, 0);
             if (lifeLost > 0) {
-                lifeSupport.applyLifeLoss(gameData, playerId, lifeLost, sourceName);
+                losses.put(playerId, lifeLost);
             }
         }
+        lifeSupport.applyLifeLosses(gameData, losses, sourceName);
     }
 }

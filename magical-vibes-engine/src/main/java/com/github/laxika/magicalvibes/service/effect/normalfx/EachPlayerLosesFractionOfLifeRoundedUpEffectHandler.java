@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -13,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.FractionalLifeLossRecipient;
 
 @Component
 @RequiredArgsConstructor
-public class EachPlayerLosesFractionOfLifeRoundedUpEffectHandler implements NormalEffectHandlerBean {
+public class EachPlayerLosesFractionOfLifeRoundedUpEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
 
@@ -39,11 +40,7 @@ public class EachPlayerLosesFractionOfLifeRoundedUpEffectHandler implements Norm
             int lifeLoss = currentLife <= 0 ? 0 : (int) (((long) currentLife + e.divisor() - 1) / e.divisor());
             amounts.put(playerId, lifeLoss);
         }
-        amounts.forEach((playerId, lifeLoss) -> {
-            if (lifeLoss > 0) {
-                lifeSupport.applyLifeLoss(gameData, playerId, lifeLoss, entry.getCard().getName());
-            }
-        });
+        lifeSupport.applyLifeLosses(gameData, amounts, entry.getCard().getName());
         if (e.recipient() == FractionalLifeLossRecipient.SUBGAME_NON_WINNERS) entry.setSubgameResult(null);
     }
 }

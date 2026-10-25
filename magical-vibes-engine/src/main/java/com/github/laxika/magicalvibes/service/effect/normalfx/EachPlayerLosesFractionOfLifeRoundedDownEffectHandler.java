@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.Map;
+import java.util.LinkedHashMap;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -11,7 +14,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class EachPlayerLosesFractionOfLifeRoundedDownEffectHandler implements NormalEffectHandlerBean {
+public class EachPlayerLosesFractionOfLifeRoundedDownEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
 
@@ -23,11 +26,13 @@ public class EachPlayerLosesFractionOfLifeRoundedDownEffectHandler implements No
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EachPlayerLosesFractionOfLifeRoundedDownEffect) effect;
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             int lifeLoss = gameData.getLife(playerId) / e.divisor();
             if (lifeLoss > 0) {
-                lifeSupport.applyLifeLoss(gameData, playerId, lifeLoss, entry.getCard().getName());
+                losses.put(playerId, lifeLoss);
             }
         }
+        lifeSupport.applyLifeLosses(gameData, losses, entry.getCard().getName());
     }
 }

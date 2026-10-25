@@ -31,7 +31,9 @@ import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -157,6 +159,7 @@ public class LifeSupport {
             return;
         }
         gameData.playerLifeTotals.put(controllerId, currentLife + amount);
+        closeDeathReplacementRerunWindow(gameData);
         if (amount > 0) {
             gameData.lifeGainedThisTurn.merge(controllerId, amount, Integer::sum);
         }
@@ -217,6 +220,7 @@ public class LifeSupport {
                 return true;
             }
             gameData.playerLifeTotals.put(playerId, currentLife + gained);
+            closeDeathReplacementRerunWindow(gameData);
             gameData.lifeGainedThisTurn.merge(playerId, gained, Integer::sum);
             emitLifeCue(gameData, VisualCueType.LIFE_GAINED, playerId, gained, null);
             triggerCollectionService.checkLifeGainTriggers(gameData, playerId, gained);
@@ -235,6 +239,7 @@ public class LifeSupport {
                 return true;
             }
             gameData.playerLifeTotals.put(playerId, SaturatingMath.subtract(currentLife, lifeLoss));
+            closeDeathReplacementRerunWindow(gameData);
             emitLifeCue(gameData, VisualCueType.LIFE_LOST, playerId, lifeLoss, null);
             triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLoss);
         }
@@ -257,6 +262,7 @@ public class LifeSupport {
         }
         int currentLife = gameData.getLife(playerId);
         gameData.playerLifeTotals.put(playerId, SaturatingMath.subtract(currentLife, amount));
+        closeDeathReplacementRerunWindow(gameData);
         emitLifeCue(gameData, VisualCueType.LIFE_LOST, playerId, amount, null);
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -265,6 +271,62 @@ public class LifeSupport {
         log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, amount, sourceName);
 
         triggerCollectionService.checkLifeLossTriggers(gameData, playerId, amount);
+    }
+
+    /**
+     * Makes each player of {@code losses} lose that much life, in order, as the life losses of one effect. First
+     * asks, through {@link #askBeforeLifeLosses}, every question the sacrifices those losses would cause need, so
+     * a resolving effect whose later loss would ask can still be stopped and resolved again.
+     *
+     * @return the total life the players lost
+     */
+    public int applyLifeLosses(GameData gameData, Map<UUID, Integer> losses, String sourceName) {
+        askBeforeLifeLosses(gameData, losses);
+        int totalLifeLost = 0;
+        for (Map.Entry<UUID, Integer> loss : losses.entrySet()) {
+            int lifeBefore = gameData.getLife(loss.getKey());
+            applyLifeLoss(gameData, loss.getKey(), loss.getValue(), sourceName);
+            totalLifeLost += Math.max(0, lifeBefore - gameData.getLife(loss.getKey()));
+        }
+        return totalLifeLost;
+    }
+
+    /**
+     * CR 616.1 for the Lich's Duel Mastery sacrifices that the life losses a resolving effect is about to cause
+     * would replace them with ({@link #lifeLossSacrifice}): while that effect has changed nothing yet
+     * ({@link GameData#deathReplacementsCanRerunEffect}), asks every death replacement question among them in APNAP
+     * order before any life is lost, and stops the effect so it is resolved again with the answers
+     * ({@link PermanentRemovalService#askDeathReplacementsBeforeRemoval}). A lone loss would ask by itself inside
+     * the window; asking ahead lets every loss of the effect ask, since the first life total that changes closes the
+     * window. Does nothing outside the window.
+     */
+    public void askBeforeLifeLosses(GameData gameData, Map<UUID, Integer> losses) {
+        if (!gameData.deathReplacementsCanRerunEffect) {
+            return;
+        }
+        List<Permanent> sacrificed = new ArrayList<>();
+        losses.forEach((playerId, amount) -> {
+            if (amount <= 0 || !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
+                return;
+            }
+            DepartureIntent sacrifice = lifeLossSacrifice(gameData, playerId);
+            Permanent mastery = sacrifice == null ? null
+                    : gameQueryService.findPermanentById(gameData, sacrifice.permanentId());
+            if (mastery != null) {
+                sacrificed.add(mastery);
+            }
+        });
+        if (!sacrificed.isEmpty()) {
+            permanentRemovalService.askDeathReplacementsBeforeRemoval(gameData, sacrificed);
+        }
+    }
+
+    /**
+     * A life total (or a Lich's Duel Mastery shield) just changed, so a resolving effect stopped later for a death
+     * replacement question could not be resolved again from the start without changing it twice.
+     */
+    private static void closeDeathReplacementRerunWindow(GameData gameData) {
+        gameData.deathReplacementsCanRerunEffect = false;
     }
 
     /** Applies a life payment and fires both life-loss and life-payment triggers. */
@@ -283,6 +345,7 @@ public class LifeSupport {
         if (gameQueryService.hasLifePaymentReplacement(gameData, playerId)
                 && gameData.getLife(playerId) >= amount
                 && deck != null && deck.size() >= amount) {
+            closeDeathReplacementRerunWindow(gameData);
             for (int i = 0; i < amount; i++) {
                 gameData.addToExile(playerId, deck.removeFirst());
             }
@@ -299,6 +362,7 @@ public class LifeSupport {
             return;
         }
         gameData.playerLifeTotals.put(playerId, SaturatingMath.subtract(currentLife, lifeLoss));
+        closeDeathReplacementRerunWindow(gameData);
         emitLifeCue(gameData, VisualCueType.LIFE_LOST, playerId, lifeLoss, null);
 
         String playerName = gameData.playerIdToName.get(playerId);
@@ -422,6 +486,7 @@ public class LifeSupport {
         for (Permanent source : masters) {
             ExiledCardEntry shield = shieldFor(gameData, source, playerId);
             if (shield != null && gameData.removeFromExile(shield.card().getId())) {
+                closeDeathReplacementRerunWindow(gameData);
                 gameData.addCardToHand(playerId, shield.card());
                 gameLogService.append(gameData, GameLog.text(
                         gameData.playerIdToName.get(playerId)

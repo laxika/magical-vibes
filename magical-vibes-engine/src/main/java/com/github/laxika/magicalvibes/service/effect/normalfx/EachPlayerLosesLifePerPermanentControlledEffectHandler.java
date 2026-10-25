@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.UUID;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -11,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class EachPlayerLosesLifePerPermanentControlledEffectHandler implements NormalEffectHandlerBean {
+public class EachPlayerLosesLifePerPermanentControlledEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -24,6 +28,7 @@ public class EachPlayerLosesLifePerPermanentControlledEffectHandler implements N
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EachPlayerLosesLifePerPermanentControlledEffect) effect;
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
             int matchingPermanentCount = 0;
             for (Permanent permanent : battlefield) {
@@ -34,8 +39,9 @@ public class EachPlayerLosesLifePerPermanentControlledEffectHandler implements N
 
             int lifeLoss = matchingPermanentCount * e.lifePerPermanent();
             if (lifeLoss > 0) {
-                lifeSupport.applyLifeLoss(gameData, playerId, lifeLoss, entry.getCard().getName());
+                losses.put(playerId, lifeLoss);
             }
         });
+        lifeSupport.applyLifeLosses(gameData, losses, entry.getCard().getName());
     }
 }
