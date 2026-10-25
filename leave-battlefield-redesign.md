@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; thirteenth part: the losses after an exile or a sacrifice (Dire Tactics, Trystan, Will of the Abzan, Xathrid Demon's sacrifice) are steps of their own through the new internal `PlayersLoseLifeEffect`, and Priest of Forgotten Gods', Mornsong Aria's and Thieving Amalgam's losses ask first; fourteenth part: Stab Wound's family through `LifeSupport`, and the losses after a reveal, a mill, a library exile or discards; fifteenth part: the destroy-all riders (Deadly Tempest, Rain of Daggers, ...) are steps of their own; sixteenth part: noncreature permanents get their CR 616.1 graveyard-replacement question too, and destroy-all riders count permanents a replacement exiled instead; seventeenth part: the targeted destroy handlers count "destroyed this way" and "put into a graveyard this way" as their Oracle text says; eighteenth part: an orphaned or illegally attached Aura with a CR 616.1 question joins the state-based departure batch; nineteenth part: the `DestroyTargetPermanentThenEffect` cards without `requiresDestruction` audited against Oracle text and rulings (no change needed), and the attachment sweeps' citations fixed; the fallback stays until the callers listed in the fifteenth part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; thirteenth part: the losses after an exile or a sacrifice (Dire Tactics, Trystan, Will of the Abzan, Xathrid Demon's sacrifice) are steps of their own through the new internal `PlayersLoseLifeEffect`, and Priest of Forgotten Gods', Mornsong Aria's and Thieving Amalgam's losses ask first; fourteenth part: Stab Wound's family through `LifeSupport`, and the losses after a reveal, a mill, a library exile or discards; fifteenth part: the destroy-all riders (Deadly Tempest, Rain of Daggers, ...) are steps of their own; sixteenth part: noncreature permanents get their CR 616.1 graveyard-replacement question too, and destroy-all riders count permanents a replacement exiled instead; seventeenth part: the targeted destroy handlers count "destroyed this way" and "put into a graveyard this way" as their Oracle text says; eighteenth part: an orphaned or illegally attached Aura with a CR 616.1 question joins the state-based departure batch; nineteenth part: the `DestroyTargetPermanentThenEffect` cards without `requiresDestruction` audited against Oracle text and rulings (no change needed), and the attachment sweeps' citations fixed; twentieth part: `DestroyTargetPermanentThenEffect`'s marked riders ("its controller loses 2 life", "you lose life equal to its toughness") are steps of their own through the internal `ResolveRiderForPlayerEffect`, so Lich's Duel Mastery's sacrifice is asked after the destruction; the fallback stays until the callers listed in the fifteenth part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -2002,6 +2002,55 @@ Steps add notes here for later steps, under their number.
   cards (`DeathsCaressTest`, `RiteOfTheSerpentTest`, `MoltenRainTest`, `KellanInquisitiveProdigyTailTheSuspectTest`,
   `AssassinsTrophyTest`, `DireStrainRampageTest.indestructibleLandUsesOneBasicBranch`). `AuraAttachmentServiceTest` and
   `AttachmentLegalityIntegrationTest` pass with the renamed display names.
+
+### Step 13 (twentieth part: the `DestroyTargetPermanentThenEffect` riders as steps of their own)
+
+- Rules: instructions are followed in the order written (CR 608.2c, checked), so Hideous End's "Its controller loses 2
+  life" and Feed the Swarm's "You lose life equal to that permanent's mana value" follow the destruction, which can
+  take away a replacement the Mastery's sacrifice would otherwise have (a destroyed Kalitas). The Mastery's sacrifice
+  replaces the loss (CR 614.6, checked) and its replacements are chosen by its controller (CR 616.1, checked; CR
+  616.1f, checked), so the question belongs after the destruction and before any life is lost. The rider's amount is
+  determined once (CR 608.2h, checked): the last-known stat is still read before the destruction, as before. No
+  official ruling covers the Mastery (it is a playtest card).
+- Done:
+  - New internal step `ResolveRiderForPlayerEffect(rider, controllerId, targetId, eventValue,
+    removedPermanentControllers, targetCardIds)` (domain `model/effect/`, never on a card) and its handler
+    `ResolveRiderForPlayerEffectHandler`, which builds the derived entry the "then" handler used to build (the
+    recipient as controller, the retargeted player, the last-known value, the destroyed permanent's controller and
+    card), checks a resolution-time `ConditionalEffect` rider on it and resolves the rider through its own handler.
+  - `AsksDeathReplacementsFirst` has a default `asksDeathReplacementsFirst(CardEffect)` (true), which
+    `EffectResolutionService` now checks before opening a rerun window. The rider step's handler overrides it: it is
+    marked exactly when its rider's handler is, since checking the condition changes nothing.
+  - `DestroyTargetPermanentThenEffectHandler`: when the effect is the step the loop is resolving (read before the
+    destruction consumes `stepDepartureEffect`) and the rider is resolved by a marked handler
+    (`ResolveRiderForPlayerEffectHandler.resolvesAsStep`, so `LoseLifeEffect`, `SacrificePermanentsEffect`, ...),
+    the rider is inserted as the next step instead of resolving at once on a fresh entry. Every other rider (draws,
+    gains, searches, sequences, the bound "may search" branch, Dire-Strain Rampage's), and a dispatch by another
+    handler (Infinite Authority's delayed trigger), resolves at once as before.
+- **Left**:
+  - Parting Thoughts (C16): its rider is a `SequenceEffect` (draw, then lose life), still resolved at once in a
+    nested resolution, so its loss falls back. Splitting a sequence into rider steps needs care for the wrapper
+    effects the resolution loop special-cases (may, may-pay, conditional replacement).
+  - The other "then" handlers that resolve a rider on a fresh entry: none has a life-loss rider on a card today
+    (`DestroyTargetPermanentsThen`: Sylvan Primordial's search; `ReturnTargetPermanentToHandThen`: counters, draws,
+    discards, tokens; `ExileTargetPermanentThen`: no loss rider, and its rider runs inside the exile's leave batch,
+    which a step would split). `SacrificePermanentThen`'s choice completion already inserts its rider as a step.
+    They can use `ResolveRiderForPlayerEffect` when a card needs it.
+  - Everything else in the fifteenth part's **Left** (Bomb Squad, parked pending an official ruling; Mulch-like
+    handlers, `LookAtTopCardMayRevealToHandAndLoseLifeEqualToManaValue`, the "unless" / "or lose life" families,
+    SetLifeTotal, doubling and exchange handlers; life payments; redirected combat damage; questions while another
+    departure batch is pending) is unchanged.
+- Tests: new in `LichsDuelMasteryTest` (both `@FailOnLegacyDepartureFallback`, both fail with the old handler, where
+  the player lost 2 life instead): `destroyThenTargetControllerLifeLossAsksTheMasteryBeforeAnyLifeIsLost` (Hideous
+  End on player 2's token: the token destroyed and player 2 at 20 while asked library-or-exile for the noncreature
+  Mastery; then the Mastery on the library's bottom, life 20) and
+  `destroyThenCasterLifeLossAsksTheMasteryBeforeAnyLifeIsLost` (Feed the Swarm cast by the Mastery's controller: the
+  Bears destroyed once, life 20 throughout, the Mastery exiled). No existing test changed. The test classes of every
+  `DestroyTargetPermanentThenEffect` card (plus `DespoilerOfSoulsTest`, picked up by name), `LichsDuelMasteryTest`,
+  the `architecture` package, `EffectResolutionServiceTest`, `DestroyAllPermanentsEffectHandlerTest` and
+  `GameSimulatorTest` fail exactly as with the old code (Orzhov Charm's bounce-mode Aura test, Price of Freedom's
+  decline test, Public Execution's regeneration test, Despoiler of Souls' five, and the application module's 58
+  known failures) apart from the two new tests.
 
 ### Step 2
 

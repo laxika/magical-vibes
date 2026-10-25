@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+
 /**
  * Marks an effect handler that changes nothing before its first attempt to remove a permanent
  * from the battlefield, on every path. While it resolves as a stack object's effect,
@@ -10,4 +12,13 @@ package com.github.laxika.magicalvibes.service.effect;
  * first removal attempt must not carry this mark, since its earlier changes would happen twice.
  */
 public interface AsksDeathReplacementsFirst {
+
+    /**
+     * Whether resolving {@code effect} changes nothing before its first removal attempt. Every effect of a marked
+     * handler does, unless the handler resolves another effect it carries (a rider step), which does only when that
+     * effect's own handler is marked.
+     */
+    default boolean asksDeathReplacementsFirst(CardEffect effect) {
+        return true;
+    }
 }

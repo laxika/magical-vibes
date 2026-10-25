@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ResolveRiderForPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +45,11 @@ import org.springframework.beans.factory.ObjectProvider;
  * chosen {@link ThenEffectRecipient} and whose {@code eventValue} carries the snapshot, so the
  * then-effect's ordinary {@code CONTROLLER}-style recipient lands on the right player with the right
  * value — without any then-effect needing its own "target permanent's controller" variant.
+ *
+ * <p>When this effect is a step of the resolution and its then-effect is resolved by a handler marked
+ * {@link AsksDeathReplacementsFirst} (a life loss), the then-effect becomes the next step of the same entry, a
+ * {@link ResolveRiderForPlayerEffect} carrying that recipient and value; any other then-effect, or one dispatched
+ * by another handler, resolves at once.
  */
 @Slf4j
 @Component
@@ -56,6 +63,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameOutcomeService gameOutcomeService;
     private final ObjectProvider<EffectResolutionService> effectResolutionService;
+    private final ResolveRiderForPlayerEffectHandler riderStepHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -65,6 +73,9 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DestroyTargetPermanentThenEffect) effect;
+        // Whether this effect is the step the resolution loop is resolving on this entry (not one another
+        // handler dispatches on an entry of its own), read before the destruction consumes the mark.
+        boolean resolvesAsStep = gameData.stepDepartureEffect == effect && entry.getResolvingEffectIndex() >= 0;
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             resolveForDepartedReferencedPermanent(gameData, entry, e);
@@ -117,7 +128,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
         }
 
         resolveThenEffect(gameData, entry, e, statValue, targetControllerId, targetOwnerId,
-                target.getOriginalCard().getId());
+                target.getOriginalCard().getId(), resolvesAsStep);
     }
 
     /**
@@ -158,12 +169,12 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
         }
         UUID departedControllerId = entry.getRemovedPermanentControllers().get(departedId);
         UUID departedOwnerId = lastKnownCard == null ? null : lastKnownCard.getOwnerId();
-        resolveThenEffect(gameData, entry, e, statValue, departedControllerId, departedOwnerId, null);
+        resolveThenEffect(gameData, entry, e, statValue, departedControllerId, departedOwnerId, null, false);
     }
 
     private void resolveThenEffect(GameData gameData, StackEntry entry, DestroyTargetPermanentThenEffect e,
                                    int statValue, UUID targetControllerId, UUID targetOwnerId,
-                                   UUID targetCardId) {
+                                   UUID targetCardId, boolean resolvesAsStep) {
         UUID thenControllerId = switch (e.recipient()) {
             case TARGET_CONTROLLER -> targetControllerId;
             case TARGET_OWNER -> targetOwnerId;
@@ -181,6 +192,18 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
             default -> entry.getTargetId();
         };
         CardEffect thenEffect = e.thenEffect();
+        // CR 608.2c: the rider follows the destruction. As a step of its own on this entry it resolves in its own
+        // window, so a question it asks before its first change (Lich's Duel Mastery's sacrifice for "its
+        // controller loses 2 life") reruns only the rider, never the destruction.
+        if (resolvesAsStep && riderStepHandler.resolvesAsStep(thenEffect)) {
+            Map<UUID, UUID> removedControllers = targetControllerId != null && entry.getTargetId() != null
+                    ? Map.of(entry.getTargetId(), targetControllerId) : Map.of();
+            List<UUID> riderCardIds = thenEffect instanceof SacrificePermanentsEffect && targetCardId != null
+                    ? List.of(targetCardId) : List.of();
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(new ResolveRiderForPlayerEffect(
+                    thenEffect, thenControllerId, thenTargetId, statValue, removedControllers, riderCardIds)));
+            return;
+        }
         StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), thenControllerId,
                 entry.getDescription(), List.of(thenEffect), thenTargetId, entry.getSourcePermanentId());
         thenEntry.setEventValue(statValue);

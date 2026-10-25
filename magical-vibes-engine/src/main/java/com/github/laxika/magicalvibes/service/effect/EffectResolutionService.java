@@ -480,7 +480,8 @@ public class EffectResolutionService {
                     // handler nested inside another one closes the window, since the outer one has
                     // already begun.
                     boolean deathReplacementRerunWindow = gameData.effectResolutionDepth == 1
-                            && handler instanceof AsksDeathReplacementsFirst
+                            && handler instanceof AsksDeathReplacementsFirst marked
+                            && marked.asksDeathReplacementsFirst(effectToResolve)
                             && (gameData.pendingEffectResolutionEntry == null
                             || gameData.pendingEffectResolutionEntry == entry);
                     gameData.deathReplacementsCanRerunEffect = deathReplacementRerunWindow;

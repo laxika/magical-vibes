@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.cards.d.DarkConfidant;
 import com.github.laxika.magicalvibes.cards.d.DeadlyTempest;
 import com.github.laxika.magicalvibes.cards.d.DireTactics;
 import com.github.laxika.magicalvibes.cards.d.DuskmantleSeer;
+import com.github.laxika.magicalvibes.cards.f.FeedTheSwarm;
 import com.github.laxika.magicalvibes.cards.f.FeralMaaka;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HideousEnd;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.m.MornsongAria;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
@@ -778,6 +780,83 @@ class LichsDuelMasteryTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(mastery.getCard());
         assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(mastery.getCard());
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed({HideousEnd.class, WheelOfSunAndMoon.class, LeylineOfTheVoid.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Hideous End asks the destroyed creature's controller's Mastery after the destruction and before any life is lost")
+    void destroyThenTargetControllerLifeLossAsksTheMasteryBeforeAnyLifeIsLost() {
+        Permanent mastery = noncreatureShieldlessMasteryBetweenWheelAndLeyline();
+        GrizzlyBears tokenCard = new GrizzlyBears();
+        tokenCard.setToken(true);
+        Permanent token = harness.addToBattlefieldAndReturn(player2, tokenCard);
+        harness.setHand(player1, List.of(new HideousEnd()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0, token.getId());
+        harness.passBothPriorities();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Exile it");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(token);
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Put it on the bottom of its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.playerDecks.get(player2.getId()).getLast().getId()).isEqualTo(mastery.getCard().getId());
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Hideous End");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({FeedTheSwarm.class, WheelOfSunAndMoon.class, LeylineOfTheVoid.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Feed the Swarm asks the caster's Mastery after the destruction, destroying once")
+    void destroyThenCasterLifeLossAsksTheMasteryBeforeAnyLifeIsLost() {
+        Permanent mastery = noncreatureShieldlessMasteryBetweenWheelAndLeyline();
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new FeedTheSwarm()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveSorcery(player2, 0, bears.getId());
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Exile it");
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(bears.getCard().getId());
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Exile it");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(mastery.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(bears.getCard().getId());
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    /**
+     * Player 2 controls a noncreature Mastery without shields that Wheel of Sun and Moon's enchanted player owns;
+     * player 1 controls Leyline of the Void. Sacrificing the Mastery then needs its controller's choice between the
+     * library and the exile (CR 616.1).
+     */
+    private Permanent noncreatureShieldlessMasteryBetweenWheelAndLeyline() {
+        harness.setLife(player2, 20);
+        Permanent mastery = harness.addToBattlefieldAndReturn(player2, new LichsDuelMastery());
+        harness.addToBattlefieldAndReturn(player2, new WheelOfSunAndMoon()).setAttachedTo(player2.getId());
+        harness.addToBattlefield(player1, new LeylineOfTheVoid());
+        return mastery;
     }
 
     private Permanent kalitas() {
