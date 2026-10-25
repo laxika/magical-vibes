@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndChangeLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import org.junit.jupiter.api.BeforeEach;
@@ -87,17 +89,20 @@ class RevealTopCardPutIntoHandAndChangeLifeEffectHandlerTest {
     }
 
     @Test
-    @DisplayName("gainLife=false puts card in hand and loses life equal to mana value")
+    @DisplayName("gainLife=false puts card in hand and makes losing life equal to mana value the next step")
     void losesLife() {
         Card topCard = createCard("Grizzly Bears", "{1}{G}");
         gd.playerDecks.get(player1Id).add(topCard);
 
         var effect = new RevealTopCardPutIntoHandAndChangeLifeEffect(false);
-        handler.resolve(gd, entryFor(effect, "Dark Tutelage"), effect);
+        StackEntry entry = entryFor(effect, "Dark Tutelage");
+        entry.setResolvingEffectIndex(0);
+        handler.resolve(gd, entry, effect);
 
         assertThat(gd.playerHands.get(player1Id)).contains(topCard);
-        verify(lifeSupport).applyLifeLoss(eq(gd), eq(player1Id), eq(2), eq("Dark Tutelage"));
-        verify(lifeSupport, never()).applyGainLife(any(), any(), anyInt(), any(), any(), any());
+        assertThat(entry.getEffectsToResolve())
+                .containsExactly(effect, new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER));
+        verifyNoInteractions(lifeSupport);
     }
 
     @Test

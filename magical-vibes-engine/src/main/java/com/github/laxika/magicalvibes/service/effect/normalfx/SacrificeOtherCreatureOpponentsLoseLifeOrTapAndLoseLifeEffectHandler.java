@@ -7,9 +7,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
@@ -25,9 +26,7 @@ public class SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffectHandle
 
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
-    private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
-    private final LifeSupport lifeSupport;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -57,8 +56,10 @@ public class SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffectHandle
                         gameLogService.append(gameData, GameLog.text(tapLog));
                         log.info("Game {} - {} is tapped (no creature to sacrifice)", gameData.id, cardName);
                     }
-                    lifeSupport.applyLifeLoss(gameData, controllerId, e.lifeLoss(), cardName);
-                    gameOutcomeService.checkWinCondition(gameData);
+                    // The life loss is a step of its own, so a death replacement question its Lich's Duel Mastery
+                    // sacrifice asks (CR 616.1f) reruns only the loss, not the tap.
+                    entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                            List.of(new LoseLifeEffect(e.lifeLoss(), LoseLifeRecipient.CONTROLLER)));
                     return;
                 }
 

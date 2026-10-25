@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandThenEachOpponentLosesLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +21,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RevealTopCardPutIntoHandThenEachOpponentLosesLifeEffectHandler implements NormalEffectHandlerBean {
 
-    private final LifeSupport lifeSupport;
     private final GameLogService gameLogService;
 
     @Override
@@ -48,11 +49,10 @@ public class RevealTopCardPutIntoHandThenEachOpponentLosesLifeEffectHandler impl
         gameData.addCardToHand(controllerId, topCard);
 
         if (manaValue > 0) {
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                if (!playerId.equals(controllerId)) {
-                    lifeSupport.applyLifeLoss(gameData, playerId, manaValue, sourceName);
-                }
-            }
+            // The life losses are a step of their own, so a death replacement question a Lich's Duel Mastery
+            // sacrifice asks (CR 616.1f) reruns only the losses, not the reveal.
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new LoseLifeEffect(manaValue, LoseLifeRecipient.EACH_OPPONENT)));
         }
 
         log.info("Game {} - {} reveals {} (MV {}) via {}", gameData.id, playerName,

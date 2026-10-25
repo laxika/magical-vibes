@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -11,6 +13,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -20,7 +23,6 @@ public class DrawAndLoseLifePerCounterOnSourceEffectHandler implements NormalEff
     private final GameQueryService gameQueryService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final AmountEvaluationService amountEvaluationService;
-    private final LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,6 +47,9 @@ public class DrawAndLoseLifePerCounterOnSourceEffectHandler implements NormalEff
                 ((DrawAndLoseLifePerCounterOnSourceEffect) effect).drawnCardAmount(),
                 AmountContext.forStackEntry(entry, source));
         playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), amount);
-        lifeSupport.applyLifeLoss(gameData, entry.getControllerId(), amount, entry.getCard().getName());
+        // The life loss is a step of its own, so a death replacement question its Lich's Duel Mastery sacrifice
+        // asks (CR 616.1f) reruns only the loss, not the draw.
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                List.of(new LoseLifeEffect(amount, LoseLifeRecipient.CONTROLLER)));
     }
 }

@@ -5,12 +5,16 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndDrainOpponentsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -18,7 +22,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RevealTopCardPutIntoHandAndDrainOpponentsEffectHandler implements NormalEffectHandlerBean {
 
-    private final LifeSupport lifeSupport;
     private final GameLogService gameLogService;
 
     @Override
@@ -53,13 +56,11 @@ public class RevealTopCardPutIntoHandAndDrainOpponentsEffectHandler implements N
             return;
         }
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(controllerId)) {
-                lifeSupport.applyLifeLoss(gameData, playerId, manaValue, sourceName);
-            }
-        }
-        lifeSupport.applyGainLife(gameData, controllerId, manaValue, sourceName,
-                entry.getCard(), entry.getEntryType());
+        // The life losses and the gain are steps of their own, so a death replacement question a Lich's Duel
+        // Mastery sacrifice asks (CR 616.1f) reruns only the losses, not the reveal.
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                new LoseLifeEffect(manaValue, LoseLifeRecipient.EACH_OPPONENT),
+                new GainLifeEffect(manaValue)));
 
         log.info("Game {} - {} drains opponents for {} after revealing {} via {}",
                 gameData.id, playerName, manaValue, topCard.getName(), sourceName);

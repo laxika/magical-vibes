@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.b.BloodTyrant;
 import com.github.laxika.magicalvibes.cards.b.BumpInTheNight;
+import com.github.laxika.magicalvibes.cards.d.DarkConfidant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
@@ -9,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -273,6 +276,66 @@ class LichsDuelMasteryTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(zombieTokens(player1)).isEqualTo(1);
         assertThat(zombieTokens(player2)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({DarkConfidant.class, Opalescence.class, WheelOfSunAndMoon.class, KalitasTraitorOfGhet.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Dark Confidant's life loss asks library-or-Kalitas after the reveal and before any life changes")
+    void revealThenLifeLossAsksTheDeathReplacementBeforeTheSacrifice() {
+        Permanent mastery = animatedShieldlessMasteryAgainstKalitas();
+        harness.addToBattlefield(player2, new DarkConfidant());
+        Card revealed = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(revealed));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId).contains(revealed.getId());
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Put it on the bottom of its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getId)
+                .containsExactly(mastery.getCard().getId());
+        assertThat(gd.playerHands.get(player2.getId()).stream().filter(card -> card.getId().equals(revealed.getId())))
+                .hasSize(1);
+        harness.assertLife(player2, 20);
+        assertThat(zombieTokens()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({BloodTyrant.class, Opalescence.class, WheelOfSunAndMoon.class, KalitasTraitorOfGhet.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Blood Tyrant's \"each player loses 1 life\" asks the opponent's Mastery before either player loses life")
+    void bloodTyrantAsksTheMasteryBeforeAnyLifeIsLost() {
+        Permanent mastery = animatedShieldlessMasteryAgainstKalitas();
+        Permanent tyrant = harness.addToBattlefieldAndReturn(player1, new BloodTyrant());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId()).contains(mastery.getCard().getId());
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        assertThat(tyrant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(zombieTokens()).isEqualTo(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

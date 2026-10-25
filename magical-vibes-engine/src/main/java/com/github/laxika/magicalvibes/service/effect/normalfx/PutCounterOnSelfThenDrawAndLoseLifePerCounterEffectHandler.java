@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenDrawAndLoseLifePerCounterEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,7 +23,6 @@ public class PutCounterOnSelfThenDrawAndLoseLifePerCounterEffectHandler implemen
     private final PermanentCounterSupport permanentCounterSupport;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final AmountEvaluationService amountEvaluationService;
-    private final LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,6 +45,9 @@ public class PutCounterOnSelfThenDrawAndLoseLifePerCounterEffectHandler implemen
         int amount = amountEvaluationService.evaluate(gameData, e.drawnCardAmount(),
                 AmountContext.forStackEntry(entry, counted));
         playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), amount);
-        lifeSupport.applyLifeLoss(gameData, entry.getControllerId(), amount, entry.getCard().getName());
+        // The life loss is a step of its own, so a death replacement question its Lich's Duel Mastery sacrifice
+        // asks (CR 616.1f) reruns only the loss, not the counter or the draw.
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                List.of(new LoseLifeEffect(amount, LoseLifeRecipient.CONTROLLER)));
     }
 }

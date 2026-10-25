@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
@@ -20,7 +22,7 @@ import static org.mockito.Mockito.*;
 class DrawAndLoseLifePerSubtypeEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
     @Test
-            @DisplayName("Draws and loses life equal to subtype count")
+            @DisplayName("Draws and makes losing life equal to subtype count the next step")
             void drawsAndLosesLifePerSubtype() {
                 Card card = createCard("Graveborn Muse");
                 DrawAndLoseLifePerSubtypeEffect effect = new DrawAndLoseLifePerSubtypeEffect(CardSubtype.ZOMBIE);
@@ -34,12 +36,18 @@ class DrawAndLoseLifePerSubtypeEffectHandlerTest extends AbstractPlayerInteracti
                 Permanent zombie2 = new Permanent(zombie2Card);
                 gd.playerBattlefields.get(player1Id).addAll(List.of(zombie1, zombie2));
 
-                when(gameQueryService.canPlayerLoseLife(gd, player1Id)).thenReturn(true);
+                when(gameQueryService.isCreature(gd, zombie1)).thenReturn(true);
+                when(gameQueryService.isCreature(gd, zombie2)).thenReturn(true);
+                when(gameQueryService.hasEffectiveSubtype(gd, zombie1, CardSubtype.ZOMBIE)).thenReturn(true);
+                when(gameQueryService.hasEffectiveSubtype(gd, zombie2, CardSubtype.ZOMBIE)).thenReturn(true);
+                entry.setResolvingEffectIndex(0);
 
                 resolveEffect(gd, entry, effect);
 
                 verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
-                assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(18);
+                assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
+                assertThat(entry.getEffectsToResolve())
+                        .containsExactly(effect, new LoseLifeEffect(2, LoseLifeRecipient.CONTROLLER));
             }
 
             @Test
@@ -54,27 +62,5 @@ class DrawAndLoseLifePerSubtypeEffectHandlerTest extends AbstractPlayerInteracti
                 verify(drawService, never()).resolveDrawCard(any(), any());
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("controls no") && logEntry.plainText().contains("Zombie")));
-            }
-
-            @Test
-            @DisplayName("Draws but does not lose life when life can't change")
-            void drawsButNoLifeLossWhenCantChange() {
-                Card card = createCard("Graveborn Muse");
-                DrawAndLoseLifePerSubtypeEffect effect = new DrawAndLoseLifePerSubtypeEffect(CardSubtype.ZOMBIE);
-                StackEntry entry = createEntry(card, player1Id, List.of(effect));
-
-                Card zombieCard = createCard("Zombie");
-                zombieCard.setSubtypes(new ArrayList<>(List.of(CardSubtype.ZOMBIE)));
-                Permanent zombie = new Permanent(zombieCard);
-                gd.playerBattlefields.get(player1Id).add(zombie);
-
-                when(gameQueryService.canPlayerLoseLife(gd, player1Id)).thenReturn(false);
-
-                resolveEffect(gd, entry, effect);
-
-                verify(drawService, times(1)).resolveDrawCard(gd, player1Id);
-                assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
-                verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
-                        logEntry.plainText().contains("life total can't change")));
             }
 }

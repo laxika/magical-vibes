@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifeAndPutCountersOnSourceEqualToLifeLostEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,7 +23,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class EachPlayerLosesLifeAndPutCountersOnSourceEqualToLifeLostEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
     private final GameQueryService gameQueryService;
@@ -36,12 +39,11 @@ public class EachPlayerLosesLifeAndPutCountersOnSourceEqualToLifeLostEffectHandl
         var e = (EachPlayerLosesLifeAndPutCountersOnSourceEqualToLifeLostEffect) effect;
         String sourceName = entry.getCard().getName();
 
-        int totalLifeLost = 0;
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
-            int before = gameData.getLife(playerId);
-            lifeSupport.applyLifeLoss(gameData, playerId, e.lifeLossPerPlayer(), sourceName);
-            totalLifeLost += Math.max(0, before - gameData.getLife(playerId));
+            losses.put(playerId, e.lifeLossPerPlayer());
         }
+        int totalLifeLost = lifeSupport.applyLifeLosses(gameData, losses, sourceName);
 
         if (totalLifeLost <= 0 || entry.getSourcePermanentId() == null) {
             return;

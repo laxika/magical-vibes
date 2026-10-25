@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndChangeLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.*;
@@ -53,7 +55,10 @@ public class RevealTopCardPutIntoHandAndChangeLifeEffectHandler implements Norma
                 lifeSupport.applyGainLife(gameData, controllerId, manaValue, sourceName,
                         entry.getCard(), entry.getEntryType());
             } else {
-                lifeSupport.applyLifeLoss(gameData, controllerId, manaValue, sourceName);
+                // The life loss is a step of its own, so a death replacement question its Lich's Duel Mastery
+                // sacrifice asks (CR 616.1f) reruns only the loss, not the reveal.
+                entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                        List.of(new LoseLifeEffect(manaValue, LoseLifeRecipient.CONTROLLER)));
             }
         } else {
             gameLogService.append(gameData, GameLog.builder().text(playerName + " puts ").card(topCard).text(" into their hand (" + sourceName + ").").build());

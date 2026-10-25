@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; the fallback stays until the callers listed in the eleventh part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; the fallback stays until the callers listed in the twelfth part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1631,6 +1631,59 @@ Steps add notes here for later steps, under their number.
   (Orzhov Guildmage's "each player loses 1 life" with a Mastery, a Wheel and a Kalitas on each side: both players are
   asked before either life total or Mastery changes; without `askBeforeLifeLosses` the second Mastery still reaches the
   fallback). No existing test changed.
+
+### Step 13 (twelfth part: life losses after a tap, a draw or a reveal)
+
+- Rules: a resolving spell or ability's instructions are followed in the order written (CR 608.2c, checked), so
+  "tap Xathrid Demon and you lose 7 life", "draw X cards and lose X life" and "reveal the top card, put it into your
+  hand, lose life equal to its mana value" lose the life after the tap, draw or reveal. The Mastery's sacrifice
+  replaces that loss (CR 614.6, checked) and its death replacements are chosen in the same process (CR 616.1f,
+  checked), so the question belongs after the tap, draw or reveal and before any life is lost; the amount is
+  determined once, when the effect is applied (CR 608.2h, checked), so it can be fixed before the loss. No official
+  ruling covers the Mastery (it is a playtest card).
+- Done: the loss becomes a step of its own. Each handler does its first part and then inserts a `LoseLifeEffect` with
+  the amount it computed right after itself (`entry.insertEffectsToResolve(getResolvingEffectIndex() + 1, ...)`, the
+  idiom `TargetPlayerDrawsAndLosesLifePerChosenTypeEffectHandler` already used), so the marked `LoseLifeEffectHandler`
+  resolves the loss in its own rerun window and a question reruns only the loss. Wrapped effects (`MayEffect`,
+  `ConditionalEffect`, `ConditionalReplacementEffect`) resolve their inner effect at the wrapper's index, so the step
+  lands right after it. Converted:
+  - `SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLife` (Xathrid Demon): with no other creature, the tap and then
+    a `LoseLifeEffect(lifeLoss, CONTROLLER)` step, so a rerun no longer repeats the tap. Its now-redundant
+    `checkWinCondition` call is gone (the state-based check after resolution makes the player lose).
+  - `DrawAndLoseLifePerCounterOnSource` (Bebop), `DrawAndLoseLifePerSubtype` (Champion of Dusk, Graveborn Muse),
+    `PutCounterOnSelfThenDrawAndLoseLifePerCounter` (Savanti Romero): draw (after the counter), then a `CONTROLLER`
+    loss step. A draw that pauses for a replacement choice now finishes before the loss, as in the chosen-type handler.
+  - `RevealTopCardPutIntoHandAndChangeLife` (the losing form: Dark Confidant, Dark Tutelage, ...),
+    `RevealTopCardPutIntoHandThenEachOpponentLosesLife` (Sorin, Grim Nemesis, Yuriko, Caustic Bronco) and
+    `RevealTopCardPutIntoHandAndDrainOpponents` (Twilight Prophet: an `EACH_OPPONENT` loss step and then a
+    `GainLifeEffect(mana value)` step, since it gains that much whatever the opponents lost).
+  - Marked `AsksDeathReplacementsFirst`: `EachPlayerLosesLifeAndPutCountersOnSourceEqualToLifeLost` (Blood Tyrant; its
+    first change is the losses, now through `applyLifeLosses`, and the counters follow the life actually lost).
+- **Left** (why the fallback still can't be deleted):
+  - Life loss elsewhere: 105 files still call `applyLifeLoss` / `applySetLifeTotal` / `applyLifePayment` without being
+    marked (same grep as in the eleventh part). Among them: handlers whose first change can change the Mastery's
+    replacement options, so the loss can't be asked ahead and needs a step of its own after it
+    (`ExileTargetCreatureThenLoseLifeEqualToToughness`, `EachDestroyedPermanentControllerLosesLife`,
+    `EachTargetPlayerLosesLifeAndSacrificesCreature`, ...); handlers that interleave per-player losses with other
+    changes (`EachPlayerRevealsTopCardLosesLifeEqualToManaValueThenToHand`, `TargetPlayersRevealTopCards...`,
+    `MillControllerAndTargetPlayerLosesLifeByMilledManaValue`, the `ExileTopCard...LoseLifeEqualToManaValue...`
+    family); the "lose life unless" / "or lose life" choice families and their completions; `SetLifeTotalEffectHandler`
+    and the exchange/redistribute handlers; and every life payment (`askBeforePayment`, CR 601.2h).
+  - Xathrid Demon's sacrifice branch: the opponents' losses follow the sacrifice, so their Masteries still fall back
+    (asking them ahead would be wrong when the sacrificed creature is the Kalitas that offers an option).
+  - Unchanged: Bomb Squad (parked pending an official ruling), redirected combat damage, and nothing is asked while
+    another departure batch or replay window's answers are pending.
+- Tests: new (both `@FailOnLegacyDepartureFallback`, both fail with the old handlers)
+  `LichsDuelMasteryTest.revealThenLifeLossAsksTheDeathReplacementBeforeTheSacrifice` (Dark Confidant at the upkeep of an
+  animated, shieldless Mastery's controller under Wheel of Sun and Moon, against Kalitas: the revealed card is in hand
+  and life is 20 while asked; then the Mastery is the only card of the library, life still 20, no Zombie) and
+  `LichsDuelMasteryTest.bloodTyrantAsksTheMasteryBeforeAnyLifeIsLost` (both players at 20 while asked; after choosing
+  Kalitas the Tyrant's controller is at 19, the Mastery is exiled with a Zombie made, and the Tyrant has one counter).
+  Changed: `RevealTopCardPutIntoHandAndChangeLifeEffectHandlerTest.losesLife` and
+  `DrawAndLoseLifePerSubtypeEffectHandlerTest.drawsAndLosesLifePerSubtype` assert the inserted loss step instead of the
+  loss (the latter also failed at HEAD for unstubbed `isCreature` / `hasEffectiveSubtype`, now stubbed); its
+  `drawsButNoLifeLossWhenCantChange` (also failing at HEAD) is removed, since the "can't change" case now belongs to
+  `LoseLifeEffectHandler`.
 
 ### Step 2
 
