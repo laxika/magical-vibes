@@ -5112,6 +5112,19 @@ public class GameData {
         }
     }
 
+    /**
+     * Gives a spell entering the stack its CR 613.7d timestamp. An entry that already carries one
+     * (a simulation copy of a spell already on the stack) keeps it; abilities are not stamped.
+     */
+    private void stampSpellEnteringStack(StackEntry entry) {
+        if (entry.getStackTimestamp() != 0
+                || entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+            return;
+        }
+        entry.setStackTimestamp(nextTimestamp());
+    }
+
     private int activeTriggeredAbilityCopies() {
         return activeTriggeredAbilityCopies;
     }
@@ -5126,6 +5139,7 @@ public class GameData {
 
         @Override
         public boolean add(StackEntry entry) {
+            gameData.stampSpellEnteringStack(entry);
             boolean added = super.add(entry);
             if (added) {
                 gameData.recordStackEntryForCrime(entry);
@@ -5146,6 +5160,7 @@ public class GameData {
 
         @Override
         public void add(int index, StackEntry entry) {
+            gameData.stampSpellEnteringStack(entry);
             super.add(index, entry);
             gameData.recordStackEntryForCrime(entry);
             gameData.recordGraveyardTargetVersions(entry);
@@ -5154,6 +5169,7 @@ public class GameData {
 
         @Override
         public boolean addAll(java.util.Collection<? extends StackEntry> entries) {
+            entries.forEach(gameData::stampSpellEnteringStack);
             boolean added = super.addAll(entries);
             if (added) {
                 entries.forEach(gameData::recordStackEntryForCrime);
@@ -5165,6 +5181,7 @@ public class GameData {
 
         @Override
         public boolean addAll(int index, java.util.Collection<? extends StackEntry> entries) {
+            entries.forEach(gameData::stampSpellEnteringStack);
             boolean added = super.addAll(index, entries);
             if (added) {
                 entries.forEach(gameData::recordStackEntryForCrime);

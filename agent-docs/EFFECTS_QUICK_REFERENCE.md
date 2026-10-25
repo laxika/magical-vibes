@@ -1926,6 +1926,10 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
 - `GraveyardStaticEffect(CardEffect wrapped)` — marks a static effect that is active while the
   source card is in its controller's graveyard; the wrapped effect reuses the ordinary static
   effect handler. Use it for abilities such as Valor's Plains-conditional first-strike grant.
+- `WrappedStackStaticEffect(CardEffect wrapped)` — marks a static effect of an instant or sorcery
+  that functions only while that spell is on the stack (CR 113.6); the wrapped effect reuses the
+  ordinary static effect handler. Torrent of Lava's "As long as this is on the stack, each creature
+  has ..." grant.
 - `ControlStealingEffect` — `controlDuration()`. Impl `GainControlOfTargetEffect`, `StealDyingOpponentPermanentUnlessPaysLifeEffect`
 - `CulturalExchangeEffect()` — targets two players; the spell's controller chooses equal numbers of creatures from their battlefields in two resolution-time multi-permanent choices, then exchanges permanent control of all chosen creatures simultaneously. Completion uses `MultiPermanentChoiceContext.CulturalExchange` and `CulturalExchangeSupport`. Used by Cultural Exchange
 - `CounterSpellingEffect` — marker for "counter target spell". Impl `CounterSpellEffect`,

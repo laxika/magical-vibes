@@ -179,6 +179,12 @@ public class StackEntry {
     /** Cross-target restriction declared by a multi-target activated ability. */
     @Setter private MultiTargetConstraint multiTargetConstraint;
     @Setter private boolean copy;
+    /**
+     * CR 613.7d timestamp this spell received when it was put on the stack (0 for abilities and
+     * spells not yet stamped). It orders the continuous effects of the spell's abilities that
+     * function on the stack ({@code WrappedStackStaticEffect}).
+     */
+    @Setter private long stackTimestamp;
     /** Whether this copy was created and then cast (CR 707.12), so it resolves as a cast spell. */
     @Setter private boolean castCopy;
     @Setter private boolean nonTargeting;
@@ -928,6 +934,7 @@ public class StackEntry {
         this.aftermathHalfFromGraveyard = source.aftermathHalfFromGraveyard;
         this.controllerId = source.controllerId;
         this.casterId = source.casterId;
+        this.stackTimestamp = source.stackTimestamp;
         this.activePlayerId = source.activePlayerId;
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);

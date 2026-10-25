@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledEnchantmentsEffect;
@@ -56,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardStaticEffect;
+import com.github.laxika.magicalvibes.model.effect.WrappedStackStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
@@ -684,6 +687,11 @@ public class LayerSystemService {
      */
     private static long computeBoardFingerprint(GameData gameData) {
         long h = 0x9E3779B97F4A7C15L;
+        for (StackEntry spell : stackStaticSources(gameData)) {
+            h = mix(h, System.identityHashCode(spell));
+            h = mix(h, spell.getControllerId() == null ? 0 : spell.getControllerId().hashCode());
+            h = mix(h, spell.getStackTimestamp());
+        }
         h = mix(h, gameData.timestampCounter);
         h = mix(h, gameData.stolenCreatures.hashCode());
         h = mix(h, gameData.stolenCreatures.size());
@@ -1046,6 +1054,27 @@ public class LayerSystemService {
         }
     }
 
+    /**
+     * The instant and sorcery spells on the stack whose abilities function there (CR 113.6): those
+     * carrying a {@link WrappedStackStaticEffect}, in stack order. Copies are left out because
+     * their abilities still name the original card as the source.
+     */
+    public static List<StackEntry> stackStaticSources(GameData gameData) {
+        List<StackEntry> sources = new ArrayList<>();
+        synchronized (gameData.stack) {
+            for (StackEntry entry : gameData.stack) {
+                if ((entry.getEntryType() == StackEntryType.INSTANT_SPELL
+                        || entry.getEntryType() == StackEntryType.SORCERY_SPELL)
+                        && !entry.isCopy() && entry.getCard() != null
+                        && entry.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(WrappedStackStaticEffect.class::isInstance)) {
+                    sources.add(entry);
+                }
+            }
+        }
+        return sources;
+    }
+
     // ===== board computation =====
 
     private record PermanentSlot(UUID controllerId, Permanent permanent, int position) {
@@ -1292,7 +1321,7 @@ public class LayerSystemService {
                         && isAttachmentProtectionGrant(effect)) {
                     continue;
                 }
-                if (effect instanceof GraveyardStaticEffect) {
+                if (effect instanceof GraveyardStaticEffect || effect instanceof WrappedStackStaticEffect) {
                     continue;
                 }
                 if (isConditionalWrapper(effect) && !admitsConditionalWrapper(effect, layer)) {
@@ -1343,7 +1372,24 @@ public class LayerSystemService {
             }
             }
         }
-        int schemePosition = graveyardPosition;
+        int stackPosition = graveyardPosition;
+        for (StackEntry spell : stackStaticSources(gameData)) {
+            // CR 113.6: an instant or sorcery's abilities function while it is on the stack.
+            PermanentSlot source = new PermanentSlot(spell.getControllerId(), new Permanent(spell.getCard()),
+                    stackPosition++);
+            for (CardEffect effect : spell.getCard().getEffects(EffectSlot.STATIC)) {
+                if (!(effect instanceof WrappedStackStaticEffect)) {
+                    continue;
+                }
+                LayerClassifier.LayerClassification classification = classifyOrNull(effect);
+                if (classification == null || !classification.layers().contains(layer)) {
+                    continue;
+                }
+                instances.add(new EffectInstance(source, effect, effect, null,
+                        classification.characteristicDefining(), spell.getStackTimestamp(), source.position()));
+            }
+        }
+        int schemePosition = stackPosition;
         for (UUID ownerId : gameData.orderedPlayerIds) {
             for (Card scheme : gameData.faceUpSchemes(ownerId)) {
                 // CR 314.4: a face-up scheme's static abilities affect the game from the command zone.

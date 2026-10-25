@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageToSourceFromCardEffect;
+import com.github.laxika.magicalvibes.model.effect.WrappedStackStaticEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -18,11 +19,11 @@ import java.util.List;
 public class TorrentOfLava extends Card {
 
     public TorrentOfLava() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addEffect(EffectSlot.STATIC, new WrappedStackStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null,
                         List.of(new PreventNextDamageToSourceFromCardEffect(getId())),
                         "Tap: Prevent the next 1 damage that would be dealt to this creature by Torrent of Lava this turn."),
-                GrantScope.ALL_CREATURES));
+                GrantScope.ALL_CREATURES)));
         addEffect(EffectSlot.SPELL, new MassDamageEffect(0, true, false, new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
     }
 }

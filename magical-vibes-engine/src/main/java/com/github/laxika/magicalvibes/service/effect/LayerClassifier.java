@@ -111,6 +111,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToOwnCreaturesFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.WrappedGraveyardStaticEffect;
+import com.github.laxika.magicalvibes.model.effect.WrappedStackStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToCreaturesOfChosenParityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenTypeToOwnCreaturesEffect;
@@ -612,6 +613,8 @@ public final class LayerClassifier {
                 classify(((ConditionalEffect) effect).wrapped(), fromOwnStaticSlot)));
         map.put(WrappedGraveyardStaticEffect.class, new Entry(anyWrappedLayer, (effect, fromOwnStaticSlot) ->
                 classify(((WrappedGraveyardStaticEffect) effect).wrapped(), fromOwnStaticSlot)));
+        map.put(WrappedStackStaticEffect.class, new Entry(anyWrappedLayer, (effect, fromOwnStaticSlot) ->
+                classify(((WrappedStackStaticEffect) effect).wrapped(), fromOwnStaticSlot)));
         map.put(EnchantedPermanentConditionalEffect.class, new Entry(anyWrappedLayer,
                 (effect, fromOwnStaticSlot) -> {
                     EnchantedPermanentConditionalEffect conditional = (EnchantedPermanentConditionalEffect) effect;

@@ -212,6 +212,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardAbilityGrantingEffec
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardsCantBeTargetedEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardsLoseAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardStaticEffect;
+import com.github.laxika.magicalvibes.model.effect.WrappedStackStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardSubtypeGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.HandAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreOpponentCreatureHexproofEffect;
@@ -6579,7 +6580,12 @@ public class GameQueryService {
 
     /** A static-effect source with the CR 613.7 ordering key used by {@link #assembleStaticBonus}. */
     private record StaticSource(Permanent permanent, UUID controllerId, boolean sameBattlefieldAsTarget,
-                                long timestamp, int position, boolean fromGraveyard) {
+                                long timestamp, int position, boolean fromGraveyard, boolean fromStack) {
+
+        StaticSource(Permanent permanent, UUID controllerId, boolean sameBattlefieldAsTarget,
+                     long timestamp, int position, boolean fromGraveyard) {
+            this(permanent, controllerId, sameBattlefieldAsTarget, timestamp, position, fromGraveyard, false);
+        }
     }
 
     /**
@@ -6700,6 +6706,12 @@ public class GameQueryService {
                         targetOnSameBattlefield, 0, position++, false));
             }
         }
+        // CR 113.6: an instant or sorcery's abilities function while it is on the stack.
+        for (StackEntry spell : LayerSystemService.stackStaticSources(gameData)) {
+            sources.add(new StaticSource(new Permanent(spell.getCard()), spell.getControllerId(),
+                    spell.getControllerId().equals(resolvedTargetControllerId),
+                    spell.getStackTimestamp(), position++, false, true));
+        }
         sources.sort(Comparator.comparingLong(StaticSource::timestamp).thenComparingInt(StaticSource::position));
         List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
         for (StaticSource sourceSlot : sources) {
@@ -6749,7 +6761,8 @@ public class GameQueryService {
                         && !appliesToItsOwnSourceInStaticPass(board, source, effect)) {
                     continue;
                 }
-                if (sourceSlot.fromGraveyard() != (effect instanceof GraveyardStaticEffect)) {
+                if (sourceSlot.fromGraveyard() != (effect instanceof GraveyardStaticEffect)
+                        || sourceSlot.fromStack() != (effect instanceof WrappedStackStaticEffect)) {
                     continue;
                 }
                 // Purely type-changing effects were applied by the layer-4 pass (with filters
@@ -6967,7 +6980,7 @@ public class GameQueryService {
         AccumulatorSnapshot beforeSelf = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
             if (target.isFaceDown()) continue;
-            if (effect instanceof GraveyardStaticEffect) {
+            if (effect instanceof GraveyardStaticEffect || effect instanceof WrappedStackStaticEffect) {
                 continue;
             }
             // A self-including scope (ALL_LANDS_INCLUDING_SELF, ALL_CREATURES_INCLUDING_SELF)

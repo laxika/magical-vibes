@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 @CardUsed({TorrentOfLava.class, BayFalcon.class, GoblinEliteInfantry.class})
 class TorrentOfLavaTest extends BaseCardTest {
 
@@ -107,6 +109,18 @@ class TorrentOfLavaTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Goblin Elite Infantry");
         harness.assertNotOnBattlefield(player2, "Goblin Elite Infantry");
+    }
+
+    @Test
+    @DisplayName("Creatures lose the granted ability once Torrent of Lava has left the stack")
+    void grantedAbilityEndsWhenTorrentLeavesStack() {
+        addCreatureReady(player2, new GoblinEliteInfantry());
+        harness.setHand(player1, List.of(new TorrentOfLava()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

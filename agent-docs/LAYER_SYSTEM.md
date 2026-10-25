@@ -644,6 +644,15 @@ Graveyard static effects that modify other battlefield permanents implement
 as synthetic source instances, so their ordinary static handlers can evaluate battlefield scope
 and conditions while the graveyard card remains outside the battlefield.
 
+Instant and sorcery spells on the stack are static sources too (CR 113.6): an effect wrapped in
+`WrappedStackStaticEffect` functions only while its spell is on the stack.
+`LayerSystemService.stackStaticSources` lists those spells (copies excluded, since their abilities
+still name the original card); the layered pass and the static-bonus assembly wrap each one in a
+synthetic source controlled by the spell's controller, with the CR 613.7d timestamp the spell got
+when it was put on the stack (`StackEntry.stackTimestamp`, stamped by `GameData`'s stack list). The
+board fingerprint hashes those spells, so the cached board drops their effects when they leave the
+stack. Torrent of Lava's granted "{T}: Prevent the next 1 damage ..." uses it.
+
 Face-up schemes in the command zone (`GameData.faceUpSchemes`) are static sources the same way
 (CR 314.4): the layered pass and the static-bonus assembly in `GameQueryService` wrap each one in
 a synthetic source owned and controlled by the scheme's owner, so an ordinary `STATIC` effect such as

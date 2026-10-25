@@ -1780,6 +1780,9 @@ Effects in the `ON_ALLY_CREATURE_BECOMES_TARGET_OF_INSTANT_OR_SORCERY` slot fire
 - `GraveyardStaticEffect(CardEffect wrapped)` marks a static effect that is active while its card
   is in its controller's graveyard; the wrapped effect reuses the ordinary continuous-effect
   handlers.
+- `WrappedStackStaticEffect(CardEffect wrapped)` marks a static effect of an instant or sorcery that
+  is active only while that spell is on the stack (Torrent of Lava); the wrapped effect reuses the
+  ordinary continuous-effect handlers.
 
 ### Conditional effects (the `Condition` model)
 
