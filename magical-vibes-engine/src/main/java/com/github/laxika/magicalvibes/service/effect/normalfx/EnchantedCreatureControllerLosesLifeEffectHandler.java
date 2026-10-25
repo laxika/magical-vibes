@@ -1,28 +1,34 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.event.VisualCueType;
-import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
 import java.util.UUID;
 
-@Slf4j
+/**
+ * Makes the enchanted creature's controller lose the life of an {@link EnchantedCreatureControllerLosesLifeEffect}
+ * (Stab Wound, Soul Bleed, Contaminated Bond, Ragged Veins, Banewasp Affliction, ...): the baked
+ * {@code affectedPlayerId}, or, for a non-targeting trigger, the current (else last-known) controller of the enchanted
+ * permanent. The loss goes through {@link LifeSupport#applyLifeLosses}, so it can be replaced (a Lich's Duel Mastery
+ * shield or sacrifice), is multiplied, and fires "loses life" triggers.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: the life loss is its only change, so a Lich's Duel Mastery sacrifice
+ * that replaces it is asked about (CR 616.1) before any life is lost.
+ */
 @Component
 @RequiredArgsConstructor
-public class EnchantedCreatureControllerLosesLifeEffectHandler implements NormalEffectHandlerBean {
+public class EnchantedCreatureControllerLosesLifeEffectHandler implements NormalEffectHandlerBean,
+        AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
-    private final VisualCueService visualCueService;
+    private final LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,23 +48,8 @@ public class EnchantedCreatureControllerLosesLifeEffectHandler implements Normal
                 playerId = currentController;
             }
         }
-        if (playerId == null) return;
+        if (playerId == null || !gameData.playerIds.contains(playerId)) return;
 
-        if (!gameQueryService.canPlayerLoseLife(gameData, playerId)) {
-            String playerName = gameData.playerIdToName.get(playerId);
-            gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
-            return;
-        }
-
-        int lifeLoss = e.amount() * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
-        int currentLife = gameData.getLife(playerId);
-        gameData.playerLifeTotals.put(playerId, currentLife - lifeLoss);
-        visualCueService.emit(gameData, VisualCueType.LIFE_LOST,
-                visualCueService.sourceOf(gameData, entry.getCard()), null, playerId, lifeLoss);
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " loses " + lifeLoss + " life (" , entry.getCard(), ")."));
-
-        log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, e.amount(), entry.getCard().getName());
+        lifeSupport.applyLifeLosses(gameData, Map.of(playerId, e.amount()), entry.getCard().getName());
     }
 }

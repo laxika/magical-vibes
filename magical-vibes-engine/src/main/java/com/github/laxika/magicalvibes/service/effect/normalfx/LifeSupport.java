@@ -322,6 +322,18 @@ public class LifeSupport {
     }
 
     /**
+     * {@link #askBeforeLifeLosses} for a resolving effect that makes a change before these life losses, a change
+     * that can neither alter their amounts nor what the Mastery sacrifices they cause can be replaced with (a card
+     * revealed, or moved from a library to exile). The questions are asked before that change, while the effect
+     * can still be resolved again from the start, and the rerun window is then closed, since the change that follows
+     * must not happen twice: a loss whose question was missed falls back instead of stopping the effect.
+     */
+    public void askBeforeLifeLossesThatFollowAChange(GameData gameData, Map<UUID, Integer> losses) {
+        askBeforeLifeLosses(gameData, losses);
+        closeDeathReplacementRerunWindow(gameData);
+    }
+
+    /**
      * A life total (or a Lich's Duel Mastery shield) just changed, so a resolving effect stopped later for a death
      * replacement question could not be resolved again from the start without changing it twice.
      */

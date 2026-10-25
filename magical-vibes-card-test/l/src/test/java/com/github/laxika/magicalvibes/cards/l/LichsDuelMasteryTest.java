@@ -5,17 +5,22 @@ import com.github.laxika.magicalvibes.cards.b.BloodTyrant;
 import com.github.laxika.magicalvibes.cards.b.BumpInTheNight;
 import com.github.laxika.magicalvibes.cards.d.DarkConfidant;
 import com.github.laxika.magicalvibes.cards.d.DireTactics;
+import com.github.laxika.magicalvibes.cards.d.DuskmantleSeer;
 import com.github.laxika.magicalvibes.cards.f.FeralMaaka;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.m.MornsongAria;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.o.OrzhovGuildmage;
+import com.github.laxika.magicalvibes.cards.p.PalantirOfOrthanc;
 import com.github.laxika.magicalvibes.cards.p.PriestOfForgottenGods;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SingeMindOgre;
+import com.github.laxika.magicalvibes.cards.s.StabWound;
 import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.cards.w.WillOfTheAbzan;
 import com.github.laxika.magicalvibes.cards.x.XathridDemon;
+import com.github.laxika.magicalvibes.cards.y.ThoughtStringAnalyst;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -26,6 +31,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
@@ -506,6 +512,169 @@ class LichsDuelMasteryTest extends BaseCardTest {
         assertThat(zombieTokens()).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
                 .isEqualTo(player2.getId());
+    }
+
+    @Test
+    @CardUsed({StabWound.class, Opalescence.class, WheelOfSunAndMoon.class, KalitasTraitorOfGhet.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Stab Wound's upkeep life loss asks library-or-Kalitas before any life changes")
+    void enchantedCreatureControllerLifeLossAsksTheMasteryBeforeAnyLifeIsLost() {
+        Permanent mastery = animatedShieldlessMasteryAgainstKalitas();
+        Permanent stabWound = harness.addToBattlefieldAndReturn(player1, new StabWound());
+        stabWound.setAttachedTo(mastery.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId()).contains(mastery.getCard().getId());
+        harness.assertLife(player2, 20);
+        assertThat(zombieTokens()).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({DuskmantleSeer.class, Opalescence.class, WheelOfSunAndMoon.class, KalitasTraitorOfGhet.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Duskmantle Seer asks the opponent's Mastery before the reveal, then both lose life at once and take their cards")
+    void revealThenSimultaneousLossesAskTheMasteryBeforeAnyLifeIsLost() {
+        Permanent mastery = animatedShieldlessMasteryAgainstKalitas();
+        harness.addToBattlefield(player1, new DuskmantleSeer());
+        Card ownCard = new GrizzlyBears();
+        Card opponentCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(ownCard));
+        harness.setLibrary(player2, List.of(opponentCard));
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCard);
+
+        harness.handleListChoice(player2, "Put it on the bottom of its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getId)
+                .containsExactly(mastery.getCard().getId());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).contains(ownCard);
+        assertThat(gd.playerHands.get(player2.getId())).contains(opponentCard);
+        assertThat(zombieTokens()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({ThoughtStringAnalyst.class, Opalescence.class, WheelOfSunAndMoon.class, KalitasTraitorOfGhet.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Thought-String Analyst asks library-or-Kalitas before the exile, then exiles once and loses no life")
+    void exileFromLibraryThenLifeLossAsksTheMasteryBeforeTheExile() {
+        Permanent mastery = animatedShieldlessMasteryAgainstKalitas();
+        harness.addToBattlefield(player2, new ThoughtStringAnalyst());
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+
+        advanceToUpkeep(player2);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
+                .contains(mastery.getCard().getId(), topCard.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player2.getId());
+        harness.assertLife(player2, 20);
+        assertThat(zombieTokens()).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({SingeMindOgre.class, Opalescence.class, WheelOfSunAndMoon.class, KalitasTraitorOfGhet.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Singe-Mind Ogre's random reveal comes first, then library-or-Kalitas is asked before any life changes")
+    void randomRevealThenLifeLossAsksTheMasteryBeforeAnyLifeIsLost() {
+        Permanent mastery = animatedShieldlessMasteryAgainstKalitas();
+        Card revealed = new GrizzlyBears();
+        harness.setHand(player2, List.of(revealed));
+        harness.setHand(player1, List.of(new SingeMindOgre()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Put it on the bottom of its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.playerDecks.get(player2.getId()).getLast().getId()).isEqualTo(mastery.getCard().getId());
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(revealed);
+        harness.assertLife(player2, 20);
+        assertThat(zombieTokens()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({PalantirOfOrthanc.class, Opalescence.class, WheelOfSunAndMoon.class, KalitasTraitorOfGhet.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Palantir of Orthanc's mill comes first, then library-or-Kalitas is asked before any life changes")
+    void millThenLifeLossAsksTheMasteryBeforeAnyLifeIsLost() {
+        Permanent mastery = animatedShieldlessMasteryAgainstKalitas();
+        harness.addToBattlefield(player1, new PalantirOfOrthanc());
+        Card milled = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), milled));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Kalitas, Traitor of Ghet");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(milled);
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Kalitas, Traitor of Ghet");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId()).contains(mastery.getCard().getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(milled);
+        harness.assertLife(player2, 20);
+        assertThat(zombieTokens()).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     /**

@@ -244,7 +244,7 @@ type is wired up; a type with no source listed is declared but not yet emitted.
 | `SPELL_RESOLVED` | A spell (not an ability) resolved. | The spell | — | — | `StackResolutionService`, at the start of each path where the spell resolves |
 | `SPELL_COUNTERED` | A spell (not an ability) was countered. | The countering spell/ability | The countered spell (`targetCardId`) | — | `CounterSupport.notifyCounteredSpell`; `MayPenaltyChoiceHandlerService` ("counter unless" answers) via `CounterSupport.emitCounteredCue` |
 | `LIFE_GAINED` | A player gained life. | The source, if any | Player | Life gained | `LifeSupport.completeGainLife`, `applySetLifeTotal` |
-| `LIFE_LOST` | A player lost life other than from damage. | The source, if any | Player | Life lost | `LifeSupport.applyLifeLoss`, `applyLifePayment`, `applySetLifeTotal`; direct writers: life casting costs (`SpellCastingService`), `LoseLifeUnlessDiscardEffectHandler`, `MayPenaltyChoiceHandlerService`, `EnchantedCreatureControllerLosesLifeEffectHandler` |
+| `LIFE_LOST` | A player lost life other than from damage. | The source, if any | Player | Life lost | `LifeSupport.applyLifeLoss`, `applyLifePayment`, `applySetLifeTotal`; direct writers: life casting costs (`SpellCastingService`), `LoseLifeUnlessDiscardEffectHandler`, `MayPenaltyChoiceHandlerService` |
 | `COUNTERS_ADDED` | Counters were put on a permanent (entering with counters included). | The resolving spell/ability, if any | Permanent | Number of counters added | `VisualCueService` counter snapshots (see *Counter cues*) |
 
 ### Damage cues

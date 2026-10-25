@@ -1742,6 +1742,64 @@ Steps add notes here for later steps, under their number.
   (Mornsong Aria at the Mastery controller's draw step: asked first, then the search). No existing test changed;
   `PriestOfForgottenGodsTest` has the same 2 failures as at HEAD.
 
+### Step 13 (fourteenth part: life losses after a reveal, a mill, a library exile or discards, and Stab Wound's family)
+
+- Rules: instructions are followed in the order written (CR 608.2c, checked); the Mastery's sacrifice replaces the
+  loss (CR 614.6, checked) and its death replacements are chosen in the same process (CR 616.1f, checked), with several
+  players' questions in APNAP order (CR 616.1 and CR 101.4, checked); amounts are determined once (CR 608.2h,
+  checked). Revealing a card leaves it where it is (CR 701.20a, checked). Duskmantle Seer's official ruling
+  (2013-01-24): the life loss is simultaneous, so two players reaching 0 draw the game. No official ruling covers the
+  Mastery (it is a playtest card).
+- Done:
+  - Bug fixed: `EnchantedCreatureControllerLosesLifeEffectHandler` (Stab Wound, Soul Bleed, One Thousand Lashes,
+    Numbing Dose, Contaminated Bond, Nettling Curse, Sinister Possession, Parasitic Impetus, Scriv's Contract, Ragged
+    Veins, Decomposition, Banewasp Affliction) wrote the life total itself, skipping the Mastery's shield and sacrifice,
+    the "loses life" triggers and the lethal-reduction replacements. It now loses through `applyLifeLosses` and is
+    marked `AsksDeathReplacementsFirst` (the loss is its only change).
+  - New `LifeSupport.askBeforeLifeLossesThatFollowAChange(gameData, losses)`: `askBeforeLifeLosses`, then closes the
+    rerun window. For a handler whose earlier change can alter neither the losses' amounts nor what the Mastery's
+    sacrifice can be replaced with: it computes the losses, asks before that change (a question stops and reruns the
+    effect with nothing done), and since the window is then closed a missed question falls back instead of repeating
+    the change. Used, with the handler marked, by:
+    - `EachPlayerRevealsTopCardLosesLifeEqualToManaValueThenToHand` (Duskmantle Seer) and
+      `TargetPlayersRevealTopCardsLoseLifeEqualToOtherManaValueThenToHand` (Parker Luck): rules fix as well. The
+      revealed cards now stay in their libraries until after the losses, the losses are one `applyLifeLosses` call
+      (they used to be reveal, lose, to hand, one player after another), and then the very cards revealed go to hand.
+    - `ExileTopCardLoseLifeEqualToManaValueAndMayCastInstantOrSorcery` (Hidetsugu and Kairi),
+      `ExileTopCardLoseLifeEqualToManaValueAndMayPlayThisTurn` (Hotel of Fears),
+      `ExileTopCardOfTargetOpponentLibraryLoseLifeEqualToManaValueAndGrantPlayPermission` (Thought-String Analyst):
+      the top card is peeked, the question asked, then the exile and the loss. Hidetsugu's free cast stays after the
+      loss (a step of its own would have let the pending cast run before the loss).
+  - A step of its own (`PlayersLoseLifeEffect` inserted after the handler), where the amount isn't known before the
+    change: `MillControllerAndTargetPlayerLosesLifeByMilledManaValue` (Palantir of Orthanc: mill replacements decide
+    what was milled; it resolves as a `MayEffect`'s else branch at the wrapper's index), `RevealRandomCardFromTargetPlayerHandLoseLifeEqualToManaValue`
+    (Singe-Mind Ogre: a rerun would pick another random card; its redundant `checkWinCondition` is gone) and
+    `ScytheSpecter` (the losses after the discards, one step for every tied player).
+- **Left** (why the fallback still can't be deleted):
+  - Life loss elsewhere: 92 files still call `applyLifeLoss` / `applySetLifeTotal` / `applyLifePayment` without being
+    marked (same grep as in the eleventh part). Among them: `EachDestroyedPermanentControllerLosesLife` (Deadly Tempest)
+    and the other `DestroyAllPermanentsEffect` then-effects that lose life (fresh `thenEntry`, see the thirteenth
+    part); `ExileGraveyardCardWithConditionalBonus`'s `creatureLifeLossToGraveyardOwner` (no card uses it yet);
+    `RevealTopCardCreatureGainToughnessLosePowerToHand` (a gain, then the loss, then to hand: the gain closes the
+    window, and the card goes to hand after the loss, so the loss step needs a "put that card into hand" step after
+    it); `LookAtTopCardMayRevealToHandAndLoseLifeEqualToManaValue`; `TargetPlayerDrawsAndLosesLifePerChosenType`'s
+    multi-target branch (Pact of the Serpent has one target, so no card reaches it); the "lose life unless" / "or lose
+    life" choice families and their completions; `SetLifeTotalEffectHandler`, `DoubleEnchantedCreatureControllerLife`
+    and the exchange/redistribute handlers; and every life payment (`askBeforePayment`, CR 601.2h).
+  - Unchanged: Bomb Squad (parked pending an official ruling), redirected combat damage, and nothing is asked while
+    another departure batch or replay window's answers are pending.
+- Tests: new in `LichsDuelMasteryTest` (all `@FailOnLegacyDepartureFallback`, all fail with the old handlers, where the
+  player lost the life instead or, for Stab Wound, no question was asked):
+  `enchantedCreatureControllerLifeLossAsksTheMasteryBeforeAnyLifeIsLost` (Stab Wound on the animated Mastery itself,
+  at its controller's upkeep), `revealThenSimultaneousLossesAskTheMasteryBeforeAnyLifeIsLost` (Duskmantle Seer: both
+  libraries untouched and both players at 20 while asked; then 18 / 20, both cards in hand, the Mastery alone in its
+  owner's library), `exileFromLibraryThenLifeLossAsksTheMasteryBeforeTheExile` (Thought-String Analyst: the top card
+  still in the library while asked, exiled once with its permission afterwards),
+  `randomRevealThenLifeLossAsksTheMasteryBeforeAnyLifeIsLost` (Singe-Mind Ogre) and
+  `millThenLifeLossAsksTheMasteryBeforeAnyLifeIsLost` (Palantir of Orthanc: the milled card in the graveyard while
+  asked, milled once). No existing test changed; `ParasiticImpetusTest` (3), `PalantirOfOrthancTest` (1) and
+  `ContaminatedBondTest` (1) have the same failures as at HEAD.
+
 ### Step 2
 
 - Types live in `magical-vibes-domain` `model/`: `DepartureCause`, `DepartureStage`, `DepartureIntent`,

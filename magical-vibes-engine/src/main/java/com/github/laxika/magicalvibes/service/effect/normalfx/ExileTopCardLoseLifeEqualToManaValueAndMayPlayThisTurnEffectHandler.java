@@ -7,17 +7,28 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardLoseLifeEqualToManaValueAndMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Hotel of Fears: exile the top card of the controller's library, the controller loses life equal to its mana value
+ * and may play that card this turn.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: exiling a card from a library can't change what a Lich's Duel
+ * Mastery's sacrifice can be replaced with, so the question that sacrifice needs (CR 616.1) is asked before the
+ * exile, while nothing has changed yet, and the effect is resolved again with the answer; the loss itself still
+ * follows the exile (CR 608.2c).
+ */
 @Component
 @RequiredArgsConstructor
 public class ExileTopCardLoseLifeEqualToManaValueAndMayPlayThisTurnEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final ExileService exileService;
     private final LifeSupport lifeSupport;
@@ -36,11 +47,13 @@ public class ExileTopCardLoseLifeEqualToManaValueAndMayPlayThisTurnEffectHandler
             return;
         }
 
-        Card topCard = library.removeFirst();
-        exileService.exileCard(gameData, controllerId, topCard);
+        Card topCard = library.getFirst();
+        Map<UUID, Integer> losses = Map.of(controllerId, topCard.getManaValue());
+        lifeSupport.askBeforeLifeLossesThatFollowAChange(gameData, losses);
 
-        int manaValue = topCard.getManaValue();
-        lifeSupport.applyLifeLoss(gameData, controllerId, manaValue, entry.getCard().getName());
+        library.removeFirst();
+        exileService.exileCard(gameData, controllerId, topCard);
+        lifeSupport.applyLifeLosses(gameData, losses, entry.getCard().getName());
         gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
         gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
 

@@ -7,20 +7,30 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTargetOpponentLibraryLoseLifeEqualToManaValueAndGrantPlayPermissionEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-/** Resolves Thought-String Analyst's upkeep trigger. */
+/**
+ * Thought-String Analyst's upkeep trigger: exile the top card of target opponent's library face down, the controller
+ * loses life equal to its mana value and may look at and play it while it remains exiled.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: exiling a card from a library can't change what a Lich's Duel
+ * Mastery's sacrifice can be replaced with, so the question that sacrifice needs (CR 616.1) is asked before the
+ * exile, while nothing has changed yet, and the effect is resolved again with the answer; the loss itself still
+ * follows the exile (CR 608.2c).
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ExileTopCardOfTargetOpponentLibraryLoseLifeEqualToManaValueAndGrantPlayPermissionEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final ExileService exileService;
     private final LifeSupport lifeSupport;
@@ -40,15 +50,16 @@ public class ExileTopCardOfTargetOpponentLibraryLoseLifeEqualToManaValueAndGrant
             return;
         }
 
-        Card topCard = library.removeFirst();
-        int manaValue = topCard.getManaValue();
+        Card topCard = library.getFirst();
+        Map<UUID, Integer> losses = Map.of(controllerId, topCard.getManaValue());
+        lifeSupport.askBeforeLifeLossesThatFollowAChange(gameData, losses);
+
+        library.removeFirst();
         exileService.exileCardFaceDown(gameData, targetPlayerId, topCard, null, controllerId);
         gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
         gameData.exilePlayAnyManaTypeWhileExiled.add(topCard.getId());
 
-        if (manaValue > 0) {
-            lifeSupport.applyLifeLoss(gameData, controllerId, manaValue, entry.getCard().getName());
-        }
+        lifeSupport.applyLifeLosses(gameData, losses, entry.getCard().getName());
 
         String controllerName = gameData.playerIdToName.get(controllerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
