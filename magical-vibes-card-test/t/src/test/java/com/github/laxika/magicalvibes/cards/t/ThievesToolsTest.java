@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThievesTools.class, GrizzlyBears.class, CrawWurm.class})
+@CardUsed({ThievesTools.class, GrizzlyBears.class, CrawWurm.class, DressDown.class})
 class ThievesToolsTest extends BaseCardTest {
 
     @Test
@@ -154,5 +155,16 @@ class ThievesToolsTest extends BaseCardTest {
         Permanent tools = harness.addToBattlefieldAndReturn(player, new ThievesTools());
         tools.setSummoningSick(false);
         return tools;
+    }
+
+    @Test
+    @DisplayName("The evasion is the Equipment's own and survives the creature losing its abilities")
+    void evasionSurvivesCreatureLosingAllAbilities() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent tools = addToolsReady(player1);
+        tools.setAttachedTo(attacker.getId());
+        harness.addToBattlefield(player2, new DressDown());
+
+        assertThat(gqs.hasCantBeBlocked(gd, attacker)).isTrue();
     }
 }

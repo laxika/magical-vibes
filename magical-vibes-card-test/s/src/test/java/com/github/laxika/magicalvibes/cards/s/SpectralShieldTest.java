@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpectralShield.class, BalduvianBears.class, GiantGrowth.class, IcyManipulator.class})
+@CardUsed({SpectralShield.class, BalduvianBears.class, GiantGrowth.class, IcyManipulator.class, DressDown.class})
 class SpectralShieldTest extends BaseCardTest {
 
     private Permanent bearsOf(Player owner) {
@@ -167,5 +168,20 @@ class SpectralShieldTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The spell restriction is the Aura's own and survives the creature losing its abilities")
+    void spellRestrictionSurvivesCreatureLosingAllAbilities() {
+        Permanent bears = bearsOf(player2);
+        enchant(bears);
+        harness.addToBattlefield(player2, new DressDown());
+
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 }

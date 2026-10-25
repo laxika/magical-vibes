@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.c.Caltrops;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ArtifactWard.class, BalduvianBears.class, GrizzlyBears.class, IcyManipulator.class,
-        ProdigalSorcerer.class, SoldeviGolem.class})
+        ProdigalSorcerer.class, SoldeviGolem.class, DressDown.class})
 class ArtifactWardTest extends BaseCardTest {
 
     @Test
@@ -192,4 +193,21 @@ class ArtifactWardTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
     }
 
+    @Test
+    @DisplayName("The artifact-source targeting restriction is the Aura's own and survives ability loss")
+    void artifactTargetingRestrictionSurvivesCreatureLosingAllAbilities() {
+        Permanent creature = addWardedCreature(player2);
+        harness.addToBattlefield(player2, new DressDown());
+        Permanent manipulator = harness.addToBattlefieldAndReturn(player1, new IcyManipulator());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(manipulator), null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be the target of abilities");
+        assertThat(manipulator.isTapped()).isFalse();
+    }
 }

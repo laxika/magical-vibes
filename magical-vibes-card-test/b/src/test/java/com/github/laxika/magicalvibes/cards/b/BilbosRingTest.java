@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.d.DelightedHalfling;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BilbosRing.class, DelightedHalfling.class, GrizzlyBears.class})
+@CardUsed({BilbosRing.class, DelightedHalfling.class, GrizzlyBears.class, DressDown.class})
 class BilbosRingTest extends BaseCardTest {
 
     @Test
@@ -137,5 +138,17 @@ class BilbosRingTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(player2, List.of(0));
         assertThatCode(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0))))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Can't be blocked is the Ring's own, but hexproof is lost with the creature's abilities")
+    void evasionSurvivesCreatureLosingAllAbilitiesButHexproofDoesNot() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ring = addCreatureReady(player1, new BilbosRing());
+        ring.setAttachedTo(creature.getId());
+        harness.addToBattlefield(player2, new DressDown());
+
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
     }
 }

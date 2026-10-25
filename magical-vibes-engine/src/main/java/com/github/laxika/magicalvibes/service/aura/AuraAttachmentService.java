@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -371,10 +370,7 @@ public class AuraAttachmentService {
                 || gameQueryService.hasProtectionFromSource(gameData, host, auraCard, auraControllerId)) {
             return false;
         }
-        if (gameQueryService.cantBeEnchantedByOtherAuras(gameData, host)
-                && auraCard.getEffects(EffectSlot.STATIC).stream().noneMatch(effect ->
-                effect instanceof GrantEffectEffect grant
-                        && grant.effect() instanceof CantBeEnchantedByOtherAurasEffect)) {
+        if (gameQueryService.cantBeEnchantedByAura(gameData, host, auraCard.getId())) {
             return false;
         }
         TargetFilter filter = auraCard.getDeclaredTargetFilter();
@@ -521,10 +517,7 @@ public class AuraAttachmentService {
         }
         // The card's declared target filter is its enchant restriction (e.g. "Enchant creature");
         // player-shaped filters never apply to a permanent host.
-        if (gameQueryService.cantBeEnchantedByOtherAurasRemovingExisting(gameData, host)
-                && attachment.getCard().getEffects(EffectSlot.STATIC).stream().noneMatch(effect ->
-                effect instanceof GrantEffectEffect grant
-                        && grant.effect() instanceof com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect)) {
+        if (gameQueryService.cantBeEnchantedByOtherAurasRemovingExisting(gameData, host, attachment.getCard().getId())) {
             return "enchanted permanent can't be enchanted by other Auras";
         }
         TargetFilter filter = attachment.getCard().getDeclaredTargetFilter();

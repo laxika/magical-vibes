@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -23,11 +24,13 @@ public class VectisGloves extends Card {
                 new Fixed(2), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
 
         // Artifact landwalk
-        addEffect(EffectSlot.STATIC, new CantBeBlockedIfDefenderControlsMatchingPermanentEffect(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsArtifactPredicate(),
-                        new PermanentIsLandPredicate())),
-                true));
+        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+                new CantBeBlockedIfDefenderControlsMatchingPermanentEffect(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsArtifactPredicate(),
+                                new PermanentIsLandPredicate())),
+                        true),
+                GrantScope.EQUIPPED_CREATURE));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

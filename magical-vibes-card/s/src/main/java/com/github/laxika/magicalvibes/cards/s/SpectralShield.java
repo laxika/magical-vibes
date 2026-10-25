@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachedPermanentRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
@@ -19,6 +19,6 @@ public class SpectralShield extends Card {
         .addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 2, GrantScope.ENCHANTED_CREATURE))
         // Enchanted creature can't be the target of spells (abilities can still target it).
         .addEffect(EffectSlot.STATIC,
-                new GrantEffectEffect(TargetingRestrictionEffect.spells(), GrantScope.ENCHANTED_CREATURE));
+                new AttachedPermanentRestrictionEffect(TargetingRestrictionEffect.spells()));
     }
 }

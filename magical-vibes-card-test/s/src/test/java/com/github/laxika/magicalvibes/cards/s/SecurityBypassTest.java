@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.ChromeCat;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SecurityBypass.class, ChromeCat.class, Mountain.class})
+@CardUsed({SecurityBypass.class, ChromeCat.class, Mountain.class, DressDown.class})
 class SecurityBypassTest extends BaseCardTest {
 
     @Test
@@ -163,5 +164,37 @@ class SecurityBypassTest extends BaseCardTest {
         }
         assertThat(index).as("card '%s' is in hand", cardName).isGreaterThanOrEqualTo(0);
         harness.handleCardChosen(player1, index);
+    }
+
+    @Test
+    void attackingAloneRestrictionIsTheAurasOwnAndSurvivesTheCreatureLosingItsAbilities() {
+        Permanent attacker = addCreatureReady(player1, new ChromeCat());
+        attachAura(attacker);
+        Permanent blocker = addCreatureReady(player2, new ChromeCat());
+        harness.addToBattlefield(player2, new DressDown());
+
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, attacker)));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(indexOf(player2, blocker), indexOf(player1, attacker)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    void grantedConniveTriggerIsLostWhenTheCreatureLosesItsAbilities() {
+        Permanent attacker = addCreatureReady(player1, new ChromeCat());
+        attachAura(attacker);
+        harness.addToBattlefield(player2, new DressDown());
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(new ChromeCat()));
+
+        declareAttackers(List.of(indexOf(player1, attacker)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.DiscardChoice).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Mountain");
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

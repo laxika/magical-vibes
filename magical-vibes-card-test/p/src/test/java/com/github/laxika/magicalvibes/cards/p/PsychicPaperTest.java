@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PsychicPaper.class, GrizzlyBears.class, HillGiant.class, GiantGrowth.class})
+@CardUsed({PsychicPaper.class, GrizzlyBears.class, HillGiant.class, GiantGrowth.class, DressDown.class})
 class PsychicPaperTest extends BaseCardTest {
 
     @Test
@@ -179,5 +180,16 @@ class PsychicPaperTest extends BaseCardTest {
         }
         harness.handleListChoice(player1, name);
         harness.handleListChoice(player1, type);
+    }
+
+    @Test
+    void cantBeBlockedIsThePapersOwnWhileWardIsLostWithTheCreaturesAbilities() {
+        Permanent paper = harness.addToBattlefieldAndReturn(player1, new PsychicPaper());
+        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        paper.setAttachedTo(host.getId());
+        harness.addToBattlefield(player2, new DressDown());
+
+        assertThat(gqs.hasCantBeBlocked(gd, host)).isTrue();
+        assertThat(gqs.hasKeyword(gd, host, Keyword.WARD)).isFalse();
     }
 }

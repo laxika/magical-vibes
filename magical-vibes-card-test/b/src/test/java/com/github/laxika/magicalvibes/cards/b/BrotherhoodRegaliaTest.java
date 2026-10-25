@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KamahlPitFighter;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BrotherhoodRegalia.class, GrizzlyBears.class, KamahlPitFighter.class, Shock.class})
+@CardUsed({BrotherhoodRegalia.class, GrizzlyBears.class, KamahlPitFighter.class, Shock.class, DressDown.class})
 class BrotherhoodRegaliaTest extends BaseCardTest {
 
     @Test
@@ -220,5 +221,17 @@ class BrotherhoodRegaliaTest extends BaseCardTest {
 
     private int battlefieldIndex(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
+    }
+
+    @Test
+    @DisplayName("Can't be blocked and the Assassin type survive the creature losing its abilities")
+    void evasionAndTypeSurviveCreatureLosingAllAbilities() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent regalia = addReadyRegalia(player1);
+        regalia.setAttachedTo(creature.getId());
+        harness.addToBattlefield(player2, new DressDown());
+
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, creature, CardSubtype.ASSASSIN)).isTrue();
     }
 }

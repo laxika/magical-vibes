@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.ReturnToDust;
 import com.github.laxika.magicalvibes.cards.w.WitchbaneOrb;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AssaultSuit.class, GrizzlyBears.class, ReturnToDust.class, WitchbaneOrb.class, TeferiTemporalArchmage.class})
+@CardUsed({AssaultSuit.class, GrizzlyBears.class, ReturnToDust.class, WitchbaneOrb.class, TeferiTemporalArchmage.class, DressDown.class})
 class AssaultSuitTest extends BaseCardTest {
 
     @Test
@@ -176,5 +177,24 @@ class AssaultSuitTest extends BaseCardTest {
         Permanent suit = harness.addToBattlefieldAndReturn(player1, new AssaultSuit());
         suit.setAttachedTo(creature.getId());
         return suit;
+    }
+
+    @Test
+    void sacrificeProtectionIsTheSuitsOwnWhileHasteIsLostWithTheCreaturesAbilities() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachSuitTo(creature);
+        harness.addToBattlefield(player2, new DressDown());
+
+        assertThat(gqs.cantBeSacrificed(gd, creature)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    void suitDoesNotProtectItselfFromSacrifice() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent suit = attachSuitTo(creature);
+
+        assertThat(gqs.cantBeSacrificed(gd, suit)).isFalse();
     }
 }

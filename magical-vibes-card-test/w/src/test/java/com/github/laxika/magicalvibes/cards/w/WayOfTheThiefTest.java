@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.g.GutterSkulk;
 import com.github.laxika.magicalvibes.cards.s.SimicGuildgate;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WayOfTheThief.class, GutterSkulk.class, SimicGuildgate.class})
+@CardUsed({WayOfTheThief.class, GutterSkulk.class, SimicGuildgate.class, DressDown.class})
 class WayOfTheThiefTest extends BaseCardTest {
 
     @Test
@@ -120,5 +121,17 @@ class WayOfTheThiefTest extends BaseCardTest {
     private void attachWayOfTheThief(Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new WayOfTheThief());
         aura.setAttachedTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("The Gate evasion is the Aura's own and survives the creature losing its abilities")
+    void evasionSurvivesCreatureLosingAllAbilities() {
+        harness.addToBattlefield(player1, new SimicGuildgate());
+        Permanent creature = addCreatureReady(player1, new GutterSkulk());
+        attachWayOfTheThief(creature);
+        harness.addToBattlefield(player2, new DressDown());
+
+        assertThat(gqs.hasCantBeBlocked(gd, creature)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
     }
 }

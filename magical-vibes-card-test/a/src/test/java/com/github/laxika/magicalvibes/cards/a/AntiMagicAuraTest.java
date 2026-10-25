@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
@@ -18,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AntiMagicAura.class, GrizzlyBears.class, HolyStrength.class, Incinerate.class,
-        ProdigalSorcerer.class})
+        ProdigalSorcerer.class, DressDown.class, Disenchant.class})
 class AntiMagicAuraTest extends BaseCardTest {
 
     private Permanent enchantedBears() {
@@ -147,5 +149,40 @@ class AntiMagicAuraTest extends BaseCardTest {
         assertThat(bears.getMarkedDamage()).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Anti-Magic Aura");
+    }
+
+    @Test
+    @DisplayName("The restrictions are the Aura's own and survive the creature losing its abilities")
+    void restrictionsSurviveCreatureLosingAllAbilities() {
+        Permanent bears = enchantedBears();
+        harness.addToBattlefield(player2, new DressDown());
+
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be the target of spells");
+
+        harness.setHand(player2, List.of(new HolyStrength()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        assertThatThrownBy(() -> harness.castEnchantment(player2, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The restrictions apply to the enchanted creature, not to Anti-Magic Aura itself")
+    void auraItselfCanBeTargetedBySpells() {
+        enchantedBears();
+        Permanent aura = findPermanent(player1, "Anti-Magic Aura");
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Anti-Magic Aura");
+        harness.assertInGraveyard(player1, "Anti-Magic Aura");
     }
 }

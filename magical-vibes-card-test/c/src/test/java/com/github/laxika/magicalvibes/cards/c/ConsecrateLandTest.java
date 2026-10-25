@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.d.DressDown;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ConsecrateLand.class, Forest.class, GrizzlyBears.class, StoneRain.class, WildGrowth.class})
+@CardUsed({ConsecrateLand.class, Forest.class, GrizzlyBears.class, StoneRain.class, WildGrowth.class, DressDown.class, DryadArbor.class})
 class ConsecrateLandTest extends BaseCardTest {
 
     @Test
@@ -124,5 +126,19 @@ class ConsecrateLandTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castEnchantment(player1, 0, forest.getId());
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("A land creature losing its abilities loses indestructible but still can't be enchanted by other Auras")
+    void auraRestrictionSurvivesAbilityLossButGrantedIndestructibleDoesNot() {
+        Permanent arbor = harness.addToBattlefieldAndReturn(player1, new DryadArbor());
+        castConsecrateLand(arbor);
+        harness.addToBattlefield(player2, new DressDown());
+
+        assertThat(gqs.hasKeyword(gd, arbor, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.setHand(player1, List.of(new WildGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, arbor.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

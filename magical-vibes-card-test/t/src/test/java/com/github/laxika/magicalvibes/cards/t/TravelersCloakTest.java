@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AncientKavu;
 import com.github.laxika.magicalvibes.cards.d.Desert;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.r.Repulse;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TravelersCloak.class, AncientKavu.class, Forest.class, Swamp.class, Desert.class, Humble.class, Repulse.class})
+@CardUsed({TravelersCloak.class, AncientKavu.class, Forest.class, Swamp.class, Desert.class, Humble.class, Repulse.class, DressDown.class})
 class TravelersCloakTest extends BaseCardTest {
 
     @Test
@@ -202,5 +203,21 @@ class TravelersCloakTest extends BaseCardTest {
 
     private int indexOf(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
+    }
+
+    @Test
+    @DisplayName("The granted landwalk is lost when the creature loses all its abilities")
+    void dressDownRemovesGrantedLandwalk() {
+        Permanent attacker = addCreatureReady(player1, new AncientKavu());
+        attacker.setAttacking(true);
+        attachCloak(attacker, CardSubtype.SWAMP);
+        Permanent blocker = addCreatureReady(player2, new AncientKavu());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.addToBattlefield(player2, new DressDown());
+
+        prepareDeclareBlockers();
+        declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }

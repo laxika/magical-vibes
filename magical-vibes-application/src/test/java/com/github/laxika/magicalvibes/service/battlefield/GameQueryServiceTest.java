@@ -4,6 +4,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBecomeSuspectedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachedPermanentRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeChosenEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -474,12 +478,14 @@ class GameQueryServiceTest {
         return card;
     }
 
-    private static Card createAura(String name, CardEffect staticEffect) {
+    private static Card createAura(String name, CardEffect... staticEffects) {
         Card card = new Card();
         card.setName(name);
         card.setType(CardType.ENCHANTMENT);
         card.setSubtypes(List.of(CardSubtype.AURA));
-        card.addEffect(EffectSlot.STATIC, staticEffect);
+        for (CardEffect staticEffect : staticEffects) {
+            card.addEffect(EffectSlot.STATIC, staticEffect);
+        }
         return card;
     }
 
@@ -3272,6 +3278,55 @@ class GameQueryServiceTest {
             equipment.setAttachedTo(creature.getId());
 
             assertThat(gqs.isEnchanted(gd, creature)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("attached permanent restrictions")
+    class AttachedPermanentRestrictions {
+
+        @Test
+        @DisplayName("restrict the permanent the Aura is attached to, not the Aura itself")
+        void restrictTheAttachedPermanentOnly() {
+            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Permanent aura = addPermanent(player1Id, createAura("Restricting Aura",
+                    new AttachedPermanentRestrictionEffect(new CantBeSacrificedEffect()),
+                    new AttachedPermanentRestrictionEffect(new CantBecomeSuspectedEffect()),
+                    new AttachedPermanentRestrictionEffect(TargetingRestrictionEffect.spells())));
+            aura.setAttachedTo(creature.getId());
+
+            assertThat(gqs.cantBeSacrificed(gd, creature)).isTrue();
+            assertThat(gqs.cantBecomeSuspected(gd, creature)).isTrue();
+            assertThat(gqs.cantBeTargetedByAnySpell(gd, creature)).isTrue();
+            assertThat(gqs.cantBeSacrificed(gd, aura)).isFalse();
+            assertThat(gqs.cantBecomeSuspected(gd, aura)).isFalse();
+            assertThat(gqs.cantBeTargetedByAnySpell(gd, aura)).isFalse();
+        }
+
+        @Test
+        @DisplayName("an unattached Aura restricts nothing")
+        void unattachedAuraRestrictsNothing() {
+            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            addPermanent(player1Id, createAura("Restricting Aura",
+                    new AttachedPermanentRestrictionEffect(new CantBeSacrificedEffect())));
+
+            assertThat(gqs.cantBeSacrificed(gd, creature)).isFalse();
+        }
+
+        @Test
+        @DisplayName("can't be enchanted by other Auras doesn't stop the imposing Aura itself")
+        void otherAurasRestrictionExemptsTheImposingAura() {
+            Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+            Permanent aura = addPermanent(player1Id, createAura("Anti-Magic Aura",
+                    new AttachedPermanentRestrictionEffect(new CantBeEnchantedByOtherAurasEffect())));
+            aura.setAttachedTo(creature.getId());
+            Card otherAura = createAura("Holy Strength");
+
+            assertThat(gqs.cantBeEnchantedByAura(gd, creature, aura.getCard().getId())).isFalse();
+            assertThat(gqs.cantBeEnchantedByAura(gd, creature, otherAura.getId())).isTrue();
+            assertThat(gqs.cantBeEnchantedByOtherAuras(gd, creature)).isTrue();
+            assertThat(gqs.cantBeEnchantedByOtherAurasRemovingExisting(gd, creature, aura.getCard().getId())).isFalse();
+            assertThat(gqs.cantBeEnchantedByOtherAurasRemovingExisting(gd, creature, otherAura.getId())).isTrue();
         }
     }
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.ConvenientTarget;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.m.MakeYourMove;
 import com.github.laxika.magicalvibes.cards.n.NervousGardener;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AirtightAlibi.class, ConvenientTarget.class, NervousGardener.class, MakeYourMove.class})
+@CardUsed({AirtightAlibi.class, ConvenientTarget.class, NervousGardener.class, MakeYourMove.class, DressDown.class})
 class AirtightAlibiTest extends BaseCardTest {
 
     @Test
@@ -110,5 +111,22 @@ class AirtightAlibiTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(enchanted.isSuspected()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The suspect restriction is the Aura's own and survives the creature losing its abilities")
+    void suspectRestrictionSurvivesCreatureLosingAllAbilities() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new NervousGardener());
+        Permanent alibi = harness.addToBattlefieldAndReturn(player1, new AirtightAlibi());
+        alibi.setAttachedTo(enchanted.getId());
+        harness.addToBattlefield(player2, new DressDown());
+
+        harness.setHand(player1, List.of(new ConvenientTarget()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(enchanted.isSuspected()).isFalse();
     }
 }

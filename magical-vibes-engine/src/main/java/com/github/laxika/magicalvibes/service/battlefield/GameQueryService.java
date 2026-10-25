@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNonAuraEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ArtifactOrCreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachedPermanentRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentMode;
 import com.github.laxika.magicalvibes.model.effect.AttackCostEffect;
@@ -4472,7 +4473,8 @@ public class GameQueryService {
     /** Returns whether a static effect prevents the permanent from becoming suspected. */
     public boolean cantBecomeSuspected(GameData gameData, Permanent permanent) {
         if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(CantBecomeSuspectedEffect.class::isInstance)) {
+                .anyMatch(CantBecomeSuspectedEffect.class::isInstance)
+                || hasAttachedPermanentRestriction(gameData, permanent, CantBecomeSuspectedEffect.class::isInstance)) {
             return true;
         }
         return computeStaticBonus(gameData, permanent).grantedEffects().stream()
@@ -4565,7 +4567,8 @@ public class GameQueryService {
                 .anyMatch(CantBeSacrificedEffect.class::isInstance)) {
             return true;
         }
-        return hasGrantedEffect(gameData, permanent, CantBeSacrificedEffect.class);
+        return hasAttachedPermanentRestriction(gameData, permanent, CantBeSacrificedEffect.class::isInstance)
+                || hasGrantedEffect(gameData, permanent, CantBeSacrificedEffect.class);
     }
 
     public boolean cantHaveCountersForController(GameData gameData, Permanent permanent, UUID controllerId) {
@@ -4607,6 +4610,62 @@ public class GameQueryService {
             }
         }
         return false;
+    }
+
+    /**
+     * The restrictions that Auras and Equipment attached to {@code permanent} impose on it through
+     * {@link AttachedPermanentRestrictionEffect}, each with the attachment imposing it. They are the
+     * attachment's own static abilities, not abilities of {@code permanent} (CR 113.10), so they still
+     * apply after {@code permanent} loses all its abilities (CR 613.1f). An attachment that lost its own
+     * abilities, or whose effects are ignored for the permanent's controller (Volrath's Curse), imposes
+     * nothing. {@link ConditionalEffect} and {@link EnchantedPermanentConditionalEffect} wrappers are
+     * unwrapped to their currently active restriction.
+     */
+    private List<AttachedRestriction> attachedPermanentRestrictions(GameData gameData, Permanent permanent) {
+        List<AttachedRestriction> restrictions = new ArrayList<>();
+        UUID permanentControllerId = findPermanentController(gameData, permanent.getId());
+        gameData.forEachPermanent((controllerId, source) -> {
+            if (!source.isAttached() || !permanent.getId().equals(source.getAttachedTo())
+                    || source.isAuraEffectsIgnoredFor(permanentControllerId)
+                    || hasLostPrintedAbilities(gameData, source)) {
+                return;
+            }
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                collectAttachedRestriction(gameData, source, controllerId, permanent, effect, restrictions);
+            }
+        });
+        return restrictions;
+    }
+
+    private void collectAttachedRestriction(GameData gameData, Permanent source, UUID sourceControllerId,
+                                            Permanent permanent, CardEffect effect,
+                                            List<AttachedRestriction> restrictions) {
+        if (effect instanceof AttachedPermanentRestrictionEffect restriction) {
+            restrictions.add(new AttachedRestriction(source, restriction.restriction()));
+        } else if (effect instanceof ConditionalEffect conditional) {
+            if (conditionEvaluationService.isMet(gameData, conditional.condition(),
+                    ConditionContext.forStaticEffect(source, sourceControllerId))) {
+                collectAttachedRestriction(gameData, source, sourceControllerId, permanent,
+                        conditional.wrapped(), restrictions);
+            }
+        } else if (effect instanceof EnchantedPermanentConditionalEffect cond) {
+            CardEffect active = matchesEnchantedPermanentPredicate(gameData, source, permanent, cond.filter())
+                    ? cond.ifMatch()
+                    : cond.ifNotMatch();
+            if (active != null) {
+                collectAttachedRestriction(gameData, source, sourceControllerId, permanent, active, restrictions);
+            }
+        }
+    }
+
+    private boolean hasAttachedPermanentRestriction(GameData gameData, Permanent permanent,
+                                                    Predicate<CardEffect> matcher) {
+        return attachedPermanentRestrictions(gameData, permanent).stream()
+                .anyMatch(attached -> matcher.test(attached.restriction()));
+    }
+
+    /** One {@link AttachedPermanentRestrictionEffect} restriction and the attachment imposing it. */
+    private record AttachedRestriction(Permanent source, CardEffect restriction) {
     }
 
     /**
@@ -4665,6 +4724,7 @@ public class GameQueryService {
             restrictions.addAll(target.getCard().getEffects(EffectSlot.STATIC));
         }
         restrictions.addAll(computeStaticBonus(gameData, target).grantedEffects());
+        attachedPermanentRestrictions(gameData, target).forEach(attached -> restrictions.add(attached.restriction()));
         return restrictions.stream()
                 .filter(TargetingRestrictionEffect.class::isInstance)
                 .flatMap(effect -> ((TargetingRestrictionEffect) effect).sourceCardTypes().stream())
@@ -8837,7 +8897,7 @@ public class GameQueryService {
                 return true;
             }
         }
-        return false;
+        return hasAttachedPermanentRestriction(gameData, target, GameQueryService::isAnySpellRestriction);
     }
 
     private boolean isActiveAnySpellRestriction(GameData gameData, Permanent target, CardEffect effect) {
@@ -8911,12 +8971,23 @@ public class GameQueryService {
      * from its own static effects or from effects granted by other permanents.
      */
     public boolean cantBeEnchantedByOtherAuras(GameData gameData, Permanent target) {
-        return hasAuraAttachmentRestriction(gameData, target, false);
+        return hasAuraAttachmentRestriction(gameData, target, false, null);
+    }
+
+    /**
+     * As {@link #cantBeEnchantedByOtherAuras(GameData, Permanent)} for one particular Aura: a
+     * restriction an attached Aura imposes (Anti-Magic Aura) doesn't stop that same Aura, which is
+     * not an "other" Aura.
+     *
+     * @param auraCardId the card of the Aura that would enchant {@code target}
+     */
+    public boolean cantBeEnchantedByAura(GameData gameData, Permanent target, UUID auraCardId) {
+        return hasAuraAttachmentRestriction(gameData, target, false, auraCardId);
     }
 
     /** Returns whether Aura spells cannot target this permanent, including attachment restrictions. */
     public boolean cantBeTargetedByAuraSpells(GameData gameData, Permanent target) {
-        return hasAuraAttachmentRestriction(gameData, target, true);
+        return hasAuraAttachmentRestriction(gameData, target, true, null);
     }
 
     /**
@@ -8925,18 +8996,31 @@ public class GameQueryService {
      * Beast) only stop new attachment and are excluded, as are Aura-spell-only targeting restrictions
      * (Tetsuo Umezawa), which never make an attached Aura illegal.
      */
-    public boolean cantBeEnchantedByOtherAurasRemovingExisting(GameData gameData, Permanent target) {
+    public boolean cantBeEnchantedByOtherAurasRemovingExisting(GameData gameData, Permanent target,
+                                                               UUID attachedAuraCardId) {
         List<CardEffect> effects = new ArrayList<>(getActiveStaticEffects(gameData, target));
         effects.addAll(getGrantedEffects(gameData, target));
+        effects.addAll(restrictionsFromOtherAttachments(gameData, target, attachedAuraCardId));
         return effects.stream().anyMatch(effect -> effect instanceof CantBeEnchantedByOtherAurasEffect restriction
                 && !restriction.auraSpellsOnly() && !restriction.keepsExistingAuras());
     }
 
-    private boolean hasAuraAttachmentRestriction(GameData gameData, Permanent target, boolean auraSpell) {
+    private boolean hasAuraAttachmentRestriction(GameData gameData, Permanent target, boolean auraSpell,
+                                                 UUID auraCardId) {
         List<CardEffect> effects = new ArrayList<>(getActiveStaticEffects(gameData, target));
         effects.addAll(getGrantedEffects(gameData, target));
+        effects.addAll(restrictionsFromOtherAttachments(gameData, target, auraCardId));
         return effects.stream().anyMatch(effect -> effect instanceof CantBeEnchantedByOtherAurasEffect restriction
                 && (auraSpell || !restriction.auraSpellsOnly()));
+    }
+
+    /** Attached-permanent restrictions on {@code target}, except those imposed by the given card's permanent. */
+    private List<CardEffect> restrictionsFromOtherAttachments(GameData gameData, Permanent target,
+                                                              UUID exceptCardId) {
+        return attachedPermanentRestrictions(gameData, target).stream()
+                .filter(attached -> exceptCardId == null || !exceptCardId.equals(attached.source().getCard().getId()))
+                .map(AttachedRestriction::restriction)
+                .toList();
     }
 
     /** Returns whether another player is prevented from gaining control of the permanent. */

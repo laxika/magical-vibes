@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -25,8 +24,7 @@ public class BilbosRing extends Card {
     public BilbosRing() {
         addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.EQUIPPED_CREATURE)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.EQUIPPED_CREATURE)));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(), new CantBeBlockedEffect()));
 
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(new AttacksAlone(),
                 SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))));

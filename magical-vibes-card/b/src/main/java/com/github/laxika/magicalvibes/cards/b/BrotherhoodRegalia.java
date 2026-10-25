@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -23,8 +22,7 @@ public class BrotherhoodRegalia extends Card {
                 new CounterUnlessPaysEffect(2), GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.STATIC,
                 new GrantSubtypeEffect(CardSubtype.ASSASSIN, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.EQUIPPED_CREATURE));
+        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
 
         addActivatedAbility(new EquipActivatedAbility(
                 "{1}",

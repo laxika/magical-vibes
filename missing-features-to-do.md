@@ -9,61 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 51. Aura and Equipment restrictions modelled as abilities granted to the creature
-
-**Status:** open · **Found:** 2026-10-23, auditing `GrantEffectEffect` attached scopes after the Gutter Shortcut fix
-
-**Failing tests:** none known; the bug shows only when the creature loses its abilities (Dress Down, Humility,
-Turn to Frog) or when "has" text is wrongly kept.
-
-**What the rules require.** "Enchanted creature can't ..." / "Equipped creature can't ..." is a static ability of the
-Aura or Equipment itself; removing the creature's abilities (layer 6, CR 613.1f) can't touch it. Only "has"/"gains"
-text grants an ability to the creature. Wrapping the effect in `GrantEffectEffect(..., ENCHANTED_CREATURE /
-EQUIPPED_CREATURE / ENCHANTED_PERMANENT)` models a granted ability. Gutter Shortcut was fixed (effect directly in
-STATIC; `BlockLegalityService` now reads attached restrictions even after ability loss). Remaining cases:
-- Card-only fixes (the engine already reads the effect from an attached permanent — `BlockLegalityService`
-  restriction kinds and `GameQueryService.hasCantBeBlocked`/`hasAuraWithEffect`, which unwraps `ConditionalEffect`
-  and `EnchantedPermanentConditionalEffect`):
-  - `SecurityBypass` (SNC 59) — "As long as enchanted creature is attacking alone, it can't be blocked." Keep the
-    granted connive trigger, which is a quoted ability.
-  - `WayOfTheThief` (GTC 56) — "Enchanted creature can't be blocked as long as you control a Gate." Use
-    `ConditionalEffect(cond, new CantBeBlockedEffect())`.
-  - `ThievesTools` (AFR 122) — "Equipped creature can't be blocked as long as its power is 3 or less." Likely
-    `EnchantedPermanentConditionalEffect(PermanentPowerAtMostPredicate(3), new CantBeBlockedEffect(), null)`; verify
-    it works for Equipment.
-  - `PsychicPaper` (WHO 181) and `BrotherhoodRegalia` (ACR 71) — "Equipped creature has ward ... and can't be
-    blocked": only the ward is granted; "can't be blocked" is the Equipment's own restriction.
-- Engine changes needed (these restriction kinds are only read from the creature's own or granted effects, see
-  `GameQueryService` and `AuraAttachmentService`):
-  - `TargetingRestrictionEffect` — `ArtifactWard` (ATQ 3, "can't be the target of abilities from artifact sources"),
-    `AntiMagicAura` (5ED 72, "can't be the target of spells"), `SpectralShield` (ICE 302, "can't be the target of
-    spells").
-  - `CantBeEnchantedByOtherAurasEffect` — `AntiMagicAura`, `ConsecrateLand` (2ED 15; its indestructible is correctly
-    granted).
-  - `CantBeSacrificedEffect` — `AssaultSuit` (CMM 369).
-  - `CantBecomeSuspectedEffect` — `AirtightAlibi` (MKM 149).
-- The reverse mistake (granted keyword modelled as the attached permanent's own effect, so it survives ability
-  loss): `TravelersCloak` (INV 83, "Enchanted creature has landwalk of the chosen type") and `VectisGloves` (MH2 241,
-  "has artifact landwalk") put `CantBeBlockedIfDefenderControlsMatchingPermanentEffect` directly in STATIC. Landwalk
-  is a keyword (CR 702.14c); wrap it in `GrantEffectEffect` like `TrailblazersBoots`.
-
-**Why it's large.** Four restriction kinds need their attached-permanent lookups added in `GameQueryService`
-(targeting legality is heavily shared), plus eleven card changes, each with a "loses all abilities" test.
-
-**Prompt to start it:**
-
-```
-Fix the Aura/Equipment restriction modelling in missing-features-to-do.md entry 51. First the card-only fixes
-(Security Bypass, Way of the Thief, Thieves' Tools, Psychic Paper, Brotherhood Regalia, Traveler's Cloak, Vectis
-Gloves), then make GameQueryService/AuraAttachmentService read TargetingRestrictionEffect,
-CantBeEnchantedByOtherAurasEffect, CantBeSacrificedEffect and CantBecomeSuspectedEffect from attached Auras and
-Equipment, and convert Artifact Ward, Anti-Magic Aura, Spectral Shield, Consecrate Land, Assault Suit and Airtight
-Alibi. Verify every Oracle text, and add a Dress Down (loses all abilities) test per card.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 52. "Loses this ability": client listing and copy effects
 
 **Status:** open · **Found:** 2026-10-23, after adding `LoseThisActivatedAbilityEffect` for Great Fang Chroniclers
@@ -507,6 +452,40 @@ with Future Sight plus Xanathar, Guild Kingpin showing both top cards are offere
 keep WindriddlePalacesTest, XanatharGuildKingpinTest, FutureSightTest, CourserOfKruphixTest and
 BolassCitadelTest passing. Verify every CR number with the rules MCP. Don't run the full test suite;
 ask me. Don't commit until I say so.
+```
+
+---
+
+## 65. Indomitable Might's damage option and attached restrictions in the client listing
+
+**Status:** open · **Found:** 2026-10-26, while finishing entry 51 (Aura/Equipment restrictions as the attachment's own abilities)
+
+**Failing tests:**
+- none yet (write one: Indomitable Might on a creature that loses all abilities to Dress Down, then blocked)
+
+**What the rules require.** "Enchanted creature's controller may have it assign its combat damage as
+though it weren't blocked" (Indomitable Might, AFC 40) is a static ability of the Aura, not an ability
+granted to the creature (CR 113.10: only "has"/"gains" text adds an ability), so it keeps working after
+the creature loses its abilities (CR 613.1f). The card wraps `AssignCombatDamageAsThoughUnblockedEffect`
+in `GrantEffectEffect(..., ENCHANTED_CREATURE)`, and `CombatDamageService` only reads that effect from the
+creature's own and granted effects. Separately, restrictions now modelled with
+`AttachedPermanentRestrictionEffect` (Anti-Magic Aura, Artifact Ward, Spectral Shield, Consecrate Land,
+Assault Suit, Airtight Alibi) are no longer granted effects, so `GrantedAbilityViewFactory` no longer
+lists them on the enchanted/equipped permanent in the client.
+
+**Why it's large.** Small engine change in `CombatDamageService` (read the effect from attached Auras,
+honouring Volrath's Curse and the Aura losing its own abilities) plus a client-listing source for
+attachment-imposed restrictions; both need tests.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 65. Make CombatDamageService read
+AssignCombatDamageAsThoughUnblockedEffect from Auras attached to the attacker (like
+GameQueryService.hasAuraWithEffect) and put Indomitable Might's effect directly in STATIC instead of a
+GrantEffectEffect; add a Dress Down test. Then have the permanent view list restrictions that attached
+Auras/Equipment impose through AttachedPermanentRestrictionEffect. Verify every CR number with the rules
+MCP. Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 
 ---
