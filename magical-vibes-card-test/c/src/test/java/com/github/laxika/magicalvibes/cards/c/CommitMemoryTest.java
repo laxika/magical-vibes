@@ -39,7 +39,7 @@ class CommitMemoryTest extends BaseCardTest {
         List<Card> library = gd.playerDecks.get(player2.getId());
         assertThat(library.get(0)).isSameAs(topCard);
         assertThat(library.get(1).getName()).isEqualTo("Grizzly Bears");
-        harness.assertInGraveyard(player1, "Commit");
+        harness.assertInGraveyard(player1, "Commit // Memory");
     }
 
     @Test
@@ -78,7 +78,7 @@ class CommitMemoryTest extends BaseCardTest {
         assertThat(library.get(0)).isSameAs(topCard);
         assertThat(library.get(1).getName()).isEqualTo("Shock");
         harness.assertNotInGraveyard(player2, "Shock");
-        harness.assertInGraveyard(player1, "Commit");
+        harness.assertInGraveyard(player1, "Commit // Memory");
     }
 
     @Test
@@ -104,9 +104,9 @@ class CommitMemoryTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Commit") || c.getName().equals("Memory"));
+                .noneMatch(c -> c.getName().equals("Commit // Memory"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Commit"));
+                .anyMatch(c -> c.getName().equals("Commit // Memory"));
     }
 
     @Test
@@ -162,7 +162,7 @@ class CommitMemoryTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Commit"));
+                .anyMatch(c -> c.getName().equals("Commit // Memory"));
     }
 
     @Test
@@ -183,5 +183,36 @@ class CommitMemoryTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(memory);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(memory);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Commit on the stack has only its own name and mana value, and is the whole card again in the graveyard")
+    void commitHasOnlyItsHalfCharacteristicsOnTheStack() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CommitMemory()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0, bears.getId());
+
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Commit");
+        assertThat(gd.stack.getLast().getSpellManaValue()).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        Card commitMemory = gd.playerGraveyards.get(player1.getId()).getFirst();
+        assertThat(commitMemory.getName()).isEqualTo("Commit // Memory");
+        assertThat(commitMemory.getManaValue()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Memory cast from the graveyard has only its own name and mana value on the stack")
+    void memoryHasOnlyItsHalfCharacteristicsOnTheStack() {
+        harness.setGraveyard(player1, List.of(new CommitMemory()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castFlashback(player1, 0);
+
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Memory");
+        assertThat(gd.stack.getLast().getSpellManaValue()).isEqualTo(6);
     }
 }

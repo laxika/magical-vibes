@@ -43,7 +43,7 @@ class InsultInjuryTest extends BaseCardTest {
 
         // Shock 2 doubled to 4
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-        harness.assertInGraveyard(player1, "Insult");
+        harness.assertInGraveyard(player1, "Insult // Injury");
     }
 
     @Test
@@ -107,9 +107,9 @@ class InsultInjuryTest extends BaseCardTest {
         assertThat(serra.getMarkedDamage()).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Insult") || c.getName().equals("Injury"));
+                .noneMatch(c -> c.getName().equals("Insult // Injury"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Insult"));
+                .anyMatch(c -> c.getName().equals("Insult // Injury"));
     }
 
     @Test
@@ -156,7 +156,7 @@ class InsultInjuryTest extends BaseCardTest {
         assertThat(creature.getMarkedDamage()).isEqualTo(4);
         harness.assertInGraveyard(player1, "Gideon of the Trials");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Insult"));
+                .anyMatch(c -> c.getName().equals("Insult // Injury"));
     }
 
     @Test
@@ -185,7 +185,7 @@ class InsultInjuryTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Insult"));
+                .anyMatch(c -> c.getName().equals("Insult // Injury"));
     }
 
     @Test
@@ -213,7 +213,7 @@ class InsultInjuryTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Insult"));
+                .anyMatch(c -> c.getName().equals("Insult // Injury"));
     }
 
     @Test

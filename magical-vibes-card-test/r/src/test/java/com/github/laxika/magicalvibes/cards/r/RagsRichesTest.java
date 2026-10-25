@@ -40,7 +40,7 @@ class RagsRichesTest extends BaseCardTest {
         assertThat(own.getEffectiveToughness()).isEqualTo(1);
         assertThat(opp.getEffectivePower()).isEqualTo(1);
         assertThat(opp.getEffectiveToughness()).isEqualTo(1);
-        harness.assertInGraveyard(player1, "Rags");
+        harness.assertInGraveyard(player1, "Rags // Riches");
     }
 
     @Test
@@ -81,9 +81,9 @@ class RagsRichesTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(bears.getId()));
         assertThat(gd.stolenCreatures).containsEntry(bears.getId(), player2.getId());
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Rags") || c.getName().equals("Riches"));
+                .noneMatch(c -> c.getName().equals("Rags // Riches"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rags"));
+                .anyMatch(c -> c.getName().equals("Rags // Riches"));
     }
 
     @Test
@@ -122,7 +122,7 @@ class RagsRichesTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rags"));
+                .anyMatch(c -> c.getName().equals("Rags // Riches"));
     }
 
     @Test
@@ -189,7 +189,7 @@ class RagsRichesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(own, chosen);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(other).doesNotContain(chosen);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Rags"));
+                .anyMatch(c -> c.getName().equals("Rags // Riches"));
     }
 
     private Permanent giant(Player player) {

@@ -61,9 +61,9 @@ class IndulgeExcessTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Treasure").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .count()).isEqualTo(1);
-        harness.assertNotInGraveyard(player1, "Indulge");
+        harness.assertNotInGraveyard(player1, "Indulge // Excess");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Indulge"));
+                .anyMatch(card -> card.getName().equals("Indulge // Excess"));
     }
 
     @Test

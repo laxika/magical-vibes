@@ -42,7 +42,8 @@ public final class FaceOracleMapper {
 
         return new OracleData(
                 // A double-faced card's printed name is "Front // Back"; a face is named by its half.
-                "split".equals(face.layout()) && !isBackFace ? face.name() : stripSecondFace(face.name()),
+                // A split card, aftermath included, keeps both names off the stack (CR 709.4a).
+                isSplitLayout(face.layout()) && !isBackFace ? face.name() : stripSecondFace(face.name()),
                 parsed.type(),
                 parsed.additionalTypes(),
                 blankToNull(stripSecondFace(face.manaCost())),
@@ -61,7 +62,7 @@ public final class FaceOracleMapper {
                 isBackFace && !isPlaneswalker(parsed) ? null : CardDataSupport.parseInt(face.loyalty()),
                 isBackFace ? null : CardDataSupport.parseInt(face.defense()),
                 isBackFace ? null : blankToNull(face.watermark()),
-                !isBackFace && "split".equals(face.layout()) && face.manaValue() != null
+                !isBackFace && isSplitLayout(face.layout()) && face.manaValue() != null
                         ? new java.math.BigDecimal(face.manaValue()).intValueExact() : null);
     }
 

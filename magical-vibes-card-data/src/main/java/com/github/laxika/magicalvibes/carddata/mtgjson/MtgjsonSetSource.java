@@ -232,7 +232,7 @@ public class MtgjsonSetSource implements SetSource {
         }
 
         return new RawFace(
-                face.has("faceName") && !"split".equals(CardDataSupport.text(face, "layout"))
+                face.has("faceName") && !FaceOracleMapper.isSplitLayout(CardDataSupport.text(face, "layout"))
                         ? face.get("faceName").asText() : CardDataSupport.text(face, "name"),
                 CardDataSupport.text(face, "manaCost"),
                 CardDataSupport.text(face, "type"),

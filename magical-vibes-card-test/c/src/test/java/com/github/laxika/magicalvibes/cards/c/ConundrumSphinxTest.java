@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ConundrumSphinx.class, LightningBolt.class, RuneclawBear.class})
+@CardUsed({ConundrumSphinx.class, CommitMemory.class, LightningBolt.class, RuneclawBear.class})
 class ConundrumSphinxTest extends BaseCardTest {
 
     @Test
@@ -94,6 +94,23 @@ class ConundrumSphinxTest extends BaseCardTest {
         // Lightning Bolt should no longer be on top of deck
         assertThat(gd.playerDecks.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(knownCard.getId()));
+    }
+
+    @Test
+    @DisplayName("Naming either half of a split card is a correct guess for it")
+    void namingEitherHalfOfSplitCardIsCorrectGuess() {
+        addCreatureReady(player1, new ConundrumSphinx());
+        Card splitCard = new CommitMemory();
+        harness.setLibrary(player1, List.of(splitCard, new ConundrumSphinx()));
+        harness.setLibrary(player2, List.of(new RuneclawBear(), new ConundrumSphinx()));
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        harness.handleListChoice(player1, "Memory");
+        harness.handleListChoice(player2, "Conundrum Sphinx");
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(splitCard);
     }
 
     @Test

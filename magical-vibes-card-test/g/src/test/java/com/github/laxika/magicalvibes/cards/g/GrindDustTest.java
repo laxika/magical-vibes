@@ -73,9 +73,9 @@ class GrindDustTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getId().equals(alsoCountered.getCard().getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grind") || c.getName().equals("Dust"));
+                .noneMatch(c -> c.getName().equals("Grind // Dust"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grind"));
+                .anyMatch(c -> c.getName().equals("Grind // Dust"));
     }
 
     @Test
@@ -90,9 +90,9 @@ class GrindDustTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Grind") || c.getName().equals("Dust"));
+                .noneMatch(c -> c.getName().equals("Grind // Dust"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grind"));
+                .anyMatch(c -> c.getName().equals("Grind // Dust"));
     }
 
     @Test

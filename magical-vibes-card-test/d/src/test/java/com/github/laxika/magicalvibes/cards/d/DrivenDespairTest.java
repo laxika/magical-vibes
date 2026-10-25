@@ -43,7 +43,7 @@ class DrivenDespairTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 1);
-        harness.assertInGraveyard(player1, "Driven");
+        harness.assertInGraveyard(player1, "Driven // Despair");
     }
 
     @Test
@@ -94,9 +94,9 @@ class DrivenDespairTest extends BaseCardTest {
 
         assertThat(bears.hasKeyword(Keyword.MENACE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Driven") || c.getName().equals("Despair"));
+                .noneMatch(c -> c.getName().equals("Driven // Despair"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Driven"));
+                .anyMatch(c -> c.getName().equals("Driven // Despair"));
 
         bears.setAttacking(true);
         resolveCombat();

@@ -38,7 +38,7 @@ class ReasonBelieveTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(0, 1, 2), List.of()));
 
         GameData gd = harness.getGameData();
-        harness.assertInGraveyard(player1, "Reason");
+        harness.assertInGraveyard(player1, "Reason // Believe");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -56,9 +56,9 @@ class ReasonBelieveTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Reason") || c.getName().equals("Believe"));
+                .noneMatch(c -> c.getName().equals("Reason // Believe"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Reason"));
+                .anyMatch(c -> c.getName().equals("Reason // Believe"));
     }
 
     @Test
@@ -76,7 +76,7 @@ class ReasonBelieveTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Reason"));
+                .anyMatch(c -> c.getName().equals("Reason // Believe"));
     }
 
     @Test
@@ -93,7 +93,7 @@ class ReasonBelieveTest extends BaseCardTest {
         harness.assertInHand(player1, "Forest");
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Reason"));
+                .anyMatch(c -> c.getName().equals("Reason // Believe"));
     }
 
     @Test
@@ -136,7 +136,7 @@ class ReasonBelieveTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(2, 0), List.of(1)));
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, first, untouched, second);
-        harness.assertInGraveyard(player1, "Reason");
+        harness.assertInGraveyard(player1, "Reason // Believe");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -156,7 +156,7 @@ class ReasonBelieveTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(), List.of(1, 0)));
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
-        harness.assertInGraveyard(player1, "Reason");
+        harness.assertInGraveyard(player1, "Reason // Believe");
     }
 
     @Test
@@ -175,6 +175,6 @@ class ReasonBelieveTest extends BaseCardTest {
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Reason"));
+                .anyMatch(c -> c.getName().equals("Reason // Believe"));
     }
 }

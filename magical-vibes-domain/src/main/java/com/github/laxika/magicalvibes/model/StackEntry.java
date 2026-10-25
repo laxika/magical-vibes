@@ -63,6 +63,13 @@ public class StackEntry {
     }
 
     private Card castCard;
+    /**
+     * The half of the aftermath split card {@link #aftermathHalfSource} cast as this spell, built on
+     * first use by {@link #getCard()}.
+     */
+    @Getter(AccessLevel.NONE) private Card aftermathHalf;
+    @Getter(AccessLevel.NONE) private Card aftermathHalfSource;
+    @Getter(AccessLevel.NONE) private boolean aftermathHalfFromGraveyard;
     @Setter private UUID controllerId;
     /** The player who cast this spell when another player has since gained control of it. */
     private UUID casterId;
@@ -916,6 +923,9 @@ public class StackEntry {
         this.bombardmentOriginalEntryType = source.bombardmentOriginalEntryType;
         this.card = source.card;
         this.castCard = source.castCard;
+        this.aftermathHalf = source.aftermathHalf;
+        this.aftermathHalfSource = source.aftermathHalfSource;
+        this.aftermathHalfFromGraveyard = source.aftermathHalfFromGraveyard;
         this.controllerId = source.controllerId;
         this.casterId = source.casterId;
         this.activePlayerId = source.activePlayerId;
@@ -1528,7 +1538,36 @@ public class StackEntry {
     }
 
     public Card getCard() {
-        return castCard != null ? castCard : card;
+        if (castCard != null) {
+            return castCard;
+        }
+        if (card != null && card.isAftermathSplitCard()
+                && entryType != StackEntryType.TRIGGERED_ABILITY && entryType != StackEntryType.ACTIVATED_ABILITY) {
+            return aftermathHalf();
+        }
+        return card;
+    }
+
+    /**
+     * The half of an aftermath card this spell was cast as: its second half when cast from a
+     * graveyard, its first half otherwise. While on the stack only that half's characteristics
+     * exist (CR 702.127a, CR 709.3b). Cast paths put the whole card on the stack, so the half is
+     * derived here rather than at each of them.
+     */
+    private Card aftermathHalf() {
+        if (aftermathHalfSource != card || aftermathHalfFromGraveyard != castWithFlashback) {
+            Card half;
+            if (castWithFlashback) {
+                half = card.createRuntimeCopyWithFace(card.graveyardCastHalf());
+            } else {
+                half = card.createRuntimeCopy();
+                half.applySplitHalf(card.getSplitHalves().getFirst());
+            }
+            aftermathHalf = freezeCard(half);
+            aftermathHalfSource = card;
+            aftermathHalfFromGraveyard = castWithFlashback;
+        }
+        return aftermathHalf;
     }
 
     /** Whether this stack object has the given printed or cast-time-granted keyword. */
@@ -2056,7 +2095,7 @@ public class StackEntry {
         if ((castWithAdventure || castWithOmen) && card != null && card.getBackFaceCard() != null) {
             return spellManaValue(card.getBackFaceCard(), xValue);
         }
-        return spellManaValue(card, xValue);
+        return spellManaValue(getCard(), xValue);
     }
 
     /** {@link #getSpellManaValue()} for a card whose stack entry is held separately. */

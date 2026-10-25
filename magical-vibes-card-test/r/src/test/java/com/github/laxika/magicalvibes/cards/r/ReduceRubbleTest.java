@@ -36,7 +36,7 @@ class ReduceRubbleTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Llanowar Elves");
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Reduce");
+        harness.assertInGraveyard(player2, "Reduce // Rubble");
     }
 
     @Test
@@ -58,7 +58,7 @@ class ReduceRubbleTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Reduce");
+        harness.assertInGraveyard(player2, "Reduce // Rubble");
     }
 
     @Test
@@ -77,9 +77,9 @@ class ReduceRubbleTest extends BaseCardTest {
         assertThat(second.getSkipUntapCount()).isEqualTo(1);
         assertThat(third.getSkipUntapCount()).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Reduce") || c.getName().equals("Rubble"));
+                .noneMatch(c -> c.getName().equals("Reduce // Rubble"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Reduce"));
+                .anyMatch(c -> c.getName().equals("Reduce // Rubble"));
     }
 
     @Test
@@ -167,7 +167,7 @@ class ReduceRubbleTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Reduce"));
+                .anyMatch(c -> c.getName().equals("Reduce // Rubble"));
     }
 
     @Test

@@ -37,7 +37,7 @@ class StruggleSurviveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Struggle");
+        harness.assertInGraveyard(player1, "Struggle // Survive");
     }
 
     @Test
@@ -90,7 +90,7 @@ class StruggleSurviveTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId()))
                 .anyMatch(c -> c.getId().equals(p2GyCard.getId()));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Struggle"));
+                .anyMatch(c -> c.getName().equals("Struggle // Survive"));
     }
 
     @Test
@@ -109,7 +109,7 @@ class StruggleSurviveTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Struggle"));
+                .anyMatch(c -> c.getName().equals("Struggle // Survive"));
     }
 
     @Test
@@ -138,7 +138,7 @@ class StruggleSurviveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Struggle");
+        harness.assertInGraveyard(player1, "Struggle // Survive");
     }
 
     @Test
@@ -153,7 +153,7 @@ class StruggleSurviveTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(target.getMarkedDamage()).isZero();
-        harness.assertInGraveyard(player1, "Struggle");
+        harness.assertInGraveyard(player1, "Struggle // Survive");
     }
 
     @Test

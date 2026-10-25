@@ -656,7 +656,7 @@ public class PredicateEvaluationService {
                 }
                 Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
                 String chosenName = source == null ? null : source.getChosenName();
-                yield chosenName != null && chosenName.equals(card.getName());
+                yield chosenName != null && card.hasName(chosenName);
             }
             case CardHasSourceChosenColorPredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {

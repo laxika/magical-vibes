@@ -34,7 +34,7 @@ class ClaimFameTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Claim");
+        harness.assertInGraveyard(player1, "Claim // Fame");
     }
 
     @Test
@@ -75,10 +75,9 @@ class ClaimFameTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
-        harness.assertNotInGraveyard(player1, "Claim");
-        harness.assertNotInGraveyard(player1, "Fame");
+        harness.assertNotInGraveyard(player1, "Claim // Fame");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Claim"));
+                .anyMatch(c -> c.getName().equals("Claim // Fame"));
     }
 
     @Test
@@ -150,7 +149,7 @@ class ClaimFameTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
-        harness.assertInGraveyard(player1, "Claim");
+        harness.assertInGraveyard(player1, "Claim // Fame");
     }
 
     @Test
@@ -182,7 +181,7 @@ class ClaimFameTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Claim");
+        harness.assertNotInGraveyard(player1, "Claim // Fame");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(spell.getId()));
     }
@@ -204,7 +203,7 @@ class ClaimFameTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
-        harness.assertNotInGraveyard(player1, "Claim");
+        harness.assertNotInGraveyard(player1, "Claim // Fame");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(spell.getId()));
     }
@@ -225,7 +224,7 @@ class ClaimFameTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
-        harness.assertNotInGraveyard(player1, "Claim");
+        harness.assertNotInGraveyard(player1, "Claim // Fame");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(spell.getId()));
     }

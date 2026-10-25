@@ -38,7 +38,7 @@ class RefuseCooperateTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, counsel.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
-        harness.assertInGraveyard(player2, "Refuse");
+        harness.assertInGraveyard(player2, "Refuse // Cooperate");
     }
 
     @Test
@@ -82,9 +82,9 @@ class RefuseCooperateTest extends BaseCardTest {
         assertThat(copy.getDescription()).isEqualTo("Copy of Counsel of the Soratami");
 
         assertThat(game.playerGraveyards.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Refuse") || c.getName().equals("Cooperate"));
+                .noneMatch(c -> c.getName().equals("Refuse // Cooperate"));
         assertThat(game.getPlayerExiledCards(player2.getId()))
-                .anyMatch(c -> c.getName().equals("Refuse"));
+                .anyMatch(c -> c.getName().equals("Refuse // Cooperate"));
     }
 
     @Test

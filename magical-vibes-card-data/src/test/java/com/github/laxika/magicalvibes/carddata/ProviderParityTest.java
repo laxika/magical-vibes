@@ -47,7 +47,7 @@ class ProviderParityTest {
         List<String> differences = new ArrayList<>();
         for (String number : scryfall.keySet()) {
             compare(differences, number, "front", scryfall.get(number), mtgjson.get(number),
-                    printing -> withoutAftermathNaming(printing, comparable(StoredSetOracleLoader.frontFace(printing))));
+                    printing -> comparable(StoredSetOracleLoader.frontFace(printing)));
             compare(differences, number, "back", scryfall.get(number), mtgjson.get(number),
                     printing -> comparable(StoredSetOracleLoader.backFace(printing)));
             compare(differences, number, "rarity", scryfall.get(number), mtgjson.get(number),
@@ -77,25 +77,6 @@ class ProviderParityTest {
                 data.cardText(), data.power(), data.toughness(), data.keywords(), data.loyalty(), data.defense(),
                 data.watermark(), data.combinedManaValue(), data.splitHalves().stream()
                 .map(ProviderParityTest::comparable).toList());
-    }
-
-    /**
-     * The one difference this test tolerates. Scryfall lays an aftermath card out as "split", so it
-     * maps to the whole card — both names and the combined mana value, as CR 709.4 has it — while
-     * MTGJSON's "aftermath" maps to the front half alone. The aftermath card classes and their tests
-     * are written against the front half, so unifying the two is a change to those cards, not to
-     * the providers.
-     */
-    private static OracleData withoutAftermathNaming(StoredPrinting printing, OracleData data) {
-        if (data == null || printing.splitHalves().isEmpty()
-                || !printing.splitHalves().getFirst().keywords().contains("Aftermath")) {
-            return data;
-        }
-        String frontName = data.name().contains(" // ") ? data.name().substring(0, data.name().indexOf(" // ")) : data.name();
-        return new OracleData(frontName, data.type(), data.additionalTypes(), data.manaCost(), data.color(),
-                data.colors(), data.colorIdentity(), data.supertypes(), data.subtypes(), data.cardText(),
-                data.power(), data.toughness(), data.keywords(), data.loyalty(), data.defense(),
-                data.watermark(), null, data.splitHalves());
     }
 
     /** What the card browser makes of a printing's variant: hidden, a deck section, or shown. */

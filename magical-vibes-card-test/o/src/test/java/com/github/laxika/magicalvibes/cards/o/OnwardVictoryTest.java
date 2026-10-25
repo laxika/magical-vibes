@@ -35,7 +35,7 @@ class OnwardVictoryTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
         assertThat(target.getEffectivePower()).isEqualTo(4);
-        harness.assertInGraveyard(player1, "Onward");
+        harness.assertInGraveyard(player1, "Onward // Victory");
     }
 
     @Test
@@ -80,9 +80,9 @@ class OnwardVictoryTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Onward") || c.getName().equals("Victory"));
+                .noneMatch(c -> c.getName().equals("Onward // Victory"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Onward"));
+                .anyMatch(c -> c.getName().equals("Onward // Victory"));
     }
 
     @Test
@@ -163,7 +163,7 @@ class OnwardVictoryTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
         assertThat(target.getPowerModifier()).isEqualTo(-3);
-        harness.assertInGraveyard(player1, "Onward");
+        harness.assertInGraveyard(player1, "Onward // Victory");
     }
 
     @Test
@@ -179,7 +179,7 @@ class OnwardVictoryTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, target)).isZero();
         assertThat(target.getPowerModifier()).isEqualTo(-2);
-        harness.assertInGraveyard(player1, "Onward");
+        harness.assertInGraveyard(player1, "Onward // Victory");
     }
 
     @Test
@@ -279,7 +279,7 @@ class OnwardVictoryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery-speed");
-        harness.assertInGraveyard(player1, "Onward");
+        harness.assertInGraveyard(player1, "Onward // Victory");
         assertThat(gqs.hasKeyword(gd, target, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 }

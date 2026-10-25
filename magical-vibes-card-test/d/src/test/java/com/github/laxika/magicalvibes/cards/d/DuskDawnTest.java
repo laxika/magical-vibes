@@ -37,7 +37,7 @@ class DuskDawnTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Hill Giant");
-        harness.assertInGraveyard(player1, "Dusk");
+        harness.assertInGraveyard(player1, "Dusk // Dawn");
     }
 
     @Test
@@ -57,10 +57,9 @@ class DuskDawnTest extends BaseCardTest {
         harness.assertInHand(player1, "Fugitive Wizard");
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Hill Giant");
-        harness.assertNotInGraveyard(player1, "Dusk");
-        harness.assertNotInGraveyard(player1, "Dawn");
+        harness.assertNotInGraveyard(player1, "Dusk // Dawn");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Dusk"));
+                .anyMatch(c -> c.getName().equals("Dusk // Dawn"));
     }
 
     @Test

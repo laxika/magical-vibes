@@ -34,7 +34,7 @@ class DestinedLeadTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(0);
         assertThat(target.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        harness.assertInGraveyard(player1, "Destined");
+        harness.assertInGraveyard(player1, "Destined // Lead");
     }
 
     @Test
@@ -79,9 +79,9 @@ class DestinedLeadTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(target.isMustBeBlockedByAllThisTurn()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Destined") || c.getName().equals("Lead"));
+                .noneMatch(c -> c.getName().equals("Destined // Lead"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Destined"));
+                .anyMatch(c -> c.getName().equals("Destined // Lead"));
     }
 
     @Test

@@ -36,7 +36,7 @@ class PrepareFightTest extends BaseCardTest {
         assertThat(target.getPowerModifier()).isEqualTo(2);
         assertThat(target.getToughnessModifier()).isEqualTo(2);
         assertThat(target.hasKeyword(Keyword.LIFELINK)).isTrue();
-        harness.assertInGraveyard(player1, "Prepare");
+        harness.assertInGraveyard(player1, "Prepare // Fight");
     }
 
     @Test
@@ -86,9 +86,9 @@ class PrepareFightTest extends BaseCardTest {
 
         GameData gameData = harness.getGameData();
         assertThat(gameData.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Prepare") || c.getName().equals("Fight"));
+                .noneMatch(c -> c.getName().equals("Prepare // Fight"));
         assertThat(gameData.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Prepare"));
+                .anyMatch(c -> c.getName().equals("Prepare // Fight"));
     }
 
     @Test

@@ -32,7 +32,7 @@ class HeavenEarthTest extends BaseCardTest {
 
         assertThat(serra.getMarkedDamage()).isEqualTo(3);
         assertThat(bear.getMarkedDamage()).isEqualTo(0);
-        harness.assertInGraveyard(player1, "Heaven");
+        harness.assertInGraveyard(player1, "Heaven // Earth");
     }
 
     @Test
@@ -64,9 +64,9 @@ class HeavenEarthTest extends BaseCardTest {
         assertThat(bear.getMarkedDamage()).isEqualTo(2);
         assertThat(serra.getMarkedDamage()).isEqualTo(0);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Heaven") || c.getName().equals("Earth"));
+                .noneMatch(c -> c.getName().equals("Heaven // Earth"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Heaven"));
+                .anyMatch(c -> c.getName().equals("Heaven // Earth"));
     }
 
     @Test
@@ -81,7 +81,7 @@ class HeavenEarthTest extends BaseCardTest {
 
         assertThat(bear.getMarkedDamage()).isEqualTo(0);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Heaven"));
+                .anyMatch(c -> c.getName().equals("Heaven // Earth"));
     }
 
     @Test
@@ -120,7 +120,7 @@ class HeavenEarthTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, 0, null);
         harness.passBothPriorities();
-        harness.assertInGraveyard(player1, "Heaven");
+        harness.assertInGraveyard(player1, "Heaven // Earth");
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -133,9 +133,9 @@ class HeavenEarthTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(ownAngel.getMarkedDamage()).isZero();
         assertThat(opposingAngel.getMarkedDamage()).isZero();
-        harness.assertNotInGraveyard(player1, "Heaven");
+        harness.assertNotInGraveyard(player1, "Heaven // Earth");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Heaven"));
+                .anyMatch(c -> c.getName().equals("Heaven // Earth"));
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }
@@ -150,7 +150,7 @@ class HeavenEarthTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, 0, (java.util.UUID) null))
                 .isInstanceOf(IllegalStateException.class);
 
-        harness.assertInGraveyard(player1, "Heaven");
+        harness.assertInGraveyard(player1, "Heaven // Earth");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }

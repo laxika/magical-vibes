@@ -40,7 +40,7 @@ class RoadRuinTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == forest && permanent.isTapped());
-        harness.assertInGraveyard(player1, "Road");
+        harness.assertInGraveyard(player1, "Road // Ruin");
     }
 
     @Test
@@ -58,10 +58,9 @@ class RoadRuinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
-        harness.assertNotInGraveyard(player1, "Road");
-        harness.assertNotInGraveyard(player1, "Ruin");
+        harness.assertNotInGraveyard(player1, "Road // Ruin");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Road"));
+                .anyMatch(card -> card.getName().equals("Road // Ruin"));
     }
 
     @Test
@@ -89,7 +88,7 @@ class RoadRuinTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Forest");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
-        harness.assertInGraveyard(player1, "Road");
+        harness.assertInGraveyard(player1, "Road // Ruin");
     }
 
     @Test
@@ -121,9 +120,9 @@ class RoadRuinTest extends BaseCardTest {
 
         assertThat(target.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Road");
+        harness.assertNotInGraveyard(player1, "Road // Ruin");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Road"));
+                .anyMatch(card -> card.getName().equals("Road // Ruin"));
     }
 
     @Test
@@ -135,7 +134,7 @@ class RoadRuinTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.assertInGraveyard(player1, "Road");
+        harness.assertInGraveyard(player1, "Road // Ruin");
     }
 
     @Test
@@ -150,7 +149,7 @@ class RoadRuinTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bears);
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Road");
+        harness.assertInGraveyard(player1, "Road // Ruin");
     }
 
     @Test
@@ -165,8 +164,8 @@ class RoadRuinTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).add(target.getCard());
         harness.passBothPriorities();
 
-        harness.assertNotInGraveyard(player1, "Road");
+        harness.assertNotInGraveyard(player1, "Road // Ruin");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Road"));
+                .anyMatch(card -> card.getName().equals("Road // Ruin"));
     }
 }

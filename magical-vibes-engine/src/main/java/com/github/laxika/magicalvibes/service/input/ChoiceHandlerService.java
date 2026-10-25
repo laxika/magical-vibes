@@ -7254,7 +7254,7 @@ public class ChoiceHandlerService {
             Card topCard = deck.removeFirst();
             gameLogService.append(gameData, GameLog.textCardText(playerName + " reveals " , topCard, "."));
 
-            if (topCard.getName().equals(chosenName)) {
+            if (chosenName != null && topCard.hasName(chosenName)) {
                 gameData.addCardToHand(pid, topCard);
                 gameLogService.append(gameData, GameLog.textCardText(playerName + " puts " , topCard, " into their hand."));
                 log.info("Game {} - {} guessed correctly, {} goes to hand", gameData.id, playerName, topCard.getName());
@@ -8370,7 +8370,7 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(controllerName + " chooses the number " + chosenNumber + "."));
 
         List<Card> library = gameData.playerDecks.get(targetPlayerId);
-        long matches = library == null ? 0 : library.stream().filter(c -> c.getName().equals(ctx.chosenName())).count();
+        long matches = library == null ? 0 : library.stream().filter(c -> c.hasName(ctx.chosenName())).count();
 
         if (library == null || library.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(targetName + " reveals an empty library."));
@@ -8417,7 +8417,7 @@ public class ChoiceHandlerService {
         }
 
         List<Card> hand = gameData.playerHands.getOrDefault(ctx.controllerId(), List.of());
-        boolean nameIsInHand = hand.stream().anyMatch(card -> ctx.chosenName().equals(card.getName()));
+        boolean nameIsInHand = hand.stream().anyMatch(card -> card.hasName(ctx.chosenName()));
         boolean guessedNameIsInHand = "Yes".equals(choice);
         boolean guessedWrong = nameIsInHand != guessedNameIsInHand;
 

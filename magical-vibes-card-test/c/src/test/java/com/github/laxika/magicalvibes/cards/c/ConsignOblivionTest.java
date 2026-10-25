@@ -38,7 +38,7 @@ class ConsignOblivionTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Consign");
+        harness.assertInGraveyard(player1, "Consign // Oblivion");
     }
 
     @Test
@@ -76,9 +76,9 @@ class ConsignOblivionTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Consign") || c.getName().equals("Oblivion"));
+                .noneMatch(c -> c.getName().equals("Consign // Oblivion"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Consign"));
+                .anyMatch(c -> c.getName().equals("Consign // Oblivion"));
     }
 
     @Test
@@ -116,7 +116,7 @@ class ConsignOblivionTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Manalith");
         harness.assertInHand(player2, "Manalith");
-        harness.assertInGraveyard(player1, "Consign");
+        harness.assertInGraveyard(player1, "Consign // Oblivion");
     }
 
     @Test
@@ -133,7 +133,7 @@ class ConsignOblivionTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Forest");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Consign"));
+                .anyMatch(c -> c.getName().equals("Consign // Oblivion"));
     }
 
     @Test
@@ -147,9 +147,9 @@ class ConsignOblivionTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
-        harness.assertNotInGraveyard(player1, "Consign");
+        harness.assertNotInGraveyard(player1, "Consign // Oblivion");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Consign"));
+                .anyMatch(c -> c.getName().equals("Consign // Oblivion"));
     }
 
     @Test

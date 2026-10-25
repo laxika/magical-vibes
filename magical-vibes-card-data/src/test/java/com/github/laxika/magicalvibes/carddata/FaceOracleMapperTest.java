@@ -239,6 +239,16 @@ class FaceOracleMapperTest {
         assertThat(data.combinedManaValue()).isEqualTo(8);
     }
 
+    /** CR 702.127a, 709.4a, 709.4b: an aftermath card is a split card, named and costed as a whole. */
+    @Test
+    void anAftermathFrontIsTheWholeCard() {
+        OracleData data = map(face().name("Commit // Memory").manaCost("{3}{U}").typeLine("Instant")
+                .colors(List.of("U")).layout("aftermath").manaValue("10.0"), FRONT);
+
+        assertThat(data.name()).isEqualTo("Commit // Memory");
+        assertThat(data.combinedManaValue()).isEqualTo(10);
+    }
+
     /**
      * An aftermath half cast from the graveyard is the split card's back face. Scryfall reports no
      * colours on a half, which left Authority (HOU) a colourless spell; CR 202.2 makes it white.

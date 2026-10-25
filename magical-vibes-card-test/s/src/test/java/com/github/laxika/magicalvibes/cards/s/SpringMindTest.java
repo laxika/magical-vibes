@@ -58,7 +58,7 @@ class SpringMindTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
-        harness.assertInGraveyard(player1, "Spring");
+        harness.assertInGraveyard(player1, "Spring // Mind");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -76,9 +76,9 @@ class SpringMindTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Spring") || c.getName().equals("Mind"));
+                .noneMatch(c -> c.getName().equals("Spring // Mind"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spring"));
+                .anyMatch(c -> c.getName().equals("Spring // Mind"));
     }
 
     @Test
@@ -97,7 +97,7 @@ class SpringMindTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spring"));
+                .anyMatch(c -> c.getName().equals("Spring // Mind"));
     }
 
     @Test
@@ -113,7 +113,7 @@ class SpringMindTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(originalLibrary);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Spring");
+        harness.assertInGraveyard(player1, "Spring // Mind");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -129,7 +129,7 @@ class SpringMindTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonland);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Spring");
+        harness.assertInGraveyard(player1, "Spring // Mind");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -151,7 +151,7 @@ class SpringMindTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Spring"));
+                .anyMatch(c -> c.getName().equals("Spring // Mind"));
     }
 
     private void setupLibrary() {

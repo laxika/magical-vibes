@@ -37,7 +37,7 @@ class LeaveChanceTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .filteredOn(c -> c.getName().equals("Grizzly Bears") || c.getName().equals("Island"))
                 .hasSize(2);
-        harness.assertInGraveyard(player1, "Leave");
+        harness.assertInGraveyard(player1, "Leave // Chance");
     }
 
     @Test
@@ -52,7 +52,7 @@ class LeaveChanceTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
-        harness.assertInGraveyard(player1, "Leave");
+        harness.assertInGraveyard(player1, "Leave // Chance");
     }
 
     @Test
@@ -88,9 +88,9 @@ class LeaveChanceTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3); // 1 kept + 2 drawn
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Leave") || c.getName().equals("Chance"));
+                .noneMatch(c -> c.getName().equals("Leave // Chance"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leave"));
+                .anyMatch(c -> c.getName().equals("Leave // Chance"));
     }
 
     @Test
@@ -119,7 +119,7 @@ class LeaveChanceTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(100);
-        harness.assertInGraveyard(player1, "Leave");
+        harness.assertInGraveyard(player1, "Leave // Chance");
     }
 
     @Test
@@ -156,7 +156,7 @@ class LeaveChanceTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leave"));
+                .anyMatch(c -> c.getName().equals("Leave // Chance"));
     }
 
     @Test
@@ -174,6 +174,6 @@ class LeaveChanceTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leave"));
+                .anyMatch(c -> c.getName().equals("Leave // Chance"));
     }
 }

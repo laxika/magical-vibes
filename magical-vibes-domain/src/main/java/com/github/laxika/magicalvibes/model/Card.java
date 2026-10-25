@@ -690,6 +690,32 @@ public class Card {
         }
     }
 
+    /**
+     * Gives this card one split half's own characteristics for casting, remembering the whole card
+     * first so it is the whole card again once the spell leaves the stack. While on the stack only
+     * the characteristics of the half being cast exist (CR 709.3b).
+     */
+    public void applySplitHalf(OracleData half) {
+        rememberSplitWholeCard();
+        setName(half.name());
+        setType(half.type());
+        setAdditionalTypes(half.additionalTypes());
+        setSupertypes(half.supertypes());
+        setSubtypes(half.subtypes());
+        setManaCost(half.manaCost());
+        setColors(half.colors());
+        setColor(half.color());
+        setCardText(half.cardText());
+    }
+
+    /**
+     * Whether this is a split card with aftermath: its second half is the back face, cast only from
+     * a graveyard (CR 702.127a), so a cast from anywhere else casts its first half.
+     */
+    public boolean isAftermathSplitCard() {
+        return splitHalves.size() >= 2 && graveyardCastHalf() != this;
+    }
+
     private void assertMutable() {
         if (frozen) {
             throw new IllegalStateException("Card '" + name + "' (" + id + ") is frozen. Live cards are shared"

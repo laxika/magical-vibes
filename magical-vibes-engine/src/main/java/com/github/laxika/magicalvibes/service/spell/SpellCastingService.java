@@ -1473,16 +1473,7 @@ public class SpellCastingService {
         com.github.laxika.magicalvibes.model.OracleData half =
                 splitHalf(card, chosenModeIndices.getFirst(), chosenModes.getFirst());
         if (half != null) {
-            card.rememberSplitWholeCard();
-            card.setName(half.name());
-            card.setType(half.type());
-            card.setAdditionalTypes(half.additionalTypes());
-            card.setSupertypes(half.supertypes());
-            card.setSubtypes(half.subtypes());
-            card.setManaCost(half.manaCost());
-            card.setColors(half.colors());
-            card.setColor(half.color());
-            card.setCardText(half.cardText());
+            card.applySplitHalf(half);
             return;
         }
         if (chosenModes.getFirst().spellType() != null) {

@@ -32,7 +32,7 @@ class FarmMarketTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, attacker.getId());
 
         harness.assertNotOnBattlefield(player2, "Mummy Paramount");
-        harness.assertInGraveyard(player1, "Farm");
+        harness.assertInGraveyard(player1, "Farm // Market");
     }
 
     @Test
@@ -64,9 +64,9 @@ class FarmMarketTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Farm") || c.getName().equals("Market"));
+                .noneMatch(c -> c.getName().equals("Farm // Market"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Farm"));
+                .anyMatch(c -> c.getName().equals("Farm // Market"));
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
@@ -105,7 +105,7 @@ class FarmMarketTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Mummy Paramount");
         harness.assertInGraveyard(player1, "Mummy Paramount");
-        harness.assertInGraveyard(player1, "Farm");
+        harness.assertInGraveyard(player1, "Farm // Market");
     }
 
     @Test
@@ -121,7 +121,7 @@ class FarmMarketTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Mummy Paramount");
-        harness.assertInGraveyard(player1, "Farm");
+        harness.assertInGraveyard(player1, "Farm // Market");
     }
 
     @Test
@@ -144,7 +144,7 @@ class FarmMarketTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(first, second);
-        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(c -> c.getName().equals("Farm"));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(c -> c.getName().equals("Farm // Market"));
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

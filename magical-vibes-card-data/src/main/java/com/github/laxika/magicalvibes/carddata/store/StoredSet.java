@@ -48,5 +48,5 @@ public record StoredSet(
      * re-downloaded instead of read. The CI cache key for {@code card-data-cache} has to change
      * with it.
      */
-    public static final int FORMAT_VERSION = 1;
+    public static final int FORMAT_VERSION = 2;
 }

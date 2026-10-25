@@ -41,7 +41,7 @@ class MouthFeedTest extends BaseCardTest {
         assertThat(hippo.getEffectiveToughness()).isEqualTo(3);
         assertThat(hippo.getCard().getColor()).isEqualTo(CardColor.GREEN);
         assertThat(hippo.getCard().getSubtypes()).contains(CardSubtype.HIPPO);
-        harness.assertInGraveyard(player1, "Mouth");
+        harness.assertInGraveyard(player1, "Mouth // Feed");
     }
 
     @Test
@@ -61,9 +61,9 @@ class MouthFeedTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Mouth") || c.getName().equals("Feed"));
+                .noneMatch(c -> c.getName().equals("Mouth // Feed"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mouth"));
+                .anyMatch(c -> c.getName().equals("Mouth // Feed"));
     }
 
     @Test
@@ -81,7 +81,7 @@ class MouthFeedTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Mouth"));
+                .anyMatch(c -> c.getName().equals("Mouth // Feed"));
     }
 
     @Test
@@ -135,7 +135,7 @@ class MouthFeedTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFlashback(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery-speed");
-        harness.assertInGraveyard(player1, "Mouth");
+        harness.assertInGraveyard(player1, "Mouth // Feed");
     }
 
     @Test
@@ -146,7 +146,7 @@ class MouthFeedTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFlashback(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
-        harness.assertInGraveyard(player1, "Mouth");
+        harness.assertInGraveyard(player1, "Mouth // Feed");
         assertThat(gd.stack).isEmpty();
     }
 }

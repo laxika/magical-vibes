@@ -39,7 +39,7 @@ class FailureComplyTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Shock"));
         harness.assertNotInGraveyard(player2, "Shock");
-        harness.assertInGraveyard(player1, "Failure");
+        harness.assertInGraveyard(player1, "Failure // Comply");
     }
 
     @Test
@@ -59,9 +59,9 @@ class FailureComplyTest extends BaseCardTest {
         assertThat(gd.opponentsCantCastNamedSpellsUntilControllerNextTurn.get(player1.getId()))
                 .contains("Shock");
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Failure") || c.getName().equals("Comply"));
+                .noneMatch(c -> c.getName().equals("Failure // Comply"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Failure"));
+                .anyMatch(c -> c.getName().equals("Failure // Comply"));
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);

@@ -39,7 +39,7 @@ class NeverReturnTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, bears.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Never");
+        harness.assertInGraveyard(player1, "Never // Return");
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
@@ -72,9 +72,9 @@ class NeverReturnTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Shock"));
         harness.assertOnBattlefield(player1, "Zombie");
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Never") || c.getName().equals("Return"));
+                .noneMatch(c -> c.getName().equals("Never // Return"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Never"));
+                .anyMatch(c -> c.getName().equals("Never // Return"));
     }
 
     @Test
@@ -121,7 +121,7 @@ class NeverReturnTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Liliana, Death's Majesty");
         harness.assertInGraveyard(player2, "Liliana, Death's Majesty");
-        harness.assertInGraveyard(player1, "Never");
+        harness.assertInGraveyard(player1, "Never // Return");
     }
 
     @Test
@@ -180,6 +180,6 @@ class NeverReturnTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Zombie");
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(creature);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
-        harness.assertNotInGraveyard(player1, "Never");
+        harness.assertNotInGraveyard(player1, "Never // Return");
     }
 }

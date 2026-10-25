@@ -46,6 +46,33 @@ class MtgjsonSetSourceTest {
                 .hasValueSatisfying(userAgent -> assertThat(userAgent).startsWith("Mozilla/5.0").contains("Chrome/"));
     }
 
+    /** CR 702.127a, 709.4a: an aftermath card is a split card, so its front keeps both names. */
+    @Test
+    void namesAnAftermathFrontByTheWholeCard() {
+        JsonNode face = MAPPER.readTree("""
+                {
+                  "name": "Commit // Memory",
+                  "faceName": "Commit",
+                  "side": "a",
+                  "layout": "aftermath",
+                  "number": "211",
+                  "manaCost": "{3}{U}",
+                  "manaValue": 10.0,
+                  "type": "Instant",
+                  "colors": ["U"],
+                  "colorIdentity": ["U"],
+                  "keywords": ["Aftermath"],
+                  "rarity": "rare",
+                  "text": "Put target spell or nonland permanent into its owner's library second from the top."
+                }
+                """);
+
+        OracleData data = parseOracleData(face, false);
+
+        assertThat(data.name()).isEqualTo("Commit // Memory");
+        assertThat(data.combinedManaValue()).isEqualTo(10);
+    }
+
     @Test
     void parsesFrontFaceOfTransformCard() {
         JsonNode face = MAPPER.readTree("""

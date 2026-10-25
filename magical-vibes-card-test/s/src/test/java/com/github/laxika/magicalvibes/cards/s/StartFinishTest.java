@@ -42,7 +42,7 @@ class StartFinishTest extends BaseCardTest {
             assertThat(warrior.getCard().getSubtypes()).contains(CardSubtype.WARRIOR);
             assertThat(gqs.hasKeyword(gd, warrior, Keyword.VIGILANCE)).isTrue();
         }
-        harness.assertInGraveyard(player1, "Start");
+        harness.assertInGraveyard(player1, "Start // Finish");
     }
 
     @Test
@@ -61,9 +61,9 @@ class StartFinishTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Start") || c.getName().equals("Finish"));
+                .noneMatch(c -> c.getName().equals("Start // Finish"));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Start"));
+                .anyMatch(c -> c.getName().equals("Start // Finish"));
     }
 
     @Test
@@ -132,9 +132,9 @@ class StartFinishTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getId).containsExactly(survivor.getId());
-        harness.assertNotInGraveyard(player1, "Start");
+        harness.assertNotInGraveyard(player1, "Start // Finish");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Start"));
+                .anyMatch(c -> c.getName().equals("Start // Finish"));
     }
 
     @Test
@@ -156,7 +156,7 @@ class StartFinishTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Start"));
+                .anyMatch(c -> c.getName().equals("Start // Finish"));
     }
 
     @Test
@@ -174,7 +174,7 @@ class StartFinishTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getId).contains(ownCreature.getId());
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Start");
+        harness.assertInGraveyard(player1, "Start // Finish");
         assertThat(gd.stack).isEmpty();
     }
 }

@@ -2781,7 +2781,7 @@ public class DrawService {
                         .text(".")
                         .build());
 
-                if (drawn.getName().equals(perm.getChosenName())) {
+                if (perm.getChosenName() != null && drawn.hasName(perm.getChosenName())) {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             perm.getCard(),

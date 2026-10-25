@@ -30,7 +30,7 @@ class CutRibbonsTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, beetle.getId());
 
         harness.assertNotOnBattlefield(player2, "Dune Beetle");
-        harness.assertInGraveyard(player1, "Cut");
+        harness.assertInGraveyard(player1, "Cut // Ribbons");
     }
 
     @Test
@@ -57,10 +57,9 @@ class CutRibbonsTest extends BaseCardTest {
 
         harness.assertLife(player2, 17);
         harness.assertLife(player1, 20);
-        harness.assertNotInGraveyard(player1, "Cut");
-        harness.assertNotInGraveyard(player1, "Ribbons");
+        harness.assertNotInGraveyard(player1, "Cut // Ribbons");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cut"));
+                .anyMatch(c -> c.getName().equals("Cut // Ribbons"));
     }
 
     @Test
@@ -75,7 +74,7 @@ class CutRibbonsTest extends BaseCardTest {
 
         harness.assertLife(player2, 20);
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Cut"));
+                .anyMatch(c -> c.getName().equals("Cut // Ribbons"));
     }
 
     @Test
@@ -90,7 +89,7 @@ class CutRibbonsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Colossapede");
         assertThat(creature.getMarkedDamage()).isEqualTo(4);
-        harness.assertInGraveyard(player1, "Cut");
+        harness.assertInGraveyard(player1, "Cut // Ribbons");
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }
@@ -105,7 +104,7 @@ class CutRibbonsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castAndResolveSorcery(player1, 0, creature.getId());
-        harness.assertInGraveyard(player1, "Cut");
+        harness.assertInGraveyard(player1, "Cut // Ribbons");
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
 
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -115,7 +114,7 @@ class CutRibbonsTest extends BaseCardTest {
 
         harness.assertLife(player2, 16);
         harness.assertLife(player1, 20);
-        harness.assertNotInGraveyard(player1, "Cut");
+        harness.assertNotInGraveyard(player1, "Cut // Ribbons");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
     }
 
@@ -129,7 +128,7 @@ class CutRibbonsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, 0, (UUID) null))
                 .isInstanceOf(IllegalStateException.class);
 
-        harness.assertInGraveyard(player1, "Cut");
+        harness.assertInGraveyard(player1, "Cut // Ribbons");
         harness.assertLife(player2, 20);
     }
 
