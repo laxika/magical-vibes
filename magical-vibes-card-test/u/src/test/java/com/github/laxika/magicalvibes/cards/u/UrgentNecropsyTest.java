@@ -112,7 +112,7 @@ class UrgentNecropsyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0,
                 List.of(firstCreature.getId(), secondCreature.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("at most one creature");
+                .hasMessageContaining("declared target groups");
     }
 
     @Test
@@ -154,6 +154,46 @@ class UrgentNecropsyTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact).doesNotContain(creature);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrderElementsOf(evidence);
+    }
+
+    @Test
+    void artifactCreatureChosenForBothTargetsIsStillDestroyedAsACreatureAfterLosingArtifactType() {
+        harness.addToBattlefield(player1, new NeurokTransmuter());
+        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player2, new RedHerring());
+        List<Card> evidence = List.of(new TunnelTipster());
+        harness.setGraveyard(player1, evidence);
+        harness.setHand(player1, List.of(new UrgentNecropsy()));
+        addManaForUrgentNecropsy();
+        gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(artifactCreature.getId(), artifactCreature.getId()), List.of(), false,
+                null, null, null, null, List.of(0));
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, artifactCreature.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.isArtifact(gd, artifactCreature)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifactCreature);
+        harness.assertInGraveyard(player2, "Red Herring");
+    }
+
+    @Test
+    void offersAnyTargetTypeFirstThenOnlyPermanentsThatFitAFreeSlot() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new NicolBolasPlaneswalker());
+        UrgentNecropsy necropsy = new UrgentNecropsy();
+
+        var first = harness.getValidTargetService()
+                .computeValidTargetsForSpell(gd, necropsy, player1.getId(), List.of());
+        var second = harness.getValidTargetService()
+                .computeValidTargetsForSpell(gd, necropsy, player1.getId(), List.of(creature.getId()));
+
+        assertThat(first.validPermanentIds()).contains(artifact.getId(), creature.getId(), planeswalker.getId());
+        assertThat(second.validPermanentIds()).contains(artifact.getId(), planeswalker.getId())
+                .doesNotContain(otherCreature.getId());
     }
 
     @Test

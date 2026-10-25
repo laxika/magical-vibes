@@ -6,12 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -19,19 +15,12 @@ import java.util.List;
 public class BoomBox extends Card {
 
     public BoomBox() {
-        PermanentPredicateTargetFilter artifactCreatureOrLand = new PermanentPredicateTargetFilter(
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsArtifactPredicate(),
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentIsLandPredicate())),
-                "Target must be an artifact, creature, or land");
-
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{6}",
                 List.of(new SacrificeSelfCost(), new DestroyEachTargetPermanentEffect()),
                 "{6}, {T}, Sacrifice this artifact: Destroy up to one target artifact, up to one target creature, and up to one target land.",
-                List.<TargetFilter>of(artifactCreatureOrLand, artifactCreatureOrLand, artifactCreatureOrLand),
+                List.<TargetFilter>of(TargetFilters.artifact(), TargetFilters.creature(), TargetFilters.land()),
                 0,
                 3
         ).withAllowSharedTargets()

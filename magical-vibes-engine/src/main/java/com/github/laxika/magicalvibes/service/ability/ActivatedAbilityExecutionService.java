@@ -192,6 +192,7 @@ public class ActivatedAbilityExecutionService {
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final com.github.laxika.magicalvibes.service.target.TargetGroupAssignmentService targetGroupAssignmentService;
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameLogService gameLogService;
@@ -2329,42 +2330,26 @@ public class ActivatedAbilityExecutionService {
     /**
      * Pairs each announced battlefield target with the target slot it fills. Targets normally fill the
      * slots in order, but when every slot is optional ("up to one target creature and up to one target
-     * land") an omitted earlier slot shifts a later-slot target into an earlier list position, so a
-     * target that fails its positional filter is paired with the first later slot that accepts it.
+     * land") each target is matched to the distinct slot it was chosen for, so an omitted earlier slot
+     * or an out-of-order list still rechecks each target against its own slot on resolution.
      */
     private List<TargetFilter> slotFiltersForTargets(GameData gameData, UUID playerId, Permanent source,
                                                      ActivatedAbility ability, List<UUID> targetIds, int xValue) {
         List<TargetFilter> slots = ability.getMultiTargetFilters();
+        List<Integer> assignedSlots = null;
+        if (slots.size() >= 2 && ability.getEffectiveMinTargets(xValue) == 0) {
+            FilterContext context = FilterContext.of(gameData)
+                    .withSourceCardId(source.getCard().getId())
+                    .withSourceControllerId(playerId);
+            assignedSlots = targetGroupAssignmentService.assignOptionalSlots(gameData, slots, targetIds, context)
+                    .orElse(null);
+        }
         List<TargetFilter> result = new ArrayList<>(targetIds.size());
-        boolean allSlotsOptional = slots.size() >= 2 && ability.getEffectiveMinTargets(xValue) == 0;
-        FilterContext context = FilterContext.of(gameData)
-                .withSourceCardId(source.getCard().getId())
-                .withSourceControllerId(playerId);
-        int nextSlot = 0;
         for (int i = 0; i < targetIds.size(); i++) {
-            int slot = Math.max(i, nextSlot);
-            Permanent target = allSlotsOptional ? gameQueryService.findPermanentById(gameData, targetIds.get(i)) : null;
-            if (target != null && slot < slots.size() && !acceptsTarget(slots.get(slot), target, context)) {
-                for (int later = slot + 1; later < slots.size(); later++) {
-                    if (acceptsTarget(slots.get(later), target, context)) {
-                        slot = later;
-                        break;
-                    }
-                }
-            }
-            nextSlot = slot + 1;
+            int slot = assignedSlots != null ? assignedSlots.get(i) : i;
             result.add(slot < slots.size() ? slots.get(slot) : ability.getTargetFilter());
         }
         return result;
-    }
-
-    private boolean acceptsTarget(TargetFilter filter, Permanent target, FilterContext context) {
-        try {
-            predicateEvaluationService.validateTargetFilter(filter, target, context);
-            return true;
-        } catch (IllegalStateException wrongSlot) {
-            return false;
-        }
     }
 
     private void pushAbilityOnStack(GameData gameData,

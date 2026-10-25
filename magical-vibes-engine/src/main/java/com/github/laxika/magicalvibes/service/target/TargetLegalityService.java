@@ -947,9 +947,17 @@ public class TargetLegalityService {
         PermanentPredicate declaredRestriction = ability.getTargetFilter() == null
                 ? EffectResolution.declaredPermanentRestriction(abilityEffects).orElse(null)
                 : null;
+        // "Up to one target X and up to one target Y": each target is checked against the distinct
+        // slot it fills, which need not be its list position.
+        boolean allSlotsOptional = hasAllOptionalTargetSlots(ability, xValue);
+        List<Integer> optionalSlots = allSlotsOptional
+                ? targetGroupAssignmentService.assignOptionalSlots(gameData, perPositionFilters, targetIds,
+                        filterContext(gameData, sourceCard.getId(), playerId)).orElse(null)
+                : null;
         for (int i = 0; i < targetIds.size(); i++) {
             UUID targetId = targetIds.get(i);
-            TargetFilter positionFilter = getPositionFilter(perPositionFilters, i);
+            TargetFilter positionFilter = getPositionFilter(perPositionFilters,
+                    optionalSlots != null ? optionalSlots.get(i) : i);
             if (positionFilter == null) {
                 positionFilter = ability.getTargetFilter();
             }
@@ -1050,10 +1058,43 @@ public class TargetLegalityService {
             }
         }
 
+        if (allSlotsOptional && optionalSlots == null && targetIds.size() <= perPositionFilters.size()) {
+            throw new IllegalStateException("Targets cannot fill the declared target slots");
+        }
         validateTargetCardGroupConstraints(gameData, abilityEffects, targetIds);
         validateMultiTargetConstraint(gameData, ability.getMultiTargetConstraint(), targetIds);
         validateFlagbearerTargetChoiceForMultiAbility(gameData, playerId, ability, abilityEffects,
                 targetIds, sourceCard, xValue);
+    }
+
+    /** Whether the spell declares several target groups and each is an optional group of battlefield permanents. */
+    public boolean hasAllOptionalPermanentTargetGroups(Card card) {
+        List<SpellTarget> groups = card.getSpellTargets();
+        return groups.size() > 1 && groups.stream().allMatch(group -> group.getMinTargets() == 0
+                && group.getMaxTargets() >= 1
+                && TargetGroupAssignmentService.isPermanentGroupFilter(group.getFilter()));
+    }
+
+    /** Whether the chosen permanents can each be placed in an optional target group of the spell they fit. */
+    public boolean fitsOptionalPermanentTargetGroups(GameData gameData, Card card, UUID controllerId,
+                                                     List<UUID> targetIds) {
+        return targetGroupAssignmentService.assignOptionalPermanentGroups(gameData, card, controllerId, targetIds)
+                .isPresent();
+    }
+
+    /** Whether every per-position target slot of the ability is optional ("up to one target X and up to one target Y"). */
+    public boolean hasAllOptionalTargetSlots(ActivatedAbility ability, int xValue) {
+        return ability.getMultiTargetFilters().size() >= 2 && ability.getEffectiveMinTargets(xValue) == 0;
+    }
+
+    /**
+     * Whether the chosen targets of an ability with all-optional target slots can each fill a distinct
+     * slot whose filter they match, so a target picker can offer exactly the permanents that still fit.
+     */
+    public boolean fitsOptionalTargetSlots(GameData gameData, ActivatedAbility ability, Card sourceCard,
+                                           UUID controllerId, List<UUID> targetIds) {
+        return targetGroupAssignmentService.assignOptionalSlots(gameData, ability.getMultiTargetFilters(),
+                targetIds, filterContext(gameData, sourceCard.getId(), controllerId)).isPresent();
     }
 
     private boolean skippedOptionalSlotAccepts(ActivatedAbility ability, int xValue, List<TargetFilter> filters,

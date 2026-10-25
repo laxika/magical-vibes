@@ -9,43 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 47. Per-slot target legality for "up to one target X, up to one target Y" spells
-
-**Status:** open · **Found:** 2026-10-22, while fixing U-card test failures
-
-**Failing tests:**
-- `UrgentNecropsyTest.artifactTargetThatLosesArtifactTypeIsNotDestroyedAsACreature()`
-
-**What the rules require.** Urgent Necropsy: "Destroy up to one target artifact, up to one target
-creature, up to one target enchantment, and up to one target planeswalker." CR 608.2b says each
-target is checked against the instance of the word "target" it was chosen for. The Plague Spores
-example in that rule is this exact case: a target chosen only as "the artifact" that stops being an
-artifact is illegal and must not be destroyed, even if it is now a creature. The card uses a single
-`target(AnyOf, 0, 4)` group plus the
-`AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER` constraint. At resolution
-each target is rechecked only against the combined AnyOf filter, so the target stays legal.
-
-**Why it's large.** Splitting the card into four optional `target(..., 0, 1)` groups doesn't work.
-Casting passes one flat `targetIds` list, and mapping it onto optional groups is positional. The
-engine would need an explicit per-slot target assignment carried from casting to the stack entry,
-across `TargetLegalityService`, `ValidTargetService`, the cast paths, the harness `cast*` overloads
-and the AI target selector. `ChaoticTransformation`, `BoomBox`, `FinaleOfPromise` and
-`ShredsOfSanity` use the same constraint approach and share the bug.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 47: record which slot ("target artifact", "target
-creature", ...) each target of a constraint-based multi-slot spell was chosen for, and recheck each
-target against its own slot at resolution (CR 608.2b). Start with Urgent Necropsy and make
-UrgentNecropsyTest.artifactTargetThatLosesArtifactTypeIsNotDestroyedAsACreature pass while keeping
-the existing "at most one creature" rejection test. Then apply it to Chaotic Transformation, Boom
-Box, Finale of Promise and Shreds of Sanity. Verify every CR number with the rules MCP. Don't run the full test suite;
-ask me. Don't commit until I say so.
-```
-
----
-
 ## 48. Declining an optional player target group in a multi-group trigger
 
 **Status:** open · **Found:** 2026-10-22, while fixing V-card test failures

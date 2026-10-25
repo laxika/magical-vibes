@@ -106,6 +106,55 @@ public class TargetGroupAssignmentService {
         return false;
     }
 
+    /**
+     * Pairs each announced target of an ability whose target slots are all optional ("up to one target
+     * artifact, up to one target creature, and up to one target land") with the distinct slot it fills,
+     * so each target is rechecked on resolution against the instance of "target" it was chosen for
+     * (CR 608.2b). A target keeps its own list position's slot when that slot accepts it, and otherwise
+     * moves to another free slot that does: omitting an earlier slot shifts later targets forward, and
+     * a list need not follow slot order. The same permanent may fill several slots (CR 601.2c). A
+     * target that isn't a battlefield permanent keeps its own position's slot.
+     *
+     * @return the slot index for each target position, or empty when the targets can't all be placed
+     */
+    public Optional<List<Integer>> assignOptionalSlots(GameData gameData, List<TargetFilter> slots,
+            List<UUID> targetIds, FilterContext context) {
+        if (targetIds.size() > slots.size()) return Optional.empty();
+        int[] slotForTarget = new int[targetIds.size()];
+        boolean[] usedSlots = new boolean[slots.size()];
+        if (!assignOptionalSlot(gameData, slots, targetIds, context, slotForTarget, usedSlots, 0)) {
+            return Optional.empty();
+        }
+        return Optional.of(Arrays.stream(slotForTarget).boxed().toList());
+    }
+
+    private boolean assignOptionalSlot(GameData gameData, List<TargetFilter> slots, List<UUID> targets,
+            FilterContext context, int[] slotForTarget, boolean[] usedSlots, int targetIndex) {
+        if (targetIndex == targets.size()) return true;
+        Permanent permanent = gameQueryService.findPermanentById(gameData, targets.get(targetIndex));
+        List<Integer> candidates = new ArrayList<>();
+        candidates.add(targetIndex);
+        if (permanent != null) {
+            for (int slot = 0; slot < slots.size(); slot++) {
+                if (slot != targetIndex) candidates.add(slot);
+            }
+        }
+        for (int slot : candidates) {
+            if (slot >= slots.size() || usedSlots[slot]) continue;
+            if (permanent != null && slots.get(slot) != null
+                    && predicateEvaluationService.checkTargetFilter(slots.get(slot), permanent, context).isPresent()) {
+                continue;
+            }
+            usedSlots[slot] = true;
+            slotForTarget[targetIndex] = slot;
+            if (assignOptionalSlot(gameData, slots, targets, context, slotForTarget, usedSlots, targetIndex + 1)) {
+                return true;
+            }
+            usedSlots[slot] = false;
+        }
+        return false;
+    }
+
     /** Whether a target group's filter selects battlefield permanents (including "you control" wording). */
     public static boolean isPermanentGroupFilter(TargetFilter filter) {
         return filter instanceof PermanentPredicateTargetFilter

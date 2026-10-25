@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.cards.n.NeurokTransmuter;
 import com.github.laxika.magicalvibes.cards.o.OasisGardener;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,9 +14,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BoomBox.class, Forest.class, GrizzlyBears.class, MindStone.class, OasisGardener.class})
+@CardUsed({BoomBox.class, Forest.class, GrizzlyBears.class, MindStone.class, NeurokTransmuter.class,
+        OasisGardener.class})
 class BoomBoxTest extends BaseCardTest {
 
     @Test
@@ -109,6 +112,66 @@ class BoomBoxTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Oasis Gardener");
         harness.assertInGraveyard(player2, "Oasis Gardener");
         harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Targets listed out of slot order still fill their own slots")
+    void targetsListedOutOfSlotOrderAreDestroyed() {
+        addBoomBox();
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        addMana();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(land.getId(), creature.getId(), artifact.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Mind Stone");
+    }
+
+    @Test
+    @DisplayName("An artifact target that stops being an artifact is not destroyed as a creature")
+    void artifactTargetThatLosesArtifactTypeIsNotDestroyed() {
+        addBoomBox();
+        harness.addToBattlefield(player1, new NeurokTransmuter());
+        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player2, new OasisGardener());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addMana();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(artifactCreature.getId(), creature.getId()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, artifactCreature.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.isArtifact(gd, artifactCreature)).isFalse();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Oasis Gardener");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Offers any type first, then only permanents that fit a slot still free")
+    void offersPermanentsThatFitAFreeSlot() {
+        Permanent boomBox = harness.addToBattlefieldAndReturn(player1, new BoomBox());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        var first = harness.getValidTargetService().computeValidTargetsForAbility(
+                gd, boomBox.getCard(), boomBox.getCard().getActivatedAbilities().getFirst(),
+                player1.getId(), 0, List.of());
+        var second = harness.getValidTargetService().computeValidTargetsForAbility(
+                gd, boomBox.getCard(), boomBox.getCard().getActivatedAbilities().getFirst(),
+                player1.getId(), 0, List.of(creature.getId()));
+
+        assertThat(first.validPermanentIds()).contains(artifact.getId(), creature.getId(), land.getId());
+        assertThat(second.validPermanentIds()).contains(artifact.getId(), land.getId())
+                .doesNotContain(otherCreature.getId());
     }
 
     @Test

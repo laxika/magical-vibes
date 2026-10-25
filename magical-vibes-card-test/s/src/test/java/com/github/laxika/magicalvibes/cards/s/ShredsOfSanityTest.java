@@ -139,7 +139,7 @@ class ShredsOfSanityTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(first.getId(), second.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("more than one sorcery");
+                .hasMessageContaining("Target must be a instant card");
     }
 
     @Test
@@ -170,7 +170,7 @@ class ShredsOfSanityTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(
                 player1, 0, List.of(firstInstant.getId(), secondInstant.getId())))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("more than one instant");
+                .hasMessageContaining("Target must be a sorcery card");
     }
 
     @Test

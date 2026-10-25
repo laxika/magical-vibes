@@ -10,23 +10,19 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetInstantAndSorceryCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
-
-import java.util.List;
 
 @CardRegistration(set = "EMN", collectorNumber = "141")
 @CardRegistration(set = "SIR", collectorNumber = "176")
 public class ShredsOfSanity extends Card {
 
     public ShredsOfSanity() {
-        CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
-                new CardTypePredicate(CardType.INSTANT),
-                new CardTypePredicate(CardType.SORCERY)));
-
+        setAllowSharedTargets(true);
         target(new GraveyardCardPredicateTargetFilter(
-                instantOrSorcery, GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 2);
+                new CardTypePredicate(CardType.INSTANT), GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 1);
+        target(new GraveyardCardPredicateTargetFilter(
+                new CardTypePredicate(CardType.SORCERY), GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 1);
         addEffect(EffectSlot.SPELL, new ReturnTargetInstantAndSorceryCardsFromGraveyardToHandEffect());
         addEffect(EffectSlot.SPELL, new DiscardEffect(1, DiscardRecipient.CONTROLLER));
         addEffect(EffectSlot.SPELL, new ExileSpellEffect());

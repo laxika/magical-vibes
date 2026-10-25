@@ -274,6 +274,27 @@ public class ValidTargetService {
                 }
             });
 
+            // Optional single-target groups ("up to one target artifact, up to one target creature, ...")
+            // may be skipped, so offer every permanent that still fits a group no other target fills.
+            if (isMultiTarget && modalTargetFilters.isEmpty() && chosenMode == null
+                    && targetLegalityService.hasAllOptionalPermanentTargetGroups(card)) {
+                List<UUID> selected = alreadySelectedIds != null ? alreadySelectedIds : List.of();
+                List<CardEffect> groupSpellEffects = spellEffects;
+                validPermanentIds.clear();
+                gameData.forEachPermanent((playerId, perm) -> {
+                    if (excludeIds.contains(perm.getId())) return;
+                    List<UUID> trial = new ArrayList<>(selected);
+                    trial.add(perm.getId());
+                    if (card.getSpellTargets().stream().anyMatch(group ->
+                            isValidPermanentTarget(gameData, card, perm, controllerId, true,
+                                    group.getFilter(), groupSpellEffects, xValue, kicked))
+                            && targetLegalityService.fitsOptionalPermanentTargetGroups(
+                            gameData, card, controllerId, trial)) {
+                        validPermanentIds.add(perm.getId());
+                    }
+                });
+            }
+
             // Cross-target restriction (e.g. Rivals' Duel): once a creature is chosen, later
             // positions may not choose a creature that shares a creature type with it.
             if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_NO_CREATURE_TYPES && !excludeIds.isEmpty()) {
@@ -874,6 +895,29 @@ public class ValidTargetService {
                         validPermanentIds.add(perm.getId());
                     }
                 });
+                }
+            }
+
+            // All-optional slots ("up to one target artifact, up to one target creature, and up to one
+            // target land"): any slot may be skipped, so offer every permanent that still fits a free slot.
+            if (targetLegalityService.hasAllOptionalTargetSlots(ability, effectiveTargetScalingValue)
+                    && ability.getMultiTargetFilters().stream().allMatch(
+                    TargetGroupAssignmentService::isPermanentGroupFilter)) {
+                List<UUID> selected = alreadySelectedIds != null ? alreadySelectedIds : List.of();
+                validPermanentIds.clear();
+                if (!gameQueryService.isPeaceTalksActive(gameData)) {
+                    gameData.forEachPermanent((playerId, perm) -> {
+                        if (excludeIds.contains(perm.getId())) return;
+                        List<UUID> trial = new ArrayList<>(selected);
+                        trial.add(perm.getId());
+                        if (ability.getMultiTargetFilters().stream().anyMatch(slotFilter ->
+                                isValidAbilityPermanentTarget(gameData, sourceCard, ability, perm, controllerId,
+                                        false, permanentIndex, slotFilter))
+                                && targetLegalityService.fitsOptionalTargetSlots(
+                                gameData, ability, sourceCard, controllerId, trial)) {
+                            validPermanentIds.add(perm.getId());
+                        }
+                    });
                 }
             }
 
