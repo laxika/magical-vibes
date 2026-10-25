@@ -28,6 +28,9 @@ import java.util.UUID;
  * @param castAsAdventure set on a playable library-top entry that offers an adventurer card cast as
  *                        its Adventure; the view then carries the Adventure's characteristics and the
  *                        client sends {@code adventure} with {@code fromLibraryTop}.
+ * @param libraryOwnerId set on a playable library-top entry to the player whose library the card is on top of;
+ *                       the client sends it back with {@code fromLibraryTop} so a player who may play from the top
+ *                       of more than one library (Windriddle Palaces) plays the card they picked.
  */
 @Builder(toBuilder = true)
 public record CardView(
@@ -105,6 +108,7 @@ public record CardView(
         boolean alternateCostCollectEvidence,
         int alternateCostCollectEvidenceAmount,
         CardView prepareSpell,
-        boolean castAsAdventure
+        boolean castAsAdventure,
+        UUID libraryOwnerId
 ) {
 }

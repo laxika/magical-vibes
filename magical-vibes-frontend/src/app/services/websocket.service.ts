@@ -246,6 +246,9 @@ export interface Card {
   /** A playable library-top entry that casts the adventurer card as its Adventure; the view
    *  carries the Adventure's characteristics. */
   castAsAdventure?: boolean;
+  /** On a playable library-top entry: the player whose library the card is on top of, sent back
+   *  as {@code libraryOwnerId} so the server plays the top card of that library. */
+  libraryOwnerId?: string;
 }
 
 export interface ModalOptionView {

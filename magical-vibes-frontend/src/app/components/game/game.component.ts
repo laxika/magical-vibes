@@ -750,7 +750,26 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   get isLibraryTopPlayable(): boolean {
-    return this.playableLibraryTopCards().length > 0;
+    return this.ownLibraryTopCards.length > 0;
+  }
+
+  /** The id of the player whose own library top this client shows as its revealed top card. */
+  private get libraryTopViewerId(): string {
+    return this.game()?.mindControlledPlayerId ?? this.websocketService.currentUser?.userId ?? '';
+  }
+
+  /** Playable library-top entries (not Adventures) from the viewer's own library. */
+  private get ownLibraryTopCards(): Card[] {
+    const viewerId = this.libraryTopViewerId;
+    return this.playableLibraryTopCards().filter(card => !card.castAsAdventure
+      && (card.libraryOwnerId == null || card.libraryOwnerId === viewerId));
+  }
+
+  /** Playable top cards of other players' libraries (Windriddle Palaces, Xanathar), not Adventures. */
+  get otherLibraryTopCards(): Card[] {
+    const viewerId = this.libraryTopViewerId;
+    return this.playableLibraryTopCards().filter(card => !card.castAsAdventure
+      && card.libraryOwnerId != null && card.libraryOwnerId !== viewerId);
   }
 
   /** Library-top entries that cast the top card as its Adventure, offered beside the card itself. */
@@ -759,14 +778,14 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   playLibraryTopCard(): void {
-    const playable = this.playableLibraryTopCards();
-    const card = playable.find(c => !c.castAsAdventure) ?? playable[0];
+    const card = this.ownLibraryTopCards[0];
     if (card) {
       this.choice.targeting.startLibraryTopPlay(card);
     }
   }
 
-  playLibraryTopAdventure(card: Card): void {
+  /** Plays a listed library-top entry: an Adventure, or the top card of another player's library. */
+  playLibraryTopEntry(card: Card): void {
     this.choice.targeting.startLibraryTopPlay(card);
   }
 

@@ -3123,12 +3123,12 @@ public class GameData {
      * A spell cast from the top of a library stopped once its costs were validated and before any of them was paid,
      * so that a permanent it sacrifices as a cost could have its death replacement chosen first (CR 616.1,
      * CR 601.2h): the cast request to make again once every answer is in, while {@code castCardId} is still the top
-     * card.
+     * card of {@code libraryOwnerId}'s library.
      */
     public record LibraryTopCastReplay(Player player, Integer xValue, UUID targetId,
                                        java.util.List<UUID> counterCostPermanentIds,
                                        java.util.List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown,
-                                       boolean castAsAdventure, UUID castCardId)
+                                       boolean castAsAdventure, UUID castCardId, UUID libraryOwnerId)
             implements DeathReplacementChoiceReplay {
     }
 

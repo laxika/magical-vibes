@@ -180,6 +180,22 @@ class PlayCardRequestDispatchServiceTest {
     }
 
     @Test
+    @DisplayName("Cast from a named library top routes to playCardFromLibraryTop with that library's owner")
+    void fromNamedLibraryTopRoutesWithLibraryOwner() {
+        UUID libraryOwnerId = UUID.randomUUID();
+        PlayCardRequest request = new PlayCardRequest(0, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, true,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                libraryOwnerId);
+
+        dispatchService.dispatch(gameData, player, request);
+
+        verify(gameService).playCardFromLibraryTop(eq(gameData), eq(player), isNull(), isNull(),
+                eq(List.of()), eq(List.of()), eq(false), eq(false), eq(libraryOwnerId));
+        verifyNoMoreInteractions(gameService);
+    }
+
+    @Test
     @DisplayName("Cast from exile routes to playCardFromExile")
     void fromExileRoutes() {
         UUID exileCardId = UUID.randomUUID();

@@ -13478,16 +13478,31 @@ public class SpellCastingService {
                                        List<UUID> counterCostPermanentIds,
                                        List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown,
                                        boolean castAsAdventure) {
-        UUID libraryOwnerId = castingPermissionService.findLibraryTopOwner(gameData, player.getId());
+        playCardFromLibraryTop(gameData, player, xValue, targetId, counterCostPermanentIds,
+                additionalCostSacrificePermanentIds, castFaceDown, castAsAdventure, null);
+    }
+
+    /**
+     * As {@link #playCardFromLibraryTop(GameData, Player, Integer, UUID, List, List, boolean, boolean)}, playing the
+     * top card of {@code requestedLibraryOwnerId}'s library when the player may play from the top of more than one
+     * library (Windriddle Palaces); {@code null} plays from the first library open to them.
+     */
+    public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
+                                       List<UUID> counterCostPermanentIds,
+                                       List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown,
+                                       boolean castAsAdventure, UUID requestedLibraryOwnerId) {
+        UUID libraryOwnerId = castingPermissionService.resolveLibraryTopOwner(
+                gameData, player.getId(), requestedLibraryOwnerId);
         List<Card> library = libraryOwnerId == null ? null : gameData.playerDecks.get(libraryOwnerId);
         UUID topCardId = library == null || library.isEmpty() ? null : library.getFirst().getId();
         try {
             playCardFromLibraryTopOnce(gameData, player, xValue, targetId, counterCostPermanentIds,
-                    additionalCostSacrificePermanentIds, castFaceDown, castAsAdventure);
+                    additionalCostSacrificePermanentIds, castFaceDown, castAsAdventure, libraryOwnerId);
         } catch (CastStoppedForCostSacrificeAnswers stopped) {
             gameData.pendingDeathReplacementChoiceReplay = new GameData.LibraryTopCastReplay(player, xValue,
                     targetId, immutableCopy(counterCostPermanentIds),
-                    immutableCopy(additionalCostSacrificePermanentIds), castFaceDown, castAsAdventure, topCardId);
+                    immutableCopy(additionalCostSacrificePermanentIds), castFaceDown, castAsAdventure, topCardId,
+                    libraryOwnerId);
             mutationCoordinator.invalidateAllPlayerViews(gameData);
         }
     }
@@ -13498,20 +13513,20 @@ public class SpellCastingService {
      */
     public void completeLibraryTopCastAfterCostSacrificeAnswers(GameData gameData,
                                                                 GameData.LibraryTopCastReplay replay) {
-        UUID libraryOwnerId = castingPermissionService.findLibraryTopOwner(gameData, replay.player().getId());
+        UUID libraryOwnerId = replay.libraryOwnerId();
         List<Card> library = libraryOwnerId == null ? null : gameData.playerDecks.get(libraryOwnerId);
         if (library == null || library.isEmpty() || !library.getFirst().getId().equals(replay.castCardId())) {
             throw new IllegalStateException("The stopped spell is no longer on top of the library");
         }
         playCardFromLibraryTop(gameData, replay.player(), replay.xValue(), replay.targetId(),
                 replay.counterCostPermanentIds(), replay.additionalCostSacrificePermanentIds(),
-                replay.castFaceDown(), replay.castAsAdventure());
+                replay.castFaceDown(), replay.castAsAdventure(), libraryOwnerId);
     }
 
     private void playCardFromLibraryTopOnce(GameData gameData, Player player, Integer xValue, UUID targetId,
                                        List<UUID> counterCostPermanentIds,
                                        List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown,
-                                       boolean castAsAdventure) {
+                                       boolean castAsAdventure, UUID libraryOwnerId) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
@@ -13519,7 +13534,6 @@ public class SpellCastingService {
 
         UUID playerId = player.getId();
         CastStartState castStart = CastStartState.of(gameData, playerId);
-        UUID libraryOwnerId = castingPermissionService.findLibraryTopOwner(gameData, playerId);
         List<Card> deck = libraryOwnerId == null ? null : gameData.playerDecks.get(libraryOwnerId);
         if (deck == null || deck.isEmpty()) {
             throw new IllegalStateException("Library is empty");
@@ -13578,6 +13592,13 @@ public class SpellCastingService {
                 return;
             }
             battlefieldEntryService.putLandOntoBattlefield(gameData, playerId, permanent, Zone.LIBRARY);
+            // CR 110.2: a land played from another player's library enters under the player's control but stays
+            // owned by that library's owner.
+            if (!playerId.equals(libraryOwnerId) && gameData.playerIds.contains(libraryOwnerId)
+                    && !gameData.stolenCreatures.containsKey(permanent.getId())
+                    && gameData.playerBattlefields.getOrDefault(playerId, List.of()).contains(permanent)) {
+                graveyardReturnSupport.trackStolenCreature(gameData, permanent.getId(), playerId, libraryOwnerId);
+            }
             if (!gameData.interaction.isAwaitingInput()) {
                 battlefieldEntryService.processLandETBEffects(gameData, playerId, landFace);
             }

@@ -92,8 +92,52 @@ class WindriddlePalacesTest extends BaseCardTest {
         assertThat(harness.getConn1().getSentMessages()).anyMatch(message -> {
             var playable = mapper.readTree(message).get("playableLibraryTopCards");
             return playable != null && playable.toString().contains("Forest")
-                    && playable.toString().contains("Grizzly Bears");
+                    && playable.toString().contains("Grizzly Bears")
+                    && playable.toString().contains(player1.getId().toString())
+                    && playable.toString().contains(player2.getId().toString());
         });
+    }
+
+    @Test
+    void castsTheChosenOpponentsTopCardWhenBothLibrariesAreNonempty() {
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castFromLibraryTopOf(player1, player2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+    }
+
+    @Test
+    void landPlayedFromOpponentsLibraryStaysOwnedByThatPlayer() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.castFromLibraryTopOf(player1, player2);
+
+        var forest = findPermanent(player1, "Forest");
+        assertThat(forest).isNotNull();
+        assertThat(gd.stolenCreatures).containsEntry(forest.getId(), player2.getId());
+    }
+
+    @Test
+    void cannotNameALibraryWhoseTopCardIsNotOpenToThePlayer() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(bears));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        gd.planechase.faceUp.clear();
+
+        assertThatThrownBy(() -> harness.castFromLibraryTopOf(player1, player2))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(bears);
     }
 
     @Test

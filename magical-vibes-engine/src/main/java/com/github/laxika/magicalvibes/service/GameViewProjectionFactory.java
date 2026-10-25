@@ -1000,8 +1000,10 @@ public class GameViewProjectionFactory {
     }
 
     /**
-     * Returns the top card of the player's library as a playable CardView if:
-     * - the player has a permanent or temporary permission to cast from the top of their library
+     * Returns the top card of each library open to the player (see
+     * {@link CastingPermissionService#findLibraryTopOwners}) as a playable CardView, tagged with that library's
+     * owner, if:
+     * - the player has a permanent or temporary permission to cast from the top of that library
      * - the top card matches one of the castable types
      * - the player can afford and is allowed to cast it
      */
@@ -1016,8 +1018,17 @@ public class GameViewProjectionFactory {
             return playable;
         }
 
-        UUID libraryOwnerId = castingPermissionService.findLibraryTopOwner(gameData, playerId);
-        List<Card> deck = libraryOwnerId == null ? null : gameData.playerDecks.get(libraryOwnerId);
+        for (UUID libraryOwnerId : castingPermissionService.findLibraryTopOwners(gameData, playerId)) {
+            for (CardView view : getPlayableLibraryTopCards(gameData, playerId, libraryOwnerId)) {
+                playable.add(view.toBuilder().libraryOwnerId(libraryOwnerId).build());
+            }
+        }
+        return playable;
+    }
+
+    private List<CardView> getPlayableLibraryTopCards(GameData gameData, UUID playerId, UUID libraryOwnerId) {
+        List<CardView> playable = new ArrayList<>();
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
         if (deck == null || deck.isEmpty()) {
             return playable;
         }

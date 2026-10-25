@@ -1683,6 +1683,13 @@ public class GameTestHarness {
         gameService.playCardFromLibraryTop(gameData, player, null, null);
     }
 
+    /** Plays the top card of {@code libraryOwner}'s library, as a client naming that library does. */
+    public void castFromLibraryTopOf(Player player, Player libraryOwner) {
+        ensurePriority(player);
+        gameService.playCardFromLibraryTop(gameData, player, null, null, List.of(), List.of(), false, false,
+                libraryOwner.getId());
+    }
+
     public void castFromLibraryTop(Player player, UUID targetId) {
         List<Card> library = gameData.playerDecks.get(player.getId());
         Card top = library == null || library.isEmpty() ? null : library.getFirst();

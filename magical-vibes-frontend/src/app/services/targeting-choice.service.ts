@@ -156,6 +156,7 @@ export class TargetingChoiceService {
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
     this.pendingLibraryTopAdventure = false;
+    this.pendingLibraryTopOwnerId = null;
     this.pendingZoneCard = null;
     this.pendingExileCounterCostPermanentIds = [];
     this.selectingExileCounterCost = false;
@@ -416,6 +417,7 @@ export class TargetingChoiceService {
   private pendingFromExileFlashforward = false;
   private pendingFromLibraryTop = false;
   private pendingLibraryTopAdventure = false;
+  private pendingLibraryTopOwnerId: string | null = null;
   private pendingZoneCard: Card | null = null;
   selectingExileCounterCost = false;
   exileCounterCostCardName = '';
@@ -1251,6 +1253,7 @@ export class TargetingChoiceService {
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
     this.pendingLibraryTopAdventure = false;
+    this.pendingLibraryTopOwnerId = null;
     this.pendingZoneCard = null;
     this.pendingExileCounterCostPermanentIds = [];
   }
@@ -1577,6 +1580,7 @@ export class TargetingChoiceService {
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
     this.pendingLibraryTopAdventure = false;
+    this.pendingLibraryTopOwnerId = null;
     this.playCard(0, () => true);
   }
   /** Play the card at {@code index} of the revealed hand of {@code ownerId} (Sen Triplets). */
@@ -1586,6 +1590,7 @@ export class TargetingChoiceService {
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
     this.pendingLibraryTopAdventure = false;
+    this.pendingLibraryTopOwnerId = null;
     this.pendingHandOwnerId = ownerId;
     this.playCard(index, () => true);
   }
@@ -1597,6 +1602,7 @@ export class TargetingChoiceService {
     this.pendingFromExileFlashforward = card.hasFlashforward === true;
     this.pendingFromLibraryTop = false;
     this.pendingLibraryTopAdventure = false;
+    this.pendingLibraryTopOwnerId = null;
     this.continueZonePlay(card);
   }
 
@@ -1608,6 +1614,7 @@ export class TargetingChoiceService {
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = true;
     this.pendingLibraryTopAdventure = card.castAsAdventure === true;
+    this.pendingLibraryTopOwnerId = card.libraryOwnerId ?? null;
     this.continueZonePlay(card);
   }
 
@@ -1817,8 +1824,10 @@ export class TargetingChoiceService {
     if (this.pendingFromLibraryTop) {
       msg.fromLibraryTop = true;
       if (this.pendingLibraryTopAdventure) msg.adventure = true;
+      if (this.pendingLibraryTopOwnerId != null) msg.libraryOwnerId = this.pendingLibraryTopOwnerId;
       this.pendingFromLibraryTop = false;
       this.pendingLibraryTopAdventure = false;
+      this.pendingLibraryTopOwnerId = null;
     }
     if (this.pendingExileCounterCostPermanentIds.length > 0) {
       msg.exileCounterCostPermanentIds = this.pendingExileCounterCostPermanentIds;
@@ -2310,6 +2319,7 @@ export class TargetingChoiceService {
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
     this.pendingLibraryTopAdventure = false;
+    this.pendingLibraryTopOwnerId = null;
     this.pendingZoneCard = null;
     this.pendingExileCounterCostPermanentIds = [];
     this.pendingBeholdPermanentId = null;
@@ -2549,6 +2559,7 @@ export class TargetingChoiceService {
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
     this.pendingLibraryTopAdventure = false;
+    this.pendingLibraryTopOwnerId = null;
     this.pendingZoneCard = null;
     this.pendingExileCounterCostPermanentIds = [];
     // Note: don't reset pendingPhyrexianLifeCount here — it carries through to the final send
@@ -2616,6 +2627,7 @@ export class TargetingChoiceService {
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
     this.pendingLibraryTopAdventure = false;
+    this.pendingLibraryTopOwnerId = null;
     this.pendingZoneCard = null;
   }
 

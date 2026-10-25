@@ -9,42 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 49. Playing cards from the top of another player's library
-
-**Status:** open · **Found:** 2026-10-22, while fixing W-card test failures
-
-**Failing tests:**
-- `WindriddlePalacesTest.offersBothPlayersTopCardsWhenBothLibrariesAreNonempty()`
-
-**What the rules require.** Windriddle Palaces: "You may play lands and cast spells from the top of
-any player's library." Each player may play the top card of every library, not only their own. The
-engine assumes a single library: `CastingPermissionService.findLibraryTopOwner` returns one owner,
-the view's `playableLibraryTopCards` lists one card, and `PlayCardRequest` carries no library owner,
-so a cast from the library top always uses that one library.
-
-**Why it's large.** It is a protocol change across the stack: a list of library owners in the
-playable-top-card view and in `canPlayLandFromTopOfLibrary`; a new `libraryOwnerId` field on
-`PlayCardRequest` (many constructor overloads) threaded through `PlayCardRequestDispatchService` into
-`SpellCastingService.playCardFromLibraryTop`; and frontend changes (`game.component.ts`,
-`targeting-choice.service.ts`) so the UI sends which library the card comes from. Only showing both
-cards in the view would let the UI offer the opponent's card but cast the player's own.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 49: let a player play cards from the top of any player's
-library when an effect allows it (Windriddle Palaces). Make the playable-library-top view list every
-eligible library's top card with its owner, add a library-owner id to PlayCardRequest and thread it
-through PlayCardRequestDispatchService into SpellCastingService.playCardFromLibraryTop and the land
-path, and update the Angular client to send it. Make
-WindriddlePalacesTest.offersBothPlayersTopCardsWhenBothLibrariesAreNonempty pass and keep the other
-play-from-top-of-library card tests (e.g. Future Sight, Courser of Kruphix, Bolas's Citadel) passing.
-Verify every CR number with the rules MCP. Don't run the full test suite; ask me. Don't commit until
-I say so.
-```
-
----
-
 ## 51. Aura and Equipment restrictions modelled as abilities granted to the creature
 
 **Status:** open · **Found:** 2026-10-23, auditing `GrantEffectEffect` attached scopes after the Gutter Shortcut fix
@@ -508,6 +472,41 @@ give the prompt a decline answer distinct from choosing the controller (see how 
 MultiPermanentChoiceContext.EtbPlayerTargetGroup). Update the AI and harness answering code.
 Verify every CR number with the rules MCP. Don't run the full test suite; ask me. Don't commit
 until I say so.
+```
+
+---
+
+## 64. Own library top hidden while a temporary grant opens another player's library
+
+**Status:** open · **Found:** 2026-10-26, while finishing entry 49 (playing from any player's library)
+
+**Failing tests:**
+- none yet (write one: Future Sight plus Xanathar, Guild Kingpin's grant on the opponent's library)
+
+**What the rules require.** Each permission works on its own library: Future Sight still lets its
+controller play the top card of their own library while Xanathar lets them play the top card of the
+target opponent's library, so both cards should be playable. `CastingPermissionService.findLibraryTopOwners`
+only adds the player's own library when no temporary grant opens a nonempty library (and no
+any-library permission applies), so the own top card is not offered. Its top-library permission checks
+(`canCastFromTopOfLibrary`, `canCastFromTopOfLibraryNormally`, `hasAnyLibraryTopPermission`, the free
+and life play permissions) are not library-aware either, so simply adding the own library could let a
+permission meant for one library authorize the other's card.
+
+**Why it's large.** Every top-library permission check needs a library owner (own-library sources like
+Future Sight, Courser of Kruphix, Bolas's Citadel vs. grants on a specific library), through the
+projection, the cast and land paths, and the AI's playability query.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 64: make the top-library permission checks in
+CastingPermissionService library-aware (own-library permissions only for the player's own library,
+grants only for their granted library, any-library permissions for all), then let
+findLibraryTopOwners include the player's own library alongside temporarily granted ones. Add a test
+with Future Sight plus Xanathar, Guild Kingpin showing both top cards are offered and playable, and
+keep WindriddlePalacesTest, XanatharGuildKingpinTest, FutureSightTest, CourserOfKruphixTest and
+BolassCitadelTest passing. Verify every CR number with the rules MCP. Don't run the full test suite;
+ask me. Don't commit until I say so.
 ```
 
 ---

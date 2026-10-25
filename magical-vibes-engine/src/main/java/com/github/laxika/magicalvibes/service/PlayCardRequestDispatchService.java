@@ -63,6 +63,14 @@ public class PlayCardRequestDispatchService {
             return;
         }
         if (Boolean.TRUE.equals(request.fromLibraryTop())) {
+            if (request.libraryOwnerId() != null) {
+                gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId(),
+                        listOrEmpty(request.exileCounterCostPermanentIds()),
+                        listOrEmpty(request.additionalCostSacrificePermanentIds()),
+                        Boolean.TRUE.equals(request.morph()), Boolean.TRUE.equals(request.adventure()),
+                        request.libraryOwnerId());
+                return;
+            }
             if (Boolean.TRUE.equals(request.adventure())) {
                 gameService.playCardFromLibraryTop(gameData, player, request.xValue(), request.targetId(),
                         listOrEmpty(request.exileCounterCostPermanentIds()),

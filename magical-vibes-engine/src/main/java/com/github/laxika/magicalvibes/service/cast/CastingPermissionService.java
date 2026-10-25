@@ -100,6 +100,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -1728,12 +1729,11 @@ public class CastingPermissionService {
         if (!card.hasType(CardType.LAND)) {
             return false;
         }
-        UUID libraryOwnerId = findLibraryTopOwner(gameData, playerId);
+        UUID libraryOwnerId = findLibraryTopOwners(gameData, playerId).stream()
+                .filter(ownerId -> gameData.playerDecks.get(ownerId).getFirst().getId().equals(card.getId()))
+                .findFirst()
+                .orElse(null);
         if (libraryOwnerId == null) {
-            return false;
-        }
-        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
-        if (deck == null || deck.isEmpty() || !deck.getFirst().getId().equals(card.getId())) {
             return false;
         }
         boolean permission = libraryOwnerId.equals(playerId)
@@ -2438,28 +2438,58 @@ public class CastingPermissionService {
                         && permission.libraryOwnerId().equals(libraryOwnerId));
     }
 
-    /** Returns the library whose top card is exposed to the player, preferring temporary access grants. */
+    /**
+     * Returns the library whose top card is exposed to the player, preferring temporary access grants: the first of
+     * {@link #findLibraryTopOwners}, or {@code null} when none is.
+     */
     public UUID findLibraryTopOwner(GameData gameData, UUID playerId) {
+        List<UUID> owners = findLibraryTopOwners(gameData, playerId);
+        return owners.isEmpty() ? null : owners.getFirst();
+    }
+
+    /**
+     * Returns every nonempty library whose top card the player may play from: each library a temporary grant opens
+     * to them, then every player's library while they control a plane letting them play from the top of any player's
+     * library (Windriddle Palaces), and otherwise their own library.
+     */
+    public List<UUID> findLibraryTopOwners(GameData gameData, UUID playerId) {
+        Set<UUID> owners = new LinkedHashSet<>();
         for (UUID libraryOwnerId : gameData.orderedPlayerIds) {
-            if (playerId.equals(libraryOwnerId)
-                    || !hasLibraryTopPermission(gameData, playerId, libraryOwnerId)) {
-                continue;
-            }
-            List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
-            if (deck != null && !deck.isEmpty()) {
-                return libraryOwnerId;
+            if (!playerId.equals(libraryOwnerId) && hasLibraryTopPermission(gameData, playerId, libraryOwnerId)
+                    && hasNonemptyLibrary(gameData, libraryOwnerId)) {
+                owners.add(libraryOwnerId);
             }
         }
         if (hasAnyLibraryTopPermission(gameData, playerId)) {
             for (UUID libraryOwnerId : gameData.orderedPlayerIds) {
-                List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
-                if (deck != null && !deck.isEmpty()) {
-                    return libraryOwnerId;
+                if (hasNonemptyLibrary(gameData, libraryOwnerId)) {
+                    owners.add(libraryOwnerId);
                 }
             }
         }
-        List<Card> ownDeck = gameData.playerDecks.get(playerId);
-        return ownDeck != null && !ownDeck.isEmpty() ? playerId : null;
+        if (owners.isEmpty() && hasNonemptyLibrary(gameData, playerId)) {
+            owners.add(playerId);
+        }
+        return List.copyOf(owners);
+    }
+
+    /**
+     * Returns the library whose top card the player plays: {@code requestedOwnerId} when the request names one,
+     * which must be one of {@link #findLibraryTopOwners}, and otherwise {@link #findLibraryTopOwner}.
+     */
+    public UUID resolveLibraryTopOwner(GameData gameData, UUID playerId, UUID requestedOwnerId) {
+        if (requestedOwnerId == null) {
+            return findLibraryTopOwner(gameData, playerId);
+        }
+        if (!findLibraryTopOwners(gameData, playerId).contains(requestedOwnerId)) {
+            throw new IllegalStateException("You can't play cards from the top of that player's library");
+        }
+        return requestedOwnerId;
+    }
+
+    private boolean hasNonemptyLibrary(GameData gameData, UUID playerId) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        return deck != null && !deck.isEmpty();
     }
 
     private boolean hasAnyLibraryTopPermission(GameData gameData, UUID playerId) {

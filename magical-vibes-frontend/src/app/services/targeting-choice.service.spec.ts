@@ -473,6 +473,36 @@ describe('TargetingChoiceService split card fuse mode', () => {
   });
 });
 
+describe('TargetingChoiceService library-top casting', () => {
+  function libraryTopService() {
+    const sent: any[] = [];
+    const ws = { currentUser: { userId: ME }, send: (message: any) => sent.push(message) } as unknown as WebsocketService;
+    const service = new TargetingChoiceService(ws);
+    service.init(signal(gameWithPriority()), () => [], () => [], () => 0);
+    return { service, sent };
+  }
+
+  function topCard(libraryOwnerId?: string): Card {
+    return { id: 'bears', name: 'Grizzly Bears', type: 'CREATURE', manaCost: '{1}{G}', keywords: [],
+      activatedAbilities: [], libraryOwnerId } as unknown as Card;
+  }
+
+  it("sends the library's owner with a cast from another player's library top", () => {
+    const { service, sent } = libraryTopService();
+    service.startLibraryTopPlay(topCard('opp'));
+    expect(sent[sent.length - 1]).toMatchObject({ type: MessageType.PLAY_CARD, fromLibraryTop: true,
+      libraryOwnerId: 'opp' });
+  });
+
+  it('sends no library owner when the entry names none, and forgets it after the cast', () => {
+    const { service, sent } = libraryTopService();
+    service.startLibraryTopPlay(topCard('opp'));
+    service.startLibraryTopPlay(topCard());
+    expect(sent[sent.length - 1].fromLibraryTop).toBe(true);
+    expect(sent[sent.length - 1].libraryOwnerId).toBeUndefined();
+  });
+});
+
 describe('TargetingChoiceService delayed trigger payment', () => {
   const payment = { sourceCardId: 'fire', sourceCardName: 'Quenchable Fire', affectedId: ME,
     affectedName: 'me', manaCost: '{U}' };
