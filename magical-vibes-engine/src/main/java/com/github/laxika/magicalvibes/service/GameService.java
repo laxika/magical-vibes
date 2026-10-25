@@ -2121,6 +2121,19 @@ public class GameService {
         }
     }
 
+    /**
+     * Runs {@code play} — any hand cast or land-play call — against {@code handOwnerId}'s hand instead of the
+     * acting player's own, while Sen Triplets lets that player play lands and cast spells from it this turn.
+     */
+    public void playFromHandOf(GameData gameData, Player player, UUID handOwnerId, Runnable play) {
+        if (runAsActionIfNeeded(gameData, () -> playFromHandOf(gameData, player, handOwnerId, play))) return;
+        synchronized (gameData) {
+            Player actor = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, actor);
+            spellCastingService.playFromHandOf(gameData, actor, handOwnerId, play);
+        }
+    }
+
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetId) {
         playCardFromExile(gameData, player, exileCardId, xValue, targetId, List.of());
     }

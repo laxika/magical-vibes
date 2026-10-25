@@ -32,6 +32,16 @@ public class PlayCardRequestDispatchService {
     private final GameService gameService;
 
     public void dispatch(GameData gameData, Player player, PlayCardRequest request) {
+        if (request.handOwnerId() != null) {
+            if (request.commandCardId() != null || Boolean.TRUE.equals(request.foretell())
+                    || Boolean.TRUE.equals(request.fromLibraryTop()) || Boolean.TRUE.equals(request.fromGraveyard())
+                    || Boolean.TRUE.equals(request.flashback()) || request.fromExileCardId() != null) {
+                throw new IllegalArgumentException("Conflicting hand casting source");
+            }
+            gameService.playFromHandOf(gameData, player, request.handOwnerId(),
+                    () -> dispatch(gameData, player, request.withoutHandOwner()));
+            return;
+        }
         if (request.commandCardId() != null) {
             if (Boolean.TRUE.equals(request.foretell()) || Boolean.TRUE.equals(request.fromLibraryTop())
                     || Boolean.TRUE.equals(request.fromGraveyard()) || Boolean.TRUE.equals(request.flashback())

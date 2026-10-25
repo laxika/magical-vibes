@@ -2188,6 +2188,12 @@ public class GameData {
     public UUID senControllerPlayerId;
     public UUID senControlledPlayerId;
 
+    /** Whether {@code playerId} may play lands and cast spells from {@code handOwnerId}'s hand this turn (Sen Triplets). */
+    public boolean canPlayFromHandOf(UUID playerId, UUID handOwnerId) {
+        return playerId != null && handOwnerId != null && !playerId.equals(handOwnerId)
+                && playerId.equals(senControllerPlayerId) && handOwnerId.equals(senControlledPlayerId);
+    }
+
     /** Card IDs that have been granted flashback until end of turn (e.g. Past in Flames).
      *  The flashback cost for these cards equals their mana cost unless overridden in
      *  {@link #cardsGrantedFlashbackCostsUntilEndOfTurn}. Cleared at end of turn. */
@@ -3123,7 +3129,8 @@ public class GameData {
      * copy casts it on its own state. {@code opponentChosenTargetPlayerId} is the opponent who chose the spell's
      * target player for an opponent-chosen target spell, stamped on its stack entry after the cast; otherwise
      * {@code null}. {@code commandCastCardId} is the commander being cast from the command zone (the cast is made
-     * again from there), or {@code null} for a cast from hand.
+     * again from there), or {@code null} for a cast from hand. {@code foreignHandOwnerId} is the player whose hand
+     * the spell is cast from when that isn't the caster's own (Sen Triplets), or {@code null}.
      */
     public record SpellCastReplay(Player player, int cardIndex, Integer xValue, UUID targetId,
                                   Map<UUID, Integer> damageAssignments, java.util.List<UUID> targetIds,
@@ -3145,7 +3152,8 @@ public class GameData {
                                   boolean waterbendPaid, Boolean payLifeForAdditionalCost, boolean adventure,
                                   boolean giftPromised, UUID chosenAdditionalCostObjectId,
                                   java.util.List<UUID> casualtyCreatureIds, UUID castCardId,
-                                  UUID opponentChosenTargetPlayerId, UUID commandCastCardId)
+                                  UUID opponentChosenTargetPlayerId, UUID commandCastCardId,
+                                  UUID foreignHandOwnerId)
             implements DeathReplacementChoiceReplay {
 
         /** This replay, stamping {@code playerId} as the opponent who chose the spell's target player. */
@@ -3159,7 +3167,7 @@ public class GameData {
                     spliceCostPermanentIds, sharedColorDiscardHandCardIndex, beholdPermanentId, beholdHandCardIndex,
                     beholdPermanentIds, beholdHandCardIndices, beholdChosenSubtype, chosenCreatureType,
                     waterbendPaid, payLifeForAdditionalCost, adventure, giftPromised, chosenAdditionalCostObjectId,
-                    casualtyCreatureIds, castCardId, playerId, commandCastCardId);
+                    casualtyCreatureIds, castCardId, playerId, commandCastCardId, foreignHandOwnerId);
         }
     }
 
@@ -6832,9 +6840,16 @@ public class GameData {
     public final Map<UUID, UUID> pendingCommandCasts = new ConcurrentHashMap<>();
     public UUID commandCastPlayerId;
     public UUID commandCastCardId;
+    /** While set, {@link #foreignHandPlayPlayerId} is playing a card from {@link #foreignHandOwnerId}'s hand
+     *  (Sen Triplets): the hand cast and land-play paths read that hand instead of the player's own. */
+    public UUID foreignHandPlayPlayerId;
+    public UUID foreignHandOwnerId;
     public List<Card> castingSourceCards(UUID playerId) {
-        return playerId.equals(commandCastPlayerId) ? playerCommandZones.get(playerId) : playerHands.get(playerId);
+        if (playerId.equals(commandCastPlayerId)) return playerCommandZones.get(playerId);
+        if (playerId.equals(foreignHandPlayPlayerId)) return playerHands.get(foreignHandOwnerId);
+        return playerHands.get(playerId);
     }
+    public boolean isForeignHandPlay(UUID playerId) { return playerId.equals(foreignHandPlayPlayerId); }
     public Zone castingSourceZone(UUID playerId) { return playerId.equals(commandCastPlayerId) ? Zone.COMMAND : Zone.HAND; }
     public DeckFormat format = DeckFormat.CASUAL;
     public final Map<UUID, DeckDefinition> acceptedDecks = new ConcurrentHashMap<>();
@@ -8189,6 +8204,8 @@ public class GameData {
         copy.completingCommanderZoneMove = this.completingCommanderZoneMove;
         copy.commandCastPlayerId = this.commandCastPlayerId;
         copy.commandCastCardId = this.commandCastCardId;
+        copy.foreignHandPlayPlayerId = this.foreignHandPlayPlayerId;
+        copy.foreignHandOwnerId = this.foreignHandOwnerId;
         copy.pendingCombatDamageFirstStrikePhase = this.pendingCombatDamageFirstStrikePhase;
         copy.pendingCombatDamageFirstestStrikePhase = this.pendingCombatDamageFirstestStrikePhase;
         copy.startingPlayerId = this.startingPlayerId;

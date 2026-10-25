@@ -297,6 +297,10 @@ public class SpellCastingService {
     private DepartureService departureService;
 
     @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport graveyardReturnSupport;
+
+    @org.springframework.beans.factory.annotation.Autowired
     private com.github.laxika.magicalvibes.service.event.VisualCueService visualCueService;
 
     // --- Helper records ---
@@ -1963,6 +1967,7 @@ public class SpellCastingService {
                 || targetIds == null) {
             return false;
         }
+        rejectOpponentChosenTargetsFromAnotherHand(gameData, player);
 
         List<Integer> opponentTargetIndices = attempted.getOpponentChosenSpellTargetIndices();
         int targetPositionCount = attempted.getMultiTargetFilters().size();
@@ -2034,8 +2039,20 @@ public class SpellCastingService {
                 || !isOpponentChosenTargetSpell(attempted)) {
             return false;
         }
+        rejectOpponentChosenTargetsFromAnotherHand(gameData, player);
         beginOpponentChosenTargetChoice(gameData, player, cardIndex, xValue, attempted, buyback);
         return true;
+    }
+
+    /**
+     * The opponent-chosen target prompt resumes the cast by an index into the caster's own hand, so it can't yet
+     * resume a spell cast from another player's hand (Sen Triplets); such a cast is refused rather than resumed
+     * with the wrong card.
+     */
+    private static void rejectOpponentChosenTargetsFromAnotherHand(GameData gameData, Player player) {
+        if (gameData.isForeignHandPlay(player.getId())) {
+            throw new IllegalStateException("Spells whose targets an opponent chooses can't yet be cast from another player's hand");
+        }
     }
 
     private void beginOpponentChosenTargetChoice(GameData gameData, Player player, int cardIndex,
@@ -2252,7 +2269,7 @@ public class SpellCastingService {
         Card attempted = hand != null && cardIndex >= 0 && cardIndex < hand.size() ? hand.get(cardIndex) : null;
         try {
             if (attempted != null && attempted.getCastingOption(AdventureCast.class).isPresent()) {
-                if (player.getId().equals(gameData.commandCastPlayerId)) {
+                if (player.getId().equals(gameData.commandCastPlayerId) || gameData.isForeignHandPlay(player.getId())) {
                     playCardWithAdventure(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, sacrificePermanentId);
                     return;
                 }
@@ -2265,7 +2282,9 @@ public class SpellCastingService {
                 return;
             }
             if (attempted != null && attempted.getKeywords().contains(Keyword.PLOT)) {
-                if (player.getId().equals(gameData.commandCastPlayerId)) throw new IllegalStateException("Plot is only available from hand");
+                if (player.getId().equals(gameData.commandCastPlayerId) || gameData.isForeignHandPlay(player.getId())) {
+                    throw new IllegalStateException("Plot is only available from your own hand");
+                }
                 plotCardFromHand(gameData, player, cardIndex, targetId, targetIds);
                 return;
             }
@@ -2400,7 +2419,7 @@ public class SpellCastingService {
             throw new IllegalStateException("Game is not running");
         }
         UUID playerId = player.getId();
-        List<Card> hand = gameData.playerHands.get(playerId);
+        List<Card> hand = gameData.castingSourceCards(playerId);
         if (hand == null || cardIndex < 0 || cardIndex >= hand.size()) {
             throw new IllegalArgumentException("Invalid card index");
         }
@@ -2636,7 +2655,7 @@ public class SpellCastingService {
             throw new IllegalStateException("Game is not running");
         }
         UUID playerId = player.getId();
-        List<Card> hand = gameData.playerHands.get(playerId);
+        List<Card> hand = gameData.castingSourceCards(playerId);
         if (hand == null || cardIndex < 0 || cardIndex >= hand.size()) {
             throw new IllegalArgumentException("Invalid card index");
         }
@@ -3420,8 +3439,53 @@ public class SpellCastingService {
                     immutableCopy(beholdHandCardIndices), beholdChosenSubtype, chosenCreatureType, waterbendPaid,
                     payLifeForAdditionalCost, adventure, giftPromised, chosenAdditionalCostObjectId,
                     immutableCopy(casualtyCreatureIds), attempted == null ? null : attempted.getId(), null,
-                    player.getId().equals(gameData.commandCastPlayerId) ? gameData.commandCastCardId : null);
+                    player.getId().equals(gameData.commandCastPlayerId) ? gameData.commandCastCardId : null,
+                    gameData.isForeignHandPlay(player.getId()) ? gameData.foreignHandOwnerId : null);
             mutationCoordinator.invalidateAllPlayerViews(gameData);
+        }
+    }
+
+    /**
+     * Runs {@code play} — a hand cast or land play by {@code player} — against {@code handOwnerId}'s hand instead
+     * of the player's own (Sen Triplets). The card moves straight from that hand to the stack or battlefield under
+     * the player's control (CR 601.2a) and keeps its owner, so a spell leaves the stack to its owner's zones
+     * (CR 400.3) and a land played this way stays with the player who played it (CR 110.2).
+     */
+    public void playFromHandOf(GameData gameData, Player player, UUID handOwnerId, Runnable play) {
+        UUID playerId = player.getId();
+        if (!gameData.canPlayFromHandOf(playerId, handOwnerId)) {
+            throw new IllegalStateException("You can't play cards from that player's hand");
+        }
+        if (gameData.foreignHandPlayPlayerId != null || playerId.equals(gameData.commandCastPlayerId)) {
+            throw new IllegalStateException("Already playing a card from another zone");
+        }
+        List<Card> ownerHand = gameData.playerHands.getOrDefault(handOwnerId, List.of());
+        Set<UUID> cardIdsBefore = new HashSet<>();
+        ownerHand.forEach(card -> cardIdsBefore.add(card.getId()));
+        gameData.foreignHandPlayPlayerId = playerId;
+        gameData.foreignHandOwnerId = handOwnerId;
+        try {
+            play.run();
+        } finally {
+            gameData.foreignHandPlayPlayerId = null;
+            gameData.foreignHandOwnerId = null;
+        }
+        gameData.playerHands.getOrDefault(handOwnerId, List.of()).forEach(card -> cardIdsBefore.remove(card.getId()));
+        if (cardIdsBefore.isEmpty()) {
+            return;
+        }
+        for (StackEntry entry : gameData.stack) {
+            Card physical = entry.getPhysicalCard();
+            if (physical != null && cardIdsBefore.contains(physical.getId()) && !entry.isCopy()
+                    && playerId.equals(entry.getControllerId())) {
+                entry.setOwnerIdOverride(handOwnerId);
+            }
+        }
+        for (Permanent permanent : List.copyOf(gameData.playerBattlefields.getOrDefault(playerId, List.of()))) {
+            if (cardIdsBefore.contains(permanent.getOriginalCard().getId())
+                    && !gameData.stolenCreatures.containsKey(permanent.getId())) {
+                graveyardReturnSupport.trackStolenCreature(gameData, permanent.getId(), playerId, handOwnerId);
+            }
         }
     }
 
@@ -3431,6 +3495,11 @@ public class SpellCastingService {
      * with the card back where it was. A commander is cast again from the command zone.
      */
     public void completeCastAfterCostSacrificeAnswers(GameData gameData, GameData.SpellCastReplay replay) {
+        if (replay.foreignHandOwnerId() != null) {
+            playFromHandOf(gameData, replay.player(), replay.foreignHandOwnerId(),
+                    () -> castAgainAfterCostSacrificeAnswers(gameData, replay));
+            return;
+        }
         if (replay.commandCastCardId() == null) {
             castAgainAfterCostSacrificeAnswers(gameData, replay);
             return;
@@ -3669,8 +3738,11 @@ public class SpellCastingService {
         }
 
         boolean commandCast = playerId.equals(gameData.commandCastPlayerId);
+        boolean foreignHandPlay = gameData.isForeignHandPlay(playerId);
         Zone castSourceZone = gameData.castingSourceZone(playerId);
-        int handCostIndex = commandCast ? -1 : cardIndex;
+        // The spell is not in the caster's own hand when cast from the command zone or another player's hand,
+        // so no index of the caster's hand is excluded from hand-card costs.
+        int handCostIndex = commandCast || foreignHandPlay ? -1 : cardIndex;
         if (fromGraveyard && sharedColorDiscardHandCardIndex != null) {
             playFlashbackSpellFromLocation(gameData, player, gameData.playerGraveyards.get(playerId),
                     cardIndex, xValue, targetId, targetIds, exileGraveyardCardIndices, null,
@@ -3687,7 +3759,7 @@ public class SpellCastingService {
         Card printedHandCard = null;
         if (!fromGraveyard) {
             physicalSourceCard = handEarly.get(cardIndex);
-            if (!commandCast && castSourceZone == Zone.HAND) {
+            if (!commandCast && !foreignHandPlay && castSourceZone == Zone.HAND) {
                 Card effectiveCard = HandCastCardCharacteristicsService.effectiveCard(
                         gameData, playerId, physicalSourceCard, gameQueryService);
                 ManaPool handCastPool = gameData.playerManaPools.get(playerId);
@@ -4734,13 +4806,13 @@ public class SpellCastingService {
             var exileHandCost = altCast.getCost(ExileCardsFromHandCastingCost.class);
             if (exileHandCost.isPresent()) {
                 validateExileFromHandAlternateCost(gameData, playerId, card, exileHandCost.get(),
-                        discardHandCardIndex, discardHandCardIndices, cardIndex, effectiveXValue);
+                        discardHandCardIndex, discardHandCardIndices, handCostIndex, effectiveXValue);
                 payFreeCastManaPortion(gameData, playerId, card, effectiveXValue,
                         castingCostService.getCastCostModifier(gameData, playerId, card, effectiveXValue), "", false);
             }
 
             validateAlternateDiscardCosts(gameData, playerId, card, alternateDiscardCosts,
-                    alternateDiscardHandCardIndex, alternateDiscardHandCardIndices, cardIndex);
+                    alternateDiscardHandCardIndex, alternateDiscardHandCardIndices, handCostIndex);
 
             var revealHandCost = altCast.getCost(RevealCardsFromHandCastingCost.class);
             if (revealHandCost.isPresent()) {
@@ -5804,7 +5876,7 @@ public class SpellCastingService {
                         gameData, player, card, kickerEffect.forageCost(),
                         new AdditionalSpellCostService.CostSelection(
                                 sacrificePermanentId, null, exileGraveyardCardIndices, null, null,
-                                0, cardIndex, additionalCostSacrificePermanentIds), -1);
+                                0, handCostIndex, additionalCostSacrificePermanentIds), -1);
             }
             if (kicked && kickerEffect != null && kickerEffect.hasSacrificeCost()) {
                 validateKickerSacrificeCost(gameData, player, card, kickerEffect, sacrificePermanentId,
@@ -5937,7 +6009,7 @@ public class SpellCastingService {
                             alternateCostSacrificePermanentIds,
                             hasDiscardHandAlternateCost ? alternateDiscardHandCardIndex : discardHandCardIndex,
                             hasDiscardHandAlternateCost ? alternateDiscardHandCardIndices : discardHandCardIndices,
-                            exileGraveyardCardIndex, cardIndex, manaCostX);
+                            exileGraveyardCardIndex, handCostIndex, manaCostX);
                 }
                 if (!usingWebSlingingCost && !usingSharedColorDiscardAlternativeCost) {
                     payEscalateManaOnly(gameData, playerId, card, escalateManaSuffix, targetingTax);
@@ -5962,7 +6034,7 @@ public class SpellCastingService {
                 payKickerCost(gameData, player, card,
                         kickerManaFoldedIntoSpellCost ? kickerEffect.withoutManaCost() : kickerEffect,
                         sacrificePermanentId, discardHandCardIndex,
-                        additionalCostSacrificePermanentIds, exileGraveyardCardIndices, cardIndex,
+                        additionalCostSacrificePermanentIds, exileGraveyardCardIndices, handCostIndex,
                         preManaPaymentPool, effectiveXValue);
             }
             if (buyback && buybackEffect != null) {
@@ -6255,7 +6327,7 @@ public class SpellCastingService {
                         gameData, player, card, kickerEffect.forageCost(),
                         new AdditionalSpellCostService.CostSelection(
                                 sacrificePermanentId, null, exileGraveyardCardIndices, null, null,
-                                0, cardIndex, additionalCostSacrificePermanentIds), -1);
+                                0, handCostIndex, additionalCostSacrificePermanentIds), -1);
             }
             if (kicked && kickerEffect != null && kickerEffect.hasSacrificeCost()) {
                 validateKickerSacrificeCost(gameData, player, card, kickerEffect, sacrificePermanentId,
@@ -6356,7 +6428,7 @@ public class SpellCastingService {
                             alternateCostSacrificePermanentIds,
                             hasDiscardHandAlternateCost ? alternateDiscardHandCardIndex : discardHandCardIndex,
                             hasDiscardHandAlternateCost ? alternateDiscardHandCardIndices : discardHandCardIndices,
-                            exileGraveyardCardIndex, cardIndex, resolvedXValue);
+                            exileGraveyardCardIndex, handCostIndex, resolvedXValue);
                 }
                 if (!usingWebSlingingCost && !usingSharedColorDiscardAlternativeCost) {
                     payEscalateManaOnly(gameData, playerId, card, escalateManaSuffix, targetingTax);
@@ -6394,7 +6466,7 @@ public class SpellCastingService {
             }
             if (kicked && kickerEffect != null) {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId, discardHandCardIndex,
-                        additionalCostSacrificePermanentIds, exileGraveyardCardIndices, cardIndex,
+                        additionalCostSacrificePermanentIds, exileGraveyardCardIndices, handCostIndex,
                         preManaPaymentPool, resolvedXValue);
             }
             if (buyback && buybackEffect != null) {
@@ -15893,10 +15965,13 @@ public class SpellCastingService {
             if (rawIndex == null || rawIndex == spellCardIndex || !seen.add(rawIndex)) {
                 throw new IllegalStateException("Invalid splice card index");
             }
-            int effectiveIndex = rawIndex > spellCardIndex ? rawIndex - 1 : rawIndex;
-            // Hand still contains the spell at this point; adjust as if it were already removed.
+            // Hand still contains the spell at this point (unless it is cast from elsewhere, spellCardIndex -1);
+            // adjust as if it were already removed.
+            int effectiveIndex = spellCardIndex >= 0 && rawIndex > spellCardIndex ? rawIndex - 1 : rawIndex;
             List<Card> remaining = new ArrayList<>(hand);
-            remaining.remove(spellCardIndex);
+            if (spellCardIndex >= 0) {
+                remaining.remove(spellCardIndex);
+            }
             if (effectiveIndex < 0 || effectiveIndex >= remaining.size()) {
                 throw new IllegalStateException("Invalid splice card index");
             }
@@ -18061,15 +18136,15 @@ public class SpellCastingService {
 
         boolean spellStillInHand = spellCardIndex >= 0 && spellCardIndex < hand.size()
                 && hand.get(spellCardIndex) == card;
-        int preRemovalHandSize = hand.size() + (spellStillInHand ? 0 : 1);
+        int preRemovalHandSize = hand.size() + (spellStillInHand || spellCardIndex < 0 ? 0 : 1);
         List<Integer> effectiveIndices = new ArrayList<>();
         for (Integer requestedIndex : requestedIndices) {
             if (requestedIndex < 0 || requestedIndex >= preRemovalHandSize || requestedIndex == spellCardIndex) {
                 throw new IllegalStateException("Must exile " + cost.count() + " " + label
                         + (cost.count() == 1 ? "" : "s") + " from your hand to cast " + card.getName());
             }
-            int validationIndex = spellStillInHand ? requestedIndex : requestedIndex > spellCardIndex
-                    ? requestedIndex - 1 : requestedIndex;
+            int validationIndex = spellStillInHand || spellCardIndex < 0 ? requestedIndex
+                    : requestedIndex > spellCardIndex ? requestedIndex - 1 : requestedIndex;
             Card toExile = hand.get(validationIndex);
             if (cost.predicate() != null
                     && !matchesExileFromHandCostCard(gameData, toExile, cost.predicate())) {
@@ -18079,7 +18154,8 @@ public class SpellCastingService {
             if (cost.manaValueEqualsX() && toExile.getManaValue() != xValue) {
                 throw new IllegalStateException("Exiled card must have mana value " + xValue);
             }
-            effectiveIndices.add(requestedIndex > spellCardIndex ? requestedIndex - 1 : requestedIndex);
+            effectiveIndices.add(spellCardIndex >= 0 && requestedIndex > spellCardIndex
+                    ? requestedIndex - 1 : requestedIndex);
         }
         effectiveIndices.sort((first, second) -> Integer.compare(second, first));
         return effectiveIndices;
@@ -18510,7 +18586,7 @@ public class SpellCastingService {
                                      UUID beholdPermanentId, Integer beholdHandCardIndex,
                                      List<UUID> beholdPermanentIds, List<Integer> beholdHandCardIndices,
                                      CardSubtype beholdChosenSubtype, List<UUID> casualtyCreatureIds) {
-        List<Card> hand = gameData.playerHands.get(player.getId());
+        List<Card> hand = gameData.castingSourceCards(player.getId());
         Card attempted = !fromGraveyard && hand != null && cardIndex >= 0 && cardIndex < hand.size()
                 ? hand.get(cardIndex) : null;
         try {

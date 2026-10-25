@@ -958,8 +958,14 @@ public class GameMessageHandler implements MessageHandler {
                     response = validTargetService.computeValidTargetsForAbility(gameData, source.getCard(), ability,
                             actorId, -1, request.alreadySelectedIds() == null ? java.util.List.of() : request.alreadySelectedIds(), request.xValue());
                 } else if (request.cardIndex() != null) {
-                    // Spell from hand
-                    java.util.List<com.github.laxika.magicalvibes.model.Card> hand = gameData.playerHands.get(player.getId());
+                    // Spell from hand (another player's while Sen Triplets lets the requester cast from it)
+                    if (request.handOwnerId() != null
+                            && !gameData.canPlayFromHandOf(player.getId(), request.handOwnerId())) {
+                        handleError(connection, "You can't play cards from that player's hand");
+                        return;
+                    }
+                    java.util.List<com.github.laxika.magicalvibes.model.Card> hand = gameData.playerHands.get(
+                            request.handOwnerId() != null ? request.handOwnerId() : player.getId());
                     if (hand == null || request.cardIndex() < 0 || request.cardIndex() >= hand.size()) {
                         handleError(connection, "Invalid card index");
                         return;

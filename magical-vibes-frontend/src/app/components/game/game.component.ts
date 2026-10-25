@@ -523,6 +523,7 @@ export class GameComponent implements OnInit, OnDestroy {
       status: state.status,
       planechase: state.planechase ?? null,
       delayedTriggerPayments: state.delayedTriggerPayments ?? [],
+      playableOpponentHandIndices: state.playableOpponentHandIndices ?? [],
       monarchPlayerId: state.monarchPlayerId ?? null,
       commander: state.commander,
       activePlayerId: state.activePlayerId,
@@ -715,6 +716,16 @@ export class GameComponent implements OnInit, OnDestroy {
     if (card.id && this.hasPriority) {
       this.websocketService.send({ type: MessageType.REVEAL_SECRET_MISSION, cardId: card.id });
     }
+  }
+  /** Whether the revealed opponent-hand card at {@code index} can be played from that hand now (Sen Triplets). */
+  isOpponentHandCardPlayable(index: number): boolean {
+    return !this.isMindControlling && this.hasPriority
+      && (this.game()?.playableOpponentHandIndices ?? []).includes(index);
+  }
+  playFromOpponentHand(index: number): void {
+    const ownerId = this.getPlayerId(this.opponentPlayerIndex);
+    if (!ownerId || !this.isOpponentHandCardPlayable(index)) return;
+    this.choice.targeting.startOpponentHandPlay(index, ownerId);
   }
   playCommander(card: Card): void {
     if (card.id && this.hasPriority && this.game()?.commander?.playableCardIds.includes(card.id)) this.choice.targeting.startCommanderPlay(card);

@@ -30,7 +30,37 @@ public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<
                               Boolean adventure,
                               Boolean alternateCost,
                               Boolean giftPromised,
+                              UUID chosenAdditionalCostObjectId, List<UUID> casualtyCreatureIds, UUID commandCardId,
+                              UUID handOwnerId) {
+    public PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
+                              List<UUID> targetIds, List<UUID> convokeCreatureIds, Boolean fromGraveyard,
+                              UUID sacrificePermanentId, Integer phyrexianLifeCount, UUID fromExileCardId,
+                              List<UUID> alternateCostSacrificePermanentIds, Boolean flashback,
+                              Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices,
+                              Boolean kicked, Boolean fromLibraryTop, String chosenGraveyardType,
+                              Integer discardHandCardIndex, List<Integer> discardHandCardIndices,
+                              List<UUID> imposedSacrificePermanentIds,
+                              List<UUID> additionalCostSacrificePermanentIds,
+                              List<String> repeatedAdditionalCosts,
+                              Boolean buyback,
+                              Integer sharedColorDiscardHandCardIndex,
+                              UUID beholdPermanentId,
+                              Integer beholdHandCardIndex,
+                              List<UUID> beholdPermanentIds,
+                              List<Integer> beholdHandCardIndices,
+                              List<UUID> exileCounterCostPermanentIds,
+                              String beholdCreatureType,
+                              Boolean morph,
+                              String chosenCreatureType,
+                              Boolean foretell,
+                              Boolean waterbendPaid,
+                              Boolean payLifeForAdditionalCost,
+                              Boolean adventure,
+                              Boolean alternateCost,
+                              Boolean giftPromised,
                               UUID chosenAdditionalCostObjectId, List<UUID> casualtyCreatureIds, UUID commandCardId) {
+        this(cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, fromExileCardId, alternateCostSacrificePermanentIds, flashback, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, fromLibraryTop, chosenGraveyardType, discardHandCardIndex, discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback, sharedColorDiscardHandCardIndex, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices, exileCounterCostPermanentIds, beholdCreatureType, morph, chosenCreatureType, foretell, waterbendPaid, payLifeForAdditionalCost, adventure, alternateCost, giftPromised, chosenAdditionalCostObjectId, casualtyCreatureIds, commandCardId, null);
+    }
     public PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                               List<UUID> targetIds, List<UUID> convokeCreatureIds, Boolean fromGraveyard,
                               UUID sacrificePermanentId, Integer phyrexianLifeCount, UUID fromExileCardId,
@@ -61,10 +91,18 @@ public record PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<
         this(cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, fromExileCardId, alternateCostSacrificePermanentIds, flashback, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, fromLibraryTop, chosenGraveyardType, discardHandCardIndex, discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback, sharedColorDiscardHandCardIndex, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices, exileCounterCostPermanentIds, beholdCreatureType, morph, chosenCreatureType, foretell, waterbendPaid, payLifeForAdditionalCost, adventure, alternateCost, giftPromised, chosenAdditionalCostObjectId, casualtyCreatureIds, null);
     }
     public PlayCardRequest withoutCommandSource() {
-        return new PlayCardRequest(0, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, fromExileCardId, alternateCostSacrificePermanentIds, flashback, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, fromLibraryTop, chosenGraveyardType, discardHandCardIndex, discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback, sharedColorDiscardHandCardIndex, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices, exileCounterCostPermanentIds, beholdCreatureType, morph, chosenCreatureType, foretell, waterbendPaid, payLifeForAdditionalCost, adventure, alternateCost, giftPromised, chosenAdditionalCostObjectId, casualtyCreatureIds, null);
+        return new PlayCardRequest(0, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, fromExileCardId, alternateCostSacrificePermanentIds, flashback, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, fromLibraryTop, chosenGraveyardType, discardHandCardIndex, discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback, sharedColorDiscardHandCardIndex, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices, exileCounterCostPermanentIds, beholdCreatureType, morph, chosenCreatureType, foretell, waterbendPaid, payLifeForAdditionalCost, adventure, alternateCost, giftPromised, chosenAdditionalCostObjectId, casualtyCreatureIds, null, handOwnerId);
     }
     public PlayCardRequest withCommandSource(UUID id) {
-        return new PlayCardRequest(0, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, fromExileCardId, alternateCostSacrificePermanentIds, flashback, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, fromLibraryTop, chosenGraveyardType, discardHandCardIndex, discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback, sharedColorDiscardHandCardIndex, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices, exileCounterCostPermanentIds, beholdCreatureType, morph, chosenCreatureType, foretell, waterbendPaid, payLifeForAdditionalCost, adventure, alternateCost, giftPromised, chosenAdditionalCostObjectId, casualtyCreatureIds, id);
+        return new PlayCardRequest(0, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, fromExileCardId, alternateCostSacrificePermanentIds, flashback, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, fromLibraryTop, chosenGraveyardType, discardHandCardIndex, discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback, sharedColorDiscardHandCardIndex, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices, exileCounterCostPermanentIds, beholdCreatureType, morph, chosenCreatureType, foretell, waterbendPaid, payLifeForAdditionalCost, adventure, alternateCost, giftPromised, chosenAdditionalCostObjectId, casualtyCreatureIds, id, handOwnerId);
+    }
+    /** This request without the other player's hand it plays from, once that hand has been selected. */
+    public PlayCardRequest withoutHandOwner() {
+        return new PlayCardRequest(cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, fromExileCardId, alternateCostSacrificePermanentIds, flashback, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, fromLibraryTop, chosenGraveyardType, discardHandCardIndex, discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback, sharedColorDiscardHandCardIndex, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices, exileCounterCostPermanentIds, beholdCreatureType, morph, chosenCreatureType, foretell, waterbendPaid, payLifeForAdditionalCost, adventure, alternateCost, giftPromised, chosenAdditionalCostObjectId, casualtyCreatureIds, commandCardId, null);
+    }
+    /** This request playing its card from {@code ownerId}'s hand (Sen Triplets). */
+    public PlayCardRequest withHandOwner(UUID ownerId) {
+        return new PlayCardRequest(cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, fromExileCardId, alternateCostSacrificePermanentIds, flashback, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, fromLibraryTop, chosenGraveyardType, discardHandCardIndex, discardHandCardIndices, imposedSacrificePermanentIds, additionalCostSacrificePermanentIds, repeatedAdditionalCosts, buyback, sharedColorDiscardHandCardIndex, beholdPermanentId, beholdHandCardIndex, beholdPermanentIds, beholdHandCardIndices, exileCounterCostPermanentIds, beholdCreatureType, morph, chosenCreatureType, foretell, waterbendPaid, payLifeForAdditionalCost, adventure, alternateCost, giftPromised, chosenAdditionalCostObjectId, casualtyCreatureIds, commandCardId, ownerId);
     }
 
     public PlayCardRequest(int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,

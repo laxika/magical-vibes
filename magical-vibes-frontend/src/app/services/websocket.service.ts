@@ -378,6 +378,8 @@ export interface Game {
   commander?: CommanderView;
   planechase?: PlanechaseView | null;
   delayedTriggerPayments?: DelayedTriggerPayment[];
+  /** Revealed opponent-hand indices this player may play from right now (Sen Triplets). */
+  playableOpponentHandIndices?: number[];
   monarchPlayerId: string | null;
   id: string;
   gameName: string;
@@ -509,6 +511,8 @@ export interface GameStateNotification {
   commander?: CommanderView;
   planechase?: PlanechaseView | null;
   delayedTriggerPayments?: DelayedTriggerPayment[];
+  /** Revealed opponent-hand indices this player may play from right now (Sen Triplets). */
+  playableOpponentHandIndices?: number[];
   monarchPlayerId: string | null;
   type: MessageType;
   status: GameStatus;

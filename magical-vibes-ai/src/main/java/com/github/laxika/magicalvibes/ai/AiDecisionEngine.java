@@ -220,7 +220,7 @@ public abstract class AiDecisionEngine {
         }
 
         switch (kind) {
-            case GAME_STATE -> { if (!tryCastCommander(gameData)) handleGameState(gameData); }
+            case GAME_STATE -> { if (!tryCastCommander(gameData) && !tryPlayFromOpponentHand(gameData)) handleGameState(gameData); }
             case MULLIGAN -> handleInitialMulligan();
             case CARDS_TO_BOTTOM -> choiceHandler.handleBottomCards(gameData);
             case ATTACKER_DECLARATION -> {
@@ -279,6 +279,53 @@ public abstract class AiDecisionEngine {
                     List.of(), List.of(), null).withCommandSource(card.getId());
             send(() -> gameActions.handlePlayCard(request));
             if (gameData.playerCommandZones.getOrDefault(playerId, List.of()).stream().noneMatch(c -> c.getId().equals(card.getId()))
+                    || gameData.interaction.isAwaitingInput()) return true;
+        }
+        return false;
+    }
+
+    /**
+     * While Sen Triplets lets this AI play lands and cast spells from an opponent's hand, plays the first card it
+     * can from there (that opponent's cards are spent before the AI's own).
+     */
+    protected boolean tryPlayFromOpponentHand(GameData gameData) {
+        UUID playerId = aiPlayer.getId();
+        UUID ownerId = gameData.senControlledPlayerId;
+        if (!gameData.canPlayFromHandOf(playerId, ownerId) || !hasPriority(gameData)
+                || gameData.interaction.isAwaitingInput()) return false;
+        List<Card> ownerHand = gameData.playerHands.getOrDefault(ownerId, List.of());
+        for (int index : actionAvailabilityService.getPotentialPlayableIndicesFromHandOf(gameData, playerId, ownerId)) {
+            if (index >= ownerHand.size()) continue;
+            Card card = ownerHand.get(index);
+            PlayCardRequest request;
+            if (card.hasType(CardType.LAND)) {
+                request = new PlayCardRequest(index, null, null, null, null, null, null, null, null, null, null, null,
+                        null, null, null, null, null, null, null, null, null).withHandOwner(ownerId);
+            } else {
+                UUID target = null;
+                List<UUID> targets = null;
+                if (targetSelector.needsMultiTargetSelection(card)) {
+                    targets = targetSelector.chooseMultiTargets(gameData, card, playerId);
+                    if (targets == null) continue;
+                } else if (EffectResolution.needsTarget(card) || card.isAura()) {
+                    target = targetSelector.chooseTarget(gameData, card, playerId);
+                    if (target == null) continue;
+                }
+                if (!targetSelector.hasWorthwhileEtbTargets(gameData, card, playerId)) continue;
+                var virtualPool = manaManager.buildVirtualManaPool(gameData, playerId);
+                int targetingTax = computeTargetingTax(gameData, card, target, targets);
+                int x = card.getManaCost() != null && card.getManaCost().contains("{X}")
+                        ? manaManager.calculateSmartX(gameData, playerId, card, target, virtualPool,
+                            targetingTax + castingCostService.getCastCostModifier(gameData, playerId, card)) : 0;
+                if (!tapManaForSpell(gameData, card, x, targetingTax)) continue;
+                request = buildSpellPlayCardRequest(gameData, card, index, x, target, null, targets,
+                        List.of(), List.of(), selectSacrificeTarget(gameData, card), null, null, null, null,
+                        List.of(), List.of(), null).withHandOwner(ownerId);
+            }
+            log.info("AI: Playing {} from an opponent's hand in game {}", card.getName(), gameId);
+            PlayCardRequest finalRequest = request;
+            send(() -> gameActions.handlePlayCard(finalRequest));
+            if (gameData.playerHands.getOrDefault(ownerId, List.of()).stream().noneMatch(c -> c.getId().equals(card.getId()))
                     || gameData.interaction.isAwaitingInput()) return true;
         }
         return false;

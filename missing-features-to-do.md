@@ -9,54 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 41. Casting spells and playing lands from another player's hand (Sen Triplets)
-
-**Status:** open · **Found:** 2026-10-19, while fixing S-card test failures
-
-**Failing tests:**
-- `SenTripletsTest.controllerCanCastSpellFromOpponentsHand()`
-- `SenTripletsTest.controllerCanPlayLandFromOpponentsHand()`
-
-**What the rules require.** Sen Triplets (ARB 109): "You may play lands and cast spells from that
-player's hand this turn." CR 601.2a: casting moves the card "from where it is" to the stack, and the
-caster becomes its controller, so the card goes straight from the opponent's hand to the stack. The
-owner doesn't change, and per CR 400.3 a spell cast this way goes to its owner's graveyard. A land
-played this way enters under the Sen Triplets controller's control and uses that player's land play
-(CR 305.2). The engine already records the window (`GameData.senControllerPlayerId` /
-`senControlledPlayerId`), silences the opponent and reveals their hand, but no cast or land-play path
-reads the window: every one takes an index into the acting player's own hand.
-
-**Why it's large.** It cuts across modules:
-- **Engine:** `SpellCastingService`'s hand cast paths (about 30 sites read `playerHands.get(playerId)`)
-  and the land-play path need the hand owner as an explicit source zone, without moving the card
-  through the caster's hand first.
-- **Cost and trigger context:** everything that treats "from hand" as "from your hand" needs checking.
-  Verify any "cast from your hand" interaction against official rulings before deciding it.
-- **Playability:** the availability checks behind the UI highlighting and the AI must offer the
-  opponent's cards.
-- **Networking:** `PlayCardRequest` has no hand-owner field.
-- **Frontend:** the revealed opponent hand has to become playable while the window is open.
-
-A previous attempt that moved the card into the caster's hand before casting was reverted, because it
-adds a zone change the rules don't have and leaves the card in the wrong hand when the cast stops for
-a prompt.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 41: let the Sen Triplets controller cast spells and play
-lands from the controlled opponent's hand while GameData.senControllerPlayerId/senControlledPlayerId
-is set. Pass the hand owner explicitly through the hand cast and land-play paths so the card moves
-directly from the opponent's hand to the stack/battlefield under the caster's control (CR 601.2a),
-keeps its owner (CR 400.3), and uses the caster's mana and land play (CR 305.2). Don't route the card
-through the caster's hand. Update playability checks (UI highlighting, AI), add a hand-owner field to
-PlayCardRequest, and make the revealed opponent hand playable in the frontend. Make
-SenTripletsTest.controllerCanCastSpellFromOpponentsHand and controllerCanPlayLandFromOpponentsHand
-pass. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 42. Aftermath cards are only their front half off the stack under MTGJSON
 
 **Status:** open · **Found:** 2026-10-21, while adding the provider parity test for the stored set data
@@ -598,6 +550,38 @@ pendingNextInstantSorceryCopyCount arming for Pyromancer's Goggles and Primal We
 ManaPool tags like Sunken Palace's copyGrantingMana (CR 106.6a), so only the matching spell the tagged
 mana actually pays for is copied, once per unit. Make the failing PyromancersGogglesTest cases pass and
 add Primal Wellspring tests. Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 58. Opponent-chosen-target spells cast from another player's hand (Sen Triplets)
+
+**Status:** open · **Found:** 2026-10-25, while finishing entry 41 (casting from another player's hand)
+
+**Failing tests:** none yet. Casting such a spell from another player's hand is refused with an
+`IllegalStateException`.
+
+**What the rules require.** Sen Triplets' rulings say a card played from that player's hand is played
+"just like playing any other card", so a spell whose targets an opponent chooses (a
+`GainControlOfTargetEffect` with `opponentChoosesTarget`, or `Card.getOpponentChosenSpellTargetIndices`)
+can be cast from it. The engine stops the cast for the opponent's choice
+(`PermanentChoiceContext.OpponentChosenSpellTarget(s)`) and resumes it with
+`SpellCastingService.playCardAfterOpponentChosenTarget(s)`, which indexes the caster's own hand, so it
+would cast the wrong card. `SpellCastingService.rejectOpponentChosenTargetsFromAnotherHand` refuses the
+cast instead. Also open: the hard AI's MCTS search (`GameSimulator`) doesn't list plays from another
+player's hand; only the base `AiDecisionEngine.tryPlayFromOpponentHand` heuristic plays them.
+
+**Why it's large.** Small to medium: the two prompt contexts need the hand owner, and their resume path
+has to run inside `SpellCastingService.playFromHandOf` so the owner gets stamped.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 58: let a spell whose targets an opponent chooses be cast from
+another player's hand under Sen Triplets. Carry the hand owner in PermanentChoiceContext.OpponentChosenSpellTarget
+and OpponentChosenSpellTargets, resume the cast through SpellCastingService.playFromHandOf, and remove
+rejectOpponentChosenTargetsFromAnotherHand. Optionally add foreign-hand plays to GameSimulator's action list.
+Add SenTripletsTest coverage. Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 
 ---

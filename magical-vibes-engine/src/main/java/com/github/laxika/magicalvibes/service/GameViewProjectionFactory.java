@@ -178,6 +178,8 @@ public class GameViewProjectionFactory {
                 }
             }
 
+            List<Integer> playableOpponentHandIndices = getPlayableOpponentHandIndices(gameData, playerId);
+
             messages.put(playerId, new GameStateMessage(
                     MessageType.GAME_STATE, gameData.status, gameData.activePlayerId, gameData.turnNumber,
                     gameData.currentStep, priorityPlayerId,
@@ -201,10 +203,27 @@ public class GameViewProjectionFactory {
                             .map(entry -> cardViewFactory.create(entry.card()))
                             .toList(),
                     List.of(),
-                    getDelayedTriggerPayments(gameData, playerId)
+                    getDelayedTriggerPayments(gameData, playerId),
+                    playableOpponentHandIndices
             ));
         }
         return Collections.unmodifiableMap(messages);
+    }
+
+    /**
+     * Indices of the revealed opponent hand the viewer may play from right now (Sen Triplets). The revealed hand
+     * is the first opponent's, so the indices are only offered when that opponent is the one whose hand the viewer
+     * may play from, and not while the viewer acts for a Mindslaver-controlled player.
+     */
+    private List<Integer> getPlayableOpponentHandIndices(GameData gameData, UUID playerId) {
+        UUID handOwnerId = gameData.senControlledPlayerId;
+        if (handOwnerId == null || !playerId.equals(gameData.senControllerPlayerId)
+                || playerId.equals(gameData.mindControllerPlayerId)
+                || !handOwnerId.equals(gameData.orderedPlayerIds.stream()
+                        .filter(id -> !id.equals(playerId)).findFirst().orElse(null))) {
+            return List.of();
+        }
+        return actionAvailabilityService.getPlayableIndicesFromHandOf(gameData, playerId, handOwnerId);
     }
 
     List<StackEntryView> getStackViews(GameData gameData) {

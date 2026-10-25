@@ -516,7 +516,7 @@ public class GameTestHarness {
     }
 
     private Card handCard(Player player, int cardIndex) {
-        List<Card> hand = gameData.playerHands.get(player.getId());
+        List<Card> hand = gameData.castingSourceCards(player.getId());
         return hand != null && cardIndex >= 0 && cardIndex < hand.size() ? hand.get(cardIndex) : null;
     }
 

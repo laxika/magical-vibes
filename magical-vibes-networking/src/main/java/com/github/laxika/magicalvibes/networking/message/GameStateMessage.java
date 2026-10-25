@@ -22,6 +22,8 @@ import java.util.UUID;
  * {@code visualCues} describe what happened in that action; the client plays the cues before it
  * applies the rest of the state. {@code delayedTriggerPayments} are the delayed-trigger payments
  * the recipient (or the player they control) may make right now as a special action.
+ * {@code playableOpponentHandIndices} are the indices of the revealed {@code opponentHand} the recipient may play
+ * from right now (Sen Triplets lets them play lands and cast spells from that hand).
  */
 @Builder(toBuilder = true)
 public record GameStateMessage(
@@ -64,11 +66,58 @@ public record GameStateMessage(
         UUID monarchPlayerId, com.github.laxika.magicalvibes.networking.model.CommanderView commander,
         List<CardView> lookedAtExileCards,
         List<VisualCueView> visualCues,
-        List<DelayedTriggerPaymentView> delayedTriggerPayments) {
+        List<DelayedTriggerPaymentView> delayedTriggerPayments,
+        List<Integer> playableOpponentHandIndices) {
     public GameStateMessage {
         lookedAtExileCards = List.copyOf(lookedAtExileCards);
         visualCues = visualCues == null ? List.of() : List.copyOf(visualCues);
         delayedTriggerPayments = delayedTriggerPayments == null ? List.of() : List.copyOf(delayedTriggerPayments);
+        playableOpponentHandIndices = playableOpponentHandIndices == null ? List.of()
+                : List.copyOf(playableOpponentHandIndices);
+    }
+
+    public GameStateMessage(
+        MessageType type,
+        GameStatus status,
+        UUID activePlayerId,
+        int turnNumber,
+        TurnStep currentStep,
+        UUID priorityPlayerId,
+        List<List<PermanentView>> battlefields,
+        List<StackEntryView> stack,
+        List<List<CardView>> graveyards,
+        List<Integer> deckSizes,
+        List<Integer> handSizes,
+        List<Integer> lifeTotals,
+        List<Integer> poisonCounters,
+        List<Integer> energyCounters,
+        List<Integer> radCounters,
+        List<CardView> hand,
+        List<CardView> opponentHand,
+        int mulliganCount,
+        Map<String, Integer> manaPool,
+        List<TurnStep> autoStopSteps,
+        List<Integer> playableCardIndices,
+        List<Integer> playableForetellIndices,
+        List<Integer> playableGraveyardLandIndices,
+        List<CardView> playableExileCards,
+        List<GameLogEntryView> newLogEntries,
+        int searchTaxCost,
+        UUID mindControlledPlayerId,
+        List<List<CardView>> revealedLibraryTopCards,
+        List<Integer> playableFlashbackIndices,
+        List<CardView> playableLibraryTopCards,
+        List<Integer> potentialPlayableCardIndices,
+        int potentialManaTotal,
+        Map<UUID, List<Integer>> potentialPayableAbilityIndices,
+        List<Integer> speeds,
+        DayNight dayNight,
+        PlanechaseView planechase,
+        UUID monarchPlayerId, com.github.laxika.magicalvibes.networking.model.CommanderView commander,
+        List<CardView> lookedAtExileCards,
+        List<VisualCueView> visualCues,
+        List<DelayedTriggerPaymentView> delayedTriggerPayments) {
+        this(type, status, activePlayerId, turnNumber, currentStep, priorityPlayerId, battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters, radCounters, hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices, playableForetellIndices, playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost, mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices, playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal, potentialPayableAbilityIndices, speeds, dayNight, planechase, monarchPlayerId, commander, lookedAtExileCards, visualCues, delayedTriggerPayments, List.of());
     }
 
     public GameStateMessage(

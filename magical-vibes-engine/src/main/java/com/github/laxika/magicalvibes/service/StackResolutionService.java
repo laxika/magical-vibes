@@ -495,6 +495,22 @@ public class StackResolutionService {
         return perm;
     }
 
+    /**
+     * A permanent spell controlled by someone other than its owner (cast from an opponent's hand via Sen Triplets,
+     * or a spell whose control changed) enters under its controller's control (CR 110.2): record the owner and the
+     * control effect that keeps it there, so it doesn't fall back to its owner when another control effect ends.
+     */
+    private void keepWithNonOwnerController(GameData gameData, UUID controllerId, Permanent permanent,
+                                            StackEntry entry) {
+        UUID ownerId = entry.getOwnerIdOverride();
+        if (entry.isCopy() || ownerId == null || ownerId.equals(controllerId)
+                || !gameData.playerIds.contains(ownerId)
+                || gameData.stolenCreatures.containsKey(permanent.getId())) {
+            return;
+        }
+        graveyardReturnSupport.trackStolenCreature(gameData, permanent.getId(), controllerId, ownerId);
+    }
+
     private void putResolvedPermanentOntoBattlefield(GameData gameData, UUID controllerId,
                                                      Permanent permanent, StackEntry entry) {
         if (entry.isEntersTapped()) {
@@ -522,6 +538,7 @@ public class StackResolutionService {
         if (gameQueryService.findPermanentById(gameData, permanent.getId()) == null) {
             return;
         }
+        keepWithNonOwnerController(gameData, controllerId, permanent, entry);
         if (entry.isSuspendHasteOnEntry()) {
             gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), permanent.getId(), controllerId,
@@ -1403,6 +1420,7 @@ public class StackResolutionService {
         perm.setSummoningSick(false);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
         if (gameQueryService.findPermanentById(gameData, perm.getId()) != null) {
+            keepWithNonOwnerController(gameData, controllerId, perm, entry);
             permanentCounterSupport.notifyCountersPlaced(gameData, entry, perm, startingLoyalty, CounterType.LOYALTY);
         }
 
@@ -1436,6 +1454,9 @@ public class StackResolutionService {
         UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
         perm.setProtectorPlayerId(opponentId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+        if (gameQueryService.findPermanentById(gameData, perm.getId()) != null) {
+            keepWithNonOwnerController(gameData, controllerId, perm, entry);
+        }
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.entersBattlefieldWithUnder(

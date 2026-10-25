@@ -97,6 +97,40 @@ public class GameActionAvailabilityService {
                         gameData, playerId, extraConvokeMana, gameData.playerManaPools.get(playerId)));
     }
 
+    /**
+     * Indices of {@code handOwnerId}'s hand that {@code playerId} could play right now with their current mana pool,
+     * while Sen Triplets lets them play lands and cast spells from that hand. Empty when they have no such
+     * permission.
+     */
+    public List<Integer> getPlayableIndicesFromHandOf(GameData gameData, UUID playerId, UUID handOwnerId) {
+        return playableIndicesFromHandOf(gameData, playerId, handOwnerId, false);
+    }
+
+    /**
+     * Like {@link #getPlayableIndicesFromHandOf}, also counting the mana the player could add by tapping their
+     * untapped mana sources.
+     */
+    public List<Integer> getPotentialPlayableIndicesFromHandOf(GameData gameData, UUID playerId, UUID handOwnerId) {
+        return playableIndicesFromHandOf(gameData, playerId, handOwnerId, true);
+    }
+
+    private List<Integer> playableIndicesFromHandOf(GameData gameData, UUID playerId, UUID handOwnerId,
+                                                    boolean includeUntappedSources) {
+        if (!gameData.canPlayFromHandOf(playerId, handOwnerId) || gameData.foreignHandPlayPlayerId != null
+                || playerId.equals(gameData.commandCastPlayerId)) {
+            return List.of();
+        }
+        gameData.foreignHandPlayPlayerId = playerId;
+        gameData.foreignHandOwnerId = handOwnerId;
+        try {
+            List<Integer> strict = getPlayableCardIndices(gameData, playerId);
+            return includeUntappedSources ? getPotentialPlayableCardIndices(gameData, playerId, strict) : strict;
+        } finally {
+            gameData.foreignHandPlayPlayerId = null;
+            gameData.foreignHandOwnerId = null;
+        }
+    }
+
     public List<Integer> getPlayableForetellIndices(GameData gameData, UUID playerId) {
         if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()
                 || !playerId.equals(gameQueryService.getPriorityPlayerId(gameData))
@@ -303,7 +337,7 @@ public class GameActionAvailabilityService {
             return playable;
         }
 
-        List<Card> hand = gameData.playerHands.get(playerId);
+        List<Card> hand = gameData.castingSourceCards(playerId);
         if (hand == null) {
             return playable;
         }

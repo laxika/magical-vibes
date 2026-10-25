@@ -38,6 +38,7 @@ export class TargetingChoiceService {
 
   reset(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     // Ability picker
     this.choosingAbility = false;
     this.abilityChoicePermanentIndex = -1;
@@ -649,6 +650,7 @@ export class TargetingChoiceService {
     const msg: any = {
       type: MessageType.VALID_TARGETS_REQUEST,
       commandCardId: this.pendingCommandCardId,
+      handOwnerId: this.pendingHandOwnerId,
       cardIndex,
       permanentIndex,
       abilityIndex,
@@ -770,7 +772,7 @@ export class TargetingChoiceService {
       this.modeOptional = card.modalOptional;
       this.modeModesMayRepeat = card.modalModesMayRepeat === true;
       this.modeSelectedIndices = [];
-      this.modeFromOwnHand = !this.pendingCommandCardId;
+      this.modeFromOwnHand = !this.pendingCommandCardId && !this.pendingHandOwnerId;
       return;
     }
 
@@ -846,6 +848,7 @@ export class TargetingChoiceService {
 
   cancelPhyrexianPayment(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.choosingPhyrexianPayment = false;
     this.phyrexianCardIndex = -1;
     this.phyrexianCardName = '';
@@ -884,6 +887,7 @@ export class TargetingChoiceService {
 
   cancelKicker(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.choosingKicker = false;
     this.kickerCardIndex = -1;
     this.kickerCardName = '';
@@ -918,6 +922,7 @@ export class TargetingChoiceService {
 
   cancelKickerPermanent(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.choosingKickerPermanent = false;
     this.kickerPermanentCardIndex = -1;
     this.kickerPermanentDescription = '';
@@ -971,6 +976,7 @@ export class TargetingChoiceService {
 
   cancelBuyback(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.choosingBuyback = false;
     this.buybackCardIndex = -1;
     this.buybackCardName = '';
@@ -1018,7 +1024,7 @@ export class TargetingChoiceService {
   }
 
   toggleBuybackDiscard(handIndex: number): void {
-    if (!this.choosingBuybackDiscard || (!this.pendingCommandCardId && handIndex === this.buybackDiscardCardIndex)) return;
+    if (!this.choosingBuybackDiscard || (!this.pendingCommandCardId && !this.pendingHandOwnerId && handIndex === this.buybackDiscardCardIndex)) return;
     const selected = this.buybackDiscardSelectedIndices();
     if (selected.includes(handIndex)) {
       this.buybackDiscardSelectedIndices.set(selected.filter(index => index !== handIndex));
@@ -1049,6 +1055,7 @@ export class TargetingChoiceService {
 
   cancelBuybackDiscard(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.choosingBuybackDiscard = false;
     this.buybackDiscardCardIndex = -1;
     this.buybackDiscardSelectedIndices.set([]);
@@ -1059,6 +1066,7 @@ export class TargetingChoiceService {
 
   cancelBuybackSacrifice(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.choosingBuybackSacrifice = false;
     this.buybackSacrificeCardIndex = -1;
     this.buybackSacrificeDescription = '';
@@ -1234,6 +1242,7 @@ export class TargetingChoiceService {
 
   cancelModes(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.resetModeState();
     this.pendingPhyrexianLifeCount = null;
     this.pendingKicked = false;
@@ -1327,6 +1336,7 @@ export class TargetingChoiceService {
 
   cancelGraveyardCastExilePermanent(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.selectingGraveyardCastExilePermanent = false;
     this.graveyardCastExilePermanentCardIndex = -1;
     this.graveyardCastExilePermanentCardName = '';
@@ -1382,6 +1392,7 @@ export class TargetingChoiceService {
 
   cancelGraveyardCastExile(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.selectingGraveyardCastExile = false;
     this.graveyardCastExileCardIndex = -1;
     this.graveyardCastExileCardName = '';
@@ -1430,6 +1441,7 @@ export class TargetingChoiceService {
 
   cancelGraveyardCastDiscard(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.selectingGraveyardCastDiscard = false;
     this.graveyardCastDiscardCardIndex = -1;
     this.graveyardCastDiscardCardName = '';
@@ -1513,6 +1525,7 @@ export class TargetingChoiceService {
 
   cancelHarmonize(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     if (!this.harmonizing) return;
     this.clearHarmonizeState();
     this.pendingFlashback = false;
@@ -1533,8 +1546,13 @@ export class TargetingChoiceService {
       spells, ExileCast cards, Wish). The PLAY_CARD message identifies the card by
       fromExileCardId, so its cardIndex is unused and sent as 0. */
   private pendingCommandCardId: string | null = null;
+  /** The opponent whose revealed hand the pending cast or land play is made from (Sen Triplets). */
+  private pendingHandOwnerId: string | null = null;
   private castingCard(index: number): Card | undefined {
     const game = this.gameSignal();
+    if (this.pendingHandOwnerId) {
+      return game?.opponentHand[index];
+    }
     if (this.pendingCommandCardId) {
       return Object.values(game?.commander?.commandZones ?? {}).flat().find(card => card.id === this.pendingCommandCardId);
     }
@@ -1545,19 +1563,35 @@ export class TargetingChoiceService {
       message.commandCardId = this.pendingCommandCardId;
       if (message.type === MessageType.PLAY_CARD) this.pendingCommandCardId = null;
     }
+    if (this.pendingHandOwnerId && (message.type === MessageType.PLAY_CARD || message.type === MessageType.VALID_TARGETS_REQUEST)) {
+      message.handOwnerId = this.pendingHandOwnerId;
+      if (message.type === MessageType.PLAY_CARD) this.pendingHandOwnerId = null;
+    }
     this.websocketService.send(message);
   }
   startCommanderPlay(card: Card): void {
     if (!card.id) return;
     this.pendingCommandCardId = card.id;
+    this.pendingHandOwnerId = null;
     this.pendingFromExileCardId = null;
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = false;
     this.pendingLibraryTopAdventure = false;
     this.playCard(0, () => true);
   }
+  /** Play the card at {@code index} of the revealed hand of {@code ownerId} (Sen Triplets). */
+  startOpponentHandPlay(index: number, ownerId: string): void {
+    this.pendingCommandCardId = null;
+    this.pendingFromExileCardId = null;
+    this.pendingFromExileFlashforward = false;
+    this.pendingFromLibraryTop = false;
+    this.pendingLibraryTopAdventure = false;
+    this.pendingHandOwnerId = ownerId;
+    this.playCard(index, () => true);
+  }
   startExilePlay(card: Card): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     if (!card.id) return;
     this.pendingFromExileCardId = card.id;
     this.pendingFromExileFlashforward = card.hasFlashforward === true;
@@ -1569,6 +1603,7 @@ export class TargetingChoiceService {
   /** Cast the top card of the library (AllowCastFromTopOfLibraryEffect). */
   startLibraryTopPlay(card: Card): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.pendingFromExileCardId = null;
     this.pendingFromExileFlashforward = false;
     this.pendingFromLibraryTop = true;
@@ -1771,6 +1806,7 @@ export class TargetingChoiceService {
     if (this.pendingCommandCardId != null) {
       msg.commandCardId = this.pendingCommandCardId;
       this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     }
     if (this.pendingFromExileCardId != null) {
       msg.fromExileCardId = this.pendingFromExileCardId;
@@ -1826,7 +1862,8 @@ export class TargetingChoiceService {
     // held back while the player taps mana sources; it is sent automatically once the
     // pool covers it (see onGameStateUpdate). Zone plays (flashback/exile/library-top)
     // keep the immediate path — the server marked them strictly affordable.
-    const isZonePlay = msg.flashback || msg.commandCardId != null || msg.fromExileCardId != null || msg.fromLibraryTop
+    const isZonePlay = msg.flashback || msg.commandCardId != null || msg.handOwnerId != null
+        || msg.fromExileCardId != null || msg.fromLibraryTop
         || msg.discardHandCardIndex != null
         || msg.sharedColorDiscardHandCardIndex != null
         || msg.morph === true
@@ -1946,6 +1983,7 @@ export class TargetingChoiceService {
       sources tapped for it (the server reverts the recorded mana activations). */
   cancelPendingCast(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     if (!this.payingForCast) return;
     this.clearCastPayment();
     this.sendMessage({ type: MessageType.REVERT_MANA_ACTIVATIONS });
@@ -2121,6 +2159,7 @@ export class TargetingChoiceService {
       sources tapped for it (the server reverts the recorded mana activations). */
   cancelPendingAbility(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     if (!this.payingForAbility) return;
     this.clearAbilityPayment();
     this.sendMessage({ type: MessageType.REVERT_MANA_ACTIVATIONS });
@@ -2258,6 +2297,7 @@ export class TargetingChoiceService {
 
   cancelXValue(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.choosingXValue = false;
     this.xValueCardIndex = -1;
     this.graveyardXCardIndex = -1;
@@ -2443,6 +2483,7 @@ export class TargetingChoiceService {
 
   cancelExileTargeting(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.targetingExile = false;
     this.exileTargetCards = [];
     this.exileTargetCardIds = [];
@@ -2452,6 +2493,7 @@ export class TargetingChoiceService {
 
   cancelGraveyardTargeting(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     const wasMultiTargeting = this.multiTargeting;
     this.targetingGraveyard = false;
     this.graveyardTargetCards = [];
@@ -2514,6 +2556,7 @@ export class TargetingChoiceService {
 
   cancelTargeting(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.resetTargetingState();
     this.pendingModalTargeting = false;
     this.pendingGraveyardCastDiscardHandIndex = null;
@@ -2554,6 +2597,7 @@ export class TargetingChoiceService {
 
   cancelSpellTargeting(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.resetSpellTargetingState();
     this.pendingPhyrexianLifeCount = null;
   }
@@ -2689,6 +2733,7 @@ export class TargetingChoiceService {
 
   cancelMultiTargeting(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.multiTargeting = false;
     this.multiTargetCardIndex = -1;
     this.multiTargetCardName = '';
@@ -2841,6 +2886,7 @@ export class TargetingChoiceService {
 
   cancelConvoke(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.convoking = false;
     this.convokeCardIndex = -1;
     this.convokeCardName = '';
@@ -2899,7 +2945,7 @@ export class TargetingChoiceService {
     const game = this.gameSignal();
     if (game) {
       game.hand.forEach((card, index) => {
-        if (this.pendingCommandCardId || index !== this.beholdCardIndex) addCard(card);
+        if (this.pendingCommandCardId || this.pendingHandOwnerId || index !== this.beholdCardIndex) addCard(card);
       });
     }
     return [...counts.entries()]
@@ -2939,7 +2985,7 @@ export class TargetingChoiceService {
 
   selectBeholdHandCard(handIndex: number): void {
     if (!this.selectingBeholdHandCard
-        || (!this.pendingCommandCardId && !this.beholdCardIsInGraveyard && handIndex === this.beholdCardIndex)
+        || (!this.pendingCommandCardId && !this.pendingHandOwnerId && !this.beholdCardIsInGraveyard && handIndex === this.beholdCardIndex)
         || this.pendingBeholdHandCardIndices.includes(handIndex)) return;
     this.pendingBeholdHandCardIndices.push(handIndex);
     this.beholdSelectedCount = this.pendingBeholdPermanentIds.length + this.pendingBeholdHandCardIndices.length;
@@ -2982,6 +3028,7 @@ export class TargetingChoiceService {
 
   cancelBehold(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.choosingBehold = false;
     this.selectingBeholdPermanent = false;
     this.selectingBeholdHandCard = false;
@@ -3009,8 +3056,10 @@ export class TargetingChoiceService {
     const fromGraveyard = this.pendingBeholdIsFlashback;
     this.skipBeholdForCardIndex = cardIndex;
     const commanderId = this.pendingCommandCardId;
+    const handOwnerId = this.pendingHandOwnerId;
     this.cancelBehold();
     this.pendingCommandCardId = commanderId;
+    this.pendingHandOwnerId = handOwnerId;
     if (fromGraveyard) {
       const game = this.gameSignal();
       const playerIndex = game?.playerIds.indexOf(this.websocketService.currentUser?.userId ?? '') ?? -1;
@@ -3045,6 +3094,7 @@ export class TargetingChoiceService {
 
   cancelAdditionalCost(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.resetAdditionalCostState();
     this.pendingPayLifeForAdditionalCost = null;
   }
@@ -3082,6 +3132,7 @@ export class TargetingChoiceService {
 
   cancelAdditionalSacrifice(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.choosingAdditionalSacrifice = false;
     this.additionalSacrificeCardIndex = -1;
     this.additionalSacrificeCardName = '';
@@ -3140,7 +3191,7 @@ export class TargetingChoiceService {
   /** Hand-card click while paying an exile- or discard-from-hand alternate casting cost. */
   selectAlternateCostHandCard(handIndex: number): void {
     if (!this.selectingAlternateCostHandCard) return;
-    if (!this.pendingCommandCardId && handIndex === this.alternateCostCardIndex) return;
+    if (!this.pendingCommandCardId && !this.pendingHandOwnerId && handIndex === this.alternateCostCardIndex) return;
     if (this.pendingAlternateHandCardIndices.includes(handIndex)) return;
     if (!this.alternateCostDiscardsHandCard && this.alternateCostExileHandCount > 1) {
       const selected = this.alternateCostSelectedHandIndices();
@@ -3232,6 +3283,7 @@ export class TargetingChoiceService {
 
   cancelAlternateCostGraveyardCards(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.resetAlternateCostState();
   }
 
@@ -3275,6 +3327,7 @@ export class TargetingChoiceService {
 
   cancelAlternateCost(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.resetAlternateCostState();
   }
 
@@ -3348,6 +3401,7 @@ export class TargetingChoiceService {
 
   cancelExileCounterCost(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.selectingExileCounterCost = false;
     this.exileCounterCostCardName = '';
     this.exileCounterCostRequired = 0;
@@ -3683,6 +3737,7 @@ export class TargetingChoiceService {
 
   cancelAbilityChoice(): void {
     this.pendingCommandCardId = null;
+    this.pendingHandOwnerId = null;
     this.choosingAbility = false;
     this.abilityChoicePermanentIndex = -1;
     this.abilityChoices = [];

@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SenTriplets.class, Shock.class, ProdigalPyromancer.class, Forest.class})
+@CardUsed({SenTriplets.class, Shock.class, ProdigalPyromancer.class, Forest.class, GrizzlyBears.class})
 class SenTripletsTest extends BaseCardTest {
 
     /** Resolve Sen Triplets' upkeep trigger with {@code target} chosen; play1 controls Sen. */
@@ -131,7 +133,7 @@ class SenTripletsTest extends BaseCardTest {
         lockOpponent(player2);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
+        gs.playFromHandOf(gd, player1, player2.getId(), () -> harness.castInstant(player1, 0, player2.getId()));
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
@@ -149,10 +151,69 @@ class SenTripletsTest extends BaseCardTest {
         lockOpponent(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.playLand(player1, 0);
+        gs.playFromHandOf(gd, player1, player2.getId(), () -> harness.playLand(player1, 0));
 
         harness.assertOnBattlefield(player1, "Forest");
         assertThat(gd.playerHands.get(player2.getId())).doesNotContain(forest);
+        Permanent played = findPermanent(player1, "Forest");
+        assertThat(gd.deriveControllerOf(played.getId())).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("A land played from the opponent's hand uses the controller's land play")
+    void landFromOpponentsHandUsesControllersLandPlay() {
+        Forest own = new Forest();
+        harness.setHand(player1, List.of(own));
+        harness.setHand(player2, List.of(new Forest()));
+        lockOpponent(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        gs.playFromHandOf(gd, player1, player2.getId(), () -> harness.playLand(player1, 0));
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0)).isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(own);
+    }
+
+    @Test
+    @DisplayName("A creature cast from the opponent's hand enters under the caster's control and keeps its owner")
+    void creatureFromOpponentsHandEntersUnderCastersControl() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        lockOpponent(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        gs.playFromHandOf(gd, player1, player2.getId(), () -> harness.castCreature(player1, 0));
+        harness.passBothPriorities();
+
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        assertThat(gd.deriveControllerOf(bears.getId())).isEqualTo(player1.getId());
+        assertThat(gd.stolenCreatures).containsEntry(bears.getId(), player2.getId());
+    }
+
+    @Test
+    @DisplayName("The controller's playable cards in the opponent's hand are offered while the window is open")
+    void offersPlayableCardsFromOpponentsHand() {
+        harness.setHand(player2, List.of(new GrizzlyBears(), new Shock()));
+        lockOpponent(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThat(GameTestEngineContext.get().getBean(GameActionAvailabilityService.class)
+                .getPlayableIndicesFromHandOf(gd, player1.getId(), player2.getId())).contains(1);
+        assertThat(GameTestEngineContext.get().getBean(GameActionAvailabilityService.class)
+                .getPlayableIndicesFromHandOf(gd, player2.getId(), player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Without the Sen Triplets window no one can play from another player's hand")
+    void cannotPlayFromOpponentsHandWithoutWindow() {
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> gs.playFromHandOf(gd, player1, player2.getId(),
+                () -> harness.castInstant(player1, 0, player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
     @Test
