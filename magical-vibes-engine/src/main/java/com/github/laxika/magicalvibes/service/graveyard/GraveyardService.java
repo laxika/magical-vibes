@@ -1180,9 +1180,7 @@ public class GraveyardService {
                 gameData, perm, allowRegeneration, allowShieldCounter);
         if (replacements.size() > 1) {
             LegacyDepartureFallback.reached(gameData,
-                    LegacyDepartureFallback.Kind.DESTRUCTION_REPLACEMENT_ASKED_AFTER_EVENT, perm);
-            queueDestructionReplacementChoice(gameData, perm, replacements, false);
-            return true;
+                    LegacyDepartureFallback.Kind.COMPETING_DESTRUCTION_REPLACEMENTS, perm);
         }
         if (perm.getLandDestructionShield() > 0) {
             perm.setLandDestructionShield(perm.getLandDestructionShield() - 1);
@@ -1296,15 +1294,10 @@ public class GraveyardService {
      * recorded on the batch (see {@code DepartureService}).
      */
     public void askDepartureDestructionReplacement(GameData gameData, Permanent perm, Map<String, String> options) {
-        queueDestructionReplacementChoice(gameData, perm, options, true);
-    }
-
-    private void queueDestructionReplacementChoice(GameData gameData, Permanent perm,
-                                                   Map<String, String> options, boolean inDepartureBatch) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, perm.getId());
         gameData.pendingInteractions.addLast(new PendingInteraction.ColorChoice(
                 controllerId, perm.getId(), null,
-                new ChoiceContext.RegenerationShieldChoice(perm.getId(), options, inDepartureBatch),
+                new ChoiceContext.RegenerationShieldChoice(perm.getId(), options),
                 List.copyOf(options.keySet()), "Choose how to save " + perm.getCard().getName()));
         processPendingRegenerationChoice(gameData);
     }
@@ -1335,16 +1328,6 @@ public class GraveyardService {
             var choice = choices.getFirst();
             gameData.pendingInteractions.removeFirstOccurrence(choice);
             interactionHandlerRegistry.begin(gameData, choice);
-        }
-    }
-
-    public void resolveRegenerationShieldChoice(GameData gameData,
-            ChoiceContext.RegenerationShieldChoice choice, String option) {
-        String shield = choice.shields().get(option);
-        if (shield == null) throw new IllegalArgumentException("Invalid regeneration shield");
-        Permanent permanent = gameQueryService.findPermanentById(gameData, choice.permanentId());
-        if (permanent != null) {
-            spendRegenerationShield(gameData, permanent, shield);
         }
     }
 
@@ -1775,23 +1758,6 @@ public class GraveyardService {
         }
         return getDyingCreatureLibraryReplacementEffect(card) != null
                 ? ChoiceContext.DeathExileReplacement.Kind.LIBRARY : null;
-    }
-
-    /**
-     * Applies the rider of the dying creature's own exile replacement after its card {@code card}
-     * was already exiled in its place: egg counters, or an extra turn for {@code controllerId}.
-     */
-    public void applyOwnDeathExileRider(GameData gameData, ChoiceContext.DeathExileReplacement.Kind kind,
-                                        Card card, UUID controllerId) {
-        if (kind == ChoiceContext.DeathExileReplacement.Kind.EGG_COUNTERS) {
-            int count = getExileWithEggCountersReplacementEffect(card).count();
-            gameData.exiledCardEggCounters.put(card.getId(), count);
-            gameLogService.append(gameData, GameLog.cardThen(card, " gets " + count + " egg counters."));
-        } else if (kind == ChoiceContext.DeathExileReplacement.Kind.EXTRA_TURN) {
-            gameData.queueExtraTurnFirst(controllerId, false);
-            gameLogService.append(gameData, GameLog.text(
-                    gameData.playerIdToName.get(controllerId) + " takes an extra turn after this one."));
-        }
     }
 
     /**

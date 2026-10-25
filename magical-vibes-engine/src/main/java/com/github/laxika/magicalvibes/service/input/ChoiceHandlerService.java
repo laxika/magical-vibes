@@ -519,15 +519,6 @@ public class ChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.DeathExileRiderChoice choice) {
-            if (!colorChoice.options().contains(colorName)) {
-                throw new IllegalArgumentException("Invalid replacement effect");
-            }
-            gameData.interaction.clearAwaitingInput();
-            permanentRemovalService.resolveDeathExileRiderChoice(gameData, choice, colorName);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.CounterReplacementOrder order) {
             if (!colorChoice.options().contains(colorName)) {
                 throw new IllegalArgumentException("Invalid counter replacement effect");
@@ -629,15 +620,11 @@ public class ChoiceHandlerService {
                 throw new IllegalArgumentException("Invalid regeneration shield");
             }
             gameData.interaction.clearAwaitingInput();
-            if (choice.inDepartureBatch()) {
-                departureService.recordDestructionAnswer(gameData, choice.permanentId(), choice.shields().get(colorName));
-                if (gameData.pendingDeathReplacementChoiceReplay != null
-                        && !permanentRemovalService.awaitsDeathReplacementChoiceBeforeRerun(gameData)) {
-                    permanentChoiceHandlerService.completeChoiceAgainAfterDeathReplacements(gameData);
-                    return;
-                }
-            } else {
-                graveyardService.resolveRegenerationShieldChoice(gameData, choice, colorName);
+            departureService.recordDestructionAnswer(gameData, choice.permanentId(), choice.shields().get(colorName));
+            if (gameData.pendingDeathReplacementChoiceReplay != null
+                    && !permanentRemovalService.awaitsDeathReplacementChoiceBeforeRerun(gameData)) {
+                permanentChoiceHandlerService.completeChoiceAgainAfterDeathReplacements(gameData);
+                return;
             }
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;

@@ -240,40 +240,13 @@ public sealed interface ChoiceContext {
      * CR 616.1: the controller of the dying creature {@code permanentId} picks which of
      * {@code options} applies before the creature leaves the battlefield. For a creature of a departure
      * batch ({@code inDepartureBatch}) the choice is recorded on the pending batch, which is performed
-     * once every such choice is made. Elsewhere it is asked when the effect causing the death can be
-     * stopped and run again, or when an option sends the creature somewhere other than exile. When it
-     * was asked before the resolving effect changed anything
-     * ({@code rerunsEffect}), the choice is recorded and the effect is resolved again, its death
-     * consuming the choice. Otherwise its removal resumes with the chosen option and the removal's
-     * original flags.
+     * once every such choice is made. Otherwise it was asked before the resolving effect or choice
+     * completion changed anything: the choice is recorded and the effect is resolved again, its death
+     * consuming the choice.
      */
     record DeathExileReplacementChoice(UUID permanentId, List<DeathExileReplacement> options,
-                                       boolean destroyedBySpellOrAbility, boolean wasSacrificed,
-                                       UUID destinationPlayerId, boolean inDepartureBatch,
-                                       boolean rerunsEffect) implements ChoiceContext {
+                                       boolean inDepartureBatch) implements ChoiceContext {
         public DeathExileReplacementChoice {
-            options = List.copyOf(options);
-        }
-    }
-
-    /**
-     * CR 616.1: a dying creature was exiled in place of dying while several exile replacements with
-     * different riders applied; every one of them exiles it, so it left with its event and its
-     * controller now picks which replacement it was. Only the chosen one's rider is applied. Only a
-     * removal whose caller can't be stopped and run again gets here: outside a departure batch and
-     * outside {@code GameData.deathReplacementsCanRerunEffect}, or a departure batch performed outside
-     * that window. Everywhere else the choice is made before the creature leaves.
-     *
-     * @param controllerId   the creature's controller when it left, who chooses
-     * @param ownerId        the owner of its main card
-     * @param mainCard       the creature's main card
-     * @param exiledCardIds  every card the creature left as that was exiled
-     * @param dyingPower     its last known power
-     */
-    record DeathExileRiderChoice(UUID controllerId, UUID ownerId, Card mainCard, List<UUID> exiledCardIds,
-                                 int dyingPower, List<DeathExileReplacement> options) implements ChoiceContext {
-        public DeathExileRiderChoice {
-            exiledCardIds = List.copyOf(exiledCardIds);
             options = List.copyOf(options);
         }
     }
@@ -378,14 +351,11 @@ public sealed interface ChoiceContext {
     }
 
     /**
-     * Chooses the destruction replacement (CR 614.8) that saves {@code permanentId}. For a permanent of a
-     * departure batch ({@code inDepartureBatch}) it is asked in the batch's gather stage, before anything
-     * leaves, and recorded on the pending batch, which applies it once every question of the batch is
-     * answered. Otherwise (a batch performed while its caller can't be stopped and run again) the permanent
-     * already survived and the chosen replacement is applied at once.
+     * Chooses the destruction replacement (CR 614.8) that saves {@code permanentId}, a permanent of a departure
+     * batch. It is asked in the batch's gather stage, before anything leaves, and recorded on the pending batch,
+     * which applies it once every question of the batch is answered.
      */
-    record RegenerationShieldChoice(UUID permanentId, Map<String, String> shields,
-                                    boolean inDepartureBatch) implements ChoiceContext {
+    record RegenerationShieldChoice(UUID permanentId, Map<String, String> shields) implements ChoiceContext {
         public RegenerationShieldChoice {
             shields = Map.copyOf(shields);
         }

@@ -979,8 +979,7 @@ public class GameSimulator {
                             ReplacementOrderChoice.choose(order, ccCtx.options())));
                 } else if (ccCtx.context() instanceof ChoiceContext.ChooseModeChoice
                         || ccCtx.context() instanceof ChoiceContext.StackedModalTriggerModeChoice
-                        || ccCtx.context() instanceof ChoiceContext.DeathExileReplacementChoice
-                        || ccCtx.context() instanceof ChoiceContext.DeathExileRiderChoice) {
+                        || ccCtx.context() instanceof ChoiceContext.DeathExileReplacementChoice) {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade(ccCtx.options().getFirst()));
                 } else {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade("RED"));

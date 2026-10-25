@@ -100,7 +100,7 @@ class ColorChoiceAiStrategyTest {
     }
 
     @Test
-    @DisplayName("Competing death exile riders pick the plain exile listed first")
+    @DisplayName("Competing death replacements pick the plain exile listed first")
     void deathExileReplacementChoicePicksFirstOption() {
         List<ChoiceContext.DeathExileReplacement> options = List.of(
                 new ChoiceContext.DeathExileReplacement("Exile it",
@@ -108,7 +108,7 @@ class ColorChoiceAiStrategyTest {
                 new ChoiceContext.DeathExileReplacement("Kalitas, Traitor of Ghet",
                         ChoiceContext.DeathExileReplacement.Kind.OPPONENT, null, null, null, null));
         PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(aiPlayerId, null, null,
-                new ChoiceContext.DeathExileRiderChoice(aiPlayerId, aiPlayerId, null, List.of(), 0, options),
+                new ChoiceContext.DeathExileReplacementChoice(UUID.randomUUID(), options, true),
                 List.of("Exile it", "Kalitas, Traitor of Ghet"), "Choose");
 
         strategy.answer(interaction, new AiInteractionContext(

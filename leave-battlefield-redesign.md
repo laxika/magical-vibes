@@ -16,7 +16,7 @@ order; each one lists what it depends on.
 | 2 | Departure model types | done |
 | 3 | `DepartureService` for state-based deaths | done |
 | 4 | Simultaneous removals and destroy batches | done |
-| 5 | Fold the leftover replacement workarounds into the choose stage | done (rider and non-batch regeneration choices remain only for callers that can't pause; see Findings) |
+| 5 | Fold the leftover replacement workarounds into the choose stage | done (the rider and non-batch regeneration choices it left for callers that can't pause were removed in step 13; see Findings) |
 | 6 | Legacy wrappers and the guard | done |
 | 7 | Resolution scratchpad and pausing at the end of a step | done |
 | 8 | Convert the "sacrifice this, then …" handlers | done (bespoke records kept where engine code or data needs them; see Findings) |
@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; thirteenth part: the losses after an exile or a sacrifice (Dire Tactics, Trystan, Will of the Abzan, Xathrid Demon's sacrifice) are steps of their own through the new internal `PlayersLoseLifeEffect`, and Priest of Forgotten Gods', Mornsong Aria's and Thieving Amalgam's losses ask first; fourteenth part: Stab Wound's family through `LifeSupport`, and the losses after a reveal, a mill, a library exile or discards; fifteenth part: the destroy-all riders (Deadly Tempest, Rain of Daggers, ...) are steps of their own; sixteenth part: noncreature permanents get their CR 616.1 graveyard-replacement question too, and destroy-all riders count permanents a replacement exiled instead; seventeenth part: the targeted destroy handlers count "destroyed this way" and "put into a graveyard this way" as their Oracle text says; eighteenth part: an orphaned or illegally attached Aura with a CR 616.1 question joins the state-based departure batch; nineteenth part: the `DestroyTargetPermanentThenEffect` cards without `requiresDestruction` audited against Oracle text and rulings (no change needed), and the attachment sweeps' citations fixed; twentieth part: `DestroyTargetPermanentThenEffect`'s marked riders ("its controller loses 2 life", "you lose life equal to its toughness") are steps of their own through the internal `ResolveRiderForPlayerEffect`, so Lich's Duel Mastery's sacrifice is asked after the destruction; twenty-first part: the set, double, exchange and redistribute life-total handlers ask the Mastery's sacrifice before any life total changes; twenty-second part: the "lose life unless" punishers (Rhystic Syphon, Isolation Cell, Elesh Norn, Painful Quandary) and Fandaniel's and Braids's "sacrifice or lose life" choices ask the Mastery's sacrifice before any life is lost, and Painful Quandary loses life through `LifeSupport` at all; the fallback stays until the callers listed in the fifteenth part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | done (every life change asks Lich's Duel Mastery's sacrifice first, Bomb Squad destroys as a step, and the fallback is deleted: a removal that reaches a question it can't ask is an engine error; see Findings, first to thirty-second parts) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -2162,6 +2162,211 @@ Steps add notes here for later steps, under their number.
   using the touched effects pass; `LoseLifeUnlessPaysEffectHandlerTest` (4, no constructor with mocked dependencies),
   `SpellCastTriggerCollectorServiceTest` (4) and the `architecture` package (3) fail exactly as at HEAD;
   `GameSimulatorTest` passes.
+
+### Step 13 (twenty-third part: life losses after a discard, mill, exile, return, draw, boost or choice, and the may answers that pay or lose life)
+
+- **Rules:**
+  - A resolving spell or ability's instructions are followed in the order written (CR 608.2c, checked). Creeping Dread's losses follow the discards, the rad trigger's follow the mill (CR 728.1, checked), Diregraf Scavenger's and Suffer the Past's follow the exile, Reanimate's follows the return, Vapor Snag's follows the bounce, Pact Weapon's follows the draw and the boost, and Parting Thoughts' follows the destruction and the draws. Pain's Reward's high bidder loses life and then draws, as does The Toymaker's Trap's opponent before you draw.
+  - Lich's Duel Mastery's sacrifice replaces the loss (CR 614.6, checked). Paying Breathstealer's Crypt's life is losing it (CR 119.4, checked). The sacrifice's death replacements are chosen by its controller inside the same process (CR 616.1 and 616.1f, checked), so the question belongs after the earlier change and before any life is lost. The amounts are determined once (CR 608.2h, checked).
+  - No official ruling covers the Mastery (it is a playtest card).
+- **Done:**
+  - **The loss as a step of its own** (`PlayersLoseLifeEffect` or `LoseLifeEffect` inserted after the handler, followed by `GainLifeEffect`, `DrawCardEffect` or a `ResolveRiderForPlayerEffect` draw where the card says so):
+    - Creeping Dread; Pain's Reward; the rad trigger (and the unused `RadCounterEffectHandler`).
+    - `ExileCardsFromGraveyard`'s conditional opponents' loss. This also corrects the order: the opponents now lose before you gain, per Oracle.
+    - `ExileGraveyardCardWithConditionalBonus`'s graveyard-owner loss (no card uses it); Suffer the Past; `GraveyardReturnSupport`'s Reanimate loss.
+    - Stroke of Luck (both branches); Pact Weapon; `TargetPlayerDrawsAndLosesLifePerChosenType`'s multi-target losses (one step after every draw).
+    - The Toymaker's Trap's wrong guess; Vapor Snag and Clutch of the Undercity (when resolving as a step); Triskaidekaphobia's losing mode (the game-loss check can be replaced by Lich's Mirror); The Master's villainous loss.
+    - `PlayersLoseLifeEffectHandler` names a cardless entry (the rad trigger) by its description.
+  - **Asked ahead:**
+    - Sapling of Colfenor is marked `AsksDeathReplacementsFirst`. It keeps the revealed creature in the library until after the gain and the loss, and asks the loss's sacrifice before the gain.
+    - Sorin the Mirthless's +1 answer and Breathstealer's Crypt's answer run through `answerAskingDeathReplacementsFirst`. Sorin asks with `askBeforeLifeLossesThatFollowAChange` before the card moves; the Crypt's payment is its first change.
+  - **Parting Thoughts:** `DestroyTargetPermanentThenEffectHandler.riderSteps` splits a plain ordered `SequenceEffect` rider containing a marked step into one `ResolveRiderForPlayerEffect` per instruction. Sequences with may, may-pay, conditional, conditional-replacement or nested-sequence steps, simultaneous ones, and ones with a draw count or sacrifice/target flags still resolve at once.
+- **Left:**
+  - Game of Chaos: the coin flip precedes the swap, and both a rerun and a may-answer replay would flip again. It needs a stored flip result or swap-and-prompt steps.
+  - Blood Scrivener's "draw two and lose 1 life" inside `DrawService`: draws include turn-based ones with no window, so it needs a pause inside the draw pipeline.
+  - The Doctor's Tomb's loss inside another permanent's departure in `PermanentRemovalService` (the "another batch pending" case). Its PLANAR case in `resolveDeathExileRiderChoice` exists only on the legacy rider path.
+  - Lich's "as enters" loss in `BattlefieldPlacementService.applyEntryReplacementEffects`, which needs a pre-entry question.
+  - Sapling of Colfenor when a gain-becomes-loss effect consumes the Mastery's last shield: the power loss's sacrifice is then not asked ahead.
+- **Tests:**
+  - New `LichsDuelMasteryRiderTest` (16, all `@FailOnLegacyDepartureFallback`, all failing with the old engine).
+  - Changed: `ExileCardsFromGraveyardEffectHandlerTest.conditionalCreatureRiderAppliesAfterExile` now asserts the inserted steps.
+  - New: `ReturnToHandEffectHandlerTest.controllerLifeLossIsNextStepWhenResolvingAsStep`.
+  - Every touched card's test class passes.
+
+### Step 13 (twenty-fourth part: the discard-or-lose-life punishers, the "or lose life" choices and the life payments of the choice completions)
+
+- Rules: "[do something] unless [a player does something else]" is a may followed by the penalty (CR 118.12a, checked). Paying life is losing that much life (CR 119.4, checked), so a payment the player chooses during resolution is a life loss that Lich's Duel Mastery replaces with its sacrifice (CR 614.6, checked). That sacrifice's death replacements are chosen before anything happens (CR 616.1 and 616.1f, checked). Instructions are followed in the order written (CR 608.2c, checked), so losses that follow discards, sacrifices, exiles, shuffles or destruction come after them. Their amounts are determined once (CR 608.2h, checked). No official ruling covers the Mastery (it is a playtest card).
+- Done:
+  - Marked `AsksDeathReplacementsFirst`:
+    - `EachOpponentDiscardsOrLosesLife` and `EachPlayerDiscardsOrLosesLife`: each run asks (`askBeforeLifeLosses`) the losses it reaches before its next discard prompt. Asking all of them ahead would ask twice, since `EffectResolutionService` clears the answers when a run ends on a prompt.
+    - `EachOpponentMayDiscardOrLoseLife`: the Fandaniel pattern, `askBeforeLifeLossesThatFollowAChange`.
+    - `LoseLifeUnlessSacrificeNonlandOrDiscard`, `DamageSourceControllerLosesLifeUnlessSacrificesPermanents` and `DrawCardUnlessTargetSacrificesCreatureOrPaysLife`: their state is set only after an at-once loss, and the chosen mode is no longer cleared before the loss or payment, which a rerun would otherwise skip.
+  - The loss as a `PlayersLoseLifeEffect` step: `EachPlayerMayDiscardOrLoseLife`, `EachPlayerDiscardsCreatureOrLosesLife`, `KroxaDiscard` and `EachPlayerMayExileGraveyardCardsThenLoseLife` (after the discards or exile), and `EachPlayerSacrificesPermanentOrLosesLife` (from `continueAfterDeparture`). `ForbiddenRitual` and the two villainous-choice handlers (This Is How It Ends, Genesis of the Daleks) insert the loss step followed by the same effect again: the repeat offer, or the repeated villainous choice (marked `__after_life_loss`), comes after the loss. The reveal-until-named completion inserts its loss into the parked resolution.
+  - Answer windows:
+    - The investigate declines (two mayfx handlers).
+    - `MayPenaltyChoiceHandlerService.payLifeAskingDeathReplacementsFirst`, used by counter-unless-pays with life (Mundungu), Tyrannize, Sirocco, Giant Albatross, Prince of Thralls / Nazgûl Battle-Mace, Vectis Dominator, Essence Vortex and every accepted `ForcedCostOrElse` cost that pays life (Umbilicus, Carnophage). It asks before any mana, tax trigger, paid effect or villainous bookkeeping.
+    - `ChoiceHandlerService`'s mana-or-life choices (Emberwilde Djinn, Erosion) and Phyrexian Processor's as-enters payment, with `ListChoiceReplay` cases in `completeListChoiceAgainAfterDeathReplacements`.
+- **Left**:
+  - Single-option "may pay life" prompts that `MayAbilityHandlerService` resolves (Emberwilde Djinn without red mana).
+  - `LoseLifeUnlessSacrificeNonlandOrDiscard`'s at-once loss is converted but untested: a player who controls a Mastery always has a nonland permanent to sacrifice.
+  - Every other file the eleventh part's grep lists.
+  - Found, not fixed (user decision): like Fandaniel and Braids, Entropic Battlecruiser, Liliana, Wernog and Professor Onyx / Ob Nixilis apply an earlier opponent's loss while later opponents' discard or may prompts are still pending, where CR 101.4 has all choices first. Battlecruiser's and Liliana's "each opponent who can't loses 3 life" also comes before the discards rather than after them. Only multiplayer games can tell the difference.
+  - Unchanged: Bomb Squad, redirected combat damage, and nothing is asked while another departure batch or replay window's answers are pending.
+- Tests: new `LichsDuelMasteryPunisherTest` (30, all `@FailOnLegacyDepartureFallback`; 29 fail with the old code and one Erosion may-path guard passes there). No existing test changed. The test classes of the 491 cards using the touched effects fail exactly as at HEAD (30 cases: CheeringCrowd 7, DuskRoseReliquary 4, ProfessorOnyx 2, AmuletOfSafekeeping, PhantasmalForces, PsychicPaper, and the "uncounterable spell may still pay" test in 14 counter-unless-pays classes).
+
+### Step 13 (twenty-fifth part: life paid or set while an effect resolves or a "may pay life" prompt is answered)
+
+- Rules: paying life is losing that life (CR 119.4, checked), so Lich's Duel Mastery replaces a life payment with a shield or with its sacrifice (CR 614.6). The sacrifice's death replacements are chosen inside the same process, before any of the answer happens (CR 616.1 and 616.1f, checked). An effect that sets a life total makes the player lose the difference (CR 119.5, checked). Instructions are followed in order (CR 608.2c, checked), so "if you do, lose N life" after a cast, and Goblin Game's "then loses half their life", ask after the earlier change. Each "pay life" check on the life total is unchanged. No official ruling covers the Mastery (it is a playtest card).
+- Done:
+  - The "you may pay life" answers wrap only the payment in `answerAskingDeathReplacementsFirst` (now returns whether it stopped). This covers Shock lands, MayPayLife, Athreos, Protection Racket (payment now before the card moves), schemes, Cleansing, Aether Rift, Wand of Ith/Ith-style reveal, the ante cards, Dash Hopes, Zur's Weirding and Wand of Denial.
+  - Resolution-time "pay {M} or N life", K'rrik and Purgatory pay the life first and replay through `MayAbilityHandlerService.completeResolutionTimeMayChoiceAgain` (the `MayAnswerReplay` case when the first effect has no may handler).
+  - Rebirth asks every new total before the first ante.
+  - The X-value payers (PayXLife, PayXLifeDrawXCards, PayAnyAmountOfLifeRevealAndExile, Plague of Vermin) are marked and clear `chosenXValue` only after paying.
+  - Illicit Auction and Mages' Contest are marked and ask the closing bid's loss before recording it (`LifeBidAuctionSupport.lifeLossIfBidEndsAuction`).
+  - Goblin Game, Menacing Ogre and Wheel of Misfortune are marked: the last number asks the reveal losses first, the losses go through `applyLifeLosses`, and Goblin Game's half-life loss is a `PlayersLoseLifeEffect` step.
+  - Ad Nauseam is marked; the support peeks and asks before the card moves.
+  - Kaervek's "if you do, lose 2 life" is a step of the parked resolution.
+  - New `GameData.InteractionAnswerReplay` re-activates the answered interaction and dispatches the same answer again. It is used by Ad Nauseam's repeat, Lim-Dûl's Vault, Sylvan Library and library reveal choices with a life cost per card (Moonlight Bargain, Search for Blex, Sword-Point Diplomacy).
+  - New `LifeSupport.askBeforeRepeatedLifeLossesThatFollowAChange` asks the sacrifices caused by the losses beyond the remaining shields.
+- Left:
+  - Start-in-graveyard life loss (pregame, no Mastery possible).
+  - The ExileCastSpellTarget and split-card paths of "if you do, lose N life" (`SplitCardCastSupport`, the target-choice completion).
+  - The `TargetPlayerManaOrLifePaymentChoice` list choice (`ChoiceHandlerService`).
+  - `MayCastHandlerService`'s life cost.
+  - Unchanged: Bomb Squad, redirected combat damage, and nothing asked while another batch's answers are pending.
+- Tests: `LichsDuelMasteryLifePaymentEffectTest` (32, all `@FailOnLegacyDepartureFallback`, all fail at HEAD). No existing test changed.
+
+### Step 13 (twenty-sixth part: life paid as a cost)
+
+- Rules: paying life is losing life (CR 119.4, checked). Lich's Duel Mastery replaces that loss with its sacrifice once no shield is left (CR 614.6, checked). The sacrifice's death replacements are chosen inside the same process (CR 616.1 and 616.1f, checked), so before the payment. A spell's or ability's costs are paid in any order (CR 601.2h, CR 602.2b, checked), as are an attack's or block's (CR 508.1j, 509.1f, checked). So the question can be asked once the costs are validated and before any is paid. No official ruling covers the Mastery (it is a playtest card).
+- Done:
+  - `LifeSupport.lifeLossSacrifice(gameData, playerId, amount)` predicts the sacrifice of a positive loss by a player who can lose life. The step 12 ask points add that intent to their `askBeforePayment` batch, and the life payment's `departNow` consumes the answer.
+  - `ActivatedAbilityExecutionService.askCostSacrificesFirst` covers every activation life cost and a mana ability's untargeted life loss.
+  - `AbilityActivationService.sacrificeChosenCostPermanents(…, lifePayment)` covers graveyard abilities. A new `askHandAbilityLifeCostFirst` with `GameData.HandAbilityActivationReplay` covers hand abilities such as Street Wraith's cycling.
+  - `SpellCastingService.castLifePayment` covers casts from hand: X and fixed life, "or pay life", kicker and buyback life, chosen Phyrexian life, an alternative cost's life, and targeting and per-target life taxes.
+  - Attack and block life taxes ask at their commit point and store `AttackDeclarationReplay` and `BlockDeclarationReplay`, which `PermanentChoiceHandlerService` completes through `payAgainAfterDeathReplacements`.
+  - Bug fixed: a Mastery sacrificed by an attack or block life payment moved the declared creatures' battlefield indices (IndexOutOfBounds on HEAD). The commit phases now find the creatures again by permanent.
+- **Left:**
+  - Phyrexian mana paid with life automatically (no `phyrexianLifeCount`).
+  - Graveyard, flashback, exile, library-top and free casts; alternative "pay life equal to mana value"; morph life; plot Phyrexian; commander tax paid with life.
+  - Channel; direct-tap mana abilities with a life cost; activated Phyrexian life in `AbilityActivationService.payManaCost`.
+  - `MayCastHandlerService`'s madness life costs and pay-life artifact casts (mana is paid before life inside a may completion).
+  - The post-cast effect losses in `SplitCardCastSupport`, `ExileFreeCastQueueSupport` and `PermanentChoiceSpellHandlerService` (`lifeLossOnCast`, `lifeLossAfterCast`, `PendingFreeCastLifeLoss`), which need the loss as a step of its own after the cast.
+  - With exactly one shield left and two life payments in one cast, the second payment's sacrifice isn't predicted.
+- Tests: the seven `LichsDuelMasteryLifeCostTest` tests listed above, all `@FailOnLegacyDepartureFallback`, all failing at HEAD. No existing test changed. A sweep of the 183 life-cost card test classes (1,609 tests) has the same 3 failures as HEAD (Dusk Mangler, Phyrexian Purge, Priest of Fell Rites). The service unit tests and `architecture` tests have the same 61 failures as HEAD. GameSimulatorTest 40/40 and GameDataDeepCopyTest 21/21 pass.
+
+### Step 13 (twenty-seventh part: Game of Chaos, Blood Scrivener, The Doctor's Tomb and Lich)
+
+- **Rules:** Lich's Duel Mastery's sacrifice replaces its controller's life loss (CR 614.6, checked). Its death replacements are chosen by its controller inside the same replacement process (CR 616.1 and 616.1f, checked), so the question comes before anything of the modified event happens:
+  - Blood Scrivener's "draw two cards and lose 1 life" (before either card is drawn).
+  - The Doctor's Tomb's "instead exile it and that creature's controller loses 2 life" (in the same choice as the dying creature, after its own replacement is known).
+  - Lich's "as this enters, you lose life equal to your life total" (before Lich enters).
+  - Game of Chaos: after the coin flip and before the life swap.
+  - No official ruling covers the Mastery (it is a playtest card).
+- **Done:**
+  - **Game of Chaos:** the flip's result is kept in `GameData.gameOfChaosFlipControllerWins` until the swap. `flipRound` asks the loser's sacrifice first. The spell handler is marked `AsksDeathReplacementsFirst`, and the flip-again answer runs through `answerAskingDeathReplacementsFirst`. Neither flips again.
+  - **Blood Scrivener:** asks through `askBeforeEvent`. While a question is open, the draw goes back to the front of `pendingCardDraws` and waits like a draw paused for a replacement choice. The redraw's loss performs the answered batch. This covers both draw-step draws and draws by spells.
+  - **The Doctor's Tomb:** `DepartureService.choose` asks the sacrifice of the Mastery predicted by `PermanentRemovalService.planarLifeLossSacrifice` in the dying creature's batch. `perform` hands that non-intent answer to `chosenDeathReplacementsForRerun` for the Mastery's own departure.
+  - **Lich:** a resolving permanent spell with the replacement asks before it leaves the stack (`LoseLifeEqualToLifeTotalAsEntersEffectHandler.askBeforeResolving`, called in `StackResolutionService.resolveTopOfStack`). `sbaProcessMayAbilitiesThenAutoPass` resolves it once the answers are in (`GameData.spellAwaitingEntryLifeLossDepartureId`).
+- **Left:**
+  - The Doctor's Tomb when the dying creature's batch can't ask (effect batches outside a rerun window, the legacy wrappers). Its PLANAR case in `resolveDeathExileRiderChoice` exists only on the legacy rider path.
+  - Lich put onto the battlefield by an effect.
+  - Sapling of Colfenor when a gain that becomes a loss uses up the Mastery's last shield.
+  - Blood Scrivener under Notion Thief redoes the Thief's log lines.
+- **Tests:** six new tests in `LichsDuelMasteryRiderTest`, all `@FailOnLegacyDepartureFallback` and all failing with the old code. No existing test changed.
+
+### Step 13 (twenty-eighth part: "if you do, lose N life" after a cast, and Kefka's owner losses)
+
+- Rules: instructions are followed in the order written (CR 608.2c, checked), so "you may cast the copy. If you do, you lose 2 life" and Kefka's "Then each player who owns a spell you cast this way loses life equal to its mana value" lose the life after the cast. Lich's Duel Mastery's sacrifice replaces that loss, and its controller chooses the sacrifice's death replacements before any life is lost (CR 616.1, checked). Paying life under Bloodletter of Aclazotz pays the printed amount and the multiplier applies once to the life lost (no official ruling found; matches `applyLifePayment`). No official ruling covers the Mastery (it is a playtest card).
+- Done: new `LifeSupport.loseLifeAsStepOfParkedResolution` inserts a `PlayersLoseLifeEffect` step into the parked resolution: after the resolving step while the resolution is running, otherwise at the parked next index. With no parked resolution it loses at once. It is used by `SplitCardCastSupport` (`lifeLossOnCast`), `ExileFreeCastQueueSupport.applyPendingFreeCastLifeLosses` (one step for every owner), both `lifeLossAfterCast` sites of `PermanentChoiceSpellHandlerService` (the `ExileCastSpellTarget` completion) and `ExileTargetCardFromGraveyardAndMayCastCopyHandler.applyLifeLoss`. Bug fixed: `DestroyLandsUnlessAnyPlayerPaysLifeHandler` (Cleansing) pre-multiplied the payment by `opponentLifeLossMultiplier`, which `applyLifePayment` applies again, so Bloodletter made a 1-life payment lose 4 life; it now pays the printed 1.
+- Left: these losses still reach the fallback when no resolution is parked (none of the tested cards hits this). The multi-target `ExileCastSpellTarget` completion is converted but untested (no black two-target card to copy).
+- Tests: new in `LichsDuelMasteryLifePaymentEffectTest`: `targetedCastCopyLifeLossAsksTheMasteryAfterTheCast` (Kaervek, Tragic Slip), `splitCastCopyLifeLossAsksTheMasteryAfterTheCast` (Kaervek, Toil // Trouble), `freeCastOwnerLifeLossAsksTheMasteryAfterTheCast` (Kefka, Sol Ring), all `@FailOnLegacyDepartureFallback`, and `cleansingPaymentIsDoubledOnceByBloodletter`. All fail with the old code. No existing test changed.
+
+### Step 13 (twenty-ninth part: Lich put onto the battlefield by an effect, and Sapling of Colfenor's replaced gain)
+
+- **Rules:** Lich's "as this enters, you lose life equal to your life total" is part of its entering. Lich's Duel Mastery replaces that loss with its sacrifice (CR 614.6), whose death replacements are chosen before anything of the event happens (CR 616.1, 616.1f), whatever puts Lich onto the battlefield. A gain that a replacement turns into a loss puts a shield into hand first, so the loss after it can be the one the sacrifice replaces. No official ruling covers the Mastery (it is a playtest card).
+- **Done:**
+  - `LoseLifeEqualToLifeTotalAsEntersEffectHandler.askBeforeEntering` asks through `askBeforeEvent` before an entry by an effect changes anything. It is called in the `BattlefieldPlacementService.place()` preamble for single entries and in `prepareNativeBatchChoices` for entry batches. The request waits in `GameData.entryAwaitingLifeLossDeparture`, and `resolveAfterDepartureQuestions` continues it the way the other "as enters" choices do (`completeNativeChoice`, or `place` plus `handleCreatureEnteredBattlefield`).
+  - `LifeSupport.askBeforeLifeGainThenLoss` together with `lifeLossSacrificeAfterEarlierLosses` (since replaced by `successiveLifeLossSacrifices`) lets Sapling of Colfenor ask the sacrifice that comes after a replaced gain uses up the last shield.
+- **Left:** code that a putting handler runs after `place()` sees the permanent not yet on the battlefield while the question is open (shared with the other "as enters" pauses).
+- **Tests:** three new tests in `LichsDuelMasteryRiderTest`, all failing with the old code. No existing test changed.
+
+### Step 13 (thirtieth part: the rest of the life costs)
+
+- Rules: paying life is losing life (CR 119.4, checked). The Mastery replaces it with a shield or its sacrifice (CR 614.6, checked), and that sacrifice's death replacements are chosen before anything happens (CR 616.1, 616.1f, checked). Costs are paid in any order (CR 601.2h and 602.2b, checked). This covers madness (CR 702.35a, checked), the morph and plot special actions (CR 702.37e, 116.2k, checked) and mana abilities (CR 605.3a, checked). So every life payment's question is asked before the first cost is paid. Each shield absorbs one loss, so with one shield left a cast's second payment is the one that sacrifices.
+- Done: LifeSupport.successiveLifeLossSacrifices counts payments past the shields. Phyrexian mana paid with life automatically is predicted with payPhyrexianManaAuto on a copy of the pool, for casts and activations. Graveyard, library-top, exile, plotted, free and resolution casts, morph, commander tax paid with life, Channel, land mana abilities with a life cost, madness (including convoke) and pay-life-equal-to-mana-value casts all ask before paying. They reuse GraveyardCastReplay, LibraryTopCastReplay, TurnFaceUpReplay and SpellCastReplay, and add eight replays.
+- Left:
+  - The Phyrexian prediction leaves out some extra mana demands (instant splice mana, waterbend generic), so a spliced spell's Phyrexian life can be under-predicted.
+  - Phyrexian symbols in graveyard flashback costs are not predicted.
+  - An activation whose earlier pass already paid or logged something doesn't ask.
+  - Commander tax: the second life payment of a commander cast whose life tax used the last shield is not predicted.
+  - The madness X-cost path (beginAlternateCastXChoice and its completion) is not converted.
+  - playCardFromExileAsResolutionCast payments that bypass SplitCardCastSupport are not converted.
+  - Untested for lack of a suitable card: plot Phyrexian, hand pay-life-equal-to-mana-value (only Cramped Vents grants it), exile, split and free-cast life.
+- Tests: 12 new tests in `LichsDuelMasteryLifeCostTest` (Mutagenic Growth, Moltensteel Dragon, Channel, Thran Portal, Shadowgrange Archfiend, Anrakyr the Traveller, Deep Analysis, Bolas's Citadel, Liesa, Zombie Cutthroat, Bitter Triumph), all failing with the old code. A sweep of 685 card test classes has no new failures.
+
+### Step 13 (thirty-first part: Bomb Squad, a blocker's departure next to the Mastery in combat, and the game-loss replacements)
+
+- Rules: Bomb Squad's rulings (2004-10-04) say the creature deals its 4 damage even if it regenerates, and with two
+  Bomb Squads both deal it although the first destroys it. So the damage is dealt by the creature as it last existed
+  (CR 608.2h, checked). Setting a life total lower than the current one is a life loss (CR 119.5, checked), which
+  Lich's Duel Mastery replaces with its sacrifice (CR 614.6), whose death replacements are chosen before the event
+  (CR 616.1, 616.1f).
+- Done:
+  - Bomb Squad (`RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffectHandler`) removes the
+    counters, decides prevention, records the creature's last-known card and controller on the entry, destroys it as
+    a step (`destroyThenContinue`) and deals the damage in `continueAfterDeparture`.
+  - Combat: the defending player's Mastery is asked first (the player event), and its answered batch waits for the
+    life loss, so a blocker's "sacrifice it instead" (Underdark Beholder) or "destroy it instead" (Kill-Suit Cultist)
+    found no window and both fell back. `DepartureService.askBeforeEvent` now sets an earlier answered, unowned,
+    non-state-based batch with other intents aside in `GameData.answeredEventDepartureBatches`;
+    `answeredRerunBatch` takes a set-aside batch with the same intents, and `discardAnsweredEventBatch` drops it.
+  - Game-loss replacements that set a life total (The Golden Throne `FixedLifeTotalLossReplacer`,
+    `ExquisiteArchangelLossReplacer`, Lich's Mirror `GameResetLossReplacer` when the Mastery isn't the player's own)
+    ask through `LossReplacer.askBeforeLifeTotal` / `LifeSupport.askBeforeLossReplacementLifeTotal`. Outside a rerun
+    window the loss waits in `GameData.pendingLossReplacement` and `GameOutcomeService.resumeLossReplacement` resolves
+    it again once answered. The "loses the game" handlers (`TargetPlayerLosesGame`, `ControllerLosesGame`,
+    `EachOpponentWithoutLegendaryCreatureOrPlaneswalkerLosesGame`, `EachPlayerAttackedBySourceLosesGame`) are marked
+    `AsksDeathReplacementsFirst`.
+  - `LifeSupport.successiveLifeLossSacrifices` replaces the twenty-ninth part's `lifeLossSacrificeAfterEarlierLosses`,
+    so Sapling of Colfenor also asks a second Mastery's sacrifice when both losses sacrifice one.
+- Left:
+  - Found, not fixed: `CombatDamageService.dealRedirectedCombatDamageToPlayer` writes the life total directly, so
+    redirected combat damage skips the Mastery, `LifeSupport` and the lethal-reduction replacements. It never reaches
+    the fallback.
+  - The multiplayer variants of "nothing asked while another batch is pending" can't happen: games have two players.
+- Tests: new `LichsDuelMasteryCombatTest` (4) and `LichsDuelMasteryLossReplacementTest` (4), all
+  `@FailOnLegacyDepartureFallback`, and `BombSquadTest.asksTheDeathReplacementBeforeTheDestructionAndDealsTheDamageAfter`;
+  all but the two guards (Kill-Suit Cultist, Earthquake) fail with the old code.
+
+### Step 13 (thirty-second part: the fallback deleted)
+
+- Survey: the card test modules, run in batches (253,117 tests), reached the fallback only from
+  `VoidMawTest`'s two competing-Maw tests, which put the Scoundrel into the graveyard through the legacy wrapper
+  directly. They now kill it with lethal damage, so the state-based batch asks before it leaves. The engine, AI
+  and application tests reached it nowhere.
+- Done:
+  - `LegacyDepartureFallback.reached` logs the caller at error level, records it for a watched game and throws
+    an `IllegalStateException`. Its kinds name the question that couldn't be asked: `COMPETING_DEATH_REPLACEMENTS`,
+    `MAY_LIBRARY_REPLACEMENT`, `COMPETING_DESTRUCTION_REPLACEMENTS`.
+  - Deleted: `PermanentRemovalService`'s rider chosen after the exile (`ChoiceContext.DeathExileRiderChoice`,
+    `resolveDeathExileRiderChoice`, the `riderOptions` plumbing, `GraveyardService.applyOwnDeathExileRider`), the death
+    replacement and "may" library prompts asked after the event (the creature stayed and the call returned `false`),
+    and the destruction replacement chosen after the event (`GraveyardService.resolveRegenerationShieldChoice`).
+  - `DeathExileReplacementChoice` keeps only `permanentId`, `options` and `inDepartureBatch` (otherwise it was asked
+    ahead of a rerun), and `RegenerationShieldChoice` only `permanentId` and `shields` (always a departure batch's).
+  - `agent-docs/ARCHITECTURE.md` describes the error instead of the fallback, the other cast and cost paths that
+    ask before payment, and how every life change asks Lich's Duel Mastery's sacrifice first.
+  - `missing-features-to-do.md` entry 34 is removed. No `@Disabled` marker from step 1 remains.
+- Left (all outside the fallback): the life-cost edge cases listed in the thirtieth part ask nothing ahead and now
+  end in the engine error when a Mastery with competing replacements is sacrificed there; the "if you do, lose N
+  life" losses with no parked resolution (twenty-eighth part) and The Doctor's Tomb in a batch that can't ask
+  (twenty-seventh part) likewise. Redirected combat damage still skips the Mastery (thirty-first part).
+- Tests: `VoidMawTest` (11) passes, both changed tests asking before the Scoundrel leaves. Changed:
+  `ColorChoiceAiStrategyTest`'s death replacement test and `InputCompletionServiceTest`'s regeneration choice use the
+  slimmer records. After the deletion, the engine, AI and application tests fail exactly as at HEAD (661 of 6,353),
+  and the 853 card test classes that use a death, graveyard or destruction replacement (7,860 tests) fail exactly as
+  before it (35); none reaches the error.
 
 ### Step 2
 

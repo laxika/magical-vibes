@@ -9,7 +9,8 @@ import java.lang.annotation.Target;
  * Fails a {@link BaseCardTest} (on a test method, or on every test of the class) whose game reaches a legacy
  * departure fallback, reported by
  * {@link com.github.laxika.magicalvibes.service.battlefield.LegacyDepartureFallback}: a removal that could no longer
- * ask its replacement question before the permanent left the battlefield.
+ * ask its replacement question before the permanent left the battlefield. Reaching one throws an engine error; this
+ * also fails the test when that error was caught on its way out.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})

@@ -186,11 +186,14 @@ class VoidMawTest extends BaseCardTest {
         addMaw();
         harness.addToBattlefield(player2, new VoidMaw());
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new KrovikanScoundrel());
+        victim.setMarkedDamage(1);
 
-        removeToGraveyard(victim);
+        harness.runStateBasedActions();
 
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        assertThat(gd.findExiledCard(victim.getCard().getId()).sourcePermanentId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.assertOnBattlefield(player2, "Krovikan Scoundrel");
+        assertThat(gd.findExiledCard(victim.getCard().getId())).isNull();
     }
 
     @Test
@@ -198,7 +201,8 @@ class VoidMawTest extends BaseCardTest {
         addMaw();
         Permanent ownMaw = harness.addToBattlefieldAndReturn(player2, new VoidMaw());
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new KrovikanScoundrel());
-        removeToGraveyard(victim);
+        victim.setMarkedDamage(1);
+        harness.runStateBasedActions();
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice.playerId()).isEqualTo(player2.getId());

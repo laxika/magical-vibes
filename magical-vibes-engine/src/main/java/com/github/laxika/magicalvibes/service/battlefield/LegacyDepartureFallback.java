@@ -16,31 +16,26 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * The guard on the legacy removal wrappers ({@code removePermanentToGraveyard}, {@code sacrificePermanentToGraveyard},
  * {@code destroyPermanentToGraveyard}, {@code tryDestroyPermanent}, {@code removePermanentToPlayerGraveyard}) and on
- * departure batches performed by a caller that can't be stopped and run again. When such a removal needs an answer
- * it can no longer ask before the event (CR 616.1), it falls back to the older behaviour: the creature leaves as a
- * plain exile and its controller picks the rider afterwards, or it stays on the battlefield until a question asked
- * after the fact is answered. Every fallback is reported here with a warning naming its caller, so those callers can
- * be moved onto {@link DepartureService#depart}.
- *
- * <p>Tests can {@link #watch} a game and fail when it reaches a fallback.
+ * departure batches performed by a caller that can't be stopped and run again. Such a removal can no longer ask a
+ * question the removal needs answered before the event (CR 616.1), and there is no fallback any more: reaching one is
+ * an engine error. It is logged naming its caller, recorded for a {@link #watch watched} game, and thrown as an
+ * {@link IllegalStateException}; the caller has to ask first through {@link DepartureService#depart}.
  */
 @Slf4j
 public final class LegacyDepartureFallback {
 
-    /** Which older behaviour a removal fell back to. */
+    /** Which question the removal would have had to ask before the event. */
     public enum Kind {
-        /** Every option exiled it, so it was exiled at once and its controller then picks the rider. */
-        RIDER_CHOSEN_AFTER_EXILE,
-        /** It stays on the battlefield until its controller picks one of its competing death replacements. */
-        DEATH_REPLACEMENT_ASKED_AFTER_EVENT,
-        /** It stays on the battlefield until its controller answers its lone "may" library replacement. */
-        MAY_LIBRARY_ASKED_AFTER_EVENT,
-        /** It stays on the battlefield until its controller picks which destruction replacement saves it. */
-        DESTRUCTION_REPLACEMENT_ASKED_AFTER_EVENT
+        /** Which of its competing death or graveyard replacements applies. */
+        COMPETING_DEATH_REPLACEMENTS,
+        /** Whether its lone "may" library replacement (Pulmonic Sliver) applies. */
+        MAY_LIBRARY_REPLACEMENT,
+        /** Which of its competing destruction replacements saves it. */
+        COMPETING_DESTRUCTION_REPLACEMENTS
     }
 
     /**
-     * One fallback.
+     * One removal that reached a question it can't ask.
      *
      * @param caller the first stack frame of the project outside the departure services, as
      *               {@code Class.method:line}
@@ -63,7 +58,7 @@ public final class LegacyDepartureFallback {
     private LegacyDepartureFallback() {
     }
 
-    /** Reports that a removal of {@code permanent} fell back to the older behaviour {@code kind}. */
+    /** Reports that a removal of {@code permanent} reached a {@code kind} question it can't ask, and throws. */
     public static void reached(GameData gameData, Kind kind, Permanent permanent) {
         String caller = WALKER.walk(frames -> frames
                 .filter(frame -> frame.getClassName().startsWith(PROJECT_PACKAGE)
@@ -74,12 +69,14 @@ public final class LegacyDepartureFallback {
                         + ":" + frame.getLineNumber())
                 .orElse("unknown"));
         String permanentName = permanent.getCard().getName();
-        log.warn("Game {} - legacy departure fallback {} for {}, reached from {}; move this caller onto"
+        log.error("Game {} - legacy departure fallback {} for {}, reached from {}; move this caller onto"
                 + " DepartureService.depart", gameData.id, kind, permanentName, caller);
         List<Hit> hits = WATCHED.get(gameData.id);
         if (hits != null) {
             hits.add(new Hit(kind, permanentName, caller));
         }
+        throw new IllegalStateException("Legacy departure fallback " + kind + " for " + permanentName
+                + ", reached from " + caller);
     }
 
     /** Starts recording the fallbacks the game {@code gameId} reaches. */
