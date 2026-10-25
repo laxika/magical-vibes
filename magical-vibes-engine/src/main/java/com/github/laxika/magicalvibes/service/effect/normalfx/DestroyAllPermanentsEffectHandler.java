@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyedPermanentCountScope;
 import com.github.laxika.magicalvibes.model.effect.EachDestroyedPermanentControllerGainsLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -25,8 +26,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Destroys all matching permanents in the effect's scope, then resolves the optional
- * per-destroyed-count rider: the count of permanents actually destroyed (and their controllers and
- * mana values) is stamped onto the entry's event values. When this effect is a step of the
+ * per-destroyed-count rider: the count of permanents actually destroyed, including those a replacement
+ * put somewhere other than a graveyard unless the rider counts only deaths (and their controllers and
+ * mana values), is stamped onto the entry's event values. When this effect is a step of the
  * resolution, the rider becomes the next step of the same entry; dispatched by another handler, it
  * resolves at once on a derived stack entry carrying those values.
  */
@@ -103,9 +105,14 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
             });
         }
 
-        List<Permanent> destroyed = destructionSupport.destroyBatchCollecting(
+        DestructionSupport.BatchOutcome outcome = destructionSupport.destroyBatchWithOutcome(
                 gameData, toDestroy, entry.getCard().getName(), e.cannotBeRegenerated());
-        entry.setEventCardIds(destroyed.stream().map(perm -> perm.getCard().getId()).toList());
+        List<Permanent> died = outcome.died();
+        entry.setEventCardIds(died.stream().map(perm -> perm.getCard().getId()).toList());
+        // A permanent a replacement exiled or moved elsewhere instead of its graveyard was still destroyed
+        // this way (Fumigate and Death Begets Life rulings); only "died this way" riders count just the deaths.
+        List<Permanent> destroyed = e.destroyedCountScope() == DestroyedPermanentCountScope.DIED
+                ? died : outcome.destroyed();
 
         if (e.thenEffect() == null) {
             return;
@@ -133,7 +140,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
         }
 
         int destroyedCount = switch (e.destroyedCountScope()) {
-            case ALL -> destroyed.size();
+            case ALL, DIED -> destroyed.size();
             case ALL_NONTOKEN -> destroyedNontokenControllerIds.size();
             case CONTROLLER -> (int) destroyedControllerIds.stream()
                     .filter(entry.getControllerId()::equals)

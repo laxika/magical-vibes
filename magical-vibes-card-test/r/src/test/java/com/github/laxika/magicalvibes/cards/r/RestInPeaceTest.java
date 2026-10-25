@@ -7,6 +7,11 @@ import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.s.SellerOfSongbirds;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -158,5 +163,33 @@ class RestInPeaceTest extends BaseCardTest {
             assertThat(gd.playerGraveyards.get(player.getId())).isEmpty();
             assertThat(gd.getPlayerExiledCards(player.getId())).contains(island);
         }
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({Millstone.class, WheelOfSunAndMoon.class})
+    @DisplayName("A destroyed noncreature artifact's controller chooses Rest in Peace over Wheel of Sun and Moon")
+    void destroyedArtifactsControllerChoosesRestInPeaceOverWheel() {
+        harness.addToBattlefield(player1, new RestInPeace());
+        harness.addToBattlefieldAndReturn(player2, new WheelOfSunAndMoon()).setAttachedTo(player2.getId());
+        Permanent millstone = harness.addToBattlefieldAndReturn(player2, new Millstone());
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, millstone.getId());
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.options()).containsExactlyInAnyOrder(
+                "Put it on the bottom of its owner's library", "Exile it");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(millstone);
+
+        harness.handleListChoice(player2, "Exile it");
+
+        harness.assertNotOnBattlefield(player2, "Millstone");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(millstone.getCard());
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

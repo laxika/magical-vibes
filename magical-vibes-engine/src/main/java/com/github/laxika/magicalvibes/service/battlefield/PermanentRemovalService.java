@@ -598,16 +598,19 @@ public class PermanentRemovalService {
     }
 
     /**
-     * The "if it would die, ... instead" replacements that currently apply to the creature
-     * {@code target}, one option per distinct outcome. Replacements that only exile it collapse
-     * into a single {@link DeathExileReplacement.Kind#PLAIN} option. Options that keep the card
-     * (hand, library, the bottom of the library) come first, then the plain exile, then exiles with
-     * riders. Changes nothing.
+     * The replacements of "put into a graveyard from the battlefield" that currently apply to the
+     * permanent {@code target}, one option per distinct outcome. Every permanent gets the ones that
+     * apply to any card or permanent (Rest in Peace, Leyline of the Void, Wheel of Sun and Moon, its own
+     * replacements, ...); only a creature gets the "if a creature would die" ones (Kalitas, blood
+     * counters, ...), matching what {@link #processGraveyardAndTriggers} applies. Replacements that only
+     * exile it collapse into a single {@link DeathExileReplacement.Kind#PLAIN} option. Options that keep
+     * the card (hand, library, the bottom of the library) come first, then the plain exile, then exiles
+     * with riders. Changes nothing.
      */
     public List<DeathExileReplacement> deathExileReplacementOptions(GameData gameData, Permanent target) {
-        if (!gameQueryService.isCreature(gameData, target)) {
-            return List.of();
-        }
+        // The same test removePermanentToGraveyard uses: one leaving with the effect that animated it counts.
+        boolean creature = gameData.simultaneousDyingCreatures.containsKey(target.getId())
+                || gameQueryService.isCreature(gameData, target);
         UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
         if (controllerId == null) {
             return List.of();
@@ -631,7 +634,7 @@ public class PermanentRemovalService {
         }
 
         boolean nontoken = !isToken(gameData, target.getCard());
-        NontokenCreatureDyingExileReplacement bloodCounter = nontoken
+        NontokenCreatureDyingExileReplacement bloodCounter = creature && nontoken
                 ? nontokenCreatureDyingExileReplacement(gameData, target) : null;
         if (bloodCounter != null) {
             riders.add(new DeathExileReplacement(
@@ -640,8 +643,8 @@ public class PermanentRemovalService {
                     bloodCounter.sourcePermanentId()));
         }
 
-        List<OpponentDyingCreatureExileReplacement> opponentReplacements =
-                opponentDyingCreatureExileReplacements(gameData, controllerId, target.getCard());
+        List<OpponentDyingCreatureExileReplacement> opponentReplacements = creature
+                ? opponentDyingCreatureExileReplacements(gameData, controllerId, target.getCard()) : List.of();
         for (OpponentDyingCreatureExileReplacement replacement : opponentReplacements) {
             ExileOpponentCreaturesInsteadOfDyingEffect effect = replacement.effect();
             if (!effect.addIceCounter() && effect.whenExiledEffect() == null && !effect.trackWithSource()
@@ -677,7 +680,7 @@ public class PermanentRemovalService {
                     source.getId()));
         }
 
-        PlanarCreatureExileReplacement planar = planarCreatureExileReplacement(gameData);
+        PlanarCreatureExileReplacement planar = creature ? planarCreatureExileReplacement(gameData) : null;
         if (planar != null) {
             riders.add(new DeathExileReplacement(planar.sourceCard().getName(),
                     DeathExileReplacement.Kind.PLANAR, null, planar.sourceCard(), null, null));
@@ -690,12 +693,12 @@ public class PermanentRemovalService {
         plain = plain
                 || (!gameQueryService.hasLostPrintedAbilities(gameData, target)
                         && GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard()))
-                || ownSubtypeExileReplacement(gameData, target, controllerId,
+                || creature && ownSubtypeExileReplacement(gameData, target, controllerId,
                         effectiveCreatureSubtypesAtDeath(gameData, target))
-                || opponentExilesOwnedNontokenCreature(gameData, ownerId, target.getCard())
-                || damagerExilesDyingCreature(gameData, target)
-                || !gameData.playersExilingCreaturesInsteadOfDyingThisTurn.isEmpty()
-                || gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.stream()
+                || creature && opponentExilesOwnedNontokenCreature(gameData, ownerId, target.getCard())
+                || creature && damagerExilesDyingCreature(gameData, target)
+                || creature && !gameData.playersExilingCreaturesInsteadOfDyingThisTurn.isEmpty()
+                || creature && gameData.playersExilingOpponentCreaturesInsteadOfDyingThisTurn.stream()
                         .anyMatch(exilingPlayerId -> !exilingPlayerId.equals(controllerId))
                 || graveyardService.exilesBattlefieldCardPlainlyInsteadOfGraveyard(
                         gameData, ownerId, target.getCard(), controllerId, target);

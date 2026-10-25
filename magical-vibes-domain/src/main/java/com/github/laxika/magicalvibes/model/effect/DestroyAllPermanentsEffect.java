@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * then optionally resolves a {@code thenEffect} rider.
  *
  * <p>The number of permanents <em>actually destroyed</em> (indestructible and regenerated
- * permanents do not count) is snapshotted onto the rider's {@code StackEntry.eventValue} channel, so
+ * permanents do not count; one a replacement exiled instead of putting it into a graveyard does,
+ * unless {@code destroyedCountScope} is {@link DestroyedPermanentCountScope#DIED}) is snapshotted onto the rider's {@code StackEntry.eventValue} channel, so
  * "for each permanent destroyed this way" riders are built from existing effects on the
  * {@code EventValue} amount (Fracturing Gust = {@code GainLifeEffect(Scaled(EventValue(), 2))},
  * Phyrexian Rebirth = an X/X token with {@code EventValue} power/toughness). The rider always

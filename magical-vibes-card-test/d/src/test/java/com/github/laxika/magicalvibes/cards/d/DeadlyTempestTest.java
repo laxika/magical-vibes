@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.s.SkyDiamond;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -103,6 +104,25 @@ class DeadlyTempestTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Darksteel Sentinel");
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed({RestInPeace.class})
+    @DisplayName("Creatures exiled by Rest in Peace instead of dying still count as destroyed this way")
+    void creaturesExiledInsteadOfDyingStillCount() {
+        harness.addToBattlefield(player2, new RestInPeace());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castDeadlyTempest();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 18);
     }
 
     private void castDeadlyTempest() {

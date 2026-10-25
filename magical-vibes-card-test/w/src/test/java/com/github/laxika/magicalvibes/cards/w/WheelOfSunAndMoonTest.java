@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfTheVoid;
+import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -254,5 +256,51 @@ class WheelOfSunAndMoonTest extends BaseCardTest {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new Millstone());
         perm.setSummoningSick(false);
         return perm;
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({LeylineOfTheVoid.class})
+    @DisplayName("A destroyed Wheel enchanting its owner lets its controller choose between itself and Leyline of the Void")
+    void destroyedWheelsControllerChoosesBetweenWheelAndLeyline() {
+        harness.addToBattlefield(player1, new LeylineOfTheVoid());
+        Permanent wheel = placeWheelOnPlayer(player2, player2);
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new Demystify()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, wheel.getId());
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.options()).containsExactlyInAnyOrder(
+                "Put it on the bottom of its owner's library", "Exile it");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(wheel);
+
+        harness.handleListChoice(player2, "Exile it");
+
+        harness.assertNotOnBattlefield(player2, "Wheel of Sun and Moon");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(wheel.getCard());
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({LeylineOfTheVoid.class})
+    @DisplayName("Choosing Wheel of Sun and Moon over Leyline of the Void puts the destroyed Wheel into its owner's library")
+    void choosingWheelOverLeylinePutsTheWheelIntoTheLibrary() {
+        harness.addToBattlefield(player1, new LeylineOfTheVoid());
+        Permanent wheel = placeWheelOnPlayer(player2, player2);
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new Demystify()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, wheel.getId());
+        harness.handleListChoice(player2, "Put it on the bottom of its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Wheel of Sun and Moon");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(wheel.getCard());
+        assertThat(gd.findExiledCard(wheel.getCard().getId())).isNull();
     }
 }

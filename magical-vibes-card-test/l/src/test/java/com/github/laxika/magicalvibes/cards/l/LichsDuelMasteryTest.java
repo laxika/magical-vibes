@@ -751,6 +751,35 @@ class LichsDuelMasteryTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    @CardUsed({BumpInTheNight.class, WheelOfSunAndMoon.class, LeylineOfTheVoid.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("A spell's life loss asks library-or-exile for the noncreature, shieldless Mastery before any life changes")
+    void lifeLossAsksTheGraveyardReplacementForTheNoncreatureMastery() {
+        harness.setLife(player2, 20);
+        Permanent mastery = harness.addToBattlefieldAndReturn(player2, new LichsDuelMastery());
+        harness.addToBattlefieldAndReturn(player2, new WheelOfSunAndMoon()).setAttachedTo(player2.getId());
+        harness.addToBattlefield(player1, new LeylineOfTheVoid());
+        harness.setHand(player1, List.of(new BumpInTheNight()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Exile it");
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Exile it");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(mastery.getCard());
+        assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(mastery.getCard());
+        harness.assertLife(player2, 20);
+    }
+
     private Permanent kalitas() {
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof KalitasTraitorOfGhet)

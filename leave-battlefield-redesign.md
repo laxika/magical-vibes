@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; thirteenth part: the losses after an exile or a sacrifice (Dire Tactics, Trystan, Will of the Abzan, Xathrid Demon's sacrifice) are steps of their own through the new internal `PlayersLoseLifeEffect`, and Priest of Forgotten Gods', Mornsong Aria's and Thieving Amalgam's losses ask first; fourteenth part: Stab Wound's family through `LifeSupport`, and the losses after a reveal, a mill, a library exile or discards; fifteenth part: the destroy-all riders (Deadly Tempest, Rain of Daggers, ...) are steps of their own; the fallback stays until the callers listed in the fifteenth part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; thirteenth part: the losses after an exile or a sacrifice (Dire Tactics, Trystan, Will of the Abzan, Xathrid Demon's sacrifice) are steps of their own through the new internal `PlayersLoseLifeEffect`, and Priest of Forgotten Gods', Mornsong Aria's and Thieving Amalgam's losses ask first; fourteenth part: Stab Wound's family through `LifeSupport`, and the losses after a reveal, a mill, a library exile or discards; fifteenth part: the destroy-all riders (Deadly Tempest, Rain of Daggers, ...) are steps of their own; sixteenth part: noncreature permanents get their CR 616.1 graveyard-replacement question too, and destroy-all riders count permanents a replacement exiled instead; the fallback stays until the callers listed in the fifteenth part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1845,6 +1845,44 @@ Steps add notes here for later steps, under their number.
   at 20 while asked; then 19 / 20, the Mastery in its owner's library) and
   `destroyAllThenLifeLossAsksTheMasteryBeforeAnyLifeIsLost` (Rain of Daggers cast by the Mastery's controller: the
   Bears destroyed once, a regenerated Kalitas offered, life 20 throughout, one Zombie). No existing test changed.
+
+### Step 13 (sixteenth part: noncreature permanents' graveyard replacements, and "destroyed this way")
+
+- Rules: when two or more replacement effects try to modify how an event affects an object, the affected object's
+  controller chooses one (CR 616.1, checked; any applicable one may be chosen, CR 616.1e, checked). Rest in Peace ("a
+  card or token"), Leyline of the Void ("a card ... an opponent's graveyard") and Wheel of Sun and Moon ("a card ...
+  enchanted player's graveyard") apply to any card, not only creatures (Oracle text checked), so a noncreature
+  artifact or enchantment going to the graveyard under two of them needs its controller's choice. Kalitas, blood
+  counters, the planar exile, the own-subtype exile, Frostwielder-style damage exiles and the "creatures you control
+  would die" turn effects only apply to creatures.
+- Done: `PermanentRemovalService.deathExileReplacementOptions` no longer returns nothing for a noncreature. It gathers
+  every option for every permanent and gates only the creature-only ones on "is a creature" (the same test
+  `removePermanentToGraveyard` uses for `wasCreature`, so a permanent leaving with the effect that animated it still
+  counts), matching what `processGraveyardAndTriggers` and `GraveyardService.addCardToGraveyard` apply. The
+  departure batch (`DepartureService.choose`), `askDeathReplacementsBeforeRemoval` and the legacy path all call it, so
+  a destroyed or sacrificed noncreature (Lich's Duel Mastery's own sacrifice among them, the fifteenth part's
+  finding) is now asked before it leaves. The chosen answer was already applied the same way for any permanent.
+- "Destroyed this way": official rulings on the same wording say a permanent destroyed but put into another zone by a
+  replacement still counts (Fumigate, KLD: "Creatures destroyed this way count toward the life gained even if
+  they're put into a zone other than a graveyard"; Death Begets Life, TDM, 2025-04-04, the same for a finality
+  counter). `DestroyAllPermanentsEffectHandler` now counts `DestructionSupport.BatchOutcome.destroyed()` (new public
+  `destroyBatchWithOutcome`) for its rider's count, controllers and mana values, so Deadly Tempest, Rain of Daggers,
+  Fumigate, Kaya's Wrath, ... count creatures Rest in Peace or Kalitas exiled. The "died this way" cards (Hellfire,
+  Mogg Infestation, Reign of Terror; Oracle checked) use the new `DestroyedPermanentCountScope.DIED` and still count
+  only deaths. `eventCardIds` stays the died cards ("put into a graveyard this way": Necromantic Selection, Cleansing
+  Meditation).
+- **Left**: other handlers that count "destroyed this way" from `destroyBatchCollecting` (died only), not audited:
+  `DestroyTargetPermanentsWithinTotalManaValue`, `DestroyTargetArtifactsThenConjurePerpetualCopiesIntoHand`,
+  `DestroyTargetCreatureAndCreateTokenCopies`, `DestroyTargetPermanentsThen` and other single-target "then" riders.
+  Orphaned Auras (`removeOrphanedAuras`, fifth part) still never ask. Everything in the fifteenth part's **Left**
+  except the Mastery's noncreature question is unchanged.
+- Tests: new, failing with the old code: `RestInPeaceTest.destroyedArtifactsControllerChoosesRestInPeaceOverWheel`,
+  `WheelOfSunAndMoonTest.destroyedWheelsControllerChoosesBetweenWheelAndLeyline` and
+  `choosingWheelOverLeylinePutsTheWheelIntoTheLibrary` (all `@FailOnLegacyDepartureFallback`),
+  `DeadlyTempestTest.creaturesExiledInsteadOfDyingStillCount`, `FumigateTest.creaturesExiledInsteadOfDyingStillCount`;
+  new guards: `LichsDuelMasteryTest.lifeLossAsksTheGraveyardReplacementForTheNoncreatureMastery`
+  (`@FailOnLegacyDepartureFallback`) and `KalitasTraitorOfGhetTest.doesNotApplyToANoncreatureArtifact`. No existing
+  test changed; `ReignOfTerrorTest`'s "exiled instead of dying" test caught Reign of Terror's "died" wording.
 
 ### Step 2
 

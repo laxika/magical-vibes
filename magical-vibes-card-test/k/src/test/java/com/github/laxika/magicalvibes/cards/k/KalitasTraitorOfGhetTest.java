@@ -27,6 +27,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
@@ -571,5 +573,24 @@ class KalitasTraitorOfGhetTest extends BaseCardTest {
                 .contains(other.getCard().getId());
         assertThat(countTokens(player1, "Zombie")).isEqualTo(1);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({Millstone.class, Naturalize.class, WheelOfSunAndMoon.class})
+    @DisplayName("Kalitas doesn't compete with Wheel of Sun and Moon for a destroyed noncreature artifact")
+    void doesNotApplyToANoncreatureArtifact() {
+        harness.addToBattlefield(player1, new KalitasTraitorOfGhet());
+        harness.addToBattlefieldAndReturn(player2, new WheelOfSunAndMoon()).setAttachedTo(player2.getId());
+        Permanent millstone = harness.addToBattlefieldAndReturn(player2, new Millstone());
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, millstone.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertNotOnBattlefield(player2, "Millstone");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(millstone.getCard());
+        assertThat(countTokens(player1, "Zombie")).isZero();
     }
 }

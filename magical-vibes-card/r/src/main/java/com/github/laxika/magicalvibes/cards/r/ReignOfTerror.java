@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyedPermanentCountScope;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -35,6 +36,7 @@ public class ReignOfTerror extends Card {
                 new PermanentColorInPredicate(Set.of(color))
         ));
         return new DestroyAllPermanentsEffect(filter, true, EachPermanentScope.ALL_PLAYERS,
-                new LoseLifeEffect(new Scaled(new EventValue(), 2), LoseLifeRecipient.CONTROLLER), false);
+                new LoseLifeEffect(new Scaled(new EventValue(), 2), LoseLifeRecipient.CONTROLLER), false,
+                DestroyedPermanentCountScope.DIED);
     }
 }

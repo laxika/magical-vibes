@@ -283,10 +283,15 @@ public class DestructionSupport {
                 .died().size();
     }
 
-    private record BatchOutcome(List<Permanent> destroyed, List<Permanent> died) {
+    /**
+     * The permanents a batch destruction destroyed, and those of them that then died (went to a graveyard
+     * rather than somewhere a replacement such as Rest in Peace put them).
+     */
+    public record BatchOutcome(List<Permanent> destroyed, List<Permanent> died) {
     }
 
-    private BatchOutcome destroyBatchWithOutcome(GameData gameData, List<Permanent> toDestroy, String sourceName,
+    /** Same batch destruction as {@link #destroyBatch}, returning both the destroyed and the died permanents. */
+    public BatchOutcome destroyBatchWithOutcome(GameData gameData, List<Permanent> toDestroy, String sourceName,
                                                  boolean cannotBeRegenerated) {
         return destroyBatchWithOutcome(gameData, toDestroy, sourceName, cannotBeRegenerated, () -> { });
     }
