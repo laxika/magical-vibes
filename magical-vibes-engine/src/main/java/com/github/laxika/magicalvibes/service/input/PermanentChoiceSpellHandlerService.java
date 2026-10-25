@@ -704,10 +704,13 @@ public class PermanentChoiceSpellHandlerService {
         boolean isSpellTarget = !isGraveyardTarget && isValidSpellTarget(
                 gameData, spellCard, gct.spellEffects(), permanentId, gct.controllerId(), gct.xValue());
         if (target != null || isPlayerTarget || isGraveyardTarget || isSpellTarget) {
-            if (!gct.withoutPayingManaCost()) {
+            String tieredManaCost = gct.tieredManaCost() == null ? "" : gct.tieredManaCost();
+            if (!gct.withoutPayingManaCost() || !tieredManaCost.isEmpty()) {
                 try {
+                    // CR 702.183a: a chosen tier's cost is an additional cost, paid even for a free cast.
                     spellCastingService.paySpellManaCostFromNonHandZone(gameData, gct.controllerId(), spellCard, gct.xValue(),
-                            Zone.GRAVEYARD, gct.anyManaType());
+                            Zone.GRAVEYARD, gct.anyManaType(), gct.withoutPayingManaCost() ? "{0}" : null,
+                            tieredManaCost);
                 } catch (IllegalStateException ex) {
                     UUID ownerId = gct.ownerId() != null ? gct.ownerId() : gct.controllerId();
                     graveyardService.addCardToGraveyard(gameData, ownerId, gct.cardToCast());

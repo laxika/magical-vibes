@@ -2288,7 +2288,20 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                     int copyCount,
                                       boolean castWithAdventure,
                                       CardEffect afterSuccessfulCastEffect,
-                                      UUID sourcePermanentId, int xValue) implements PermanentChoiceContext {
+                                      UUID sourcePermanentId, int xValue,
+                                      String tieredManaCost) implements PermanentChoiceContext {
+
+        /** Without a chosen tier's additional mana cost (CR 702.183a). */
+        public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                        StackEntryType spellType, boolean exileInsteadOfGraveyard,
+                                        boolean withoutPayingManaCost, UUID ownerId,
+                                        boolean restrictAdditionalSpellsThisTurn, boolean anyManaType,
+                                        int copyCount, boolean castWithAdventure,
+                                        CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId, int xValue) {
+            this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
+                    withoutPayingManaCost, ownerId, restrictAdditionalSpellsThisTurn, anyManaType,
+                    copyCount, castWithAdventure, afterSuccessfulCastEffect, sourcePermanentId, xValue, "");
+        }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                        StackEntryType spellType, boolean exileInsteadOfGraveyard,

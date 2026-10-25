@@ -855,6 +855,10 @@ public class ChoiceHandlerService {
             mayCastHandlerServiceProvider.getObject().completeLibraryFreeCastModeChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.GraveyardCastModeChoice ctx) {
+            mayCastHandlerServiceProvider.getObject().completeGraveyardCastModeChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ExileCopyCastModeChoice ctx) {
             exileCopyCastHandlerProvider.getObject().completeModeChoice(gameData, player, colorName, ctx);
             return;

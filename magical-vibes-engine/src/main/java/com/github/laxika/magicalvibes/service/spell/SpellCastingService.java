@@ -14304,6 +14304,18 @@ public class SpellCastingService {
     }
 
     /**
+     * As {@link #paySpellManaCostFromNonHandZone(GameData, UUID, Card, int, Zone, boolean, String)}, also paying
+     * {@code additionalManaCost}, an additional mana cost announced as the spell is cast such as the chosen tier's
+     * cost (CR 702.183a). An additional cost is still paid when the mana cost itself is replaced or waived.
+     */
+    public int paySpellManaCostFromNonHandZone(GameData gameData, UUID playerId, Card card,
+                                                int effectiveXValue, Zone sourceZone, boolean anyManaType,
+                                                String replacementManaCost, String additionalManaCost) {
+        return paySpellManaCostFromNonHandZone(gameData, playerId, card, effectiveXValue, sourceZone,
+                List.of(), anyManaType, replacementManaCost, false, additionalManaCost);
+    }
+
+    /**
      * The spectacle cost (CR 702.137a) of a spell cast from exile, which can be paid whenever an
      * opponent lost life this turn, whatever zone the spell is cast from. It is used when the printed
      * mana cost can't be paid from the pool; {@code null} when spectacle doesn't apply.
@@ -14333,6 +14345,15 @@ public class SpellCastingService {
                                                 int effectiveXValue, Zone sourceZone,
                                                 List<ManaColor> convokeContributions,
                                                 boolean anyManaType, String replacementManaCost, boolean castFaceDown) {
+        return paySpellManaCostFromNonHandZone(gameData, playerId, card, effectiveXValue, sourceZone,
+                convokeContributions, anyManaType, replacementManaCost, castFaceDown, null);
+    }
+
+    private int paySpellManaCostFromNonHandZone(GameData gameData, UUID playerId, Card card,
+                                                int effectiveXValue, Zone sourceZone,
+                                                List<ManaColor> convokeContributions,
+                                                boolean anyManaType, String replacementManaCost, boolean castFaceDown,
+                                                String additionalManaCost) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         var snowManaBefore = pool.getSnowManaTotals();
         int treasureManaBefore = pool.getTreasureManaTotal();
@@ -14366,7 +14387,7 @@ public class SpellCastingService {
                 pool.setAllManaSpendableAsAnyColor(true);
             }
             payment = computeSpellManaPayment(gameData, playerId, card, effectiveXValue, convokeContributions,
-                    null, false, faceDownCostAdjustment, 0, 0, "", "", sourceZone,
+                    null, false, faceDownCostAdjustment, 0, 0, additionalManaCost, "", sourceZone,
                     anyManaType && !anyColorForColoredSymbols, false, replacementManaCost);
         } finally {
             pool.setAllManaSpendableAsAnyColor(existingAnyColorPermission);

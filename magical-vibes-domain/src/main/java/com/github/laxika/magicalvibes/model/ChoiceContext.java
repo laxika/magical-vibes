@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -283,6 +284,18 @@ public sealed interface ChoiceContext {
     /** Chooses the mode of a modal spell cast from the top of a library during resolution (Galvanoth). */
     record LibraryFreeCastModeChoice(UUID cardId, Map<String, Integer> modes) implements ChoiceContext {
         public LibraryFreeCastModeChoice {
+            modes = Map.copyOf(modes);
+        }
+    }
+
+    /**
+     * Chooses the mode of a modal spell cast from a graveyard during resolution (Quistis Trepe). {@code castEffect}
+     * is the graveyard-cast permission being used and {@code chosenX} the X already announced for the cast, if any.
+     */
+    record GraveyardCastModeChoice(PendingMayAbility ability,
+                                   CastCardFromGraveyardEffect castEffect,
+                                   Integer chosenX, Map<String, Integer> modes) implements ChoiceContext {
+        public GraveyardCastModeChoice {
             modes = Map.copyOf(modes);
         }
     }

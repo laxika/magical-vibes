@@ -9,39 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 37. Choosing modes (and tier costs) when casting a modal spell from a graveyard
-
-**Status:** open · **Found:** 2026-10-18, while fixing Q-card test failures
-
-**Failing tests:**
-- `QuistisTrepeTest.tieredSpellRequiresChoosingAModeBeforeItIsCast()`
-
-**What the rules require.** CR 601.2b: modes are announced as the spell is cast, and a tiered spell's
-chosen tier adds its cost. Casting from hand does this (`SpellCastingService.playCard`, with
-`tieredManaSuffix`). Casting from a graveyard (`MayCastHandlerService.handleCastCardFromGraveyardChoice`,
-Quistis Trepe and other "you may cast target card from a graveyard" effects) announces no mode: the
-spell goes on the stack with an unresolved `ChooseOneEffect` and pays no tier cost.
-
-**Why it's large.** Needs a new graveyard-cast mode choice (a `ChoiceContext` next to
-`LibraryFreeCastModeChoice` in `ChoiceHandlerService`), unwrapping the chosen mode via
-`SpellCastingService.prepareModalSpellCast`, carrying a replacement mana cost for the tier through
-`GraveyardCastSpellTarget` (many constructors) to both pay sites (`MayCastHandlerService` untargeted
-pay and `PermanentChoiceSpellHandlerService.handleGraveyardCastSpellTarget`), and building targets
-from the chosen mode's effects. Roughly 150-200 lines across 5-6 files.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 37: casting a modal or tiered spell from a graveyard
-(MayCastHandlerService.handleCastCardFromGraveyardChoice) must announce the mode (CR 601.2b) and pay
-the tier cost. Add a graveyard-cast mode choice next to LibraryFreeCastModeChoice, unwrap via
-prepareModalSpellCast, pass the tiered replacement cost through GraveyardCastSpellTarget, and make
-QuistisTrepeTest.tieredSpellRequiresChoosingAModeBeforeItIsCast pass. Don't run the full test suite;
-ask me. Don't commit until I say so.
-```
-
----
-
 ## 38. "Until end of turn" effects under Runed Terror's phase-by-phase turn structure
 
 **Status:** open · **Found:** 2026-10-19, while fixing R-card test failures

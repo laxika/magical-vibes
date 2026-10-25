@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.MayCastFromSideboardWithoutPa
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TieredManaCost;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -341,6 +342,16 @@ public class MayCastHandlerService {
             return;
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** The modes of a single-choice modal spell that may be chosen outside its owner's hand, by label. */
+    private static Map<String, Integer> castableModes(ChooseOneEffect modal) {
+        Map<String, Integer> modes = new LinkedHashMap<>();
+        for (int mode = 0; mode < modal.options().size(); mode++) {
+            if (modal.options().get(mode).handOnly()) continue;
+            modes.put(modal.options().get(mode).label(), mode);
+        }
+        return modes;
     }
 
     private static ChooseOneEffect singleChoiceModal(Card card) {
@@ -1105,6 +1116,27 @@ public class MayCastHandlerService {
     public void handleCastCardFromGraveyardChoice(
             GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
             CastCardFromGraveyardEffect castEffect, Integer chosenX) {
+        handleCastCardFromGraveyardChoice(gameData, player, accepted, ability, castEffect, chosenX, null);
+    }
+
+    /** Completes the mode choice begun by {@link #handleCastCardFromGraveyardChoice} and continues the cast. */
+    public void completeGraveyardCastModeChoice(GameData gameData, Player player, String choice,
+                                                ChoiceContext.GraveyardCastModeChoice context) {
+        Integer mode = context.modes().get(choice);
+        if (mode == null) throw new IllegalStateException("Invalid mode choice");
+        gameData.interaction.clearAwaitingInput();
+        handleCastCardFromGraveyardChoice(gameData, player, true, context.ability(), context.castEffect(),
+                context.chosenX(), mode);
+    }
+
+    /**
+     * Continues a graveyard cast once its X and, for a modal spell, its mode have been announced
+     * (CR 601.2b). A tiered spell's chosen mode adds that mode's cost as an additional cost (CR 702.183a),
+     * which is paid even when the spell is cast without paying its mana cost.
+     */
+    private void handleCastCardFromGraveyardChoice(
+            GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
+            CastCardFromGraveyardEffect castEffect, Integer chosenX, Integer chosenMode) {
         Card cardToCast = ability.sourceCard();
         String playerName = player.getUsername();
 
@@ -1189,6 +1221,16 @@ public class MayCastHandlerService {
             return;
         }
         int xValue = chosenX == null ? 0 : chosenX;
+        ChooseOneEffect modal = castAsAdventure ? null : singleChoiceModal(spellCard);
+        if (modal != null && chosenMode == null) {
+            Map<String, Integer> modes = castableModes(modal);
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    player.getId(), null, null,
+                    new ChoiceContext.GraveyardCastModeChoice(ability, castEffect, chosenX, modes),
+                    new ArrayList<>(modes.keySet()),
+                    "Choose a mode for " + spellCard.getName() + "."));
+            return;
+        }
         StackEntryType spellType = mapCardTypeToSpellType(spellCard);
         boolean isPermanentSpell = spellCard.hasType(CardType.CREATURE)
                 || spellCard.hasType(CardType.ARTIFACT)
@@ -1198,11 +1240,33 @@ public class MayCastHandlerService {
         List<CardEffect> spellEffects = isPermanentSpell
                 ? List.of()
                 : new ArrayList<>(spellCard.getEffects(EffectSlot.SPELL));
+        String tieredManaCost = "";
+        if (modal != null) {
+            Card modalCard = cardToCast.createRuntimeCopy();
+            try {
+                spellCastingService.prepareModalSpellCast(
+                        gameData, player.getId(), modalCard, spellEffects, chosenMode, false);
+            } catch (IllegalStateException ex) {
+                gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                        " can't be cast with the chosen mode and remains in the graveyard."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            TieredManaCost tiers = spellEffects.stream().filter(TieredManaCost.class::isInstance)
+                    .map(TieredManaCost.class::cast).findFirst().orElse(null);
+            tieredManaCost = additionalSpellCostService.tieredManaSuffix(tiers, chosenMode);
+            spellEffects.removeIf(TieredManaCost.class::isInstance);
+            cardToCast = modalCard;
+            spellCard = modalCard;
+        }
         boolean exileInsteadOfGraveyard = predicateEvaluationService.matchesCardPredicate(
                 spellCard, castEffect.exileInsteadOfGraveyardFilter(), spellCard.getId(), gameData,
                 graveyardOwnerId, ability.sourcePermanentId(), ability.sourcePowerAtTrigger(), ability.xValue());
 
-        if (EffectResolution.needsTarget(spellCard) || EffectResolution.needsSpellTarget(spellEffects)) {
+        boolean needsTarget = modal != null
+                ? EffectResolution.needsTarget(spellEffects, List.of(), false, false)
+                : EffectResolution.needsTarget(spellCard);
+        if (needsTarget || EffectResolution.needsSpellTarget(spellEffects)) {
             List<UUID> validTargets = buildValidSpellTargets(gameData, spellCard, spellEffects, player.getId(), xValue, false);
             if (validTargets.isEmpty()) {
                 gameLogService.append(gameData, GameLog.cardThen(cardToCast, " has no valid targets."));
@@ -1217,7 +1281,7 @@ public class MayCastHandlerService {
                             exileInsteadOfGraveyard, castEffect.withoutPayingManaCost(), graveyardOwnerId,
                             false, castEffect.anyManaType(), 0,
                             castAsAdventure, castEffect.afterSuccessfulCastEffect(),
-                            ability.sourcePermanentId(), xValue));
+                            ability.sourcePermanentId(), xValue, tieredManaCost));
             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                     "Choose a target for " + cardToCast.getName() + ".");
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
@@ -1225,10 +1289,11 @@ public class MayCastHandlerService {
             return;
         }
 
-        if (!castEffect.withoutPayingManaCost()) {
+        if (!castEffect.withoutPayingManaCost() || !tieredManaCost.isEmpty()) {
             try {
                 spellCastingService.paySpellManaCostFromNonHandZone(
-                        gameData, player.getId(), spellCard, xValue, Zone.GRAVEYARD, castEffect.anyManaType());
+                        gameData, player.getId(), spellCard, xValue, Zone.GRAVEYARD, castEffect.anyManaType(),
+                        castEffect.withoutPayingManaCost() ? "{0}" : null, tieredManaCost);
             } catch (IllegalStateException ex) {
                 gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                         " can't be cast because its mana cost can't be paid."));
