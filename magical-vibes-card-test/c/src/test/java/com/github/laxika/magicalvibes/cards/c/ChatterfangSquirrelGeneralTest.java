@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.a.AcademyManufactor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HardEvidence;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.r.RaiseTheAlarm;
 import com.github.laxika.magicalvibes.cards.s.SparkDouble;
 import com.github.laxika.magicalvibes.cards.o.OjerTaqDeepestFoundation;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.t.ThrabenInspector;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -85,6 +87,25 @@ class ChatterfangSquirrelGeneralTest extends BaseCardTest {
         });
         assertThat(findPermanents(player1, "Squirrel")).isEmpty();
         assertThat(findPermanents(player1, "Sol Ring")).containsExactly(ring);
+    }
+
+    @Test
+    @CardUsed(QueenAllenalOfRuadach.class)
+    @DisplayName("Applying Queen Allenal before Chatterfang adds a Squirrel for her Soldier too")
+    void queenFirstAddsSquirrelForTheSoldier() {
+        harness.addToBattlefield(player1, new ChatterfangSquirrelGeneral());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.setHand(player1, List.of(new RaiseTheAlarm()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith("Queen Allenal of Ruadach")).findFirst().orElseThrow());
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(3);
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(3);
     }
 
     @Test

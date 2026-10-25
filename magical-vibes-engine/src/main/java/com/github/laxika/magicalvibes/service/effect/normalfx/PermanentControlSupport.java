@@ -98,11 +98,11 @@ public class PermanentControlSupport {
             return List.of();
         }
         if (amount > 0) {
-            // The player creating the tokens orders the count replacements (CR 616.1), so the creation
-            // may pause for a choice and then continue through applyCreateTokenAfterReplacementOrder.
+            // The player creating the tokens orders the count replacements and additions (CR 616.1), so the
+            // creation may pause for a choice and then continue through applyCreateTokenAfterReplacementOrder.
             var outcome = replacementOrderService.run(gameData, new TokenCreationEvent(
                     controllerId, amount, Set.of(), token, power, toughness, sourceSetCode, additionalEffects,
-                    token.primaryType() == CardType.CREATURE));
+                    token.primaryType() == CardType.CREATURE, simultaneousTokenGroups(token)));
             if (outcome instanceof ReplacementOrderService.Outcome.Completed<TokenCreationEvent> completed) {
                 return applyCreateTokenAfterReplacementOrder(gameData, completed.event());
             }
@@ -113,13 +113,26 @@ public class PermanentControlSupport {
     }
 
     /**
-     * Creates the tokens of an event whose count replacements have all been applied, in the order the
-     * creating player chose. The event's amount is final, so the count replacements are not applied again.
+     * Creates the tokens of an event whose count replacements and additions have all been applied, in
+     * the order the creating player chose. The event's counts are final, so those replacements are not
+     * applied again; the event's added tokens (simultaneous tokens, Soldiers, Frogs, Squirrels) are
+     * created with the blueprint's tokens.
      */
     public List<UUID> applyCreateTokenAfterReplacementOrder(GameData gameData, TokenCreationEvent event) {
-        return applyCreateToken(gameData, event.controllerId(), event.token(), event.amount(),
+        return applyCreateToken(gameData, event.controllerId(), event.token(), event.tokenCount(),
                 event.sourceSetCode(), event.power(), event.toughness(), true, true, true,
-                event.additionalEffects(), event.amount());
+                event.additionalEffects(), event.tokenCount(), event.addedTokens());
+    }
+
+    private static List<TokenCreationEvent.TokenGroup> simultaneousTokenGroups(CreateTokenEffect token) {
+        List<TokenCreationEvent.TokenGroup> groups = new ArrayList<>();
+        for (CreateTokenEffect simultaneousToken : token.simultaneousTokens()) {
+            if (!(simultaneousToken.amount() instanceof Fixed fixedAmount)) {
+                throw new IllegalStateException("Simultaneous token counts must be evaluated");
+            }
+            groups.add(new TokenCreationEvent.TokenGroup(simultaneousToken, fixedAmount.value()));
+        }
+        return groups;
     }
 
     /** Creates tokens after Jinnie Fay's replacement choice has already been made. */
@@ -138,11 +151,16 @@ public class PermanentControlSupport {
     }
 
     private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, Map<EffectSlot, List<EffectRegistration>> additionalEffects) {
-        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, applyAdditionalReplacements, applyTokenMultiplier, fireTokenTriggers, additionalEffects, -1);
+        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, applyAdditionalReplacements, applyTokenMultiplier, fireTokenTriggers, additionalEffects, -1, null);
     }
 
-    /** {@code orderedAmount} is the token count after its replacements were ordered and applied, or -1 to apply them in a fixed order. */
-    private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, Map<EffectSlot, List<EffectRegistration>> additionalEffects, int orderedAmount) {
+    /**
+     * {@code orderedAmount} is the token count after its replacements were ordered and applied, or -1 to apply them
+     * in a fixed order; {@code orderedAddedTokens} are then the event's other tokens, which replace the blueprint's
+     * simultaneous tokens and the Soldier, Frog and Squirrel additions.
+     */
+    private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, Map<EffectSlot, List<EffectRegistration>> additionalEffects, int orderedAmount, List<TokenCreationEvent.TokenGroup> orderedAddedTokens) {
+        boolean ordered = orderedAddedTokens != null;
         List<UUID> createdIds = new ArrayList<>();
         boolean baseTokenIsCreature = token.primaryType() == CardType.CREATURE;
         int totalAmount = orderedAmount >= 0 ? orderedAmount : applyTokenMultiplier ? gameQueryService.getTokenCreationAmount(gameData, controllerId, amount, token.subtypes(), baseTokenIsCreature) : amount;
@@ -157,15 +175,15 @@ public class PermanentControlSupport {
         int additionalMutagenTokenCount = applyAdditionalReplacements
                 ? TokenCreationReplacementSupport.additionalMutagenTokenCount(gameData, controllerId, amount)
                 : 0;
-        CreateTokenEffect additionalFrog = applyAdditionalReplacements
+        CreateTokenEffect additionalFrog = applyAdditionalReplacements && !ordered
                 ? TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
                         gameData, controllerId, token)
                 : null;
-        CreateTokenEffect additionalSquirrel = applyAdditionalReplacements
+        CreateTokenEffect additionalSquirrel = applyAdditionalReplacements && !ordered
                 ? TokenCreationReplacementSupport.additionalSquirrelTokenIfApplicable(
                         gameData, controllerId, token)
                 : null;
-        int additionalSoldierTokenCount = applyAdditionalReplacements
+        int additionalSoldierTokenCount = applyAdditionalReplacements && !ordered
                 ? TokenCreationReplacementSupport.additionalSoldierTokenCountIfApplicable(
                         gameData, controllerId, token)
                 : 0;
@@ -217,7 +235,14 @@ public class PermanentControlSupport {
         } else {
             tokenBlueprints.addAll(academyManufactorTokenBlueprints);
         }
-        for (CreateTokenEffect simultaneousToken : token.simultaneousTokens()) {
+        if (ordered) {
+            for (TokenCreationEvent.TokenGroup group : orderedAddedTokens) {
+                for (int tokenIndex = 0; tokenIndex < group.count(); tokenIndex++) {
+                    tokenBlueprints.add(group.blueprint());
+                }
+            }
+        }
+        for (CreateTokenEffect simultaneousToken : ordered ? List.<CreateTokenEffect>of() : token.simultaneousTokens()) {
             if (!(simultaneousToken.amount() instanceof Fixed fixedAmount)) {
                 throw new IllegalStateException("Simultaneous token counts must be evaluated");
             }

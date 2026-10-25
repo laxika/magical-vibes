@@ -9,43 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 35. Choosing the order of token-creation replacement effects
-
-**Status:** open · **Found:** 2026-10-18, while fixing Q-card test failures
-
-**Failing tests:**
-- `QueenAllenalOfRuadachTest.doesNotSilentlyForceTokenDoublingBeforeQueenReplacement()`
-
-**What the rules require.** CR 616.1: when several replacement effects would change how tokens are
-created for a player, that player chooses which one applies first, then the next, and so on
-(CR 616.1e: any applicable one may be chosen). With Queen Allenal of Ruadach ("those tokens plus an
-additional 1/1 Soldier") and Parallel Lives (twice that many) out, Captain's Call can make 8 Soldiers
-(Queen first: (3+1)x2) or 7 (Parallel Lives first: 3x2+1). The engine always applies the multiplier
-(`MultiplyTokenCreationEffect`) to the base amount and then adds the Queen/Frog/Squirrel-style
-additions unmultiplied, in a fixed order with no prompt, so the player always gets 7.
-
-**Why it's large.** Token creation doesn't go through `ReplacementOrderService`. The fixed order is
-duplicated in three creation paths (`PermanentControlSupport` ~L120-240, `DestructionSupport` ~L1012,
-`TokenCopySupport` ~L193) plus the additive helpers in `TokenCreationReplacementSupport`. A fix needs
-a token-creation replacement event that collects every applicable multiplier and addition, a choice
-prompt (or a single "order" choice) when more than one applies, and suspend/resume at each creation
-site — some of which run mid-effect. Silently picking the "best" order is not acceptable: the
-player must choose.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 35: let the player order token-creation replacement
-effects (CR 616.1) — multipliers like Parallel Lives/Doubling Season and additions like Queen
-Allenal of Ruadach, Quina Qu Gourmet, Chatterfang. Unify the fixed ordering in PermanentControlSupport,
-DestructionSupport and TokenCopySupport behind one token-creation replacement event, and reuse the
-ChoiceContext / ReplacementOrderService approach from the CR 616.1 death replacement ordering.
-Make QueenAllenalOfRuadachTest.doesNotSilentlyForceTokenDoublingBeforeQueenReplacement pass.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 36. Quenchable Fire's pay-{U}-before-upkeep special action
 
 **Status:** open · **Found:** 2026-10-18, while fixing Q-card test failures
@@ -627,6 +590,42 @@ Finish "loses this ability" (missing-features-to-do.md entry 52): hide lost prin
 PermanentViewFactory, and make the lost-ability record survive copy and transform correctly. Write tests first:
 Great Fang Chroniclers after using its ability, then becoming a copy of a creature with an activated ability.
 Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 53. Ordering token-creation replacements outside the single-blueprint creation path
+
+**Status:** open · **Found:** 2026-10-25, while finishing entry 35 (token replacement ordering)
+
+**Failing tests:**
+- None yet. Write one per path, e.g. Queen Allenal of Ruadach + Parallel Lives with a token copy
+  (Cackling Counterpart) or a token created through `DestructionSupport.createTokenForPlayer`: the player
+  must be asked, and Queen first must give the doubled Soldier.
+
+**What the rules require.** CR 616.1 / 616.1e: the player creating the tokens chooses the order of every
+replacement that modifies the token creation event. `PermanentControlSupport.applyCreateToken` (the
+single-blueprint path) now runs a `TokenCreationEvent` where count replacements (`TokenCreationReplacements`)
+and the Soldier/Frog/Squirrel additions (`TokenAdditionReplacements`) are ordered. Still fixed, with no prompt:
+- `DestructionSupport.createTokenForPlayer`, `TokenCopySupport` and the copy handlers that call
+  `getTokenCreationAmount` (multiplier first, additions unmultiplied).
+- In the single-blueprint path, the Map, Thopter, Mutagen, Food (Tippy-Toe), Treasure (Bilbo), Academy
+  Manufactor and solved-Case Clue additions/replacements are applied after the ordered event, so a doubler
+  never doubles them and Chatterfang never counts them (before entry 35 Chatterfang counted them).
+
+**Why it's large.** Each remaining site creates tokens mid-effect and would need to suspend on the order
+prompt and resume (as `ChoiceHandlerService` does for `TokenCreationEvent`). Academy Manufactor replaces the
+token kind, so it needs a non-count option on the event.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 53: route the remaining token creation paths
+(DestructionSupport.createTokenForPlayer, TokenCopySupport, the token copy handlers) and the remaining
+additions (Map, Thopter, Mutagen, Tippy-Toe Food, Bilbo Treasure, Academy Manufactor, solved Case Clues)
+through TokenCreationEvent and ReplacementOrderService, as TokenAdditionReplacements does for Queen
+Allenal, Quina and Chatterfang. Write the tests first. Don't run the full test suite; ask me. Don't
+commit until I say so.
 ```
 
 ---

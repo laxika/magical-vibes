@@ -246,6 +246,11 @@ public final class TokenCreationReplacementSupport {
         if (!hasStaticEffect(gameData, controllerId, AddFrogTokenToTokenCreationEffect.class)) {
             return null;
         }
+        return additionalFrogToken(original);
+    }
+
+    /** The 1/1 green Frog an addition puts in a token creation event, carrying the riders of {@code original}. */
+    public static CreateTokenEffect additionalFrogToken(CreateTokenEffect original) {
         return new CreateTokenEffect(
                 CardType.CREATURE, 1, "Frog", 1, 1, CardColor.GREEN, null,
                 List.of(CardSubtype.FROG), Set.of(), Set.of(),
@@ -261,6 +266,11 @@ public final class TokenCreationReplacementSupport {
         if (!hasStaticEffect(gameData, controllerId, AddSquirrelTokenToTokenCreationEffect.class)) {
             return null;
         }
+        return additionalSquirrelToken(original);
+    }
+
+    /** The 1/1 green Squirrel an addition puts in a token creation event, carrying the riders of {@code original}. */
+    public static CreateTokenEffect additionalSquirrelToken(CreateTokenEffect original) {
         return new CreateTokenEffect(
                 CardType.CREATURE, 1, "Squirrel", 1, 1, CardColor.GREEN, null,
                 List.of(CardSubtype.SQUIRREL), Set.of(), Set.of(),
@@ -331,6 +341,20 @@ public final class TokenCreationReplacementSupport {
                 || !hasStaticEffect(gameData, controllerId, AddSoldierTokenToCreatureTokenCreationEffect.class)) {
             return null;
         }
+        return soldierToken(tappedAndAttacking, tapped, exileAtEndOfCombat, exileAtEndStep, initialCounters,
+                grantedKeywords);
+    }
+
+    /** Queen Allenal's 1/1 white Soldier, carrying the event-level riders of {@code original}. */
+    public static CreateTokenEffect additionalSoldierToken(CreateTokenEffect original) {
+        return soldierToken(original.tappedAndAttacking(), original.tapped(), original.exileAtEndOfCombat(),
+                original.exileAtEndStep(), original.initialPlusOnePlusOneCounters(),
+                original.grantedKeywordsUntilEndOfTurn());
+    }
+
+    private static CreateTokenEffect soldierToken(boolean tappedAndAttacking, boolean tapped,
+                                                  boolean exileAtEndOfCombat, boolean exileAtEndStep,
+                                                  int initialCounters, Set<Keyword> grantedKeywords) {
         return new CreateTokenEffect(
                 CardType.CREATURE, 1, "Soldier", 1, 1, CardColor.WHITE, null,
                 List.of(CardSubtype.SOLDIER), Set.of(), Set.of(), tappedAndAttacking, tapped,

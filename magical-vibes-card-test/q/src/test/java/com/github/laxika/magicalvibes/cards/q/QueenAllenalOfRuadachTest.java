@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.cards.i.Ixidron;
 import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.cards.r.ResoluteReinforcements;
 import com.github.laxika.magicalvibes.cards.w.WilyGoblin;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -118,16 +120,53 @@ class QueenAllenalOfRuadachTest extends BaseCardTest {
 
     @Test
     @CardUsed({CaptainsCall.class, ParallelLives.class})
-    void doesNotSilentlyForceTokenDoublingBeforeQueenReplacement() {
+    @DisplayName("With Parallel Lives, the creating player is asked which replacement applies first")
+    void asksForOrderWithParallelLives() {
+        castCaptainsCallWithQueenAndParallelLives();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
+    }
+
+    @Test
+    @CardUsed({CaptainsCall.class, ParallelLives.class})
+    @DisplayName("Applying Queen before Parallel Lives doubles the added Soldier too")
+    void queenFirstDoublesTheAddedSoldier() {
+        castCaptainsCallWithQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        // (3 + 1) x 2
+        assertThat(findPermanents(player1, "Soldier")).hasSize(8);
+    }
+
+    @Test
+    @CardUsed({CaptainsCall.class, ParallelLives.class})
+    @DisplayName("Applying Parallel Lives before Queen adds one undoubled Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        castCaptainsCallWithQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+
+        // 3 x 2 + 1
+        assertThat(findPermanents(player1, "Soldier")).hasSize(7);
+    }
+
+    private void castCaptainsCallWithQueenAndParallelLives() {
         addQueenReady(player1);
         harness.addToBattlefield(player1, new ParallelLives());
         harness.setHand(player1, List.of(new CaptainsCall()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castAndResolveSorcery(player1, 0, List.of());
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+    }
 
-        assertThat(gd.interaction.isAwaitingInput() || countPermanents(player1, "Soldier") == 8)
-                .as("Offer replacement ordering or apply Queen before Parallel Lives to create eight Soldiers")
-                .isTrue();
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 }

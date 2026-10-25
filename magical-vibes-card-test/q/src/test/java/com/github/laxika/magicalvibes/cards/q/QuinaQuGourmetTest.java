@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.b.BladeSplicer;
+import com.github.laxika.magicalvibes.cards.c.CaptainsCall;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.cards.r.RelmsSketching;
 import com.github.laxika.magicalvibes.cards.s.ScorpionSentinel;
 import com.github.laxika.magicalvibes.cards.w.WilyGoblin;
@@ -9,6 +11,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -110,6 +113,47 @@ class QuinaQuGourmetTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(quina.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({CaptainsCall.class, ParallelLives.class})
+    @DisplayName("Applying Quina before Parallel Lives doubles the added Frog too")
+    void quinaFirstDoublesTheAddedFrog() {
+        castCaptainsCallWithQuinaAndParallelLives();
+
+        chooseReplacement("Quina, Qu Gourmet");
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(6);
+        assertThat(findPermanents(player1, "Frog")).hasSize(2);
+    }
+
+    @Test
+    @CardUsed({CaptainsCall.class, ParallelLives.class})
+    @DisplayName("Applying Parallel Lives before Quina adds one undoubled Frog")
+    void parallelLivesFirstAddsOneFrog() {
+        castCaptainsCallWithQuinaAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(6);
+        assertThat(findPermanents(player1, "Frog")).hasSize(1);
+    }
+
+    private void castCaptainsCallWithQuinaAndParallelLives() {
+        harness.addToBattlefield(player1, new QuinaQuGourmet());
+        harness.addToBattlefield(player1, new ParallelLives());
+        harness.setHand(player1, List.of(new CaptainsCall()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 
     private int battlefieldIndex(Permanent permanent) {
