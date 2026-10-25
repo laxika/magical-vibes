@@ -25,9 +25,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * Destroys all matching permanents in the effect's scope, then resolves the optional
- * per-destroyed-count rider: the count of permanents actually destroyed is snapshotted onto a
- * derived stack entry's {@code eventValue} and the rider dispatches through its own handler
- * (the {@link DestroyTargetPermanentThenEffectHandler} pattern generalized to board wipes).
+ * per-destroyed-count rider: the count of permanents actually destroyed (and their controllers and
+ * mana values) is stamped onto the entry's event values. When this effect is a step of the
+ * resolution, the rider becomes the next step of the same entry; dispatched by another handler, it
+ * resolves at once on a derived stack entry carrying those values.
  */
 @Slf4j
 @Component
@@ -47,6 +48,9 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DestroyAllPermanentsEffect) effect;
+        // Whether this effect is the step the resolution loop is resolving on this entry (not one another
+        // handler dispatches on an entry of its own), read before the destruction consumes the mark.
+        boolean resolvesAsStep = gameData.stepDepartureEffect == effect;
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
@@ -138,12 +142,20 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                     .filter(entry.getControllerId()::equals)
                     .count();
         };
+        // CR 608.2c: the rider follows the destruction. As a step of its own on this entry it resolves in
+        // its own window, so a question it asks before its first change (Lich's Duel Mastery's sacrifice for
+        // Deadly Tempest's life loss) reruns only the rider, never the destruction.
+        if (resolvesAsStep && entry.getResolvingEffectIndex() >= 0) {
+            stampRiderValues(entry, destroyedCount, destroyedControllerIds, destroyedNontokenControllerIds,
+                    destroyedManaValues);
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(e.thenEffect()));
+            return;
+        }
+
         StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(e.thenEffect()), entry.getTargetId(), entry.getSourcePermanentId());
-        thenEntry.setEventValue(destroyedCount);
-        thenEntry.setEventPlayerIds(destroyedControllerIds);
-        thenEntry.setEventNontokenPlayerIds(destroyedNontokenControllerIds);
-        thenEntry.setEventManaValues(destroyedManaValues);
+        stampRiderValues(thenEntry, destroyedCount, destroyedControllerIds, destroyedNontokenControllerIds,
+                destroyedManaValues);
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
         EffectHandler handler = effectHandlerRegistry.getHandler(e.thenEffect());
@@ -154,5 +166,13 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
         }
 
         gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    private static void stampRiderValues(StackEntry riderEntry, int destroyedCount, List<UUID> destroyedControllerIds,
+                                         List<UUID> destroyedNontokenControllerIds, List<Integer> destroyedManaValues) {
+        riderEntry.setEventValue(destroyedCount);
+        riderEntry.setEventPlayerIds(destroyedControllerIds);
+        riderEntry.setEventNontokenPlayerIds(destroyedNontokenControllerIds);
+        riderEntry.setEventManaValues(destroyedManaValues);
     }
 }
