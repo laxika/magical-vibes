@@ -8,12 +8,12 @@ import java.util.UUID;
  * them apply, {@link #chooserId()} picks the one to apply next (CR 616.1); every effect already
  * applied is remembered in {@link #appliedKeys()} so it never affects the event again (CR 614.5).
  */
-public sealed interface ReplacementEvent permits DamageEvent, LandManaEvent, LifeGainEvent, TokenCreationEvent {
+public sealed interface ReplacementEvent permits DamageEvent, LandManaEvent, LifeGainEvent, MillEvent, TokenCreationEvent {
 
     /** The affected player, or the affected object's controller, who orders the effects. */
     UUID chooserId();
 
-    /** How much the event does: the damage still to be dealt, the mana to be produced, or the number of tokens to be created. */
+    /** How much the event does: the damage still to be dealt, the mana to be produced, the number of cards to be milled, or the number of tokens to be created. */
     int amount();
 
     /** Keys of the {@link ReplacementOption}s already applied to this event. */

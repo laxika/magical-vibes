@@ -24,8 +24,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerOpponentMillBonusEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerOpponentMillMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.DestructionReplacement;
 import com.github.laxika.magicalvibes.model.effect.DestructionReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
@@ -64,7 +62,11 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSu
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.replacement.DamageJournalService;
+import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.model.replacement.MillEvent;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -103,6 +105,14 @@ public class GraveyardService {
     @Autowired
     @Lazy
     private DepartureService departureService;
+
+    @Autowired
+    @Lazy
+    private ReplacementOrderService replacementOrderService;
+
+    @Autowired
+    @Lazy
+    private DamageJournalService damageJournalService;
 
     public GraveyardService(GameQueryService gameQueryService,
                             GameLogService gameLogService,
@@ -159,6 +169,11 @@ public class GraveyardService {
         for (UUID playerId : playerIds) {
             resolveMillPlayer(gameData, playerId, count, false, false, nonlandCardsMilled);
         }
+        if (damageJournalService != null && damageJournalService.isHoldingEvents(gameData)) {
+            // A mill waits for its player to order replacement effects; the effect is resolved again
+            // afterwards and the whole simultaneous mill triggers then.
+            return;
+        }
         triggerCollectionService.checkNonlandCardsMilledTriggers(gameData, playerIds.getFirst(), nonlandCardsMilled[0]);
     }
 
@@ -176,35 +191,80 @@ public class GraveyardService {
         return resolveMillPlayer(gameData, targetPlayerId, count, true, true, null);
     }
 
+    /**
+     * Mills through the replacement effects that change how many cards are milled (The Water Crystal,
+     * Bruvac the Grandiloquent), in the order the milling player chooses when that order matters
+     * (CR 616.1). A mill the resolving effect starts is journaled like its damage
+     * ({@link DamageJournalService}): when its player is asked, it and every later event of the
+     * effect wait, and the effect is resolved again once the order is chosen, so the handler sees
+     * the cards actually milled. Any other mill waiting for its order happens once the order is
+     * chosen ({@link #completeMillAfterReplacementOrder}) and reports no cards to its caller.
+     */
     private List<Card> resolveMillPlayer(GameData gameData, UUID targetPlayerId, int count,
                                          boolean includeCardsDivertedToExile, boolean includeAllMilledCards,
                                          int[] simultaneousNonlandCardsMilled) {
+        MillEvent event = new MillEvent(targetPlayerId, count, Set.of(), -1);
+        if (replacementOrderService == null || damageJournalService == null) {
+            return millCards(gameData, targetPlayerId, count, includeCardsDivertedToExile, includeAllMilledCards,
+                    simultaneousNonlandCardsMilled).cards();
+        }
+        return switch (damageJournalService.nextMill(gameData)) {
+            case DamageJournalService.MillStep.Replay replay -> {
+                if (simultaneousNonlandCardsMilled != null) {
+                    simultaneousNonlandCardsMilled[0] += replay.milled().nonlandCards();
+                }
+                yield replay.milled().cards();
+            }
+            case DamageJournalService.MillStep.Hold hold -> List.of();
+            case DamageJournalService.MillStep.FinishReady ready -> {
+                MillResult result = millCards(gameData, targetPlayerId, ready.event().amount(),
+                        includeCardsDivertedToExile, includeAllMilledCards, simultaneousNonlandCardsMilled);
+                damageJournalService.milled(gameData, ready.slot(), result.cards(), result.nonlandCards());
+                yield result.cards();
+            }
+            case DamageJournalService.MillStep.Track track -> runMill(gameData, event.withJournalSlot(track.slot()),
+                    includeCardsDivertedToExile, includeAllMilledCards, simultaneousNonlandCardsMilled);
+            case DamageJournalService.MillStep.Untracked untracked -> runMill(gameData, event,
+                    includeCardsDivertedToExile, includeAllMilledCards, simultaneousNonlandCardsMilled);
+        };
+    }
+
+    private List<Card> runMill(GameData gameData, MillEvent event, boolean includeCardsDivertedToExile,
+                               boolean includeAllMilledCards, int[] simultaneousNonlandCardsMilled) {
+        if (!(replacementOrderService.run(gameData, event)
+                instanceof ReplacementOrderService.Outcome.Completed<MillEvent> completed)) {
+            if (event.journalSlot() >= 0) {
+                damageJournalService.awaiting(gameData, event.journalSlot());
+            }
+            return List.of();
+        }
+        MillResult result = millCards(gameData, event.playerId(), completed.event().amount(),
+                includeCardsDivertedToExile, includeAllMilledCards, simultaneousNonlandCardsMilled);
+        if (event.journalSlot() >= 0) {
+            damageJournalService.milled(gameData, event.journalSlot(), result.cards(), result.nonlandCards());
+        }
+        return result.cards();
+    }
+
+    /**
+     * Finishes a mill whose player has chosen the order of its replacement effects. A journaled
+     * mill waits for its effect to be resolved again; any other mill happens now.
+     */
+    public void completeMillAfterReplacementOrder(GameData gameData, MillEvent event) {
+        if (damageJournalService.millReady(gameData, event)) {
+            return;
+        }
+        millCards(gameData, event.playerId(), event.amount(), false, false, null);
+    }
+
+    private record MillResult(List<Card> cards, int nonlandCards) {}
+
+    private MillResult millCards(GameData gameData, UUID targetPlayerId, int cardsToMillBeforeLimit,
+                                 boolean includeCardsDivertedToExile, boolean includeAllMilledCards,
+                                 int[] simultaneousNonlandCardsMilled) {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         gameData.lastMilledCardColorSymbols.clear();
-        int additionalCards = 0;
-        int millMultiplier = 1;
-        if (count > 0) {
-            int[] bonus = {0};
-            int[] multiplier = {1};
-            gameData.forEachPermanent((controllerId, permanent) -> {
-                if (controllerId.equals(targetPlayerId)
-                        || permanent.isFaceDown()
-                        || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
-                    return;
-                }
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
-                    if (effect instanceof ControllerOpponentMillBonusEffect millBonus) {
-                        bonus[0] += millBonus.amount();
-                    }
-                    if (effect instanceof ControllerOpponentMillMultiplyingEffect millMultiplierEffect) {
-                        multiplier[0] *= millMultiplierEffect.millMultiplier();
-                    }
-                }
-            });
-            additionalCards = bonus[0];
-            millMultiplier = multiplier[0];
-        }
-        int cardsToMill = Math.min((count + additionalCards) * millMultiplier, deck.size());
+        int cardsToMill = Math.max(0, Math.min(cardsToMillBeforeLimit, deck.size()));
         List<Card> milledCards = new ArrayList<>(deck.subList(0, cardsToMill));
         deck.subList(0, cardsToMill).clear();
         List<Card> cardsEnteredGraveyard = new ArrayList<>();
@@ -296,15 +356,15 @@ public class GraveyardService {
             }
         }
         if (includeAllMilledCards) {
-            return milledCards;
+            return new MillResult(milledCards, nonlandCardsEntered);
         }
         if (!includeCardsDivertedToExile) {
-            return cardsEnteredGraveyard;
+            return new MillResult(cardsEnteredGraveyard, nonlandCardsEntered);
         }
-        return milledCards.stream()
+        return new MillResult(milledCards.stream()
                 .filter(card -> cardsEnteredGraveyard.contains(card)
                         || gameData.findExiledCard(card.getId()) != null)
-                .toList();
+                .toList(), nonlandCardsEntered);
     }
 
     /**

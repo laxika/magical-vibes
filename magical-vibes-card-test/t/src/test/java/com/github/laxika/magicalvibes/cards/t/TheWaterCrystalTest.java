@@ -172,6 +172,42 @@ class TheWaterCrystalTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @CardUsed(BruvacTheGrandiloquent.class)
+    void opponentAddingFourFirstMillsTwiceTheIncreasedNumber() {
+        setUpMillstoneWithBruvac();
+
+        harness.activateAbility(player1, 2, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, "The Water Crystal: mill 4 more");
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(12);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(8);
+    }
+
+    @Test
+    @CardUsed(BruvacTheGrandiloquent.class)
+    void opponentDoublingFirstMillsFourMoreThanTwice() {
+        setUpMillstoneWithBruvac();
+
+        harness.activateAbility(player1, 2, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "Bruvac the Grandiloquent: mill twice that many");
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(8);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(12);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void setUpMillstoneWithBruvac() {
+        harness.addToBattlefield(player1, new TheWaterCrystal());
+        harness.addToBattlefield(player1, new BruvacTheGrandiloquent());
+        harness.addToBattlefield(player1, new Millstone());
+        harness.setLibrary(player2, cards(20));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    }
+
     private List<Card> cards(int count) {
         return java.util.stream.IntStream.range(0, count)
                 .mapToObj(ignored -> (Card) new GrizzlyBears())

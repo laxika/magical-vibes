@@ -1,15 +1,18 @@
 package com.github.laxika.magicalvibes.model.replacement;
 
+import com.github.laxika.magicalvibes.model.Card;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * The damage events one resolving effect started, in order, kept while one of them waits for its
- * player to order replacement effects (CR 616.1). The effect is then resolved again: events already
- * dealt report their result without being dealt twice, the one whose order was chosen is dealt at
- * its place, and the ones held back behind it are dealt as usual. That keeps a handler that reads
- * the damage it dealt ("destroy it if it was dealt damage this way") correct across the prompt.
+ * The damage and mill events one resolving effect started, in order, kept while one of them waits
+ * for its player to order replacement effects (CR 616.1). The effect is then resolved again: events
+ * already dealt or milled report their result without happening twice, the one whose order was
+ * chosen happens at its place, and the ones held back behind it happen as usual. That keeps a
+ * handler that reads the damage it dealt ("destroy it if it was dealt damage this way") or the
+ * cards it milled ("you may cast a spell from among them") correct across the prompt.
  */
 public final class DamageJournal {
 
@@ -18,6 +21,20 @@ public final class DamageJournal {
 
         /** Dealt; {@code dealt} is what the event reported. */
         record Done(int dealt) implements Slot {}
+
+        /**
+         * Milled; {@code cards} is what the mill reported to the handler and {@code nonlandCards}
+         * the nonland cards it counted towards a simultaneous mill's "one or more" triggers.
+         */
+        record Milled(List<Card> cards, int nonlandCards) implements Slot {
+
+            public Milled {
+                cards = List.copyOf(cards);
+            }
+        }
+
+        /** Every mill replacement has been applied; it is milled when the effect resolves again. */
+        record MillReady(MillEvent event) implements Slot {}
 
         /** Its player is still ordering replacement effects. */
         record Awaiting() implements Slot {}
@@ -104,9 +121,9 @@ public final class DamageJournal {
         return index >= 0 && index < slots.size() ? slots.get(index) : null;
     }
 
-    /** Whether an event of the effect still has to be dealt. */
+    /** Whether an event of the effect still has to be dealt or milled. */
     public boolean hasUnfinishedEvents() {
-        return slots.stream().anyMatch(slot -> !(slot instanceof Slot.Done));
+        return slots.stream().anyMatch(slot -> !(slot instanceof Slot.Done) && !(slot instanceof Slot.Milled));
     }
 
     /** Damage being processed while the effect resolves; damage it causes isn't the effect's own. */

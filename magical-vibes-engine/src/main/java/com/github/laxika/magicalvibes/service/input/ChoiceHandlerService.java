@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.LandManaEvent;
 import com.github.laxika.magicalvibes.model.replacement.LifeGainEvent;
+import com.github.laxika.magicalvibes.model.replacement.MillEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementEvent;
 import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
 import com.github.laxika.magicalvibes.model.PowerToughnessForm;
@@ -2070,6 +2071,10 @@ public class ChoiceHandlerService {
             }
             case LifeGainEvent gain -> {
                 lifeSupport.completeGainLife(gameData, gain);
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }
+            case MillEvent mill -> {
+                graveyardService.completeMillAfterReplacementOrder(gameData, mill);
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             }
             case TokenCreationEvent tokens -> {

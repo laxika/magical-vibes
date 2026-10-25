@@ -9,36 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 44. Ordering competing mill replacement effects (The Water Crystal + Bruvac)
-
-**Status:** open · **Found:** 2026-10-22, while fixing T-card test failures
-
-**Failing tests:**
-- `TheWaterCrystalTest.affectedOpponentChoosesOrderOfMillReplacementEffects()`
-
-**What the rules require.** CR 616.1: when two or more replacement effects try to modify the same
-event, the affected player chooses one to apply, then repeats for the rest. The Water Crystal ("If
-an opponent would mill one or more cards, they mill that many cards plus four instead") and Bruvac
-the Grandiloquent (doubling) give different totals depending on order, so the milling opponent must
-choose. `GraveyardService.resolveMillPlayer` applies them in a fixed order with no prompt.
-
-**Why it's large.** Mill isn't routed through `ReplacementOrderService`. It needs a mill event
-object, candidate collection for every mill-modifying replacement, a resumable completion after the
-choice, and migration of every mill caller onto the new path.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 44: route mill events through replacement ordering
-(CR 616.1) so the affected player chooses the order of competing mill replacement effects such as
-The Water Crystal and Bruvac the Grandiloquent. Add a mill event plus a resumable completion in
-GraveyardService.resolveMillPlayer and reuse ReplacementOrderService. Make
-TheWaterCrystalTest.affectedOpponentChoosesOrderOfMillReplacementEffects pass. Verify every CR
-number with the rules MCP. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 45. Optional additional votes from a static ability for every vote (Tivit)
 
 **Status:** open · **Found:** 2026-10-22, while fixing T-card test failures

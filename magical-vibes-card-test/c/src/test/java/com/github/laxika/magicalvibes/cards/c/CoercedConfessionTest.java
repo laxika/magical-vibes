@@ -5,12 +5,15 @@ import com.github.laxika.magicalvibes.cards.b.BruvacTheGrandiloquent;
 import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.t.TheWaterCrystal;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -124,6 +127,38 @@ class CoercedConfessionTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(8);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    @CardUsed({TheWaterCrystal.class, BruvacTheGrandiloquent.class})
+    void drawsForCreaturesMilledInTheOrderTheMillingPlayerChose() {
+        prepare();
+        harness.addToBattlefield(player1, new TheWaterCrystal());
+        harness.addToBattlefield(player1, new BruvacTheGrandiloquent());
+        List<Card> library = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            library.add(new ContaminatedGround());
+        }
+        for (int i = 0; i < 8; i++) {
+            library.add(new BasilicaScreecher());
+        }
+        for (int i = 0; i < 8; i++) {
+            library.add(new ContaminatedGround());
+        }
+        harness.setLibrary(player2, library);
+        harness.setLibrary(player1, IntStream.range(0, 10)
+                .mapToObj(ignored -> (Card) new ContaminatedGround())
+                .toList());
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.handleListChoice(player2, "Bruvac the Grandiloquent: mill twice that many");
+
+        // Four doubled to eight, plus four: twelve cards, eight of them creatures.
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(12);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(8);
     }
 
     private void prepare() {
