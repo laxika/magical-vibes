@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TemporaryModifierShare;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerDamageMultiplication;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
@@ -53,10 +55,13 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger;
@@ -267,7 +272,25 @@ public class TurnCleanupService {
         // before the legacy per-permanent modifier reset below. An expiring layer-1 copy effect
         // (Tilonalli's Skinshifter) reverts the permanent's card to the pre-copy card — the
         // official ruling pins this to the same moment damage is removed (the cleanup step).
-        for (FloatingContinuousEffect expired : gameData.expireEndOfTurnFloatingEffects()) {
+        // Runed Terror ruling (CR 514.2): while players take their phases sequentially, an "until end
+        // of turn" effect ends only at the cleanup step of the player who was active when it began.
+        boolean phaseSequence = gameData.runedTerrorPhaseSequenceActive && gameData.activePlayerId != null;
+        Map<UUID, TemporaryModifierShare> retainedModifiers = phaseSequence
+                ? releaseActivePlayerModifierShares(gameData)
+                : Map.of();
+        List<FloatingContinuousEffect> expiredFloatingEffects;
+        if (phaseSequence) {
+            expiredFloatingEffects = gameData.expireEndOfTurnFloatingEffectsCreatedDuring(gameData.activePlayerId);
+        } else {
+            gameData.phaseSequenceModifierShares.clear();
+            expiredFloatingEffects = gameData.expireEndOfTurnFloatingEffects();
+            Set<UUID> liveFloatingEffectIds = new HashSet<>();
+            synchronized (gameData.floatingEffects) {
+                gameData.floatingEffects.forEach(fe -> liveFloatingEffectIds.add(fe.id()));
+            }
+            gameData.floatingEffectCreatingActivePlayerIds.keySet().retainAll(liveFloatingEffectIds);
+        }
+        for (FloatingContinuousEffect expired : expiredFloatingEffects) {
             if (expired.effect() instanceof TemporaryCopyEffect
                     && expired.affectedPermanentId() != null) {
                 Permanent copy = findPermanent(gameData, expired.affectedPermanentId());
@@ -329,6 +352,12 @@ public class TurnCleanupService {
             // state it clears (must-be-blocked, must-block, transient type overrides, ...) survive cleanup
             // whenever that was the permanent's only modification.
             p.resetModifiers();
+            TemporaryModifierShare retained = retainedModifiers.get(p.getId());
+            if (retained != null) {
+                p.setPowerModifier(retained.power());
+                p.setToughnessModifier(retained.toughness());
+                p.getGrantedKeywords().addAll(retained.keywords());
+            }
             p.setDamagePreventionShield(0);
             p.setDamageToCounterPreventionShield(0);
             p.setDamageToPlusOnePlusOneCounterPreventionShield(0);
@@ -698,6 +727,61 @@ public class TurnCleanupService {
                 manaPool.clearPersistentMana();
             }
         }
+    }
+
+    /**
+     * Credits the active player with every permanent's "until end of turn" power/toughness
+     * modifiers and granted keywords that no player's share accounts for yet, i.e. those created
+     * since the last attribution. Called under Runed Terror's sequential phases whenever the active
+     * player is about to change and at each cleanup step, so each player's share can end at that
+     * player's own cleanup step (Runed Terror ruling, CR 514.2).
+     *
+     * @param gameData the current game state to modify
+     */
+    public void attributeTemporaryModifiersToActivePlayer(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId == null) {
+            return;
+        }
+        gameData.forEachPermanent((ownerId, permanent) -> {
+            Map<UUID, TemporaryModifierShare> shares =
+                    gameData.phaseSequenceModifierShares.getOrDefault(permanent.getId(), Map.of());
+            TemporaryModifierShare attributed = shares.values().stream()
+                    .reduce(new TemporaryModifierShare(0, 0, Set.of()), TemporaryModifierShare::plus);
+            Set<Keyword> newKeywords = EnumSet.noneOf(Keyword.class);
+            newKeywords.addAll(permanent.getGrantedKeywords());
+            newKeywords.removeAll(attributed.keywords());
+            int power = permanent.getPowerModifier() - attributed.power();
+            int toughness = permanent.getToughnessModifier() - attributed.toughness();
+            if (power == 0 && toughness == 0 && newKeywords.isEmpty()) {
+                return;
+            }
+            gameData.phaseSequenceModifierShares
+                    .computeIfAbsent(permanent.getId(), id -> new ConcurrentHashMap<>())
+                    .merge(activePlayerId, new TemporaryModifierShare(power, toughness, newKeywords),
+                            TemporaryModifierShare::plus);
+        });
+    }
+
+    /**
+     * Attributes the outstanding modifiers to the active player, drops that player's shares and
+     * returns, per permanent id, the combined shares of the other players, which outlive this
+     * cleanup step.
+     */
+    private Map<UUID, TemporaryModifierShare> releaseActivePlayerModifierShares(GameData gameData) {
+        attributeTemporaryModifiersToActivePlayer(gameData);
+        Map<UUID, TemporaryModifierShare> retained = new HashMap<>();
+        gameData.phaseSequenceModifierShares.entrySet().removeIf(entry -> {
+            Map<UUID, TemporaryModifierShare> shares = entry.getValue();
+            shares.remove(gameData.activePlayerId);
+            if (shares.isEmpty()) {
+                return true;
+            }
+            retained.put(entry.getKey(), shares.values().stream()
+                    .reduce(new TemporaryModifierShare(0, 0, Set.of()), TemporaryModifierShare::plus));
+            return false;
+        });
+        return retained;
     }
 
     private boolean isCreatureForCleanup(GameData gameData, Permanent permanent) {

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.a.AerialManeuver;
 import com.github.laxika.magicalvibes.cards.t.TitanicGrowth;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RunedTerror.class, TitanicGrowth.class, TurnToFrog.class})
+@CardUsed({RunedTerror.class, TitanicGrowth.class, TurnToFrog.class, AerialManeuver.class})
 class RunedTerrorTest extends BaseCardTest {
 
     @Test
@@ -70,6 +72,45 @@ class RunedTerrorTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, terror)).isEqualTo(originalPower + 4);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gqs.getEffectivePower(gd, terror)).isEqualTo(originalPower);
+    }
+
+    @Test
+    void temporaryKeywordGrantSurvivesOtherPlayersCleanup() {
+        Permanent terror = harness.addToBattlefieldAndReturn(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new AerialManeuver()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        int originalPower = gqs.getEffectivePower(gd, terror);
+        harness.castAndResolveInstant(player2, 0, terror.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gqs.hasKeyword(gd, terror, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, terror, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, terror)).isEqualTo(originalPower + 1);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gqs.hasKeyword(gd, terror, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, terror, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, terror)).isEqualTo(originalPower);
+    }
+
+    @Test
+    void activePlayersOwnBoostEndsAtTheirCleanup() {
+        Permanent terror = harness.addToBattlefieldAndReturn(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new TitanicGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        int originalPower = gqs.getEffectivePower(gd, terror);
+        harness.castAndResolveInstant(player1, 0, terror.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
         assertThat(gqs.getEffectivePower(gd, terror)).isEqualTo(originalPower);
     }
 

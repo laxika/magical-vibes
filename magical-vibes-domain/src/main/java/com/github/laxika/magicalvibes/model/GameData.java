@@ -4574,6 +4574,16 @@ public class GameData {
      *  at their respective cleanup step and end of upkeep. */
     public final List<FloatingContinuousEffect> floatingEffects = Collections.synchronizedList(new ArrayList<>());
 
+    /** Active player at the moment each floating effect was created, keyed by the effect's id. Under
+     *  Runed Terror's sequential phases an "until end of turn" effect ends only at the cleanup step of
+     *  the player who was active when it began (Runed Terror ruling, CR 514.2). */
+    public final Map<UUID, UUID> floatingEffectCreatingActivePlayerIds = new ConcurrentHashMap<>();
+
+    /** Under Runed Terror's sequential phases: each permanent's "until end of turn" power/toughness
+     *  modifiers and granted keywords, split by the active player they were created under (keyed by
+     *  permanent id, then player id), so a cleanup step ends only the active player's share. */
+    public final Map<UUID, Map<UUID, TemporaryModifierShare>> phaseSequenceModifierShares = new ConcurrentHashMap<>();
+
     /** Keywords that remain with a card through zone changes. */
     public final Map<UUID, Set<Keyword>> perpetualCardKeywords = new ConcurrentHashMap<>();
 
@@ -4668,6 +4678,9 @@ public class GameData {
     public FloatingContinuousEffect addFloatingEffect(FloatingContinuousEffect effect) {
         FloatingContinuousEffect stamped = effect.withTimestamp(nextTimestamp());
         floatingEffects.add(stamped);
+        if (stamped.id() != null && activePlayerId != null) {
+            floatingEffectCreatingActivePlayerIds.put(stamped.id(), activePlayerId);
+        }
         return stamped;
     }
 
@@ -4721,10 +4734,26 @@ public class GameData {
 
     /** Removes and returns all floating effects with end-of-turn duration (cleanup step). */
     public List<FloatingContinuousEffect> expireEndOfTurnFloatingEffects() {
-        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_END_OF_TURN
+        return expireFloatingEffects(this::endsAtCleanup);
+    }
+
+    /**
+     * Removes and returns the floating effects with end-of-turn duration that were created while
+     * the given player was the active player, plus any whose creating active player is unknown.
+     * Used at a cleanup step under Runed Terror's sequential phases, where such an effect ends at
+     * the cleanup step of the player who was active when it began (Runed Terror ruling, CR 514.2).
+     */
+    public List<FloatingContinuousEffect> expireEndOfTurnFloatingEffectsCreatedDuring(UUID playerId) {
+        return expireFloatingEffects(fe -> endsAtCleanup(fe)
+                && (fe.id() == null || playerId.equals(
+                floatingEffectCreatingActivePlayerIds.getOrDefault(fe.id(), playerId))));
+    }
+
+    private boolean endsAtCleanup(FloatingContinuousEffect fe) {
+        return fe.duration() == EffectDuration.UNTIL_END_OF_TURN
                 || (fe.duration() == EffectDuration.UNTIL_MATCHING_SPELL_CAST
                 && !(fe.effect() instanceof ReduceCastCostForNextMatchingSpellEffect reduction
-                && !reduction.expiresAtCleanup())));
+                && !reduction.expiresAtCleanup()));
     }
 
     /** Removes and returns all floating effects that expire at the beginning of the next end step. */
@@ -4829,6 +4858,9 @@ public class GameData {
             if (expired.test(fe)) {
                 removed.add(fe);
                 it.remove();
+                if (fe.id() != null) {
+                    floatingEffectCreatingActivePlayerIds.remove(fe.id());
+                }
             }
         }
         return removed;
@@ -9699,6 +9731,9 @@ public class GameData {
 
         // --- Floating continuous effects (immutable records, safe to share) ---
         copy.floatingEffects.addAll(this.floatingEffects);
+        copy.floatingEffectCreatingActivePlayerIds.putAll(this.floatingEffectCreatingActivePlayerIds);
+        this.phaseSequenceModifierShares.forEach((permanentId, shares) ->
+                copy.phaseSequenceModifierShares.put(permanentId, new ConcurrentHashMap<>(shares)));
         copy.temporaryGraveyardCardAnimationsUntilEndOfTurn
                 .putAll(this.temporaryGraveyardCardAnimationsUntilEndOfTurn);
         copy.perpetualCardPowerToughnessModifiers.putAll(this.perpetualCardPowerToughnessModifiers);

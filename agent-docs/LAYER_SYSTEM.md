@@ -896,7 +896,10 @@ and any deviations from this document.
    new `FloatingContinuousEffect.withTimestamp(...)`; the record is immutable, so
    `simulationCopy()` shares instances via `addAll`, list itself independent). Expiry helpers
    on `GameData` (mirroring the `drainDelayedActions` pattern, each returns the removed
-   effects): `expireEndOfTurnFloatingEffects()` — called at the top of
+   effects): `expireEndOfTurnFloatingEffects()` (or, while Runed Terror's sequential phases
+   run, `expireEndOfTurnFloatingEffectsCreatedDuring(activePlayerId)`, which keeps effects
+   created under another active player — `addFloatingEffect` records each effect's creating
+   active player in `floatingEffectCreatingActivePlayerIds`) — called at the top of
    `TurnCleanupService.resetEndOfTurnModifiers` BEFORE the `resetModifiers()` loop (covers
    both the cleanup step and the "end the turn" effect via `TurnSupport`);
    `expireFloatingEffectsForDepartedSource(id)` (WHILE_SOURCE_ON_BATTLEFIELD + WHILE_ATTACHED)

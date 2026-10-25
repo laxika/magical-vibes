@@ -9,40 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 38. "Until end of turn" effects under Runed Terror's phase-by-phase turn structure
-
-**Status:** open · **Found:** 2026-10-19, while fixing R-card test failures
-
-**Failing tests:**
-- `RunedTerrorTest.temporaryBoostSurvivesOtherPlayersCleanup()`
-
-**What the rules require.** Runed Terror makes players take each phase in sequence instead of whole
-turns, so every player gets a cleanup step during one turn cycle. Its ruling (2024-11-08, found by web
-search; re-check before implementing)
-says an "until end of turn" effect ends at the cleanup step of the player who was active when the
-effect began. CR 514.2 ends "until end of turn" and "this turn" effects at cleanup. The engine's
-`TurnCleanupService.applyCleanupResets` / `resetEndOfTurnModifiers` clears every temporary modifier at
-whichever cleanup comes first, so Titanic Growth cast during player 2's phases ends at player 1's
-cleanup.
-
-**Why it's large.** Every until-end-of-turn store (power/toughness modifiers, granted keywords,
-floating layer effects, "this turn" flags and sets) would need to record the active player at creation
-and be cleared only at that player's cleanup while Runed Terror's structure is in effect. That touches
-most of `TurnCleanupService` and every place that creates such effects.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 38: while RunedTerrorEffect is active, "until end of turn"
-effects must end at the cleanup step of the player who was active when the effect was created
-(Runed Terror ruling; CR 514.2). Record the creating active player on temporary modifiers / floating
-effects and make TurnCleanupService.applyCleanupResets clear only those belonging to the player whose
-cleanup it is. Make RunedTerrorTest.temporaryBoostSurvivesOtherPlayersCleanup pass without changing
-normal-game behaviour. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 39. Non-mana triggers from mana abilities are held during the mana-undo window
 
 **Status:** open · **Found:** 2026-10-19, while fixing R-card test failures
@@ -595,6 +561,42 @@ to GameActionAvailabilityService.getDelayedTriggerPaymentsOwedBy so it goes thro
 AbilityActivationService.payDelayedTriggerCost and the PAY_DELAYED_TRIGGER_COST client action, retire
 payDrawStepLifeLoss, and let the AI pay delayed-trigger costs when it is worth it. Don't run the full test
 suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 55. Other "until end of turn" stores under Runed Terror's sequential phases
+
+**Status:** open · **Found:** 2026-10-25, while finishing entry 38 (Runed Terror durations)
+
+**Failing tests:**
+- None yet. Write one per store moved, in the style of `RunedTerrorTest.temporaryBoostSurvivesOtherPlayersCleanup`
+  (e.g. player 2 casts a "can't block this turn" or damage-prevention spell during their phase; it must still
+  apply after player 1's cleanup step and end at player 2's).
+
+**What the rules require.** Runed Terror ruling (2024-11-08): "until end of turn" and "this turn" effects end
+during the cleanup step of the player who was active when the effect began (CR 514.2 ends them at cleanup).
+Entry 38 made this hold for floating continuous effects (`floatingEffectCreatingActivePlayerIds`,
+`GameData.expireEndOfTurnFloatingEffectsCreatedDuring`) and for `Permanent` power/toughness modifiers and
+granted keywords (`GameData.phaseSequenceModifierShares`, `TemporaryModifierShare`). Every other store that
+`TurnCleanupService.resetEndOfTurnModifiers` / `Permanent.resetModifiers` clears (the other per-permanent
+flags such as `cantBlockThisTurn`, `removedKeywords`, protections, transient types/colors, base P/T
+overrides, damage-prevention and redirection shields, "this turn" player sets and cast/play permissions)
+still ends at whichever player's cleanup comes first. A keyword granted by the active player and again by
+another player (same keyword on a `Permanent.grantedKeywords` set) is credited only to the first granter.
+
+**Why it's large.** Each store needs the creating active player recorded, or a per-player split like
+`TemporaryModifierShare`, and roughly two hundred stores are involved.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 55: extend entry 38's Runed Terror duration handling
+(TurnCleanupService.attributeTemporaryModifiersToActivePlayer / phaseSequenceModifierShares and the
+floating-effect tagging) to the remaining "until end of turn" / "this turn" stores, so each ends only at the
+cleanup step of the player who was active when it began (Runed Terror ruling; CR 514.2). Start with the
+most-used ones (Permanent.resetModifiers flags, damage-prevention shields) and add RunedTerrorTest cases for
+each. Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 
 ---
