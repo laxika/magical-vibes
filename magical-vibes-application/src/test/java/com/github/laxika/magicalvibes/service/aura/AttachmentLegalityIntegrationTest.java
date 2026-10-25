@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * End-to-end CR 704.5n check: an aura whose enchanted creature gains protection from the
+ * End-to-end CR 704.5m check: an aura whose enchanted creature gains protection from the
  * aura's color is put into its owner's graveyard by state-based actions.
  */
 @CardUsed({SpiritLink.class, GrizzlyBears.class, ApostlesBlessing.class})

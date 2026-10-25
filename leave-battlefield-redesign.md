@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; thirteenth part: the losses after an exile or a sacrifice (Dire Tactics, Trystan, Will of the Abzan, Xathrid Demon's sacrifice) are steps of their own through the new internal `PlayersLoseLifeEffect`, and Priest of Forgotten Gods', Mornsong Aria's and Thieving Amalgam's losses ask first; fourteenth part: Stab Wound's family through `LifeSupport`, and the losses after a reveal, a mill, a library exile or discards; fifteenth part: the destroy-all riders (Deadly Tempest, Rain of Daggers, ...) are steps of their own; sixteenth part: noncreature permanents get their CR 616.1 graveyard-replacement question too, and destroy-all riders count permanents a replacement exiled instead; seventeenth part: the targeted destroy handlers count "destroyed this way" and "put into a graveyard this way" as their Oracle text says; eighteenth part: an orphaned or illegally attached Aura with a CR 616.1 question joins the state-based departure batch; the fallback stays until the callers listed in the fifteenth part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; thirteenth part: the losses after an exile or a sacrifice (Dire Tactics, Trystan, Will of the Abzan, Xathrid Demon's sacrifice) are steps of their own through the new internal `PlayersLoseLifeEffect`, and Priest of Forgotten Gods', Mornsong Aria's and Thieving Amalgam's losses ask first; fourteenth part: Stab Wound's family through `LifeSupport`, and the losses after a reveal, a mill, a library exile or discards; fifteenth part: the destroy-all riders (Deadly Tempest, Rain of Daggers, ...) are steps of their own; sixteenth part: noncreature permanents get their CR 616.1 graveyard-replacement question too, and destroy-all riders count permanents a replacement exiled instead; seventeenth part: the targeted destroy handlers count "destroyed this way" and "put into a graveyard this way" as their Oracle text says; eighteenth part: an orphaned or illegally attached Aura with a CR 616.1 question joins the state-based departure batch; nineteenth part: the `DestroyTargetPermanentThenEffect` cards without `requiresDestruction` audited against Oracle text and rulings (no change needed), and the attachment sweeps' citations fixed; the fallback stays until the callers listed in the fifteenth part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1961,6 +1961,47 @@ Steps add notes here for later steps, under their number.
   `LegacyDepartureWrapperRatchetTest` and `GameSimulatorTest`, had 200 failures; 198 fail the same way with the old
   code, and the other two (`OrzhovCharmTest`'s bounce-mode Aura test, `GlacialPlatingTest`'s snow-mana test) pass on
   rerun (the Glacial Plating one is flaky with the old code too).
+
+### Step 13 (nineteenth part: the `DestroyTargetPermanentThenEffect` wording audit, and the attachment citations)
+
+- Rules: a rider worded "if ... destroyed this way" or "if ... dies this way" happens only if that happened (the
+  seventeenth part). A rider in a second sentence ("Its controller loses 2 life", "Its controller may search ...") or
+  gated on what the permanent was ("If that creature was a Human", "If that land was nonbasic") happens whenever the
+  spell resolves, even if the permanent isn't destroyed (indestructible, regenerated), with the condition checked on
+  the permanent as it last existed; only an illegal target stops it, since then the spell doesn't resolve (CR 608.2b,
+  checked). Rulings saying so: Death's Caress (DKA, 2013-07-01), Rite of the Serpent (KTK, 2014-09-20), Molten Rain
+  (MRD, 2021-03-19), Kellan, Inquisitive Prodigy (MKM, 2024-02-02: "you will still draw a card as long as you control
+  the artifact"), Assassin's Trophy (GRN, 2018-10-05) and Dire-Strain Rampage (MID, 2021-09-24: a legal target that
+  wasn't destroyed still lets its controller search for one basic land, "even if the target was a land").
+- Done: every one of the 89 card classes using `DestroyTargetPermanentThenEffect` was checked against its Oracle text.
+  The ones with `requiresDestruction` (Noxious Gearhulk, Break the Spell, Smashing Success, Shredder's Technique,
+  Acolyte Hybrid, Transforming Flourish; Infinite Authority's delayed trigger, built in
+  `DestroyCombatOpponentAtEndOfCombatEffectHandler`, too) or `ifDiesThisWay` (Cinder Cloud, Kaervek's Purge, Tuktuk
+  Scrapper) are the only ones worded that way. Every other card is unconditional or gated on the permanent's
+  last-known characteristics through `thenCondition`, which the handler already evaluates before the destruction and
+  applies whether or not it succeeds, so none needed a change. Dire-Strain Rampage, the one other card worded
+  "destroyed this way" ("If a land was destroyed this way, ... up to two ... Otherwise, ... one"), already reads
+  `tryDestroyAndLog`'s "destroyed" result through `EventStat.BASIC_LAND_SEARCH_COUNT`, so an indestructible land gets
+  the one-land branch and a land Rest in Peace exiled instead the two-land branch. A sweep of every implemented card's
+  Oracle text for "destroyed this way", "dies this way", "died this way" and "put into a graveyard this way" found
+  the rest on the handlers the sixteenth and seventeenth parts audited (`DestroyAllPermanentsEffect`,
+  `DestroyEachTargetPermanentEffect`) or on graveyard counts after a mill or a discard, and Cosmic Horror's
+  `DestroySourceAndDamageControllerIfDestroyedEffect` already keys its damage on "destroyed".
+- Citations: an Aura illegally attached or attached to nothing is CR 704.5m (checked), an illegally attached Equipment
+  or Fortification CR 704.5n (checked); CR 704.5q (checked) is the +1/+1 and -1/-1 counter annihilation. The
+  `PermanentRemovalService.enforceAttachmentLegality` Javadoc, the `ChoiceHandlerService` protection-grant comment,
+  `AttachmentLegalityIntegrationTest`'s Javadoc and `AuraAttachmentServiceTest`'s nested-class display names cited
+  704.5n for Auras and 704.5q for Equipment; they now cite 704.5m and 704.5n (the test's banner comment carrying the
+  wrong pair is removed).
+- **Left**: everything in the fifteenth part's **Left** except the Mastery's noncreature question (Bomb Squad, parked
+  pending an official ruling; the remaining life-change families: other "then" handlers resolving riders on a fresh
+  stack entry, Mulch-like handlers, "unless" / "or lose life" families, SetLifeTotal, doubling and exchange handlers;
+  life payments; redirected combat damage; questions while another departure batch is pending) is unchanged.
+- Tests: new guard `DireStrainRampageTest.landExiledInsteadOfGoingToGraveyardStillSearchesForTwo` (passes with the old
+  code too, since no engine behavior changed). The existing "not destroyed still applies" guards cover the other ruled
+  cards (`DeathsCaressTest`, `RiteOfTheSerpentTest`, `MoltenRainTest`, `KellanInquisitiveProdigyTailTheSuspectTest`,
+  `AssassinsTrophyTest`, `DireStrainRampageTest.indestructibleLandUsesOneBasicBranch`). `AuraAttachmentServiceTest` and
+  `AttachmentLegalityIntegrationTest` pass with the renamed display names.
 
 ### Step 2
 

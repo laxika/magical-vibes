@@ -1982,7 +1982,7 @@ public class PermanentRemovalService {
     }
 
     /**
-     * State-based attachment legality (CR 704.5n/704.5q): puts illegally attached auras into
+     * State-based attachment legality (CR 704.5m for Auras, CR 704.5n for Equipment and Fortifications): puts illegally attached auras into
      * their owners' graveyards and unattaches illegally attached equipment. An Aura whose move to the graveyard
      * has a CR 616.1 question is left for the state-based departure batch, as in {@link #removeOrphanedAuras}.
      *

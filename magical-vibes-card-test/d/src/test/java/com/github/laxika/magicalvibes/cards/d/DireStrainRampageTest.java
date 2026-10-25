@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DireStrainRampage.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class,
-        Island.class, Mountain.class, BrambleArmor.class, CurseOfShakenFaith.class})
+        Island.class, Mountain.class, BrambleArmor.class, CurseOfShakenFaith.class, RestInPeace.class})
 class DireStrainRampageTest extends BaseCardTest {
 
     @Test
@@ -86,6 +87,26 @@ class DireStrainRampageTest extends BaseCardTest {
         assertThat(countPermanents(player2, "Forest")).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
                 .params().remainingCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A land destroyed but exiled by Rest in Peace instead still counts as destroyed this way")
+    void landExiledInsteadOfGoingToGraveyardStillSearchesForTwo() {
+        harness.addToBattlefield(player1, new RestInPeace());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player2, List.of(new Mountain(), new Island()));
+        giveRampageFromHand();
+
+        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Forest"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Forest"));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().remainingCount()).isEqualTo(2);
     }
 
     @Test

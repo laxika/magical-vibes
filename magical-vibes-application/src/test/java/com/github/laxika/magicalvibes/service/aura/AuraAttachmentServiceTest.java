@@ -328,10 +328,8 @@ class AuraAttachmentServiceTest {
         }
     }
 
-    // ===== enforceAttachmentLegality — CR 704.5n / 704.5q =====
-
     @Nested
-    @DisplayName("enforceAttachmentLegality - Aura legality (CR 704.5n)")
+    @DisplayName("enforceAttachmentLegality - Aura legality (CR 704.5m)")
     class AuraAttachmentLegality {
 
         @Test
@@ -440,7 +438,7 @@ class AuraAttachmentServiceTest {
     }
 
     @Nested
-    @DisplayName("enforceAttachmentLegality - Equipment legality (CR 704.5q)")
+    @DisplayName("enforceAttachmentLegality - Equipment legality (CR 704.5n)")
     class EquipmentAttachmentLegality {
 
         @Test
