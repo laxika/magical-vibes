@@ -1949,8 +1949,9 @@ public class TriggerCollectionService {
                     .forEach(selfCastEffects::add);
         }
 
-        Integer pendingSpellOrAbilityCopies = gameData.pendingNextSpellOrAbilityCopyCount.get(castingPlayerId);
-        if (pendingSpellOrAbilityCopies != null && pendingSpellOrAbilityCopies > 0) {
+        ManaPool castingPlayerPool = gameData.playerManaPools.get(castingPlayerId);
+        int pendingSpellOrAbilityCopies = castingPlayerPool == null ? 0 : castingPlayerPool.takeSpentCopyGrantingMana();
+        if (pendingSpellOrAbilityCopies > 0) {
             StackEntry spellEntry = null;
             for (StackEntry se : gameData.stack) {
                 if (se.getTargetableId().equals(spellCard.getId())) {
@@ -1977,7 +1978,6 @@ public class TriggerCollectionService {
                         "Copy " + spellCard.getName(),
                         copyEffects
                 ));
-                gameData.pendingNextSpellOrAbilityCopyCount.remove(castingPlayerId);
                 gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
                 log.info("Game {} - {} mana-linked spell-or-ability copy trigger(s) queued for {}",
                         gameData.id, pendingSpellOrAbilityCopies, spellCard.getName());
@@ -12700,32 +12700,41 @@ public class TriggerCollectionService {
         checkCardPutIntoGraveyardFromAnywhereTriggers(gameData, graveyardOwnerId, card, null);
     }
 
-    /** Queues the copy created when mana from a copy rider pays for a non-mana ability. */
+    /**
+     * Queues one copy trigger per unit of copy-rider mana (Sunken Palace) spent to activate this
+     * non-mana ability (CR 106.6a).
+     */
     public void checkManaLinkedAbilityCopyTrigger(GameData gameData, UUID activatingPlayerId,
                                                    StackEntry abilityEntry, ActivatedAbility ability) {
+        ManaPool pool = gameData.playerManaPools.get(activatingPlayerId);
+        int pendingCopies = pool == null ? 0 : pool.takeSpentCopyGrantingMana();
         if (abilityEntry == null) return;
-        Integer pendingCopies = gameData.pendingNextSpellOrAbilityCopyCount.get(activatingPlayerId);
-        if (pendingCopies == null || pendingCopies <= 0) return;
-
-        CardEffect copyEffect = new CopyControllerActivatedAbilityEffect(
-                new StackEntry(abilityEntry), ability, activatingPlayerId);
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                abilityEntry.getCard(),
-                activatingPlayerId,
-                abilityEntry.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(copyEffect))
-        ));
-        gameData.pendingNextSpellOrAbilityCopyCount.remove(activatingPlayerId);
-        gameLogService.append(gameData,
-                GameLog.textCardText("A copy of ", abilityEntry.getCard(), "'s ability is created."));
-        log.info("Game {} - mana-linked ability copy trigger queued for {}", gameData.id,
-                abilityEntry.getCard().getName());
+        for (int i = 0; i < pendingCopies; i++) {
+            CardEffect copyEffect = new CopyControllerActivatedAbilityEffect(
+                    new StackEntry(abilityEntry), ability, activatingPlayerId);
+            gameData.enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    abilityEntry.getCard(),
+                    activatingPlayerId,
+                    abilityEntry.getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(copyEffect))
+            ));
+            gameLogService.append(gameData,
+                    GameLog.textCardText("A copy of ", abilityEntry.getCard(), "'s ability is created."));
+            log.info("Game {} - mana-linked ability copy trigger queued for {}", gameData.id,
+                    abilityEntry.getCard().getName());
+        }
     }
 
-    /** Mana abilities cannot be copied; spending the linked mana on one consumes the rider. */
+    /**
+     * Copy-rider mana spent to activate a mana ability triggers, but mana abilities can't be
+     * copied, so the spent rider does nothing.
+     */
     public void consumeManaLinkedCopyOnManaAbility(GameData gameData, UUID playerId) {
-        gameData.pendingNextSpellOrAbilityCopyCount.remove(playerId);
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        if (pool != null) {
+            pool.takeSpentCopyGrantingMana();
+        }
     }
 
     public void checkCardPutIntoGraveyardFromAnywhereTriggers(GameData gameData, UUID graveyardOwnerId,

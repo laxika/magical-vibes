@@ -2055,7 +2055,10 @@ public class ChoiceHandlerService {
                     inputCompletionService.publishStateAfterInput(gameData);
                     return;
                 }
-                if (mana.spellOnly()) {
+                if (mana.restriction() != null) {
+                    mana.restriction().applyTo(gameData.playerManaPools.get(mana.playerId()), color, mana.amount());
+                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                } else if (mana.spellOnly()) {
                     handleSpellOnlyManaColorChosen(gameData, player, color.name(),
                             new ChoiceContext.SpellOnlyManaColorChoice(mana.playerId(),
                                     mana.production().fromCreature(), mana.amount(), false).withReplacementsApplied());
@@ -3004,8 +3007,8 @@ public class ChoiceHandlerService {
         if (!options.contains(colorName)) {
             throw new IllegalArgumentException("Invalid mana color choice: " + colorName);
         }
-        ManaColor manaColor = ManaProductionSupport.effectiveColor(
-                gameData, ctx.playerId(), ManaColor.valueOf(colorName));
+        ManaColor manaColor = ctx.replacementsApplied() ? ManaColor.valueOf(colorName)
+                : ManaProductionSupport.effectiveColor(gameData, ctx.playerId(), ManaColor.valueOf(colorName));
         gameData.interaction.clearAwaitingInput();
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
         int amount = ctx.sameColor() ? ctx.amount() : 1;

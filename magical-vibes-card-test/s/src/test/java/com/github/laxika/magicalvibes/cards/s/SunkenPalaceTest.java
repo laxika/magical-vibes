@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AuguryRaven;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SunkenPalace.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class, Shock.class})
+@CardUsed({SunkenPalace.class, AuguryRaven.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class, Shock.class})
 class SunkenPalaceTest extends BaseCardTest {
 
     @Test
@@ -145,6 +147,49 @@ class SunkenPalaceTest extends BaseCardTest {
 
         harness.assertLife(player1, 22);
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(7);
+    }
+
+    @Test
+    void eachSpentUnitOfCopyManaCopiesTheAbilitySeparately() {
+        harness.addToBattlefield(player1, new SunkenPalace());
+        harness.addToBattlefield(player1, new SunkenPalace());
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.setGraveyard(player1, graveyardCards());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.setGraveyard(player1, graveyardCards());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 1, 1, null, null);
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(pool.getCopyGrantingMana(ManaColor.BLUE)).isEqualTo(2);
+
+        harness.activateAbility(player1, 2, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void copyManaSpentToForetellDoesNotCopyTheNextSpell() {
+        harness.addToBattlefield(player1, new SunkenPalace());
+        harness.setGraveyard(player1, graveyardCards());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player1, List.of(new AuguryRaven(), new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.foretell(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
     }
 
     private List<Card> graveyardCards() {

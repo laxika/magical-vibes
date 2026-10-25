@@ -9,44 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 40. Mana riders and spending restrictions tied to specific units of mana
-
-**Status:** open · **Found:** 2026-10-19, while fixing S-card test failures
-
-**Failing tests:**
-- `SunkenPalaceTest.activatingAnotherManaAbilityDoesNotConsumeTheCopyRider()`
-- `SunkenPalaceTest.freeSpellDoesNotConsumeTheCopyRider()`
-- `SunkenPalaceTest.spellPaidWithOtherManaDoesNotTriggerACopy()`
-- `SunkenCitadelTest` "Damping Sphere changes mana type and amount but preserves the spending restriction"
-
-**What the rules require.** CR 106.6: a mana ability can restrict how its mana is spent, add an
-effect to the spell or ability that mana is spent on, or create a delayed trigger that fires when
-that mana is spent. Sunken Palace's {U} copies the spell or ability *that mana* is spent on, so the
-copy must fire only when that exact unit pays for something. Sunken Citadel's two mana "spend this
-mana only to activate abilities of land sources" keeps its restriction even when Damping Sphere
-replaces it with different mana. The engine instead arms the Palace rider per player:
-`ActivatedAbilityExecutionService` calls `TriggerCollectionService.consumeManaLinkedCopyOnManaAbility`
-on any later mana ability, and the next spell is copied whichever mana paid for it. Citadel's
-restriction is lost when a replacement changes the mana.
-
-**Why it's large.** `ManaPool` tracks counts per color plus a few special pools. Riders and
-restrictions have to stay attached to individual units through every payment path, cost
-reduction, free cast, mana-doubling and mana-replacement effect, and spell copy. That touches the
-pool, all of `ManaCost`'s payment helpers, and every caller that spends mana.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 40: tag mana units in ManaPool with their rider/spend
-restriction (CR 106.6) so Sunken Palace's "when you spend this mana ... copy that spell or ability"
-fires only for the spell or ability that the tagged {U} actually paid for, and Sunken Citadel's
-land-ability-only restriction survives Damping Sphere-style mana replacement. Replace the per-player
-consumeManaLinkedCopyOnManaAbility arming. Make the failing SunkenPalaceTest and SunkenCitadelTest
-cases pass. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 41. Casting spells and playing lands from another player's hand (Sen Triplets)
 
 **Status:** open · **Found:** 2026-10-19, while fixing S-card test failures
@@ -599,6 +561,43 @@ the colour is chosen (CR 603.3, CR 117.3c), and make that activation non-reverta
 GameService.finishPriorityManaActivation already does for activations that finish at once. Keep
 intent-tagged (payment) activations held and revertable. Add tests next to ManaActivationRevertTest. Don't
 run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 57. Per-unit copy riders for Pyromancer's Goggles and Primal Wellspring
+
+**Status:** open · **Found:** 2026-10-25, while finishing entry 40 (Sunken Palace's per-unit copy rider)
+
+**Failing tests:**
+- `PyromancersGogglesTest` "Each mana produced with a mana multiplier grants its own copy"
+- `PyromancersGogglesTest` "Spending Goggles mana on a non-red spell cannot copy a later red spell"
+- `PyromancersGogglesTest` "Only Goggles mana actually spent on a spell creates copies"
+
+**What the rules require.** CR 106.6 / 106.6a: "When that mana is spent to cast a red instant or
+sorcery spell, copy that spell" is a delayed trigger on the mana itself, one per unit produced. The
+engine still arms these per player (`GameData.pendingNextRedInstantSorceryCopyCount`,
+`pendingNextInstantSorceryCopyCount`, set in `AnyColorManaChoiceSupport`), so the next matching spell is
+copied whatever mana paid for it. Sunken Palace now uses a pool tag instead
+(`ManaPool.addCopyGrantingMana` / `takeSpentCopyGrantingMana`, claimed in
+`TriggerCollectionService.checkSpellCastTriggers`, discarded at the end of every action by
+`GameData.discardUnclaimedSpentManaRiders`). Goggles and Wellspring need the same tag, with the spell
+filter (red instant/sorcery, instant/sorcery) checked when the spent units are claimed: units spent on a
+spell that doesn't match are spent without effect. Also: Sunken Palace's mana that is added only after a
+prompt (a land-mana replacement order or color choice) is not tagged yet (`tagCopyGrantingMana` in
+`ActivatedAbilityExecutionService` runs only when no mana choice is pending).
+
+**Why it's large.** Medium: two more tags through every `ManaPool` copy/merge/convert/drain path, and the
+any-color choice handlers must tag the chosen color.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 57: replace the per-player pendingNextRedInstantSorceryCopyCount /
+pendingNextInstantSorceryCopyCount arming for Pyromancer's Goggles and Primal Wellspring with per-unit
+ManaPool tags like Sunken Palace's copyGrantingMana (CR 106.6a), so only the matching spell the tagged
+mana actually pays for is copied, once per unit. Make the failing PyromancersGogglesTest cases pass and
+add Primal Wellspring tests. Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 
 ---

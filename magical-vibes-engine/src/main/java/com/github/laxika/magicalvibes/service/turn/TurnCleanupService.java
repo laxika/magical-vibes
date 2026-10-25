@@ -848,7 +848,6 @@ public class TurnCleanupService {
                 if (!copyGrantManaPersists) {
                     gameData.pendingNextInstantSorceryCopyCount.remove(playerId);
                     gameData.pendingNextRedInstantSorceryCopyCount.remove(playerId);
-                    gameData.pendingNextSpellOrAbilityCopyCount.remove(playerId);
                 }
             }
         }

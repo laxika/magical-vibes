@@ -2502,9 +2502,6 @@ public class GameData {
      *  Decremented when an instant/sorcery is cast; cleared when mana pools drain. */
     public final Map<UUID, Integer> pendingNextInstantSorceryCopyCount = new ConcurrentHashMap<>();
 
-    /** Pending one-shot spell-or-ability copy triggers from mana abilities, cleared when that mana drains. */
-    public final Map<UUID, Integer> pendingNextSpellOrAbilityCopyCount = new ConcurrentHashMap<>();
-
     /** Path of Ancestry mana choices awaiting completion, keyed by source permanent id. */
     public final Map<UUID, Integer> pendingPathOfAncestryManaChoices = new ConcurrentHashMap<>();
 
@@ -6865,6 +6862,15 @@ public class GameData {
         return Math.min(lifeTotal, getMaximumLifeTotal(playerId));
     }
 
+    /**
+     * Discards copy-rider mana (Sunken Palace) spent during an action without a spell cast or an
+     * ability activated to claim it: mana spent on anything else, such as a tax or a special action,
+     * never triggers the rider (CR 106.6).
+     */
+    public void discardUnclaimedSpentManaRiders() {
+        playerManaPools.values().forEach(ManaPool::takeSpentCopyGrantingMana);
+    }
+
     /** Records the current board snapshot for turn-history conditions such as "way behind". */
     public void recordWayBehindState() {
         for (UUID controllerId : orderedPlayerIds) {
@@ -9845,7 +9851,6 @@ public class GameData {
 
         // --- Pending one-shot spell copy triggers (Primal Wellspring) ---
         copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);
-        copy.pendingNextSpellOrAbilityCopyCount.putAll(this.pendingNextSpellOrAbilityCopyCount);
         copy.pendingPathOfAncestryManaChoices.putAll(this.pendingPathOfAncestryManaChoices);
         copy.pendingNextRedInstantSorceryCopyCount.putAll(this.pendingNextRedInstantSorceryCopyCount);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);

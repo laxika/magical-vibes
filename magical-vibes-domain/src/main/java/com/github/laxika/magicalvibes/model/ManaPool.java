@@ -108,6 +108,21 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> commanderCounterGrantingMana = new EnumMap<>(ManaColor.class);
     /** Mana carrying the rider "if spent on a creature spell, it gains riot". */
     private final EnumMap<ManaColor, Integer> riotGrantingMana = new EnumMap<>(ManaColor.class);
+    /**
+     * Mana carrying the rider "when you spend this mana to cast a spell or activate an ability, copy
+     * that spell or ability" (Sunken Palace). Each unit is its own delayed trigger (CR 106.6a).
+     */
+    private final EnumMap<ManaColor, Integer> copyGrantingMana = new EnumMap<>(ManaColor.class);
+    /**
+     * How many {@link #copyGrantingMana} units were spent since the spell or ability they paid for
+     * last claimed them ({@link #takeSpentCopyGrantingMana}).
+     */
+    private int spentCopyGrantingMana;
+    /**
+     * Set while a mana ability's cost is paid: its controller would rather spend untagged mana of
+     * the same color there, since copy-rider mana spent on a mana ability copies nothing.
+     */
+    private boolean copyGrantingManaHeldBack;
     /** Mana carrying Path of Ancestry's creature-type matching scry rider. */
     private final EnumMap<ManaColor, Integer> pathOfAncestryMana = new EnumMap<>(ManaColor.class);
     private int artifactOnlyColorless;
@@ -354,6 +369,7 @@ public class ManaPool {
             creatureAdditionalCounterGrantingMana.put(color, 0);
             commanderCounterGrantingMana.put(color, 0);
             riotGrantingMana.put(color, 0);
+            copyGrantingMana.put(color, 0);
             pathOfAncestryMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
             graveyardOnlyMana.put(color, 0);
@@ -434,6 +450,7 @@ public class ManaPool {
         mergeMana(creatureAdditionalCounterGrantingMana, source.creatureAdditionalCounterGrantingMana);
         mergeMana(commanderCounterGrantingMana, source.commanderCounterGrantingMana);
         mergeMana(riotGrantingMana, source.riotGrantingMana);
+        mergeMana(copyGrantingMana, source.copyGrantingMana);
         mergeMana(pathOfAncestryMana, source.pathOfAncestryMana);
         mergeMana(flashbackOnlyMana, source.flashbackOnlyMana);
         mergeMana(graveyardOnlyMana, source.graveyardOnlyMana);
@@ -572,6 +589,9 @@ public class ManaPool {
         creatureAdditionalCounterGrantingMana.putAll(source.creatureAdditionalCounterGrantingMana);
         commanderCounterGrantingMana.putAll(source.commanderCounterGrantingMana);
         riotGrantingMana.putAll(source.riotGrantingMana);
+        copyGrantingMana.putAll(source.copyGrantingMana);
+        this.spentCopyGrantingMana = source.spentCopyGrantingMana;
+        this.copyGrantingManaHeldBack = source.copyGrantingManaHeldBack;
         pathOfAncestryMana.putAll(source.pathOfAncestryMana);
         flashbackOnlyMana.putAll(source.flashbackOnlyMana);
         graveyardOnlyMana.putAll(source.graveyardOnlyMana);
@@ -1171,6 +1191,7 @@ public class ManaPool {
             creatureAdditionalCounterGrantingMana.put(color, 0);
             commanderCounterGrantingMana.put(color, 0);
             riotGrantingMana.put(color, 0);
+            copyGrantingMana.put(color, 0);
             pathOfAncestryMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
             lifeLossAbilityMana.put(color, 0);
@@ -1255,6 +1276,7 @@ public class ManaPool {
         subtypeHasteGrantingMana.clear();
         uncounterableSubtypeCreatureMana.clear();
         spentUncounterableGrantingMana = false;
+        spentCopyGrantingMana = 0;
         subtypeSpellOrAbilityMana.clear();
         subtypeSetSpellOrAbilityMana.clear();
         subtypeSpellOnlyMana.clear();
@@ -1738,6 +1760,11 @@ public class ManaPool {
         if (riotGranting > 0) {
             riotGrantingMana.put(color, riotGranting - 1);
         }
+        int copyGranting = copyGrantingMana.getOrDefault(color, 0);
+        if (copyGranting > 0 && !(copyGrantingManaHeldBack && copyGranting <= pool.getOrDefault(color, 0))) {
+            copyGrantingMana.put(color, copyGranting - 1);
+            spentCopyGrantingMana++;
+        }
         int pathOfAncestry = pathOfAncestryMana.getOrDefault(color, 0);
         if (pathOfAncestry > 0) {
             pathOfAncestryMana.put(color, pathOfAncestry - 1);
@@ -1778,6 +1805,9 @@ public class ManaPool {
         }
         if (riotGrantingMana.getOrDefault(color, 0) > total) {
             riotGrantingMana.put(color, total);
+        }
+        if (copyGrantingMana.getOrDefault(color, 0) > total) {
+            copyGrantingMana.put(color, total);
         }
         if (pathOfAncestryMana.getOrDefault(color, 0) > total) {
             pathOfAncestryMana.put(color, total);
@@ -1931,6 +1961,34 @@ public class ManaPool {
             total += value;
         }
         return total;
+    }
+
+    /** Tags {@code amount} units of {@code color} already in the pool with the copy rider. */
+    public void addCopyGrantingMana(ManaColor color, int amount) {
+        if (amount > 0) {
+            copyGrantingMana.merge(color, amount, Integer::sum);
+        }
+    }
+
+    /** See {@link #copyGrantingManaHeldBack}. */
+    public void setCopyGrantingManaHeldBack(boolean heldBack) {
+        this.copyGrantingManaHeldBack = heldBack;
+    }
+
+    /** Mana of {@code color} still carrying the copy rider. */
+    public int getCopyGrantingMana(ManaColor color) {
+        return copyGrantingMana.getOrDefault(color, 0);
+    }
+
+    /**
+     * Returns how many copy-rider units were spent since the last call and resets the count. The
+     * spell or ability those units paid for claims them right after its payment; a payment that
+     * is neither (a mana ability, a tax) discards them, since their trigger never fires.
+     */
+    public int takeSpentCopyGrantingMana() {
+        int spent = spentCopyGrantingMana;
+        spentCopyGrantingMana = 0;
+        return spent;
     }
 
     /** Adds mana carrying Path of Ancestry's scry rider. */
@@ -5182,6 +5240,7 @@ public class ManaPool {
             moveTaggedManaToColorless(creatureAdditionalCounterGrantingMana, color, amount);
             moveTaggedManaToColorless(commanderCounterGrantingMana, color, amount);
             moveTaggedManaToColorless(riotGrantingMana, color, amount);
+            moveTaggedManaToColorless(copyGrantingMana, color, amount);
             moveTaggedManaToColorless(pathOfAncestryMana, color, amount);
         }
 
@@ -5300,6 +5359,7 @@ public class ManaPool {
             moveTaggedMana(creatureAdditionalCounterGrantingMana, color, replacementColor, amount);
             moveTaggedMana(commanderCounterGrantingMana, color, replacementColor, amount);
             moveTaggedMana(riotGrantingMana, color, replacementColor, amount);
+            moveTaggedMana(copyGrantingMana, color, replacementColor, amount);
             moveTaggedMana(pathOfAncestryMana, color, replacementColor, amount);
         }
 
@@ -5575,6 +5635,7 @@ public class ManaPool {
         clampColorTag(creatureAdditionalCounterGrantingMana, protectedColors);
         clampColorTag(commanderCounterGrantingMana, protectedColors);
         clampColorTag(riotGrantingMana, protectedColors);
+        clampColorTag(copyGrantingMana, protectedColors);
         clampColorTag(pathOfAncestryMana, protectedColors);
         drainColorMap(spellCastTriggerMana, protectedColors);
         drainColorBucket(abilityOnlyMana, protectedColors);

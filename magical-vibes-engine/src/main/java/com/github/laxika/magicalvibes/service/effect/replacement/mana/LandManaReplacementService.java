@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.replacement.LandManaEvent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
@@ -76,11 +77,22 @@ public class LandManaReplacementService {
      */
     public Resolution produce(GameData gameData, UUID playerId, Permanent land, Set<ManaColor> baseColors,
                               int baseAmount, ChoiceContext.ManaColorChoice production, boolean spellOnly) {
+        return produce(gameData, playerId, land, baseColors, baseAmount, production, spellOnly, null);
+    }
+
+    /**
+     * {@link #produce(GameData, UUID, Permanent, Set, int, ChoiceContext.ManaColorChoice, boolean)}
+     * for a mana ability whose mana carries {@code restriction} (Sunken Citadel's "spend this mana
+     * only to activate abilities of land sources"); the replaced mana keeps it (CR 106.6a).
+     */
+    public Resolution produce(GameData gameData, UUID playerId, Permanent land, Set<ManaColor> baseColors,
+                              int baseAmount, ChoiceContext.ManaColorChoice production, boolean spellOnly,
+                              ManaRestriction restriction) {
         if (baseAmount <= 0) {
             return new Resolution.Unchanged();
         }
         LandManaEvent event = new LandManaEvent(playerId, land.getId(), baseColors, baseAmount, production, Set.of(),
-                spellOnly);
+                spellOnly, restriction);
         return switch (replacementOrderService.run(gameData, event)) {
             case ReplacementOrderService.Outcome.Prompted<LandManaEvent> ignored -> new Resolution.Prompted();
             case ReplacementOrderService.Outcome.Suspended<LandManaEvent> ignored ->
@@ -152,6 +164,10 @@ public class LandManaReplacementService {
         ManaColor color = event.colors().iterator().next();
         int amount = event.amount();
         ManaPool pool = gameData.playerManaPools.get(event.playerId());
+        if (event.restriction() != null) {
+            event.restriction().applyTo(pool, color, amount);
+            return;
+        }
         if (production.creatureSpellOnly()) {
             if (production.fromCreature()) {
                 pool.addCreatureSourceCreatureSpellOnlyMana(color, amount);
@@ -182,6 +198,21 @@ public class LandManaReplacementService {
 
     private void askForColor(GameData gameData, LandManaEvent event) {
         List<String> colors = event.colors().stream().sorted().map(Enum::name).toList();
+        if (event.restriction() != null) {
+            ChoiceContext.RestrictedManaColorChoice restricted = new ChoiceContext.RestrictedManaColorChoice(
+                    event.playerId(), event.amount(), event.production().fromCreature(),
+                    event.colors().stream().sorted().toList(), event.restriction(), true)
+                    .withReplacementsApplied();
+            PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
+                    event.playerId(), null, null, restricted, colors,
+                    "Choose a color of mana to add (" + event.restriction().description() + ").");
+            if (gameData.interaction.isAwaitingInput()) {
+                gameData.queueInteraction(choice);
+            } else {
+                interactionHandlerRegistry.begin(gameData, choice);
+            }
+            return;
+        }
         ChoiceContext context = event.spellOnly()
                 ? new ChoiceContext.SpellOnlyManaColorChoice(event.playerId(), event.production().fromCreature(),
                         event.amount(), false).withReplacementsApplied()

@@ -4141,6 +4141,7 @@ public class AbilityActivationService {
             if (pool != null) {
                 pool.setBlueSpendableAsAnyColorForActivatedAbilities(previousBlueSpendPermission);
                 pool.setAllManaSpendableAsAnyColorForActivatedAbilities(previousAllManaSpendPermission);
+                pool.setCopyGrantingManaHeldBack(false);
             }
             if (pool != null && !withheldSpellOnlyMana.isEmpty()) {
                 pool.restoreSpellOnlyMana(withheldSpellOnlyMana);
@@ -4284,6 +4285,7 @@ public class AbilityActivationService {
         if (activationPool != null) {
             activationPool.setAllManaSpendableAsAnyColorForActivatedAbilities(
                     gameQueryService.canSpendManaAsAnyColorForActivatedAbilities(gameData, permanent, ability));
+            activationPool.setCopyGrantingManaHeldBack(isManaAbility(ability, ability.getEffects()));
         }
         if (ability.getRequiredXSourceCounterType() != null
                 && effectiveXValue != permanent.getCounterCount(ability.getRequiredXSourceCounterType())) {

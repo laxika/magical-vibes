@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.AddNotedManaForLastExiledCard
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterNextSpellOrAbilityCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardHasteGrantingManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
@@ -76,6 +77,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ManaAbilityCardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
@@ -1039,6 +1041,7 @@ public class ActivatedAbilityExecutionService {
                     revertable ? AbilityActivationService.snapshotPoolColors(pool) : null;
             java.util.EnumMap<ManaColor, Integer> creatureManaBefore =
                     revertable ? AbilityActivationService.snapshotCreatureManaColors(pool) : null;
+            java.util.EnumMap<ManaColor, Integer> regularManaBefore = AbilityActivationService.snapshotPoolColors(pool);
             int pendingTriggersBefore = gameData.pendingManaAbilityTriggers.size();
 
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects, effectiveXValue,
@@ -1047,6 +1050,7 @@ public class ActivatedAbilityExecutionService {
                     gameData, playerId);
             if (!manaTypeChoicePending) {
                 tagLegendarySourceMana(gameData, permanent, pool, manaTypesBefore);
+                tagCopyGrantingMana(snapshotEffects, pool, regularManaBefore);
                 int stackBeforeManaResolutionTriggers = gameData.stack.size();
                 triggerCollectionService.checkManaAbilityResolutionTriggers(
                         gameData, permanent, playerId,
@@ -1268,6 +1272,40 @@ public class ActivatedAbilityExecutionService {
         }
     }
 
+    /**
+     * The spending restriction every mana-producing effect of the ability puts on its mana, or
+     * {@code null} when its mana is unrestricted or its effects disagree.
+     */
+    private static ManaRestriction sharedManaRestriction(List<CardEffect> effects) {
+        ManaRestriction shared = null;
+        for (CardEffect effect : effects) {
+            if (!(effect instanceof ManaProducingEffect)) {
+                continue;
+            }
+            if (!(effect instanceof AwardRestrictedManaEffect restricted)
+                    || (shared != null && !shared.equals(restricted.restriction()))) {
+                return null;
+            }
+            shared = restricted.restriction();
+        }
+        return shared;
+    }
+
+    /**
+     * Sunken Palace: every unit of mana the ability produced carries the "when you spend this mana
+     * ... copy that spell or ability" rider, including mana a replacement effect added or changed
+     * (CR 106.6a).
+     */
+    private static void tagCopyGrantingMana(List<CardEffect> effects, ManaPool pool,
+                                            Map<ManaColor, Integer> before) {
+        if (effects.stream().noneMatch(RegisterNextSpellOrAbilityCopyEffect.class::isInstance)) {
+            return;
+        }
+        for (ManaColor color : ManaColor.values()) {
+            pool.addCopyGrantingMana(color, Math.max(0, pool.get(color) - before.getOrDefault(color, 0)));
+        }
+    }
+
     private List<CardEffect> snapshotEffects(GameData gameData, List<CardEffect> abilityEffects,
                                              Permanent permanent, ActivatedAbility ability,
                                              UUID activatedPermanentControllerId) {
@@ -1435,7 +1473,8 @@ public class ActivatedAbilityExecutionService {
                             .withSnowSource(snowSource)
                             .withCaveSource(caveSource)
                             .withDesertSource(desertSource)
-                            .withArtifactSource(nonTreasureArtifactSource));
+                            .withArtifactSource(nonTreasureArtifactSource),
+                    false, sharedManaRestriction(snapshotEffects));
             landManaReplaced = !(resolution instanceof LandManaReplacementService.Resolution.Unchanged);
             if (resolution instanceof LandManaReplacementService.Resolution.Produced produced
                     && produced.event().colors().size() == 1) {

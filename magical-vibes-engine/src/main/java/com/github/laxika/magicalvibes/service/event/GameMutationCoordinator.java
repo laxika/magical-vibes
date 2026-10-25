@@ -122,6 +122,7 @@ public class GameMutationCoordinator {
                     }
                     result = mutation.get();
                     gameData.recordWayBehindState();
+                    gameData.discardUnclaimedSpentManaRiders();
                     if (cues != null) {
                         cues.actionCompleting(gameData);
                     }

@@ -553,7 +553,13 @@ public sealed interface ChoiceContext {
 
     record RestrictedManaColorChoice(UUID playerId, int amount, boolean fromCreature,
                                      List<ManaColor> fixedColorOptions,
-                                     ManaRestriction restriction, boolean sameColor) implements ChoiceContext {
+                                     ManaRestriction restriction, boolean sameColor,
+                                     boolean replacementsApplied) implements ChoiceContext {
+        public RestrictedManaColorChoice(UUID playerId, int amount, boolean fromCreature,
+                                         List<ManaColor> fixedColorOptions,
+                                         ManaRestriction restriction, boolean sameColor) {
+            this(playerId, amount, fromCreature, fixedColorOptions, restriction, sameColor, false);
+        }
         public RestrictedManaColorChoice(UUID playerId, int amount, boolean fromCreature,
                                          List<ManaColor> fixedColorOptions,
                                          ManaRestriction restriction) {
@@ -565,6 +571,12 @@ public sealed interface ChoiceContext {
 
         public RestrictedManaColorChoice {
             fixedColorOptions = List.copyOf(fixedColorOptions);
+        }
+
+        /** The chosen color is the land's final mana; its replacement effects were already applied. */
+        public RestrictedManaColorChoice withReplacementsApplied() {
+            return new RestrictedManaColorChoice(playerId, amount, fromCreature, fixedColorOptions, restriction,
+                    sameColor, true);
         }
 
     }
