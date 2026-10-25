@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndSearchesLibraryToHandEffect;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,11 +17,14 @@ import org.springframework.stereotype.Component;
  * performs a mandatory unrestricted search of their own library for a card to put into their hand,
  * then shuffles. Both parts act on the draw-step player, so this cannot reuse the controller-relative
  * {@code LoseLifeEffect}/{@code SearchLibraryEffect} handlers.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: the life loss is its first change, so the Lich's Duel Mastery
+ * sacrifice that replaces it asks its CR 616.1 questions before any life changes.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TargetPlayerLosesLifeAndSearchesLibraryToHandEffectHandler implements NormalEffectHandlerBean {
+public class TargetPlayerLosesLifeAndSearchesLibraryToHandEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
     private final LibrarySearchSupport librarySearchSupport;

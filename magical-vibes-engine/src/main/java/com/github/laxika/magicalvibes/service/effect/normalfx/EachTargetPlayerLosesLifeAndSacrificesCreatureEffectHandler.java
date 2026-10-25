@@ -8,21 +8,30 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerLosesLifeAndSacrificesCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.effect.ContinuesAfterDeparture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+/**
+ * "Each target player loses life and sacrifices a creature", in either order. Marked {@link AsksDeathReplacementsFirst}:
+ * the losing-first form's first change is the losses, and the sacrificing-first form changes nothing before its
+ * sacrifice step; its losses follow as a {@link PlayersLoseLifeEffect} step.
+ */
 @Component
 @RequiredArgsConstructor
 public class EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler
-        implements NormalEffectHandlerBean, ContinuesAfterDeparture {
+        implements NormalEffectHandlerBean, ContinuesAfterDeparture, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
@@ -48,7 +57,10 @@ public class EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler
         }
 
         if (!loseLifeAndSacrifice.sacrificeBeforeLifeLoss()) {
-            applyLifeLoss(gameData, allTargetPlayerIds, loseLifeAndSacrifice.lifeLoss(), entry.getCard().getName());
+            // The losses are this step's first change, so every Lich's Duel Mastery sacrifice that replaces one
+            // of them asks its CR 616.1 questions before any life is lost.
+            lifeSupport.applyLifeLosses(gameData, losses(gameData, allTargetPlayerIds, loseLifeAndSacrifice.lifeLoss()),
+                    entry.getCard().getName());
         }
 
         beginNextTarget(gameData, entry, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
@@ -63,13 +75,17 @@ public class EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler
         return List.copyOf(targetPlayerIds);
     }
 
-    /** "Then each loses life", for the form that sacrifices first, once the sacrifice step is done. */
+    /**
+     * "Then each loses life", for the form that sacrifices first, once the sacrifice step is done: the losses are the
+     * next step (CR 608.2c), since the sacrifice can take away a replacement the Lich's Duel Mastery sacrifice that
+     * replaces a loss would have, so that sacrifice asks its CR 616.1 questions before any life is lost.
+     */
     @Override
     public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
         var loseLifeAndSacrifice = (EachTargetPlayerLosesLifeAndSacrificesCreatureEffect) effect;
         if (loseLifeAndSacrifice.sacrificeBeforeLifeLoss()) {
-            applyLifeLoss(gameData, targetPlayerIds(entry), loseLifeAndSacrifice.lifeLoss(),
-                    entry.getCard().getName());
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(new PlayersLoseLifeEffect(
+                    losses(gameData, targetPlayerIds(entry), loseLifeAndSacrifice.lifeLoss()))));
         }
     }
 
@@ -143,16 +159,26 @@ public class EachTargetPlayerLosesLifeAndSacrificesCreatureEffectHandler
         }
         destructionSupport.performSimultaneousSacrifice(gameData, chosen);
         if (effect.sacrificeBeforeLifeLoss()) {
-            applyLifeLoss(gameData, targetPlayerIds, effect.lifeLoss(), sourceCard.getName());
+            Map<UUID, Integer> losses = losses(gameData, targetPlayerIds, effect.lifeLoss());
+            StackEntry parked = gameData.pendingEffectResolutionEntry;
+            if (parked != null) {
+                // The losses are the step the parked resolution resumes with, as after a sacrifice step.
+                parked.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                        List.of(new PlayersLoseLifeEffect(losses)));
+            } else {
+                lifeSupport.applyLifeLosses(gameData, losses, sourceCard.getName());
+            }
         }
     }
 
-    private void applyLifeLoss(GameData gameData, List<UUID> targetPlayerIds, int amount, String cardName) {
+    private static Map<UUID, Integer> losses(GameData gameData, List<UUID> targetPlayerIds, int amount) {
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID targetPlayerId : targetPlayerIds) {
             if (gameData.playerIds.contains(targetPlayerId)) {
-                lifeSupport.applyLifeLoss(gameData, targetPlayerId, amount, cardName);
+                losses.put(targetPlayerId, amount);
             }
         }
+        return losses;
     }
 
     private List<UUID> apnapTargets(GameData gameData, List<UUID> targetPlayerIds) {

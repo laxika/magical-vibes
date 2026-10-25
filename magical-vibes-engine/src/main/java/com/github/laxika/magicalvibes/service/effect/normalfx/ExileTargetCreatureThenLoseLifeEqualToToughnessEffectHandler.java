@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureThenLoseLifeEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -14,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 /** Resolves the exile-plus-last-known-toughness life-loss effect. */
@@ -26,7 +29,6 @@ public class ExileTargetCreatureThenLoseLifeEqualToToughnessEffectHandler
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
-    private final LifeSupport lifeSupport;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -53,8 +55,12 @@ public class ExileTargetCreatureThenLoseLifeEqualToToughnessEffectHandler
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         UUID controllerId = entry.getControllerId();
-        if (controllerId != null && !controlsExemptPermanent(gameData, controllerId, exile)) {
-            lifeSupport.applyLifeLoss(gameData, controllerId, toughness, entry.getCard().getName());
+        if (controllerId != null && toughness > 0 && !controlsExemptPermanent(gameData, controllerId, exile)) {
+            // The life loss is a step of its own (CR 608.2c: after the exile, which can take away a replacement
+            // the Lich's Duel Mastery sacrifice that replaces it would have), so that sacrifice's CR 616.1
+            // questions are asked before any life is lost and a rerun doesn't exile again.
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(new LoseLifeEffect(toughness, LoseLifeRecipient.CONTROLLER)));
         }
     }
 

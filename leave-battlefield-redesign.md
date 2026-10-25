@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; the fallback stays until the callers listed in the twelfth part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; thirteenth part: the losses after an exile or a sacrifice (Dire Tactics, Trystan, Will of the Abzan, Xathrid Demon's sacrifice) are steps of their own through the new internal `PlayersLoseLifeEffect`, and Priest of Forgotten Gods', Mornsong Aria's and Thieving Amalgam's losses ask first; the fallback stays until the callers listed in the thirteenth part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1684,6 +1684,63 @@ Steps add notes here for later steps, under their number.
   loss (the latter also failed at HEAD for unstubbed `isCreature` / `hasEffectiveSubtype`, now stubbed); its
   `drawsButNoLifeLossWhenCantChange` (also failing at HEAD) is removed, since the "can't change" case now belongs to
   `LoseLifeEffectHandler`.
+
+### Step 13 (thirteenth part: life losses after an exile or a sacrifice)
+
+- Rules: instructions are followed in the order written (CR 608.2c, checked), so "exile target creature. If you don't
+  control a Human, you lose life equal to its toughness", "exile a card from your graveyard, then each opponent loses
+  2 life", "each sacrifice a creature ... and lose 3 life" and "sacrifice a creature, then each opponent loses life equal
+  to its power" lose the life after the exile or sacrifice, which can take away a replacement the Mastery's sacrifice
+  would otherwise have (the exiled or sacrificed Kalitas, an animated Rest in Peace). The Mastery's sacrifice replaces
+  the loss (CR 614.6, checked) and its death replacements are chosen in the same process (CR 616.1f, checked), so the
+  question belongs after the earlier change and before any life is lost; several players' questions are asked in APNAP
+  order (CR 616.1 and CR 101.4, checked). The amounts are determined once (CR 608.2h, checked), so they are fixed
+  before the loss step. No official ruling covers the Mastery (it is a playtest card).
+- Done:
+  - New internal step `PlayersLoseLifeEffect(Map<UUID, Integer> losses)` (domain `model/effect/`, never on a card) and
+    its handler `PlayersLoseLifeEffectHandler` (marked `AsksDeathReplacementsFirst`, `LifeSupport.applyLifeLosses`,
+    players who left the game skipped). It carries players and amounts a `LoseLifeRecipient` can't name (each target
+    player, a choice completion's opponents), so multi-target losses can be a step of their own too.
+  - `ExileTargetCreatureThenLoseLifeEqualToToughness` (Dire Tactics): after the exile, a `LoseLifeEffect(toughness,
+    CONTROLLER)` step (the Human check stays at that moment, after the exile).
+  - `ExileOwnGraveyardCardThenEachOpponentLosesLife` (Trystan, Penitent Culler): after the exile, an `EACH_OPPONENT`
+    loss step.
+  - `EachTargetPlayerLosesLifeAndSacrificesCreature`, now marked `AsksDeathReplacementsFirst`: the losing-first form
+    (Priest of Forgotten Gods) loses through `applyLifeLosses` (its first change); the sacrificing-first form (Will of
+    the Abzan) inserts a `PlayersLoseLifeEffect` after the sacrifice step from `continueAfterDeparture`, and from the
+    choice completion at `pendingEffectResolutionIndex` of the parked resolution (losses at once only when nothing is
+    parked).
+  - Xathrid Demon's sacrifice branch: `DestructionSupport.applyOpponentsLoseLife` became `opponentsLoseLifeAsStep`,
+    which inserts a `PlayersLoseLifeEffect` (into the resolving entry for the lone-creature sacrifice, at the parked
+    resolution's index from `handleSacrificeCreatureOpponentsLoseLife`); with no entry the losses happen at once.
+  - Marked `AsksDeathReplacementsFirst` (their first change is the loss): `TargetPlayerLosesLifeAndSearchesLibraryToHand`
+    (Mornsong Aria, Maralen of the Mornsong) and `DrainLifeFromDyingCreatureOwner` (Thieving Amalgam).
+- **Left** (why the fallback still can't be deleted):
+  - Life loss elsewhere: 100 files still call `applyLifeLoss` / `applySetLifeTotal` / `applyLifePayment` without being
+    marked (same grep as in the eleventh part). Among them: `EachDestroyedPermanentControllerLosesLife` (Deadly
+    Tempest) and the other `DestroyAllPermanentsEffect` then-effects that lose life: they resolve on a fresh
+    `thenEntry` after the destruction (which closes the window), so a step they insert would be lost; that needs the
+    then-effect run as a step of the real entry with its event values. `ExileGraveyardCardWithConditionalBonus`'s
+    `creatureLifeLossToGraveyardOwner` (no card uses it yet); `ScytheSpecter` (the discards, then the losses); the
+    handlers that interleave per-player losses with other changes (`EachPlayerRevealsTopCardLosesLifeEqualToManaValueThenToHand`,
+    `TargetPlayersRevealTopCards...`, `MillControllerAndTargetPlayerLosesLifeByMilledManaValue`, the
+    `ExileTopCard...LoseLifeEqualToManaValue...` family; `PlayersLoseLifeEffect` can now carry each player's loss);
+    `TargetPlayerDrawsAndLosesLifePerChosenType`'s multi-target losses (same); the "lose life unless" / "or lose life"
+    choice families and their completions; `SetLifeTotalEffectHandler` and the exchange/redistribute handlers; and every
+    life payment (`askBeforePayment`, CR 601.2h).
+  - `EnchantedCreatureControllerLosesLifeEffectHandler` (Stab Wound, Soul Bleed, ...) changes the life total itself,
+    bypassing `LifeSupport` entirely: no Mastery shield or sacrifice, no "loses life" triggers. Found, not fixed.
+  - Unchanged: Bomb Squad (parked pending an official ruling), redirected combat damage, and nothing is asked while
+    another departure batch or replay window's answers are pending.
+- Tests: new in `LichsDuelMasteryTest` (all `@FailOnLegacyDepartureFallback`, all fail with the old handlers, where the
+  player lost the life instead): `exileThenLifeLossAsksTheDeathReplacementBeforeTheSacrifice` (Dire Tactics cast by the
+  Mastery's controller: the Bears are exiled and life is 20 while asked), `loseLifeThenSacrificeAsksTheMasteryBeforeAnyLifeIsLost`
+  (Priest of Forgotten Gods: asked before the loss; after choosing Kalitas, life 20, a Zombie, {B}{B} and the card
+  drawn), `sacrificeThenLifeLossAsksTheMasteryBeforeAnyLifeIsLost` (Will of the Abzan: Avatar of Might's own sacrifice
+  question first, then the Mastery's with the Avatar gone and life 20), `xathridDemonSacrificeThenAsksTheMasteryBeforeAnyLifeIsLost`
+  (the chosen Bears in the graveyard, life 20 while asked) and `loseLifeThenSearchAsksTheMasteryBeforeAnyLifeIsLost`
+  (Mornsong Aria at the Mastery controller's draw step: asked first, then the search). No existing test changed;
+  `PriestOfForgottenGodsTest` has the same 2 failures as at HEAD.
 
 ### Step 2
 

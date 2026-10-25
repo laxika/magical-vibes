@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentMayGainControlOfCreat
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutSubject;
+import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
@@ -81,6 +82,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1072,12 +1074,27 @@ public class DestructionSupport {
                 gameData.id, entry.getCard().getName(), enchanted.getCard().getName());
     }
 
-    public void applyOpponentsLoseLife(GameData gameData, UUID controllerId, int amount, String sourceName) {
+    /**
+     * Makes each opponent of {@code controllerId} lose {@code amount} life after a sacrifice ("sacrifice a creature,
+     * then each opponent loses life equal to its power"). The losses are a {@link PlayersLoseLifeEffect} step inserted
+     * at {@code index} of {@code entry} (CR 608.2c), so the Lich's Duel Mastery sacrifices that replace them ask their
+     * CR 616.1 questions before any life is lost, and a stopped loss is resolved again without sacrificing again.
+     * With no {@code entry} (no resolution to resume) the losses happen at once.
+     */
+    public void opponentsLoseLifeAsStep(GameData gameData, StackEntry entry, int index, UUID controllerId,
+                                        int amount, String sourceName) {
         if (amount <= 0) return;
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (playerId.equals(controllerId)) continue;
-            lifeSupport.applyLifeLoss(gameData, playerId, amount, sourceName);
+            if (!playerId.equals(controllerId)) {
+                losses.put(playerId, amount);
+            }
         }
+        if (entry != null) {
+            entry.insertEffectsToResolve(index, List.of(new PlayersLoseLifeEffect(losses)));
+            return;
+        }
+        lifeSupport.applyLifeLosses(gameData, losses, sourceName);
         gameOutcomeService.checkWinCondition(gameData);
     }
 

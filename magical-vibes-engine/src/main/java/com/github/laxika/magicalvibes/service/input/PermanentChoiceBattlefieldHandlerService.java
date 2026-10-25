@@ -1524,8 +1524,10 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         destructionSupport.sacrificeAndLog(gameData, target, sacrificingPlayerId);
 
-        // Each opponent loses life equal to the sacrificed creature's power
-        destructionSupport.applyOpponentsLoseLife(gameData, sacrificingPlayerId, power, context.sourceCardName());
+        // Each opponent loses life equal to the sacrificed creature's power, as the step the parked resolution
+        // resumes with, so their Lich's Duel Mastery sacrifices are asked about before any life is lost.
+        destructionSupport.opponentsLoseLifeAsStep(gameData, gameData.pendingEffectResolutionEntry,
+                gameData.pendingEffectResolutionIndex, sacrificingPlayerId, power, context.sourceCardName());
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

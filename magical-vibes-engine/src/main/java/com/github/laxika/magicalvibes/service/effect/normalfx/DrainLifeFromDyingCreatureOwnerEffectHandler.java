@@ -6,15 +6,20 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainLifeFromDyingCreatureOwnerEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-/** Resolves a life drain from the owner of the creature that caused an ally-death trigger. */
+/**
+ * Resolves a life drain from the owner of the creature that caused an ally-death trigger. Marked
+ * {@link AsksDeathReplacementsFirst}: the life loss is its first change, so the Lich's Duel Mastery sacrifice that
+ * replaces it asks its CR 616.1 questions before any life changes.
+ */
 @Component
 @RequiredArgsConstructor
-public class DrainLifeFromDyingCreatureOwnerEffectHandler implements NormalEffectHandlerBean {
+public class DrainLifeFromDyingCreatureOwnerEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final LifeSupport lifeSupport;

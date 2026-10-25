@@ -69,7 +69,10 @@ public class SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffectHandle
                     if (creature != null) {
                         int power = gameQueryService.getEffectivePower(gameData, creature);
                         destructionSupport.sacrificeAndLog(gameData, creature, controllerId);
-                        destructionSupport.applyOpponentsLoseLife(gameData, controllerId, power, cardName);
+                        // The opponents' life loss is a step of its own after the sacrifice, which can take away
+                        // a replacement their Lich's Duel Mastery sacrifice would have (the sacrificed Kalitas).
+                        destructionSupport.opponentsLoseLifeAsStep(gameData, entry,
+                                entry.getResolvingEffectIndex() + 1, controllerId, power, cardName);
                     }
                     return;
                 }
