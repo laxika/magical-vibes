@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGraveyardExileEffect;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -4135,13 +4136,15 @@ public abstract class AiDecisionEngine {
         return color != null ? ManaColor.fromCode(color.getCode()) : null;
     }
 
+    /** Taps mana sources to pay for the AI's next action, so their triggers wait for it (CR 603.3). */
     protected AiManaManager.ManaTapAction manaTapAction() {
         return (idx, abilityIndex) -> {
             if (abilityIndex != null) {
-                send(() -> gameActions.handleActivateAbility(
-                        new ActivateAbilityRequest(idx, abilityIndex, null, null, null, null, null)));
+                send(() -> gameActions.handleActivateAbility(new ActivateAbilityRequest(
+                        idx, abilityIndex, null, null, null, null, null, ManaPaymentIntent.unspecified())));
             } else {
-                send(() -> gameActions.handleTapPermanent(new TapPermanentRequest(idx)));
+                send(() -> gameActions.handleTapPermanent(
+                        new TapPermanentRequest(idx, ManaPaymentIntent.unspecified())));
             }
         };
     }

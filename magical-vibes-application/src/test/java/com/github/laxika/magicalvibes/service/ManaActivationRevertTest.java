@@ -2,12 +2,16 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.r.RelicPutrescence;
+import com.github.laxika.magicalvibes.cards.s.SilverMyr;
 import com.github.laxika.magicalvibes.cards.w.WanderwineHub;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -190,5 +194,77 @@ class ManaActivationRevertTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.revertableManaActivations).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A mana ability activated on its own puts its trigger on the stack and can no longer be reverted")
+    void standaloneActivationWithTriggerIsCommitted() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent myr = enchantedSilverMyr();
+        harness.ensurePriority(player1);
+
+        harness.tapPermanent(player1, 0);
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY));
+        assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+        assertThat(gd.revertableManaActivations).hasSize(1);
+
+        gs.revertManaActivations(gd, player1);
+
+        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(myr.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A mana ability activated to pay for a cast holds its trigger, and reverting drops it")
+    void paymentActivationHoldsTriggerUntilReverted() {
+        Permanent myr = enchantedSilverMyr();
+        harness.setHand(player1, List.of(createGreenCreature()));
+        harness.ensurePriority(player1);
+
+        harness.tapPermanentToPayFor(player1, 0, ManaPaymentIntent.forCast(0, 0));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+
+        gs.revertManaActivations(gd, player1);
+
+        assertThat(myr.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An unspecified payment intent still holds the trigger until the spell is cast above it")
+    void unspecifiedPaymentHoldsTriggerUntilCast() {
+        enchantedSilverMyr();
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(createGreenCreature()));
+        harness.ensurePriority(player1);
+
+        harness.tapPermanentToPayFor(player1, 0, ManaPaymentIntent.unspecified());
+        harness.tapPermanentToPayFor(player1, 1, ManaPaymentIntent.unspecified());
+        assertThat(gd.stack).isEmpty();
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+    }
+
+    private Permanent enchantedSilverMyr() {
+        Permanent myr = harness.addToBattlefieldAndReturn(player1, new SilverMyr());
+        myr.setSummoningSick(false);
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new RelicPutrescence());
+        aura.setAttachedTo(myr.getId());
+        return myr;
     }
 }

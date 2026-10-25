@@ -128,7 +128,7 @@ public class AiGameActions {
         GameData gameData = game();
         if (gameData == null) return;
         try {
-            gameService.tapPermanent(gameData, aiPlayer, request.permanentIndex());
+            gameService.tapPermanent(gameData, aiPlayer, request.permanentIndex(), request.paymentIntent());
         } catch (IllegalArgumentException | IllegalStateException e) {
             log.info("AI: engine rejected tapPermanent (index={}) in game {}: {}", request.permanentIndex(), gameId, e.getMessage());
         }
@@ -169,7 +169,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.activateAbility(gameData, aiPlayer, request.permanentIndex(), request.abilityIndex(), request.xValue(),
-                    request.targetId(), request.targetZone(), request.targetIds(), request.damageAssignments());
+                    request.targetId(), request.targetZone(), request.targetIds(), request.damageAssignments(),
+                    request.paymentIntent());
         } catch (IllegalArgumentException | IllegalStateException e) {
             log.info("AI: engine rejected activateAbility (permanentIndex={}, abilityIndex={}) in game {}: {}",
                     request.permanentIndex(), request.abilityIndex(), gameId, e.getMessage());

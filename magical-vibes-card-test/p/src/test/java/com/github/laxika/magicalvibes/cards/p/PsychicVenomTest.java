@@ -85,14 +85,15 @@ class PsychicVenomTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Tapping the enchanted land for mana defers its damage trigger until priority")
+    @DisplayName("Tapping the enchanted land for mana puts its damage trigger on the stack")
     void tappingLandQueuesTrigger() {
         addLandWithAura(player1);
 
-        // Tapping a land for mana defers its triggers (CR 603.3) until a player next gets priority.
+        // The trigger goes on the stack the next time a player would receive priority (CR 603.3),
+        // which is right after the mana ability resolves.
         harness.tapPermanent(player1, 0);
 
-        assertThat(gd.pendingManaAbilityTriggers).anySatisfy(entry -> {
+        assertThat(gd.stack).anySatisfy(entry -> {
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         });
     }

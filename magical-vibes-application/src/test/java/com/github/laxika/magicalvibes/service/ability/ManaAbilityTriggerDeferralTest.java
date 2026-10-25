@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.ShrineOfBoundlessGrowth;
 import com.github.laxika.magicalvibes.cards.v.ViridianRevel;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -408,7 +409,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
     // =========================================================================
 
     @Nested
-    @DisplayName("CR 603.2: basic-mana tap defers enchanted-permanent-tap triggers")
+    @DisplayName("CR 603.2: basic-mana tap made to pay for a spell defers enchanted-permanent-tap triggers")
     class BasicManaTapTriggerDeferral {
 
         /**
@@ -432,11 +433,11 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("Tapping enchanted artifact for mana defers Relic Putrescence trigger")
+        @DisplayName("Tapping enchanted artifact to pay for a spell defers Relic Putrescence trigger")
         void enchantedTapDefersTrigger() {
             setupEnchantedMyr(player2);
 
-            harness.tapPermanent(player2, 0);
+            harness.tapPermanentToPayFor(player2, 0, ManaPaymentIntent.unspecified());
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
@@ -457,7 +458,8 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             harness.setHand(player1, List.of(new Shock()));
             harness.addMana(player1, ManaColor.RED, 1);
 
-            harness.tapPermanent(player2, 0); // tap Leaden Myr → Relic Putrescence triggers, deferred
+            // tap Leaden Myr to pay for the Bond → Relic Putrescence triggers, deferred
+            harness.tapPermanentToPayFor(player2, 0, ManaPaymentIntent.forCast(0, 0));
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
 
@@ -482,7 +484,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             harness.setHand(player1, List.of(new Shock()));
             harness.addMana(player1, ManaColor.RED, 1);
 
-            harness.tapPermanent(player2, 0);
+            harness.tapPermanentToPayFor(player2, 0, ManaPaymentIntent.unspecified());
             assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
 
             harness.passPriority(player2);

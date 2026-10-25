@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.ManaShort;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -85,14 +86,15 @@ class BlightTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Tapping the enchanted land triggers the destroy ability (deferred as a mana-ability trigger)")
+    @DisplayName("Tapping the enchanted land triggers the destroy ability onto the stack")
     void tappingLandTriggersDestroy() {
         addLandWithAura();
 
-        // Tapping a land for mana defers its triggers (CR 603.3) until a player next gets priority.
+        // The trigger goes on the stack the next time a player would receive priority (CR 603.3),
+        // which is right after the mana ability resolves.
         harness.tapPermanent(player1, 0);
 
-        assertThat(gd.pendingManaAbilityTriggers).anySatisfy(entry -> {
+        assertThat(gd.stack).anySatisfy(entry -> {
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(entry.getCard().getName()).isEqualTo("Blight");
         });
@@ -146,10 +148,12 @@ class BlightTest extends BaseCardTest {
         Permanent enchantedLand = addLandWithAura();
         Permanent otherLand = harness.addToBattlefieldAndReturn(player1, new Forest());
 
-        harness.tapPermanent(player1, 0);
-        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(otherLand));
-
         harness.setHand(player1, List.of(new GrizzlyBears()));
+        ManaPaymentIntent payForBears = ManaPaymentIntent.forCast(0, 0);
+
+        harness.tapPermanentToPayFor(player1, 0, payForBears);
+        harness.tapPermanentToPayFor(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(otherLand), payForBears);
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 

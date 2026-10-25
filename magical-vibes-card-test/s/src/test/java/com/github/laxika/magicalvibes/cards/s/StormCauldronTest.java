@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RazorGolem;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -46,7 +47,7 @@ class StormCauldronTest extends BaseCardTest {
         harness.tapPermanent(player1, 1);
 
         harness.assertOnBattlefield(player1, "Forest");
-        assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
 
         resolveAllTriggers();
 
@@ -75,7 +76,7 @@ class StormCauldronTest extends BaseCardTest {
         harness.tapPermanent(player1, 1);
 
         harness.assertOnBattlefield(player1, "Forest");
-        assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
@@ -103,7 +104,7 @@ class StormCauldronTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(bears), null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
-        assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
 
         resolveAllTriggers();
 
@@ -120,9 +121,10 @@ class StormCauldronTest extends BaseCardTest {
         }
         harness.setHand(player1, List.of(new RazorGolem()));
 
-        harness.tapPermanent(player1, 1);
-        harness.tapPermanent(player1, 2);
-        harness.tapPermanent(player1, 3);
+        ManaPaymentIntent payForGolem = ManaPaymentIntent.forCast(0, 0);
+        harness.tapPermanentToPayFor(player1, 1, payForGolem);
+        harness.tapPermanentToPayFor(player1, 2, payForGolem);
+        harness.tapPermanentToPayFor(player1, 3, payForGolem);
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).anySatisfy(entry ->
@@ -190,7 +192,7 @@ class StormCauldronTest extends BaseCardTest {
 
         harness.tapPermanent(player1, 1);
 
-        assertThat(gd.pendingManaAbilityTriggers).hasSize(2);
+        assertThat(gd.stack).hasSize(2);
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Forest");

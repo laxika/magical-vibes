@@ -1914,19 +1914,20 @@ export class TargetingChoiceService {
    * mana of any colour" prompt can tell which colours would strand the payment and grey out the
    * rest. Advisory only — every colour stays answerable.
    *
-   * Kicker and buyback casts are deliberately omitted: the server prices the card's own cost, so
-   * an unmentioned optional cost could grey out a colour the player actually needs. Omitting the
-   * intent just leaves all colours enabled.
+   * Kicker and buyback casts send an empty intent: the server prices the card's own cost, so
+   * an unmentioned optional cost could grey out a colour the player actually needs. An empty
+   * intent leaves all colours enabled but still tells the server the tap is part of a payment,
+   * so the source's triggers wait for the spell instead of going on the stack first.
    */
   private paymentIntent(): { handCardIndex?: number; xValue?: number; abilityPermanentId?: string; abilityIndex?: number } | undefined {
-    if (this.payingForCast && this.pendingCastCardIndex >= 0) {
+    if (this.payingForCast) {
       const msg = this.pendingCastMessage;
-      if (msg?.kicked || msg?.buyback) return undefined;
+      if (this.pendingCastCardIndex < 0 || msg?.kicked || msg?.buyback) return {};
       return { handCardIndex: this.pendingCastCardIndex, xValue: this.pendingCastXValue };
     }
-    if (this.payingForAbility && this.pendingActivationPermanentId != null) {
+    if (this.payingForAbility) {
       const abilityIndex = this.pendingActivationMessage?.abilityIndex;
-      if (typeof abilityIndex !== 'number') return undefined;
+      if (this.pendingActivationPermanentId == null || typeof abilityIndex !== 'number') return {};
       return { abilityPermanentId: this.pendingActivationPermanentId, abilityIndex };
     }
     return undefined;

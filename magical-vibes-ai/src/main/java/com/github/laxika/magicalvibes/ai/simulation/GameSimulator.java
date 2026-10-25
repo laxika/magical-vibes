@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.InteractionOptions;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -734,10 +735,9 @@ public class GameSimulator {
                     gd, player.getId(), ability.getManaCost(), additionalGenericCost,
                     (index, manaAbilityIndex) -> {
                         if (manaAbilityIndex == null) {
-                            gameService.tapPermanent(gd, player, index);
+                            gameService.tapPermanent(gd, player, index, ManaPaymentIntent.unspecified());
                         } else {
-                            gameService.activateAbility(
-                                    gd, player, index, manaAbilityIndex, null, null, null);
+                            activateManaAbilityToPay(gd, player, index, manaAbilityIndex);
                         }
                     },
                     ability.isRequiresTap() ? source.getId() : null);
@@ -1187,9 +1187,9 @@ public class GameSimulator {
             manaManager.tapBasicLandsForCost(gd, playerId, card.getManaCost(), xValue,
                     (index, abilityIndex) -> {
                         if (abilityIndex == null) {
-                            gameService.tapPermanent(gd, player, index);
+                            gameService.tapPermanent(gd, player, index, ManaPaymentIntent.unspecified());
                         } else {
-                            gameService.activateAbility(gd, player, index, abilityIndex, null, null, null);
+                            activateManaAbilityToPay(gd, player, index, abilityIndex);
                         }
                     });
             return;
@@ -1237,9 +1237,9 @@ public class GameSimulator {
         manaManager.tapSourcesForCost(gd, playerId, card.getManaCost(), xValue,
                 (index, abilityIndex) -> {
                     if (abilityIndex == null) {
-                        gameService.tapPermanent(gd, player, index);
+                        gameService.tapPermanent(gd, player, index, ManaPaymentIntent.unspecified());
                     } else {
-                        gameService.activateAbility(gd, player, index, abilityIndex, null, null, null);
+                        activateManaAbilityToPay(gd, player, index, abilityIndex);
                     }
                 });
     }
@@ -1510,6 +1510,12 @@ public class GameSimulator {
         return selectedIds.size() == requirement.count() ? selectedIds : null;
     }
 
+    /** Activates a mana ability to pay for the simulated action, so its triggers wait for it (CR 603.3). */
+    private void activateManaAbilityToPay(GameData gd, Player player, int index, int abilityIndex) {
+        gameService.activateAbility(gd, player, index, abilityIndex, null, null, null, null, null,
+                ManaPaymentIntent.unspecified());
+    }
+
     /**
      * Taps a permanent for mana or activates its mana ability in simulation.
      * Returns true if the permanent was tapped, false if it has no mana production.
@@ -1518,7 +1524,7 @@ public class GameSimulator {
         boolean hasOnTapMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
                 .anyMatch(e -> e instanceof ManaProducingEffect mp && mp.modeledByManaEstimator());
         if (hasOnTapMana) {
-            gameService.tapPermanent(gd, player, index);
+            gameService.tapPermanent(gd, player, index, ManaPaymentIntent.unspecified());
             return true;
         }
         // Check activated mana abilities (dual lands, pain lands, etc.)
@@ -1534,7 +1540,7 @@ public class GameSimulator {
             }
         }
         if (bestIndex == null) return false;
-        gameService.activateAbility(gd, player, index, bestIndex, null, null, null);
+        activateManaAbilityToPay(gd, player, index, bestIndex);
         return true;
     }
 

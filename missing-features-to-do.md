@@ -9,40 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 39. Non-mana triggers from mana abilities are held during the mana-undo window
-
-**Status:** open · **Found:** 2026-10-19, while fixing R-card test failures
-
-**Failing tests:**
-- `RelicPutrescenceTest.manaAbilityResolvesBeforePoisonTrigger()` ("Tapping for mana adds mana
-  immediately and puts poison on the stack")
-
-**What the rules require.** CR 605.3b: an activated mana ability resolves immediately. Relic
-Putrescence's "Whenever enchanted artifact becomes tapped, its controller gets a poison counter" is
-not a mana ability, so per CR 603.3 it goes on the stack the next time a player would receive
-priority. The engine's `GameService.flushManaAbilityTriggersAfterActivation` deliberately keeps such
-triggers in `pendingManaAbilityTriggers` while `revertableManaActivations` is non-empty, so the
-player can still undo the mana tap. The trigger therefore is not on the stack after the tap.
-
-**Why it's large.** It is a conflict between rules timing and the client's "undo mana tap" UX.
-Fixing it means deciding that a mana activation whose trigger leaves the mana-ability world can't
-be reverted (or ending the revert window at that point), then changing the revert bookkeeping, the
-flush logic, and the frontend's undo affordance.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 39: when an activated mana ability causes a non-mana
-triggered ability (e.g. Relic Putrescence), put that trigger on the stack at the next priority
-(CR 603.3) instead of holding it in pendingManaAbilityTriggers during the revertable-mana window.
-Decide how this interacts with revertableManaActivations (likely: that activation becomes
-non-revertable) and update GameService.flushManaAbilityTriggersAfterActivation and the client undo
-UI. Make RelicPutrescenceTest.manaAbilityResolvesBeforePoisonTrigger pass. Don't run the full test
-suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 40. Mana riders and spending restrictions tied to specific units of mana
 
 **Status:** open · **Found:** 2026-10-19, while fixing S-card test failures
@@ -597,6 +563,42 @@ floating-effect tagging) to the remaining "until end of turn" / "this turn" stor
 cleanup step of the player who was active when it began (Runed Terror ruling; CR 514.2). Start with the
 most-used ones (Permanent.resetModifiers flags, damage-prevention shields) and add RunedTerrorTest cases for
 each. Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 56. A standalone "any colour" mana activation still holds its non-mana triggers
+
+**Status:** open · **Found:** 2026-10-25, while finishing entry 39 (mana-ability trigger timing)
+
+**Failing tests:**
+- None yet. Write one: activate Birds of Paradise (or a land whose mana needs a colour prompt) with no
+  payment intent while a non-mana trigger watches it, answer the colour prompt, and expect the trigger on
+  the stack.
+
+**What the rules require.** CR 603.3: a triggered ability goes on the stack the next time a player would
+receive priority. A mana ability activated with no payment in progress resolves, and its controller then
+receives priority (CR 117.3c), so its non-mana triggers belong on the stack then. Since entry 39,
+`GameService.finishPriorityManaActivation` does this for activations that finish at once. An activation that
+stops for a colour choice parks in `GameData.pendingRevertableManaActivation`. The answer handlers then
+complete it into a revertable `ManaActivation`, and `GameService.handleInteractionAnswer` still uses the
+old flush, which waits while any revertable activation exists. So with no payment intent, its triggers
+wait until the next priority pass or cast.
+
+**Why it's large.** The payment intent is only known on the `tapPermanent`/`activateAbility` call. To
+carry it across the colour prompt, `PendingManaActivation` (or a sibling field) has to record "standalone",
+and every `completeParkedManaActivation` call site in `ChoiceHandlerService` (about ten) has to commit
+instead of recording a revertable activation. Then the answer path needs the standalone flush.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 56: when a mana ability activated with no ManaPaymentIntent
+parks for a colour choice (pendingRevertableManaActivation), make its non-mana triggers go on the stack once
+the colour is chosen (CR 603.3, CR 117.3c), and make that activation non-revertable, matching what
+GameService.finishPriorityManaActivation already does for activations that finish at once. Keep
+intent-tagged (payment) activations held and revertable. Add tests next to ManaActivationRevertTest. Don't
+run the full test suite; ask me. Don't commit until I say so.
 ```
 
 ---

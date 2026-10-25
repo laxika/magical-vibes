@@ -13,7 +13,9 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.ManaActivation;
 import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -63,6 +65,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -2257,8 +2261,9 @@ public class GameService {
             if (manaPayment) {
                 activateDuringManaPayment(gameData, activation);
             } else {
+                int revertableBefore = gameData.revertableManaActivations.size();
                 activation.run();
-                flushManaAbilityTriggersAfterActivation(gameData);
+                finishPriorityManaActivation(gameData, revertableBefore, paymentIntent);
             }
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
         }
@@ -2423,6 +2428,7 @@ public class GameService {
             Player activatingPlayer = player;
             Runnable activation = () -> abilityActivationService.activateAbility(gameData, activatingPlayer,
                     permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments);
+            int revertableBefore = gameData.revertableManaActivations.size();
             if (normalPriorityActivation) {
                 activation.run();
             } else {
@@ -2430,7 +2436,7 @@ public class GameService {
             }
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
             if (normalPriorityActivation && manaActivation) {
-                flushManaAbilityTriggersAfterActivation(gameData);
+                finishPriorityManaActivation(gameData, revertableBefore, paymentIntent);
             }
         }
     }
@@ -2448,6 +2454,48 @@ public class GameService {
         } finally {
             gameData.interaction.closeNestedPromptWindow();
         }
+    }
+
+    /**
+     * Ends a mana ability activated while its controller holds priority. One activated on its own
+     * (no {@code paymentIntent}) puts its non-mana triggers on the stack right away: the player
+     * receives priority after activating an ability (CR 117.3c), which is when triggered abilities
+     * are put on the stack (CR 603.3). A trigger on the stack can't be taken back, so that
+     * activation leaves the cancel-casting undo window. One activated to pay for a cast or
+     * activation the client is holding back keeps its triggers waiting, still revertable, until
+     * that spell or ability is put on the stack.
+     */
+    private void finishPriorityManaActivation(GameData gameData, int revertableBefore,
+                                              ManaPaymentIntent paymentIntent) {
+        if (paymentIntent != null) {
+            flushManaAbilityTriggersAfterActivation(gameData);
+            return;
+        }
+        List<ManaActivation> activations = gameData.revertableManaActivations;
+        for (int i = activations.size() - 1; i >= Math.min(revertableBefore, activations.size()); i--) {
+            if (!activations.get(i).deferredTriggers().isEmpty()) {
+                activations.remove(i);
+            }
+        }
+        if (gameData.interaction.isAwaitingInput()
+                || gameData.pendingRevertableManaActivation != null
+                || gameData.pendingManaAbilityTriggers.isEmpty()) {
+            return;
+        }
+        Set<StackEntry> held = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (ManaActivation revertable : activations) {
+            held.addAll(revertable.deferredTriggers());
+        }
+        List<StackEntry> ready = gameData.pendingManaAbilityTriggers.stream()
+                .filter(entry -> !held.contains(entry))
+                .toList();
+        if (ready.isEmpty()) {
+            return;
+        }
+        stateBasedActionService.performStateBasedActions(gameData);
+        gameData.stack.addAll(ready);
+        gameData.pendingManaAbilityTriggers.removeIf(entry -> !held.contains(entry));
+        gameData.priorityPassedBy.clear();
     }
 
     /**

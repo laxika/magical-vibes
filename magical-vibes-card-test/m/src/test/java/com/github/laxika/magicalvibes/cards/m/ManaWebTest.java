@@ -30,7 +30,7 @@ class ManaWebTest extends BaseCardTest {
         assertThat(firstForest.isTapped()).isTrue();
         assertThat(secondForest.isTapped()).isFalse();
         assertThat(mountain.isTapped()).isFalse();
-        assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
 
         resolveAllTriggers();
 
@@ -52,7 +52,7 @@ class ManaWebTest extends BaseCardTest {
         assertThat(firstForest.isTapped()).isTrue();
         assertThat(secondForest.isTapped()).isTrue();
         assertThat(mountain.isTapped()).isFalse();
-        assertThat(gd.pendingManaAbilityTriggers).hasSize(2);
+        assertThat(gd.stack).hasSize(2);
 
         resolveAllTriggers();
 

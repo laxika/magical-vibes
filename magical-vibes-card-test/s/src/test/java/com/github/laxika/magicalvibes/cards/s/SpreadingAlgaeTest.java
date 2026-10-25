@@ -85,14 +85,15 @@ class SpreadingAlgaeTest extends BaseCardTest {
     // ===== Tap trigger: destroy the enchanted land =====
 
     @Test
-    @DisplayName("Tapping the enchanted Swamp triggers the destroy ability (deferred as a mana-ability trigger)")
+    @DisplayName("Tapping the enchanted Swamp triggers the destroy ability onto the stack")
     void tappingSwampTriggersDestroy() {
         addSwampWithAura();
 
-        // Tapping a land for mana defers its triggers (CR 603.3) until a player next gets priority.
+        // The trigger goes on the stack the next time a player would receive priority (CR 603.3),
+        // which is right after the mana ability resolves.
         harness.tapPermanent(player1, 0);
 
-        assertThat(gd.pendingManaAbilityTriggers).anySatisfy(entry -> {
+        assertThat(gd.stack).anySatisfy(entry -> {
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(entry.getCard().getName()).isEqualTo("Spreading Algae");
         });
