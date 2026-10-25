@@ -9,38 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 36. Quenchable Fire's pay-{U}-before-upkeep special action
-
-**Status:** open · **Found:** 2026-10-18, while fixing Q-card test failures
-
-**Failing tests:**
-- None. Write one: after Quenchable Fire resolves, the targeted player pays {U} during the caster's
-  end step (or any time they could cast an instant) and no damage is dealt at the caster's upkeep.
-
-**What the rules require.** Quenchable Fire: "It deals an additional 3 damage to that player or
-planeswalker at the beginning of your next upkeep step unless that player or that planeswalker's
-controller pays {U} before that step." Its ruling: paying is a special action that player may take
-any time they have priority before that upkeep starts; once the delayed trigger is on the stack it
-can't be stopped. The engine now pushes the delayed damage trigger under the caster's control at
-upkeep (`StepTriggerService`, `DamageAtNextUpkeepUnlessPays`), but there is no way to pay, so the
-damage always happens.
-
-**Why it's large.** It needs a new player action: a special action (no stack) offered while the
-player has priority, listed in the action-availability service and the client UI, which pays the
-mana and removes the matching `DamageAtNextUpkeepUnlessPays` delayed action.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 36: add a special action that lets the affected player
-pay {U} before the caster's next upkeep to cancel Quenchable Fire's delayed damage
-(DamageAtNextUpkeepUnlessPays). Offer it whenever that player has priority, through
-GameActionAvailabilityService and the networking/frontend action list. Don't run the full test
-suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 37. Choosing modes (and tier costs) when casting a modal spell from a graveyard
 
 **Status:** open · **Found:** 2026-10-18, while fixing Q-card test failures
@@ -626,6 +594,40 @@ additions (Map, Thopter, Mutagen, Tippy-Toe Food, Bilbo Treasure, Academy Manufa
 through TokenCreationEvent and ReplacementOrderService, as TokenAdditionReplacements does for Queen
 Allenal, Quina and Chatterfang. Write the tests first. Don't run the full test suite; ask me. Don't
 commit until I say so.
+```
+
+---
+
+## 54. Nafs Asp's pay-before-draw special action has no client action, and the AI never pays
+
+**Status:** open · **Found:** 2026-10-25, while finishing entry 36 (Quenchable Fire's special action)
+
+**Failing tests:**
+- None yet. Write one: a human player damaged by Nafs Asp (or Glass Asp) is offered the payment in
+  `GameStateMessage.delayedTriggerPayments` while holding priority before their draw step, auto-pass stops
+  for it, and paying clears `priorityPassedBy`.
+
+**What the rules require.** CR 116.2c: paying "unless they pay {1} before that draw step" is a special action
+the player may take any time they have priority until the step begins; CR 117.4: an earlier pass no longer
+counts as passing in succession after an action. Entry 36 added the generic delayed-trigger payment
+(`GameActionAvailabilityService.getDelayedTriggerPaymentsOwedBy`, `AbilityActivationService.payDelayedTriggerCost`,
+`PAY_DELAYED_TRIGGER_COST`, a side-panel button and an auto-pass stop) for Quenchable Fire and Sabertooth
+Cobra. Nafs Asp and Glass Asp (`LoseLifeAtNextDrawStepUnlessPays`) still pay only through
+`GameService.payDrawStepLifeLoss`, which no client message reaches, auto-pass doesn't stop for, and which
+keeps `priorityPassedBy` (`AbilityActivationServiceTest.drawStepPaymentRemovesOnlyOneIdenticalObligation`
+asserts that). The AI never makes any of these payments.
+
+**Why it's large.** Moving the Asps onto the generic payment changes their payment path and the service
+tests that pin it; teaching the AI when paying is worth it needs a planner hook for special actions.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 54: add LoseLifeAtNextDrawStepUnlessPays (Nafs Asp, Glass Asp)
+to GameActionAvailabilityService.getDelayedTriggerPaymentsOwedBy so it goes through
+AbilityActivationService.payDelayedTriggerCost and the PAY_DELAYED_TRIGGER_COST client action, retire
+payDrawStepLifeLoss, and let the AI pay delayed-trigger costs when it is worth it. Don't run the full test
+suite; ask me. Don't commit until I say so.
 ```
 
 ---

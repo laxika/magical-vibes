@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.networking.model.DelayedTriggerPaymentView;
 import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
@@ -19,7 +20,8 @@ import java.util.UUID;
 /**
  * One recipient's view of the game after a completed action. {@code newLogEntries} and
  * {@code visualCues} describe what happened in that action; the client plays the cues before it
- * applies the rest of the state.
+ * applies the rest of the state. {@code delayedTriggerPayments} are the delayed-trigger payments
+ * the recipient (or the player they control) may make right now as a special action.
  */
 @Builder(toBuilder = true)
 public record GameStateMessage(
@@ -61,10 +63,12 @@ public record GameStateMessage(
         PlanechaseView planechase,
         UUID monarchPlayerId, com.github.laxika.magicalvibes.networking.model.CommanderView commander,
         List<CardView> lookedAtExileCards,
-        List<VisualCueView> visualCues) {
+        List<VisualCueView> visualCues,
+        List<DelayedTriggerPaymentView> delayedTriggerPayments) {
     public GameStateMessage {
         lookedAtExileCards = List.copyOf(lookedAtExileCards);
         visualCues = visualCues == null ? List.of() : List.copyOf(visualCues);
+        delayedTriggerPayments = delayedTriggerPayments == null ? List.of() : List.copyOf(delayedTriggerPayments);
     }
 
     public GameStateMessage(
@@ -105,7 +109,7 @@ public record GameStateMessage(
         DayNight dayNight,
         PlanechaseView planechase,
         UUID monarchPlayerId, com.github.laxika.magicalvibes.networking.model.CommanderView commander) {
-        this(type, status, activePlayerId, turnNumber, currentStep, priorityPlayerId, battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters, radCounters, hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices, playableForetellIndices, playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost, mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices, playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal, potentialPayableAbilityIndices, speeds, dayNight, planechase, monarchPlayerId, commander, List.of(), List.of());
+        this(type, status, activePlayerId, turnNumber, currentStep, priorityPlayerId, battlefields, stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters, radCounters, hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices, playableForetellIndices, playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost, mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices, playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal, potentialPayableAbilityIndices, speeds, dayNight, planechase, monarchPlayerId, commander, List.of(), List.of(), List.of());
     }
     public GameStateMessage(
         MessageType type,

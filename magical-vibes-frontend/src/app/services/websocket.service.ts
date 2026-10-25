@@ -61,6 +61,7 @@ export enum MessageType {
   VALID_TARGETS_REQUEST = 'VALID_TARGETS_REQUEST',
   VALID_TARGETS_RESPONSE = 'VALID_TARGETS_RESPONSE',
   PAY_SEARCH_TAX = 'PAY_SEARCH_TAX',
+  PAY_DELAYED_TRIGGER_COST = 'PAY_DELAYED_TRIGGER_COST',
   REVERT_MANA_ACTIVATIONS = 'REVERT_MANA_ACTIVATIONS',
   SURRENDER = 'SURRENDER',
   LEAVE_GAME = 'LEAVE_GAME',
@@ -363,10 +364,20 @@ export interface PlanechaseView {
   rollSequence: number;
 }
 
+/** A delayed-trigger payment ("unless that player pays ... before that step") the viewer may make now. */
+export interface DelayedTriggerPayment {
+  sourceCardId: string;
+  sourceCardName: string;
+  affectedId: string;
+  affectedName: string | null;
+  manaCost: string;
+}
+
 export interface CommanderView { format: DeckFormat; commandZones: Record<string, Card[]>; commanders: Record<string, string[]>; tax: Record<string, number>; damageReceived: Record<string, Record<string, number>>; playableCardIds: string[]; revealableMissionIds: string[]; }
 export interface Game {
   commander?: CommanderView;
   planechase?: PlanechaseView | null;
+  delayedTriggerPayments?: DelayedTriggerPayment[];
   monarchPlayerId: string | null;
   id: string;
   gameName: string;
@@ -497,6 +508,7 @@ export interface VisualCue {
 export interface GameStateNotification {
   commander?: CommanderView;
   planechase?: PlanechaseView | null;
+  delayedTriggerPayments?: DelayedTriggerPayment[];
   monarchPlayerId: string | null;
   type: MessageType;
   status: GameStatus;

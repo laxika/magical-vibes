@@ -106,6 +106,11 @@ public interface MessageHandler {
 
     void handlePaySearchTax(Connection connection, PaySearchTaxRequest request) throws Exception;
 
+    default void handlePayDelayedTriggerCost(Connection connection,
+            com.github.laxika.magicalvibes.networking.message.PayDelayedTriggerCostRequest request) throws Exception {
+        throw new UnsupportedOperationException("Delayed-trigger payments are not supported");
+    }
+
     void handleRevertManaActivations(Connection connection, RevertManaActivationsRequest request) throws Exception;
 
     void handleSaveDeck(Connection connection, SaveDeckRequest request) throws Exception;

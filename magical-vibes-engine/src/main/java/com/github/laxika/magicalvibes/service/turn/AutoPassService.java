@@ -432,6 +432,10 @@ public class AutoPassService {
     private boolean shouldStopForAvailableAction(GameData gameData, UUID priorityHolder) {
         if (!actionAvailabilityService.getPlayableCommanders(gameData, priorityHolder).isEmpty()) return true;
         if (gameData.planechase != null && planechaseService.canOfferRoll(gameData, priorityHolder)) return true;
+        // CR 116.2c: an "unless that player pays before that step" payment is only open until its
+        // step begins, which can be before the player's next auto-stop (Sabertooth Cobra's damaged
+        // player owes it before their own upkeep), so every priority window while it is payable stops.
+        if (!actionAvailabilityService.getAvailableDelayedTriggerPayments(gameData, priorityHolder).isEmpty()) return true;
         List<Integer> playable = actionAvailabilityService.getPlayableCardIndices(gameData, priorityHolder);
         if (!playable.isEmpty() && shouldStopForPlayableCards(gameData, priorityHolder)) {
             return true;

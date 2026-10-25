@@ -1,6 +1,6 @@
 import { Injectable, Signal, signal } from '@angular/core';
 import {
-  WebsocketService, Game, MessageType, Card, Permanent, StackEntry, ActivatedAbilityView,
+  WebsocketService, Game, MessageType, DelayedTriggerPayment, Card, Permanent, StackEntry, ActivatedAbilityView,
   ValidTargetsResponse, ModalOptionView
 } from './websocket.service';
 import { isPermanentArtifact, isPermanentCreature } from '../components/game/battlefield.utils';
@@ -2047,10 +2047,38 @@ export class TargetingChoiceService {
     }
   }
 
+  /** Special action: pay a delayed trigger's "unless that player pays ... before that step" cost,
+      first entering payment mode when the mana isn't floating yet. */
+  payDelayedTriggerCost(payment: DelayedTriggerPayment): void {
+    if (this.payingForCast || this.payingForAbility) return;
+    const msg = { type: MessageType.PAY_DELAYED_TRIGGER_COST, sourceCardId: payment.sourceCardId,
+      affectedId: payment.affectedId };
+    if (this.canPayManaCost(payment.manaCost)) {
+      this.sendMessage(msg);
+      return;
+    }
+    this.payingForAbility = true;
+    this.pendingActivationSourceName = payment.sourceCardName;
+    this.pendingActivationManaCost = payment.manaCost;
+    this.pendingActivationMessage = msg;
+  }
+
   private onAbilityPaymentGameState(): void {
     const planar = this.gameSignal()?.planechase;
     if (!planar?.canRoll || planar.rollSequence !== this.pendingPlanarRollSequence) this.planarRollPending = false;
     if (!this.payingForAbility) return;
+    if (this.pendingActivationMessage?.type === MessageType.PAY_DELAYED_TRIGGER_COST) {
+      const pending = this.pendingActivationMessage;
+      const stillOwed = this.gameSignal()?.delayedTriggerPayments?.some(p =>
+        p.sourceCardId === pending.sourceCardId && p.affectedId === pending.affectedId);
+      if (!stillOwed || this.priorityMovedOn) {
+        this.clearAbilityPayment();
+      } else if (this.pendingActivationManaCost && this.canPayManaCost(this.pendingActivationManaCost)) {
+        this.clearAbilityPayment();
+        this.sendMessage(pending);
+      }
+      return;
+    }
     if (this.pendingActivationMessage?.type === MessageType.ROLL_PLANAR_DIE) {
       if (!planar || this.priorityMovedOn || this.gameSignal()?.turnNumber !== this.pendingPlanarTurn
           || planar.rollSequence !== this.pendingPlanarRollSequence) {

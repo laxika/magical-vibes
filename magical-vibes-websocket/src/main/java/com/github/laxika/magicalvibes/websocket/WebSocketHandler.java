@@ -127,6 +127,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case REQUEST_CARD_LIST -> messageHandler.handleRequestCardList(connection, objectMapper.treeToValue(jsonNode, RequestCardListRequest.class));
                 case VALID_TARGETS_REQUEST -> messageHandler.handleValidTargetsRequest(connection, objectMapper.treeToValue(jsonNode, ValidTargetsRequest.class));
                 case PAY_SEARCH_TAX -> messageHandler.handlePaySearchTax(connection, objectMapper.treeToValue(jsonNode, PaySearchTaxRequest.class));
+                case PAY_DELAYED_TRIGGER_COST -> messageHandler.handlePayDelayedTriggerCost(connection, objectMapper.treeToValue(jsonNode, com.github.laxika.magicalvibes.networking.message.PayDelayedTriggerCostRequest.class));
                 case REVERT_MANA_ACTIVATIONS -> messageHandler.handleRevertManaActivations(connection, objectMapper.treeToValue(jsonNode, RevertManaActivationsRequest.class));
                 case LOAD_DECK -> messageHandler.handleLoadDeck(connection, objectMapper.treeToValue(jsonNode, com.github.laxika.magicalvibes.networking.message.LoadDeckRequest.class));
                 case VALIDATE_DECK -> messageHandler.handleValidateDeck(connection, objectMapper.treeToValue(jsonNode, com.github.laxika.magicalvibes.networking.message.ValidateDeckRequest.class));

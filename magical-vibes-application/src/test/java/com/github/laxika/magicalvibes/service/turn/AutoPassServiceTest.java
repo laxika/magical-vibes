@@ -80,6 +80,12 @@ class AutoPassServiceTest {
     @Mock
     private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
 
+    @Mock
+    private com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService stackedModalTriggerService;
+
+    @Mock
+    private com.github.laxika.magicalvibes.service.trigger.StackedDividedDamageTriggerService stackedDividedDamageTriggerService;
+
     @InjectMocks
     private AutoPassService sut;
 
@@ -118,6 +124,17 @@ class AutoPassServiceTest {
         sut.resolveAutoPass(gd, ignored -> { throw new AssertionError("Turn advanced past a legal roll"); });
         assertThat(gd.priorityPassedBy).isEmpty();
         verify(planechaseService).canOfferRoll(gd, player1Id);
+    }
+
+    @Test
+    void preservesPriorityWhenADelayedTriggerPaymentCanBeMade() {
+        gd.activePlayerId = player2Id;
+        when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+        when(actionAvailabilityService.getAvailableDelayedTriggerPayments(gd, player1Id)).thenReturn(List.of(
+                new GameActionAvailabilityService.DelayedTriggerPayment(null, new Card(), player1Id, "{2}")));
+        sut.resolveAutoPass(gd, ignored -> { throw new AssertionError("Turn advanced past a payable obligation"); });
+        assertThat(gd.priorityPassedBy).isEmpty();
+        verify(actionAvailabilityService).getAvailableDelayedTriggerPayments(gd, player1Id);
     }
 
     @Nested

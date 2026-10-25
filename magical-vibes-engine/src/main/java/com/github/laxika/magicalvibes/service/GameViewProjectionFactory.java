@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
 import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.networking.model.DelayedTriggerPaymentView;
 import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
@@ -199,7 +200,8 @@ public class GameViewProjectionFactory {
                                     .getOrDefault(entry.card().getId(), java.util.Set.of()).contains(playerId))
                             .map(entry -> cardViewFactory.create(entry.card()))
                             .toList(),
-                    List.of()
+                    List.of(),
+                    getDelayedTriggerPayments(gameData, playerId)
             ));
         }
         return Collections.unmodifiableMap(messages);
@@ -1275,6 +1277,28 @@ public class GameViewProjectionFactory {
                         : actionAvailabilityService.getPlayableCommanders(game, actingPlayerId).stream().map(Card::getId).toList(),
                 actingPlayerId == null || controlledViewer ? List.of()
                         : secretMissionService.revealableMissionCardIds(game, actingPlayerId));
+    }
+
+    /**
+     * The delayed-trigger payments the viewer can make now. A Mindslaver controller acts for the
+     * controlled player, so they see that player's payments and the controlled player sees none.
+     */
+    List<DelayedTriggerPaymentView> getDelayedTriggerPayments(GameData gameData, UUID playerId) {
+        if (playerId.equals(gameData.mindControlledPlayerId)) return List.of();
+        UUID actingPlayerId = playerId.equals(gameData.mindControllerPlayerId) && gameData.mindControlledPlayerId != null
+                ? gameData.mindControlledPlayerId : playerId;
+        return actionAvailabilityService.getAvailableDelayedTriggerPayments(gameData, actingPlayerId).stream()
+                .map(payment -> new DelayedTriggerPaymentView(payment.sourceCard().getId(),
+                        payment.sourceCard().getName(), payment.affectedId(),
+                        affectedName(gameData, payment.affectedId()), payment.manaCost()))
+                .toList();
+    }
+
+    private String affectedName(GameData gameData, UUID affectedId) {
+        String playerName = gameData.playerIdToName.get(affectedId);
+        if (playerName != null) return playerName;
+        Permanent permanent = gameQueryService.findPermanentById(gameData, affectedId);
+        return permanent == null ? null : permanent.getCard().getName();
     }
 
     int getSearchTaxCost(GameData gameData, UUID playerId) {

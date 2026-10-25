@@ -792,9 +792,10 @@ public class StepTriggerService {
 
         // Quenchable Fire: "It deals an additional N damage to that player or planeswalker at the
         // beginning of your next upkeep step unless that player or that planeswalker's controller pays
-        // {cost} before that step." The payment is a special action available only before upkeep
-        // begins, which the engine does not model, so the damage is dealt unconditionally here. The
-        // delayed trigger is controlled by the spell's controller and fizzles if the target is gone.
+        // {cost} before that step." Paying is a special action (CR 116.2c,
+        // AbilityActivationService.payDelayedTriggerCost) that removes the obligation; one still
+        // queued here was not paid, and once upkeep has begun it can't be. The delayed trigger is
+        // controlled by the spell's controller and fizzles if the target is gone.
         if (gameData.hasDelayedAction(DamageAtNextUpkeepUnlessPays.class)) {
             List<DamageAtNextUpkeepUnlessPays> pending = gameData.drainDelayedActions(
                     DamageAtNextUpkeepUnlessPays.class, a -> a.spellControllerId().equals(gameData.activePlayerId));
@@ -820,8 +821,8 @@ public class StepTriggerService {
 
         // Sabertooth Cobra: "The player gets another poison counter at the beginning of their next
         // upkeep unless they pay {2} before that step." Delayed trigger keyed to the damaged player's
-        // own upkeep. The payment window before upkeep is not modelled, so the counter is given
-        // unconditionally here and no payment prompt is offered.
+        // own upkeep. Paying is a special action (CR 116.2c, AbilityActivationService
+        // .payDelayedTriggerCost) that removes the obligation, so one still queued here was not paid.
         if (gameData.hasDelayedAction(PoisonAtNextUpkeepUnlessPays.class)) {
             List<PoisonAtNextUpkeepUnlessPays> pendingPoison = gameData.drainDelayedActions(
                     PoisonAtNextUpkeepUnlessPays.class, a -> a.playerId().equals(gameData.activePlayerId));

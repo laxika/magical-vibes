@@ -522,6 +522,7 @@ export class GameComponent implements OnInit, OnDestroy {
       ...g,
       status: state.status,
       planechase: state.planechase ?? null,
+      delayedTriggerPayments: state.delayedTriggerPayments ?? [],
       monarchPlayerId: state.monarchPlayerId ?? null,
       commander: state.commander,
       activePlayerId: state.activePlayerId,

@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.q;
 import com.github.laxika.magicalvibes.cards.c.CylianElf;
 import com.github.laxika.magicalvibes.cards.e.ElspethKnightErrant;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -27,6 +29,17 @@ class QuenchableFireTest extends BaseCardTest {
     private void giveQuenchableFire() {
         harness.setHand(player1, List.of(new QuenchableFire()));
         harness.addMana(player1, ManaColor.RED, 4);
+    }
+
+    /** Casts Quenchable Fire at {@code targetId}, resolves it, and hands priority to player2. */
+    private QuenchableFire castAtAndPassToPlayer2(java.util.UUID targetId) {
+        QuenchableFire fire = new QuenchableFire();
+        harness.setHand(player1, List.of(fire));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castSorcery(player1, 0, targetId);
+        harness.passBothPriorities();
+        harness.passPriority(player1);
+        return fire;
     }
 
     /** Resolve the delayed ability at the caster's next upkeep. */
@@ -140,5 +153,129 @@ class QuenchableFireTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeAfterImmediate);
         assertThat(gd.getDelayedActions(DamageAtNextUpkeepUnlessPays.class)).hasSize(1);
+    }
+    @Test
+    @DisplayName("Paying {U} before the caster's upkeep stops the additional damage")
+    void payingBeforeUpkeepPreventsAdditionalDamage() {
+        QuenchableFire fire = castAtAndPassToPlayer2(player2.getId());
+        int lifeAfterImmediate = gd.getLife(player2.getId());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        gs.payDelayedTriggerCost(gd, player2, fire.getId(), player2.getId());
+
+        assertThat(gd.getDelayedActions(DamageAtNextUpkeepUnlessPays.class)).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+
+        gd.turnNumber = 3;
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeAfterImmediate);
+    }
+
+    @Test
+    @DisplayName("The payment is offered to the damaged player while they have priority, and not to the caster")
+    void paymentOfferedOnlyToDamagedPlayerWithPriority() {
+        QuenchableFire fire = castAtAndPassToPlayer2(player2.getId());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        var availability = harness.getGameActionAvailabilityService();
+
+        assertThat(availability.getAvailableDelayedTriggerPayments(gd, player2.getId()))
+                .singleElement()
+                .satisfies(payment -> {
+                    assertThat(payment.sourceCard().getId()).isEqualTo(fire.getId());
+                    assertThat(payment.affectedId()).isEqualTo(player2.getId());
+                    assertThat(payment.manaCost()).isEqualTo("{U}");
+                });
+        assertThat(availability.getAvailableDelayedTriggerPayments(gd, player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The payment is not offered to the damaged player while the caster holds priority")
+    void paymentNotOfferedWithoutPriority() {
+        giveQuenchableFire();
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        assertThat(gqs.getPriorityPlayerId(gd)).isEqualTo(player1.getId());
+        assertThat(harness.getGameActionAvailabilityService()
+                .getAvailableDelayedTriggerPayments(gd, player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The caster can't pay to stop their own delayed damage")
+    void casterCannotPay() {
+        giveQuenchableFire();
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        Card fire = gd.playerGraveyards.get(player1.getId()).getFirst();
+
+        assertThat(gqs.getPriorityPlayerId(gd)).isEqualTo(player1.getId());
+        assertThatThrownBy(() -> gs.payDelayedTriggerCost(gd, player1, fire.getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No unpaid");
+        assertThat(gd.getDelayedActions(DamageAtNextUpkeepUnlessPays.class)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Paying requires priority")
+    void payingRequiresPriority() {
+        giveQuenchableFire();
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        Card fire = gd.playerGraveyards.get(player1.getId()).getFirst();
+
+        assertThatThrownBy(() -> gs.payDelayedTriggerCost(gd, player2, fire.getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getDelayedActions(DamageAtNextUpkeepUnlessPays.class)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Paying requires blue mana; a failed payment keeps the obligation and the mana")
+    void payingRequiresBlueMana() {
+        QuenchableFire fire = castAtAndPassToPlayer2(player2.getId());
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> gs.payDelayedTriggerCost(gd, player2, fire.getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.getDelayedActions(DamageAtNextUpkeepUnlessPays.class)).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Paying is a special action: the payer keeps priority and an earlier pass no longer counts")
+    void payingIsASpecialAction() {
+        QuenchableFire fire = castAtAndPassToPlayer2(player2.getId());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        TurnStep stepBefore = gd.currentStep;
+
+        gs.payDelayedTriggerCost(gd, player2, fire.getId(), player2.getId());
+
+        assertThat(gd.currentStep).isEqualTo(stepBefore);
+        assertThat(gqs.getPriorityPlayerId(gd)).isEqualTo(player2.getId());
+        assertThat(gd.priorityPassedBy).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The damaged planeswalker's controller can pay to stop the additional damage")
+    void planeswalkerControllerCanPay() {
+        Permanent elspeth = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        elspeth.setCounterCount(CounterType.LOYALTY, 8);
+        QuenchableFire fire = castAtAndPassToPlayer2(elspeth.getId());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        gs.payDelayedTriggerCost(gd, player2, fire.getId(), elspeth.getId());
+
+        gd.turnNumber = 3;
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(elspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
     }
 }

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SabertoothCobra.class, GiantMantis.class, Incinerate.class, PsionicGift.class})
 class SabertoothCobraTest extends BaseCardTest {
@@ -218,5 +219,45 @@ class SabertoothCobraTest extends BaseCardTest {
         advanceToPlayer2UpkeepObligation();
 
         assertThat(poison()).isEqualTo(4);
+    }
+    @Test
+    @DisplayName("Paying {2} before upkeep prevents the second poison counter")
+    void payingBeforeUpkeepPreventsSecondPoison() {
+        SabertoothCobra cobraCard = new SabertoothCobra();
+        Permanent cobra = addCreatureReady(player1, cobraCard);
+        cobra.setAttacking(true);
+        dealCombatDamageToPlayer2();
+
+        harness.passPriority(player1);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        gs.payDelayedTriggerCost(gd, player2, cobraCard.getId(), player2.getId());
+
+        assertThat(gd.getDelayedActions(PoisonAtNextUpkeepUnlessPays.class)).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
+
+        advanceToPlayer2UpkeepObligation();
+
+        assertThat(poison()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Only the poisoned player can pay, and only with enough mana")
+    void onlyPoisonedPlayerCanPayWithEnoughMana() {
+        SabertoothCobra cobraCard = new SabertoothCobra();
+        Permanent cobra = addCreatureReady(player1, cobraCard);
+        cobra.setAttacking(true);
+        dealCombatDamageToPlayer2();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> gs.payDelayedTriggerCost(gd, player1, cobraCard.getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passPriority(player1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> gs.payDelayedTriggerCost(gd, player2, cobraCard.getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.getDelayedActions(PoisonAtNextUpkeepUnlessPays.class)).hasSize(1);
     }
 }

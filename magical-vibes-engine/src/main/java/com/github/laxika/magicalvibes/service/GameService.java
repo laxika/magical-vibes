@@ -2333,6 +2333,21 @@ public class GameService {
         }
     }
 
+    /**
+     * Special action (CR 116.2c): pays an "unless [that player] pays [cost] before that step"
+     * obligation of a delayed triggered ability, such as Quenchable Fire's, so it won't trigger.
+     */
+    public void payDelayedTriggerCost(GameData gameData, Player player, UUID sourceCardId, UUID affectedId) {
+        Player actionPlayer = player;
+        if (runAsActionIfNeeded(gameData,
+                () -> payDelayedTriggerCost(gameData, actionPlayer, sourceCardId, affectedId))) return;
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.payDelayedTriggerCost(gameData, player, sourceCardId, affectedId);
+        }
+    }
+
     public void payGuardianAngel(GameData gameData, Player player, UUID targetId) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,

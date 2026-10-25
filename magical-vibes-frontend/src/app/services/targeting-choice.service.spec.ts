@@ -472,3 +472,45 @@ describe('TargetingChoiceService split card fuse mode', () => {
     expect(offeredLabels(service)).toEqual(['Profit', 'Loss']);
   });
 });
+
+describe('TargetingChoiceService delayed trigger payment', () => {
+  const payment = { sourceCardId: 'fire', sourceCardName: 'Quenchable Fire', affectedId: ME,
+    affectedName: 'me', manaCost: '{U}' };
+  const payMessage = { type: MessageType.PAY_DELAYED_TRIGGER_COST, sourceCardId: 'fire', affectedId: ME };
+
+  function owedGame(pool: Record<string, number>, payments = [payment]): Game {
+    return { ...gameWithPool(pool), delayedTriggerPayments: payments };
+  }
+
+  it('sends the payment right away when floating mana covers it', () => {
+    const sent: any[] = [];
+    const service = makePaymentService([], signal(owedGame({ U: 1 })), sent);
+    service.payDelayedTriggerCost(payment);
+    expect(sent).toEqual([payMessage]);
+    expect(service.payingForAbility).toBe(false);
+  });
+
+  it('holds the payment until the mana is floating', () => {
+    const game = signal<Game | null>(owedGame({}));
+    const sent: any[] = [];
+    const service = makePaymentService([land('island')], game, sent);
+    service.payDelayedTriggerCost(payment);
+    expect(service.payingForAbility).toBe(true);
+    expect(sent).toEqual([]);
+    game.set(owedGame({ U: 1 }));
+    service.onGameStateUpdate();
+    expect(sent).toEqual([payMessage]);
+    expect(service.payingForAbility).toBe(false);
+  });
+
+  it('abandons the payment once the obligation is no longer offered', () => {
+    const game = signal<Game | null>(owedGame({}));
+    const sent: any[] = [];
+    const service = makePaymentService([], game, sent);
+    service.payDelayedTriggerCost(payment);
+    game.set(owedGame({ U: 1 }, []));
+    service.onGameStateUpdate();
+    expect(service.payingForAbility).toBe(false);
+    expect(sent).toEqual([]);
+  });
+});

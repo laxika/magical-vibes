@@ -639,6 +639,11 @@
     @if (searchTaxCost > 0 && hasPriority) {
       <button class="btn-pass btn-pass-orange" (click)="paySearchTax.emit()">Pay {{ '{' + searchTaxCost + '}' }} — Leonin Arbiter</button>
     }
+    @if (hasPriority && !choice.targeting.payingForCast && !choice.targeting.payingForAbility) {
+      @for (payment of delayedTriggerPayments; track payment.sourceCardId + payment.affectedId) {
+        <button class="btn-pass btn-pass-orange" (click)="choice.targeting.payDelayedTriggerCost(payment)">Pay {{ payment.manaCost }} — {{ payment.sourceCardName }}@if (payment.affectedName) { ({{ payment.affectedName }})}</button>
+      }
+    }
     @if (choice.targeting.choosingPhyrexianPayment) {
       <div class="phyrexian-banner">
         <span class="phyrexian-prompt">Phyrexian Mana for {{ choice.targeting.phyrexianCardName }}</span>

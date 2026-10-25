@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter, signal, inject, HostListener, ViewChild, ElementRef, OnChanges, OnDestroy, SimpleChanges, AfterViewChecked } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Card, GameLogEntry, Permanent, StackEntry } from '../../../services/websocket.service';
+import { Card, DelayedTriggerPayment, GameLogEntry, Permanent, StackEntry } from '../../../services/websocket.service';
 import { GameChoiceService } from '../../../services/game-choice.service';
 import { manaSymbolHtml } from '../../../utils/mana-symbols';
 import { CardDisplayComponent } from '../card-display/card-display.component';
@@ -61,6 +61,7 @@ export class SidePanelComponent implements OnChanges, OnDestroy, AfterViewChecke
   @Input() getPlayerName!: (playerId: string) => string;
   @Input() getStackEntryTargetName!: (entry: StackEntry) => string | null;
   @Input() searchTaxCost = 0;
+  @Input() delayedTriggerPayments: DelayedTriggerPayment[] = [];
   @Input() myPlayerIndex = 0;
   @Input() isMindControlling = false;
   @Input() mindControlledPlayerName = '';

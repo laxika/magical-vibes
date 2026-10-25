@@ -152,6 +152,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
+import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.ability.cost.AllMatchingPermanentSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.BlightXCostHandler;
@@ -238,6 +239,10 @@ public class AbilityActivationService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private GameActionAvailabilityService actionAvailabilityService;
 
     private final CardRevealService cardRevealService;
 
@@ -1119,6 +1124,39 @@ public class AbilityActivationService {
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " pays {" + obligation.payAmount() + "} for ",
                 obligation.sourceCard(), "'s draw-step obligation."));
+        mutationCoordinator.invalidateAllPlayerViews(gameData);
+    }
+
+    /**
+     * Special action (CR 116.2c): pays one outstanding "unless [that player] pays [cost] before that
+     * step" obligation — Quenchable Fire's, Sabertooth Cobra's — from {@code sourceCardId} against
+     * {@code affectedId}, so its delayed ability won't trigger. Uses no stack; the player keeps
+     * priority (CR 116.3), and earlier passes no longer count as passing in succession (CR 117.4).
+     *
+     * @throws IllegalStateException if {@code player} owes no such obligation or can't pay its cost
+     */
+    public void payDelayedTriggerCost(GameData gameData, Player player, UUID sourceCardId, UUID affectedId) {
+        UUID playerId = player.getId();
+        GameActionAvailabilityService.DelayedTriggerPayment payment = actionAvailabilityService
+                .getDelayedTriggerPaymentsOwedBy(gameData, playerId).stream()
+                .filter(p -> p.sourceCard().getId().equals(sourceCardId) && p.affectedId().equals(affectedId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No unpaid delayed-trigger obligation to pay"));
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        ManaCost cost = new ManaCost(payment.manaCost());
+        if (pool == null || !cost.canPayForSpecialAction(pool)) {
+            throw new IllegalStateException("Not enough mana to pay " + payment.manaCost()
+                    + " for " + payment.sourceCard().getName());
+        }
+        cost.payForSpecialAction(pool);
+        gameData.delayedActions.remove(payment.obligation());
+        gameData.revertableManaActivations.clear();
+        gameData.priorityPassedBy.clear();
+        gameLogService.append(gameData, GameLog.textCardText(
+                player.getUsername() + " pays " + payment.manaCost() + " so ",
+                payment.sourceCard(), "'s delayed ability won't trigger."));
+        log.info("Game {} - {} pays {} to cancel {}'s delayed ability", gameData.id, player.getUsername(),
+                payment.manaCost(), payment.sourceCard().getName());
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
