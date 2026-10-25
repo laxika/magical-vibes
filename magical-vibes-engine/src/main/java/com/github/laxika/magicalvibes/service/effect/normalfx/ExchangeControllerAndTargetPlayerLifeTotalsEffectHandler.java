@@ -7,14 +7,25 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControllerAndTargetPlayerLifeTotalsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Exchanges two players' life totals.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: the exchange is its first change, and each player gains or loses the
+ * life needed to reach the other's former total (CR 701.12c), so a Lich's Duel Mastery the losing player's loss would
+ * sacrifice instead is asked about (CR 616.1) before either life total changes: the gaining player's change would
+ * otherwise close the question window first.
+ */
 @Component
 @RequiredArgsConstructor
-public class ExchangeControllerAndTargetPlayerLifeTotalsEffectHandler implements NormalEffectHandlerBean {
+public class ExchangeControllerAndTargetPlayerLifeTotalsEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -54,6 +65,10 @@ public class ExchangeControllerAndTargetPlayerLifeTotalsEffectHandler implements
             return;
         }
 
+        Map<UUID, Integer> newLifeTotals = new LinkedHashMap<>();
+        newLifeTotals.put(controllerId, targetLife);
+        newLifeTotals.put(targetId, controllerLife);
+        lifeSupport.askBeforeLifeTotalsChange(gameData, newLifeTotals);
         lifeSupport.applySetLifeTotal(gameData, controllerId, targetLife);
         lifeSupport.applySetLifeTotal(gameData, targetId, controllerLife);
         entry.setEventValue(Math.max(0, controllerLife - gameData.getLife(controllerId)));

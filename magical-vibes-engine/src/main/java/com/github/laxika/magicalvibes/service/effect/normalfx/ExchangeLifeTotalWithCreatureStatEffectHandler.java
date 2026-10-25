@@ -8,16 +8,24 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeLifeTotalWithCreatureStatEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+/**
+ * Exchanges a player's life total with the source creature's power or toughness (Tree of Perdition, Evra).
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: the life total is its first change, so a Lich's Duel Mastery the
+ * player's life loss would sacrifice instead (CR 701.12g) is asked about (CR 616.1) before the life total or the
+ * creature changes.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEffectHandlerBean {
+public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -55,7 +63,7 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
             return;
         }
 
-        // CR 701.10e: player's new life = creature's current effective stat
+        // CR 701.12g: the player's new life total is the creature's current effective stat
         int currentStat = usePower
                 ? gameQueryService.getEffectivePower(gameData, source)
                 : gameQueryService.getEffectiveToughness(gameData, source);
@@ -63,7 +71,7 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
         currentStat = gameData.capLifeTotal(playerId, currentStat);
 
         String playerName = gameData.playerIdToName.get(playerId);
-        // CR 118.7: the life change goes through the shared life-total path, which applies the
+        // CR 701.12a: the life change goes through the shared life-total path, which applies the
         // can't-change, can't-gain and can't-lose prohibitions and the life gain/loss replacements.
         // When it is blocked the exchange does not occur at all.
         if (!lifeSupport.applySetLifeTotal(gameData, playerId, currentStat)) {

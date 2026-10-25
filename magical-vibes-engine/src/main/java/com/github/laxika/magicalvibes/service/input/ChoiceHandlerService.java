@@ -1716,8 +1716,11 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.RedistributePlayerLifeTotalsChoice ctx) {
             gameData.interaction.clearAwaitingInput();
-            redistributePlayerLifeTotalsSupport.applyChoice(gameData, colorName, ctx.choices());
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            // The new life totals are the completion's first change, so a Lich's Duel Mastery a lowered total
+            // would sacrifice instead is asked about (CR 616.1) before any life total changes.
+            permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
+                    () -> redistributeLifeTotals(gameData, colorName, ctx),
+                    new GameData.ListChoiceReplay(colorChoice, colorName));
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.TormentPenaltyChoice ctx) {
@@ -5867,6 +5870,12 @@ public class ChoiceHandlerService {
                 new GameData.ListChoiceReplay(active, chosen));
     }
 
+    private void redistributeLifeTotals(GameData gameData, String chosen,
+                                        ChoiceContext.RedistributePlayerLifeTotalsChoice ctx) {
+        redistributePlayerLifeTotalsSupport.applyChoice(gameData, chosen, ctx.choices());
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     private void destroyUnpaidEnchantedPermanent(GameData gameData,
                                                  ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx) {
         Permanent aura = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
@@ -5884,6 +5893,11 @@ public class ChoiceHandlerService {
      * answer, once every death replacement it asked about has been chosen.
      */
     public void completeListChoiceAgainAfterDeathReplacements(GameData gameData, GameData.ListChoiceReplay replay) {
+        if (replay.choice().context() instanceof ChoiceContext.RedistributePlayerLifeTotalsChoice redistribution) {
+            permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
+                    () -> redistributeLifeTotals(gameData, replay.chosen(), redistribution), replay);
+            return;
+        }
         if (!(replay.choice().context() instanceof ChoiceContext.EnchantedPermanentManaOrLifePaymentChoice ctx)) {
             throw new IllegalStateException("Not a list choice that asks death replacements first: "
                     + replay.choice().context());

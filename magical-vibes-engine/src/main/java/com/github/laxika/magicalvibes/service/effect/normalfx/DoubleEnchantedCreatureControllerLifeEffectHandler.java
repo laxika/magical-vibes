@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleEnchantedCreatureControllerLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,10 +16,17 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+/**
+ * Doubles the life total of the enchanted creature's controller (Celestial Mantle).
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: the new life total is its first change, so a Lich's Duel Mastery
+ * the life loss of a doubled negative total would sacrifice instead (CR 701.10d) is asked about (CR 616.1) before
+ * the life total changes.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DoubleEnchantedCreatureControllerLifeEffectHandler implements NormalEffectHandlerBean {
+public class DoubleEnchantedCreatureControllerLifeEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final LifeSupport lifeSupport;
     private final GameLogService gameLogService;

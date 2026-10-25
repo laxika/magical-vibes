@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
+import com.github.laxika.magicalvibes.cards.b.Biorhythm;
 import com.github.laxika.magicalvibes.cards.b.BloodTyrant;
 import com.github.laxika.magicalvibes.cards.b.BumpInTheNight;
 import com.github.laxika.magicalvibes.cards.d.DarkConfidant;
@@ -17,10 +18,15 @@ import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.o.OrzhovGuildmage;
 import com.github.laxika.magicalvibes.cards.p.PalantirOfOrthanc;
 import com.github.laxika.magicalvibes.cards.p.PriestOfForgottenGods;
+import com.github.laxika.magicalvibes.cards.p.PsychicTransfer;
 import com.github.laxika.magicalvibes.cards.r.RainOfDaggers;
+import com.github.laxika.magicalvibes.cards.r.ReverseTheSands;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SingeMindOgre;
+import com.github.laxika.magicalvibes.cards.s.SorinMarkov;
+import com.github.laxika.magicalvibes.cards.s.SoulConduit;
 import com.github.laxika.magicalvibes.cards.s.StabWound;
+import com.github.laxika.magicalvibes.cards.t.TreeOfPerdition;
 import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
 import com.github.laxika.magicalvibes.cards.w.WillOfTheAbzan;
 import com.github.laxika.magicalvibes.cards.x.XathridDemon;
@@ -844,6 +850,168 @@ class LichsDuelMasteryTest extends BaseCardTest {
                 .containsExactly(bears.getCard().getId());
         harness.assertLife(player2, 20);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({SorinMarkov.class, WheelOfSunAndMoon.class, LeylineOfTheVoid.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("\"Life total becomes 10\" asks the Mastery's sacrifice before the life total changes")
+    void setLifeTotalAsksTheMasteryBeforeTheLifeTotalChanges() {
+        Permanent sorin = harness.addToBattlefieldAndReturn(player1, new SorinMarkov());
+        sorin.setCounterCount(CounterType.LOYALTY, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent mastery = noncreatureShieldlessMasteryBetweenWheelAndLeyline();
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertMasteryAskedLibraryOrExile();
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Exile it");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(mastery.getCard());
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({Biorhythm.class, WheelOfSunAndMoon.class, LeylineOfTheVoid.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Biorhythm asks the Mastery's sacrifice before the first player's life total rises")
+    void eachPlayerSetLifeTotalAsksTheMasteryBeforeAnyLifeTotalChanges() {
+        Permanent mastery = noncreatureShieldlessMasteryBetweenWheelAndLeyline();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLife(player1, 1);
+
+        harness.castFromHand(player1, new Biorhythm(), "{6}{G}{G}");
+        harness.passBothPriorities();
+
+        assertMasteryAskedLibraryOrExile();
+        harness.assertLife(player1, 1);
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Put it on the bottom of its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.playerDecks.get(player2.getId()).getLast().getId()).isEqualTo(mastery.getCard().getId());
+        harness.assertLife(player1, 2);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({SoulConduit.class, WheelOfSunAndMoon.class, LeylineOfTheVoid.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Exchanging life totals asks the losing player's Mastery before the gaining player's total rises")
+    void exchangeLifeTotalsAsksTheMasteryBeforeEitherLifeTotalChanges() {
+        harness.addToBattlefieldAndReturn(player1, new SoulConduit()).setSummoningSick(false);
+        Permanent mastery = noncreatureShieldlessMasteryBetweenWheelAndLeyline();
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player1.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        assertMasteryAskedLibraryOrExile();
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Exile it");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(mastery.getCard());
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({PsychicTransfer.class, WheelOfSunAndMoon.class, LeylineOfTheVoid.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Psychic Transfer asks the target's Mastery before the caster's life total rises")
+    void psychicTransferAsksTheMasteryBeforeEitherLifeTotalChanges() {
+        Permanent mastery = noncreatureShieldlessMasteryBetweenWheelAndLeyline();
+        harness.setLife(player1, 16);
+        harness.setHand(player1, List.of(new PsychicTransfer()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertMasteryAskedLibraryOrExile();
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Put it on the bottom of its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.playerDecks.get(player2.getId()).getLast().getId()).isEqualTo(mastery.getCard().getId());
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({TreeOfPerdition.class, WheelOfSunAndMoon.class, LeylineOfTheVoid.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Tree of Perdition asks the Mastery's sacrifice before the life total or the toughness changes")
+    void exchangeLifeTotalWithToughnessAsksTheMasteryBeforeAnythingChanges() {
+        Permanent tree = harness.addToBattlefieldAndReturn(player1, new TreeOfPerdition());
+        tree.setSummoningSick(false);
+        Permanent mastery = noncreatureShieldlessMasteryBetweenWheelAndLeyline();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertMasteryAskedLibraryOrExile();
+        harness.assertLife(player2, 20);
+        assertThat(gqs.getEffectiveToughness(gd, tree)).isEqualTo(13);
+
+        harness.handleListChoice(player2, "Exile it");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(mastery.getCard());
+        harness.assertLife(player2, 20);
+        assertThat(gqs.getEffectiveToughness(gd, tree)).isEqualTo(20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({ReverseTheSands.class, WheelOfSunAndMoon.class, LeylineOfTheVoid.class})
+    @FailOnLegacyDepartureFallback
+    @DisplayName("Reverse the Sands asks the Mastery's sacrifice before the first player's life total rises")
+    void redistributeLifeTotalsAsksTheMasteryBeforeAnyLifeTotalChanges() {
+        Permanent mastery = noncreatureShieldlessMasteryBetweenWheelAndLeyline();
+        harness.setLife(player1, 5);
+        String swap = gd.playerIdToName.get(player1.getId()) + ": 20; "
+                + gd.playerIdToName.get(player2.getId()) + ": 5";
+
+        harness.castFromHand(player1, new ReverseTheSands(), "{6}{W}{W}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, swap);
+
+        assertMasteryAskedLibraryOrExile();
+        harness.assertLife(player1, 5);
+        harness.assertLife(player2, 20);
+
+        harness.handleListChoice(player2, "Exile it");
+
+        harness.assertNotOnBattlefield(player2, "Lich's Duel Mastery");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(mastery.getCard());
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private void assertMasteryAskedLibraryOrExile() {
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.options())
+                .containsExactlyInAnyOrder("Put it on the bottom of its owner's library", "Exile it");
+        harness.assertOnBattlefield(player2, "Lich's Duel Mastery");
     }
 
     /**

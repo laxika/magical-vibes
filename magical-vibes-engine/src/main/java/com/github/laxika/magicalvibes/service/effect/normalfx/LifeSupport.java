@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -319,6 +320,39 @@ public class LifeSupport {
         if (!sacrificed.isEmpty()) {
             permanentRemovalService.askDeathReplacementsBeforeRemoval(gameData, sacrificed);
         }
+    }
+
+    /**
+     * {@link #askBeforeLifeLosses} for the life totals a resolving effect is about to set or exchange, each player's
+     * to the value of {@code newLifeTotals}: a player whose total would become lower loses the difference (CR 119.5,
+     * CR 701.12c), and one whose gain a replacement turns into a loss loses the gain ({@link #applySetLifeTotal}).
+     * An effect that sets several life totals one after another needs this before the first, since a total that rises
+     * first closes the window before a later one falls.
+     */
+    public void askBeforeLifeTotalsChange(GameData gameData, Map<UUID, Integer> newLifeTotals) {
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
+        newLifeTotals.forEach((playerId, newLife) ->
+                losses.put(playerId, lifeLossOfSettingLifeTotal(gameData, playerId, newLife)));
+        askBeforeLifeLosses(gameData, losses);
+    }
+
+    /** The life {@link #applySetLifeTotal} would make {@code playerId} lose now on its way to {@code newLife}. */
+    private int lifeLossOfSettingLifeTotal(GameData gameData, UUID playerId, int newLife) {
+        if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+            return 0;
+        }
+        int currentLife = gameData.getLife(playerId);
+        newLife = gameData.capLifeTotal(playerId, newLife);
+        if (newLife < currentLife) {
+            return SaturatingMath.subtract(currentLife, newLife);
+        }
+        boolean gainBecomesLoss = newLife > currentLife
+                && gameQueryService.canPlayerGainLife(gameData, playerId)
+                && !hasNefariousLichLifeGainReplacement(gameData, playerId)
+                && (gameQueryService.lifeGainBecomesLifeLoss(gameData, playerId)
+                || gameQueryService.lifeGainFromSpellOrAbilityBecomesLifeLoss(
+                        gameData, playerId, resolveSpellOrAbilityControllerId(gameData)));
+        return gainBecomesLoss ? newLife - currentLife : 0;
     }
 
     /**

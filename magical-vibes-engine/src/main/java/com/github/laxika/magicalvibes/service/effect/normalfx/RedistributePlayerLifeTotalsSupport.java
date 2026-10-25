@@ -58,6 +58,18 @@ public class RedistributePlayerLifeTotalsSupport {
             }
         }
 
+        // Every Lich's Duel Mastery sacrifice a lowered total causes is asked about (CR 616.1) before the first
+        // total changes, since a total that rises first would close the question window.
+        Map<UUID, Integer> changedLifeTotals = new LinkedHashMap<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            int oldLife = oldLifeTotals.get(playerId);
+            int newLife = newLifeTotals.getOrDefault(playerId, oldLife);
+            if (oldLife != newLife) {
+                changedLifeTotals.put(playerId, newLife);
+            }
+        }
+        lifeSupport.askBeforeLifeTotalsChange(gameData, changedLifeTotals);
+
         boolean changed = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
             int oldLife = oldLifeTotals.get(playerId);

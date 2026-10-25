@@ -7,17 +7,28 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeTargetPlayersLifeTotalsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Exchanges two players' life totals.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: the exchange is its first change, and each player gains or loses the
+ * life needed to reach the other's former total (CR 701.12c), so a Lich's Duel Mastery the losing player's loss would
+ * sacrifice instead is asked about (CR 616.1) before either life total changes: the gaining player's change would
+ * otherwise close the question window first.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ExchangeTargetPlayersLifeTotalsEffectHandler implements NormalEffectHandlerBean {
+public class ExchangeTargetPlayersLifeTotalsEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -84,6 +95,10 @@ public class ExchangeTargetPlayersLifeTotalsEffectHandler implements NormalEffec
         String nameA = gameData.playerIdToName.get(playerA);
         String nameB = gameData.playerIdToName.get(playerB);
 
+        Map<UUID, Integer> newLifeTotals = new LinkedHashMap<>();
+        newLifeTotals.put(playerA, lifeB);
+        newLifeTotals.put(playerB, lifeA);
+        lifeSupport.askBeforeLifeTotalsChange(gameData, newLifeTotals);
         lifeSupport.applySetLifeTotal(gameData, playerA, lifeB);
         lifeSupport.applySetLifeTotal(gameData, playerB, lifeA);
         int newLifeA = gameData.getLife(playerA);
