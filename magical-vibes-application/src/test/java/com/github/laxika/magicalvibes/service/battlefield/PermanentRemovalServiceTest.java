@@ -56,7 +56,7 @@ class PermanentRemovalServiceTest {
         Permanent aura = new Permanent(createEnchantment("Leaving Aura"));
         UUID hostId = UUID.randomUUID();
         aura.setAttachedTo(hostId);
-        when(auraAttachmentService.enforceAttachmentLegality(gd)).thenReturn(
+        when(auraAttachmentService.enforceAttachmentLegality(eq(gd), any())).thenReturn(
                 new AuraAttachmentService.AttachmentSweepResult(List.of(
                         new AuraAttachmentService.OrphanedAuraRemoval(aura.getCard(), player1Id, aura)), false));
 
@@ -173,7 +173,7 @@ class PermanentRemovalServiceTest {
     void setUp() {
         lenient().when(gameQueryService.triggeredAbilityCanMoveCreatureToken(any(), any())).thenReturn(true);
         lenient().when(gameQueryService.delayedTriggeredAbilityCanMoveCreatureToken(any(), any())).thenReturn(true);
-        lenient().when(auraAttachmentService.removeOrphanedAuras(any())).thenReturn(NO_ATTACHMENT_CHANGE);
+        lenient().when(auraAttachmentService.removeOrphanedAuras(any(), any())).thenReturn(NO_ATTACHMENT_CHANGE);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

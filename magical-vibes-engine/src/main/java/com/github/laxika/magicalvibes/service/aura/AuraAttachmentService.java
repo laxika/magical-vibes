@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 /**
  * Handles aura and attachment lifecycle: removing orphaned or unattached auras and detaching
@@ -86,6 +87,15 @@ public class AuraAttachmentService {
      * @return what the sweep changed, so the SBA loop knows whether to run another pass
      */
     public AttachmentSweepResult removeOrphanedAuras(GameData gameData) {
+        return removeOrphanedAuras(gameData, aura -> false);
+    }
+
+    /**
+     * {@link #removeOrphanedAuras(GameData)}, except that an Aura matching {@code leftForDepartureBatch} stays on
+     * the battlefield: the state-based check puts it into the graveyard in its departure batch instead, which asks
+     * its CR 616.1 question before it leaves.
+     */
+    public AttachmentSweepResult removeOrphanedAuras(GameData gameData, Predicate<Permanent> leftForDepartureBatch) {
         List<OrphanedAuraRemoval> removals = new ArrayList<>();
         boolean anyUnattached = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -101,13 +111,7 @@ public class AuraAttachmentService {
                 if (isAura && !p.isAttached() && isAwaitingDayNightAttachment(gameData, p.getId())) {
                     continue;
                 }
-                boolean attachmentIsMissing = p.isAttached()
-                        && !gameData.playerIds.contains(p.getAttachedTo())
-                        && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null
-                        && !(gameQueryService.findCardInGraveyardById(gameData, p.getAttachedTo()) != null
-                                && (!isAura || enchantsCardInZone(p, TargetPredicate.Kind.GRAVEYARD_CARD)))
-                        && !(isCardInHand(gameData, p.getAttachedTo())
-                                && (!isAura || enchantsCardInZone(p, TargetPredicate.Kind.HAND_CARD)));
+                boolean attachmentIsMissing = attachmentIsMissing(gameData, p, isAura);
                 if ((isAura && !p.isAttached()) || attachmentIsMissing) {
                     if (p.isBestow()) {
                         p.setCard(p.getOriginalCard());
@@ -127,7 +131,7 @@ public class AuraAttachmentService {
                         
                         gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes unattached (attached permanent left the battlefield)."));
                         log.info("Game {} - {} unattached (attached permanent left)", gameData.id, p.getCard().getName());
-                    } else {
+                    } else if (!leftForDepartureBatch.test(p)) {
                         boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
                         // An Aura enchanting a card in a graveyard whose card left was enchanting nothing when it
                         // fell off (Spellweaver Volute's triggered ability finds no enchanted card).
@@ -167,6 +171,46 @@ public class AuraAttachmentService {
         }
         creatureControlService.reconcileControl(gameData);
         return new AttachmentSweepResult(removals, anyUnattached);
+    }
+
+    private boolean attachmentIsMissing(GameData gameData, Permanent p, boolean isAura) {
+        return p.isAttached()
+                && !gameData.playerIds.contains(p.getAttachedTo())
+                && gameQueryService.findPermanentById(gameData, p.getAttachedTo()) == null
+                && !(gameQueryService.findCardInGraveyardById(gameData, p.getAttachedTo()) != null
+                        && (!isAura || enchantsCardInZone(p, TargetPredicate.Kind.GRAVEYARD_CARD)))
+                && !(isCardInHand(gameData, p.getAttachedTo())
+                        && (!isAura || enchantsCardInZone(p, TargetPredicate.Kind.HAND_CARD)));
+    }
+
+    /**
+     * The Auras that {@link #removeOrphanedAuras} or {@link #enforceAttachmentLegality} would now put into a
+     * graveyard (CR 704.5m): unattached ones, ones whose object or player no longer exists, and ones attached to an
+     * illegal object or player. A bestowed Aura (it becomes a creature instead) and one still waiting for its
+     * day/night attachment choice are left out. Changes nothing.
+     */
+    public List<Permanent> aurasPutIntoGraveyardByAttachmentSweeps(GameData gameData) {
+        List<Permanent> auras = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (p.isBestow()
+                        || gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.EQUIPMENT)
+                        || gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.FORTIFICATION)
+                        || !gameQueryService.hasEffectiveSubtype(gameData, p, CardSubtype.AURA)) {
+                    continue;
+                }
+                boolean orphaned = !p.getCard().isEnchantZone()
+                        && (p.isAttached()
+                                ? attachmentIsMissing(gameData, p, true)
+                                : !isAwaitingDayNightAttachment(gameData, p.getId()));
+                if (orphaned || p.isAttached() && illegalAttachmentReason(gameData, p, playerId, true, false) != null) {
+                    auras.add(p);
+                }
+            }
+        }
+        return auras;
     }
 
     private void snapshotDepartingSource(GameData gameData, Permanent permanent, boolean enchantingNothing) {
@@ -225,6 +269,16 @@ public class AuraAttachmentService {
      * not a creature or has protection from it becomes unattached (CR 704.5n).
      */
     public AttachmentSweepResult enforceAttachmentLegality(GameData gameData) {
+        return enforceAttachmentLegality(gameData, aura -> false);
+    }
+
+    /**
+     * {@link #enforceAttachmentLegality(GameData)}, except that an Aura matching {@code leftForDepartureBatch} stays
+     * on the battlefield: the state-based check puts it into the graveyard in its departure batch instead, which asks
+     * its CR 616.1 question before it leaves.
+     */
+    public AttachmentSweepResult enforceAttachmentLegality(GameData gameData,
+                                                           Predicate<Permanent> leftForDepartureBatch) {
         List<OrphanedAuraRemoval> removals = new ArrayList<>();
         boolean anyUnattached = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -269,7 +323,7 @@ public class AuraAttachmentService {
                     anyUnattached = true;
                     gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " becomes an enchantment creature (bestow attachment became illegal)."));
                     log.info("Game {} - {} becomes a creature after illegal bestow attachment", gameData.id, p.getCard().getName());
-                } else {
+                } else if (!leftForDepartureBatch.test(p)) {
                     // CR 704.5m — an illegally attached aura is put into its owner's graveyard
                     boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
                     snapshotDepartingSource(gameData, p, false);

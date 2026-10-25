@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
@@ -302,5 +305,102 @@ class WheelOfSunAndMoonTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Wheel of Sun and Moon");
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(wheel.getCard());
         assertThat(gd.findExiledCard(wheel.getCard().getId())).isNull();
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({LeylineOfTheVoid.class, HolyStrength.class, Unsummon.class})
+    @DisplayName("An Aura left enchanting nothing lets its controller choose between Wheel and Leyline before it leaves")
+    void orphanedAurasControllerChoosesBetweenWheelAndLeyline() {
+        Permanent aura = setUpOrphanedAuraUnderWheelAndLeyline();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.options()).containsExactlyInAnyOrder(
+                "Put it on the bottom of its owner's library", "Exile it");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(aura);
+
+        harness.handleListChoice(player2, "Put it on the bottom of its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Holy Strength");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(aura.getCard());
+        assertThat(gd.findExiledCard(aura.getCard().getId())).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({LeylineOfTheVoid.class, HolyStrength.class, Unsummon.class})
+    @DisplayName("Choosing Leyline of the Void over Wheel exiles the Aura left enchanting nothing")
+    void choosingLeylineExilesTheOrphanedAura() {
+        Permanent aura = setUpOrphanedAuraUnderWheelAndLeyline();
+
+        harness.handleListChoice(player2, "Exile it");
+
+        harness.assertNotOnBattlefield(player2, "Holy Strength");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(aura.getCard());
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({HolyStrength.class, Unsummon.class})
+    @DisplayName("An Aura left enchanting nothing goes to the bottom of its enchanted owner's library without a question")
+    void orphanedAuraWithOnlyTheWheelGoesToTheLibrary() {
+        placeWheelOnPlayer(player2, player2);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
+        aura.setAttachedTo(bears.getId());
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertNotOnBattlefield(player2, "Holy Strength");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(aura.getCard());
+    }
+
+    @Test
+    @FailOnLegacyDepartureFallback
+    @CardUsed({LeylineOfTheVoid.class, HolyStrength.class, Forest.class})
+    @DisplayName("An Aura attached to an illegal object lets its controller choose between Wheel and Leyline before it leaves")
+    void illegallyAttachedAurasControllerChoosesBetweenWheelAndLeyline() {
+        harness.addToBattlefield(player1, new LeylineOfTheVoid());
+        placeWheelOnPlayer(player2, player2);
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
+        aura.setAttachedTo(forest.getId());
+        harness.setLibrary(player2, List.of());
+
+        harness.runStateBasedActions();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.options()).containsExactlyInAnyOrder(
+                "Put it on the bottom of its owner's library", "Exile it");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(aura);
+
+        harness.handleListChoice(player2, "Put it on the bottom of its owner's library");
+
+        harness.assertNotOnBattlefield(player2, "Holy Strength");
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(aura.getCard());
+        assertThat(gd.findExiledCard(aura.getCard().getId())).isNull();
+    }
+
+    private Permanent setUpOrphanedAuraUnderWheelAndLeyline() {
+        harness.addToBattlefield(player1, new LeylineOfTheVoid());
+        placeWheelOnPlayer(player2, player2);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
+        aura.setAttachedTo(bears.getId());
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        return aura;
     }
 }

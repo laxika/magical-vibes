@@ -835,6 +835,16 @@ public class PermanentRemovalService {
                 intent.cause() == DepartureCause.SACRIFICE, intent.graveyardOwnerId(), true, false);
     }
 
+    /**
+     * Whether putting {@code permanent} into a graveyard from the battlefield needs its controller's answer first:
+     * two or more replacements compete (CR 616.1), or its only one is a "may". The departure batch asks exactly
+     * these. Changes nothing.
+     */
+    public boolean hasDeathReplacementQuestion(GameData gameData, Permanent permanent) {
+        return deathExileReplacementOptions(gameData, permanent).size() > 1
+                || hasMayLibraryReplacement(gameData, permanent);
+    }
+
     /** Whether the dying creature {@code target} has a "you may put it on top of its owner's library instead". */
     public boolean hasMayLibraryReplacement(GameData gameData, Permanent target) {
         return findMayLibraryReplacement(gameData, target) != null;
@@ -1935,7 +1945,9 @@ public class PermanentRemovalService {
     }
 
     /**
-     * Removes all auras whose enchanted permanent is no longer on the battlefield.
+     * Removes all auras whose enchanted permanent is no longer on the battlefield. An Aura whose move to the
+     * graveyard has a CR 616.1 question ({@link #hasDeathReplacementQuestion}) stays: it can't be asked here, so
+     * the state-based check puts it into the graveyard in its departure batch (CR 704.5m), which asks first.
      *
      * @param gameData the current game state
      * @return {@code true} if any attachment changed (the SBA loop must re-check)
@@ -1944,7 +1956,8 @@ public class PermanentRemovalService {
         if (gameData.effectResolutionDepth > 0 || gameData.deferPlayerLossCheck) {
             return false;
         }
-        var result = auraAttachmentService.removeOrphanedAuras(gameData);
+        var result = auraAttachmentService.removeOrphanedAuras(gameData,
+                aura -> hasDeathReplacementQuestion(gameData, aura));
         for (var removal : result.removals()) {
             emitLeaveCue(gameData, removal.permanent(), true, VisualCueType.DIED, VisualCueService.Source.none());
             handleExileReturnOnLeave(gameData, removal.permanent(), removal.controllerId(), true);
@@ -1958,13 +1971,26 @@ public class PermanentRemovalService {
     }
 
     /**
+     * The Auras the attachment sweeps would put into a graveyard (CR 704.5m) but leave on the battlefield because
+     * that move has a CR 616.1 question ({@link #hasDeathReplacementQuestion}): the state-based check departs them
+     * in its batch, which asks before they leave. Changes nothing.
+     */
+    public List<Permanent> aurasLeftForStateBasedDepartures(GameData gameData) {
+        return auraAttachmentService.aurasPutIntoGraveyardByAttachmentSweeps(gameData).stream()
+                .filter(aura -> hasDeathReplacementQuestion(gameData, aura))
+                .toList();
+    }
+
+    /**
      * State-based attachment legality (CR 704.5n/704.5q): puts illegally attached auras into
-     * their owners' graveyards and unattaches illegally attached equipment.
+     * their owners' graveyards and unattaches illegally attached equipment. An Aura whose move to the graveyard
+     * has a CR 616.1 question is left for the state-based departure batch, as in {@link #removeOrphanedAuras}.
      *
      * @return {@code true} if any attachment changed (the SBA loop must re-check)
      */
     public boolean enforceAttachmentLegality(GameData gameData) {
-        var result = auraAttachmentService.enforceAttachmentLegality(gameData);
+        var result = auraAttachmentService.enforceAttachmentLegality(gameData,
+                aura -> hasDeathReplacementQuestion(gameData, aura));
         for (var removal : result.removals()) {
             emitLeaveCue(gameData, removal.permanent(), true, VisualCueType.DIED, VisualCueService.Source.none());
             handleExileReturnOnLeave(gameData, removal.permanent(), removal.controllerId(), true);

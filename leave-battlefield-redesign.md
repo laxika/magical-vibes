@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; thirteenth part: the losses after an exile or a sacrifice (Dire Tactics, Trystan, Will of the Abzan, Xathrid Demon's sacrifice) are steps of their own through the new internal `PlayersLoseLifeEffect`, and Priest of Forgotten Gods', Mornsong Aria's and Thieving Amalgam's losses ask first; fourteenth part: Stab Wound's family through `LifeSupport`, and the losses after a reveal, a mill, a library exile or discards; fifteenth part: the destroy-all riders (Deadly Tempest, Rain of Daggers, ...) are steps of their own; sixteenth part: noncreature permanents get their CR 616.1 graveyard-replacement question too, and destroy-all riders count permanents a replacement exiled instead; seventeenth part: the targeted destroy handlers count "destroyed this way" and "put into a graveyard this way" as their Oracle text says; the fallback stays until the callers listed in the fifteenth part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; thirteenth part: the losses after an exile or a sacrifice (Dire Tactics, Trystan, Will of the Abzan, Xathrid Demon's sacrifice) are steps of their own through the new internal `PlayersLoseLifeEffect`, and Priest of Forgotten Gods', Mornsong Aria's and Thieving Amalgam's losses ask first; fourteenth part: Stab Wound's family through `LifeSupport`, and the losses after a reveal, a mill, a library exile or discards; fifteenth part: the destroy-all riders (Deadly Tempest, Rain of Daggers, ...) are steps of their own; sixteenth part: noncreature permanents get their CR 616.1 graveyard-replacement question too, and destroy-all riders count permanents a replacement exiled instead; seventeenth part: the targeted destroy handlers count "destroyed this way" and "put into a graveyard this way" as their Oracle text says; eighteenth part: an orphaned or illegally attached Aura with a CR 616.1 question joins the state-based departure batch; the fallback stays until the callers listed in the fifteenth part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1925,6 +1925,42 @@ Steps add notes here for later steps, under their number.
   `VolcanicEruptionTest.mountainsExiledInsteadOfGoingToGraveyardDealNoDamage`; new guard:
   `TerastodonTest.permanentExiledInsteadOfGoingToGraveyardCreatesNoElephant`. The existing Rest in Peace and Leyline
   guards of Cinder Cloud, Kaervek's Purge, Tuktuk Scrapper and Builder's Bane still pass. No existing test changed.
+
+### Step 13 (eighteenth part: orphaned and illegally attached Auras)
+
+- Rules: an Aura attached to an illegal object or player, or attached to nothing, is put into its owner's graveyard
+  as a state-based action (CR 704.5m, checked; CR 303.4c, checked, says the same), performed with the check's other
+  state-based actions as one event (CR 704.3, checked). When two or more replacements compete for that move (Rest in
+  Peace, Leyline of the Void, Wheel of Sun and Moon, a Storm Herald "exile it instead" Aura under one of them), the
+  Aura's controller chooses one (CR 616.1, checked).
+- Done: the attachment sweeps (`AuraAttachmentService.removeOrphanedAuras` / `enforceAttachmentLegality`) take a
+  `Predicate<Permanent>`; `PermanentRemovalService` passes the new `hasDeathReplacementQuestion` (two or more
+  `deathExileReplacementOptions`, or a lone "may": the test `DepartureService.choose` asks by), so such an Aura stays
+  on the battlefield instead of going through `GraveyardService.addCardToGraveyard`'s fixed order. The new
+  `AuraAttachmentService.aurasPutIntoGraveyardByAttachmentSweeps` lists what the sweeps would put into a graveyard
+  (bestowed Auras, which become creatures, and an Aura awaiting its day/night attachment are left out), and
+  `PermanentRemovalService.aurasLeftForStateBasedDepartures` filters it by the same test. `StateBasedActionService`'s
+  state-based departure batch adds those as `STATE_BASED` intents (`DeathReason.ILLEGAL_AURA`, logged "X is put into
+  the graveyard (Aura not legally attached)."), so the question is asked before the Aura leaves, in the same event as
+  that check's other deaths, and a resumed batch recognises them. Every eager sweep call site (after a resolution, a
+  choice completion, a removal) is unchanged; it simply leaves such an Aura for the next state-based check, which is
+  when CR 704.5m performs it anyway. An Aura without a question still leaves through the sweep as before (a separate
+  event from the departure batch, as it was).
+- **Left**: `DestroyTargetPermanentThenEffect` cards without `requiresDestruction` (seventeenth part) and everything
+  in the fifteenth part's **Left** except the Mastery's noncreature question (Bomb Squad, the remaining life-change
+  families, life payments, redirected combat damage, questions while another departure batch is pending) are
+  unchanged.
+- Tests: new, failing with the old code (all `@FailOnLegacyDepartureFallback`) in `WheelOfSunAndMoonTest`:
+  `orphanedAurasControllerChoosesBetweenWheelAndLeyline`, `choosingLeylineExilesTheOrphanedAura` (Unsummon on the
+  enchanted creature) and `illegallyAttachedAurasControllerChoosesBetweenWheelAndLeyline` (Holy Strength on a
+  Forest); new guard `orphanedAuraWithOnlyTheWheelGoesToTheLibrary`; new unit test
+  `AuraAttachmentServiceTest.auraLeftForDepartureBatchStaysAndIsListed`. Changed: `PermanentRemovalServiceTest`'s two
+  sweep mocks now stub the predicate overloads. A sweep of 1,828 card test classes mentioning an Aura, Rest in Peace,
+  Leyline of the Void, Wheel of Sun and Moon, Kalitas, Gravebane Zombie or Pulmonic Sliver, plus
+  `StateBasedActionServiceTest`, `AuraAttachmentServiceTest`, `PermanentRemovalServiceTest`,
+  `LegacyDepartureWrapperRatchetTest` and `GameSimulatorTest`, had 200 failures; 198 fail the same way with the old
+  code, and the other two (`OrzhovCharmTest`'s bounce-mode Aura test, `GlacialPlatingTest`'s snow-mana test) pass on
+  rerun (the Glacial Plating one is flaky with the old code too).
 
 ### Step 2
 

@@ -123,6 +123,22 @@ class AuraAttachmentServiceTest {
         }
 
         @Test
+        @DisplayName("Aura left for the state-based departure batch stays on the battlefield and is listed for it")
+        void auraLeftForDepartureBatchStaysAndIsListed() {
+            UUID deadCreatureId = UUID.randomUUID();
+            Permanent aura = createAura("Holy Strength");
+            aura.setAttachedTo(deadCreatureId);
+            gd.playerBattlefields.get(player1Id).add(aura);
+
+            var result = service.removeOrphanedAuras(gd, permanent -> permanent == aura);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(aura);
+            assertThat(result.anyChange()).isFalse();
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any(), any(), any(), any(Permanent.class));
+            assertThat(service.aurasPutIntoGraveyardByAttachmentSweeps(gd)).containsExactly(aura);
+        }
+
+        @Test
         @DisplayName("Unattached Aura awaiting a day/night attachment choice stays on the battlefield")
         void dayNightAuraAwaitingAttachmentIsNotRemoved() {
             Permanent aura = createAura("Curse of Leeches");

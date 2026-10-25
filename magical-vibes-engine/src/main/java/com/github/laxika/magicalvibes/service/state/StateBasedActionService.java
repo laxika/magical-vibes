@@ -85,7 +85,7 @@ public class StateBasedActionService {
     private final DepartureService departureService;
 
     private enum DeathReason {
-        ZERO_TOUGHNESS, LETHAL_DAMAGE, ZERO_LOYALTY, ZERO_DEFENSE, FINAL_CHAPTER, WORLD_RULE, REDUNDANT_ROLE
+        ZERO_TOUGHNESS, LETHAL_DAMAGE, ZERO_LOYALTY, ZERO_DEFENSE, FINAL_CHAPTER, WORLD_RULE, REDUNDANT_ROLE, ILLEGAL_AURA
     }
 
     private record DeathEntry(Permanent permanent, DeathReason reason) {}
@@ -461,7 +461,9 @@ public class StateBasedActionService {
     /**
      * Performs every state-based action of this check that puts permanents into a graveyard as one departure batch
      * (CR 704.3: they are performed simultaneously as a single event): 0 toughness, lethal damage and deathtouch,
-     * 0 loyalty, 0 defense, completed Sagas, the world rule and redundant Roles.
+     * 0 loyalty, 0 defense, completed Sagas, the world rule, redundant Roles, and the illegally attached or
+     * unattached Auras (CR 704.5m) whose move to the graveyard has a CR 616.1 question (the attachment sweeps put
+     * the others there themselves).
      */
     private boolean performStateBasedDepartures(GameData gameData, Set<UUID> processedIds) {
         DepartureService.discardOrphanedStepBatch(gameData);
@@ -527,6 +529,12 @@ public class StateBasedActionService {
         for (Permanent role : redundantRoles(gameData)) {
             if (!processedIds.contains(role.getId()) && dying.add(role.getId())) {
                 toDie.add(new DeathEntry(role, DeathReason.REDUNDANT_ROLE));
+            }
+        }
+        // CR 704.5m: the attachment sweeps leave an Aura with a CR 616.1 question for this batch.
+        for (Permanent aura : permanentRemovalService.aurasLeftForStateBasedDepartures(gameData)) {
+            if (!processedIds.contains(aura.getId()) && dying.add(aura.getId())) {
+                toDie.add(new DeathEntry(aura, DeathReason.ILLEGAL_AURA));
             }
         }
 
@@ -620,6 +628,9 @@ public class StateBasedActionService {
         if (permanent.getCard().getSupertypes().contains(CardSupertype.WORLD)) {
             return DeathReason.WORLD_RULE;
         }
+        if (permanentRemovalService.aurasLeftForStateBasedDepartures(gameData).contains(permanent)) {
+            return DeathReason.ILLEGAL_AURA;
+        }
         if (permanent.getCard().getSubtypes().contains(com.github.laxika.magicalvibes.model.CardSubtype.ROLE)) {
             return DeathReason.REDUNDANT_ROLE;
         }
@@ -657,6 +668,11 @@ public class StateBasedActionService {
                 gameLogService.append(gameData, GameLog.cardThen(card,
                         " is put into its owner's graveyard because its controller controls another Role attached to the same permanent."));
                 log.info("Game {} - redundant Role {} is put into its owner's graveyard", gameData.id, name);
+            }
+            case ILLEGAL_AURA -> {
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        " is put into the graveyard (Aura not legally attached)."));
+                log.info("Game {} - {} removed (Aura not legally attached)", gameData.id, name);
             }
         }
     }
