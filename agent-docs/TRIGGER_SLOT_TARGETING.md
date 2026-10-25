@@ -819,9 +819,13 @@ Controller end-step effects bound to multiple declared target groups are queued 
 source zone is the library. It includes non-mill moves such as Call of the Wild; use
 `ON_SELF_MILLED` only when the ability specifically requires milling.
 
-Optional multi-target groups consisting of player targets use
-`MultiPermanentChoiceContext.EtbPlayerTargetGroup` when the controller is a legal target.
-An empty selection ends the group, leaving the controller available as an actual target.
+Optional target groups of the slot-by-slot walker (any size, including a single "up to one
+target player" slot such as Volatile Arsonist's) use
+`MultiPermanentChoiceContext.EtbPlayerTargetGroup` when the controller is a legal target for the
+group and it has no graveyard or exiled-card candidates. The whole group is chosen in one answer
+(`harness.handleMultiplePermanentsChosen`); an empty selection declines it, leaving the controller
+available as an actual target. Groups that can't target the controller keep the single-slot prompt,
+where choosing yourself stops the group.
 
 End-of-combat planar abilities with multiple declared target groups use the same slot-by-slot
 walker as ETB token triggers. A dependent constraint can filter later groups from the first

@@ -598,7 +598,10 @@ public class ETBTokenTargetService {
             }
 
             boolean minMet = chosenInGroup >= effectiveMinTargets;
-            if (effectiveMinTargets == 0 && group.getMaxTargets() > 1
+            // An optional group that can target the controller can't use "choose yourself" to stop,
+            // so it asks for the whole group at once and an empty answer chooses no targets for it
+            // (CR 601.2c, CR 603.3d) — even a single-slot "up to one target player" group.
+            if (effectiveMinTargets == 0
                     && validExiledCardTargets.isEmpty()
                     && validGraveyardCardTargets.isEmpty()
                     && validPlayerTargets.contains(pending.controllerId())) {

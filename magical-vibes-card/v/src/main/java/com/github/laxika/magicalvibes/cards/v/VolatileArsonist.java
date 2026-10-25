@@ -32,6 +32,7 @@ public class VolatileArsonist extends Card {
                 "Target must be a planeswalker"
         ), 0, 1).addEffect(EffectSlot.ON_ATTACK,
                 new DealDamageToTargetPlayerOrPlaneswalkerEffect(1));
+        setAllowSharedTargets(true);
     }
 
     @Override

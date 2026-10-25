@@ -29,5 +29,6 @@ public class DireStrainAnarchist extends Card {
                 "Target must be a planeswalker"
         ), 0, 1).bindEffect(planeswalkerDamage);
         addSimultaneousEffects(EffectSlot.ON_ATTACK, creatureDamage, playerDamage, planeswalkerDamage);
+        setAllowSharedTargets(true);
     }
 }

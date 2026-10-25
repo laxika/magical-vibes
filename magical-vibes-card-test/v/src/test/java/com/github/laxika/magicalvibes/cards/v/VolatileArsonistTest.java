@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.cards.g.GideonBlackblade;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DayNight;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -35,7 +37,7 @@ class VolatileArsonistTest extends BaseCardTest {
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
         harness.handlePermanentChosen(player1, creature.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         harness.handlePermanentChosen(player1, planeswalker.getId());
         harness.passBothPriorities();
 
@@ -56,7 +58,7 @@ class VolatileArsonistTest extends BaseCardTest {
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(arsonist)));
 
         harness.handlePermanentChosen(player1, creature.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         harness.handlePermanentChosen(player1, planeswalker.getId());
         harness.passBothPriorities();
 
@@ -96,7 +98,7 @@ class VolatileArsonistTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(arsonist)));
         harness.handlePermanentChosen(player1, creature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(transformed ? 18 : 19);
@@ -114,7 +116,7 @@ class VolatileArsonistTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(arsonist)));
         harness.handlePermanentChosen(player1, gideon.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         harness.handlePermanentChosen(player1, gideon.getId());
         harness.passBothPriorities();
 
@@ -134,7 +136,9 @@ class VolatileArsonistTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(arsonist)));
         harness.handlePermanentChosen(player1, player1.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).context())
+                .isInstanceOf(MultiPermanentChoiceContext.EtbPlayerTargetGroup.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
@@ -165,7 +169,7 @@ class VolatileArsonistTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(arsonist)));
         harness.handlePermanentChosen(player1, player1.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
@@ -186,7 +190,7 @@ class VolatileArsonistTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(arsonist)));
         harness.handlePermanentChosen(player1, creature.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         harness.handlePermanentChosen(player1, planeswalker.getId());
         gd.playerBattlefields.get(player2.getId()).remove(creature);
         gd.playerGraveyards.get(player2.getId()).add(creature.getCard());
