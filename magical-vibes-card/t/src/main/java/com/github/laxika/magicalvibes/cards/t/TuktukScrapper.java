@@ -26,12 +26,11 @@ public class TuktukScrapper extends Card {
 
         target(TargetFilters.artifact()).addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ALLY),
-                        new MayEffect(new DestroyTargetPermanentThenEffect(
+                        new MayEffect(DestroyTargetPermanentThenEffect.ifDiesThisWay(
                                 EventStat.NONE,
                                 new DealDamageToPlayersEffect(allies, DamageRecipient.TARGET_PLAYER),
                                 ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,
-                                null,
-                                true),
+                                null),
                                 "Destroy target artifact?")));
     }
 }

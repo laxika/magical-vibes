@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HurkylsRecall;
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FlamesOfMoradin.class, SolRing.class, GrizzlyBears.class, HurkylsRecall.class, ThayanEvokers.class})
+@CardUsed({RestInPeace.class, FlamesOfMoradin.class, SolRing.class, GrizzlyBears.class, HurkylsRecall.class, ThayanEvokers.class})
 class FlamesOfMoradinTest extends BaseCardTest {
 
     @Test
@@ -201,4 +202,23 @@ class FlamesOfMoradinTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
+    @Test
+    void conjuresDuplicateOfArtifactExiledByRestInPeaceInsteadOfGoingToGraveyard() {
+        harness.addToBattlefield(player1, new RestInPeace());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        harness.setHand(player1, List.of(new FlamesOfMoradin()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(artifact.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Sol Ring"));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Sol Ring");
+    }
+
 }

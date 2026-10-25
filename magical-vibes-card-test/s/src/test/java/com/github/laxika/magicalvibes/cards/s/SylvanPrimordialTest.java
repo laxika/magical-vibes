@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.b.BreedingPool;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
@@ -20,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SylvanPrimordial.class, Forest.class, GrizzlyBears.class, Plains.class,
+@CardUsed({RestInPeace.class, SylvanPrimordial.class, Forest.class, GrizzlyBears.class, Plains.class,
         BreedingPool.class, DarksteelCitadel.class, PsychogenicProbe.class})
 class SylvanPrimordialTest extends BaseCardTest {
 
@@ -200,6 +201,23 @@ class SylvanPrimordialTest extends BaseCardTest {
         harness.castCreature(player1, 0, targetIds);
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("A permanent destroyed but exiled by Rest in Peace instead still counts toward the Forests")
+    void permanentExiledInsteadOfGoingToGraveyardStillCounts() {
+        harness.addToBattlefield(player1, new RestInPeace());
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
+
+        castSylvanPrimordial(List.of(plains.getId()));
+
+        harness.assertNotInGraveyard(player2, "Plains");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Plains"));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, 0);
+        harness.assertOnBattlefield(player1, "Forest");
     }
 
     private void prepareCast() {

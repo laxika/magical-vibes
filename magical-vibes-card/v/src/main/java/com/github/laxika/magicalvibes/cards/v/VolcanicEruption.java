@@ -25,7 +25,7 @@ public class VolcanicEruption extends Card {
         targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
                 "Targets must be Mountains"
-        ), 100).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+        ), 100).addEffect(EffectSlot.SPELL, DestroyEachTargetPermanentEffect.countingPermanentsPutIntoAGraveyard());
 
         addEffect(EffectSlot.SPELL, new MassDamageEffect(new EventValue(), true));
     }

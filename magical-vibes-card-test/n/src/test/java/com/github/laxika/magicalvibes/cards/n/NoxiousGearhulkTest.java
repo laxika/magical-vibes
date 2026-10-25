@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.e.EagerConstruct;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NoxiousGearhulk.class, EagerConstruct.class})
+@CardUsed({RestInPeace.class, NoxiousGearhulk.class, EagerConstruct.class})
 class NoxiousGearhulkTest extends BaseCardTest {
 
     @Test
@@ -177,6 +178,22 @@ class NoxiousGearhulkTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A creature destroyed but exiled by Rest in Peace instead still grants life")
+    void creatureExiledInsteadOfDyingStillGrantsLife() {
+        harness.addToBattlefield(player2, new RestInPeace());
+        harness.setLife(player1, 20);
+        Permanent target = addCreatureReady(player2, new EagerConstruct());
+
+        castAndAcceptMay(target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Eager Construct");
+        harness.assertNotInGraveyard(player2, "Eager Construct");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Eager Construct"));
+        harness.assertLife(player1, 22);
     }
 
     private void castAndAcceptMay(UUID targetId) {

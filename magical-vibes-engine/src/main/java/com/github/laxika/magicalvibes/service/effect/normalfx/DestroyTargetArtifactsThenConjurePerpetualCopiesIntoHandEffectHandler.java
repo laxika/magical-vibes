@@ -55,7 +55,7 @@ public class DestroyTargetArtifactsThenConjurePerpetualCopiesIntoHandEffectHandl
             }
         }
 
-        List<Permanent> destroyed = destructionSupport.destroyBatchCollecting(
+        List<Permanent> destroyed = destructionSupport.destroyBatchDestroyed(
                 gameData, targets, entry.getCard().getName(), false);
         int conjuredCount = 0;
         for (Permanent destroyedPermanent : destroyed) {

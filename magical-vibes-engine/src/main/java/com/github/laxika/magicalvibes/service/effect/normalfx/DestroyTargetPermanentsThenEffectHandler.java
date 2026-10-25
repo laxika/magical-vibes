@@ -54,7 +54,7 @@ public class DestroyTargetPermanentsThenEffectHandler implements NormalEffectHan
             }
         }
 
-        List<Permanent> destroyed = destructionSupport.destroyBatchCollecting(
+        List<Permanent> destroyed = destructionSupport.destroyBatchDestroyed(
                 gameData, toDestroy, entry.getCard().getName(), e.cannotBeRegenerated());
 
         // The rider always runs, even when nothing was destroyed: its count is the number destroyed

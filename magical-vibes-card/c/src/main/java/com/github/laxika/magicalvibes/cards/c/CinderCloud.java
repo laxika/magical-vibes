@@ -22,11 +22,10 @@ public class CinderCloud extends Card {
         // Destroy target creature. If a white creature dies this way, Cinder Cloud deals damage to
         // that creature's controller equal to the creature's power.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+                .addEffect(EffectSlot.SPELL, DestroyTargetPermanentThenEffect.ifDiesThisWay(
                         EventStat.POWER,
                         new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER),
                         ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,
-                        new PermanentColorInPredicate(Set.of(CardColor.WHITE)),
-                        true));
+                        new PermanentColorInPredicate(Set.of(CardColor.WHITE))));
     }
 }

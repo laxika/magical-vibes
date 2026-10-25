@@ -33,11 +33,10 @@ public class KaerveksPurge extends Card {
                         new PermanentManaValueEqualsXPredicate())),
                 "Target must be a creature with mana value X."
         ))
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+                .addEffect(EffectSlot.SPELL, DestroyTargetPermanentThenEffect.ifDiesThisWay(
                         EventStat.POWER,
                         new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER),
                         ThenEffectRecipient.TARGET_CONTROLLER_AS_TARGET,
-                        null,
-                        true));
+                        null));
     }
 }

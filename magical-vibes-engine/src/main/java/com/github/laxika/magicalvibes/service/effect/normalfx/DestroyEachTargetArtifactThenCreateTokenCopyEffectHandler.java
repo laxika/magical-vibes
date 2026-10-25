@@ -46,7 +46,7 @@ public class DestroyEachTargetArtifactThenCreateTokenCopyEffectHandler implement
             }
         }
 
-        List<Permanent> destroyed = destructionSupport.destroyBatchCollecting(
+        List<Permanent> destroyed = destructionSupport.destroyBatchDestroyed(
                 gameData, targets, entry.getCard().getName(), false);
         entry.setEventValue(destroyed.size());
         if (entry.getXValue() < TOKEN_COPY_THRESHOLD || destroyed.isEmpty()) {

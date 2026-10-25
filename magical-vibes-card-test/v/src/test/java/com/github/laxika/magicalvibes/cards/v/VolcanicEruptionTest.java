@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -20,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VolcanicEruption.class, Forest.class, GrizzlyBears.class, HillGiant.class, Mountain.class,
+@CardUsed({RestInPeace.class, VolcanicEruption.class, Forest.class, GrizzlyBears.class, HillGiant.class, Mountain.class,
         PhantasmalTerrain.class})
 class VolcanicEruptionTest extends BaseCardTest {
 
@@ -182,4 +183,28 @@ class VolcanicEruptionTest extends BaseCardTest {
         harness.assertLife(player1, 99);
         harness.assertLife(player2, 99);
     }
+    @Test
+    @DisplayName("Mountains destroyed but exiled by Rest in Peace instead deal no damage")
+    void mountainsExiledInsteadOfGoingToGraveyardDealNoDamage() {
+        harness.addToBattlefield(player1, new RestInPeace());
+        Permanent m1 = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        Permanent m2 = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new VolcanicEruption()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castSorcery(player1, 0, 2, List.of(m1.getId(), m2.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Mountain");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .filteredOn(card -> card.getName().equals("Mountain"))
+                .hasSize(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
 }

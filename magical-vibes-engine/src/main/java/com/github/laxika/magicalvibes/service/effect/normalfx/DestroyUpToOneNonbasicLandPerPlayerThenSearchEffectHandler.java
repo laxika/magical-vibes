@@ -93,7 +93,7 @@ public class DestroyUpToOneNonbasicLandPerPlayerThenSearchEffectHandler
             }
         }
 
-        List<Permanent> destroyed = destructionSupport.destroyBatchCollecting(
+        List<Permanent> destroyed = destructionSupport.destroyBatchDestroyed(
                 gameData, toDestroy, sourceName, false);
         List<UUID> destroyedControllers = destroyed.stream()
                 .map(permanent -> controllerByPermanentId.get(permanent.getId()))

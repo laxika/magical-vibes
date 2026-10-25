@@ -19,7 +19,7 @@ public class BuildersBane extends Card {
         targetExactlyX(new PermanentPredicateTargetFilter(
                 new PermanentIsArtifactPredicate(),
                 "Targets must be artifacts"
-        ), Integer.MAX_VALUE).addEffect(EffectSlot.SPELL, new DestroyEachTargetPermanentEffect());
+        ), Integer.MAX_VALUE).addEffect(EffectSlot.SPELL, DestroyEachTargetPermanentEffect.countingPermanentsPutIntoAGraveyard());
 
         addEffect(EffectSlot.SPELL, new DealDamageToEachDestroyedPermanentControllerEffect());
     }

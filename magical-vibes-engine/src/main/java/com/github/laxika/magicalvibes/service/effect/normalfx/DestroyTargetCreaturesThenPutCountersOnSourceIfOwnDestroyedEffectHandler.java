@@ -51,7 +51,7 @@ public class DestroyTargetCreaturesThenPutCountersOnSourceIfOwnDestroyedEffectHa
             }
         }
 
-        List<Permanent> destroyed = destructionSupport.destroyBatchCollecting(
+        List<Permanent> destroyed = destructionSupport.destroyBatchDestroyed(
                 gameData, toDestroy, entry.getCard().getName(), false);
         boolean ownCreatureDestroyed = destroyed.stream()
                 .map(Permanent::getId)

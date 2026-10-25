@@ -253,7 +253,8 @@ public class DestructionSupport {
 
     /**
      * Same batch destruction as {@link #destroyBatch}, but returns the permanents that actually died
-     * so a "for each permanent destroyed this way" rider can inspect them (e.g. their controllers).
+     * (were put into a graveyard), for "died this way" and "put into a graveyard this way" riders. A
+     * "destroyed this way" rider counts {@link #destroyBatchDestroyed} instead.
      */
     public List<Permanent> destroyBatchCollecting(GameData gameData, List<Permanent> toDestroy, String sourceName,
                               boolean cannotBeRegenerated) {

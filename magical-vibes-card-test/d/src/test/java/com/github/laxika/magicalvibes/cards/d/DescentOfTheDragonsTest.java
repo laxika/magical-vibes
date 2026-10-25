@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.c.ColossodonYearling;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -22,7 +23,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DescentOfTheDragons.class, GrizzlyBears.class, Forest.class,
+@CardUsed({RestInPeace.class, DescentOfTheDragons.class, GrizzlyBears.class, Forest.class,
         ColossodonYearling.class, DragonFodder.class, DragonlordSilumgar.class, SarkhansRage.class})
 class DescentOfTheDragonsTest extends BaseCardTest {
 
@@ -176,6 +177,22 @@ class DescentOfTheDragonsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(creature.getId(), creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A creature destroyed but exiled by Rest in Peace instead still gives its controller a Dragon")
+    void creatureExiledInsteadOfDyingStillCreatesDragon() {
+        harness.addToBattlefield(player1, new RestInPeace());
+        Permanent opponentBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castDescent(List.of(opponentBear.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        assertThat(dragons(player2)).hasSize(1).allSatisfy(this::assertDragon);
+        assertThat(dragons(player1)).isEmpty();
     }
 
     private void castDescent(List<UUID> targetIds) {

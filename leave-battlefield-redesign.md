@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; thirteenth part: the losses after an exile or a sacrifice (Dire Tactics, Trystan, Will of the Abzan, Xathrid Demon's sacrifice) are steps of their own through the new internal `PlayersLoseLifeEffect`, and Priest of Forgotten Gods', Mornsong Aria's and Thieving Amalgam's losses ask first; fourteenth part: Stab Wound's family through `LifeSupport`, and the losses after a reveal, a mill, a library exile or discards; fifteenth part: the destroy-all riders (Deadly Tempest, Rain of Daggers, ...) are steps of their own; sixteenth part: noncreature permanents get their CR 616.1 graveyard-replacement question too, and destroy-all riders count permanents a replacement exiled instead; the fallback stays until the callers listed in the fifteenth part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; thirteenth part: the losses after an exile or a sacrifice (Dire Tactics, Trystan, Will of the Abzan, Xathrid Demon's sacrifice) are steps of their own through the new internal `PlayersLoseLifeEffect`, and Priest of Forgotten Gods', Mornsong Aria's and Thieving Amalgam's losses ask first; fourteenth part: Stab Wound's family through `LifeSupport`, and the losses after a reveal, a mill, a library exile or discards; fifteenth part: the destroy-all riders (Deadly Tempest, Rain of Daggers, ...) are steps of their own; sixteenth part: noncreature permanents get their CR 616.1 graveyard-replacement question too, and destroy-all riders count permanents a replacement exiled instead; seventeenth part: the targeted destroy handlers count "destroyed this way" and "put into a graveyard this way" as their Oracle text says; the fallback stays until the callers listed in the fifteenth part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -1883,6 +1883,48 @@ Steps add notes here for later steps, under their number.
   new guards: `LichsDuelMasteryTest.lifeLossAsksTheGraveyardReplacementForTheNoncreatureMastery`
   (`@FailOnLegacyDepartureFallback`) and `KalitasTraitorOfGhetTest.doesNotApplyToANoncreatureArtifact`. No existing
   test changed; `ReignOfTerrorTest`'s "exiled instead of dying" test caught Reign of Terror's "died" wording.
+
+### Step 13 (seventeenth part: the "destroyed this way" audit of the targeted destroy handlers)
+
+- Rules: to destroy a permanent is to move it from the battlefield to its owner's graveyard (CR 701.8a, checked), and
+  a replacement such as Rest in Peace changes where it goes without undoing the destruction, so official rulings
+  count it as "destroyed this way" (Noxious Gearhulk, KLD, 2016-09-20: "If it is destroyed but put into a zone other
+  than a graveyard, you'll gain life"; Break the Spell, WOE; Acolyte Hybrid, 40K; Fumigate, sixteenth part). A card
+  worded "dies this way" (CR 700.4, checked: "is put into a graveyard from the battlefield") or "put into a graveyard
+  this way" counts only those that reached a graveyard (Tuktuk Scrapper, WWK, 2013-07-01: a replacement that moves
+  the artifact elsewhere means no damage; Saw in Half, MAR, 2025-09-19, the same for its tokens).
+- Done, by Oracle wording:
+  - `DestructionSupport.destroyBatchDestroyed` (destroyed, wherever they went) now feeds Sylvan Primordial
+    (`DestroyTargetPermanentsThen`), Flames of Moradin, Red Sun's Twilight, Demonic Junker, Krenko's Buzzcrusher and
+    Rampaging Yao Guai (no rider). `destroyBatchCollecting` (died only) stays for Saw in Half, Sorin, Lord of
+    Innistrad and Come Back Wrong ("put into a graveyard this way") and Glyph of Reincarnation ("died this way").
+  - `DestroyTargetPermanentThenEffect`'s `requiresDestruction` now means "destroyed this way" (Smashing Success,
+    Shredder's Technique, Noxious Gearhulk, Break the Spell, Acolyte Hybrid, Transforming Flourish, Infinite
+    Authority's delayed trigger). The new `requiresDeath` component, built with the `ifDiesThisWay` factory, keeps
+    the graveyard check for Cinder Cloud, Kaervek's Purge and Tuktuk Scrapper.
+  - `DestroyEachTargetPermanentEffect` takes a `DestroyedPermanentCountScope` (`ALL` default, or `DIED` through
+    `countingPermanentsPutIntoAGraveyard()`), and every channel it stamps (`eventValue`, `eventManaValues`,
+    `eventPlayerIds`, `eventNontokenPlayerIds`, `eventDestroyedPlayerIds`) now comes from the same list. Before,
+    the count was destroyed while the controllers and mana values were whatever was found in a graveyard, so Volcanic
+    Eruption ("put into a graveyard this way") counted exiled Mountains and Descent of the Dragons, The Curse of
+    Fenric and Convert to Slime ("destroyed this way") skipped exiled ones. Volcanic Eruption, Builder's Bane and
+    Terastodon use `DIED`; a destroyed token now counts for them too, since it is put into a graveyard before it
+    ceases to exist (Tuktuk Scrapper ruling, 2010-03-01).
+  - Single-target handlers checked and already right: `DestroyTargetPermanentAndDamageControllerIfDestroyed`
+    (Werewolf Ransacker, "put into a graveyard") and `DestroyTargetCreatureThenCreateTokenEqualToPowerToughness`
+    (Kalitas, Bloodchief of Ghet, "dies") check the graveyard; `tryDestroyAndLog` already returns "destroyed".
+- **Left**: `DestroyTargetPermanentThenEffect` cards that leave `requiresDestruction` off run their rider even when
+  nothing is destroyed; whether any of them is worded "if ... destroyed this way" was not audited card by card.
+  Orphaned Auras (`removeOrphanedAuras`) still never ask. Everything in the fifteenth part's **Left** except the
+  Mastery's noncreature question is unchanged.
+- Tests: new, failing with the old code: `NoxiousGearhulkTest.creatureExiledInsteadOfDyingStillGrantsLife`,
+  `BreakTheSpellTest.enchantmentExiledInsteadOfGoingToGraveyardStillDraws`,
+  `SylvanPrimordialTest.permanentExiledInsteadOfGoingToGraveyardStillCounts`,
+  `FlamesOfMoradinTest.conjuresDuplicateOfArtifactExiledByRestInPeaceInsteadOfGoingToGraveyard`,
+  `DescentOfTheDragonsTest.creatureExiledInsteadOfDyingStillCreatesDragon` and
+  `VolcanicEruptionTest.mountainsExiledInsteadOfGoingToGraveyardDealNoDamage`; new guard:
+  `TerastodonTest.permanentExiledInsteadOfGoingToGraveyardCreatesNoElephant`. The existing Rest in Peace and Leyline
+  guards of Cinder Cloud, Kaervek's Purge, Tuktuk Scrapper and Builder's Bane still pass. No existing test changed.
 
 ### Step 2
 

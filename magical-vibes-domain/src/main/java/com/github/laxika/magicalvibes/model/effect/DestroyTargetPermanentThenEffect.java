@@ -19,8 +19,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * <p>By default the then-effect happens regardless of whether destruction actually succeeds
  * (indestructible / regeneration), matching the "second sentence" wording of most cards that map
- * here. Cards worded "if … dies this way" instead require the permanent to actually reach the
- * graveyard; set {@link #requiresDestruction()} for those (Cinder Cloud). When
+ * here. Cards worded "if … is destroyed this way" set {@link #requiresDestruction()}: the then-effect
+ * happens only if the permanent was destroyed, even when a replacement such as Rest in Peace then put
+ * it somewhere other than a graveyard (Noxious Gearhulk, Break the Spell and Acolyte Hybrid rulings).
+ * Cards worded "if … dies this way" or "if … is put into a graveyard this way" also set
+ * {@link #requiresDeath()}: the permanent must actually reach the graveyard (Cinder Cloud; Tuktuk
+ * Scrapper ruling); build those with {@link #ifDiesThisWay}. When
  * {@link #thenCondition()} is non-null the then-effect happens only if the destroyed permanent
  * matched that predicate (Death's Caress: "If that creature was a Human, you gain life equal to its
  * toughness."), evaluated on last-known information before the permanent leaves.
@@ -31,6 +35,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param thenCondition        when non-null, the then-effect happens only if the destroyed permanent matched it
  * @param cannotBeRegenerated  when {@code true} the destruction can't be prevented by regeneration (Crumble)
  * @param requiresDestruction  when {@code true} the then-effect happens only if the permanent was actually destroyed
+ * @param requiresDeath        when {@code true} (with {@code requiresDestruction}) the destroyed permanent must also
+ *                             have been put into a graveyard rather than somewhere a replacement moved it
  */
 public record DestroyTargetPermanentThenEffect(
         EventStat stat,
@@ -38,8 +44,16 @@ public record DestroyTargetPermanentThenEffect(
         ThenEffectRecipient recipient,
         PermanentPredicate thenCondition,
         boolean cannotBeRegenerated,
-        boolean requiresDestruction
+        boolean requiresDestruction,
+        boolean requiresDeath
 ) implements CardEffect {
+
+    /** Then-effect with every option but {@link #requiresDeath()}, which is off. */
+    public DestroyTargetPermanentThenEffect(EventStat stat, CardEffect thenEffect, ThenEffectRecipient recipient,
+                                            PermanentPredicate thenCondition, boolean cannotBeRegenerated,
+                                            boolean requiresDestruction) {
+        this(stat, thenEffect, recipient, thenCondition, cannotBeRegenerated, requiresDestruction, false);
+    }
 
     /** Unconditional then-effect, no last-known stat snapshot. */
     public DestroyTargetPermanentThenEffect(CardEffect thenEffect, ThenEffectRecipient recipient) {
@@ -63,10 +77,20 @@ public record DestroyTargetPermanentThenEffect(
         this(stat, thenEffect, recipient, thenCondition, false, false);
     }
 
-    /** "If a … creature dies this way": condition plus a requirement that the permanent actually died. */
+    /** "If a … is destroyed this way": condition plus a requirement that the permanent was actually destroyed. */
     public DestroyTargetPermanentThenEffect(EventStat stat, CardEffect thenEffect, ThenEffectRecipient recipient,
                                             PermanentPredicate thenCondition, boolean requiresDestruction) {
         this(stat, thenEffect, recipient, thenCondition, false, requiresDestruction);
+    }
+
+    /**
+     * "If a … dies this way" / "if … is put into a graveyard this way": the then-effect happens only if the
+     * permanent was destroyed and put into a graveyard ({@code thenCondition} may be {@code null}).
+     */
+    public static DestroyTargetPermanentThenEffect ifDiesThisWay(EventStat stat, CardEffect thenEffect,
+                                                                 ThenEffectRecipient recipient,
+                                                                 PermanentPredicate thenCondition) {
+        return new DestroyTargetPermanentThenEffect(stat, thenEffect, recipient, thenCondition, false, true, true);
     }
 
     @Override

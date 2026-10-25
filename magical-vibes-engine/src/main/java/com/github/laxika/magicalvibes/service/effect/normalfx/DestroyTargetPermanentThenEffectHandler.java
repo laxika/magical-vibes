@@ -93,8 +93,8 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
         boolean thenApplies = e.thenCondition() == null
                 || predicateEvaluationService.matchesPermanentPredicate(target, e.thenCondition(), conditionContext);
 
-        // Unless the card says "dies this way", the then-effect happens regardless of whether
-        // destruction succeeds (indestructible / regeneration).
+        // Unless the card says "destroyed this way" or "dies this way", the then-effect happens regardless
+        // of whether destruction succeeds (indestructible / regeneration).
         long previousGraveyardVersion = gameData.graveyardEntryVersion(target.getOriginalCard().getId());
         boolean destroyed = destructionSupport.tryDestroyAndLog(
                 gameData, target, entry.getCard().getName(), e.cannotBeRegenerated());
@@ -112,7 +112,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
         }
 
         boolean died = gameData.graveyardEntryVersion(target.getOriginalCard().getId()) > previousGraveyardVersion;
-        if (!thenApplies || (e.requiresDestruction() && (!destroyed || !died))) {
+        if (!thenApplies || (e.requiresDestruction() && (!destroyed || e.requiresDeath() && !died))) {
             return;
         }
 

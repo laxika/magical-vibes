@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.u.UpTheBeanstalk;
 import com.github.laxika.magicalvibes.cards.t.TuinvaleGuide;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BreakTheSpell.class, UpTheBeanstalk.class, TuinvaleGuide.class})
+@CardUsed({RestInPeace.class, BreakTheSpell.class, UpTheBeanstalk.class, TuinvaleGuide.class})
 class BreakTheSpellTest extends BaseCardTest {
 
     @Test
@@ -128,6 +129,23 @@ class BreakTheSpellTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BreakTheSpell()));
         harness.setLibrary(player1, List.of(new TuinvaleGuide()));
         harness.addMana(player1, ManaColor.WHITE, 1);
+    }
+
+    @Test
+    @DisplayName("Draws when its enchantment is destroyed but exiled by Rest in Peace instead")
+    void enchantmentExiledInsteadOfGoingToGraveyardStillDraws() {
+        harness.addToBattlefield(player2, new RestInPeace());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new UpTheBeanstalk());
+        prepareSpell();
+
+        cast(target);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        harness.assertNotInGraveyard(player1, "Up the Beanstalk");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Up the Beanstalk"));
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void cast(Permanent target) {

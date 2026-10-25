@@ -34,7 +34,7 @@ public class Terastodon extends Card {
                 "Target must be a noncreature permanent"), 0, 3);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
                 SequenceEffect.of(
-                        new DestroyEachTargetPermanentEffect(),
+                        DestroyEachTargetPermanentEffect.countingPermanentsPutIntoAGraveyard(),
                         new CreateTokenForEachDestroyedPermanentControllerEffect(
                                 new CreateTokenEffect("Elephant", 3, 3, CardColor.GREEN,
                                         List.of(CardSubtype.ELEPHANT), Set.of(), Set.of()))),

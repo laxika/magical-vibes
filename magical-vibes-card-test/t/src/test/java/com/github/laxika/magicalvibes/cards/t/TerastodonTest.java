@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.l.LeatherbackBaloth;
 import com.github.laxika.magicalvibes.cards.s.StirringWildwood;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -20,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Terastodon.class, TectonicEdge.class, LeatherbackBaloth.class, StirringWildwood.class})
+@CardUsed({RestInPeace.class, Terastodon.class, TectonicEdge.class, LeatherbackBaloth.class, StirringWildwood.class})
 class TerastodonTest extends BaseCardTest {
 
     @Test
@@ -148,6 +149,22 @@ class TerastodonTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(wildwood).doesNotContain(land);
         assertThat(elephants(player2)).hasSize(1).allSatisfy(this::assertElephant);
+    }
+
+    @Test
+    @DisplayName("A permanent destroyed but exiled by Rest in Peace instead gives its controller no Elephant")
+    void permanentExiledInsteadOfGoingToGraveyardCreatesNoElephant() {
+        harness.addToBattlefield(player1, new RestInPeace());
+        Permanent opponentEdge = harness.addToBattlefieldAndReturn(player2, new TectonicEdge());
+
+        castTerastodon(List.of(opponentEdge.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(opponentEdge.getId()));
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Tectonic Edge"));
+        assertThat(elephants(player2)).isEmpty();
+        assertThat(elephants(player1)).isEmpty();
     }
 
     private void acceptDestructionIfPrompted() {

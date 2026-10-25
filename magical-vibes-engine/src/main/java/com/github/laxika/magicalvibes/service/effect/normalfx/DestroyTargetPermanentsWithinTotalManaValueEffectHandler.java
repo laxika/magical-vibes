@@ -79,7 +79,7 @@ public class DestroyTargetPermanentsWithinTotalManaValueEffectHandler implements
             }
         }
 
-        List<Permanent> actuallyDestroyed = destructionSupport.destroyBatchCollecting(
+        List<Permanent> actuallyDestroyed = destructionSupport.destroyBatchDestroyed(
                 gameData, toDestroy, entry.getCard().getName(), false);
         List<UUID> destroyedControllerIds = new ArrayList<>();
         List<UUID> destroyedNontokenControllerIds = new ArrayList<>();
