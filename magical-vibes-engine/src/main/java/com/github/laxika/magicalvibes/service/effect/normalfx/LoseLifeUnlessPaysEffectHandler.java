@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -14,10 +15,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/**
+ * "Target player loses N life unless they pay {M}" (Rhystic Syphon, Isolation Cell, Elesh Norn). A player who can't
+ * pay loses the life at once; one who can is asked through the may ability system.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: the life loss of a player who can't pay is its first change (asking
+ * the player changes nothing yet), so a Lich's Duel Mastery that loss would sacrifice is asked about (CR 616.1)
+ * before any life is lost.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class LoseLifeUnlessPaysEffectHandler implements NormalEffectHandlerBean {
+public class LoseLifeUnlessPaysEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;

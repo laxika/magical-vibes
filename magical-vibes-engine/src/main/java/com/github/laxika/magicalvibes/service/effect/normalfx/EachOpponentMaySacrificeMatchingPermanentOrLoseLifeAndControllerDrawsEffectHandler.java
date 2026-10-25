@@ -9,17 +9,28 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentMaySacrificeMatch
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves Braids's per-opponent sacrifice-or-life-loss-and-draw clause in APNAP order. */
+/**
+ * Resolves Braids's per-opponent sacrifice-or-life-loss-and-draw clause in APNAP order: an opponent with a matching
+ * permanent to sacrifice is asked, one without loses the life at once and its controller draws.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: before anything changes, the Lich's Duel Mastery sacrifices the
+ * at-once losses would cause are asked about (CR 616.1) through
+ * {@link LifeSupport#askBeforeLifeLossesThatFollowAChange}, since a draw or an earlier opponent's prompt can come
+ * before a later opponent's loss.
+ */
 @Component
 @RequiredArgsConstructor
 public class EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDrawsEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
     private final DrawCardEffectHandler drawCardEffectHandler;
@@ -35,9 +46,18 @@ public class EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDra
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var braidsEffect = (EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDrawsEffect) effect;
-        for (UUID opponentId : AnyOpponentMayTakeDamageSacrificeSourceEffectHandler
-                .apnapOpponents(gameData, entry.getControllerId())) {
-            if (hasLegalSacrifice(gameData, entry, opponentId)) {
+        List<UUID> opponents = AnyOpponentMayTakeDamageSacrificeSourceEffectHandler
+                .apnapOpponents(gameData, entry.getControllerId());
+        Map<UUID, Integer> lossesAtOnce = new LinkedHashMap<>();
+        for (UUID opponentId : opponents) {
+            if (!hasLegalSacrifice(gameData, entry, opponentId)) {
+                lossesAtOnce.put(opponentId, braidsEffect.lifeLoss());
+            }
+        }
+        lifeSupport.askBeforeLifeLossesThatFollowAChange(gameData, lossesAtOnce);
+
+        for (UUID opponentId : opponents) {
+            if (!lossesAtOnce.containsKey(opponentId)) {
                 gameData.pendingMayAbilities.addLast(new PendingMayAbility(
                         entry.getCard(),
                         opponentId,

@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.event.VisualCueType;
-import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -10,21 +8,27 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-@Slf4j
+/**
+ * "That player loses N life unless they discard a card" (Painful Quandary). A player with an empty hand loses the
+ * life at once, through {@link LifeSupport} like every other life loss; one with cards is asked through the may
+ * ability system.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: the life loss of a player with an empty hand is its first change
+ * (asking the player changes nothing yet), so a Lich's Duel Mastery that loss would sacrifice is asked about
+ * (CR 616.1) before any life is lost.
+ */
 @Component
 @RequiredArgsConstructor
-public class LoseLifeUnlessDiscardEffectHandler implements NormalEffectHandlerBean {
+public class LoseLifeUnlessDiscardEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final GameLogService gameLogService;
-    private final GameQueryService gameQueryService;
-    private final VisualCueService visualCueService;
+    private final LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,32 +43,15 @@ public class LoseLifeUnlessDiscardEffectHandler implements NormalEffectHandlerBe
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
-        boolean hasCards = hand != null && !hand.isEmpty();
-
-        if (!hasCards) {
-            // No cards to discard — auto-apply life loss
-            if (!gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)) {
-                gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
-            } else {
-                int lifeLoss = e.lifeLoss()
-                        * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
-                int currentLife = gameData.getLife(targetPlayerId);
-                gameData.playerLifeTotals.put(targetPlayerId, currentLife - lifeLoss);
-                visualCueService.emit(gameData, VisualCueType.LIFE_LOST,
-                        visualCueService.sourceOf(gameData, entry.getCard()), null, targetPlayerId, lifeLoss);
-                String logEntry = playerName + " has no cards to discard. " + playerName + " loses " + lifeLoss + " life.";
-                gameLogService.append(gameData, GameLog.text(logEntry));
-                log.info("Game {} - {} loses {} life (no cards to discard, {})",
-                        gameData.id, playerName, lifeLoss, entry.getCard().getName());
-            }
+        if (hand == null || hand.isEmpty()) {
+            lifeSupport.applyLifeLoss(gameData, targetPlayerId, e.lifeLoss(), entry.getCard().getName());
+            gameLogService.append(gameData, GameLog.text(playerName + " has no cards to discard."));
             return;
         }
 
-        // Has cards — ask the target player via the may ability system
         String prompt = "Discard a card? If you don't, you lose " + e.lifeLoss() + " life. (" + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetPlayerId, List.of(e), prompt, null, entry.getControllerId()
         ));
-    
     }
 }

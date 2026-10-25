@@ -18,24 +18,39 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves Fandaniel's per-opponent nontoken-creature sacrifice choice in APNAP order. */
+/**
+ * Resolves Fandaniel's per-opponent nontoken-creature sacrifice choice in APNAP order: an opponent with a nontoken
+ * creature to sacrifice is asked, one without loses the life at once.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: before anything changes, the Lich's Duel Mastery sacrifices the
+ * at-once losses would cause are asked about (CR 616.1) through
+ * {@link LifeSupport#askBeforeLifeLossesThatFollowAChange}, since an earlier opponent's prompt is queued before a
+ * later opponent's loss.
+ */
 @Component
 @RequiredArgsConstructor
 public class EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     public static final PermanentPredicate NONTOKEN_CREATURE = new PermanentAllOfPredicate(List.of(
             new PermanentIsCreaturePredicate(),
             new PermanentNotPredicate(new PermanentIsTokenPredicate())));
 
     private final DestructionSupport destructionSupport;
+    private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
+    private final LifeSupport lifeSupport;
     private final LoseLifeEffectHandler loseLifeEffectHandler;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -52,9 +67,18 @@ public class EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffectHandler
             return;
         }
 
-        for (UUID opponentId : AnyOpponentMayTakeDamageSacrificeSourceEffectHandler
-                .apnapOpponents(gameData, controllerId)) {
-            if (hasLegalSacrifice(gameData, entry, opponentId)) {
+        List<UUID> opponents = AnyOpponentMayTakeDamageSacrificeSourceEffectHandler
+                .apnapOpponents(gameData, controllerId);
+        Map<UUID, Integer> lossesAtOnce = new LinkedHashMap<>();
+        for (UUID opponentId : opponents) {
+            if (!hasLegalSacrifice(gameData, entry, opponentId)) {
+                lossesAtOnce.put(opponentId, lifeLossAmount(gameData, entry, opponentId, sacrificeEffect.lifeLoss()));
+            }
+        }
+        lifeSupport.askBeforeLifeLossesThatFollowAChange(gameData, lossesAtOnce);
+
+        for (UUID opponentId : opponents) {
+            if (!lossesAtOnce.containsKey(opponentId)) {
                 gameData.pendingMayAbilities.addLast(new PendingMayAbility(
                         entry.getCard(),
                         opponentId,
@@ -134,6 +158,20 @@ public class EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffectHandler
     private void applyLifeLoss(GameData gameData, StackEntry contextEntry, UUID playerId,
             DynamicAmount amount) {
         var lifeLoss = new LoseLifeEffect(amount, LoseLifeRecipient.TARGET_PLAYER);
+        loseLifeEffectHandler.resolve(gameData, lifeLossEntry(contextEntry, playerId, lifeLoss), lifeLoss);
+    }
+
+    /** The life {@link #applyLifeLoss} would make {@code playerId} lose now, evaluated as the loss itself evaluates it. */
+    private int lifeLossAmount(GameData gameData, StackEntry contextEntry, UUID playerId, DynamicAmount amount) {
+        StackEntry lifeLossEntry = lifeLossEntry(contextEntry, playerId,
+                new LoseLifeEffect(amount, LoseLifeRecipient.TARGET_PLAYER));
+        Permanent source = lifeLossEntry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, lifeLossEntry.getSourcePermanentId())
+                : null;
+        return amountEvaluationService.evaluate(gameData, amount, AmountContext.forStackEntry(lifeLossEntry, source));
+    }
+
+    private static StackEntry lifeLossEntry(StackEntry contextEntry, UUID playerId, LoseLifeEffect lifeLoss) {
         StackEntry lifeLossEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 contextEntry.getCard(),
@@ -143,6 +181,6 @@ public class EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffectHandler
                 playerId,
                 contextEntry.getSourcePermanentId());
         lifeLossEntry.setSourcePermanentSnapshot(contextEntry.getSourcePermanentSnapshot());
-        loseLifeEffectHandler.resolve(gameData, lifeLossEntry, lifeLoss);
+        return lifeLossEntry;
     }
 }

@@ -142,8 +142,9 @@ class PainfulQuandaryTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 5);
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard")
-                && log.contains("loses 5 life"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("no cards to discard"))
+                .anyMatch(log -> log.contains("loses 5 life"));
     }
 
     @Test

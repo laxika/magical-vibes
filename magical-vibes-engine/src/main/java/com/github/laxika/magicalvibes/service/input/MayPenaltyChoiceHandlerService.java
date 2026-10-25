@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.service.input;
 
-import com.github.laxika.magicalvibes.model.event.VisualCueType;
-import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -128,7 +126,6 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DestroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler destroyTargetCreatureUnlessControllerPaysToughnessLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTargetCreatureUnlessControllerPaysEffectHandler returnTargetCreatureUnlessControllerPaysEffectHandler;
     private final CounterSupport counterSupport;
-    private final VisualCueService visualCueService;
     private final WaterbendPaymentService waterbendPaymentService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
@@ -951,21 +948,9 @@ public class MayPenaltyChoiceHandlerService {
             // Hand changed since prompt — no cards left, fall through to life loss
         }
 
-        // Declined or no cards — lose life
-        if (!gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)) {
-            gameLogService.append(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
-        } else {
-            int lifeLoss = effect.lifeLoss()
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, targetPlayerId);
-            int currentLife = gameData.getLife(targetPlayerId);
-            gameData.playerLifeTotals.put(targetPlayerId, currentLife - lifeLoss);
-            visualCueService.emit(gameData, VisualCueType.LIFE_LOST,
-                    visualCueService.sourceOf(gameData, ability.sourceCard()), null, targetPlayerId, lifeLoss);
-
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " loses " + lifeLoss + " life. (", ability.sourceCard(), ")"));
-            log.info("Game {} - {} loses {} life (declined discard, {})", gameData.id, player.getUsername(), lifeLoss, ability.sourceCard().getName());
-        }
+        // Declined or no cards — lose life, through LifeSupport like every other life loss.
+        lifeSupport.applyLifeLoss(gameData, targetPlayerId, effect.lifeLoss(), ability.sourceCard().getName());
+        log.info("Game {} - {} declined to discard ({})", gameData.id, player.getUsername(), ability.sourceCard().getName());
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

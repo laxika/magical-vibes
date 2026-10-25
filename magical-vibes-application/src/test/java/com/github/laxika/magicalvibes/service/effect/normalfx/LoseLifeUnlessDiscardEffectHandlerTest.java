@@ -17,33 +17,18 @@ import static org.mockito.Mockito.*;
 class LoseLifeUnlessDiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
     @Test
-            @DisplayName("Auto-applies life loss when no cards in hand")
-            void autoAppliesLifeLossWhenNoCards() {
+            @DisplayName("Loses the life through LifeSupport when no cards in hand")
+            void losesLifeThroughLifeSupportWhenNoCards() {
                 Card card = createCard("Rackling");
                 LoseLifeUnlessDiscardEffect effect = new LoseLifeUnlessDiscardEffect(3);
                 StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-                when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(true);
-
                 resolveEffect(gd, entry, effect);
 
-                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
+                verify(lifeSupport).applyLifeLoss(gd, player2Id, 3, "Rackling");
                 verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
-                        logEntry.plainText().contains("no cards to discard") && logEntry.plainText().contains("loses 3 life")));
-            }
-
-            @Test
-            @DisplayName("No life loss when life can't change and no cards")
-            void noLifeLossWhenLifeCantChange() {
-                Card card = createCard("Rackling");
-                LoseLifeUnlessDiscardEffect effect = new LoseLifeUnlessDiscardEffect(3);
-                StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
-
-                when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(false);
-
-                resolveEffect(gd, entry, effect);
-
-                assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
+                        logEntry.plainText().contains("no cards to discard")));
+                assertThat(gd.pendingMayAbilities).isEmpty();
             }
 
             @Test

@@ -24,7 +24,7 @@ order; each one lists what it depends on.
 | 10 | Convert the choice-completion paths | done (choice completions depart through replay windows rather than scratchpad steps; see Findings) |
 | 11 | Loops and drained queues | done (six non-cost callers outside every step's list remain on the allowlist; see Findings) |
 | 12 | Costs and mana abilities | done (every sacrifice cost of an activation, an attack, a cast from any zone, a free cast and a morph face-up cost asks before anything leaves; a commander whose tax is paid with life and the suspend / exile-mana tails don't ask, no card needs them; see Findings) |
-| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; thirteenth part: the losses after an exile or a sacrifice (Dire Tactics, Trystan, Will of the Abzan, Xathrid Demon's sacrifice) are steps of their own through the new internal `PlayersLoseLifeEffect`, and Priest of Forgotten Gods', Mornsong Aria's and Thieving Amalgam's losses ask first; fourteenth part: Stab Wound's family through `LifeSupport`, and the losses after a reveal, a mill, a library exile or discards; fifteenth part: the destroy-all riders (Deadly Tempest, Rain of Daggers, ...) are steps of their own; sixteenth part: noncreature permanents get their CR 616.1 graveyard-replacement question too, and destroy-all riders count permanents a replacement exiled instead; seventeenth part: the targeted destroy handlers count "destroyed this way" and "put into a graveyard this way" as their Oracle text says; eighteenth part: an orphaned or illegally attached Aura with a CR 616.1 question joins the state-based departure batch; nineteenth part: the `DestroyTargetPermanentThenEffect` cards without `requiresDestruction` audited against Oracle text and rulings (no change needed), and the attachment sweeps' citations fixed; twentieth part: `DestroyTargetPermanentThenEffect`'s marked riders ("its controller loses 2 life", "you lose life equal to its toughness") are steps of their own through the internal `ResolveRiderForPlayerEffect`, so Lich's Duel Mastery's sacrifice is asked after the destruction; twenty-first part: the set, double, exchange and redistribute life-total handlers ask the Mastery's sacrifice before any life total changes; the fallback stays until the callers listed in the fifteenth part's Findings can pause) |
+| 13 | Make the guard strict and remove the fallback | in progress (first part: the allowlist is empty and 13 more handlers are step departures; second part: 34 of the 38 normalfx files now ask first (21 converted, 13 already asked through replay windows); third part: Desolation and Bend or Break too, so Bomb Squad and `LifeSupport` are the normalfx files left; fourth part: Forbidden Ritual's repeat, Worms of the Earth's lands and Infernal Offering's draws; fifth part: Flash's no-mana-cost sacrifice, and four listed callers found already done; sixth part: every multi-permanent choice completion that removes a permanent; seventh part: the single-permanent choice completions re-audited, Celestial Judgment and Demonic Hordes' opponent choice now ask first; eighth part: `ChoiceHandlerService`'s list-choice completions audited, The Toymaker's Trap's sacrifice and Root Greevil's destruction are now steps; ninth part: the "destroy it instead" and "sacrifice it" damage replacements ask before the damage event goes on; tenth part: Lich's Duel Mastery's sacrifice for the life loss damage causes asks before the damage is dealt; eleventh part: the life loss of `LoseLifeEffect` and 21 other life-loss handlers asks the Mastery's sacrifice before any life is lost; twelfth part: Xathrid Demon's tap, the draw-then-lose-life and reveal-then-lose-life handlers make the loss a step of its own, and Blood Tyrant's loss asks first; thirteenth part: the losses after an exile or a sacrifice (Dire Tactics, Trystan, Will of the Abzan, Xathrid Demon's sacrifice) are steps of their own through the new internal `PlayersLoseLifeEffect`, and Priest of Forgotten Gods', Mornsong Aria's and Thieving Amalgam's losses ask first; fourteenth part: Stab Wound's family through `LifeSupport`, and the losses after a reveal, a mill, a library exile or discards; fifteenth part: the destroy-all riders (Deadly Tempest, Rain of Daggers, ...) are steps of their own; sixteenth part: noncreature permanents get their CR 616.1 graveyard-replacement question too, and destroy-all riders count permanents a replacement exiled instead; seventeenth part: the targeted destroy handlers count "destroyed this way" and "put into a graveyard this way" as their Oracle text says; eighteenth part: an orphaned or illegally attached Aura with a CR 616.1 question joins the state-based departure batch; nineteenth part: the `DestroyTargetPermanentThenEffect` cards without `requiresDestruction` audited against Oracle text and rulings (no change needed), and the attachment sweeps' citations fixed; twentieth part: `DestroyTargetPermanentThenEffect`'s marked riders ("its controller loses 2 life", "you lose life equal to its toughness") are steps of their own through the internal `ResolveRiderForPlayerEffect`, so Lich's Duel Mastery's sacrifice is asked after the destruction; twenty-first part: the set, double, exchange and redistribute life-total handlers ask the Mastery's sacrifice before any life total changes; twenty-second part: the "lose life unless" punishers (Rhystic Syphon, Isolation Cell, Elesh Norn, Painful Quandary) and Fandaniel's and Braids's "sacrifice or lose life" choices ask the Mastery's sacrifice before any life is lost, and Painful Quandary loses life through `LifeSupport` at all; the fallback stays until the callers listed in the fifteenth part's Findings can pause) |
 | 14 | Move other pausing effects onto the step model (repeatable) | open |
 
 ## Why
@@ -2100,6 +2100,68 @@ Steps add notes here for later steps, under their number.
   `architecture` package and `GameSimulatorTest` fail exactly as at HEAD (`ProvidenceTest` 3,
   `OketrasLastMercyTest` 1, `EffectResolutionServiceTest` 43, the `architecture` package 3) apart from the new tests
   and the fixed Psychic Transfer test.
+
+### Step 13 (twenty-second part: the "lose life unless" punishers and the "sacrifice or lose life" choices)
+
+- Rules: "[do something] unless [a player does something else]" means "[that player] may [do something else]. If
+  [they don't], [do something]" (CR 118.12a, checked), so a player who doesn't pay or discard, or can't, loses the life
+  when the ability resolves or when the answer is completed, with nothing changed before it. Losing life adjusts the
+  life total (CR 119.3, checked), and Lich's Duel Mastery replaces that loss with its sacrifice (CR 614.6, checked),
+  whose death replacements its controller chooses before anything happens (CR 616.1 and 616.1f, checked), several
+  players' in APNAP order (CR 101.4, checked). Braids's draw follows the loss (CR 608.2c, checked). The amounts are
+  determined once (CR 608.2h, checked). No official ruling covers the Mastery (it is a playtest card).
+- Done:
+  - Bug fixed: Painful Quandary (`LoseLifeUnlessDiscardEffectHandler` with an empty hand, and the decline in
+    `MayPenaltyChoiceHandlerService.handleLoseLifeUnlessDiscardChoice`) wrote the life total itself, skipping the
+    Mastery's shield and sacrifice, the "loses life" triggers and the lethal-reduction replacements. Both now lose
+    through `LifeSupport.applyLifeLoss` (the "has no cards to discard" log line now follows the loss's own line).
+  - Marked `AsksDeathReplacementsFirst` (the loss of a player who can't pay or has no card is their first change;
+    queuing the prompt changes nothing): `LoseLifeUnlessPaysEffectHandler` and `LoseLifeUnlessDiscardEffectHandler`.
+  - Their may answers (`LoseLifeUnlessPaysHandler`, `LoseLifeUnlessDiscardHandler`) run through
+    `answerAskingDeathReplacementsFirst`: a declined or unpayable answer loses the life first (Rhystic Syphon's gain
+    follows it), an accepted one only pays mana or starts the discard choice.
+  - Fandaniel's and Braids's resolutions (`EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffectHandler`,
+    `EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDrawsEffectHandler`), now marked, compute the
+    at-once losses of every opponent without a legal sacrifice first and ask them through
+    `askBeforeLifeLossesThatFollowAChange` before queuing any prompt, losing any life or drawing (Fandaniel's amount is
+    evaluated as its `LoseLifeEffect` evaluates it). Their declines (`EachOpponentMaySacrificeNontokenCreatureOrLoseLifeHandler`,
+    `EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDrawsChoiceHandler`) run the loss through
+    `answerAskingDeathReplacementsFirst` too; Braids's closes the window after the loss, before the draw.
+- **Left**:
+  - Life loss elsewhere: 82 files still call `applyLifeLoss` / `applySetLifeTotal` / `applyLifePayment` without being
+    marked (same grep as in the eleventh part; the two Fandaniel / Braids may handlers above stay listed although their
+    losses now ask inside an answer window). Among them, the rest of the "unless" / "or lose life" families: the
+    discard-or-lose-life handlers (`EachOpponentDiscardsOrLosesLife`, `EachPlayerDiscardsOrLosesLife`,
+    `EachPlayerMayDiscardOrLoseLife`, `EachOpponentMayDiscardOrLoseLife`, `EachPlayerDiscardsCreatureOrLosesLife`: they
+    interleave each player's discard prompt with the next player's loss, so the losses need asking ahead the way
+    Fandaniel's now are), `LoseLifeUnlessSacrificeNonlandOrDiscard`, `EachPlayerSacrificesPermanentOrLosesLife`,
+    `DamageSourceControllerLosesLifeUnlessSacrificesPermanents`, `DrawCardUnlessTargetSacrificesCreatureOrPaysLife`,
+    `EachOpponentMayInvestigateOrLoseLifeThenControllerInvestigates`, `EachPlayerMayExileGraveyardCardsThenLoseLife` and
+    the other `MayPenaltyChoiceHandlerService` / `ChoiceHandlerService` loss completions; Parting Thoughts' sequence
+    rider; `RevealTopCardCreatureGainToughnessLosePowerToHand`; `LookAtTopCardMayRevealToHandAndLoseLifeEqualToManaValue`;
+    the game-loss replacers that set a life total and Rebirth's ante handler; and every life payment
+    (`askBeforePayment`, CR 601.2h).
+  - Found, not fixed: Fandaniel and Braids resolve opponents one by one (an opponent without a legal sacrifice loses
+    at once while the others' prompts wait), where CR 101.4 has every opponent choose in APNAP order and the losses
+    happen together. Only multiplayer games can tell the difference.
+  - Unchanged: Bomb Squad (parked pending an official ruling), redirected combat damage, and nothing is asked while
+    another departure batch or replay window's answers are pending.
+- Tests: new in `LichsDuelMasteryTest` (all `@FailOnLegacyDepartureFallback`, all eight fail with the old code, where the
+  player lost the life instead or, for Painful Quandary, no question was asked), each with player 2's noncreature,
+  shieldless Mastery between Wheel of Sun and Moon and Leyline of the Void:
+  `unpaidLifeLossAsksTheMasteryBeforeAnyLifeChanges` and `declinedPaymentLifeLossAsksTheMasteryBeforeAnyLifeChanges`
+  (Rhystic Syphon: both players at 20 while asked, then the caster at 25 and the target at 20, the declined mana
+  unspent), `emptyHandLifeLossAsksTheMasteryBeforeAnyLifeChanges` and
+  `declinedDiscardLifeLossAsksTheMasteryBeforeAnyLifeChanges` (Painful Quandary),
+  `declinedSacrificeLifeLossAsksTheMasteryBeforeAnyLifeIsLost` and `noSacrificeLifeLossAsksTheMasteryBeforeAnyLifeIsLost`
+  (Fandaniel), `noMatchingPermanentAsksTheMasteryBeforeTheLossAndTheDraw` and
+  `declinedMatchingSacrificeAsksTheMasteryBeforeTheLossAndTheDraw` (Braids: nothing drawn while asked, one card after).
+  Changed: `PainfulQuandaryTest.autoLosesLifeWithEmptyHand` checks the "no cards to discard" and "loses 5 life" log
+  lines separately, and `LoseLifeUnlessDiscardEffectHandlerTest`'s two empty-hand tests became one that verifies the
+  loss goes through `LifeSupport` (the "can't change" case belongs to `LifeSupport`). The test classes of every card
+  using the touched effects pass; `LoseLifeUnlessPaysEffectHandlerTest` (4, no constructor with mocked dependencies),
+  `SpellCastTriggerCollectorServiceTest` (4) and the `architecture` package (3) fail exactly as at HEAD;
+  `GameSimulatorTest` passes.
 
 ### Step 2
 

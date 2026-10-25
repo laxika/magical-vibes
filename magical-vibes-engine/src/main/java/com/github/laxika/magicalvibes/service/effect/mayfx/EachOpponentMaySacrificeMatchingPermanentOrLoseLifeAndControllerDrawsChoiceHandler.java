@@ -29,8 +29,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * Handles one opponent's choice for Braids's sacrifice-or-life-loss-and-draw clause. An accepted
- * sacrifice changes nothing before it, so a creature with competing death replacements is asked
- * about before it leaves (CR 616.1) and the answer is completed again with that choice.
+ * sacrifice changes nothing before it, and neither does the life loss of an opponent who doesn't
+ * sacrifice (the draw follows it), so a creature with competing death replacements, or a Lich's Duel
+ * Mastery that loss would sacrifice, is asked about before it leaves (CR 616.1) and the answer is
+ * completed again with that choice.
  */
 @Component
 @RequiredArgsConstructor
@@ -62,10 +64,16 @@ public class EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDra
             return;
         }
 
-        lifeSupport.applyLifeLoss(gameData, ability.controllerId(), braidsEffect.lifeLoss(),
-                ability.sourceCard().getName());
-        drawCardEffectHandler.resolve(gameData, drawEntry(ability, sourceControllerId), new DrawCardEffect(1));
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                gameData, player, ability, accepted, () -> {
+                    lifeSupport.applyLifeLoss(gameData, ability.controllerId(), braidsEffect.lifeLoss(),
+                            ability.sourceCard().getName());
+                    // The draw follows the loss and must not happen twice.
+                    gameData.deathReplacementsCanRerunEffect = false;
+                    drawCardEffectHandler.resolve(gameData, drawEntry(ability, sourceControllerId),
+                            new DrawCardEffect(1));
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                });
     }
 
     private void sacrifice(GameData gameData, PendingMayAbility ability, UUID sourceControllerId) {

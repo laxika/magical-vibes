@@ -22,8 +22,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Handles one opponent's choice for Fandaniel's sacrifice-or-life-loss clause. An accepted sacrifice
- * changes nothing before it, so a creature with competing death replacements is asked about before
- * it leaves (CR 616.1) and the answer is completed again with that choice.
+ * changes nothing before it, and neither does the life loss of an opponent who doesn't sacrifice, so a
+ * creature with competing death replacements, or a Lich's Duel Mastery that loss would sacrifice, is
+ * asked about before it leaves (CR 616.1) and the answer is completed again with that choice.
  */
 @Component
 @RequiredArgsConstructor
@@ -49,8 +50,11 @@ public class EachOpponentMaySacrificeNontokenCreatureOrLoseLifeHandler
             return;
         }
 
-        effectHandler.applyLifeLoss(gameData, ability, effect.lifeLoss());
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        permanentChoiceHandlerServiceProvider.getObject().answerAskingDeathReplacementsFirst(
+                gameData, player, ability, accepted, () -> {
+                    effectHandler.applyLifeLoss(gameData, ability, effect.lifeLoss());
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                });
     }
 
     private void sacrifice(GameData gameData, PendingMayAbility ability) {
