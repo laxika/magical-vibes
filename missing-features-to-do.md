@@ -9,35 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 46. Choosing which coin flip to ignore (Krark's Thumb)
-
-**Status:** open · **Found:** 2026-10-22, while fixing T-card test failures
-
-**Failing tests:**
-- `TwoHeadedGiantTest.krarksThumbLetsControllerChooseWhichResultsToIgnore()`
-
-**What the rules require.** Krark's Thumb: "If you would flip a coin, instead flip two coins and
-ignore one." The controller sees both results and chooses which one to ignore. CR 705.3 covers
-effects that dictate a flip's result. The engine's `CoinFlipService` treats the pair as "heads if
-either is heads", which is right only for flips the player wants to win and gives no choice for
-effects such as Two-Headed Giant's two separate flips, where the controller may prefer tails.
-
-**Why it's large.** Every coin-flip effect resolves its flips synchronously. A player choice per
-replaced flip needs a resumable prompt in the middle of each flipping effect, across all
-coin-flip handlers.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 46: make Krark's Thumb flip two coins and let its
-controller choose which result to ignore, instead of CoinFlipService auto-preferring heads. Add a
-resumable choice to the coin-flip path used by every coin-flip handler. Make
-TwoHeadedGiantTest.krarksThumbLetsControllerChooseWhichResultsToIgnore pass. Verify every CR number
-with the rules MCP. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 47. Per-slot target legality for "up to one target X, up to one target Y" spells
 
 **Status:** open · **Found:** 2026-10-22, while fixing U-card test failures
@@ -533,6 +504,47 @@ Planeswalkers (Path of the Ghosthunter / Path of the Animist) and the innocent-o
 their votes and call VotingFinishedSupport.finishVoting, so "whenever players finish voting" triggers
 (Model of Unity, Erestor of the Council) fire for them. Add tests. Verify every CR number with the
 rules MCP. Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 62. Krark's Thumb result choice for interleaved, nested and non-resolution coin flips
+
+**Status:** open · **Found:** 2026-10-25, while finishing entry 46 (Krark's Thumb result choice)
+
+**Failing tests:** none yet; a Krark's Thumb test with mixed mocked flips on any path below would
+show the heads result kept without a prompt.
+
+**What the rules require.** Krark's Thumb: "If you would flip a coin, instead flip two coins and
+ignore one." Its controller sees the results and chooses which to ignore (a replacement effect,
+CR 614.1a; CR 705.3 covers effects that fix a flip's result). Only the first coin-flip event of a
+handler marked `ChoosesCoinFlipResultsFirst` asks: `CoinFlipService` stops the handler with
+`CoinFlipChoicePending` and `EffectResolutionService` resolves it again. Everywhere else the engine
+still keeps heads when the physical flips disagree:
+- handlers that change the game between flips: `FlipUntilLoseEffectHandler`,
+  `FlipUntilLosePutCountersOnSourceEffectHandler`, `FlipCoinsUntilLoseEffectHandler`,
+  `FlipUntilLoseOrStopSupport` (Fiery Gambit), `ManaClashEffectHandler`,
+  `EachPlayerFlipsCoinAndTailsSacrificesCreatureEffectHandler`, `FlipCoinForEachOpponentEffectHandler`,
+  `FlipCoinForEachBlockingCreatureEffectHandler`, `RiskyMoveEffectHandler`, `GameOfChaosSupport`,
+  `AmuletOfQuozAnteEffectHandler`;
+- a marked handler's later flips, and flips of effects it dispatches (a branch that flips again);
+- flips outside stack resolution: `CoinFlipCostSupport` (costs), `FlipCoinOnEnterEffectHandler`,
+  `PermanentChoiceBattlefieldHandlerService`, and `D20RollService`'s coin flips.
+
+**Why it's large.** Loop handlers need their flips journaled across reruns (log and trigger side
+effects between flips must not repeat), or a resumable state machine per handler. Cost and entry
+paths need their own pause points outside the parked-resolution mechanism.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 62: extend the Krark's Thumb result choice
+(ChoiceContext.CoinFlipResultChoice, CoinFlipService.recordedCoinFlips, CoinFlipChoicePending) to
+the coin-flip paths listed in the entry: flip-until-lose loops, Mana Clash, per-player and per-blocker
+flips, Risky Move, Game of Chaos, Amulet of Quoz, nested flips, coin-flip costs, entry flips and
+D20RollService. Keep replayed flips from repeating logs or triggers. Add Krark's Thumb tests with
+mocked mixed flips for each. Verify every CR number with the rules MCP. Don't run the full test
+suite; ask me. Don't commit until I say so.
 ```
 
 ---

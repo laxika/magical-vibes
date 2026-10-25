@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.k.KrarksThumb;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -139,6 +140,46 @@ class TwoHeadedGiantTest extends BaseCardTest {
             harness.passBothPriorities();
             assertThat(gd.interaction.isAwaitingInput()).isTrue();
             assertThat(gqs.hasKeyword(gd, giant, Keyword.DOUBLE_STRIKE)).isFalse();
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"Heads, Heads, true, false", "Tails, Tails, false, true", "Heads, Tails, false, false"})
+    void krarksThumbKeepsTheChosenResultOfEachCoin(String first, String second,
+                                                   boolean doubleStrike, boolean menace) {
+        Permanent giant = addCreatureReady(player1, new TwoHeadedGiant());
+        harness.addToBattlefield(player1, new KrarksThumb());
+        ThreadLocalRandom random = mock(ThreadLocalRandom.class);
+        when(random.nextBoolean()).thenReturn(true, false, false, true);
+        try (var coins = mockStatic(ThreadLocalRandom.class)) {
+            coins.when(ThreadLocalRandom::current).thenReturn(random);
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, first);
+            assertThat(gd.interaction.isAwaitingInput()).isTrue();
+            harness.handleListChoice(player1, second);
+
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+            assertThat(gqs.hasKeyword(gd, giant, Keyword.DOUBLE_STRIKE)).isEqualTo(doubleStrike);
+            assertThat(gqs.hasKeyword(gd, giant, Keyword.MENACE)).isEqualTo(menace);
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
+                    .filter(log -> log.contains("flips two coins for Two-Headed Giant"))).hasSize(1);
+        }
+    }
+
+    @Test
+    void krarksThumbAsksNothingWhenBothFlipsOfEachCoinAgree() {
+        Permanent giant = addCreatureReady(player1, new TwoHeadedGiant());
+        harness.addToBattlefield(player1, new KrarksThumb());
+        ThreadLocalRandom random = mock(ThreadLocalRandom.class);
+        when(random.nextBoolean()).thenReturn(false);
+        try (var coins = mockStatic(ThreadLocalRandom.class)) {
+            coins.when(ThreadLocalRandom::current).thenReturn(random);
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+            assertThat(gqs.hasKeyword(gd, giant, Keyword.MENACE)).isTrue();
         }
     }
 }

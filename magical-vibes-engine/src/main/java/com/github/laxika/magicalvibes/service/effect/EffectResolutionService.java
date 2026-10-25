@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.DeathReplacementChoicePending;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipChoicePending;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -485,12 +486,20 @@ public class EffectResolutionService {
                             && (gameData.pendingEffectResolutionEntry == null
                             || gameData.pendingEffectResolutionEntry == entry);
                     gameData.deathReplacementsCanRerunEffect = deathReplacementRerunWindow;
+                    // Krark's Thumb: the handler's first coin flip may stop it while its player chooses which
+                    // results to ignore; it is then resolved again and reads those flips back.
+                    boolean coinFlipRerunWindow = gameData.effectResolutionDepth == 1
+                            && handler instanceof ChoosesCoinFlipResultsFirst
+                            && (gameData.pendingEffectResolutionEntry == null
+                            || gameData.pendingEffectResolutionEntry == entry);
+                    gameData.coinFlipChoicesCanRerunEffect = coinFlipRerunWindow;
                     // Only this step's own departure may end it on a pending question (CR 616.1): not one in a
                     // nested resolution, nor one a handler dispatches for another effect.
                     gameData.stepDepartureEffect = gameData.effectResolutionDepth == 1
                             && (gameData.pendingEffectResolutionEntry == null
                             || gameData.pendingEffectResolutionEntry == entry) ? effectToResolve : null;
                     boolean stoppedForDeathReplacement = false;
+                    boolean stoppedForCoinFlipChoice = false;
                     try {
                         handler.resolve(gameData, entry, effectToResolve);
                     } catch (DeathReplacementChoicePending pending) {
@@ -498,8 +507,17 @@ public class EffectResolutionService {
                             throw pending;
                         }
                         stoppedForDeathReplacement = true;
+                    } catch (CoinFlipChoicePending pending) {
+                        if (!coinFlipRerunWindow) {
+                            throw pending;
+                        }
+                        stoppedForCoinFlipChoice = true;
                     } finally {
                         gameData.deathReplacementsCanRerunEffect = false;
+                        gameData.coinFlipChoicesCanRerunEffect = false;
+                        if (coinFlipRerunWindow && !stoppedForCoinFlipChoice) {
+                            gameData.recordedCoinFlips.clear();
+                        }
                         gameData.stepDepartureEffect = null;
                         if (deathReplacementRerunWindow && !stoppedForDeathReplacement) {
                             gameData.chosenDeathReplacementsForRerun.clear();

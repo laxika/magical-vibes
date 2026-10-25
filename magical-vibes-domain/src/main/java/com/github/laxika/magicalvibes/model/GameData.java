@@ -2938,6 +2938,17 @@ public class GameData {
      */
     public boolean deathReplacementsCanRerunEffect;
     /**
+     * {@code true} while the resolving effect's handler has not flipped a coin yet and has changed nothing, so a
+     * coin flip Krark's Thumb replaces can stop it while the flipping player chooses which results to ignore. The
+     * handler's first flip consumes it.
+     */
+    public boolean coinFlipChoicesCanRerunEffect;
+    /**
+     * The flips of the coin-flip event that stopped the resolving effect, in order, while their player chooses
+     * which Krark's Thumb results to keep; the effect resolved again reads them back instead of flipping.
+     */
+    public final List<RecordedCoinFlip> recordedCoinFlips = new ArrayList<>();
+    /**
      * The step (the effect of the resolving stack entry's effect list) whose handler is running and may end on a
      * pending departure batch, or {@code null}. Only that step's own departure may pause: a handler it dispatches
      * for a nested effect, or a second departure of the same step, sees a different value (CR 608.2c).
@@ -4451,6 +4462,7 @@ public class GameData {
                     "pendingEffectResolutionIndex", "resolvingMayEffectFromStack",
                     "resolvedMayAccepted", "resolvedMayTargetingEntry",
                     "rerunCurrentEffectAfterInteraction", "deathReplacementsCanRerunEffect", "stepDepartureEffect",
+                    "coinFlipChoicesCanRerunEffect", "recordedCoinFlips",
                     "chosenDeathReplacementsForRerun", "rerunMayLibraryChoices", "pendingDeathReplacementChoiceReplay",
                     "deferPlayerLossCheck",
                     "effectResolutionDepth", "restartTurnRequested", "simulation",
@@ -10017,6 +10029,8 @@ public class GameData {
         copy.deathReplacementChoiceBatchDepth = this.deathReplacementChoiceBatchDepth;
         copy.deferredDeathReplacementChoices.addAll(this.deferredDeathReplacementChoices);
         copy.deathReplacementsCanRerunEffect = this.deathReplacementsCanRerunEffect;
+        copy.coinFlipChoicesCanRerunEffect = this.coinFlipChoicesCanRerunEffect;
+        copy.recordedCoinFlips.addAll(this.recordedCoinFlips);
         copy.stepDepartureEffect = this.stepDepartureEffect;
         copy.chosenDeathReplacementsForRerun.putAll(this.chosenDeathReplacementsForRerun);
         copy.rerunMayLibraryChoices.addAll(this.rerunMayLibraryChoices);

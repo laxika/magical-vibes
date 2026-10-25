@@ -56,6 +56,13 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.CoinFlipResultChoice) {
+            // Heads wins a called flip, so the AI keeps it.
+            log.info("AI: Keeping heads for a Krark's Thumb coin flip in game {}", gameId);
+            answerWith(ctx, interaction, ChoiceContext.CoinFlipResultChoice.HEADS);
+            return;
+        }
+
         if (context instanceof ChoiceContext.KeywordGrantChoice kgc) {
             String chosenKeyword = kgc.options().getFirst().name();
             log.info("AI: Choosing keyword {} in game {}", chosenKeyword, gameId);

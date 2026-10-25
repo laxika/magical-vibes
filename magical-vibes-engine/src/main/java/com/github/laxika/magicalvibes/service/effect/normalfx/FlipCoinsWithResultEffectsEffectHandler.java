@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class FlipCoinsWithResultEffectsEffectHandler implements NormalEffectHandlerBean {
+public class FlipCoinsWithResultEffectsEffectHandler implements NormalEffectHandlerBean, ChoosesCoinFlipResultsFirst {
 
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameLogService gameLogService;

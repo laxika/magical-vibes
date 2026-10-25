@@ -260,6 +260,8 @@ public class ChoiceHandlerService {
 
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.SagaChapterService sagaChapterService;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService coinFlipService;
 
     @Autowired @Lazy
     private LibraryChoiceHandlerService libraryChoiceHandlerService;
@@ -577,6 +579,25 @@ public class ChoiceHandlerService {
                     gameData.stack.set(i, entries.get(ordered.get(stackIndex++)));
                 }
             }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.CoinFlipResultChoice choice) {
+            if (!player.getId().equals(colorChoice.playerId())) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid coin flip result: " + colorName);
+            }
+            gameData.interaction.clearAwaitingInput();
+            coinFlipService.chooseResult(gameData, choice.coinIndex(),
+                    ChoiceContext.CoinFlipResultChoice.HEADS.equals(colorName));
+            if (coinFlipService.beginNextResultChoice(gameData, choice.playerId())) {
+                return;
+            }
+            // Every kept result is chosen: the stopped effect resolves again with them.
+            gameData.rerunCurrentEffectAfterInteraction = false;
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

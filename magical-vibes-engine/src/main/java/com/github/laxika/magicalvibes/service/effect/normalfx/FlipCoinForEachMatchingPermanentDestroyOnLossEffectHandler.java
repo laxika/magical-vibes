@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,7 +23,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-public class FlipCoinForEachMatchingPermanentDestroyOnLossEffectHandler implements NormalEffectHandlerBean {
+public class FlipCoinForEachMatchingPermanentDestroyOnLossEffectHandler implements NormalEffectHandlerBean, ChoosesCoinFlipResultsFirst {
 
     private final CoinFlipService coinFlipService;
     private final StepDepartureSupport stepDepartureSupport;
@@ -56,8 +57,11 @@ public class FlipCoinForEachMatchingPermanentDestroyOnLossEffectHandler implemen
         List<Permanent> lostPermanents = new ArrayList<>();
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         String sourceName = entry.getCard().getName();
-        for (Permanent permanent : matchingPermanents) {
-            CoinFlipResult result = coinFlipService.flip(gameData, entry.getControllerId());
+        List<CoinFlipResult> results = coinFlipService.flipCoins(
+                gameData, entry.getControllerId(), matchingPermanents.size());
+        for (int i = 0; i < matchingPermanents.size(); i++) {
+            Permanent permanent = matchingPermanents.get(i);
+            CoinFlipResult result = results.get(i);
             String outcome = result.heads() ? "wins" : "loses";
             gameLogService.append(gameData, GameLog.text(playerName + " " + outcome
                     + " the coin flip for " + sourceName + " for " + permanent.getCard().getName()

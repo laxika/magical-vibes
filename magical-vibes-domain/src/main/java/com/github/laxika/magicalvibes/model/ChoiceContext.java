@@ -1316,6 +1316,16 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /**
+     * Krark's Thumb: the flipping player chooses which result of a replaced coin flip to keep when the
+     * physical flips disagree. {@code coinIndex} is the logical flip's position in
+     * {@link GameData#recordedCoinFlips}.
+     */
+    record CoinFlipResultChoice(UUID playerId, int coinIndex) implements ChoiceContext {
+        public static final String HEADS = "Heads";
+        public static final String TAILS = "Tails";
+    }
+
     /** The affected player orders competing delayed library-look replacements for one draw. */
     record DrawLookReplacementOrder(UUID playerId, List<Integer> counts) implements ChoiceContext {
         public DrawLookReplacementOrder {

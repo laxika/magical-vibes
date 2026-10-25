@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -17,7 +18,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class FlipCoinDoubleOrPreventNextCombatDamageFromAttackingCreatureEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, ChoosesCoinFlipResultsFirst {
 
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;

@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.RecordedCoinFlip;
 import com.github.laxika.magicalvibes.model.effect.EdgarKingOfFigaroEffect;
 import com.github.laxika.magicalvibes.model.effect.KrarksThumbEffect;
 import com.github.laxika.magicalvibes.model.effect.PokeyTheScallywaggEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +19,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-/** Performs one logical coin flip, including coin-flip replacement effects controlled by its player. */
+/**
+ * Performs one logical coin flip, including coin-flip replacement effects controlled by its player.
+ *
+ * <p>Krark's Thumb replaces each flip with two flips, one of which its controller ignores. When the
+ * physical results disagree and the flip is the first coin-flip event of a handler marked
+ * {@link com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst}, the flips are
+ * recorded in {@link GameData#recordedCoinFlips}, the player is asked which result to keep for each
+ * such coin, and the handler is stopped with {@link CoinFlipChoicePending} and later resolved again
+ * with the kept results. Anywhere else the heads result is kept.</p>
+ */
 @Component
 @RequiredArgsConstructor
 public class CoinFlipService {
@@ -25,6 +38,10 @@ public class CoinFlipService {
     @Autowired
     @Lazy
     private TriggerCollectionService triggerCollectionService;
+
+    @Autowired
+    @Lazy
+    private InteractionHandlerRegistry interactionHandlerRegistry;
 
     public CoinFlipResult flip(GameData gameData, UUID playerId) {
         return flipCoins(gameData, playerId, 1).getFirst();
@@ -42,6 +59,13 @@ public class CoinFlipService {
 
     private List<CoinFlipResult> flipCoins(GameData gameData, UUID playerId, int count,
                                            boolean applyPokey) {
+        // Only a marked handler's first coin-flip event may stop it for a Krark's Thumb choice.
+        boolean choiceCanRerunEffect = gameData.coinFlipChoicesCanRerunEffect;
+        gameData.coinFlipChoicesCanRerunEffect = false;
+        if (choiceCanRerunEffect && !gameData.recordedCoinFlips.isEmpty()) {
+            return replayRecordedFlips(gameData);
+        }
+
         boolean pokeyApplies = applyPokey && gameQueryService.countPlayerControlledStaticEffects(
                 gameData, playerId, PokeyTheScallywaggEffect.class) > 0;
         if (pokeyApplies) {
@@ -64,17 +88,82 @@ public class CoinFlipService {
                 && gameQueryService.countPlayerControlledStaticEffects(
                         gameData, playerId, EdgarKingOfFigaroEffect.class) > 0;
 
-        List<CoinFlipResult> results = new ArrayList<>(count);
+        // Every coin of the event is flipped before any result is chosen, so the player knows all of them.
+        List<RecordedCoinFlip> flips = new ArrayList<>(count);
         for (int coin = 0; coin < count; coin++) {
-            boolean heads = edgarApplies;
-            if (!heads) {
+            int physicalHeads = physicalFlips;
+            if (!edgarApplies) {
+                physicalHeads = 0;
                 for (int i = 0; i < physicalFlips; i++) {
-                    heads |= ThreadLocalRandom.current().nextBoolean();
+                    if (ThreadLocalRandom.current().nextBoolean()) {
+                        physicalHeads++;
+                    }
                 }
             }
-            results.add(new CoinFlipResult(heads, physicalFlips, edgarApplies, null));
+            Boolean heads = physicalHeads == physicalFlips ? Boolean.TRUE
+                    : physicalHeads == 0 ? Boolean.FALSE
+                    : null;
+            flips.add(new RecordedCoinFlip(heads, physicalFlips, physicalHeads, edgarApplies));
         }
+
+        if (flips.stream().anyMatch(RecordedCoinFlip::awaitsChoice)) {
+            if (choiceCanRerunEffect && interactionHandlerRegistry != null) {
+                gameData.recordedCoinFlips.addAll(flips);
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                beginNextResultChoice(gameData, playerId);
+                throw new CoinFlipChoicePending();
+            }
+            // No resumable choice on this path: keep a heads result if any physical flip came up heads.
+            flips.replaceAll(flip -> flip.awaitsChoice() ? flip.withHeads(true) : flip);
+        }
+        return flips.stream().map(CoinFlipService::toResult).toList();
+    }
+
+    private List<CoinFlipResult> replayRecordedFlips(GameData gameData) {
+        List<CoinFlipResult> results = gameData.recordedCoinFlips.stream()
+                .map(flip -> flip.awaitsChoice() ? flip.withHeads(true) : flip)
+                .map(CoinFlipService::toResult)
+                .toList();
+        gameData.recordedCoinFlips.clear();
         return results;
+    }
+
+    private static CoinFlipResult toResult(RecordedCoinFlip flip) {
+        return new CoinFlipResult(flip.heads(), flip.physicalFlips(), flip.edgarApplied(), null);
+    }
+
+    /**
+     * Asks {@code playerId} which result to keep for the first recorded flip still awaiting that choice.
+     *
+     * @return {@code false} when every recorded flip already has its kept result
+     */
+    public boolean beginNextResultChoice(GameData gameData, UUID playerId) {
+        List<RecordedCoinFlip> flips = gameData.recordedCoinFlips;
+        for (int index = 0; index < flips.size(); index++) {
+            RecordedCoinFlip flip = flips.get(index);
+            if (!flip.awaitsChoice()) {
+                continue;
+            }
+            int tails = flip.physicalFlips() - flip.physicalHeads();
+            String coin = flips.size() == 1 ? "a coin" : "coin " + (index + 1) + " of " + flips.size();
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    playerId, null, null,
+                    new ChoiceContext.CoinFlipResultChoice(playerId, index),
+                    List.of(ChoiceContext.CoinFlipResultChoice.HEADS, ChoiceContext.CoinFlipResultChoice.TAILS),
+                    "Krark's Thumb: flipping " + coin + " came up " + flip.physicalHeads() + " heads and "
+                            + tails + " tails. Choose the result to keep; the others are ignored."));
+            return true;
+        }
+        return false;
+    }
+
+    /** Records the result {@code playerId} keeps for the recorded flip at {@code coinIndex}. */
+    public void chooseResult(GameData gameData, int coinIndex, boolean heads) {
+        RecordedCoinFlip flip = gameData.recordedCoinFlips.get(coinIndex);
+        if (!flip.awaitsChoice()) {
+            throw new IllegalStateException("That coin flip's result was already chosen");
+        }
+        gameData.recordedCoinFlips.set(coinIndex, flip.withHeads(heads));
     }
 
     public String replacementDetails(CoinFlipResult result) {
