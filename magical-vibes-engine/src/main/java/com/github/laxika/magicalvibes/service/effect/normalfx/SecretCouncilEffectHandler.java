@@ -25,6 +25,7 @@ import java.util.UUID;
 public class SecretCouncilEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final VotingSupport votingSupport;
     private final PlayerInputService playerInputService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final TapUntapSupport tapUntapSupport;
@@ -37,7 +38,7 @@ public class SecretCouncilEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
+        beginNextVote(gameData, votingSupport.voterOrder(gameData, entry.getControllerId()),
                 entry.getControllerId(), new LinkedHashMap<>(), entry.getCard().getName(), entry);
     }
 
@@ -60,7 +61,7 @@ public class SecretCouncilEffectHandler implements NormalEffectHandlerBean {
             if (candidates.isEmpty()) {
                 continue;
             }
-            if (candidates.size() == 1) {
+            if (candidates.size() == 1 && !votingSupport.mayVoteAgain(gameData, choosingPlayerId)) {
                 votingFinishedSupport.recordVote(gameData, effectControllerId, choosingPlayerId,
                         "permanent:" + candidates.getFirst());
                 votes.merge(candidates.getFirst(), 1, Integer::sum);
@@ -109,16 +110,5 @@ public class SecretCouncilEffectHandler implements NormalEffectHandlerBean {
                     gameData, entry, permanent, CounterType.STUN, vote.getValue());
             tapUntapSupport.tapPermanent(gameData, permanent);
         }
-    }
-
-    private List<UUID> orderStartingWith(GameData gameData, UUID firstPlayerId) {
-        List<UUID> orderedPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
-        int firstIndex = orderedPlayerIds.indexOf(firstPlayerId);
-        if (firstIndex <= 0) {
-            return orderedPlayerIds;
-        }
-        List<UUID> rotated = new ArrayList<>(orderedPlayerIds.subList(firstIndex, orderedPlayerIds.size()));
-        rotated.addAll(orderedPlayerIds.subList(0, firstIndex));
-        return rotated;
     }
 }

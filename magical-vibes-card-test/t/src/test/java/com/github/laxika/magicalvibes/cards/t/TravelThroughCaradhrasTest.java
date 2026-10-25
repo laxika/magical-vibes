@@ -93,6 +93,7 @@ class TravelThroughCaradhrasTest extends BaseCardTest {
         cast(List.of(), List.of());
 
         harness.handleListChoice(player1, ChoiceContext.TravelThroughCaradhrasChoice.REDHORN_PASS);
+        harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN);
 
         PendingInteraction.ColorChoice nextVote =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);

@@ -26,6 +26,7 @@ public class VotingFinishedSupport {
 
     public void finishVoting(GameData gameData, UUID controllerId) {
         Map<UUID, Set<String>> choices = gameData.votingChoicesByController.remove(controllerId);
+        gameData.additionalVotesTaken.clear();
         triggerCollectionService.checkVotingFinishedTriggers(
                 gameData, new VotingResult(choices == null ? Map.of() : choices));
     }

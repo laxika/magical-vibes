@@ -16,13 +16,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** Resolves Tivit's council's dilemma vote. */
+/**
+ * Resolves Tivit's council's dilemma vote. Tivit's additional vote is its static ability, offered by
+ * {@link VotingSupport} like in any other vote.
+ */
 @Component
 @RequiredArgsConstructor
 public class CouncilDilemmaEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final VotingFinishedSupport votingFinishedSupport;
+    private final VotingSupport votingSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,9 +35,8 @@ public class CouncilDilemmaEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> votingOrder = orderStartingWith(gameData, entry.getControllerId());
-        beginNextVote(gameData, votingOrder, entry.getControllerId(), 0, 0,
-                entry.getCard().getName(), true);
+        beginNextVote(gameData, votingSupport.voterOrder(gameData, entry.getControllerId()),
+                entry.getControllerId(), 0, 0, entry.getCard().getName());
     }
 
     public void completeVote(GameData gameData, String choice,
@@ -49,39 +52,13 @@ public class CouncilDilemmaEffectHandler implements NormalEffectHandlerBean {
         } else {
             briberyVotes++;
         }
-
-        if (context.offerAdditionalVote() && sourceStillOnBattlefield(gameData)) {
-            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                    context.effectControllerId(), null, null,
-                    new ChoiceContext.CouncilDilemmaAdditionalVoteChoice(
-                            context.effectControllerId(), context.remainingPlayerIds(),
-                            evidenceVotes, briberyVotes, context.sourceName()),
-                    ChoiceContext.CouncilDilemmaAdditionalVoteChoice.OPTIONS,
-                    context.sourceName() + " - vote an additional time?"));
-            return;
-        }
-
         beginNextVote(gameData, context.remainingPlayerIds(), context.effectControllerId(),
-                evidenceVotes, briberyVotes, context.sourceName(), false);
-    }
-
-    public void completeAdditionalVote(GameData gameData, String choice,
-                                       ChoiceContext.CouncilDilemmaAdditionalVoteChoice context) {
-        if (!ChoiceContext.CouncilDilemmaAdditionalVoteChoice.OPTIONS.contains(choice)) {
-            throw new IllegalArgumentException("Invalid additional council's dilemma vote choice: " + choice);
-        }
-
-        List<UUID> remaining = new ArrayList<>(context.remainingPlayerIds());
-        if (ChoiceContext.CouncilDilemmaAdditionalVoteChoice.VOTE_AGAIN.equals(choice)) {
-            remaining.add(0, context.effectControllerId());
-        }
-        beginNextVote(gameData, remaining, context.effectControllerId(),
-                context.evidenceVotes(), context.briberyVotes(), context.sourceName(), false);
+                evidenceVotes, briberyVotes, context.sourceName());
     }
 
     private void beginNextVote(GameData gameData, List<UUID> remainingPlayerIds,
                                UUID effectControllerId, int evidenceVotes, int briberyVotes,
-                               String sourceName, boolean offerAdditionalVote) {
+                               String sourceName) {
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         remaining.removeIf(id -> !gameData.playerIds.contains(id));
         if (remaining.isEmpty()) {
@@ -93,22 +70,9 @@ public class CouncilDilemmaEffectHandler implements NormalEffectHandlerBean {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 choosingPlayerId, null, null,
                 new ChoiceContext.CouncilDilemmaChoice(
-                        effectControllerId, remaining, evidenceVotes, briberyVotes, sourceName,
-                        offerAdditionalVote),
+                        effectControllerId, remaining, evidenceVotes, briberyVotes, sourceName),
                 ChoiceContext.CouncilDilemmaChoice.OPTIONS,
                 sourceName + " - vote for evidence or bribery."));
-    }
-
-    /** "While voting, you may vote an additional time" is Tivit's static ability, so it is lost once Tivit leaves. */
-    private boolean sourceStillOnBattlefield(GameData gameData) {
-        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        if (pendingEntry == null || pendingEntry.getCard() == null) {
-            return false;
-        }
-        UUID sourceCardId = pendingEntry.getCard().getId();
-        return gameData.playerBattlefields.values().stream()
-                .flatMap(List::stream)
-                .anyMatch(permanent -> permanent.getCard().getId().equals(sourceCardId));
     }
 
     private void finishVote(GameData gameData, UUID effectControllerId, int evidenceVotes, int briberyVotes) {
@@ -128,16 +92,5 @@ public class CouncilDilemmaEffectHandler implements NormalEffectHandlerBean {
         }
         pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, results);
         votingFinishedSupport.finishVoting(gameData, effectControllerId);
-    }
-
-    private List<UUID> orderStartingWith(GameData gameData, UUID firstPlayerId) {
-        List<UUID> orderedPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
-        int firstIndex = orderedPlayerIds.indexOf(firstPlayerId);
-        if (firstIndex <= 0) {
-            return orderedPlayerIds;
-        }
-        List<UUID> rotated = new ArrayList<>(orderedPlayerIds.subList(firstIndex, orderedPlayerIds.size()));
-        rotated.addAll(orderedPlayerIds.subList(0, firstIndex));
-        return rotated;
     }
 }

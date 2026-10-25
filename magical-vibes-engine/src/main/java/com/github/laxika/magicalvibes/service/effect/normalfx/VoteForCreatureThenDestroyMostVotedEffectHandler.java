@@ -25,6 +25,7 @@ import java.util.UUID;
 public class VoteForCreatureThenDestroyMostVotedEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final VotingSupport votingSupport;
     private final PlayerInputService playerInputService;
     private final DestructionSupport destructionSupport;
     private final VotingFinishedSupport votingFinishedSupport;
@@ -36,7 +37,7 @@ public class VoteForCreatureThenDestroyMostVotedEffectHandler implements NormalE
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
+        beginNextVote(gameData, votingSupport.voterOrder(gameData, entry.getControllerId()),
                 entry.getControllerId(), new HashMap<>(), entry.getCard().getName(), entry);
     }
 
@@ -114,16 +115,5 @@ public class VoteForCreatureThenDestroyMostVotedEffectHandler implements NormalE
             }
         }
         return creatureIds;
-    }
-
-    private List<UUID> orderStartingWith(GameData gameData, UUID firstPlayerId) {
-        List<UUID> orderedPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
-        int firstIndex = orderedPlayerIds.indexOf(firstPlayerId);
-        if (firstIndex <= 0) {
-            return orderedPlayerIds;
-        }
-        List<UUID> rotated = new ArrayList<>(orderedPlayerIds.subList(firstIndex, orderedPlayerIds.size()));
-        rotated.addAll(orderedPlayerIds.subList(0, firstIndex));
-        return rotated;
     }
 }

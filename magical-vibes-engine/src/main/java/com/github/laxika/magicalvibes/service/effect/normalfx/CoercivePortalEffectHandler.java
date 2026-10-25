@@ -39,8 +39,7 @@ public class CoercivePortalEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginNextVote(gameData, votingSupport.addAdditionalControllerVotes(
-                        gameData, orderStartingWith(gameData, entry.getControllerId()), entry.getControllerId()),
+        beginNextVote(gameData, votingSupport.voterOrder(gameData, entry.getControllerId()),
                 entry.getControllerId(), new HashMap<>(), entry.getCard().getName());
     }
 
@@ -84,16 +83,5 @@ public class CoercivePortalEffectHandler implements NormalEffectHandlerBean {
                         effectControllerId, remaining, votes, sourceName),
                 ChoiceContext.CoercivePortalChoice.OPTIONS,
                 sourceName + " — vote for carnage or homage."));
-    }
-
-    private List<UUID> orderStartingWith(GameData gameData, UUID firstPlayerId) {
-        List<UUID> orderedPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
-        int firstIndex = orderedPlayerIds.indexOf(firstPlayerId);
-        if (firstIndex <= 0) {
-            return orderedPlayerIds;
-        }
-        List<UUID> rotated = new ArrayList<>(orderedPlayerIds.subList(firstIndex, orderedPlayerIds.size()));
-        rotated.addAll(orderedPlayerIds.subList(0, firstIndex));
-        return rotated;
     }
 }

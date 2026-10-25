@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component;
 public class CirdanTheShipwrightEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInputService playerInputService;
+    private final VotingSupport votingSupport;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final PredicateEvaluationService predicateEvaluationService;
     private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
@@ -44,7 +45,7 @@ public class CirdanTheShipwrightEffectHandler implements NormalEffectHandlerBean
             beginNextHandChoice(gameData, cirdan.noVotePlayers(), List.of(), entry.getCard().getName());
             return;
         }
-        beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
+        beginNextVote(gameData, votingSupport.voterOrder(gameData, entry.getControllerId()),
                 entry.getControllerId(), new LinkedHashMap<>(), entry.getCard().getName());
     }
 

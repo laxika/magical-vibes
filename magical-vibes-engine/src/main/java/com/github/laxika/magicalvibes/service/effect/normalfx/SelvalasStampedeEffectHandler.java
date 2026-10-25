@@ -25,6 +25,7 @@ import java.util.UUID;
 public class SelvalasStampedeEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final VotingSupport votingSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,7 +34,7 @@ public class SelvalasStampedeEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginNextVote(gameData, orderStartingWith(gameData, entry.getControllerId()),
+        beginNextVote(gameData, votingSupport.voterOrder(gameData, entry.getControllerId()),
                 entry.getControllerId(), new HashMap<>(), entry.getCard().getName());
     }
 
@@ -82,16 +83,5 @@ public class SelvalasStampedeEffectHandler implements NormalEffectHandlerBean {
                         effectControllerId, remaining, votes, sourceName),
                 ChoiceContext.SelvalasStampedeChoice.OPTIONS,
                 sourceName + " — vote for wild or free."));
-    }
-
-    private List<UUID> orderStartingWith(GameData gameData, UUID firstPlayerId) {
-        List<UUID> orderedPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
-        int firstIndex = orderedPlayerIds.indexOf(firstPlayerId);
-        if (firstIndex <= 0) {
-            return orderedPlayerIds;
-        }
-        List<UUID> rotated = new ArrayList<>(orderedPlayerIds.subList(firstIndex, orderedPlayerIds.size()));
-        rotated.addAll(orderedPlayerIds.subList(0, firstIndex));
-        return rotated;
     }
 }

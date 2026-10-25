@@ -25,6 +25,7 @@ import java.util.UUID;
 public class MobVerdictEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInputService playerInputService;
+    private final VotingSupport votingSupport;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameQueryService gameQueryService;
     private final DamageSupport damageSupport;
@@ -38,14 +39,8 @@ public class MobVerdictEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<UUID> voteOrder = new ArrayList<>();
-        for (UUID voterId : orderStartingWith(gameData, entry.getControllerId())) {
-            for (int i = 0; i <= gameQueryService.countAdditionalVotes(gameData, voterId); i++) {
-                voteOrder.add(voterId);
-            }
-        }
-        beginNextVote(gameData, voteOrder, entry.getControllerId(), new LinkedHashMap<>(),
-                entry.getCard().getName(), entry);
+        beginNextVote(gameData, votingSupport.voterOrder(gameData, entry.getControllerId()),
+                entry.getControllerId(), new LinkedHashMap<>(), entry.getCard().getName(), entry);
     }
 
     public void completeVote(GameData gameData, List<UUID> selectedIds,
@@ -69,7 +64,7 @@ public class MobVerdictEffectHandler implements NormalEffectHandlerBean {
             if (validPlayerIds.isEmpty()) {
                 continue;
             }
-            if (validPlayerIds.size() == 1) {
+            if (validPlayerIds.size() == 1 && !votingSupport.mayVoteAgain(gameData, voterId)) {
                 UUID votedFor = validPlayerIds.getFirst();
                 votingFinishedSupport.recordVote(gameData, effectControllerId, voterId,
                         "player:" + votedFor);
@@ -122,16 +117,5 @@ public class MobVerdictEffectHandler implements NormalEffectHandlerBean {
         List<Permanent> battlefield = new ArrayList<>(gameData.playerBattlefields.getOrDefault(playerId, List.of()));
         damageSupport.damageFilteredCreatures(gameData, entry, damage, battlefield,
                 permanent -> gameQueryService.isCreature(gameData, permanent));
-    }
-
-    private List<UUID> orderStartingWith(GameData gameData, UUID firstPlayerId) {
-        List<UUID> orderedPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
-        int firstIndex = orderedPlayerIds.indexOf(firstPlayerId);
-        if (firstIndex <= 0) {
-            return orderedPlayerIds;
-        }
-        List<UUID> rotated = new ArrayList<>(orderedPlayerIds.subList(firstIndex, orderedPlayerIds.size()));
-        rotated.addAll(orderedPlayerIds.subList(0, firstIndex));
-        return rotated;
     }
 }

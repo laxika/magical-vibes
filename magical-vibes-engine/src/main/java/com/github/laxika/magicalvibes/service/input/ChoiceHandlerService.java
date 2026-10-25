@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.PowerToughnessForm;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.VoteChoiceContext;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
 import com.github.laxika.magicalvibes.model.amount.DevotionToColor;
@@ -182,6 +183,9 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
     private final LandTapTriggerCollectorService landTapTriggerCollectorService;
     private final VotingFinishedSupport votingFinishedSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.VotingSupport votingSupport;
+    private final org.springframework.beans.factory.ObjectProvider<MultiPermanentChoiceHandlerService>
+            multiPermanentChoiceHandlerServiceProvider;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport lifeSupport;
@@ -527,6 +531,16 @@ public class ChoiceHandlerService {
             gameData.interaction.clearAwaitingInput();
             counterPlacementHandler.resolveReplacementOrder(gameData, order, colorName);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.AdditionalVoteChoice offer) {
+            handleAdditionalVoteChoice(gameData, player, colorName, offer);
+            return;
+        }
+        if (colorChoice.context() instanceof VoteChoiceContext
+                && colorChoice.options().contains(colorName)
+                && votingSupport.offerAdditionalVote(gameData, player.getId(), colorChoice, colorName, List.of())) {
             return;
         }
 
@@ -1522,17 +1536,6 @@ public class ChoiceHandlerService {
             }
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.CouncilDilemmaAdditionalVoteChoice ctx) {
-            if (!ctx.OPTIONS.contains(colorName)) {
-                throw new IllegalArgumentException("Invalid additional council's dilemma vote choice: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            councilDilemmaEffectHandler.completeAdditionalVote(gameData, colorName, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.ZndrsplatsJudgmentChoice ctx) {
             if (!ctx.OPTIONS.contains(colorName)) {
                 throw new IllegalArgumentException("Invalid Zndrsplt's Judgment choice: " + colorName);
@@ -1806,6 +1809,31 @@ public class ChoiceHandlerService {
         stateBasedActionService.performStateBasedActions(gameData);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Answer to "vote an additional time?": the held vote answer is counted now, with the voter queued to
+     * vote again first when they accepted (CR 701.38d).
+     */
+    private void handleAdditionalVoteChoice(GameData gameData, Player player, String choice,
+                                            ChoiceContext.AdditionalVoteChoice offer) {
+        if (!ChoiceContext.AdditionalVoteChoice.OPTIONS.contains(choice)) {
+            throw new IllegalArgumentException("Invalid additional vote choice: " + choice);
+        }
+        gameData.interaction.clearAwaitingInput();
+        PendingInteraction heldVote = votingSupport.recordAdditionalVoteDecision(
+                gameData, offer, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN.equals(choice));
+        if (heldVote == null) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        interactionHandlerRegistry.beginWithoutPrompt(gameData, heldVote);
+        if (heldVote instanceof PendingInteraction.MultiPermanentChoice) {
+            multiPermanentChoiceHandlerServiceProvider.getObject()
+                    .handleMultiplePermanentsChosen(gameData, player, offer.selectedIds());
+        } else {
+            handleListChoice(gameData, player, offer.answer());
+        }
     }
 
     private void recordVotingChoiceIfApplicable(GameData gameData, UUID voterId, String choice,

@@ -48,12 +48,10 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         WillOfTheCouncilEffect willOfTheCouncil = (WillOfTheCouncilEffect) effect;
         if (willOfTheCouncil.graveyardCards()) {
-            beginNextGraveyardVote(gameData, votingSupport.addAdditionalControllerVotes(
-                            gameData, orderStartingWith(gameData, entry.getControllerId()), entry.getControllerId()),
+            beginNextGraveyardVote(gameData, votingSupport.voterOrder(gameData, entry.getControllerId()),
                     entry.getControllerId(), new HashMap<>(), entry.getCard().getName());
         } else {
-            beginNextVote(gameData, votingSupport.addAdditionalControllerVotes(
-                            gameData, orderStartingWith(gameData, entry.getControllerId()), entry.getControllerId()),
+            beginNextVote(gameData, votingSupport.voterOrder(gameData, entry.getControllerId()),
                     entry.getControllerId(), new HashMap<>(), entry.getCard().getName(),
                     willOfTheCouncil.creaturesOnly());
         }
@@ -86,7 +84,7 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
             if (candidates.isEmpty()) {
                 continue;
             }
-            if (candidates.size() == 1) {
+            if (candidates.size() == 1 && !votingSupport.mayVoteAgain(gameData, choosingPlayerId)) {
                 votingFinishedSupport.recordVote(gameData, effectControllerId, choosingPlayerId,
                         "permanent:" + candidates.getFirst());
                 votes.merge(candidates.getFirst(), 1, Integer::sum);
@@ -172,7 +170,7 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
             if (candidates.isEmpty()) {
                 continue;
             }
-            if (candidates.size() == 1) {
+            if (candidates.size() == 1 && !votingSupport.mayVoteAgain(gameData, choosingPlayerId)) {
                 votingFinishedSupport.recordVote(gameData, effectControllerId, choosingPlayerId,
                         "permanent:" + candidates.getFirst());
                 votes.merge(candidates.getFirst(), 1, Integer::sum);
@@ -231,16 +229,5 @@ public class WillOfTheCouncilEffectHandler implements NormalEffectHandlerBean {
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
         }
-    }
-
-    private List<UUID> orderStartingWith(GameData gameData, UUID firstPlayerId) {
-        List<UUID> orderedPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
-        int firstIndex = orderedPlayerIds.indexOf(firstPlayerId);
-        if (firstIndex <= 0) {
-            return orderedPlayerIds;
-        }
-        List<UUID> rotated = new ArrayList<>(orderedPlayerIds.subList(firstIndex, orderedPlayerIds.size()));
-        rotated.addAll(orderedPlayerIds.subList(0, firstIndex));
-        return rotated;
     }
 }

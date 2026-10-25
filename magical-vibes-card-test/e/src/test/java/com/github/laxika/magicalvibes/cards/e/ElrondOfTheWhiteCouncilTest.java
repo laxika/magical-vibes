@@ -88,6 +88,7 @@ class ElrondOfTheWhiteCouncilTest extends BaseCardTest {
         harness.addToBattlefield(player1, new TheValeyard());
         castElrond();
         harness.handleListChoice(player1, ChoiceContext.ElrondOfTheWhiteCouncilChoice.AID);
+        harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN);
 
         PendingInteraction.ColorChoice secondVote =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);

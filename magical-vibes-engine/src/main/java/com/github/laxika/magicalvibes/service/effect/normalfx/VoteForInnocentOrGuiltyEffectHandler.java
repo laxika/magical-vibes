@@ -37,8 +37,7 @@ public class VoteForInnocentOrGuiltyEffectHandler implements NormalEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginNextVote(gameData, votingSupport.addAdditionalControllerVotes(
-                        gameData, orderStartingWith(gameData, entry.getControllerId()), entry.getControllerId()),
+        beginNextVote(gameData, votingSupport.voterOrder(gameData, entry.getControllerId()),
                 entry.getControllerId(), new HashMap<>(), entry.getCard().getName());
     }
 
@@ -116,16 +115,5 @@ public class VoteForInnocentOrGuiltyEffectHandler implements NormalEffectHandler
             }
         });
         gameData.exileReturnOnPermanentLeave.remove(sourceId);
-    }
-
-    private List<UUID> orderStartingWith(GameData gameData, UUID firstPlayerId) {
-        List<UUID> orderedPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
-        int firstIndex = orderedPlayerIds.indexOf(firstPlayerId);
-        if (firstIndex <= 0) {
-            return orderedPlayerIds;
-        }
-        List<UUID> rotated = new ArrayList<>(orderedPlayerIds.subList(firstIndex, orderedPlayerIds.size()));
-        rotated.addAll(orderedPlayerIds.subList(0, firstIndex));
-        return rotated;
     }
 }

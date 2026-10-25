@@ -36,8 +36,7 @@ public class TravelThroughCaradhrasEffectHandler implements NormalEffectHandlerB
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginNextVote(gameData, votingSupport.addAdditionalControllerVotes(
-                        gameData, orderStartingWith(gameData, entry.getControllerId()), entry.getControllerId()),
+        beginNextVote(gameData, votingSupport.voterOrder(gameData, entry.getControllerId()),
                 entry.getControllerId(), 0, 0, entry.getCard().getName());
     }
 
@@ -93,16 +92,5 @@ public class TravelThroughCaradhrasEffectHandler implements NormalEffectHandlerB
             results.add(ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.HAND).build());
         }
         pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, results);
-    }
-
-    private List<UUID> orderStartingWith(GameData gameData, UUID firstPlayerId) {
-        List<UUID> orderedPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
-        int firstIndex = orderedPlayerIds.indexOf(firstPlayerId);
-        if (firstIndex <= 0) {
-            return orderedPlayerIds;
-        }
-        List<UUID> rotated = new ArrayList<>(orderedPlayerIds.subList(firstIndex, orderedPlayerIds.size()));
-        rotated.addAll(orderedPlayerIds.subList(0, firstIndex));
-        return rotated;
     }
 }

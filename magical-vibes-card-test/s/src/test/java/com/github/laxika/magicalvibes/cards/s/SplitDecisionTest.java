@@ -155,10 +155,8 @@ class SplitDecisionTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, originalId);
         harness.handleListChoice(player1, ChoiceContext.VoteForDenialOrDuplicationChoice.DUPLICATION);
         harness.handleListChoice(player2, ChoiceContext.VoteForDenialOrDuplicationChoice.DENIAL);
+        harness.handleListChoice(player2, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN);
 
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
-            harness.handleMayAbilityChosen(player2, true);
-        }
         assertThat(activeVote().playerId()).isEqualTo(player2.getId());
         harness.handleListChoice(player2, ChoiceContext.VoteForDenialOrDuplicationChoice.DENIAL);
 

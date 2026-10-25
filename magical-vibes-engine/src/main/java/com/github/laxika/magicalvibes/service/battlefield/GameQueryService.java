@@ -227,6 +227,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivateTapAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.MayVoteAdditionalTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.MeliraPoisonReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MiracleGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect;
@@ -8746,10 +8747,10 @@ public class GameQueryService {
                 .sum();
     }
 
-    /** Returns the number of additional votes The Valeyard grants to a player. */
+    /** Returns how many "you may vote an additional time" abilities (Tivit, The Valeyard) a voter controls. */
     public int countAdditionalVotes(GameData gameData, UUID voterId) {
         return voterId == null ? 0
-                : countPlayerControlledStaticEffects(gameData, voterId, TheValeyardEffect.class);
+                : countPlayerControlledStaticEffects(gameData, voterId, MayVoteAdditionalTimeEffect.class);
     }
 
     /**

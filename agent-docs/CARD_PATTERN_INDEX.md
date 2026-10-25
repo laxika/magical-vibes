@@ -157,7 +157,7 @@
 | planeswalker with a perpetual hand-card choice, spellbook battlefield draft, and mass trample pump | `g/GarrukWrathOfTheWilds.java` + `ChooseCardFromHandAndApplyPerpetualPowerToughnessAndCostReductionEffect` + `DraftCardFromSpellbookEffect(..., false, true)` |
 | random opponent gains control of source permanent | EFFECTS_QUICK_REFERENCE.md and EFFECTS_INDEX.md |
 | each opponent chooses between a free cast from their library and four-card total-mana-value damage | `e/EnsnaredByTheMara.java` + `EnsnaredByTheMaraVillainousChoiceEffect` |
-| villainous-choice replacement plus additional vote | `t/TheValeyard.java` + `TheValeyardEffect` |
+| villainous-choice replacement plus optional additional vote | `t/TheValeyard.java` + `TheValeyardEffect` + `MayVoteAdditionalTimeEffect` |
 | draw three, then target opponent chooses between discarding three and a controller free-cast from hand | `g/GreatIntelligencesPlan.java` + `GreatIntelligencesPlanVillainousChoiceEffect` |
 | randomly choose a creature, steal it until end of turn, untap and haste it, then destroy the other creatures | `t/TheNiptonLottery.java` + `ChooseRandomCreatureGainControlUntilEndOfTurnThenDestroyOtherCreaturesEffect` |
 | command-zone Secret Mission: pregame secret choice, end-step reveal special action, reward trigger | `m/MarchesasSurpriseParty.java` + `COMMAND_ZONE_STATIC SecretMissionEffect(List<Mission(label, Condition)>, reward)` |
@@ -242,6 +242,7 @@
 | secret player vote, vote-counted draws, and zero-vote permanent cards from hand | `c/CirdanTheShipwright.java` + `CirdanTheShipwrightEffect` |
 | secret player vote, damage to each opponent for each vote, and draw for votes received | `m/MobVerdict.java` + `MobVerdictEffect` |
 | secret opponent choices with revealed all-same or mixed damage branches | `p/PrisonersDilemma.java` + `PrisonersDilemmaEffect` |
+| any new vote handler: start with `VotingSupport.voterOrder` and give its vote prompt context `VoteChoiceContext`, so "you may vote an additional time" is offered by `ChoiceHandlerService`/`MultiPermanentChoiceHandlerService`; don't auto-cast a lone-candidate vote while `VotingSupport.mayVoteAgain` | `SecretCouncilEffectHandler` + `VotingSupport` |
 | post-vote trigger that compares the controller's choices with each opponent's choices | `e/ErestorOfTheCouncil.java` + `ErestorOfTheCouncilEffect` + `VotingResult` |
 | post-vote trigger that offers the controller and matching voters a may-scry ability | `m/ModelOfUnity.java` + `ModelOfUnityEffect` + `VotingResult` |
 | exile up to one target creature card from your graveyard, then seek a creature with mana value one higher and perpetually grant menace | `p/PuppetRaiser.java` and `ExileTargetCreatureCardFromGraveyardThenSeekWithMenaceEffect` |

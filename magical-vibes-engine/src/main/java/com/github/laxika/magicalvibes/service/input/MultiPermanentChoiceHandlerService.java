@@ -113,6 +113,7 @@ public class MultiPermanentChoiceHandlerService {
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
     private final VotingFinishedSupport votingFinishedSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.VotingSupport votingSupport;
     private final PermanentChoiceTriggerHandlerService triggerHandler;
     private final PermanentChoiceBattlefieldHandlerService battlefieldHandler;
     private final TurnProgressionService turnProgressionService;
@@ -929,6 +930,10 @@ public class MultiPermanentChoiceHandlerService {
                 && mayCastHandlerService.madnessConvokeContributions(
                 gameData, playerId, madnessConvoke, permanentIds) == null) {
             throw new IllegalStateException("The chosen creatures can't pay the madness cost with convoke");
+        }
+
+        if (votingSupport.offerAdditionalVote(gameData, playerId, multiPermanentChoice, null, permanentIds)) {
+            return;
         }
 
         gameData.interaction.clearAwaitingInput();

@@ -1159,6 +1159,16 @@ public class GameData {
     public StackEntry handCardChoiceDeclineEntry;
     /** Votes collected while a voting spell or ability is resolving, keyed by its controller. */
     public final Map<UUID, Map<UUID, Set<String>>> votingChoicesByController = new ConcurrentHashMap<>();
+    /**
+     * Additional votes each player has taken in the vote now resolving under "you may vote an additional
+     * time"; a declined offer counts as every one of them taken, so it isn't offered again.
+     */
+    public final Map<UUID, Integer> additionalVotesTaken = new ConcurrentHashMap<>();
+    /**
+     * Answer to an additional-vote offer made by a vote that reruns its effect to read it (Truth or
+     * Consequences); {@code null} while no answer is waiting.
+     */
+    public Boolean additionalVoteAccepted;
     public PendingReverseMiracleSearch pendingReverseMiracleSearch;
     /** CR 603.5 — set when a MayEffect is encountered during stack resolution, cleared after player responds. */
     public boolean resolvingMayEffectFromStack;
@@ -8309,6 +8319,8 @@ public class GameData {
                     choicesCopy.put(playerId, new LinkedHashSet<>(choices)));
             copy.votingChoicesByController.put(controllerId, choicesCopy);
         });
+        copy.additionalVotesTaken.putAll(this.additionalVotesTaken);
+        copy.additionalVoteAccepted = this.additionalVoteAccepted;
         copy.wordOfCommandPendingResolutionEntry = this.wordOfCommandPendingResolutionEntry != null
                 ? new StackEntry(this.wordOfCommandPendingResolutionEntry) : null;
         copy.pendingReverseMiracleSearch = this.pendingReverseMiracleSearch;

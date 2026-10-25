@@ -49,8 +49,7 @@ public class ElrondOfTheWhiteCouncilEffectHandler implements NormalEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        beginNextVote(gameData, votingSupport.addAdditionalControllerVotes(gameData,
-                        orderStartingWith(gameData, entry.getControllerId()), entry.getControllerId()),
+        beginNextVote(gameData, votingSupport.voterOrder(gameData, entry.getControllerId()),
                 entry.getControllerId(), List.of(), 0, entry.getCard().getName());
     }
 

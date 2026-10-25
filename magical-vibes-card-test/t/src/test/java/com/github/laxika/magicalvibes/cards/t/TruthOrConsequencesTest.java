@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.ModelOfUnity;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TruthOrConsequences.class, Forest.class, ModelOfUnity.class})
+@CardUsed({TruthOrConsequences.class, Forest.class, ModelOfUnity.class, TheValeyard.class})
 class TruthOrConsequencesTest extends BaseCardTest {
 
     @Test
@@ -107,6 +108,49 @@ class TruthOrConsequencesTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
+
+    @Test
+    void valeyardControllerMayCastAnAdditionalSecretVote() {
+        harness.addToBattlefield(player1, new TheValeyard());
+        Forest drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+
+        cast();
+        harness.handleXValueChosen(player1, 0);
+        PendingInteraction.ColorChoice offer = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(offer).isNotNull();
+        assertThat(offer.playerId()).isEqualTo(player1.getId());
+        assertThat(offer.options()).containsExactlyElementsOf(ChoiceContext.AdditionalVoteChoice.OPTIONS);
+        harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleXValueChosen(player1, 1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleXValueChosen(player2, 1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    void valeyardControllerMayDeclineTheAdditionalSecretVote() {
+        harness.addToBattlefield(player1, new TheValeyard());
+
+        cast();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.CONTINUE);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleXValueChosen(player2, 1);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 14);
+    }
+
     private void cast() {
         harness.castFromHand(player1, new TruthOrConsequences(), "{2}{U}{R}");
         harness.passBothPriorities();

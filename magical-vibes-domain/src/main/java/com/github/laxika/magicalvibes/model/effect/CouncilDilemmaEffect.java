@@ -1,5 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Each player votes for evidence or bribery; the controller may vote an additional time. */
+/** Council's dilemma: each player votes for evidence or bribery. */
 public record CouncilDilemmaEffect() implements CardEffect {
 }

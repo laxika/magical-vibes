@@ -9,37 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 45. Optional additional votes from a static ability for every vote (Tivit)
-
-**Status:** open · **Found:** 2026-10-22, while fixing T-card test failures
-
-**Failing tests:**
-- `TivitSellerOfSecretsTest.additionalVoteAppliesToAnotherCardsVote()`
-
-**What the rules require.** CR 701.38a: to vote, each player chooses one of the options, starting
-with a specified player and proceeding in turn order. Tivit, Seller of Secrets says "While voting,
-you may vote an additional time", which applies to every vote its controller takes part in (Plea
-for Power in the test), not only Tivit's own council's dilemma. The engine supports the extra vote
-only inside `CouncilDilemmaEffectHandler`; `VotingSupport.countAdditionalVotes` counts only The
-Valeyard's mandatory extra vote and never asks.
-
-**Why it's large.** About 17 vote handlers each run their own voting loop. A generic optional extra
-vote needs a static marker effect, a shared "vote again?" prompt in `VotingSupport`, and every vote
-handler moved onto that shared loop.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 45: make "While voting, you may vote an additional time"
-(Tivit, Seller of Secrets) work for every vote, not only council's dilemma. Add a static marker
-effect and an optional extra-vote prompt to VotingSupport, and move the vote handlers onto the
-shared voting loop. Make TivitSellerOfSecretsTest.additionalVoteAppliesToAnotherCardsVote pass and
-keep The Valeyard's mandatory extra vote working. Verify every CR number with the rules MCP. Don't
-run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 46. Choosing which coin flip to ignore (Krark's Thumb)
 
 **Status:** open · **Found:** 2026-10-22, while fixing T-card test failures
@@ -536,6 +505,34 @@ its WrappedStackStaticEffect abilities (CR 113.6, CR 707.2), with Torrent of Lav
 prevention keyed to the copy as the damage source. Stop excluding copies in
 LayerSystemService.stackStaticSources once the source reference is per stack object. Verify every
 CR number with the rules MCP. Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+---
+
+## 61. Four vote handlers never report their votes as finished
+
+**Status:** open · **Found:** 2026-10-25, while finishing entry 45 (optional additional votes)
+
+**Failing tests:** none yet; a Model of Unity or Erestor of the Council test with one of these votes would fail.
+
+**What the rules require.** "Whenever players finish voting" abilities (Model of Unity, Erestor of the
+Council) trigger after every vote (CR 701.38a defines voting). `FatefulTempestEffectHandler`,
+`SelvalasStampedeEffectHandler`, `WillOfThePlaneswalkersEffectHandler` and
+`VoteForInnocentOrGuiltyEffectHandler` never call `VotingFinishedSupport.finishVoting`, and
+`ChoiceHandlerService.recordVotingChoiceIfApplicable` doesn't record their votes, so those triggers
+never see these votes.
+
+**Why it's large.** Small: record the votes (all four contexts already implement `VoteChoiceContext`)
+and call `finishVoting` where each vote ends, then add a Model of Unity test per card.
+
+**Prompt to start it:**
+
+```
+Implement missing-features-to-do.md entry 61: make Fateful Tempest, Selvala's Stampede, Will of the
+Planeswalkers (Path of the Ghosthunter / Path of the Animist) and the innocent-or-guilty vote record
+their votes and call VotingFinishedSupport.finishVoting, so "whenever players finish voting" triggers
+(Model of Unity, Erestor of the Council) fire for them. Add tests. Verify every CR number with the
+rules MCP. Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 
 ---

@@ -54,11 +54,32 @@ class TheValeyardTest extends BaseCardTest {
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
         harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
+        assertThat(activeAdditionalVote().playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN);
         assertThat(activeVote().playerId()).isEqualTo(player1.getId());
         harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.KNOWLEDGE);
         harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.KNOWLEDGE);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third);
+    }
+
+    @Test
+    void controllerMayDeclineTheAdditionalVote() {
+        harness.addToBattlefield(player1, new TheValeyard());
+        harness.setHand(player1, List.of(new PleaForPower()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
+        harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.CONTINUE);
+        assertThat(activeVote().playerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.KNOWLEDGE);
+
+        assertThat(gd.extraTurns).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
     }
 
     private void chooseSycoraxDamage() {
@@ -83,6 +104,8 @@ class TheValeyardTest extends BaseCardTest {
         harness.handleListChoice(player1, ChoiceContext.PleaForPowerChoice.TIME);
         harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.KNOWLEDGE);
 
+        assertThat(activeAdditionalVote().playerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN);
         assertThat(activeVote().playerId()).isEqualTo(player2.getId());
         harness.handleListChoice(player2, ChoiceContext.PleaForPowerChoice.KNOWLEDGE);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third);
@@ -138,6 +161,14 @@ class TheValeyardTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options()).containsExactlyElementsOf(ChoiceContext.PleaForPowerChoice.OPTIONS);
+        return choice;
+    }
+
+    private PendingInteraction.ColorChoice activeAdditionalVote() {
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyElementsOf(ChoiceContext.AdditionalVoteChoice.OPTIONS);
         return choice;
     }
 }

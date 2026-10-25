@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TheValeyard;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -60,7 +61,25 @@ class MobVerdictTest extends BaseCardTest {
         harness.castFromHand(player1, new MobVerdict(), "{2}{R}{R}");
         harness.passBothPriorities();
 
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
+        harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.VOTE_AGAIN);
+
         harness.assertLife(player2, 16);
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void declinedAdditionalVoteFromTheValeyardKeepsOneVote() {
+        harness.addToBattlefield(player1, new TheValeyard());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.castFromHand(player1, new MobVerdict(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
+        harness.handleListChoice(player1, ChoiceContext.AdditionalVoteChoice.CONTINUE);
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

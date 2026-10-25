@@ -1504,7 +1504,7 @@ public sealed interface MultiPermanentChoiceContext {
                                   String sourceName,
                                   boolean graveyardCards,
                                   boolean creaturesOnly)
-            implements MultiPermanentChoiceContext {
+            implements MultiPermanentChoiceContext, VoteChoiceContext {
         public WillOfTheCouncilChoice(UUID effectControllerId,
                                       java.util.List<UUID> remainingPlayerIds,
                                       java.util.Map<UUID, Integer> votes,
@@ -1524,6 +1524,17 @@ public sealed interface MultiPermanentChoiceContext {
             remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
             votes = java.util.Map.copyOf(votes);
         }
+
+        @Override
+        public java.util.List<UUID> remainingVoterIds() {
+            return remainingPlayerIds;
+        }
+
+        @Override
+        public WillOfTheCouncilChoice withRemainingVoterIds(java.util.List<UUID> remainingVoterIds) {
+            return new WillOfTheCouncilChoice(effectControllerId, remainingVoterIds, votes, sourceName,
+                    graveyardCards, creaturesOnly);
+        }
     }
 
     /** Vault 11: Voter's Dilemma: the current player voted for up to one creature. */
@@ -1532,10 +1543,20 @@ public sealed interface MultiPermanentChoiceContext {
             java.util.List<UUID> remainingPlayerIds,
             java.util.Map<UUID, Integer> votes,
             String sourceName)
-            implements MultiPermanentChoiceContext {
+            implements MultiPermanentChoiceContext, VoteChoiceContext {
         public VoteForCreatureThenDestroyMostVotedChoice {
             remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
             votes = java.util.Map.copyOf(votes);
+        }
+
+        @Override
+        public java.util.List<UUID> remainingVoterIds() {
+            return remainingPlayerIds;
+        }
+
+        @Override
+        public VoteForCreatureThenDestroyMostVotedChoice withRemainingVoterIds(java.util.List<UUID> remainingVoterIds) {
+            return new VoteForCreatureThenDestroyMostVotedChoice(effectControllerId, remainingVoterIds, votes, sourceName);
         }
     }
 
@@ -1544,10 +1565,20 @@ public sealed interface MultiPermanentChoiceContext {
                                java.util.List<UUID> remainingPlayerIds,
                                java.util.Map<UUID, Integer> votes,
                                String sourceName)
-            implements MultiPermanentChoiceContext {
+            implements MultiPermanentChoiceContext, VoteChoiceContext {
         public SecretCouncilChoice {
             remainingPlayerIds = java.util.List.copyOf(remainingPlayerIds);
             votes = java.util.Map.copyOf(votes);
+        }
+
+        @Override
+        public java.util.List<UUID> remainingVoterIds() {
+            return remainingPlayerIds;
+        }
+
+        @Override
+        public SecretCouncilChoice withRemainingVoterIds(java.util.List<UUID> remainingVoterIds) {
+            return new SecretCouncilChoice(effectControllerId, remainingVoterIds, votes, sourceName);
         }
     }
 
@@ -1569,10 +1600,15 @@ public sealed interface MultiPermanentChoiceContext {
                             java.util.List<UUID> remainingVoterIds,
                             java.util.Map<UUID, Integer> votes,
                             String sourceName)
-            implements MultiPermanentChoiceContext {
+            implements MultiPermanentChoiceContext, VoteChoiceContext {
         public CirdanVoteChoice {
             remainingVoterIds = java.util.List.copyOf(remainingVoterIds);
             votes = java.util.Map.copyOf(votes);
+        }
+
+        @Override
+        public CirdanVoteChoice withRemainingVoterIds(java.util.List<UUID> remainingVoterIds) {
+            return new CirdanVoteChoice(effectControllerId, remainingVoterIds, votes, sourceName);
         }
     }
 
@@ -1582,10 +1618,15 @@ public sealed interface MultiPermanentChoiceContext {
                             java.util.List<UUID> remainingVoterIds,
                             java.util.Map<UUID, Integer> votes,
                             String sourceName)
-            implements MultiPermanentChoiceContext {
+            implements MultiPermanentChoiceContext, VoteChoiceContext {
         public MobVerdictChoice {
             remainingVoterIds = java.util.List.copyOf(remainingVoterIds);
             votes = java.util.Map.copyOf(votes);
+        }
+
+        @Override
+        public MobVerdictChoice withRemainingVoterIds(java.util.List<UUID> remainingVoterIds) {
+            return new MobVerdictChoice(effectControllerId, remainingVoterIds, votes, sourceName);
         }
     }
 

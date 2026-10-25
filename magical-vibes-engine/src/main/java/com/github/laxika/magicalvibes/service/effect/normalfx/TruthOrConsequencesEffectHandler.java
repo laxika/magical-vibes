@@ -45,9 +45,19 @@ public class TruthOrConsequencesEffectHandler implements NormalEffectHandlerBean
         if (!state.active) {
             state.reset();
             state.active = true;
-            state.order.addAll(votingSupport.addAdditionalControllerVotes(
-                    gameData, apnapPlayers(gameData), entry.getControllerId()));
+            state.order.addAll(votingSupport.voterOrder(gameData, gameData.activePlayerId));
             promptNextPlayer(gameData, cardName);
+            return;
+        }
+
+        Boolean voteAgain = gameData.additionalVoteAccepted;
+        if (voteAgain != null) {
+            gameData.additionalVoteAccepted = null;
+            gameData.rerunCurrentEffectAfterInteraction = false;
+            if (voteAgain) {
+                state.order.add(state.index, state.currentPlayerId);
+            }
+            continueVote(gameData, state, entry, cardName);
             return;
         }
 
@@ -60,6 +70,15 @@ public class TruthOrConsequencesEffectHandler implements NormalEffectHandlerBean
         gameData.chosenXValue = null;
         state.index++;
 
+        if (votingSupport.mayVoteAgain(gameData, state.currentPlayerId)) {
+            votingSupport.offerAdditionalVoteToRerunningEffect(gameData, state.currentPlayerId, cardName);
+            return;
+        }
+        continueVote(gameData, state, entry, cardName);
+    }
+
+    private void continueVote(GameData gameData, TruthOrConsequencesState state, StackEntry entry,
+                              String cardName) {
         if (state.index < state.order.size()) {
             promptNextPlayer(gameData, cardName);
             return;
@@ -115,16 +134,5 @@ public class TruthOrConsequencesEffectHandler implements NormalEffectHandlerBean
         }
         pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex + 1, results);
         state.reset();
-    }
-
-    private List<UUID> apnapPlayers(GameData gameData) {
-        List<UUID> players = new ArrayList<>(gameData.orderedPlayerIds);
-        int activeIndex = players.indexOf(gameData.activePlayerId);
-        if (activeIndex <= 0) {
-            return players;
-        }
-        List<UUID> rotated = new ArrayList<>(players.subList(activeIndex, players.size()));
-        rotated.addAll(players.subList(0, activeIndex));
-        return rotated;
     }
 }
