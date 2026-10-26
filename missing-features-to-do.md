@@ -20,7 +20,7 @@ copy-group `TokenCreationEvent` (`TokenCreationEvent.copies`, `copyOf` = the cop
 single card (no explicit attack targets, no Aura host) now run a copy-group event carrying a `TokenCopyBatch` and resume
 in `TokenCopySupport.createCopiesAfterReplacementOrder`, tested in `CacklingCounterpartTest`; copies of several
 different cards in the same paths now hold each other card's copies as a copy group (`TokenGroup.copyOf`) of the same
-event, tested in `SecondHarvestTest`; copies with explicit attack targets now join the ordered path when each copied card has one attack target (`TokenCopyBatch.attackTargets`, by card identity; added tokens take the first card's target), tested in `MirrorStyleMasterTest`, and the sole-defender branch of `CreateTokenCopyOfTargetPermanentEffectHandler` no longer applies the token multiplier twice
+event, tested in `SecondHarvestTest`; copies with explicit attack targets now join the ordered path when each copied card has one attack target (`TokenCopyBatch.attackTargets`, by card identity; added tokens take the first card's target), tested in `MirrorStyleMasterTest`, and the sole-defender branch of `CreateTokenCopyOfTargetPermanentEffectHandler` no longer applies the token multiplier twice; `CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler` (Echocasting Symposium) now creates its copy through `TokenCopySupport.createTokenCopies` for the target player (ordered by that player, additions now applied), tested in `EchocastingSymposiumTest`
 
 **Failing tests:**
 - None yet. Write one per remaining path, e.g. Queen Allenal of Ruadach + Parallel Lives with Flamerush Rider

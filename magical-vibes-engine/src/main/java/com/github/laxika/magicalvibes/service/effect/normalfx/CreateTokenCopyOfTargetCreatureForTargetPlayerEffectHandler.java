@@ -1,32 +1,31 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetCreatureForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import java.util.ArrayList;
-import java.util.EnumSet;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/**
+ * Has the target player create a token copy of the target creature through the shared token-copy pipeline, so
+ * that player orders the token creation replacements they control (CR 616.1).
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler implements NormalEffectHandlerBean {
 
-    private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
+    private final PermanentCopierService permanentCopierService;
+    private final TokenCopySupport tokenCopySupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,69 +46,8 @@ public class CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler impleme
             return;
         }
 
-        Card sourceCard = targetPermanent.isFaceDown() ? faceDownCopySource() : targetPermanent.getCard();
-        int tokenCount = gameQueryService.getTokenCreationAmount(
-                gameData, tokenControllerId, 1, sourceCard.getSubtypes(), true);
-        for (int copy = 0; copy < tokenCount; copy++) {
-            Card tokenCard = buildTokenCopy(sourceCard);
-            Card createdTokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                    gameData, tokenControllerId, tokenCard);
-
-            Permanent tokenPermanent = new Permanent(createdTokenCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, tokenControllerId, tokenPermanent);
-
-            String controllerName = gameData.playerIdToName.get(tokenControllerId);
-            gameLogService.append(gameData, GameLog.textCardText(controllerName + " creates a token copy of " , sourceCard, "."));
-            log.info("Game {} - {} creates token copy of {} for {}", gameData.id, controllerName,
-                    sourceCard.getName(), tokenControllerId);
-
-            battlefieldEntryService.handleCreatureEnteredBattlefield(
-                    gameData, tokenControllerId, createdTokenCard, null, false);
-        }
-    }
-
-    /** A face-down permanent's copiable values are those of a nameless 2/2 creature with no abilities (CR 707.2). */
-    private Card faceDownCopySource() {
-        Card visible = new Card();
-        visible.setName("");
-        visible.setManaCost("");
-        visible.setType(CardType.CREATURE);
-        visible.setPower(2);
-        visible.setToughness(2);
-        return visible;
-    }
-
-    private Card buildTokenCopy(Card sourceCard) {
-        Card tokenCard = new Card();
-        tokenCard.setName(sourceCard.getName());
-        tokenCard.setType(sourceCard.getType());
-        tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
-        tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
-        tokenCard.setToken(true);
-        tokenCard.setColor(sourceCard.getColor());
-        tokenCard.setColors(sourceCard.getColors() == null ? new ArrayList<>() : new ArrayList<>(sourceCard.getColors()));
-        tokenCard.setSupertypes(sourceCard.getSupertypes());
-        tokenCard.setPower(sourceCard.getPower());
-        tokenCard.setToughness(sourceCard.getToughness());
-        tokenCard.setCardText(sourceCard.getCardText());
-        tokenCard.setSetCode(sourceCard.getSetCode());
-        tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
-        if (sourceCard.getSubtypes() != null) {
-            tokenCard.setSubtypes(new ArrayList<>(sourceCard.getSubtypes()));
-        }
-        if (sourceCard.getKeywords() != null && !sourceCard.getKeywords().isEmpty()) {
-            tokenCard.setKeywords(EnumSet.copyOf(sourceCard.getKeywords()));
-        }
-
-        for (EffectSlot slot : EffectSlot.values()) {
-            for (var reg : sourceCard.getEffectRegistrations(slot)) {
-                tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
-            }
-        }
-        for (var ability : sourceCard.getActivatedAbilities()) {
-            tokenCard.addActivatedAbility(ability);
-        }
-        tokenCard.copyTargetingFrom(sourceCard);
-        return tokenCard;
+        tokenCopySupport.createTokenCopies(gameData, entry,
+                List.of(permanentCopierService.copiableCard(targetPermanent)), null, tokenControllerId,
+                new CreateTokenCopyOfTargetPermanentEffect());
     }
 }

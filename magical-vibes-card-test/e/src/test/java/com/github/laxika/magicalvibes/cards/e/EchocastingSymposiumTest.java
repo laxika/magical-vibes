@@ -4,10 +4,14 @@ import com.github.laxika.magicalvibes.cards.a.AzizaMageTowerCaptain;
 import com.github.laxika.magicalvibes.cards.h.HoodedHydra;
 import com.github.laxika.magicalvibes.cards.i.ImprovisationCapstone;
 import com.github.laxika.magicalvibes.cards.n.NoxiousNewt;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmCastSupport;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,8 +26,60 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({EchocastingSymposium.class, NoxiousNewt.class, ImprovisationCapstone.class,
-        AzizaMageTowerCaptain.class, HoodedHydra.class})
+        AzizaMageTowerCaptain.class, HoodedHydra.class, QueenAllenalOfRuadach.class, ParallelLives.class})
 class EchocastingSymposiumTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The target player creating the copy orders their Queen Allenal and Parallel Lives")
+    void targetPlayerIsAskedToOrderTokenReplacements() {
+        castForOpponentUnderQueenAndParallelLives();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(newtTokens(player2)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Applying Queen Allenal before Parallel Lives doubles the copy and the added Soldier")
+    void queenFirstDoublesCopyAndSoldier() {
+        castForOpponentUnderQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(newtTokens(player2)).hasSize(2);
+        assertThat(findPermanents(player2, "Soldier")).hasSize(2);
+        assertThat(newtTokens(player1)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Applying Parallel Lives before Queen Allenal adds one undoubled Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        castForOpponentUnderQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(newtTokens(player2)).hasSize(2);
+        assertThat(findPermanents(player2, "Soldier")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The caster's token replacements don't apply to a copy the opponent creates")
+    void castersReplacementsDoNotApplyToOpponentsCopy() {
+        UUID newtId = harness.addToBattlefieldAndReturn(player1, new NoxiousNewt()).getId();
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        harness.setHand(player1, List.of(new EchocastingSymposium()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castSorcery(player1, 0, List.of(player2.getId(), newtId));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(newtTokens(player2)).hasSize(1);
+        assertThat(findPermanents(player2, "Soldier")).isEmpty();
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
+    }
 
     @Test
     @DisplayName("Target player creates a token copy of target creature you control")
@@ -264,5 +320,27 @@ class EchocastingSymposiumTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         assertThat(token.getCard().getName()).isNullOrEmpty();
         assertThat(token.getCard().getManaCost()).isNullOrEmpty();
+    }
+
+    private void castForOpponentUnderQueenAndParallelLives() {
+        UUID newtId = harness.addToBattlefieldAndReturn(player1, new NoxiousNewt()).getId();
+        harness.addToBattlefield(player2, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player2, new ParallelLives());
+        harness.setHand(player1, List.of(new EchocastingSymposium()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castSorcery(player1, 0, List.of(player2.getId(), newtId));
+        harness.passBothPriorities();
+    }
+
+    private List<Permanent> newtTokens(Player player) {
+        return findPermanents(player, "Noxious Newt").stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player2, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 }
