@@ -2940,7 +2940,7 @@ public class GraveyardReturnSupport {
      * Variant that applies an Eternalize-style "except it's a 4/4 black Zombie" transformation to the
      * token copy: {@code colorOverride} (if non-null) replaces the copy's color and
      * {@code powerOverride}/{@code toughnessOverride} (if non-null) set its base P/T. The additional
-     * subtypes are still added "in addition to" the copy's other types. Used by Hour of Eternity.
+     * subtypes are still added "in addition to" the copy's other types.
      */
     public void createTokenCopyFromCard(GameData gameData, StackEntry entry, Card sourceCard,
                                          List<CardSubtype> additionalSubtypes, boolean grantHaste,

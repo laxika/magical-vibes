@@ -23,9 +23,9 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
  *       exiled card (Midnight Ritual, Necromancer's Covenant).</li>
  *   <li>Copy ({@code copyExiledCards = true}): a token that is a copy of the exiled card, with the
  *       Eternalize-style "except it's a 4/4 black Zombie" transformation applied (Hour of Eternity).
- *       The {@code colorOverride} replaces the copy's color, {@code addedSubtype} is added in
- *       addition to the copy's other creature types, and {@code powerOverride}/{@code toughnessOverride}
- *       set the copy's base P/T.</li>
+ *       The {@code colorOverride} replaces the copy's color, {@code addedSubtype} replaces the copy's
+ *       creature types, and {@code powerOverride}/{@code toughnessOverride} set the copy's base P/T. The
+ *       copies are created as one token creation event whose replacements the player orders.</li>
  * </ul>
  *
  * @param targetPlayerGraveyard whether the effect exiles a target player's whole graveyard (creature
@@ -34,7 +34,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
  * @param powerOverride         copy mode: base power of the token copy (e.g. 4)
  * @param toughnessOverride     copy mode: base toughness of the token copy (e.g. 4)
  * @param colorOverride         copy mode: the copy's color is set to exactly this color (e.g. black)
- * @param addedSubtype          copy mode: creature subtype added to the copy in addition to its other types (e.g. Zombie)
+ * @param addedSubtype          copy mode: creature subtype that replaces the copy's creature types (e.g. Zombie)
  * @param graveyardScope        graveyards that can supply individually targeted creature cards
  */
 public record ExileCreaturesFromGraveyardAndCreateTokensEffect(

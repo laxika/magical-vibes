@@ -5,14 +5,18 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -28,6 +32,8 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
     private final PermanentControlSupport permanentControlSupport;
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final TokenCopySupport tokenCopySupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -71,17 +77,18 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
         }
 
         // Hour of Eternity: create a token that's a copy of each exiled card, except it's a 4/4 black Zombie
-        // (no "in addition to its other types", so the copy's creature types are replaced).
+        // (no "in addition to its other types", so the copy's creature types are replaced). The copies are one
+        // token creation event whose count replacements and additions the player orders (CR 616.1); the creation
+        // may pause for that choice.
         if (e.copyExiledCards()) {
-            List<CardSubtype> addedSubtypes = e.addedSubtype() != null ? List.of(e.addedSubtype()) : List.of();
-            // Hour of Eternity creates every token copy at once, so a copy carrying an
-            // enters-with-counters or enters-as-copy ability must not apply it to its batch-mates.
-            List<Permanent> copyBatch = new ArrayList<>();
-            for (Card exiledCard : exiledCards) {
-                graveyardReturnSupport.createTokenCopyFromCard(gameData, entry, exiledCard, addedSubtypes,
-                        false, false, e.colorOverride(), e.powerOverride(), e.toughnessOverride(),
-                        true, false, copyBatch, Set.of());
+            if (exiledCards.isEmpty()) {
+                return;
             }
+            var copyOptions = new CreateTokenCopyOfTargetPermanentEffect(List.of(), Set.of(),
+                    e.powerOverride(), e.toughnessOverride(), Map.of(), false, false, false, false, false, false,
+                    e.colorOverride(), Set.of());
+            tokenCopySupport.createTokenCopiesWithCopyException(gameData, entry, exiledCards, null, controllerId,
+                    copyOptions, tokenCard -> replaceCreatureTypes(tokenCard, e.addedSubtype()));
             return;
         }
 
@@ -91,6 +98,30 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
             permanentControlSupport.applyCreateToken(gameData, controllerId,
                     CreateTokenEffect.blackZombie(exiledCards.size()), exiledCards.size(),
                     entry.getCard().getSetCode());
+        }
+    }
+
+    /**
+     * Replaces the copy's creature types with {@code creatureType}, keeping its other subtypes; a changeling
+     * copy loses changeling, since the exception defines its creature types (CR 707.9d).
+     */
+    private void replaceCreatureTypes(Card tokenCard, CardSubtype creatureType) {
+        if (creatureType == null) {
+            return;
+        }
+        List<CardSubtype> subtypes = new ArrayList<>();
+        for (CardSubtype subtype : tokenCard.getSubtypes()) {
+            if (!gameQueryService.isCreatureSubtype(subtype)) {
+                subtypes.add(subtype);
+            }
+        }
+        subtypes.add(creatureType);
+        tokenCard.setSubtypes(subtypes);
+        if (tokenCard.getKeywords().contains(Keyword.CHANGELING)) {
+            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+            keywords.addAll(tokenCard.getKeywords());
+            keywords.remove(Keyword.CHANGELING);
+            tokenCard.setKeywords(keywords);
         }
     }
 }

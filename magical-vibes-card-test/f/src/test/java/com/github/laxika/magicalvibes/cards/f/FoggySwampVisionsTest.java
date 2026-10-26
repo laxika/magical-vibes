@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.t.TurtleDuck;
 import com.github.laxika.magicalvibes.cards.v.VedalkenOrrery;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +21,8 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FoggySwampVisions.class, GrizzlyBears.class, TurtleDuck.class, VedalkenOrrery.class})
+@CardUsed({FoggySwampVisions.class, GrizzlyBears.class, TurtleDuck.class, VedalkenOrrery.class,
+        QueenAllenalOfRuadach.class, ParallelLives.class})
 class FoggySwampVisionsTest extends BaseCardTest {
 
     @Test
@@ -234,5 +238,37 @@ class FoggySwampVisionsTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
         assertThat(gqs.hasKeyword(gd, token, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void ordersTokenReplacementsAndSacrificesEveryCreatedTokenAtTheNextEndStep() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(first, second));
+        harness.setHand(player1, List.of(new FoggySwampVisions()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent -> permanent.getCard().isToken());
+        harness.handleListChoice(player1, order.options().stream()
+                .filter(option -> option.startsWith("Queen Allenal of Ruadach")).findFirst().orElseThrow());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()
+                        && permanent.getCard().getName().equals("Grizzly Bears"))).hasSize(4);
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(2);
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
     }
 }
