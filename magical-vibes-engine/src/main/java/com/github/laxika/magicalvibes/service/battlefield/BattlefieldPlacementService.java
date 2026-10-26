@@ -297,7 +297,9 @@ public class BattlefieldPlacementService {
         EnterBattlefieldOnDiscardEffect discardReplacement = request.discardReplacement();
         gameData.restoreBombardmentCardForBattlefield(permanent);
         controllerId = resolveEnteringController(gameData, controllerId, permanent);
-        TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData, controllerId, permanent);
+        if (!permanent.isTokenKindReplacementsApplied()) {
+            TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData, controllerId, permanent);
+        }
         applyMysticReflectionReplacement(gameData, permanent, simultaneouslyEntered);
         if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             becomeDayAsEntersEffectHandler.applyDayboundEntryFace(gameData, permanent);

@@ -438,6 +438,11 @@ public class Permanent {
     private boolean faceDown;
     /** An automatic Illusionary Mask turn-up whose engine triggers still need to be collected. */
     @Setter private boolean pendingAutomaticTurnFaceUp;
+    /**
+     * A token whose creation event already applied the token replacements that change what is created (Divine
+     * Visitation, Fisher's Talent) in the order its creator chose (CR 616.1), so entering doesn't apply them again.
+     */
+    @Setter private boolean tokenKindReplacementsApplied;
     /** Illusionary Mask: this face-down permanent turns face up before it deals or is dealt damage, or becomes tapped. */
     @Setter private boolean turnsFaceUpOnDamageOrTap;
     private boolean cloaked;
@@ -1108,6 +1113,7 @@ public class Permanent {
         this.toughnessAsLoyalty = source.toughnessAsLoyalty;
         this.faceDown = source.faceDown;
         this.pendingAutomaticTurnFaceUp = source.pendingAutomaticTurnFaceUp;
+        this.tokenKindReplacementsApplied = source.tokenKindReplacementsApplied;
         this.turnsFaceUpOnDamageOrTap = source.turnsFaceUpOnDamageOrTap;
         this.cloaked = source.cloaked;
         this.faceDownWard = source.faceDownWard;

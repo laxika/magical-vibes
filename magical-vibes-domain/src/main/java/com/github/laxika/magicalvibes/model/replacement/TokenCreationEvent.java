@@ -19,7 +19,8 @@ import java.util.function.Predicate;
  * A token creation event whose replacement effects are being ordered: count replacements (Xorn,
  * Doubling Season, Parallel Lives, Halving Season), "those tokens plus ..." additions (Queen
  * Allenal of Ruadach, Quina Qu Gourmet, Chatterfang, Worldwalker Helm, Stridehangar Automaton, Donatello,
- * Tippy-Toe, a solved Case of the Pilfered Proof, Bilbo) and Academy Manufactor's "one of each". The
+ * Tippy-Toe, a solved Case of the Pilfered Proof, Bilbo), Academy Manufactor's "one of each" and the replacements
+ * that change what kind of token is created (Divine Visitation, Fisher's Talent; blueprint events only). The
  * player creating the tokens orders the effects (CR 616.1); once all of them have applied, {@link #tokenCount()} tokens are created from
  * {@link #token()} together with every group of {@link #addedTokens()}.
  *
@@ -207,6 +208,17 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
     public TokenCreationEvent withAddedTokens(List<TokenGroup> newAddedTokens) {
         return new TokenCreationEvent(controllerId, tokenCount, appliedKeys, token, power, toughness,
                 sourceSetCode, additionalEffects, creatureToken, newAddedTokens, copyOf, copyBatch);
+    }
+
+    /**
+     * This event creating its {@link #tokenCount()} tokens from {@code newToken} instead, a replacement that changes
+     * what is created (Divine Visitation, Fisher's Talent): the replaced tokens' abilities, including the
+     * {@link #additionalEffects()} they would have been created with, are gone.
+     */
+    public TokenCreationEvent withToken(CreateTokenEffect newToken, int newPower, int newToughness,
+                                        boolean newCreatureToken) {
+        return new TokenCreationEvent(controllerId, tokenCount, appliedKeys, newToken, newPower, newToughness,
+                sourceSetCode, Map.of(), newCreatureToken, addedTokens, copyOf, copyBatch);
     }
 
     /** This event with {@code count} more tokens of {@code blueprint}. */

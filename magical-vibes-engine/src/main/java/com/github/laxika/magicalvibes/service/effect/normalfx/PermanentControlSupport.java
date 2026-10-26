@@ -315,7 +315,9 @@ public class PermanentControlSupport {
         gameData.deferCreatureEntersBoons = fireTokenTriggers && !hasNativeDevour && tokenBlueprints.size() > 1;
         for (CreateTokenEffect originalTokenBlueprint : tokenBlueprints) {
             boolean originalBlueprint = originalTokenBlueprint == evaluatedToken;
-            CreateTokenEffect tokenBlueprint = TokenCreationReplacementSupport.replaceTokenSubtypeIfApplicable(
+            // An ordered event already applied Divine Visitation and Fisher's Talent in the creator's order (CR 616.1).
+            CreateTokenEffect tokenBlueprint = ordered ? originalTokenBlueprint
+                    : TokenCreationReplacementSupport.replaceTokenSubtypeIfApplicable(
                     gameData, controllerId, originalTokenBlueprint);
             boolean blueprintIsCreature = tokenBlueprint.primaryType() == CardType.CREATURE;
             int blueprintPower = fixedStat(tokenBlueprint.power(), tokenBlueprint);
@@ -328,10 +330,13 @@ public class PermanentControlSupport {
                     }
                 }
             }
-            tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                    gameData, controllerId, tokenCard);
+            if (!ordered) {
+                tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                        gameData, controllerId, tokenCard);
+            }
 
             Permanent tokenPermanent = new Permanent(tokenCard);
+            tokenPermanent.setTokenKindReplacementsApplied(ordered);
             if (tokenBlueprint.initialPlusOnePlusOneCounters() > 0
                     && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, tokenPermanent, controllerId)) {
                 int initial = gameQueryService.doublePlusOnePlusOneCounters(

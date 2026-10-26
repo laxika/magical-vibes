@@ -117,6 +117,25 @@ public final class TokenCreationReplacementSupport {
         return replaced;
     }
 
+    /**
+     * Divine Visitation's 4/4 white Angel created in place of a creature token of {@code original}, keeping the
+     * creating effect's riders (tapped, attacking, exiled at end of combat, ...) but none of the replaced token's
+     * characteristics or abilities.
+     */
+    public static CreateTokenEffect divineVisitationToken(CreateTokenEffect original) {
+        return withEventModifiers(DIVINE_VISITATION_TOKEN, original);
+    }
+
+    /**
+     * The token {@code replacement} (Fisher's Talent's Shark or Octopus) creates in place of a token of
+     * {@code original}, keeping the creating effect's riders but none of the replaced token's characteristics or
+     * abilities.
+     */
+    public static CreateTokenEffect subtypeReplacementToken(ReplaceTokenSubtypeCreationEffect replacement,
+                                                            CreateTokenEffect original) {
+        return withEventModifiers(replacement.replacementToken(), original);
+    }
+
     /** Applies the replacement to a token permanent that was already wrapped in a Permanent. */
     public static void replaceCreatureTokenIfApplicable(GameData gameData, UUID controllerId,
                                                          Permanent permanent) {
