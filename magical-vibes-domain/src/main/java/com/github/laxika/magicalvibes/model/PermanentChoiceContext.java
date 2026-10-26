@@ -1501,7 +1501,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                         CreateTokenCopyOfTargetPermanentEffect copyEffect,
                                         List<Permanent> tokens, Permanent sourcePermanent,
                                         List<UUID> attackTargets, boolean explicitAttackTargets,
-                                        int choosingIndex) implements PermanentChoiceContext {
+                                        int choosingIndex,
+                                        java.util.function.BiConsumer<GameData, List<Permanent>> afterEntry)
+            implements PermanentChoiceContext {
         public PreparedTokenCopyAttachments {
             tokens = List.copyOf(tokens);
             attackTargets = java.util.Collections.unmodifiableList(new java.util.ArrayList<>(attackTargets));
@@ -1511,7 +1513,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             return new PreparedTokenCopyAttachments(controllerId, new StackEntry(entry), copyEffect,
                     tokens.stream().map(Permanent::new).toList(),
                     sourcePermanent == null ? null : new Permanent(sourcePermanent),
-                    attackTargets, explicitAttackTargets, choosingIndex);
+                    attackTargets, explicitAttackTargets, choosingIndex, afterEntry);
         }
     }
 
@@ -1523,7 +1525,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record PreparedOpponentTokenCopiesAttacking(UUID controllerId, StackEntry entry,
                                                 CreateTokenCopyOfTargetPermanentEffect copyEffect,
                                                 List<Permanent> tokens, List<UUID> tokenOpponents,
-                                                List<UUID> chosenAttackTargets) implements PermanentChoiceContext {
+                                                List<UUID> chosenAttackTargets,
+                                                java.util.function.BiConsumer<GameData, List<Permanent>> afterEntry)
+            implements PermanentChoiceContext {
         public PreparedOpponentTokenCopiesAttacking {
             tokens = List.copyOf(tokens);
             tokenOpponents = java.util.Collections.unmodifiableList(new java.util.ArrayList<>(tokenOpponents));
@@ -1532,7 +1536,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
         public PreparedOpponentTokenCopiesAttacking deepCopy() {
             return new PreparedOpponentTokenCopiesAttacking(controllerId, new StackEntry(entry), copyEffect,
-                    tokens.stream().map(Permanent::new).toList(), tokenOpponents, chosenAttackTargets);
+                    tokens.stream().map(Permanent::new).toList(), tokenOpponents, chosenAttackTargets, afterEntry);
         }
     }
 

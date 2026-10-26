@@ -6,11 +6,16 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -25,7 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MirrorMatch.class, AirElemental.class, GrizzlyBears.class, GloriousAnthem.class,
-        GiantGrowth.class, FaerieConclave.class, JaceBeleren.class, PhantomWarrior.class, SoulWarden.class})
+        GiantGrowth.class, FaerieConclave.class, JaceBeleren.class, PhantomWarrior.class, SoulWarden.class,
+        ParallelLives.class, QueenAllenalOfRuadach.class})
 class MirrorMatchTest extends BaseCardTest {
 
     @Test
@@ -192,6 +198,90 @@ class MirrorMatchTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("A doubled copy blocks the creature it copies too")
+    void doubledCopiesAllBlockTheCopiedAttacker() {
+        Permanent attacker = addCreatureReady(player1, new AirElemental());
+        harness.addToBattlefield(player2, new ParallelLives());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        castMirrorMatch();
+
+        List<Permanent> copies = tokensOf(player2, "Air Elemental");
+        assertThat(copies).hasSize(2);
+        assertThat(copies).allMatch(copy -> copy.isBlocking()
+                && copy.getBlockingTargetIds().equals(List.of(attacker.getId())));
+    }
+
+    @Test
+    @DisplayName("With Queen Allenal and Parallel Lives, the caster orders them before the copies are created")
+    void asksToOrderTokenReplacements() {
+        addCreatureReady(player1, new AirElemental());
+        harness.addToBattlefield(player2, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player2, new ParallelLives());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        castMirrorMatch();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(tokensOf(player2, "Air Elemental")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Applying Queen Allenal first doubles the copies and the Soldier, and each blocks after the order prompt")
+    void queenFirstDoublesCopiesAndSoldierAndAllBlock() {
+        Permanent airElemental = addCreatureReady(player1, new AirElemental());
+        Permanent grizzlyBears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player2, new ParallelLives());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        castMirrorMatch();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(tokensOf(player2, "Air Elemental")).hasSize(2).allMatch(copy -> copy.isBlocking()
+                && copy.getBlockingTargetIds().equals(List.of(airElemental.getId())));
+        assertThat(tokensOf(player2, "Grizzly Bears")).hasSize(2).allMatch(copy -> copy.isBlocking()
+                && copy.getBlockingTargetIds().equals(List.of(grizzlyBears.getId())));
+        assertThat(tokensOf(player2, "Soldier")).hasSize(2).allMatch(Permanent::isBlocking);
+    }
+
+    @Test
+    @DisplayName("Applying Parallel Lives first adds one undoubled Soldier, which blocks and will be exiled at end of combat")
+    void parallelLivesFirstAddsOneBlockingSoldierExiledAtEndOfCombat() {
+        Permanent attacker = addCreatureReady(player1, new AirElemental());
+        harness.addToBattlefield(player2, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player2, new ParallelLives());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        castMirrorMatch();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(tokensOf(player2, "Air Elemental")).hasSize(2).allMatch(Permanent::isBlocking);
+        List<Permanent> soldiers = tokensOf(player2, "Soldier");
+        assertThat(soldiers).hasSize(1);
+        assertThat(soldiers.getFirst().getBlockingTargetIds()).containsExactly(attacker.getId());
+
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .filteredOn(action -> action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT)
+                .extracting(DelayedPermanentAction::permanentId)
+                .contains(soldiers.getFirst().getId());
+    }
+
+    private List<Permanent> tokensOf(Player player, String name) {
+        return gd.playerBattlefields.get(player.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken() && permanent.getCard().getName().equals(name))
+                .toList();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player2, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 
     private void castMirrorMatch() {

@@ -2143,14 +2143,17 @@ public sealed interface ChoiceContext {
     /**
      * Jinnie Fay's replacement choice for a batch of already-prepared token copies; the choice resumes
      * entering the batch (or enters Cat/Dog tokens that keep the creating effect's riders, including
-     * {@code tokenRider}, the set-up every token the creating effect makes gets, or {@code null}).
+     * {@code tokenRider}, the set-up every token the creating effect makes gets, or {@code null}), then runs
+     * {@code afterEntry}, the creating effect's follow-up on the entered tokens, or {@code null}.
      */
     record JinnieFayTokenCopyChoice(UUID controllerId, Card sourceCard, StackEntry entry,
                                     com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect effect,
                                     List<Permanent> tokens, Permanent sourcePermanent,
                                     List<UUID> expandedAttackTargets, boolean explicitAttackTargets,
                                     boolean chooseOpponentAttackTargets,
-                                    java.util.function.Consumer<Permanent> tokenRider) implements ChoiceContext {}
+                                    java.util.function.Consumer<Permanent> tokenRider,
+                                    java.util.function.BiConsumer<GameData, List<Permanent>> afterEntry)
+            implements ChoiceContext {}
 
     /** The controller chooses a color at resolution, then gains one life per matching permanent. */
     record GainLifePerPermanentOfChosenColorChoice(UUID controllerId, Card sourceCard,

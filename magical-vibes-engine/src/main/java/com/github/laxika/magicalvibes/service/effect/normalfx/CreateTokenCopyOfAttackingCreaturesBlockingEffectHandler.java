@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -11,8 +12,11 @@ import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /** Resolves Mirror Match's copies of creatures attacking its controller. */
 @Component
@@ -39,22 +43,31 @@ public class CreateTokenCopyOfAttackingCreaturesBlockingEffectHandler implements
                         && attacksControllerOrTheirPlaneswalker(gameData, permanent, controllerId))
                 .toList();
 
-        CreateTokenCopyOfTargetPermanentEffect copyEffect =
-                CreateTokenCopyOfTargetPermanentEffect.exiledAtEndOfCombat();
         if (attackers.isEmpty()) {
             return;
         }
-        // The copies are created as one event, so each sees the others enter (CR 603.6a).
-        List<UUID> createdIds = tokenCopySupport.createTokenCopiesWithoutReplacementOrder(
-                gameData, entry, attackers.stream().map(Permanent::getCard).toList(), attackers.getFirst(),
-                controllerId, copyEffect);
-        if (createdIds.size() != attackers.size()) {
-            return;
-        }
-        for (int i = 0; i < attackers.size(); i++) {
-            combatBlockService.markTokenAsBlocking(
-                    gameData, gameQueryService.findPermanentById(gameData, createdIds.get(i)), attackers.get(i));
-        }
+        // The copies are created as one event whose replacements the caster orders (CR 616.1), so each sees the
+        // others enter (CR 603.6a). Each copy, doubled copies included, blocks the creature it copies; a token a
+        // replacement adds or substitutes (Queen Allenal's Soldier, Jinnie Fay's Cat or Dog) follows the creating
+        // effect's instructions too, so it blocks the first attacker.
+        Map<Card, UUID> attackerByCard = new IdentityHashMap<>();
+        attackers.forEach(attacker -> attackerByCard.put(attacker.getCard(), attacker.getId()));
+        UUID firstAttackerId = attackers.getFirst().getId();
+        Map<UUID, UUID> blockedAttackerByToken = new ConcurrentHashMap<>();
+        tokenCopySupport.createTokenCopiesThen(gameData, entry,
+                attackers.stream().map(Permanent::getCard).toList(), controllerId,
+                CreateTokenCopyOfTargetPermanentEffect.exiledAtEndOfCombat(),
+                (copiedCard, copy) -> blockedAttackerByToken.put(copy.getId(), attackerByCard.get(copiedCard)),
+                (game, tokens) -> {
+                    for (Permanent token : tokens) {
+                        Permanent entered = gameQueryService.findPermanentById(game, token.getId());
+                        if (entered == null || !gameQueryService.isCreature(game, entered)) {
+                            continue;
+                        }
+                        combatBlockService.markTokenAsBlocking(game, entered, gameQueryService.findPermanentById(
+                                game, blockedAttackerByToken.getOrDefault(token.getId(), firstAttackerId)));
+                    }
+                });
     }
 
     private boolean attacksControllerOrTheirPlaneswalker(GameData gameData, Permanent attacker,
