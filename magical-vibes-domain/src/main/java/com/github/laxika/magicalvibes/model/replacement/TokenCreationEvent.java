@@ -62,33 +62,55 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
      * card but {@link #copyOf()} as copy groups: {@code copyOf} is the card those tokens copy, {@code blueprint}
      * only describes their kind and {@code copyCreature} says whether they enter as creatures.
      *
+     * <p>When Jinnie Fay replaces the tokens of a token-copy event, her Cats or Dogs are substitute groups
+     * ({@code substitute}): tokens created from {@code blueprint} in place of tokens the creating effect makes, which
+     * keep its instructions, and {@code copyOf} is then the card the tokens they replace copied, or {@code null} when
+     * they replace tokens a replacement added.
+     *
      * @param blueprint    the blueprint of the tokens, or the kind of the copies of a copy group
      * @param count        the number of tokens as the event currently stands
-     * @param copyOf       the card a copy group's tokens copy, or {@code null} for tokens created from {@code blueprint}
-     * @param copyCreature whether a copy group's tokens are creatures; ignored for blueprint groups
+     * @param copyOf       the card a copy group's tokens copy, the card the replaced copies of a substitute group
+     *                     copied, or {@code null} for tokens created from {@code blueprint}
+     * @param copyCreature whether a copy group's tokens are creatures; ignored for blueprint and substitute groups
+     * @param substitute   whether the tokens are created from {@code blueprint} in place of tokens of the creating
+     *                     effect (Jinnie Fay)
      */
-    public record TokenGroup(CreateTokenEffect blueprint, int count, Card copyOf, boolean copyCreature) {
+    public record TokenGroup(CreateTokenEffect blueprint, int count, Card copyOf, boolean copyCreature,
+                             boolean substitute) {
 
         public TokenGroup(CreateTokenEffect blueprint, int count) {
-            this(blueprint, count, null, false);
+            this(blueprint, count, null, false, false);
         }
 
         /** {@code count} copies of {@code copyOf}, whose kind {@code kind} describes. */
         public static TokenGroup copies(CreateTokenEffect kind, int count, Card copyOf, boolean creature) {
-            return new TokenGroup(kind, count, copyOf, creature);
+            return new TokenGroup(kind, count, copyOf, creature, false);
+        }
+
+        /**
+         * {@code count} tokens of {@code blueprint} created in place of tokens of the creating effect, which were
+         * copies of {@code replacedCopyOf}, or tokens a replacement added when it is {@code null}.
+         */
+        public static TokenGroup substitutes(CreateTokenEffect blueprint, int count, Card replacedCopyOf) {
+            return new TokenGroup(blueprint, count, replacedCopyOf, false, true);
+        }
+
+        /** Whether the group's tokens are copies of {@link #copyOf()} rather than created from {@link #blueprint()}. */
+        public boolean copies() {
+            return copyOf != null && !substitute;
         }
 
         public boolean creature() {
-            return copyOf != null ? copyCreature : blueprint.primaryType() == CardType.CREATURE;
+            return copies() ? copyCreature : blueprint.primaryType() == CardType.CREATURE;
         }
 
         /** This group with {@code newCount} tokens. */
         public TokenGroup withCount(int newCount) {
-            return new TokenGroup(blueprint, newCount, copyOf, copyCreature);
+            return new TokenGroup(blueprint, newCount, copyOf, copyCreature, substitute);
         }
 
         private boolean sameTokens(TokenGroup other) {
-            return copyOf == other.copyOf && blueprint.equals(other.blueprint);
+            return copyOf == other.copyOf && substitute == other.substitute && blueprint.equals(other.blueprint);
         }
     }
 

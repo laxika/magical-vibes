@@ -2130,16 +2130,17 @@ public sealed interface ChoiceContext {
                                                        String sourceSetCode) implements ChoiceContext {}
 
     /**
-     * Jinnie Fay's Cat, Dog or original tokens choice as her replacement applies to {@code event}, a blueprint token
-     * creation event whose other replacements are ordered with hers (CR 616.1); the event continues with the chosen
-     * tokens through the replacement order once the player answers.
+     * Jinnie Fay's Cat, Dog or original tokens choice as her replacement applies to {@code event}, a token creation
+     * event (blueprint or token-copy) whose other replacements are ordered with hers (CR 616.1); the event continues
+     * with the chosen tokens through the replacement order once the player answers.
      */
     record JinnieFayTokenChoice(UUID controllerId, Card sourceCard,
                                 com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent event)
             implements ChoiceContext {}
 
     /**
-     * Jinnie Fay's replacement choice for a batch of already-prepared token copies; the choice resumes
+     * Jinnie Fay's replacement choice for a batch of already-prepared token copies whose copied cards' copies attack
+     * different targets, which {@code TokenCopySupport} creates without ordering their replacements; the choice resumes
      * entering the batch (or enters Cat/Dog tokens that keep the creating effect's riders, including
      * {@code tokenRider}, the set-up every token the creating effect makes gets, or {@code null}, and
      * {@code instructionRider}, given for each Cat or Dog the entry of {@code copiedCards} (index-aligned with

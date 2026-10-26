@@ -200,7 +200,7 @@ class RootbornDefensesTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Jinnie Fay replaces the populated copy and Queen Allenal's Soldier together, and the spell resumes")
+    @DisplayName("Jinnie Fay applied after Queen Allenal replaces the populated copy and the Soldier, and the spell resumes")
     void jinnieFayReplacesPopulatedCopyAndAddedSoldier() {
         harness.addToBattlefield(player1, new JinnieFayJetmirsSecond());
         harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
@@ -208,6 +208,7 @@ class RootbornDefensesTest extends BaseCardTest {
         castWithoutResolving(player1);
         harness.passBothPriorities();
 
+        chooseReplacement("Queen Allenal of Ruadach");
         harness.handleListChoice(player1, "Cat");
 
         assertThat(countOf(player1, "Wolf Token")).isEqualTo(1);
@@ -230,6 +231,7 @@ class RootbornDefensesTest extends BaseCardTest {
         castWithoutResolving(player1);
         harness.passBothPriorities();
 
+        chooseReplacement("Jinnie Fay, Jetmir's Second");
         harness.handleListChoice(player1, "Original tokens");
 
         assertThat(countOf(player1, "Wolf Token")).isEqualTo(2);

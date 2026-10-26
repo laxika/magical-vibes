@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.b.BestialMenace;
+import com.github.laxika.magicalvibes.cards.c.CacklingCounterpart;
 import com.github.laxika.magicalvibes.cards.c.CitizensCrowbar;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.r.RaiseTheAlarm;
@@ -15,6 +17,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -262,6 +265,88 @@ class JinnieFayJetmirsSecondTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Cat")).hasSize(2);
         assertThat(findPermanents(player1, "Soldier")).hasSize(1);
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @CardUsed({CacklingCounterpart.class, GrizzlyBears.class, TippyToeTerrificPartner.class})
+    @DisplayName("For a token copy, the creating player orders Jinnie Fay's replacement and Tippy-Toe's Food")
+    void ordersJinnieFayWithTippyToeForTokenCopy() {
+        castCacklingCounterpartUnder(new TippyToeTerrificPartner());
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).anyMatch(option -> option.startsWith("Jinnie Fay, Jetmir's Second"))
+                .anyMatch(option -> option.startsWith("Tippy-Toe, Terrific Partner"));
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({CacklingCounterpart.class, GrizzlyBears.class, TippyToeTerrificPartner.class})
+    @DisplayName("Applying Tippy-Toe before Jinnie Fay replaces the token copy and the Food")
+    void tippyToeFirstReplacesTokenCopyAndFood() {
+        castCacklingCounterpartUnder(new TippyToeTerrificPartner());
+
+        chooseReplacement("Tippy-Toe, Terrific Partner");
+        harness.handleListChoice(player1, "Cat");
+
+        assertThat(findPermanents(player1, "Cat")).hasSize(2).allSatisfy(cat -> {
+            assertThat(cat.getCard().isToken()).isTrue();
+            assertThat(cat.getEffectivePower()).isEqualTo(2);
+            assertThat(cat.getEffectiveToughness()).isEqualTo(2);
+        });
+        assertThat(findPermanents(player1, "Food")).isEmpty();
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({CacklingCounterpart.class, GrizzlyBears.class, TippyToeTerrificPartner.class})
+    @DisplayName("Applying Jinnie Fay before Tippy-Toe keeps the Food added to the Cat replacing the token copy")
+    void jinnieFayFirstKeepsFoodForTokenCopy() {
+        castCacklingCounterpartUnder(new TippyToeTerrificPartner());
+
+        chooseReplacement("Jinnie Fay, Jetmir's Second");
+        harness.handleListChoice(player1, "Cat");
+
+        assertThat(findPermanents(player1, "Cat")).hasSize(1);
+        assertThat(findPermanents(player1, "Food")).hasSize(1);
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({CacklingCounterpart.class, GrizzlyBears.class, ParallelLives.class})
+    @DisplayName("Parallel Lives applied before Jinnie Fay makes a Dog for each doubled token copy")
+    void parallelLivesFirstDoublesTokenCopyBeforeTheDogs() {
+        castCacklingCounterpartUnder(new ParallelLives());
+
+        chooseReplacement("Parallel Lives");
+        harness.handleListChoice(player1, "Dog");
+
+        assertThat(findPermanents(player1, "Dog")).hasSize(2);
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({CacklingCounterpart.class, GrizzlyBears.class, ParallelLives.class})
+    @DisplayName("Choosing the original tokens creates the token copy, which Parallel Lives still doubles")
+    void originalTokensKeepTheTokenCopy() {
+        castCacklingCounterpartUnder(new ParallelLives());
+
+        chooseReplacement("Jinnie Fay, Jetmir's Second");
+        harness.handleListChoice(player1, JinnieFayTokenReplacementEffect.ORIGINAL_OPTION);
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(3);
+        assertThat(findPermanents(player1, "Cat")).isEmpty();
+    }
+
+    private void castCacklingCounterpartUnder(Card replacement) {
+        harness.addToBattlefield(player1, new JinnieFayJetmirsSecond());
+        harness.addToBattlefield(player1, replacement);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CacklingCounterpart()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passBothPriorities();
     }
 
     private void castRaiseTheAlarmUnder(Card replacement) {

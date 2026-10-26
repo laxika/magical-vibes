@@ -589,8 +589,25 @@ public final class TokenCreationReplacementSupport {
      * it stands (its blueprint's tokens, simultaneous tokens and tokens additions put in it alike), keeping the
      * creating effect's riders (tapped, attacking, exiled at end of combat, ...) but none of the replaced tokens'
      * characteristics or abilities.
+     *
+     * <p>In a token-copy event ({@link TokenCreationEvent#copyBatch()}) the Cats or Dogs are substitute groups
+     * ({@link TokenCreationEvent.TokenGroup#substitutes}), one per copied card, so each keeps the creating effect's
+     * instructions for the copies it replaces (Mirror Match's "blocking that creature", the copies' attack target),
+     * and a doubler applied after Jinnie Fay doubles them per copied card.
      */
     public static TokenCreationEvent jinnieFayEvent(TokenCreationEvent event, boolean cat) {
+        if (event.copyBatch() != null) {
+            CreateTokenEffect substitute = jinnieFayToken(event.token(), 1, cat);
+            List<TokenCreationEvent.TokenGroup> groups = new ArrayList<>();
+            if (event.tokenCount() > 0) {
+                groups.add(TokenCreationEvent.TokenGroup.substitutes(substitute, event.tokenCount(), event.copyOf()));
+            }
+            for (TokenCreationEvent.TokenGroup group : event.addedTokens()) {
+                groups.add(TokenCreationEvent.TokenGroup.substitutes(substitute, group.count(), group.copyOf()));
+            }
+            return new TokenCreationEvent(event.controllerId(), 0, event.appliedKeys(), substitute, cat ? 2 : 3,
+                    cat ? 2 : 1, event.sourceSetCode(), Map.of(), true, groups, event.copyOf(), event.copyBatch());
+        }
         return new TokenCreationEvent(event.controllerId(), event.amount(), event.appliedKeys(),
                 jinnieFayToken(event.token(), 1, cat), cat ? 2 : 3, cat ? 2 : 1, event.sourceSetCode(), Map.of(),
                 true, List.of());

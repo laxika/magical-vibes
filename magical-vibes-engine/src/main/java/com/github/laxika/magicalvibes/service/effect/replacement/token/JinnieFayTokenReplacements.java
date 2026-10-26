@@ -19,13 +19,12 @@ import java.util.List;
 /**
  * Jinnie Fay, Jetmir's Second's "you may instead create that many 2/2 green Cat creature tokens with haste or that
  * many 3/1 green Dog creature tokens with vigilance", one option per effect instance, ordered with the token count
- * replacements and additions of a blueprint token creation event (CR 616.1): applied after Tippy-Toe or a doubler
+ * replacements and additions of a token creation event (CR 616.1): applied after Tippy-Toe or a doubler
  * it replaces the tokens they added or doubled too, applied before them the additions and doublers see the Cats or
  * Dogs. Applying it asks the creating player for Cat, Dog or the original tokens, so it is not pure; the event
- * continues through {@code ChoiceHandlerService} once they answer.
- *
- * <p>Token-copy events ({@link TokenCreationEvent#copyBatch()}) still ask about Jinnie Fay after their other
- * replacements, in {@code TokenCopySupport}, so they are left out here.
+ * continues through {@code ChoiceHandlerService} once they answer. In a token-copy event
+ * ({@link TokenCreationEvent#copyBatch()}) her Cats or Dogs replace the copies and keep the creating effect's
+ * instructions for them.
  */
 @Component
 public class JinnieFayTokenReplacements implements ReplacementCandidateSource<TokenCreationEvent> {
@@ -74,7 +73,7 @@ public class JinnieFayTokenReplacements implements ReplacementCandidateSource<To
     }
 
     private List<Instance> instances(GameData gameData, TokenCreationEvent event) {
-        if (event.copyBatch() != null || event.amount() <= 0) {
+        if (event.amount() <= 0) {
             return List.of();
         }
         List<Instance> instances = new ArrayList<>();

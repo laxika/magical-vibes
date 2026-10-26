@@ -612,8 +612,8 @@ public class TokenCopySupport {
 
     /**
      * Builds and enters the copies and the added tokens of a token-copy event whose replacements have all been
-     * applied in the order the creating player chose. All of them enter together; Jinnie Fay and creature-token
-     * replacements such as Divine Visitation still apply to them afterwards.
+     * applied in the order the creating player chose, Jinnie Fay's included. All of them enter together;
+     * creature-token replacements such as Divine Visitation still apply to them afterwards.
      */
     public List<UUID> createCopiesAfterReplacementOrder(GameData gameData, TokenCreationEvent event) {
         TokenCopyBatch batch = event.copyBatch();
@@ -628,7 +628,14 @@ public class TokenCopySupport {
         attackTargets.addAll(Collections.nCopies(tokens.size() - attackTargets.size(), firstAttackTarget));
         copiedCards.addAll(Collections.nCopies(tokens.size() - copiedCards.size(), event.copyOf()));
         for (TokenCreationEvent.TokenGroup group : event.addedTokens()) {
-            if (group.copyOf() != null) {
+            if (group.substitute()) {
+                addSubstitutes(gameData, batch, tokenControllerId, group, event.sourceSetCode(), tokens);
+                attackTargets.addAll(Collections.nCopies(tokens.size() - attackTargets.size(),
+                        group.copyOf() == null ? firstAttackTarget : batch.attackTargetOf(group.copyOf())));
+                copiedCards.addAll(Collections.nCopies(tokens.size() - copiedCards.size(), group.copyOf()));
+                continue;
+            }
+            if (group.copies()) {
                 addPreparedCopies(gameData, batch, tokenControllerId, group.copyOf(), group.count(), tokens);
                 attackTargets.addAll(Collections.nCopies(tokens.size() - attackTargets.size(),
                         batch.attackTargetOf(group.copyOf())));
@@ -659,15 +666,6 @@ public class TokenCopySupport {
             attackTargets = new ArrayList<>(Collections.nCopies(tokens.size(), null));
         }
         boolean explicitAttackTargets = batch.attackTargets() != null || chooseAttackTargets;
-        Card jinnieFay = tokens.isEmpty() ? null
-                : TokenCreationReplacementSupport.findJinnieFay(gameData, tokenControllerId);
-        if (jinnieFay != null) {
-            playerInputService.beginJinnieFayTokenCopyChoice(gameData, new ChoiceContext.JinnieFayTokenCopyChoice(
-                    tokenControllerId, jinnieFay, entry, effect, tokens, batch.sourcePermanent(),
-                    attackTargets, explicitAttackTargets, chooseAttackTargets, batch.tokenRider(), copiedCards,
-                    batch.instructionRider(), batch.afterEntry()));
-            return List.of();
-        }
         return enterPreparedTokenCopies(gameData, entry, tokens, batch.sourcePermanent(), tokenControllerId,
                 effect, attackTargets, explicitAttackTargets, chooseAttackTargets, batch.afterEntry());
     }
@@ -759,6 +757,24 @@ public class TokenCopySupport {
                 batch.copyRider().accept(sourceCard, preparedToken);
             }
             tokens.add(preparedToken);
+        }
+    }
+
+    /**
+     * Builds the {@code group.count()} Cats or Dogs Jinnie Fay substituted for tokens of the batch into
+     * {@code tokens}. They aren't copies, so the copy rider doesn't apply, but they get the creating effect's riders
+     * (haste, granted death trigger), since anything else the creating effect specifies still applies to her tokens
+     * (Jinnie Fay ruling, 2022-04-29).
+     */
+    private static void addSubstitutes(GameData gameData, TokenCopyBatch batch, UUID tokenControllerId,
+                                       TokenCreationEvent.TokenGroup group, String setCode, List<Permanent> tokens) {
+        CreateTokenEffect blueprint = group.blueprint();
+        for (int i = 0; i < group.count(); i++) {
+            Card substitute = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData,
+                    tokenControllerId, TokenCardFactory.create(blueprint, fixedStat(blueprint.power()),
+                            fixedStat(blueprint.toughness()), setCode));
+            tokens.add(withGrantedDeathEffects(withGrantedHaste(substitute, substitute, batch.effect()),
+                    batch.effect()));
         }
     }
 
