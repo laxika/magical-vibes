@@ -20,7 +20,7 @@ import java.util.function.Predicate;
  * Doubling Season, Parallel Lives, Halving Season), "those tokens plus ..." additions (Queen
  * Allenal of Ruadach, Quina Qu Gourmet, Chatterfang, Worldwalker Helm, Stridehangar Automaton, Donatello,
  * Tippy-Toe, a solved Case of the Pilfered Proof, Bilbo), Academy Manufactor's "one of each" and the replacements
- * that change what kind of token is created (Divine Visitation, Fisher's Talent; blueprint events only). The
+ * that change what kind of token is created (Divine Visitation, Fisher's Talent). The
  * player creating the tokens orders the effects (CR 616.1); once all of them have applied, {@link #tokenCount()} tokens are created from
  * {@link #token()} together with every group of {@link #addedTokens()}.
  *
@@ -63,8 +63,8 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
      * card but {@link #copyOf()} as copy groups: {@code copyOf} is the card those tokens copy, {@code blueprint}
      * only describes their kind and {@code copyCreature} says whether they enter as creatures.
      *
-     * <p>When Jinnie Fay replaces the tokens of a token-copy event, her Cats or Dogs are substitute groups
-     * ({@code substitute}): tokens created from {@code blueprint} in place of tokens the creating effect makes, which
+     * <p>When Jinnie Fay, Divine Visitation or Fisher's Talent replaces tokens of a token-copy event, the replacing
+     * tokens are substitute groups ({@code substitute}): tokens created from {@code blueprint} in place of tokens the creating effect makes, which
      * keep its instructions, and {@code copyOf} is then the card the tokens they replace copied, or {@code null} when
      * they replace tokens a replacement added.
      *
@@ -74,7 +74,7 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
      *                     copied, or {@code null} for tokens created from {@code blueprint}
      * @param copyCreature whether a copy group's tokens are creatures; ignored for blueprint and substitute groups
      * @param substitute   whether the tokens are created from {@code blueprint} in place of tokens of the creating
-     *                     effect (Jinnie Fay)
+     *                     effect (Jinnie Fay, Divine Visitation, Fisher's Talent in a token-copy event)
      */
     public record TokenGroup(CreateTokenEffect blueprint, int count, Card copyOf, boolean copyCreature,
                              boolean substitute) {

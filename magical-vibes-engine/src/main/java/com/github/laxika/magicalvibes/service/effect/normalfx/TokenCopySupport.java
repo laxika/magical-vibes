@@ -437,8 +437,8 @@ public class TokenCopySupport {
 
     /**
      * Builds and enters the copies and the added tokens of a token-copy event whose replacements have all been
-     * applied in the order the creating player chose, Jinnie Fay's included. All of them enter together;
-     * creature-token replacements such as Divine Visitation still apply to them afterwards.
+     * applied in the order the creating player chose, Jinnie Fay's and the token-kind replacements (Divine Visitation,
+     * Fisher's Talent) included, so they aren't replaced again as they enter. All of them enter together.
      */
     public List<UUID> createCopiesAfterReplacementOrder(GameData gameData, TokenCreationEvent event) {
         TokenCopyBatch batch = event.copyBatch();
@@ -469,15 +469,15 @@ public class TokenCopySupport {
             }
             CreateTokenEffect blueprint = group.blueprint();
             for (int i = 0; i < group.count(); i++) {
-                Card addedCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                        gameData, tokenControllerId, TokenCardFactory.create(blueprint,
-                                fixedStat(blueprint.power()), fixedStat(blueprint.toughness()), event.sourceSetCode()));
+                Card addedCard = TokenCardFactory.create(blueprint, fixedStat(blueprint.power()),
+                        fixedStat(blueprint.toughness()), event.sourceSetCode());
                 tokens.add(blueprint.subtypes() != null && blueprint.subtypes().contains(CardSubtype.SQUIRREL)
                         ? withGrantedHaste(addedCard, addedCard, effect) : new Permanent(addedCard));
                 attackTargets.add(firstAttackTarget);
                 copiedCards.add(null);
             }
         }
+        tokens.forEach(token -> token.setTokenKindReplacementsApplied(true));
         if (batch.tokenRider() != null) {
             tokens.forEach(batch.tokenRider());
         }
@@ -586,8 +586,7 @@ public class TokenCopySupport {
                                    int count, List<Permanent> tokens) {
         CreateTokenCopyOfTargetPermanentEffect effect = batch.effect();
         for (int copy = 0; copy < count; copy++) {
-            Card tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData,
-                    tokenControllerId, copyTemplate(batch.entry(), sourceCard, effect, batch.copyException()));
+            Card tokenCard = copyTemplate(batch.entry(), sourceCard, effect, batch.copyException());
             Permanent preparedToken = withGrantedDeathEffects(withGrantedHaste(tokenCard, sourceCard, effect), effect);
             if (tokenCard.hasType(CardType.PLANESWALKER) && tokenCard.getLoyalty() != null) {
                 preparedToken.setCounterCount(CounterType.LOYALTY, tokenCard.getLoyalty());
@@ -609,9 +608,8 @@ public class TokenCopySupport {
                                        TokenCreationEvent.TokenGroup group, String setCode, List<Permanent> tokens) {
         CreateTokenEffect blueprint = group.blueprint();
         for (int i = 0; i < group.count(); i++) {
-            Card substitute = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData,
-                    tokenControllerId, TokenCardFactory.create(blueprint, fixedStat(blueprint.power()),
-                            fixedStat(blueprint.toughness()), setCode));
+            Card substitute = TokenCardFactory.create(blueprint, fixedStat(blueprint.power()),
+                    fixedStat(blueprint.toughness()), setCode);
             tokens.add(withGrantedDeathEffects(withGrantedHaste(substitute, substitute, batch.effect()),
                     batch.effect()));
         }

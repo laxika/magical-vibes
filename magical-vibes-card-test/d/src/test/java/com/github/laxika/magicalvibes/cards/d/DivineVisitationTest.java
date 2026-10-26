@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.b.BladeSplicer;
+import com.github.laxika.magicalvibes.cards.c.CacklingCounterpart;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.s.SwornCompanions;
 import com.github.laxika.magicalvibes.cards.v.VizierOfManyFaces;
@@ -22,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DivineVisitation.class, BladeSplicer.class, SwornCompanions.class, VizierOfManyFaces.class,
-        QueenAllenalOfRuadach.class})
+        QueenAllenalOfRuadach.class, CacklingCounterpart.class, GrizzlyBears.class})
 class DivineVisitationTest extends BaseCardTest {
 
     @Test
@@ -161,6 +163,76 @@ class DivineVisitationTest extends BaseCardTest {
                 assertThat(angel.getCard().getKeywords())
                         .containsExactlyInAnyOrder(Keyword.FLYING, Keyword.VIGILANCE));
         assertThat(findPermanents(player1, "Soldier")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A token copy of a creature is an Angel instead")
+    void replacesTokenCopyWithAngel() {
+        harness.addToBattlefield(player1, new DivineVisitation());
+        castCacklingCounterpartOnGrizzlyBears();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1)
+                .allSatisfy(bears -> assertThat(bears.getCard().isToken()).isFalse());
+        assertThat(findPermanents(player1, "Angel")).hasSize(1).allSatisfy(angel -> {
+            assertThat(angel.getCard().isToken()).isTrue();
+            assertThat(angel.getEffectivePower()).isEqualTo(4);
+            assertThat(angel.getEffectiveToughness()).isEqualTo(4);
+        });
+    }
+
+    @Test
+    @DisplayName("The creator orders Divine Visitation and Queen Allenal before a token copy is created")
+    void asksToOrderDivineVisitationAndQueenAllenalForTokenCopy() {
+        harness.addToBattlefield(player1, new DivineVisitation());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        castCacklingCounterpartOnGrizzlyBears();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(findPermanents(player1, "Angel")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Applying Divine Visitation before Queen Allenal to a token copy leaves the added Soldier a Soldier")
+    void divineVisitationFirstKeepsTheSoldierAddedToTokenCopy() {
+        harness.addToBattlefield(player1, new DivineVisitation());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        castCacklingCounterpartOnGrizzlyBears();
+
+        chooseReplacement("Divine Visitation");
+
+        assertThat(findPermanents(player1, "Angel")).hasSize(1);
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1).allSatisfy(soldier -> {
+            assertThat(soldier.getEffectivePower()).isEqualTo(1);
+            assertThat(soldier.getEffectiveToughness()).isEqualTo(1);
+        });
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Applying Queen Allenal before Divine Visitation to a token copy turns the added Soldier into an Angel too")
+    void queenAllenalFirstReplacesTheSoldierAddedToTokenCopy() {
+        harness.addToBattlefield(player1, new DivineVisitation());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        castCacklingCounterpartOnGrizzlyBears();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(findPermanents(player1, "Angel")).hasSize(2).allSatisfy(angel ->
+                assertThat(angel.getCard().getKeywords())
+                        .containsExactlyInAnyOrder(Keyword.FLYING, Keyword.VIGILANCE));
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
+    }
+
+    private void castCacklingCounterpartOnGrizzlyBears() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CacklingCounterpart()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passBothPriorities();
     }
 
     private void castSwornCompanionsWithQueenAllenal() {

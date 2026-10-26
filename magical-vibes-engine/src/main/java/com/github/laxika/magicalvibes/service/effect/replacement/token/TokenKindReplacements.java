@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.function.BiPredicate;
 import java.util.function.UnaryOperator;
 
 /**
@@ -29,15 +29,23 @@ import java.util.function.UnaryOperator;
  * they are pure. The replaced tokens keep the creating effect's riders (tapped, attacking, exiled at end of combat)
  * but none of their characteristics or abilities.
  *
- * <p>Only blueprint events are ordered here; token-copy events ({@link TokenCreationEvent#copyBatch()}) still apply
- * these replacements to each copy after the order.
+ * <p>In a token-copy event ({@link TokenCreationEvent#copyBatch()}) the replaced copies become substitute groups
+ * ({@link TokenCreationEvent.TokenGroup#substitutes}) of the card they would have copied, like Jinnie Fay's Cats and
+ * Dogs: the replacing tokens aren't copies, but anything else the creating effect specifies (haste, attacking, the
+ * copied card's attack target or blocked attacker, ...) still applies to them (Divine Visitation ruling).
+ * Whether a copy is a creature is decided by the copy as it would enter ({@link TokenCreationEvent#creatureToken()},
+ * {@link TokenCreationEvent.TokenGroup#creature()}).
  */
 @Component
 public class TokenKindReplacements implements ReplacementCandidateSource<TokenCreationEvent> {
 
     private static final String KEY_PREFIX = "TokenKind:";
 
-    private record Instance(String key, String label, Predicate<CreateTokenEffect> replaces,
+    /**
+     * One replacement instance: {@code replaces} tests a token's blueprint (or a copy's kind) and whether it is a
+     * creature token.
+     */
+    private record Instance(String key, String label, BiPredicate<CreateTokenEffect, Boolean> replaces,
                             UnaryOperator<CreateTokenEffect> replacement) {}
 
     @Override
@@ -60,22 +68,33 @@ public class TokenKindReplacements implements ReplacementCandidateSource<TokenCr
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Token kind replacement source left: " + option.key()));
         TokenCreationEvent result = event;
-        if (event.tokenCount() > 0 && instance.replaces().test(event.token())) {
+        List<TokenCreationEvent.TokenGroup> groups = new ArrayList<>(event.addedTokens().size() + 1);
+        if (event.tokenCount() > 0 && instance.replaces().test(event.token(), baseIsCreature(event))) {
             CreateTokenEffect replaced = instance.replacement().apply(event.token());
-            result = result.withToken(replaced, replaced.tokenPower(), replaced.tokenToughness(),
-                    replaced.primaryType() == CardType.CREATURE);
+            if (event.copyBatch() != null) {
+                groups.add(TokenCreationEvent.TokenGroup.substitutes(replaced, event.tokenCount(), event.copyOf()));
+                result = result.withTokenCount(0);
+            } else {
+                result = result.withToken(replaced, replaced.tokenPower(), replaced.tokenToughness(),
+                        replaced.primaryType() == CardType.CREATURE);
+            }
         }
-        List<TokenCreationEvent.TokenGroup> groups = new ArrayList<>(event.addedTokens().size());
         for (TokenCreationEvent.TokenGroup group : event.addedTokens()) {
-            groups.add(instance.replaces().test(group.blueprint())
-                    ? new TokenCreationEvent.TokenGroup(instance.replacement().apply(group.blueprint()), group.count())
-                    : group);
+            if (!instance.replaces().test(group.blueprint(), group.creature())) {
+                groups.add(group);
+            } else if (group.copies()) {
+                groups.add(TokenCreationEvent.TokenGroup.substitutes(
+                        instance.replacement().apply(group.blueprint()), group.count(), group.copyOf()));
+            } else {
+                groups.add(new TokenCreationEvent.TokenGroup(instance.replacement().apply(group.blueprint()),
+                        group.count(), group.copyOf(), false, group.substitute()));
+            }
         }
         return result.withAddedTokens(groups);
     }
 
     private List<Instance> instances(GameData gameData, TokenCreationEvent event) {
-        if (event.amount() <= 0 || event.copyBatch() != null) {
+        if (event.amount() <= 0) {
             return List.of();
         }
         List<Instance> instances = new ArrayList<>();
@@ -94,22 +113,38 @@ public class TokenKindReplacements implements ReplacementCandidateSource<TokenCr
                 Instance instance = switch (effect) {
                     case ReplaceCreatureTokenCreationEffect ignored -> new Instance(key,
                             name + ": create that many 4/4 Angel tokens instead of creature tokens",
-                            blueprint -> blueprint.primaryType() == CardType.CREATURE,
+                            (blueprint, creature) -> creature,
                             TokenCreationReplacementSupport::divineVisitationToken);
                     case ReplaceTokenSubtypeCreationEffect subtype
                             when permanent.getClassLevel() >= subtype.minimumSourceLevel() -> new Instance(key,
                             name + ": create " + subtype.replacementToken().tokenName() + " tokens instead of "
                                     + subtype.sourceSubtype().getDisplayName() + " tokens",
-                            blueprint -> hasSubtype(blueprint, subtype.sourceSubtype()),
+                            (blueprint, creature) -> hasSubtype(blueprint, subtype.sourceSubtype()),
                             blueprint -> TokenCreationReplacementSupport.subtypeReplacementToken(subtype, blueprint));
                     default -> null;
                 };
-                if (instance != null && event.createsToken(instance.replaces())) {
+                if (instance != null && createsMatchingToken(event, instance)) {
                     instances.add(instance);
                 }
             }
         }
         return instances;
+    }
+
+    /**
+     * Whether the event's own tokens are creatures: a token-copy event's copies as they would enter, a blueprint
+     * event's tokens by their blueprint.
+     */
+    private static boolean baseIsCreature(TokenCreationEvent event) {
+        return event.copyBatch() != null ? event.creatureToken() : event.token().primaryType() == CardType.CREATURE;
+    }
+
+    private static boolean createsMatchingToken(TokenCreationEvent event, Instance instance) {
+        if (event.tokenCount() > 0 && instance.replaces().test(event.token(), baseIsCreature(event))) {
+            return true;
+        }
+        return event.addedTokens().stream()
+                .anyMatch(group -> instance.replaces().test(group.blueprint(), group.creature()));
     }
 
     private static boolean hasSubtype(CreateTokenEffect blueprint, CardSubtype subtype) {
