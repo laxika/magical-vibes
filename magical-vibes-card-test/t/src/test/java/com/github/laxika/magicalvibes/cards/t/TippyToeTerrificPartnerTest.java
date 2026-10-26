@@ -1,15 +1,21 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AcademyManufactor;
+import com.github.laxika.magicalvibes.cards.b.BilboFellowConspirator;
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.ForswornPaladin;
 import com.github.laxika.magicalvibes.cards.r.RangerClass;
+import com.github.laxika.magicalvibes.cards.w.WorldwalkerHelm;
 import com.github.laxika.magicalvibes.cards.y.YouSeeAPairOfGoblins;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,7 +23,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TippyToeTerrificPartner.class, ForswornPaladin.class, Forest.class,
-        AcademyManufactor.class, RangerClass.class, YouSeeAPairOfGoblins.class})
+        AcademyManufactor.class, RangerClass.class, YouSeeAPairOfGoblins.class, DoublingSeason.class,
+        BilboFellowConspirator.class, WorldwalkerHelm.class})
 class TippyToeTerrificPartnerTest extends BaseCardTest {
 
     @Test
@@ -143,6 +150,88 @@ class TippyToeTerrificPartnerTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Goblin")).isEqualTo(2);
         assertThat(countPermanents(player1, "Food")).isOne();
+    }
+
+    @Test
+    @DisplayName("With Doubling Season, the creating player is asked which replacement applies first")
+    void asksForOrderWithDoublingSeason() {
+        createTreasureWithDoublingSeason();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+    }
+
+    @Test
+    @DisplayName("Applying Tippy-Toe before Doubling Season doubles the added Food too")
+    void tippyToeFirstDoublesTheAddedFood() {
+        createTreasureWithDoublingSeason();
+
+        chooseReplacement("Tippy-Toe");
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+        assertThat(countPermanents(player1, "Food")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Applying Doubling Season before Tippy-Toe adds one undoubled Food")
+    void doublingSeasonFirstAddsOneFood() {
+        createTreasureWithDoublingSeason();
+
+        chooseReplacement("Doubling Season");
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+        assertThat(countPermanents(player1, "Food")).isOne();
+    }
+
+    @Test
+    @DisplayName("Bilbo adds a Treasure for the Food Tippy-Toe adds to a creature token event")
+    void bilboAddsTreasureForTheAddedFood() {
+        harness.addToBattlefield(player1, new BilboFellowConspirator());
+        createWolf();
+
+        assertThat(countPermanents(player1, "Wolf")).isOne();
+        assertThat(countPermanents(player1, "Food")).isOne();
+        assertThat(countPermanents(player1, "Treasure")).isOne();
+    }
+
+    @Test
+    @DisplayName("Worldwalker Helm adds a Map once Tippy-Toe's Food makes the event create an artifact token")
+    void worldwalkerHelmAddsMapForTheAddedFood() {
+        harness.addToBattlefield(player1, new WorldwalkerHelm());
+        createWolf();
+
+        assertThat(countPermanents(player1, "Wolf")).isOne();
+        assertThat(countPermanents(player1, "Food")).isOne();
+        assertThat(countPermanents(player1, "Map")).isOne();
+    }
+
+    private void createWolf() {
+        harness.addToBattlefield(player1, new TippyToeTerrificPartner());
+        harness.setHand(player1, List.of(new RangerClass()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+    }
+
+    private void createTreasureWithDoublingSeason() {
+        harness.addToBattlefield(player1, new TippyToeTerrificPartner());
+        harness.addToBattlefield(player1, new DoublingSeason());
+        addCreatureReady(player1, new ForswornPaladin());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 2, 0, null, null);
+        harness.passBothPriorities();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 
     private void createTreasureAndFood() {

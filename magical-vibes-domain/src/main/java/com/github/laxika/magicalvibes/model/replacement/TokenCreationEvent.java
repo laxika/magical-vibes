@@ -12,12 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 /**
  * A token creation event whose replacement effects are being ordered: count replacements (Xorn,
- * Doubling Season, Parallel Lives, Halving Season) and "those tokens plus ..." additions (Queen
- * Allenal of Ruadach, Quina Qu Gourmet, Chatterfang). The player creating the tokens orders the
- * effects (CR 616.1); once all of them have applied, {@link #tokenCount()} tokens are created from
+ * Doubling Season, Parallel Lives, Halving Season), "those tokens plus ..." additions (Queen
+ * Allenal of Ruadach, Quina Qu Gourmet, Chatterfang, Worldwalker Helm, Stridehangar Automaton, Donatello,
+ * Tippy-Toe, a solved Case of the Pilfered Proof, Bilbo) and Academy Manufactor's "one of each". The
+ * player creating the tokens orders the effects (CR 616.1); once all of them have applied, {@link #tokenCount()} tokens are created from
  * {@link #token()} together with every group of {@link #addedTokens()}.
  *
  * @param controllerId      the player creating the tokens, who orders the effects
@@ -99,6 +101,22 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
     /** Whether the event creates at least one creature token as it currently stands. */
     public boolean createsCreatureToken() {
         return creatureToken && tokenCount > 0 || addedTokens.stream().anyMatch(TokenGroup::creature);
+    }
+
+    /** Whether the event creates at least one token matching {@code kind} as it currently stands. */
+    public boolean createsToken(Predicate<CreateTokenEffect> kind) {
+        return countTokens(kind) > 0;
+    }
+
+    /** How many of the tokens the event creates as it currently stands match {@code kind}. */
+    public int countTokens(Predicate<CreateTokenEffect> kind) {
+        int count = tokenCount > 0 && kind.test(token) ? tokenCount : 0;
+        for (TokenGroup group : addedTokens) {
+            if (kind.test(group.blueprint())) {
+                count += group.count();
+            }
+        }
+        return count;
     }
 
     public TokenCreationEvent withTokenCount(int newTokenCount) {

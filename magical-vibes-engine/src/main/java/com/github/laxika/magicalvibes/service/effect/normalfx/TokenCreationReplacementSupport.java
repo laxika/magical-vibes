@@ -48,6 +48,17 @@ public final class TokenCreationReplacementSupport {
             "Angel", 4, 4, CardColor.WHITE, List.of(CardSubtype.ANGEL),
             Set.of(Keyword.FLYING, Keyword.VIGILANCE), Set.of());
 
+    /*
+     * Additions put these blueprints, or riders-carrying copies sharing their abilities, into a token creation
+     * event. Sharing one instance keeps equal additions equal, so orders that end in the same tokens are recognised
+     * as the same outcome and need no prompt (CR 616.1).
+     */
+    private static final CreateTokenEffect MAP_TOKEN = CreateTokenEffect.ofMapToken(1);
+    private static final CreateTokenEffect CLUE_TOKEN = CreateTokenEffect.ofClueToken(1);
+    private static final CreateTokenEffect FOOD_TOKEN = CreateTokenEffect.ofFoodToken(1);
+    private static final CreateTokenEffect TREASURE_TOKEN = CreateTokenEffect.ofTreasureToken(1);
+    private static final CreateTokenEffect MUTAGEN_TOKEN = mutagenToken();
+
     private TokenCreationReplacementSupport() {
     }
 
@@ -122,7 +133,7 @@ public final class TokenCreationReplacementSupport {
                 AddThopterTokenToArtifactTokenCreationEffect.class);
     }
 
-    static CreateTokenEffect additionalThopterToken(CreateTokenEffect original) {
+    public static CreateTokenEffect additionalThopterToken(CreateTokenEffect original) {
         return withEventModifiers(thopterToken(), original);
     }
 
@@ -139,8 +150,8 @@ public final class TokenCreationReplacementSupport {
         return additionalMapTokenCount(gameData, controllerId);
     }
 
-    static CreateTokenEffect additionalMapToken(CreateTokenEffect token) {
-        CreateTokenEffect map = CreateTokenEffect.ofMapToken(1);
+    public static CreateTokenEffect additionalMapToken(CreateTokenEffect token) {
+        CreateTokenEffect map = MAP_TOKEN;
         return new CreateTokenEffect(
                 CardType.ARTIFACT,
                 1,
@@ -182,16 +193,16 @@ public final class TokenCreationReplacementSupport {
         return countActiveStaticEffects(gameData, controllerId, AddFoodTokenToTokenCreationEffect.class);
     }
 
-    static CreateTokenEffect additionalFoodToken(CreateTokenEffect original) {
-        return withEventModifiers(CreateTokenEffect.ofFoodToken(1), original);
+    public static CreateTokenEffect additionalFoodToken(CreateTokenEffect original) {
+        return withEventModifiers(FOOD_TOKEN, original);
     }
 
     static CreateTokenEffect additionalFoodToken(boolean tapped, boolean tappedAndAttacking) {
         return CreateTokenEffect.ofFoodToken(1).withTapped(tapped || tappedAndAttacking);
     }
 
-    static CreateTokenEffect additionalMutagenToken(CreateTokenEffect original) {
-        CreateTokenEffect mutagen = mutagenToken();
+    public static CreateTokenEffect additionalMutagenToken(CreateTokenEffect original) {
+        CreateTokenEffect mutagen = MUTAGEN_TOKEN;
         return new CreateTokenEffect(
                 CardType.ARTIFACT,
                 1,
@@ -216,7 +227,7 @@ public final class TokenCreationReplacementSupport {
     }
 
     static CreateTokenEffect additionalMutagenToken(boolean tapped, boolean tappedAndAttacking) {
-        return mutagenToken().withTapped(tapped || tappedAndAttacking);
+        return MUTAGEN_TOKEN.withTapped(tapped || tappedAndAttacking);
     }
 
     private static CreateTokenEffect mutagenToken() {
@@ -439,6 +450,45 @@ public final class TokenCreationReplacementSupport {
         return blueprints;
     }
 
+    /**
+     * The tokens one Academy Manufactor replacement adds for each token of {@code original}'s kind: a token
+     * that is a Clue, Food or Treasure is created together with one of each of the other two kinds, carrying
+     * the riders of {@code original}. Empty when {@code original} is none of those kinds.
+     */
+    public static List<CreateTokenEffect> academyManufactorAdditions(CreateTokenEffect original) {
+        CardSubtype kind = manufactorTokenSubtype(original);
+        if (kind == null) {
+            return List.of();
+        }
+        List<CreateTokenEffect> additions = new ArrayList<>(2);
+        if (kind != CardSubtype.CLUE) {
+            additions.add(academyManufactorToken(original, CLUE_TOKEN));
+        }
+        if (kind != CardSubtype.FOOD) {
+            additions.add(academyManufactorToken(original, FOOD_TOKEN));
+        }
+        if (kind != CardSubtype.TREASURE) {
+            additions.add(academyManufactorToken(original, TREASURE_TOKEN));
+        }
+        return additions;
+    }
+
+    /** The Clue a solved Case of the Pilfered Proof adds to a token creation event, carrying the riders of {@code original}. */
+    public static CreateTokenEffect additionalClueToken(CreateTokenEffect original) {
+        return withEventModifiers(CLUE_TOKEN, original);
+    }
+
+    /** Whether {@code token} is an artifact token, which Worldwalker Helm's and Stridehangar Automaton's additions need. */
+    public static boolean isArtifactToken(CreateTokenEffect token) {
+        return token.primaryType() == CardType.ARTIFACT
+                || (token.additionalTypes() != null && token.additionalTypes().contains(CardType.ARTIFACT));
+    }
+
+    /** Whether {@code token} is a Food token, which Bilbo's replacement needs. */
+    public static boolean isFoodToken(CreateTokenEffect token) {
+        return token.subtypes() != null && token.subtypes().contains(CardSubtype.FOOD);
+    }
+
     private static int academyManufactorMultiplier(GameData gameData, UUID controllerId,
                                                     Collection<CardSubtype> tokenSubtypes) {
         if (!isAcademyManufactorToken(tokenSubtypes)) {
@@ -487,8 +537,8 @@ public final class TokenCreationReplacementSupport {
     }
 
     /** Returns Bilbo's Treasure token while preserving event-level token riders. */
-    static CreateTokenEffect additionalTreasureToken(CreateTokenEffect original) {
-        CreateTokenEffect treasure = CreateTokenEffect.ofTreasureToken(1);
+    public static CreateTokenEffect additionalTreasureToken(CreateTokenEffect original) {
+        CreateTokenEffect treasure = TREASURE_TOKEN;
         return new CreateTokenEffect(
                 CardType.ARTIFACT, 1, treasure.tokenName(), 0, 0, treasure.color(), treasure.colors(),
                 treasure.subtypes(), treasure.keywords(), treasure.additionalTypes(), false,
@@ -635,10 +685,6 @@ public final class TokenCreationReplacementSupport {
         return count;
     }
 
-    private static boolean isArtifactToken(CreateTokenEffect token) {
-        return token.primaryType() == CardType.ARTIFACT
-                || (token.additionalTypes() != null && token.additionalTypes().contains(CardType.ARTIFACT));
-    }
     static List<CreateTokenEffect> additionalAcademyManufactorTokens(
             GameData gameData, UUID controllerId, CreateTokenEffect original, int amount) {
         if (amount <= 0 || original == null) {

@@ -11,7 +11,8 @@ Remove an entry once the feature has landed and its tests pass.
 
 ## 53. Ordering token-creation replacements outside the single-blueprint creation path
 
-**Status:** open · **Found:** 2026-10-25, while finishing entry 35 (token replacement ordering)
+**Status:** partial · **Found:** 2026-10-25, while finishing entry 35 (token replacement ordering) ·
+**Progress:** 2026-10-26, every addition in the single-blueprint path is now ordered
 
 **Failing tests:**
 - None yet. Write one per path, e.g. Queen Allenal of Ruadach + Parallel Lives with a token copy
@@ -20,27 +21,29 @@ Remove an entry once the feature has landed and its tests pass.
 
 **What the rules require.** CR 616.1 / 616.1e: the player creating the tokens chooses the order of every
 replacement that modifies the token creation event. `PermanentControlSupport.applyCreateToken` (the
-single-blueprint path) now runs a `TokenCreationEvent` where count replacements (`TokenCreationReplacements`)
-and the Soldier/Frog/Squirrel additions (`TokenAdditionReplacements`) are ordered. Still fixed, with no prompt:
-- `DestructionSupport.createTokenForPlayer`, `TokenCopySupport` and the copy handlers that call
-  `getTokenCreationAmount` (multiplier first, additions unmultiplied).
-- In the single-blueprint path, the Map, Thopter, Mutagen, Food (Tippy-Toe), Treasure (Bilbo), Academy
-  Manufactor and solved-Case Clue additions/replacements are applied after the ordered event, so a doubler
-  never doubles them and Chatterfang never counts them (before entry 35 Chatterfang counted them).
+single-blueprint path) runs a `TokenCreationEvent` where count replacements (`TokenCreationReplacements`)
+and every addition (`TokenAdditionReplacements`: Soldier, Frog, Squirrels, Map, Thopter, Mutagen, Tippy-Toe
+Food, solved-Case Clue, Bilbo Treasure, Academy Manufactor's "one of each") are ordered. Still fixed, with
+no prompt:
+- `DestructionSupport.createTokenForPlayer`, `TokenCopySupport`, `PopulateSupport` and the copy handlers
+  that call `getTokenCreationAmount` (multiplier first, additions unmultiplied).
+- Jinnie Fay's choice is always asked first, before the event is ordered, so the player can't apply Tippy-Toe
+  (or a doubler) before Jinnie Fay replaces the tokens.
+- `replaceTokenSubtypeIfApplicable` / `replaceCreatureTokenIfApplicable` (Divine Visitation and similar) apply
+  per token after the ordered event.
 
 **Why it's large.** Each remaining site creates tokens mid-effect and would need to suspend on the order
-prompt and resume (as `ChoiceHandlerService` does for `TokenCreationEvent`). Academy Manufactor replaces the
-token kind, so it needs a non-count option on the event.
+prompt and resume (as `ChoiceHandlerService` does for `TokenCreationEvent`). Token copies have no
+`CreateTokenEffect` blueprint, so the event needs a copy-group form.
 
 **Prompt to start it:**
 
 ```
 Implement missing-features-to-do.md entry 53: route the remaining token creation paths
-(DestructionSupport.createTokenForPlayer, TokenCopySupport, the token copy handlers) and the remaining
-additions (Map, Thopter, Mutagen, Tippy-Toe Food, Bilbo Treasure, Academy Manufactor, solved Case Clues)
-through TokenCreationEvent and ReplacementOrderService, as TokenAdditionReplacements does for Queen
-Allenal, Quina and Chatterfang. Write the tests first. Don't run the full test suite; ask me. Don't
-commit until I say so.
+(DestructionSupport.createTokenForPlayer, TokenCopySupport, PopulateSupport, the token copy handlers)
+through TokenCreationEvent and ReplacementOrderService, as PermanentControlSupport.applyCreateToken does
+with TokenCreationReplacements and TokenAdditionReplacements. Write the tests first. Don't run the full
+test suite; ask me. Don't commit until I say so.
 ```
 
 ---

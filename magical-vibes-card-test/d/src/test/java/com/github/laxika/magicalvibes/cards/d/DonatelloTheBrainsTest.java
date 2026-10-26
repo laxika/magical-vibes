@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.c.ChatterfangSquirrelGeneral;
 import com.github.laxika.magicalvibes.cards.m.MyrBattlesphere;
 import com.github.laxika.magicalvibes.cards.w.WilyGoblin;
 import com.github.laxika.magicalvibes.cards.r.RootbornDefenses;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +16,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DonatelloTheBrains.class, MyrBattlesphere.class, WilyGoblin.class, RootbornDefenses.class})
+@CardUsed({DonatelloTheBrains.class, MyrBattlesphere.class, WilyGoblin.class, RootbornDefenses.class,
+        ChatterfangSquirrelGeneral.class})
 class DonatelloTheBrainsTest extends BaseCardTest {
 
     @Test
@@ -113,6 +117,55 @@ class DonatelloTheBrainsTest extends BaseCardTest {
         assertThat(mutagen.getCard().getSubtypes())
                 .extracting(subtype -> subtype.name())
                 .contains("MUTAGEN");
+    }
+
+    @Test
+    @DisplayName("With Chatterfang, the creating player is asked which replacement applies first")
+    void asksForOrderWithChatterfang() {
+        castWilyGoblinWithChatterfang();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(findPermanents(player1, "Mutagen")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Applying Donatello before Chatterfang makes Chatterfang count the Mutagen")
+    void donatelloFirstGetsASquirrelForTheMutagen() {
+        castWilyGoblinWithChatterfang();
+
+        chooseReplacement("Donatello");
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(findPermanents(player1, "Mutagen")).hasSize(1);
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Applying Chatterfang before Donatello adds one Squirrel")
+    void chatterfangFirstAddsOneSquirrel() {
+        castWilyGoblinWithChatterfang();
+
+        chooseReplacement("Chatterfang");
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(findPermanents(player1, "Mutagen")).hasSize(1);
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(1);
+    }
+
+    private void castWilyGoblinWithChatterfang() {
+        harness.addToBattlefield(player1, new DonatelloTheBrains());
+        harness.addToBattlefield(player1, new ChatterfangSquirrelGeneral());
+        harness.castFromHand(player1, new WilyGoblin(), "{R}{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 
     private void castMyrBattlesphere(Player player) {

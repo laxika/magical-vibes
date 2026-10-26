@@ -97,25 +97,34 @@ public class PermanentControlSupport {
                     gameData, controllerId, jinnieFay, token, amount, power, toughness, sourceSetCode, additionalEffects);
             return List.of();
         }
-        if (amount > 0) {
-            // The player creating the tokens orders the count replacements and additions (CR 616.1), so the
-            // creation may pause for a choice and then continue through applyCreateTokenAfterReplacementOrder.
-            var outcome = replacementOrderService.run(gameData, new TokenCreationEvent(
-                    controllerId, amount, Set.of(), token, power, toughness, sourceSetCode, additionalEffects,
-                    token.primaryType() == CardType.CREATURE, simultaneousTokenGroups(token)));
-            if (outcome instanceof ReplacementOrderService.Outcome.Completed<TokenCreationEvent> completed) {
-                return applyCreateTokenAfterReplacementOrder(gameData, completed.event());
-            }
-            return List.of();
+        return createOrdered(gameData, controllerId, token, amount, sourceSetCode, power, toughness, additionalEffects);
+    }
+
+    /**
+     * Creates the tokens after the player creating them has ordered the count replacements and additions
+     * (CR 616.1), so the creation may pause for a choice and then continue through
+     * {@link #applyCreateTokenAfterReplacementOrder}.
+     */
+    private List<UUID> createOrdered(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
+                                     String sourceSetCode, int power, int toughness,
+                                     Map<EffectSlot, List<EffectRegistration>> additionalEffects) {
+        if (amount <= 0) {
+            return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness,
+                    true, true, true, additionalEffects);
         }
-        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness,
-                true, true, true, additionalEffects);
+        var outcome = replacementOrderService.run(gameData, new TokenCreationEvent(
+                controllerId, amount, Set.of(), token, power, toughness, sourceSetCode, additionalEffects,
+                token.primaryType() == CardType.CREATURE, simultaneousTokenGroups(token)));
+        if (outcome instanceof ReplacementOrderService.Outcome.Completed<TokenCreationEvent> completed) {
+            return applyCreateTokenAfterReplacementOrder(gameData, completed.event());
+        }
+        return List.of();
     }
 
     /**
      * Creates the tokens of an event whose count replacements and additions have all been applied, in
      * the order the creating player chose. The event's counts are final, so those replacements are not
-     * applied again; the event's added tokens (simultaneous tokens, Soldiers, Frogs, Squirrels) are
+     * applied again; the event's added tokens (simultaneous tokens and every addition's tokens) are
      * created with the blueprint's tokens.
      */
     public List<UUID> applyCreateTokenAfterReplacementOrder(GameData gameData, TokenCreationEvent event) {
@@ -135,12 +144,14 @@ public class PermanentControlSupport {
         return groups;
     }
 
-    /** Creates tokens after Jinnie Fay's replacement choice has already been made. */
+    /**
+     * Creates tokens after Jinnie Fay's replacement choice has already been made; the other replacements
+     * are then ordered as usual.
+     */
     public List<UUID> applyCreateTokenAfterJinnieFayChoice(GameData gameData, UUID controllerId,
                                                             CreateTokenEffect token, int amount,
                                                             String sourceSetCode, int power, int toughness) {
-        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness,
-                true, true, true);
+        return createOrdered(gameData, controllerId, token, amount, sourceSetCode, power, toughness, Map.of());
     }
 
     private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
@@ -157,33 +168,34 @@ public class PermanentControlSupport {
     /**
      * {@code orderedAmount} is the token count after its replacements were ordered and applied, or -1 to apply them
      * in a fixed order; {@code orderedAddedTokens} are then the event's other tokens, which replace the blueprint's
-     * simultaneous tokens and the Soldier, Frog and Squirrel additions.
+     * simultaneous tokens and every addition and Academy Manufactor replacement.
      */
     private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, Map<EffectSlot, List<EffectRegistration>> additionalEffects, int orderedAmount, List<TokenCreationEvent.TokenGroup> orderedAddedTokens) {
         boolean ordered = orderedAddedTokens != null;
+        boolean fixedAdditions = applyAdditionalReplacements && !ordered;
         List<UUID> createdIds = new ArrayList<>();
         boolean baseTokenIsCreature = token.primaryType() == CardType.CREATURE;
         int totalAmount = orderedAmount >= 0 ? orderedAmount : applyTokenMultiplier ? gameQueryService.getTokenCreationAmount(gameData, controllerId, amount, token.subtypes(), baseTokenIsCreature) : amount;
-        int additionalMapTokenCount = applyAdditionalReplacements
+        int additionalMapTokenCount = fixedAdditions
                 ? TokenCreationReplacementSupport.additionalMapTokenCount(
                         gameData, controllerId, token, amount)
                 : 0;
-        int additionalThopterTokenCount = applyAdditionalReplacements
+        int additionalThopterTokenCount = fixedAdditions
                 ? TokenCreationReplacementSupport.additionalThopterTokenCount(
                         gameData, controllerId, token, amount)
                 : 0;
-        int additionalMutagenTokenCount = applyAdditionalReplacements
+        int additionalMutagenTokenCount = fixedAdditions
                 ? TokenCreationReplacementSupport.additionalMutagenTokenCount(gameData, controllerId, amount)
                 : 0;
-        CreateTokenEffect additionalFrog = applyAdditionalReplacements && !ordered
+        CreateTokenEffect additionalFrog = fixedAdditions
                 ? TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
                         gameData, controllerId, token)
                 : null;
-        CreateTokenEffect additionalSquirrel = applyAdditionalReplacements && !ordered
+        CreateTokenEffect additionalSquirrel = fixedAdditions
                 ? TokenCreationReplacementSupport.additionalSquirrelTokenIfApplicable(
                         gameData, controllerId, token)
                 : null;
-        int additionalSoldierTokenCount = applyAdditionalReplacements && !ordered
+        int additionalSoldierTokenCount = fixedAdditions
                 ? TokenCreationReplacementSupport.additionalSoldierTokenCountIfApplicable(
                         gameData, controllerId, token)
                 : 0;
@@ -191,14 +203,14 @@ public class PermanentControlSupport {
                 ? TokenCreationReplacementSupport.additionalSoldierTokenIfApplicable(
                         gameData, controllerId, token)
                 : null;
-        int additionalTreasureTokenCount = applyAdditionalReplacements
+        int additionalTreasureTokenCount = fixedAdditions
                 ? TokenCreationReplacementSupport.additionalTreasureTokenCount(
                         gameData, controllerId, token, totalAmount)
                 : 0;
-        int additionalFoodTokenCount = applyAdditionalReplacements
+        int additionalFoodTokenCount = fixedAdditions
                 ? TokenCreationReplacementSupport.additionalFoodTokenCount(gameData, controllerId, totalAmount)
                 : 0;
-        List<CreateTokenEffect> academyManufactorTokenBlueprints = applyAdditionalReplacements
+        List<CreateTokenEffect> academyManufactorTokenBlueprints = fixedAdditions
                 ? TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
                         gameData, controllerId, token, totalAmount)
                 : List.of();
@@ -210,7 +222,7 @@ public class PermanentControlSupport {
                     gameData, controllerId, CreateTokenEffect.ofFoodToken(1), foodCount);
         }
         // Each solved Case of the Pilfered Proof is its own replacement, adding one Clue apiece
-        int addedClueTokens = applyAdditionalReplacements && totalAmount > 0
+        int addedClueTokens = fixedAdditions && totalAmount > 0
                 ? solvedClueReplacementCount(gameData, controllerId) : 0;
         CreateTokenEffect evaluatedToken = token.withPowerToughness(power, toughness);
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
@@ -432,7 +444,7 @@ public class PermanentControlSupport {
     }
 
     public List<UUID> applyCreateTokenAfterJinnieFayChoice(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, Map<EffectSlot, List<EffectRegistration>> additionalEffects) {
-        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, true, true, true, additionalEffects);
+        return createOrdered(gameData, controllerId, token, amount, sourceSetCode, power, toughness, additionalEffects);
     }
 
     int solvedClueReplacementCount(GameData gameData, UUID controllerId) {

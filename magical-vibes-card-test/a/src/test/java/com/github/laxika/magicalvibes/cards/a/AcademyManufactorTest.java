@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BriarbridgeTracker;
 import com.github.laxika.magicalvibes.cards.b.BristlebudFarmer;
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.f.ForswornPaladin;
 import com.github.laxika.magicalvibes.cards.g.GildedGoose;
 import com.github.laxika.magicalvibes.cards.n.NoviceInspector;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AcademyManufactor.class, BristlebudFarmer.class, ForswornPaladin.class,
         NoviceInspector.class, WilyGoblin.class, GildedGoose.class, BriarbridgeTracker.class,
-        SecondHarvest.class, Xorn.class})
+        SecondHarvest.class, Xorn.class, DoublingSeason.class})
 class AcademyManufactorTest extends BaseCardTest {
 
     @Test
@@ -203,4 +205,19 @@ class AcademyManufactorTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("With Doubling Season every order ends in the same tokens, so the player is not asked")
+    void doublingSeasonDoublesEachKindWithoutAPrompt() {
+        harness.addToBattlefield(player1, new AcademyManufactor());
+        harness.addToBattlefield(player1, new DoublingSeason());
+        harness.setHand(player1, List.of(new WilyGoblin()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Clue")).isEqualTo(2);
+        assertThat(countPermanents(player1, "Food")).isEqualTo(2);
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
+    }
 }
