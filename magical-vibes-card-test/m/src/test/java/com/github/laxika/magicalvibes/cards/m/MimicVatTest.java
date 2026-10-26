@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.p.PullFromEternity;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -396,6 +399,78 @@ class MimicVatTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Grizzly Bears"));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("The controller is asked to order Queen Allenal and Parallel Lives for the copy")
+    void controllerIsAskedToOrderTokenReplacements() {
+        activateUnderQueenAndParallelLives();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(bearsTokens()).isEmpty();
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("Applying Queen Allenal before Parallel Lives doubles the copy and the added Soldier")
+    void queenFirstDoublesCopyAndSoldier() {
+        activateUnderQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        List<Permanent> copies = bearsTokens();
+        assertThat(copies).hasSize(2);
+        assertThat(copies).allMatch(copy -> gqs.hasKeyword(gd, copy, Keyword.HASTE));
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2);
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("Applying Parallel Lives before Queen Allenal adds one undoubled Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        activateUnderQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(bearsTokens()).hasSize(2);
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("Every doubled copy is exiled at the beginning of the next end step")
+    void everyDoubledCopyIsExiledAtEndStep() {
+        activateUnderQueenAndParallelLives();
+        chooseReplacement("Parallel Lives");
+        assertThat(bearsTokens()).hasSize(2);
+
+        advanceToEndStep();
+        harness.passBothPriorities();
+
+        assertThat(bearsTokens()).isEmpty();
+    }
+
+    private void activateUnderQueenAndParallelLives() {
+        imprintBears();
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+    }
+
+    private List<Permanent> bearsTokens() {
+        return findPermanents(player1, "Grizzly Bears").stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 
     private void imprintBears() {

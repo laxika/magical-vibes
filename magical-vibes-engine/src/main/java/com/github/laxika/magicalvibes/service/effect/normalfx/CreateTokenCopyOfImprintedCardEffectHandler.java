@@ -1,40 +1,35 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import java.util.EnumSet;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/**
+ * Creates a token copy of the card imprinted on (exiled with) the source through the shared token-copy pipeline,
+ * so the controller orders the token creation replacements they control (CR 616.1).
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffectHandlerBean {
 
-    private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
+    private final TokenCopySupport tokenCopySupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,129 +39,55 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CreateTokenCopyOfImprintedCardEffect) effect;
-        
-                // Per rulings (Mimic Vat, Prototype Portal): if the source permanent has left the battlefield
-                // by the time the ability resolves, the token is still created. The imprinted card reference
-                // is preserved via entry.getCard() (a snapshot captured when the ability went on the stack).
-                Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
 
-                Card imprintedCard = sourcePermanent != null
-                        ? gameData.getImprintedCard(sourcePermanent.getCard())
-                        : gameData.getImprintedCard(entry.getCard());
-                // The source re-entering the battlefield (blink) drops its imprint, but an activated ability
-                // that exiled a card as a cost still knows that card.
-                if (imprintedCard == null && entry.getExiledCostCardId() != null) {
-                    var exiledAsCost = gameData.findExiledCard(entry.getExiledCostCardId());
-                    imprintedCard = exiledAsCost != null ? exiledAsCost.card() : null;
-                }
-                if (imprintedCard == null) {
-                    log.info("Game {} - No card imprinted on {}, no token created", gameData.id, entry.getCard().getName());
-                    return;
-                }
+        // Per rulings (Mimic Vat, Prototype Portal): if the source permanent has left the battlefield
+        // by the time the ability resolves, the token is still created. The imprinted card reference
+        // is preserved via entry.getCard() (a snapshot captured when the ability went on the stack).
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
 
-                // A card that left exile is a new object, so it is no longer "a card exiled with" the source.
-                if (gameData.findExiledCard(imprintedCard.getId()) == null) {
-                    log.info("Game {} - Imprinted card {} is no longer in exile, no token created",
-                            gameData.id, imprintedCard.getName());
-                    return;
-                }
-                // A token copy of an instant or sorcery card cannot exist on the battlefield.
-                if (!imprintedCard.hasType(CardType.CREATURE) && !imprintedCard.hasType(CardType.ARTIFACT)
-                        && !imprintedCard.hasType(CardType.ENCHANTMENT) && !imprintedCard.hasType(CardType.LAND)
-                        && !imprintedCard.hasType(CardType.PLANESWALKER) && !imprintedCard.hasType(CardType.BATTLE)) {
-                    return;
-                }
+        Card imprintedCard = sourcePermanent != null
+                ? gameData.getImprintedCard(sourcePermanent.getCard())
+                : gameData.getImprintedCard(entry.getCard());
+        // The source re-entering the battlefield (blink) drops its imprint, but an activated ability
+        // that exiled a card as a cost still knows that card.
+        if (imprintedCard == null && entry.getExiledCostCardId() != null) {
+            var exiledAsCost = gameData.findExiledCard(entry.getExiledCostCardId());
+            imprintedCard = exiledAsCost != null ? exiledAsCost.card() : null;
+        }
+        if (imprintedCard == null) {
+            log.info("Game {} - No card imprinted on {}, no token created", gameData.id, entry.getCard().getName());
+            return;
+        }
 
-                int tokenMultiplier = gameQueryService.getTokenCreationAmount(
-                        gameData, entry.getControllerId(), 1, imprintedCard.getSubtypes(), imprintedCard.hasType(CardType.CREATURE));
-                for (int copy = 0; copy < tokenMultiplier; copy++) {
-                    // Create a token that's a copy of the imprinted card (copying all copiable values)
-                    Card tokenCard = new Card();
-                    tokenCard.setName(imprintedCard.getName());
-                    tokenCard.setType(imprintedCard.getType());
-                    Set<CardType> additionalTypes = EnumSet.noneOf(CardType.class);
-                    if (imprintedCard.getAdditionalTypes() != null) {
-                        additionalTypes.addAll(imprintedCard.getAdditionalTypes());
-                    }
-                    additionalTypes.addAll(e.additionalTypes());
-                    tokenCard.setAdditionalTypes(additionalTypes);
-                    tokenCard.setManaCost(imprintedCard.getManaCost() != null ? imprintedCard.getManaCost() : "");
-                    tokenCard.setToken(true);
-                    tokenCard.setColor(imprintedCard.getColor());
-                    tokenCard.setSupertypes(imprintedCard.getSupertypes());
-                    tokenCard.setPower(e.powerOverride() != null ? e.powerOverride() : imprintedCard.getPower());
-                    tokenCard.setToughness(e.toughnessOverride() != null ? e.toughnessOverride() : imprintedCard.getToughness());
-                    List<CardSubtype> subtypes = new ArrayList<>();
-                    if (imprintedCard.getSubtypes() != null) {
-                        subtypes.addAll(imprintedCard.getSubtypes());
-                    }
-                    for (CardSubtype subtype : e.additionalSubtypes()) {
-                        if (!subtypes.contains(subtype)) {
-                            subtypes.add(subtype);
-                        }
-                    }
-                    tokenCard.setSubtypes(subtypes);
-                    tokenCard.setCardText(imprintedCard.getCardText());
-                    tokenCard.setSetCode(imprintedCard.getSetCode());
-                    tokenCard.setCollectorNumber(imprintedCard.getCollectorNumber());
+        // A card that left exile is a new object, so it is no longer "a card exiled with" the source.
+        if (gameData.findExiledCard(imprintedCard.getId()) == null) {
+            log.info("Game {} - Imprinted card {} is no longer in exile, no token created",
+                    gameData.id, imprintedCard.getName());
+            return;
+        }
+        // A token copy of an instant or sorcery card cannot exist on the battlefield.
+        if (!imprintedCard.hasType(CardType.CREATURE) && !imprintedCard.hasType(CardType.ARTIFACT)
+                && !imprintedCard.hasType(CardType.ENCHANTMENT) && !imprintedCard.hasType(CardType.LAND)
+                && !imprintedCard.hasType(CardType.PLANESWALKER) && !imprintedCard.hasType(CardType.BATTLE)) {
+            return;
+        }
 
-                    // Copy keywords (conditionally add haste)
-                    Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
-                    if (imprintedCard.getKeywords() != null) {
-                        keywords.addAll(imprintedCard.getKeywords());
-                    }
-                    if (e.grantHaste()) {
-                        keywords.add(Keyword.HASTE);
-                    }
-                    tokenCard.setKeywords(keywords);
+        tokenCopySupport.createTokenCopies(gameData, entry, List.of(imprintedCard), null,
+                entry.getControllerId(), toTokenCopyEffect(e));
+    }
 
-                    // Copy effects and activated abilities (copiable characteristics per CR 707.2)
-                    // A token whose power/toughness are overridden does not copy characteristic-defining
-                    // abilities that define power/toughness (Dollhouse of Horrors ruling, 2021-11-19).
-                    boolean overridesPowerToughness = e.powerOverride() != null || e.toughnessOverride() != null;
-                    for (EffectSlot slot : EffectSlot.values()) {
-                        for (EffectRegistration reg : imprintedCard.getEffectRegistrations(slot)) {
-                            if (overridesPowerToughness && reg.effect() instanceof SetPowerToughnessToAmountEffect) {
-                                continue;
-                            }
-                            tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
-                        }
-                    }
-                    for (ActivatedAbility ability : imprintedCard.getActivatedAbilities()) {
-                        tokenCard.addActivatedAbility(ability);
-                    }
-                    for (CardEffect additionalEffect : e.additionalEffects()) {
-                        tokenCard.addEffect(EffectSlot.STATIC, additionalEffect);
-                    }
-                    tokenCard.copyTargetingFrom(imprintedCard);
-                    tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                            gameData, entry.getControllerId(), tokenCard);
-
-                    Permanent tokenPermanent = new Permanent(tokenCard);
-                    if (e.grantHasteUntilEndOfTurn()) {
-                        tokenPermanent.getGrantedKeywords().add(Keyword.HASTE);
-                    }
-                    battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
-
-                    // Conditionally schedule for exile at beginning of next end step
-                    if (e.exileAtEndStep()) {
-                        gameData.queueDelayedAction(new DelayedPermanentAction(tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
-                    }
-
-                    if (e.grantHaste() || e.grantHasteUntilEndOfTurn()) {
-                        gameLogService.append(gameData, GameLog.textCardText(
-                                "A token copy of ", imprintedCard, " is created with haste."));
-                    } else {
-                        gameLogService.append(gameData, GameLog.textCardText(
-                                "A token copy of ", imprintedCard, " is created."));
-                    }
-                    log.info("Game {} - Token copy of {} created via {}", gameData.id, imprintedCard.getName(),
-                            entry.getCard().getName());
-
-                    // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted
-                    // ETB ability chooses its target at trigger time (CR 603.3) via the ETBTokenTargetTrigger path.
-                    battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, null, false);
-                }
-    
+    /**
+     * Expresses the imprint copy's exceptions and riders as a {@link CreateTokenCopyOfTargetPermanentEffect}.
+     * "It gains haste" is granted to the token rather than copied, while a copied haste keyword is a copy
+     * exception (CR 707.9b).
+     */
+    private static CreateTokenCopyOfTargetPermanentEffect toTokenCopyEffect(CreateTokenCopyOfImprintedCardEffect e) {
+        return new CreateTokenCopyOfTargetPermanentEffect(e.additionalSubtypes(), e.additionalTypes(),
+                e.powerOverride(), e.toughnessOverride(), Map.of(), e.grantHasteUntilEndOfTurn(),
+                e.exileAtEndStep(), false, false, false, false, null,
+                e.grantHaste() ? Set.of(Keyword.HASTE) : Set.of(), false,
+                e.additionalEffects().isEmpty() ? Map.of() : Map.of(EffectSlot.STATIC, e.additionalEffects()),
+                List.of(), false, false, new Fixed(1), false, Set.of(), false, List.of(), null, false,
+                e.grantHasteUntilEndOfTurn(), null);
     }
 }
