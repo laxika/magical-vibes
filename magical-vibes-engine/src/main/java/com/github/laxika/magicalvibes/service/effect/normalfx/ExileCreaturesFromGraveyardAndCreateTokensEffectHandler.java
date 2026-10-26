@@ -1,20 +1,16 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +29,6 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final TokenCopySupport tokenCopySupport;
-    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -88,7 +83,8 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
                     e.powerOverride(), e.toughnessOverride(), Map.of(), false, false, false, false, false, false,
                     e.colorOverride(), Set.of());
             tokenCopySupport.createTokenCopiesWithCopyException(gameData, entry, exiledCards, null, controllerId,
-                    copyOptions, tokenCard -> replaceCreatureTypes(tokenCard, e.addedSubtype()));
+                    copyOptions, tokenCard -> tokenCopySupport.replaceCreatureTypes(tokenCard,
+                            e.addedSubtype() == null ? List.of() : List.of(e.addedSubtype())));
             return;
         }
 
@@ -98,30 +94,6 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
             permanentControlSupport.applyCreateToken(gameData, controllerId,
                     CreateTokenEffect.blackZombie(exiledCards.size()), exiledCards.size(),
                     entry.getCard().getSetCode());
-        }
-    }
-
-    /**
-     * Replaces the copy's creature types with {@code creatureType}, keeping its other subtypes; a changeling
-     * copy loses changeling, since the exception defines its creature types (CR 707.9d).
-     */
-    private void replaceCreatureTypes(Card tokenCard, CardSubtype creatureType) {
-        if (creatureType == null) {
-            return;
-        }
-        List<CardSubtype> subtypes = new ArrayList<>();
-        for (CardSubtype subtype : tokenCard.getSubtypes()) {
-            if (!gameQueryService.isCreatureSubtype(subtype)) {
-                subtypes.add(subtype);
-            }
-        }
-        subtypes.add(creatureType);
-        tokenCard.setSubtypes(subtypes);
-        if (tokenCard.getKeywords().contains(Keyword.CHANGELING)) {
-            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
-            keywords.addAll(tokenCard.getKeywords());
-            keywords.remove(Keyword.CHANGELING);
-            tokenCard.setKeywords(keywords);
         }
     }
 }

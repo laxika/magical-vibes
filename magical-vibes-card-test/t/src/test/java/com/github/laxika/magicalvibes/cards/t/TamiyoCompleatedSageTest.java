@@ -246,6 +246,7 @@ class TamiyoCompleatedSageTest extends BaseCardTest {
     void minusXCreatesAnAuraAttachedToAChosenCreature() {
         addReadyTamiyo(5);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         Card pacifism = new Pacifism();
         harness.setGraveyard(player1, List.of(pacifism));
 

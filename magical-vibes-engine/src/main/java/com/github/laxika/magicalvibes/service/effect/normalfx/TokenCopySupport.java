@@ -597,6 +597,37 @@ public class TokenCopySupport {
         return template;
     }
 
+    /**
+     * A copy exception for "except it's a [creature type]" without "in addition to its other types": replaces the
+     * copy's creature types with {@code creatureTypes}, keeping its other subtypes; a changeling copy loses
+     * changeling, since the exception defines its creature types (CR 707.9d). Does nothing for no creature types.
+     */
+    public void replaceCreatureTypes(Card tokenCard, List<CardSubtype> creatureTypes) {
+        if (creatureTypes == null || creatureTypes.isEmpty()) {
+            return;
+        }
+        List<CardSubtype> subtypes = new ArrayList<>();
+        if (tokenCard.getSubtypes() != null) {
+            for (CardSubtype subtype : tokenCard.getSubtypes()) {
+                if (!gameQueryService.isCreatureSubtype(subtype)) {
+                    subtypes.add(subtype);
+                }
+            }
+        }
+        for (CardSubtype creatureType : creatureTypes) {
+            if (!subtypes.contains(creatureType)) {
+                subtypes.add(creatureType);
+            }
+        }
+        tokenCard.setSubtypes(subtypes);
+        if (tokenCard.getKeywords() != null && tokenCard.getKeywords().contains(Keyword.CHANGELING)) {
+            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+            keywords.addAll(tokenCard.getKeywords());
+            keywords.remove(Keyword.CHANGELING);
+            tokenCard.setKeywords(keywords);
+        }
+    }
+
     /** Builds {@code count} copies of {@code sourceCard} with the batch's exceptions and riders into {@code tokens}. */
     private void addPreparedCopies(GameData gameData, TokenCopyBatch batch, UUID tokenControllerId, Card sourceCard,
                                    int count, List<Permanent> tokens) {

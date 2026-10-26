@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.cards.z.ZombieGoliath;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheScarabGod.class, GrizzlyBears.class, Plains.class, WrathOfGod.class, ZombieGoliath.class})
+@CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class, TheScarabGod.class, GrizzlyBears.class, Plains.class, WrathOfGod.class, ZombieGoliath.class})
 class TheScarabGodTest extends BaseCardTest {
 
     @Test
@@ -197,5 +200,74 @@ class TheScarabGodTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(scarabCard.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(scarabCard.getId()));
+    }
+
+    @Test
+    @DisplayName("The controller orders Queen Allenal and Parallel Lives before the Zombie copy is created")
+    void asksControllerToOrderTokenReplacements() {
+        activateCopyAbilityWithQueenAndParallelLives();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(tokensNamed("Grizzly Bears")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Applying Queen Allenal before Parallel Lives doubles the 4/4 Zombie copy and the added Soldier")
+    void queenFirstDoublesTheAddedSoldier() {
+        activateCopyAbilityWithQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        List<Permanent> copies = tokensNamed("Grizzly Bears");
+        assertThat(copies).hasSize(2);
+        assertThat(copies).allSatisfy(copy -> {
+            assertThat(copy.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
+            assertThat(copy.getCard().getColor()).isEqualTo(CardColor.BLACK);
+            assertThat(copy.getCard().getPower()).isEqualTo(4);
+            assertThat(copy.getCard().getToughness()).isEqualTo(4);
+        });
+        assertThat(tokensNamed("Soldier")).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Applying Parallel Lives before Queen Allenal doubles the Zombie copy and adds one Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        activateCopyAbilityWithQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(tokensNamed("Grizzly Bears")).hasSize(2);
+        assertThat(tokensNamed("Soldier")).hasSize(1);
+    }
+
+    private void activateCopyAbilityWithQueenAndParallelLives() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        Permanent scarab = harness.addToBattlefieldAndReturn(player1, new TheScarabGod());
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(bears));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(scarab);
+        harness.activateAbilityWithGraveyardTargets(player1, idx, 0, List.of(bears.getId()));
+        harness.passBothPriorities();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
+    }
+
+    private List<Permanent> tokensNamed(String name) {
+        return gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken() && p.getCard().getName().equals(name))
+                .toList();
     }
 }
