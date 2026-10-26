@@ -18,12 +18,14 @@ tokens created as one batch), tested in `BeastWithinTest` with Queen Allenal + P
 copy-group `TokenCreationEvent` (`TokenCreationEvent.copies`, `copyOf` = the copied token) and resumes in
 `PopulateSupport.createCopiesAfterReplacementOrder`, tested in `RootbornDefensesTest`; `TokenCopySupport` copies of a
 single card (no explicit attack targets, no Aura host) now run a copy-group event carrying a `TokenCopyBatch` and resume
-in `TokenCopySupport.createCopiesAfterReplacementOrder`, tested in `CacklingCounterpartTest`
+in `TokenCopySupport.createCopiesAfterReplacementOrder`, tested in `CacklingCounterpartTest`; copies of several
+different cards in the same paths now hold each other card's copies as a copy group (`TokenGroup.copyOf`) of the same
+event, tested in `SecondHarvestTest`
 
 **Failing tests:**
-- None yet. Write one per remaining path, e.g. Queen Allenal of Ruadach + Parallel Lives with a copy of two
-  different targets, an attacking copy (Kiki-Jiki-style tapped-and-attacking copy) or Mirror Match: the player must
-  be asked, and Queen first must give the doubled Soldier.
+- None yet. Write one per remaining path, e.g. Queen Allenal of Ruadach + Parallel Lives with an attacking copy
+  (Kiki-Jiki-style tapped-and-attacking copy) or Mirror Match: the player must be asked, and Queen first must give
+  the doubled Soldier.
 
 **What the rules require.** CR 616.1 / 616.1e: the player creating the tokens chooses the order of every
 replacement that modifies the token creation event. `PermanentControlSupport.applyCreateToken` (the
@@ -31,8 +33,7 @@ single-blueprint path) runs a `TokenCreationEvent` where count replacements (`To
 and every addition (`TokenAdditionReplacements`: Soldier, Frog, Squirrels, Map, Thopter, Mutagen, Tippy-Toe
 Food, solved-Case Clue, Bilbo Treasure, Academy Manufactor's "one of each") are ordered. Still fixed, with
 no prompt:
-- `TokenCopySupport` batches outside the ordered single-card path: copies of several different cards (one
-  `copyOf` per event; needs a list of copy groups), copies with explicit attack targets (`attackTargetIds`,
+- `TokenCopySupport` batches outside the ordered path: copies with explicit attack targets (`attackTargetIds`,
   `createTokenCopiesChoosingOpponentAttackTargets`; a doubled copy must keep its source's attack target), Aura-host
   copies (`createTokenCopiesAttachedTo`), and the callers that act on the returned ids
   (`createTokenCopiesWithoutReplacementOrder`: Human Time Lord Meta-Crisis, Satya, Cleaver Skaab/Ashling's
@@ -51,16 +52,18 @@ no prompt:
 
 **Why it's large.** Each remaining site creates tokens mid-effect and would need to suspend on the order
 prompt and resume (as `ChoiceHandlerService` does for `TokenCreationEvent`). Token copies have no
-`CreateTokenEffect` blueprint; `TokenCreationEvent.copies` gives the event a copy-group form, but its `copyOf`
-holds a single card, so multi-source copies (`TokenCopySupport` with several source cards) need a list of groups.
+`CreateTokenEffect` blueprint; `TokenCreationEvent.copies` gives the event a copy-group form, and copy
+`TokenGroup`s (`TokenGroup.copies`) hold the copies of further cards. Attacking copies would need each copy group to
+carry its source's attack target (and decide whether added tokens such as Queen's Soldier enter attacking).
 
 **Prompt to start it:**
 
 ```
 Implement missing-features-to-do.md entry 53: route the remaining token creation paths
-(TokenCopySupport's multi-source/attacking/Aura-host/id-returning batches and the token copy handlers that call
-getTokenCreationAmount; populate and single-card TokenCopySupport batches are done, see PopulateSupport,
-TokenCopySupport.createCopiesAfterReplacementOrder, TokenCreationEvent.copies and TokenCopyBatch)
+(TokenCopySupport's attacking/Aura-host/id-returning batches and the token copy handlers that call
+getTokenCreationAmount; populate and TokenCopySupport batches without attack targets or an Aura host are done, see
+PopulateSupport, TokenCopySupport.createCopiesAfterReplacementOrder, TokenCreationEvent.copies, TokenGroup.copies
+and TokenCopyBatch)
 through TokenCreationEvent and ReplacementOrderService, as PermanentControlSupport.applyCreateToken does
 with TokenCreationReplacements and TokenAdditionReplacements. Write the tests first. Don't run the full
 test suite; ask me. Don't commit until I say so.

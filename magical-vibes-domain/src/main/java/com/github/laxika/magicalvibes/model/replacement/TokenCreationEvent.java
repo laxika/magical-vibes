@@ -26,7 +26,9 @@ import java.util.function.Predicate;
  * <p>An event that creates copies of a token (populate, CR 701.36a, or a token-copy effect described by
  * {@link #copyBatch()}) has no blueprint of its own: {@link #copyOf()}
  * is the token being copied, {@link #tokenCount()} counts the copies and {@link #token()} only describes their kind
- * (types, subtypes, name and colour) for the effects that look at it.
+ * (types, subtypes, name and colour) for the effects that look at it. A token-copy effect copying several
+ * different cards in one event puts the copies of each other card in a copy group of {@link #addedTokens()}
+ * ({@link TokenGroup#copyOf()}), so a count replacement rewrites each card's copies.
  *
  * @param controllerId      the player creating the tokens, who orders the effects
  * @param tokenCount        the number of tokens from {@link #token()} as the event currently stands
@@ -55,11 +57,38 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
 
     /**
      * {@code count} tokens of one blueprint that the event creates besides those of {@link #token()}.
+     *
+     * <p>A token-copy event that copies several different cards ({@link #copyBatch()}) holds the copies of every
+     * card but {@link #copyOf()} as copy groups: {@code copyOf} is the card those tokens copy, {@code blueprint}
+     * only describes their kind and {@code copyCreature} says whether they enter as creatures.
+     *
+     * @param blueprint    the blueprint of the tokens, or the kind of the copies of a copy group
+     * @param count        the number of tokens as the event currently stands
+     * @param copyOf       the card a copy group's tokens copy, or {@code null} for tokens created from {@code blueprint}
+     * @param copyCreature whether a copy group's tokens are creatures; ignored for blueprint groups
      */
-    public record TokenGroup(CreateTokenEffect blueprint, int count) {
+    public record TokenGroup(CreateTokenEffect blueprint, int count, Card copyOf, boolean copyCreature) {
+
+        public TokenGroup(CreateTokenEffect blueprint, int count) {
+            this(blueprint, count, null, false);
+        }
+
+        /** {@code count} copies of {@code copyOf}, whose kind {@code kind} describes. */
+        public static TokenGroup copies(CreateTokenEffect kind, int count, Card copyOf, boolean creature) {
+            return new TokenGroup(kind, count, copyOf, creature);
+        }
 
         public boolean creature() {
-            return blueprint.primaryType() == CardType.CREATURE;
+            return copyOf != null ? copyCreature : blueprint.primaryType() == CardType.CREATURE;
+        }
+
+        /** This group with {@code newCount} tokens. */
+        public TokenGroup withCount(int newCount) {
+            return new TokenGroup(blueprint, newCount, copyOf, copyCreature);
+        }
+
+        private boolean sameTokens(TokenGroup other) {
+            return copyOf == other.copyOf && blueprint.equals(other.blueprint);
         }
     }
 
@@ -104,13 +133,13 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
                 creatureToken, List.of(), copyOf, batch);
     }
 
-    /** Merges groups of equal blueprints and sorts them, so the order effects added them in doesn't matter. */
+    /** Merges groups of equal blueprints copying the same card, if any, and sorts them, so the order effects added them in doesn't matter. */
     private static List<TokenGroup> canonical(List<TokenGroup> groups) {
         List<TokenGroup> merged = new ArrayList<>();
         for (TokenGroup group : groups) {
             int index = -1;
             for (int i = 0; i < merged.size(); i++) {
-                if (merged.get(i).blueprint().equals(group.blueprint())) {
+                if (merged.get(i).sameTokens(group)) {
                     index = i;
                     break;
                 }
@@ -118,7 +147,7 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
             if (index < 0) {
                 merged.add(group);
             } else {
-                merged.set(index, new TokenGroup(group.blueprint(), merged.get(index).count() + group.count()));
+                merged.set(index, group.withCount(merged.get(index).count() + group.count()));
             }
         }
         merged.removeIf(group -> group.count() <= 0);

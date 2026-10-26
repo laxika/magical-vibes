@@ -72,8 +72,7 @@ public class TokenCreationReplacements implements ReplacementCandidateSource<Tok
             if (forGroup.isPresent()) {
                 addsOnce = forGroup.get().effect() instanceof AddTokenCreationEffect;
                 added = true;
-                groups.add(new TokenCreationEvent.TokenGroup(group.blueprint(),
-                        replace(gameData, forGroup.get(), group.count())));
+                groups.add(group.withCount(replace(gameData, forGroup.get(), group.count())));
             } else {
                 groups.add(group);
             }

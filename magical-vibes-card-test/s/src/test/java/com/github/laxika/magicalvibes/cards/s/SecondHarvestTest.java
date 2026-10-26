@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BoundByMoonsilver;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.t.ThrabenInspector;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,7 +22,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SecondHarvest.class, ThrabenInspector.class, BoundByMoonsilver.class})
+@CardUsed({SecondHarvest.class, ThrabenInspector.class, BoundByMoonsilver.class, QueenAllenalOfRuadach.class,
+        ParallelLives.class})
 class SecondHarvestTest extends BaseCardTest {
 
     private List<Permanent> tokensNamed(Player player, String name) {
@@ -40,6 +45,76 @@ class SecondHarvestTest extends BaseCardTest {
         Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
         return perm;
+    }
+
+    @Test
+    @DisplayName("Queen Allenal adds a single Soldier to the copies of several different tokens")
+    void queenAddsOneSoldierToCopiesOfDifferentTokens() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        castWithSpiritAndSaproling();
+
+        assertThat(tokensNamed(player1, "Spirit")).hasSize(2);
+        assertThat(tokensNamed(player1, "Saproling")).hasSize(2);
+        assertThat(tokensNamed(player1, "Soldier")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("With Queen Allenal and Parallel Lives, the player orders them before the copies of different tokens are created")
+    void asksToOrderTokenReplacementsForCopiesOfDifferentTokens() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        castWithSpiritAndSaproling();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(tokensNamed(player1, "Spirit")).hasSize(1);
+        assertThat(tokensNamed(player1, "Saproling")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Applying Queen Allenal before Parallel Lives doubles each token's copy and the added Soldier")
+    void queenFirstDoublesEachCopyAndSoldier() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        castWithSpiritAndSaproling();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(tokensNamed(player1, "Spirit")).hasSize(3);
+        assertThat(tokensNamed(player1, "Saproling")).hasSize(3);
+        assertThat(tokensNamed(player1, "Soldier")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Applying Parallel Lives before Queen Allenal doubles each token's copy and adds one Soldier")
+    void parallelLivesFirstDoublesEachCopyAndAddsOneSoldier() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        castWithSpiritAndSaproling();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(tokensNamed(player1, "Spirit")).hasSize(3);
+        assertThat(tokensNamed(player1, "Saproling")).hasSize(3);
+        assertThat(tokensNamed(player1, "Soldier")).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Second Harvest");
+    }
+
+    private void castWithSpiritAndSaproling() {
+        addToken(player1, "Spirit", CardType.CREATURE, List.of(CardSubtype.SPIRIT));
+        addToken(player1, "Saproling", CardType.CREATURE, List.of(CardSubtype.SAPROLING));
+        harness.setHand(player1, List.of(new SecondHarvest()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 
     @Test

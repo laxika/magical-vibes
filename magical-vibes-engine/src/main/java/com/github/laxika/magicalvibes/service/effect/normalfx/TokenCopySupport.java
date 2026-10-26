@@ -152,10 +152,9 @@ public class TokenCopySupport {
         if (sourceCards == null || sourceCards.isEmpty()) {
             return List.of();
         }
-        if (orderReplacements && attackTargetIds == null && !chooseOpponentAttackTargets && auraHost == null
-                && sourceCards.stream().allMatch(card -> card == sourceCards.getFirst())) {
-            return createOrderedTokenCopies(gameData, entry, sourceCards.getFirst(), sourceCards.size(),
-                    sourcePermanent, tokenControllerId, effect, copyException);
+        if (orderReplacements && attackTargetIds == null && !chooseOpponentAttackTargets && auraHost == null) {
+            return createOrderedTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
+                    effect, copyException);
         }
 
         List<Permanent> tokens = new ArrayList<>();
@@ -346,24 +345,47 @@ public class TokenCopySupport {
     }
 
     /**
-     * Creates {@code count} copies of {@code sourceCard} as one token creation event whose count replacements and
-     * additions the creating player orders (CR 616.1). The creation may pause for that choice and then continue
-     * through {@link #createCopiesAfterReplacementOrder}; the ids are only returned when it doesn't.
+     * Creates a copy of each of {@code sourceCards} as one token creation event whose count replacements and
+     * additions the creating player orders (CR 616.1). The copies of the first card are the event's own tokens and
+     * the copies of every other card a copy group, so a doubler doubles each card's copies. The creation may pause
+     * for that choice and then continue through {@link #createCopiesAfterReplacementOrder}; the ids are only
+     * returned when it doesn't.
      */
-    private List<UUID> createOrderedTokenCopies(GameData gameData, StackEntry entry, Card sourceCard, int count,
+    private List<UUID> createOrderedTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                                 Permanent sourcePermanent, UUID tokenControllerId,
                                                 CreateTokenCopyOfTargetPermanentEffect effect,
                                                 Consumer<Card> copyException) {
-        Card template = buildTokenCopyCard(
-                sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard(), true);
-        if (copyException != null) {
-            copyException.accept(template);
+        List<Card> distinctCards = new ArrayList<>();
+        List<Integer> counts = new ArrayList<>();
+        for (Card sourceCard : sourceCards) {
+            int index = -1;
+            for (int i = 0; i < distinctCards.size(); i++) {
+                if (distinctCards.get(i) == sourceCard) {
+                    index = i;
+                    break;
+                }
+            }
+            if (index < 0) {
+                distinctCards.add(sourceCard);
+                counts.add(1);
+            } else {
+                counts.set(index, counts.get(index) + 1);
+            }
         }
-        TokenCreationEvent event = TokenCreationEvent.copies(tokenControllerId, count, sourceCard,
+        List<TokenCreationEvent.TokenGroup> copyGroups = new ArrayList<>();
+        for (int i = 1; i < distinctCards.size(); i++) {
+            Card template = copyTemplate(entry, distinctCards.get(i), effect, copyException);
+            copyGroups.add(TokenCreationEvent.TokenGroup.copies(TokenCreationReplacementSupport.copyKind(template),
+                    counts.get(i), distinctCards.get(i), TokenCreationReplacementSupport.entersAsCreature(template)));
+        }
+        Card sourceCard = distinctCards.getFirst();
+        Card template = copyTemplate(entry, sourceCard, effect, copyException);
+        TokenCreationEvent event = TokenCreationEvent.copies(tokenControllerId, counts.getFirst(), sourceCard,
                 TokenCreationReplacementSupport.copyKind(template),
                 TokenCreationReplacementSupport.entersAsCreature(template),
                 entry.getCard() == null ? null : entry.getCard().getSetCode(),
-                new TokenCopyBatch(entry, sourcePermanent, effect, copyException));
+                new TokenCopyBatch(entry, sourcePermanent, effect, copyException))
+                .withAddedTokens(copyGroups);
         var outcome = replacementOrderService.getObject().run(gameData, event);
         if (outcome instanceof ReplacementOrderService.Outcome.Completed<TokenCreationEvent> completed) {
             return createCopiesAfterReplacementOrder(gameData, completed.event());
@@ -381,23 +403,13 @@ public class TokenCopySupport {
         StackEntry entry = batch.entry();
         CreateTokenCopyOfTargetPermanentEffect effect = batch.effect();
         UUID tokenControllerId = event.controllerId();
-        Card sourceCard = event.copyOf();
         List<Permanent> tokens = new ArrayList<>();
-        for (int copy = 0; copy < event.tokenCount(); copy++) {
-            Card tokenCard = buildTokenCopyCard(
-                    sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard(), true);
-            if (batch.copyException() != null) {
-                batch.copyException().accept(tokenCard);
-            }
-            tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                    gameData, tokenControllerId, tokenCard);
-            Permanent preparedToken = withGrantedDeathEffects(withGrantedHaste(tokenCard, sourceCard, effect), effect);
-            if (tokenCard.hasType(CardType.PLANESWALKER) && tokenCard.getLoyalty() != null) {
-                preparedToken.setCounterCount(CounterType.LOYALTY, tokenCard.getLoyalty());
-            }
-            tokens.add(preparedToken);
-        }
+        addPreparedCopies(gameData, batch, tokenControllerId, event.copyOf(), event.tokenCount(), tokens);
         for (TokenCreationEvent.TokenGroup group : event.addedTokens()) {
+            if (group.copyOf() != null) {
+                addPreparedCopies(gameData, batch, tokenControllerId, group.copyOf(), group.count(), tokens);
+                continue;
+            }
             CreateTokenEffect blueprint = group.blueprint();
             for (int i = 0; i < group.count(); i++) {
                 Card addedCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
@@ -418,6 +430,31 @@ public class TokenCopySupport {
         }
         return enterPreparedTokenCopies(gameData, entry, tokens, batch.sourcePermanent(), tokenControllerId,
                 effect, attackTargets, false, false);
+    }
+
+    private Card copyTemplate(StackEntry entry, Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect,
+                              Consumer<Card> copyException) {
+        Card template = buildTokenCopyCard(
+                sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard(), true);
+        if (copyException != null) {
+            copyException.accept(template);
+        }
+        return template;
+    }
+
+    /** Builds {@code count} copies of {@code sourceCard} with the batch's exceptions and riders into {@code tokens}. */
+    private void addPreparedCopies(GameData gameData, TokenCopyBatch batch, UUID tokenControllerId, Card sourceCard,
+                                   int count, List<Permanent> tokens) {
+        CreateTokenCopyOfTargetPermanentEffect effect = batch.effect();
+        for (int copy = 0; copy < count; copy++) {
+            Card tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(gameData,
+                    tokenControllerId, copyTemplate(batch.entry(), sourceCard, effect, batch.copyException()));
+            Permanent preparedToken = withGrantedDeathEffects(withGrantedHaste(tokenCard, sourceCard, effect), effect);
+            if (tokenCard.hasType(CardType.PLANESWALKER) && tokenCard.getLoyalty() != null) {
+                preparedToken.setCounterCount(CounterType.LOYALTY, tokenCard.getLoyalty());
+            }
+            tokens.add(preparedToken);
+        }
     }
 
     private static int fixedStat(DynamicAmount stat) {
