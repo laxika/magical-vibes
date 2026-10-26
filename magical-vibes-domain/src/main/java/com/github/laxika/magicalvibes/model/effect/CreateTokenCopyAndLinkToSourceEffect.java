@@ -12,9 +12,11 @@ import java.util.List;
  *
  * <p>Beyond creating the token copy (of the permanent referenced by the stack entry's {@code targetId}),
  * this effect establishes the mutual bond Dance of Many needs: every created token (several with a
- * token doubler) is recorded under the source in {@code GameData.sourceCreatedTokens} and stores the
- * source's id in {@code chosenPermanentId}, and each token is given an {@code ON_SELF_LEAVES_BATTLEFIELD}
- * {@link RemoveLinkedPermanentEffect} so it sacrifices the enchantment if it leaves. The enchantment
+ * token doubler, plus any token a replacement adds or substitutes, such as Queen Allenal's Soldier) is
+ * recorded under the source in {@code GameData.sourceCreatedTokens} and stores the source's id in
+ * {@code chosenPermanentId}, and each token's permanent (not its copiable card) is given an
+ * {@code ON_SELF_LEAVES_BATTLEFIELD} {@link RemoveLinkedPermanentEffect} so it sacrifices the enchantment
+ * if it leaves. The enchantment
  * carries the reciprocal {@link ExileTokensCreatedWithSourceEffect} trigger on its own card, which exiles
  * every tracked token.
  */

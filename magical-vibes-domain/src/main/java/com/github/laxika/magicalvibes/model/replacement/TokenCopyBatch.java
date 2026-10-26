@@ -23,10 +23,14 @@ import java.util.function.Consumer;
  *                        {@code null} when the copies take {@code sourcePermanent}'s attack target
  * @param copyRider       set-up applied to each copy's permanent (not to added tokens) before it enters, such as a
  *                        link to a card that isn't part of the copiable values, or {@code null}
+ * @param tokenRider      set-up applied to every token the event creates before it enters, the copies and the
+ *                        tokens a replacement adds or substitutes alike (Queen Allenal's Soldier, Jinnie Fay's Cats
+ *                        or Dogs), for instructions of the creating effect such as a link to its source, or
+ *                        {@code null}
  */
 public record TokenCopyBatch(StackEntry entry, Permanent sourcePermanent, CreateTokenCopyOfTargetPermanentEffect effect,
                              Consumer<Card> copyException, Map<Card, UUID> attackTargets,
-                             Consumer<Permanent> copyRider) {
+                             Consumer<Permanent> copyRider, Consumer<Permanent> tokenRider) {
 
     public TokenCopyBatch {
         if (attackTargets != null) {
@@ -37,7 +41,7 @@ public record TokenCopyBatch(StackEntry entry, Permanent sourcePermanent, Create
 
     public TokenCopyBatch(StackEntry entry, Permanent sourcePermanent, CreateTokenCopyOfTargetPermanentEffect effect,
                           Consumer<Card> copyException) {
-        this(entry, sourcePermanent, effect, copyException, null, null);
+        this(entry, sourcePermanent, effect, copyException, null, null, null);
     }
 
     /** The attack target of the copies of {@code copiedCard}, or {@code null} when none was given for it. */

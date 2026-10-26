@@ -115,6 +115,23 @@ public class TokenCopySupport {
                 effect, null, copyException, false, null, true, copyRider);
     }
 
+    /**
+     * Creates a copy of each of {@code sourceCards} as one ordered token creation event (CR 616.1), setting up every
+     * token the event creates with {@code tokenRider} before it enters: the copies and the tokens a replacement adds
+     * or substitutes (Queen Allenal's Soldier, Jinnie Fay's Cats or Dogs) alike, since the creating effect's
+     * instructions apply to all of them. The ids are only returned when the creation doesn't pause for a choice.
+     */
+    public List<UUID> createTokenCopiesWithTokenRider(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                                      UUID tokenControllerId,
+                                                      CreateTokenCopyOfTargetPermanentEffect effect,
+                                                      Consumer<Permanent> tokenRider) {
+        if (sourceCards == null || sourceCards.isEmpty()) {
+            return List.of();
+        }
+        return createOrderedTokenCopies(gameData, entry, sourceCards, null, tokenControllerId, effect, null, null,
+                null, tokenRider);
+    }
+
     private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                          Permanent sourcePermanent, UUID tokenControllerId,
                                          CreateTokenCopyOfTargetPermanentEffect effect,
@@ -174,7 +191,7 @@ public class TokenCopySupport {
                     : attackTargetsByCopiedCard(sourceCards, attackTargetIds);
             if (attackTargetIds == null || attackTargets != null) {
                 return createOrderedTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                        effect, copyException, attackTargets, copyRider);
+                        effect, copyException, attackTargets, copyRider, null);
             }
         }
 
@@ -361,7 +378,7 @@ public class TokenCopySupport {
         if (jinnieFay != null) {
             playerInputService.beginJinnieFayTokenCopyChoice(gameData, new ChoiceContext.JinnieFayTokenCopyChoice(
                     tokenControllerId, jinnieFay, entry, effect, tokens, sourcePermanent,
-                    expandedAttackTargets, attackTargetIds != null, chooseOpponentAttackTargets));
+                    expandedAttackTargets, attackTargetIds != null, chooseOpponentAttackTargets, null));
             return List.of();
         }
         return enterPreparedTokenCopies(gameData, entry, tokens, sourcePermanent, tokenControllerId, effect,
@@ -379,7 +396,7 @@ public class TokenCopySupport {
                                                 Permanent sourcePermanent, UUID tokenControllerId,
                                                 CreateTokenCopyOfTargetPermanentEffect effect,
                                                 Consumer<Card> copyException, Map<Card, UUID> attackTargets,
-                                                Consumer<Permanent> copyRider) {
+                                                Consumer<Permanent> copyRider, Consumer<Permanent> tokenRider) {
         List<Card> distinctCards = new ArrayList<>();
         List<Integer> counts = new ArrayList<>();
         for (Card sourceCard : sourceCards) {
@@ -409,7 +426,8 @@ public class TokenCopySupport {
                 TokenCreationReplacementSupport.copyKind(template),
                 TokenCreationReplacementSupport.entersAsCreature(template),
                 entry.getCard() == null ? null : entry.getCard().getSetCode(),
-                new TokenCopyBatch(entry, sourcePermanent, effect, copyException, attackTargets, copyRider))
+                new TokenCopyBatch(entry, sourcePermanent, effect, copyException, attackTargets, copyRider,
+                        tokenRider))
                 .withAddedTokens(copyGroups);
         var outcome = replacementOrderService.getObject().run(gameData, event);
         if (outcome instanceof ReplacementOrderService.Outcome.Completed<TokenCreationEvent> completed) {
@@ -450,13 +468,16 @@ public class TokenCopySupport {
                 attackTargets.add(firstAttackTarget);
             }
         }
+        if (batch.tokenRider() != null) {
+            tokens.forEach(batch.tokenRider());
+        }
         boolean explicitAttackTargets = batch.attackTargets() != null;
         Card jinnieFay = tokens.isEmpty() ? null
                 : TokenCreationReplacementSupport.findJinnieFay(gameData, tokenControllerId);
         if (jinnieFay != null) {
             playerInputService.beginJinnieFayTokenCopyChoice(gameData, new ChoiceContext.JinnieFayTokenCopyChoice(
                     tokenControllerId, jinnieFay, entry, effect, tokens, batch.sourcePermanent(),
-                    attackTargets, explicitAttackTargets, false));
+                    attackTargets, explicitAttackTargets, false, batch.tokenRider()));
             return List.of();
         }
         return enterPreparedTokenCopies(gameData, entry, tokens, batch.sourcePermanent(), tokenControllerId,
@@ -550,8 +571,12 @@ public class TokenCopySupport {
             tokens = new ArrayList<>();
             for (int i = 0; i < context.tokens().size(); i++) {
                 Card replacementCard = TokenCardFactory.create(replacement, cat ? 2 : 3, cat ? 2 : 1, setCode);
-                tokens.add(withGrantedDeathEffects(
-                        withGrantedHaste(replacementCard, replacementCard, context.effect()), context.effect()));
+                Permanent replacementToken = withGrantedDeathEffects(
+                        withGrantedHaste(replacementCard, replacementCard, context.effect()), context.effect());
+                if (context.tokenRider() != null) {
+                    context.tokenRider().accept(replacementToken);
+                }
+                tokens.add(replacementToken);
             }
         }
         enterPreparedTokenCopies(gameData, context.entry(), tokens, context.sourcePermanent(),

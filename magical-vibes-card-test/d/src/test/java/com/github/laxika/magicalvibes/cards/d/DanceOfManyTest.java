@@ -2,7 +2,12 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JinnieFayJetmirsSecond;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -288,5 +293,115 @@ class DanceOfManyTest extends BaseCardTest {
         harness.clearPriorityPassed();
         resolveAllTriggers();
         harness.assertInGraveyard(player1, "Dance of Many");
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("The controller is asked to order Queen Allenal and Parallel Lives for the token copy")
+    void controllerIsAskedToOrderTokenReplacements() {
+        castDanceUnder(new QueenAllenalOfRuadach(), new ParallelLives());
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(tokenCopy(player1)).isNull();
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("Applying Queen Allenal before Parallel Lives doubles the copy and the added Soldier")
+    void queenFirstDoublesCopyAndSoldier() {
+        castDanceUnder(new QueenAllenalOfRuadach(), new ParallelLives());
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(tokenCopies(player1)).hasSize(2);
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2);
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("Applying Parallel Lives before Queen Allenal adds one undoubled Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        castDanceUnder(new QueenAllenalOfRuadach(), new ParallelLives());
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(tokenCopies(player1)).hasSize(2);
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("Leaving exiles the doubled copies and the added Soldiers")
+    void leavingExilesCopiesAndAddedSoldiers() {
+        castDanceUnder(new QueenAllenalOfRuadach(), new ParallelLives());
+        chooseReplacement("Queen Allenal of Ruadach");
+        resolveAllTriggers();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, danceOfMany(player1)));
+        harness.clearPriorityPassed();
+        resolveAllTriggers();
+
+        assertThat(tokenCopies(player1)).isEmpty();
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
+    }
+
+    @Test
+    @CardUsed(QueenAllenalOfRuadach.class)
+    @DisplayName("The added Soldier leaving sacrifices Dance and exiles the copy")
+    void addedSoldierLeavingSacrificesDance() {
+        castDanceUnder(new QueenAllenalOfRuadach());
+        assertThat(tokenCopies(player1)).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, findPermanent(player1, "Soldier")));
+        harness.clearPriorityPassed();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Dance of Many");
+        assertThat(tokenCopies(player1)).isEmpty();
+    }
+
+    @Test
+    @CardUsed(JinnieFayJetmirsSecond.class)
+    @DisplayName("A Cat that replaces the copy is linked to Dance of Many")
+    void jinnieFayCatIsLinkedToDance() {
+        castDanceUnder(new JinnieFayJetmirsSecond());
+        harness.handleListChoice(player1, "Cat");
+        Permanent cat = findPermanent(player1, "Cat");
+        assertThat(cat).isNotNull();
+        assertThat(tokenCopy(player1)).isNull();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, cat));
+        harness.clearPriorityPassed();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Dance of Many");
+    }
+
+    private void castDanceUnder(Card... replacements) {
+        for (var replacement : replacements) {
+            harness.addToBattlefield(player1, replacement);
+        }
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DanceOfMany()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
+    private List<Permanent> tokenCopies(Player player) {
+        return findPermanents(player, "Grizzly Bears").stream()
+                .filter(p -> p.getCard().isToken())
+                .toList();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 }

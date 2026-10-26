@@ -1,28 +1,29 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyAndLinkToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Resolves Dance of Many's enter-the-battlefield ability: create a token copy of the target nontoken
- * creature and forge the mutual leaves-the-battlefield bond between the enchantment and every token
- * created (recorded in {@code GameData.sourceCreatedTokens} for the enchantment's
+ * creature through the shared token-copy pipeline, so the controller orders the token creation
+ * replacements (CR 616.1), and forge the mutual leaves-the-battlefield bond between the enchantment and
+ * every token created (recorded in {@code GameData.sourceCreatedTokens} for the enchantment's
  * {@link com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect} trigger).
  */
 @Slf4j
@@ -30,9 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffectHandlerBean {
 
-    private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
+    private final TokenCopySupport tokenCopySupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,40 +49,23 @@ public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffect
             return;
         }
 
-        // Build the token as a plain copy (no P/T or type overrides), then attach the reciprocal
-        // "when this leaves the battlefield, sacrifice the linked enchantment" trigger before freezing.
-        Card sourceCard = targetCreature.getCard();
-        int tokenCount = gameQueryService.getTokenCreationAmount(
-                gameData, entry.getControllerId(), 1, sourceCard.getSubtypes(), true);
-        for (int copy = 0; copy < tokenCount; copy++) {
-            Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
-                    sourceCard, new CreateTokenCopyOfTargetPermanentEffect());
-            tokenCard.addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                    new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.SACRIFICE_PARTNER));
-            Card createdTokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                    gameData, entry.getControllerId(), tokenCard);
-
-            Permanent tokenPermanent = new Permanent(createdTokenCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, entry.getControllerId(), tokenPermanent);
-
-            // Forge the bond for every token the ability creates (a token doubler makes several): the
-            // source tracks them all for its exile trigger, and each token remembers the source for its
-            // sacrifice trigger.
-            if (sourceEnchantment != null) {
-                gameData.sourceCreatedTokens
-                        .computeIfAbsent(sourceEnchantment.getId(), ignored -> ConcurrentHashMap.newKeySet())
-                        .add(tokenPermanent.getId());
-                tokenPermanent.setChosenPermanentId(sourceEnchantment.getId());
-            }
-
-            gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
-            log.info("Game {} - Dance of Many creates a token copy of {}", gameData.id, sourceCard.getName());
-
-            // The token wasn't cast; any targeted ETB ability of the copied creature chooses its target at
-            // trigger time (CR 603.3) via the ETBTokenTargetTrigger path.
-            battlefieldEntryService.handleCreatureEnteredBattlefield(
-                    gameData, entry.getControllerId(), createdTokenCard, null, false);
-        }
+        // A Dance of Many that already left creates an unlinked token. Otherwise every token the ability
+        // creates is "the token": the doubled copies and the tokens a replacement adds or substitutes
+        // (Queen Allenal's Soldier, Jinnie Fay's Cats), since the creating effect's instructions apply to
+        // all of them. The "when the token leaves, sacrifice this enchantment" trigger is the enchantment's
+        // ability, not a copiable value of the token, so it rides on each token's permanent.
+        boolean linked = sourceEnchantment != null;
+        var copyOptions = new CreateTokenCopyOfTargetPermanentEffect(List.of(), Set.of(), null, null, Map.of(),
+                false, false, false, false, linked, false, null, Set.of(), false, Map.of(), List.of(), false, false,
+                new Fixed(1), false, Set.of(), false);
+        UUID enchantmentId = linked ? sourceEnchantment.getId() : null;
+        tokenCopySupport.createTokenCopiesWithTokenRider(gameData, entry, List.of(targetCreature.getCard()),
+                entry.getControllerId(), copyOptions, linked ? token -> {
+                    token.addPersistentTriggeredEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+                            new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.SACRIFICE_PARTNER));
+                    token.setChosenPermanentId(enchantmentId);
+                } : null);
+        log.info("Game {} - Dance of Many creates a token copy of {}", gameData.id,
+                targetCreature.getCard().getName());
     }
 }
