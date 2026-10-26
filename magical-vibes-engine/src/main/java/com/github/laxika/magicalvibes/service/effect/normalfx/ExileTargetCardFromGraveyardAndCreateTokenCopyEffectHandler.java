@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -45,8 +44,6 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final ExileService exileService;
-    private final GraveyardReturnSupport graveyardReturnSupport;
-    private final PermanentControlSupport permanentControlSupport;
     private final TokenCopySupport tokenCopySupport;
 
     @Override
@@ -106,64 +103,15 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         gameLogService.append(gameData, GameLog.textCardText(playerName + " exiles ", targetCard, " from a graveyard."));
 
-        if (e.exileOtherControlledTokensOfSubtype() == null) {
-            createOrderedTokenCopy(gameData, entry, e, targetCard);
-            return;
-        }
-
-        int createdPermanentCount = entry.getCreatedPermanentIds().size();
-        graveyardReturnSupport.createTokenCopyFromCard(gameData, entry, targetCard, e.additionalSubtypes(),
-                false, e.exileAtEndStep(), e.colorOverride(),
-                e.powerOverride(), e.toughnessOverride(), e.replaceSubtypes(), false,
-                new ArrayList<>(), e.additionalKeywords(), false, e.removeLegendary(),
-                e.additionalTypes(), e.sacrificeAtEndStep(), e.tappedAndAttacking(),
-                e.exileAtEndOfCombat());
-        if (e.grantHaste()) {
-            for (UUID createdId : entry.getCreatedPermanentIds().subList(createdPermanentCount,
-                    entry.getCreatedPermanentIds().size())) {
-                Permanent token = gameQueryService.findPermanentById(gameData, createdId);
-                if (token != null) {
-                    token.getPersistentGrantedKeywords().add(Keyword.HASTE);
-                }
-            }
-        }
-
-        if (e.exileOtherControlledTokensOfSubtype() != null) {
-            Set<UUID> createdByThisEffect = new HashSet<>(entry.getCreatedPermanentIds()
-                    .subList(createdPermanentCount, entry.getCreatedPermanentIds().size()));
-            PermanentPredicate filter = new PermanentAllOfPredicate(List.of(
-                    new PermanentIsTokenPredicate(),
-                    new PermanentHasSubtypePredicate(e.exileOtherControlledTokensOfSubtype()),
-                    new PermanentControlledBySourceControllerPredicate()));
-            FilterContext filterContext = FilterContext.of(gameData)
-                    .withSourceCardId(entry.getCard().getId())
-                    .withSourceControllerId(entry.getControllerId());
-            List<Permanent> toExile = new ArrayList<>();
-            for (Permanent permanent : gameData.playerBattlefields
-                    .getOrDefault(entry.getControllerId(), List.of())) {
-                if (!createdByThisEffect.contains(permanent.getId())
-                        && predicateEvaluationService.matchesPermanentPredicate(permanent, filter, filterContext)) {
-                    toExile.add(permanent);
-                }
-            }
-            for (Permanent permanent : toExile) {
-                permanentRemovalService.removePermanentToExile(gameData, permanent);
-                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is exiled."));
-            }
-            permanentRemovalService.removeOrphanedAuras(gameData);
-        }
-
-        if (e.createZombieTokenWithExiledCardStats()) {
-            entry.getCreatedPermanentIds().addAll(permanentControlSupport.applyCreateToken(
-                    gameData, entry.getControllerId(), zombieWithStatsOf(gameData, targetCard), 1,
-                    entry.getCard().getSetCode()));
-        }
+        createOrderedTokenCopy(gameData, entry, e, targetCard);
     }
 
     /**
      * Creates the copy as one token creation event whose count replacements and additions the controller orders
      * (CR 616.1). The creation may pause for that choice (or Jinnie Fay's), so Soul Separator's Zombie is spliced in
-     * as the entry's next step, where it waits for the copy and is its own creation event.
+     * as the entry's next step, where it waits for the copy and is its own creation event. Abyssal Harvester's
+     * "then exile all other Nightmare tokens you control" runs once every token of the event has entered, and spares
+     * each of them (doubled copies included), as the effect's instructions refer to all the tokens it creates.
      */
     private void createOrderedTokenCopy(GameData gameData, StackEntry entry,
                                         ExileTargetCardFromGraveyardAndCreateTokenCopyEffect e, Card targetCard) {
@@ -191,13 +139,42 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
         Consumer<Card> copyException = e.replaceSubtypes()
                 ? tokenCard -> tokenCopySupport.replaceCreatureTypes(tokenCard, additionalSubtypes)
                 : null;
-        if (attackTargetIds != null) {
+        if (e.exileOtherControlledTokensOfSubtype() != null) {
+            tokenCopySupport.createTokenCopiesThen(gameData, entry, List.of(targetCard), entry.getControllerId(),
+                    copyOptions, null, (game, tokens) -> exileOtherControlledTokensOfSubtype(game, entry,
+                            e.exileOtherControlledTokensOfSubtype(), tokens));
+        } else if (attackTargetIds != null) {
             tokenCopySupport.createTokenCopies(gameData, entry, List.of(targetCard), null,
                     entry.getControllerId(), copyOptions, attackTargetIds);
         } else {
             tokenCopySupport.createTokenCopiesWithCopyException(gameData, entry, List.of(targetCard), null,
                     entry.getControllerId(), copyOptions, copyException);
         }
+    }
+
+    private void exileOtherControlledTokensOfSubtype(GameData gameData, StackEntry entry, CardSubtype subtype,
+                                                     List<Permanent> createdTokens) {
+        Set<UUID> createdByThisEffect = new HashSet<>();
+        createdTokens.forEach(token -> createdByThisEffect.add(token.getId()));
+        PermanentPredicate filter = new PermanentAllOfPredicate(List.of(
+                new PermanentIsTokenPredicate(),
+                new PermanentHasSubtypePredicate(subtype),
+                new PermanentControlledBySourceControllerPredicate()));
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard().getId())
+                .withSourceControllerId(entry.getControllerId());
+        List<Permanent> toExile = new ArrayList<>();
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of())) {
+            if (!createdByThisEffect.contains(permanent.getId())
+                    && predicateEvaluationService.matchesPermanentPredicate(permanent, filter, filterContext)) {
+                toExile.add(permanent);
+            }
+        }
+        for (Permanent permanent : toExile) {
+            permanentRemovalService.removePermanentToExile(gameData, permanent);
+            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is exiled."));
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     /** Soul Separator's second token: a black Zombie whose P/T are the exiled card's P/T. */

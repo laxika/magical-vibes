@@ -3,11 +3,15 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.cards.d.DazzlingAngel;
 import com.github.laxika.magicalvibes.cards.e.EmpyreanEagle;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -19,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AbyssalHarvester.class, BearCub.class, Plains.class, DazzlingAngel.class, EmpyreanEagle.class})
+@CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class, AbyssalHarvester.class, BearCub.class, Plains.class, DazzlingAngel.class, EmpyreanEagle.class})
 class AbyssalHarvesterTest extends BaseCardTest {
 
     @Test
@@ -157,6 +161,79 @@ class AbyssalHarvesterTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
         assertThat(harness.getGameQueryService().getEffectiveColors(gd, copy))
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLUE);
+    }
+
+    @Test
+    @DisplayName("The controller orders Queen Allenal and Parallel Lives before the copy is created and other Nightmares are exiled")
+    void asksControllerToOrderTokenReplacementsBeforeExiling() {
+        Card oldNightmare = activateWithQueenAndParallelLives();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(tokensNamed("Bear Cub")).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(oldNightmare.getId()));
+    }
+
+    @Test
+    @DisplayName("Queen Allenal first doubles the Soldier; both Nightmare copies stay and the old Nightmare is exiled")
+    void queenFirstKeepsBothCopiesAndExilesOtherNightmares() {
+        Card oldNightmare = activateWithQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(tokensNamed("Bear Cub")).hasSize(2)
+                .allSatisfy(copy -> assertThat(copy.getCard().getSubtypes())
+                        .contains(CardSubtype.NIGHTMARE, CardSubtype.BEAR));
+        assertThat(tokensNamed("Soldier")).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(oldNightmare.getId()));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Parallel Lives first doubles the copy and Queen Allenal adds one Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        Card oldNightmare = activateWithQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(tokensNamed("Bear Cub")).hasSize(2);
+        assertThat(tokensNamed("Soldier")).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(oldNightmare.getId()));
+    }
+
+    private Card activateWithQueenAndParallelLives() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        Permanent harvester = harness.addToBattlefieldAndReturn(player1, new AbyssalHarvester());
+        harvester.setSummoningSick(false);
+        Card oldNightmare = token("Old Nightmare", CardSubtype.NIGHTMARE);
+        harness.addToBattlefield(player1, oldNightmare);
+        Permanent dyingCreature = harness.addToBattlefieldAndReturn(player2, new BearCub());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, dyingCreature));
+
+        int harvesterIndex = gd.playerBattlefields.get(player1.getId()).indexOf(harvester);
+        harness.activateAbilityWithGraveyardTargets(player1, harvesterIndex, 0,
+                List.of(dyingCreature.getCard().getId()));
+        harness.passBothPriorities();
+        return oldNightmare;
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
+    }
+
+    private List<Permanent> tokensNamed(String name) {
+        return gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken() && permanent.getCard().getName().equals(name))
+                .toList();
     }
 
     private Card token(String name, CardSubtype subtype) {
