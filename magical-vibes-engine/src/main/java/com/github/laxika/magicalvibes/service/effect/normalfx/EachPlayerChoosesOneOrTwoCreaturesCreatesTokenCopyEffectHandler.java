@@ -89,44 +89,60 @@ public class EachPlayerChoosesOneOrTwoCreaturesCreatesTokenCopyEffectHandler
         createCopiesAndCounters(gameData, chosenByPlayer, sourceCard);
     }
 
+    /**
+     * Creates each player's copy, in APNAP order, as that player's own token creation event whose replacements
+     * they order (CR 616.1), each starting once the previous player's tokens have entered (the creation may pause
+     * for the order prompt or Jinnie Fay). Once every player's tokens are on the battlefield, each player who chose
+     * a second creature puts +1/+1 counters equal to its power on every token they created this way, tokens a
+     * replacement adds or substitutes (Queen Allenal's Soldier) included.
+     */
     private void createCopiesAndCounters(GameData gameData, Map<UUID, List<UUID>> chosenByPlayer,
             Card sourceCard) {
-        List<CreatedCopy> createdCopies = new ArrayList<>();
-        for (Map.Entry<UUID, List<UUID>> choice : chosenByPlayer.entrySet()) {
-            List<UUID> selectedIds = choice.getValue();
-            Permanent copiedCreature = gameQueryService.findPermanentById(gameData, selectedIds.getFirst());
-            if (copiedCreature == null || !isControlledCreature(gameData, copiedCreature, choice.getKey())) {
+        createCopyForPlayer(gameData, List.copyOf(chosenByPlayer.entrySet()), 0, new LinkedHashMap<>(),
+                sourceCard);
+    }
+
+    private void createCopyForPlayer(GameData gameData, List<Map.Entry<UUID, List<UUID>>> choices, int index,
+            Map<UUID, List<UUID>> tokenIdsByPlayer, Card sourceCard) {
+        for (int i = index; i < choices.size(); i++) {
+            UUID playerId = choices.get(i).getKey();
+            Permanent copiedCreature = gameQueryService.findPermanentById(gameData, choices.get(i).getValue().getFirst());
+            if (copiedCreature == null || !isControlledCreature(gameData, copiedCreature, playerId)) {
                 continue;
             }
-
-            StackEntry copyEntry = new StackEntry(sourceCard, choice.getKey());
-            int expectedCopyCount = gameQueryService.getTokenCreationAmount(
-                    gameData, choice.getKey(), 1, copiedCreature.getCard().getSubtypes(),
-                    gameQueryService.isCreature(gameData, copiedCreature));
-            List<UUID> createdIds = tokenCopySupport.createTokenCopiesWithoutReplacementOrder(
-                    gameData, copyEntry, List.of(copiedCreature.getCard()), null,
-                    choice.getKey(), TOKEN_PROFILE);
-            int copyCount = Math.min(expectedCopyCount, createdIds.size());
-            createdCopies.add(new CreatedCopy(choice.getKey(), selectedIds,
-                    List.copyOf(createdIds.subList(0, copyCount)), copyEntry));
+            int next = i + 1;
+            tokenCopySupport.createTokenCopiesThen(gameData, new StackEntry(sourceCard, playerId),
+                    List.of(copiedCreature.getCard()), playerId, TOKEN_PROFILE, null,
+                    (game, tokens) -> {
+                        tokenIdsByPlayer.put(playerId, tokens.stream().map(Permanent::getId).toList());
+                        createCopyForPlayer(game, choices, next, tokenIdsByPlayer, sourceCard);
+                    });
+            return;
         }
+        putCounters(gameData, choices, tokenIdsByPlayer, sourceCard);
+    }
 
-        for (CreatedCopy createdCopy : createdCopies) {
-            if (createdCopy.selectedIds().size() < 2) {
+    private void putCounters(GameData gameData, List<Map.Entry<UUID, List<UUID>>> choices,
+            Map<UUID, List<UUID>> tokenIdsByPlayer, Card sourceCard) {
+        for (Map.Entry<UUID, List<UUID>> choice : choices) {
+            List<UUID> tokenIds = tokenIdsByPlayer.get(choice.getKey());
+            if (tokenIds == null || choice.getValue().size() < 2) {
                 continue;
             }
-            Permanent secondCreature = gameQueryService.findPermanentById(
-                    gameData, createdCopy.selectedIds().get(1));
+            Permanent secondCreature = gameQueryService.findPermanentById(gameData, choice.getValue().get(1));
             if (secondCreature == null) {
                 continue;
             }
             int counterCount = Math.max(0, gameQueryService.getEffectivePower(gameData, secondCreature));
-            for (UUID tokenId : createdCopy.tokenIds()) {
+            if (counterCount == 0) {
+                continue;
+            }
+            StackEntry counterEntry = new StackEntry(sourceCard, choice.getKey());
+            for (UUID tokenId : tokenIds) {
                 Permanent token = gameQueryService.findPermanentById(gameData, tokenId);
-                if (token != null && counterCount > 0) {
+                if (token != null) {
                     permanentCounterSupport.placeCounterOnPermanent(
-                            gameData, createdCopy.copyEntry(), token,
-                            CounterType.PLUS_ONE_PLUS_ONE, counterCount);
+                            gameData, counterEntry, token, CounterType.PLUS_ONE_PLUS_ONE, counterCount);
                 }
             }
         }
@@ -154,9 +170,5 @@ public class EachPlayerChoosesOneOrTwoCreaturesCreatesTokenCopyEffectHandler
         List<UUID> rotated = new ArrayList<>(players.subList(activeIndex, players.size()));
         rotated.addAll(players.subList(0, activeIndex));
         return rotated;
-    }
-
-    private record CreatedCopy(UUID controllerId, List<UUID> selectedIds,
-                               List<UUID> tokenIds, StackEntry copyEntry) {
     }
 }

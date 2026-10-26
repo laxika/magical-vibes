@@ -248,19 +248,6 @@ public class TokenCopySupport {
     }
 
     /**
-     * Creates token copies without pausing for the creating player to order the token creation replacements, so
-     * the returned ids are always the tokens created, for callers that go on to act on them. The replacements then
-     * apply in a fixed order.
-     */
-    public List<UUID> createTokenCopiesWithoutReplacementOrder(GameData gameData, StackEntry entry,
-                                                               List<Card> sourceCards, Permanent sourcePermanent,
-                                                               UUID tokenControllerId,
-                                                               CreateTokenCopyOfTargetPermanentEffect effect) {
-        return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                effect, null, null, null, false, null);
-    }
-
-    /**
      * Creates token copies of Auras that enter attached to {@code auraHost} rather than having their
      * controller choose what they enchant. A copy that could not enchant the host is not created.
      */
