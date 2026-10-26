@@ -32,10 +32,9 @@ public class LoseThisActivatedAbilityEffectHandler implements NormalEffectHandle
         if (source == null) {
             return;
         }
-        List<ActivatedAbility> printed = source.getCard().getActivatedAbilities();
-        for (int i = 0; i < printed.size(); i++) {
-            if (printed.get(i).getEffects().contains(effect)) {
-                source.getLostPrintedActivatedAbilityIndices().add(i);
+        for (ActivatedAbility ability : source.getCard().getActivatedAbilities()) {
+            if (ability.getEffects().contains(effect)) {
+                source.loseActivatedAbility(ability);
             }
         }
     }

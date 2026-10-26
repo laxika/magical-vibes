@@ -810,10 +810,15 @@ public class Permanent {
      *  constructor) and must stay immutable after construction.
      *  NOT cleared by {@link #resetModifiers()}. */
     private final List<ActivatedAbility> persistentGrantedActivatedAbilities = new ArrayList<>();
-    /** Indices into {@code getCard().getActivatedAbilities()} of printed activated abilities this
-     *  permanent has lost ("then this creature loses this ability", Great Fang Chroniclers). Permanent
-     *  state tied to this object; never cleared by {@link #resetModifiers()}. */
-    private final java.util.Set<Integer> lostPrintedActivatedAbilityIndices = new java.util.HashSet<>();
+    /** Printed activated abilities this permanent has lost ("then this creature loses this ability",
+     *  Great Fang Chroniclers), held by identity. Only the removed ability stays gone: if the permanent
+     *  becomes a copy of something else or changes face, the new card's abilities are other objects and
+     *  remain available, and the loss applies again if the permanent shows the original card once more.
+     *  Card instances (and so their abilities) are shared with AI simulation copies, so identity
+     *  survives the copy constructor. Never cleared by {@link #resetModifiers()}. */
+    @Getter(AccessLevel.NONE)
+    private final java.util.Set<ActivatedAbility> lostPrintedActivatedAbilities =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     /** When true, this permanent is a temporary copy (until end of turn) of another creature.
      *  At the cleanup step, the copy's floating layer-1 effect expires and the card reverts to
      *  {@link #preCopyCard} via {@link #revertEndOfTurnCopy()}.
@@ -1245,7 +1250,7 @@ public class Permanent {
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
         this.adaptOverridesUntilEndOfTurn = source.adaptOverridesUntilEndOfTurn;
         this.persistentGrantedActivatedAbilities.addAll(source.persistentGrantedActivatedAbilities);
-        this.lostPrintedActivatedAbilityIndices.addAll(source.lostPrintedActivatedAbilityIndices);
+        this.lostPrintedActivatedAbilities.addAll(source.lostPrintedActivatedAbilities);
         this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;
         this.preCopyCard = source.preCopyCard;
         this.nonCopiableKeywords.addAll(source.nonCopiableKeywords);
@@ -1264,6 +1269,22 @@ public class Permanent {
         this.copyUntilNextTurnControllerId = source.copyUntilNextTurnControllerId;
         this.untilNextTurnCopyLayers.addAll(source.untilNextTurnCopyLayers);
         this.timestamp = source.timestamp;
+    }
+
+    /** Records that this permanent has lost the given printed activated ability. */
+    public void loseActivatedAbility(ActivatedAbility ability) {
+        lostPrintedActivatedAbilities.add(ability);
+    }
+
+    /** Whether this permanent has lost exactly this ability object ("loses this ability"). */
+    public boolean hasLostActivatedAbility(ActivatedAbility ability) {
+        return lostPrintedActivatedAbilities.contains(ability);
+    }
+
+    /** Whether any printed activated ability of the card this permanent currently shows has been lost. */
+    public boolean hasLostAnyCurrentActivatedAbility() {
+        return !lostPrintedActivatedAbilities.isEmpty()
+                && card.getActivatedAbilities().stream().anyMatch(lostPrintedActivatedAbilities::contains);
     }
 
     public Card getOriginalCard() {

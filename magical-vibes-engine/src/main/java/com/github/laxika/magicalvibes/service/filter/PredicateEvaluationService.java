@@ -4514,7 +4514,7 @@ public class PredicateEvaluationService {
                         || hasPrintedManaAbility(permanent.getCard());
             }
         }
-        if (!permanent.getLostPrintedActivatedAbilityIndices().isEmpty() && !printedAbilitiesSuppressed(permanent)
+        if (permanent.hasLostAnyCurrentActivatedAbility() && !printedAbilitiesSuppressed(permanent)
                 && gameData != null) {
             Set<Keyword> perpetuallyRemoved = gameData.perpetualCardRemovedKeywords
                     .getOrDefault(permanent.getCard().getId(), Set.of());
@@ -4662,7 +4662,7 @@ public class PredicateEvaluationService {
         if (printedAbilitiesSuppressed(permanent)) {
             return false;
         }
-        if (permanent.getLostPrintedActivatedAbilityIndices().isEmpty()) {
+        if (!permanent.hasLostAnyCurrentActivatedAbility()) {
             return hasAnyPrintedAbility(permanent.getCard());
         }
         return hasAnyRemainingPrintedAbilityIgnoringKeywords(permanent);
@@ -4677,10 +4677,8 @@ public class PredicateEvaluationService {
     private static boolean hasAnyRemainingPrintedAbilityIgnoringKeywords(Permanent permanent) {
         Card card = permanent.getCard();
         List<ActivatedAbility> printed = card.getActivatedAbilities();
-        for (int i = 0; i < printed.size(); i++) {
-            if (!permanent.getLostPrintedActivatedAbilityIndices().contains(i)) {
-                return true;
-            }
+        if (printed.stream().anyMatch(ability -> !permanent.hasLostActivatedAbility(ability))) {
+            return true;
         }
         if (!card.getGraveyardActivatedAbilities().isEmpty()
                 || !card.getHandActivatedAbilities().isEmpty()

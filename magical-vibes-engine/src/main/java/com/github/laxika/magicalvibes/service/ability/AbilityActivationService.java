@@ -6735,7 +6735,8 @@ public class AbilityActivationService {
 
     /**
      * Returns the complete list of activated abilities currently available on a permanent: its own
-     * printed abilities (unless it has lost all abilities), abilities granted by static effects,
+     * printed abilities (unless it has lost all abilities, and minus any it has lost individually
+     * via "loses this ability"), abilities granted by static effects,
      * and temporary/until-next-turn abilities. The list order defines the {@code abilityIndex}
      * used by {@code activateAbility}.
      */
@@ -6761,6 +6762,7 @@ public class AbilityActivationService {
             abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         }
+        abilities.removeIf(permanent::hasLostActivatedAbility);
         permanent.getPersistentGrantedActivatedAbilities().forEach(ability -> {
             if (!abilities.contains(ability)) {
                 abilities.add(ability);
@@ -10755,8 +10757,7 @@ public class AbilityActivationService {
     }
 
     private void validateActivationLimitPerTurn(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int abilityIndex) {
-        if (abilityIndex < permanent.getCard().getActivatedAbilities().size()
-                && permanent.getLostPrintedActivatedAbilityIndices().contains(abilityIndex)) {
+        if (permanent.hasLostActivatedAbility(ability)) {
             throw new IllegalStateException("This permanent has lost that ability");
         }
         validateActivationLimitPerGame(gameData, playerId, permanent, ability, abilityIndex);

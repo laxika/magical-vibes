@@ -166,6 +166,44 @@ class PermanentViewFactoryTest {
     }
 
     @Test
+    @DisplayName("A printed activated ability the permanent lost is not listed; the others and granted ones are")
+    void lostActivatedAbilityIsNotListed() {
+        Card printed = card("Great Fang Chroniclers", CardType.CREATURE);
+        ActivatedAbility conjure = new ActivatedAbility(false, "{3}{G}", List.of(new DrawCardEffect()), "Conjure.");
+        printed.getActivatedAbilities().add(conjure);
+        printed.getActivatedAbilities().add(
+                new ActivatedAbility(true, "{0}", List.of(new DrawCardEffect()), "{T}: Draw a card."));
+        Permanent creature = new Permanent(printed);
+        creature.loseActivatedAbility(conjure);
+        ActivatedAbility granted = new ActivatedAbility(false, "{1}", List.of(new DrawCardEffect()), "{1}: Draw a card.");
+
+        PermanentView view = factory.create(creature, 0, 0, Set.of(), false, List.of(granted));
+
+        assertThat(view.card().activatedAbilities())
+                .extracting(ability -> ability.description())
+                .containsExactly("{T}: Draw a card.", "{1}: Draw a card.");
+    }
+
+    @Test
+    @DisplayName("A lost ability does not hide the ability at the same position of a card the permanent now copies")
+    void lostActivatedAbilityDoesNotHideCopiedCardsAbility() {
+        Card printed = card("Great Fang Chroniclers", CardType.CREATURE);
+        ActivatedAbility conjure = new ActivatedAbility(false, "{3}{G}", List.of(new DrawCardEffect()), "Conjure.");
+        printed.getActivatedAbilities().add(conjure);
+        Permanent creature = new Permanent(printed);
+        creature.loseActivatedAbility(conjure);
+        Card copied = card("Prodigal Pyromancer", CardType.CREATURE);
+        copied.getActivatedAbilities().add(
+                new ActivatedAbility(true, null, List.of(new DrawCardEffect()), "{T}: Ping."));
+
+        creature.setCard(copied);
+
+        assertThat(create(creature).card().activatedAbilities())
+                .extracting(ability -> ability.description())
+                .containsExactly("{T}: Ping.");
+    }
+
+    @Test
     @DisplayName("Summoning sickness clears once haste is granted from any source")
     void hasteClearsSummoningSickness() {
         Permanent creature = new Permanent(card("Grizzly Bears", CardType.CREATURE));

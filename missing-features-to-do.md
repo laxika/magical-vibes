@@ -9,35 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 52. "Loses this ability": client listing and copy effects
-
-**Status:** open · **Found:** 2026-10-23, after adding `LoseThisActivatedAbilityEffect` for Great Fang Chroniclers
-
-**Failing tests:** none yet.
-
-**What the rules require.** After "then this creature loses this ability" the permanent no longer has that
-activated ability. The engine records it by printed-ability index in `Permanent.lostPrintedActivatedAbilityIndices`,
-and activation and `PredicateEvaluationService.hasAnyPrintedAbility` honour it. Two gaps remain:
-- `PermanentViewFactory` strips activated abilities only for `losesAllAbilities`/`losesAllNonManaAbilities`, so the
-  client (and anything listing abilities from the view) still offers the lost ability until activation is refused.
-- The record is an index into the card's printed abilities. If the permanent later becomes a copy of something else
-  or changes face, the index would hide the new object's ability at that position. Only the removed ability itself
-  should stay gone, so the record should be tied to the ability, or cleared or reinterpreted when the copiable
-  values change. Not verified with a test yet.
-
-**Why it's large.** Small, but it touches the view layer and copy and transform handling.
-
-**Prompt to start it:**
-
-```
-Finish "loses this ability" (missing-features-to-do.md entry 52): hide lost printed activated abilities in
-PermanentViewFactory, and make the lost-ability record survive copy and transform correctly. Write tests first:
-Great Fang Chroniclers after using its ability, then becoming a copy of a creature with an activated ability.
-Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 53. Ordering token-creation replacements outside the single-blueprint creation path
 
 **Status:** open · **Found:** 2026-10-25, while finishing entry 35 (token replacement ordering)
@@ -486,6 +457,32 @@ GameQueryService.hasAuraWithEffect) and put Indomitable Might's effect directly 
 GrantEffectEffect; add a Dress Down test. Then have the permanent view list restrictions that attached
 Auras/Equipment impose through AttachedPermanentRestrictionEffect. Verify every CR number with the rules
 MCP. Don't run the full test suite; ask me. Don't commit until I say so.
+```
+
+## 66. Activated-ability indices shift when abilities drop out of the effective list
+
+**Status:** open · **Found:** 2026-10-26, while finishing entry 52 ("loses this ability" listing and copies)
+
+**Failing tests:** none yet.
+
+**What the rules require.** Each activated ability is its own ability; "activate only once each turn" and similar
+limits track that ability. The engine keys per-turn and per-game activation counts
+(`GameData.activatedAbilityUsesThisTurn`) by the position in `AbilityActivationService.getEffectiveActivatedAbilities`.
+That list drops abilities the permanent lost ("loses this ability", losing all non-mana abilities), so a later
+ability's position shifts mid-turn and it can inherit or lose another ability's count. Separately, `CardViewFactory`
+leaves exile-only abilities out of the client's list while the engine list keeps them, so a client index after an
+exile-only ability points one too far.
+
+**Why it's large.** Activation limits, the AI and the client all use the position; keying counts by ability
+identity touches every limit check.
+
+**Prompt to start it:**
+
+```
+Fix missing-features-to-do.md entry 66: key activation-limit counts by ability rather than effective-list position,
+and make the client ability list and the engine's effective list agree on exile-only abilities. Write tests first:
+a permanent with a lost ability before a once-per-turn ability, activated before and after the loss.
+Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 
 ---

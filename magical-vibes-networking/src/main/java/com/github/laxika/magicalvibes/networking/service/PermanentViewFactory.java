@@ -108,6 +108,9 @@ public class PermanentViewFactory {
         cardView = applyPermanentAnimation(cardView, p);
         cardView = applyStaticGrantedCardTypes(cardView, staticGrantedCardTypes, cardTypeOverriding);
         cardView = applyStaticGrantedSupertypes(cardView, staticGrantedSupertypes);
+        if (!p.isFaceDown()) {
+            cardView = stripLostActivatedAbilities(cardView, p);
+        }
         cardView = applyGrantedActivatedAbilities(cardView, grantedActivatedAbilities);
         cardView = applyStaticGrantedColors(cardView, p, staticGrantedColors, colorOverriding);
         // When creature loses all abilities, strip its own activated abilities and intrinsic tap
@@ -377,6 +380,29 @@ public class PermanentViewFactory {
             return cardView;
         }
         return cardView.toBuilder().activatedAbilities(List.of()).build();
+    }
+
+    /**
+     * Removes printed activated abilities the permanent has lost individually ("then this creature
+     * loses this ability"), so the client's ability list matches the engine's effective ability list.
+     * Must run before granted abilities are appended, while the view's abilities still map one-to-one
+     * onto the card's non-exile-only printed abilities.
+     */
+    private CardView stripLostActivatedAbilities(CardView cardView, Permanent p) {
+        if (!p.hasLostAnyCurrentActivatedAbility()) {
+            return cardView;
+        }
+        List<ActivatedAbility> printed = p.getCard().getActivatedAbilities().stream()
+                .filter(ability -> !ability.isExileOnly())
+                .toList();
+        List<ActivatedAbilityView> views = cardView.activatedAbilities();
+        List<ActivatedAbilityView> retained = new ArrayList<>();
+        for (int i = 0; i < views.size(); i++) {
+            if (i >= printed.size() || !p.hasLostActivatedAbility(printed.get(i))) {
+                retained.add(views.get(i));
+            }
+        }
+        return cardView.toBuilder().activatedAbilities(retained).build();
     }
 
     private CardView stripCardNonManaActivatedAbilities(CardView cardView, Card card) {

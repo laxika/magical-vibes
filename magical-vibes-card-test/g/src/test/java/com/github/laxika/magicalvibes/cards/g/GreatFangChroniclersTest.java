@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.m.Mirrorweave;
 import com.github.laxika.magicalvibes.cards.m.MuragandaPetroglyphs;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GreatFangChroniclers.class, MuragandaPetroglyphs.class})
+@CardUsed({GreatFangChroniclers.class, MuragandaPetroglyphs.class, Mirrorweave.class, ProdigalPyromancer.class})
 class GreatFangChroniclersTest extends BaseCardTest {
 
     @Test
@@ -139,6 +141,55 @@ class GreatFangChroniclersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Muraganda Petroglyphs")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("After losing the conjure ability, becoming a copy keeps the copied creature's activated ability")
+    void copyAfterLosingAbilityKeepsCopiedActivatedAbility() {
+        Permanent chroniclers = useConjureAbility();
+        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+        harness.setHand(player1, List.of(new Mirrorweave()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castAndResolveInstant(player1, 0, pyromancer.getId());
+        assertThat(chroniclers.getCard().getName()).isEqualTo("Prodigal Pyromancer");
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("The conjure ability stays lost once a temporary copy effect ends")
+    void conjureAbilityStaysLostAfterCopyEnds() {
+        Permanent chroniclers = useConjureAbility();
+        Permanent pyromancer = addCreatureReady(player2, new ProdigalPyromancer());
+        harness.setHand(player1, List.of(new Mirrorweave()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castAndResolveInstant(player1, 0, pyromancer.getId());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        assertThat(chroniclers.getCard().getName()).isEqualTo("Great Fang Chroniclers");
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+        assertThat(findPermanents(player1, "Muraganda Petroglyphs")).hasSize(1);
+    }
+
+    private Permanent useConjureAbility() {
+        Permanent chroniclers = addReadyChroniclers(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        return chroniclers;
     }
 
     private Permanent addReadyChroniclers(Player player) {
