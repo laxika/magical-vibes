@@ -126,6 +126,24 @@ class SaheeliTheGiftedTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("-7 with Queen Allenal gives her added Soldier haste too and exiles it at the next end step")
+    void minusSevenSoldierGainsHasteAndIsExiled() {
+        Permanent saheeli = addReadySaheeli(7);
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+
+        harness.activateAbility(player1, battlefieldIndex(saheeli), 2, null, null);
+        harness.passBothPriorities();
+
+        Permanent soldier = findPermanents(player1, "Soldier").getFirst();
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.HASTE)).isTrue();
+        assertThat(tokenCopies("Ornithopter")).allMatch(copy -> gqs.hasKeyword(gd, copy, Keyword.HASTE));
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .anyMatch(action -> action.permanentId().equals(soldier.getId())
+                        && action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
+    }
+
     private void activateMinusSevenWithQueenAndParallelLives() {
         Permanent saheeli = addReadySaheeli(7);
         harness.addToBattlefield(player1, new WornPowerstone());

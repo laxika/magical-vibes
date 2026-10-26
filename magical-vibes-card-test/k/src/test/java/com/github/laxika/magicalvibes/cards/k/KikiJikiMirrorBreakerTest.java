@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.b.BlindWithAnger;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KikiJikiMirrorBreaker.class, WanderingOnes.class, Forest.class, BlindWithAnger.class})
+@CardUsed({KikiJikiMirrorBreaker.class, WanderingOnes.class, Forest.class, BlindWithAnger.class,
+        QueenAllenalOfRuadach.class})
 class KikiJikiMirrorBreakerTest extends BaseCardTest {
 
     @Test
@@ -43,6 +45,28 @@ class KikiJikiMirrorBreakerTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
                         false, null, null, player1.getId()));
+    }
+
+    @Test
+    @DisplayName("Queen Allenal's added Soldier is sacrificed at the next end step but doesn't get the copy's haste")
+    void queenAllenalSoldierIsSacrificedWithoutHaste() {
+        addKikiJikiReady(player1);
+        harness.addToBattlefield(player1, new WanderingOnes());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Wandering Ones"));
+        harness.passBothPriorities();
+
+        Permanent copy = findPermanents(player1, "Wandering Ones").stream()
+                .filter(p -> p.getCard().isToken())
+                .findFirst().orElseThrow();
+        Permanent soldier = findPermanents(player1, "Soldier").getFirst();
+        assertThat(gqs.hasKeyword(gd, copy, Keyword.HASTE)).isTrue();
+        assertThat(copy.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.HASTE)).isFalse();
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .anyMatch(action -> action.permanentId().equals(soldier.getId())
+                        && action.kind() == DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
     }
 
     @Test

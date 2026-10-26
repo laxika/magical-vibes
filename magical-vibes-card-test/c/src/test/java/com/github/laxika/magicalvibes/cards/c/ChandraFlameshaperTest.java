@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AjaniCallerOfThePride;
 import com.github.laxika.magicalvibes.cards.b.BurstLightning;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -24,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ChandraFlameshaper.class, AjaniCallerOfThePride.class, BurstLightning.class,
-        Forest.class, LlanowarElves.class})
+        Forest.class, LlanowarElves.class, QueenAllenalOfRuadach.class})
 class ChandraFlameshaperTest extends BaseCardTest {
 
     @Test
@@ -74,6 +75,33 @@ class ChandraFlameshaperTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("+1 with Queen Allenal: her added Soldier gets neither the copy's haste nor its sacrifice trigger")
+    void plusOneQueenAllenalSoldierHasNoCopyExceptions() {
+        addReadyChandra(player1, 4);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()
+                        && permanent.getCard().getName().equals("Llanowar Elves"))
+                .findFirst()
+                .orElseThrow();
+        Permanent soldier = findPermanents(player1, "Soldier").getFirst();
+        assertThat(gqs.hasKeyword(gd, copy, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.HASTE)).isFalse();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(copy);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(soldier);
     }
 
     @Test

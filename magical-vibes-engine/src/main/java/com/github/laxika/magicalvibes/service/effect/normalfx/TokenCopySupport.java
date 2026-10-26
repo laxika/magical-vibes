@@ -438,7 +438,11 @@ public class TokenCopySupport {
     /**
      * Builds and enters the copies and the added tokens of a token-copy event whose replacements have all been
      * applied in the order the creating player chose, Jinnie Fay's and the token-kind replacements (Divine Visitation,
-     * Fisher's Talent) included, so they aren't replaced again as they enter. All of them enter together.
+     * Fisher's Talent) included, so they aren't replaced again as they enter. All of them enter together. An added
+     * token (Queen Allenal's Soldier, Chatterfang's Squirrels, Stridehangar Automaton's Thopter, ...) copies nothing,
+     * but the creating effect's instructions apply to it, "those tokens gain haste" included (Queen Allenal, Chatterfang
+     * and Stridehangar Automaton rulings); an "except it has haste" exception is part of the copy (CR 707.9a), so an
+     * added token doesn't get it.
      */
     public List<UUID> createCopiesAfterReplacementOrder(GameData gameData, TokenCreationEvent event) {
         TokenCopyBatch batch = event.copyBatch();
@@ -471,8 +475,7 @@ public class TokenCopySupport {
             for (int i = 0; i < group.count(); i++) {
                 Card addedCard = TokenCardFactory.create(blueprint, fixedStat(blueprint.power()),
                         fixedStat(blueprint.toughness()), event.sourceSetCode());
-                tokens.add(blueprint.subtypes() != null && blueprint.subtypes().contains(CardSubtype.SQUIRREL)
-                        ? withGrantedHaste(addedCard, addedCard, effect) : new Permanent(addedCard));
+                tokens.add(withGrantedHaste(addedCard, addedCard, effect));
                 attackTargets.add(firstAttackTarget);
                 copiedCards.add(null);
             }

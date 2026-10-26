@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -13,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @CardRegistration(set = "CHK", collectorNumber = "175")
 @CardRegistration(set = "V11", collectorNumber = "4")
@@ -29,7 +32,9 @@ public class KikiJikiMirrorBreaker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new CreateTokenCopyOfTargetPermanentEffect(true, false, true)),
+                List.of(new CreateTokenCopyOfTargetPermanentEffect(
+                        List.of(), Set.of(), null, null, Map.of(), false, false, true, false, false, false,
+                        null, Set.of(Keyword.HASTE))),
                 "{T}: Create a token that's a copy of target nonlegendary creature you control, except it has haste. Sacrifice it at the beginning of the next end step.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

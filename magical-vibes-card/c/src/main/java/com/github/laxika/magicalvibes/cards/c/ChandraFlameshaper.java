@@ -3,17 +3,23 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "81")
 @CardRegistration(set = "FDN", collectorNumber = "360")
@@ -31,7 +37,10 @@ public class ChandraFlameshaper extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new CreateTokenCopyOfTargetPermanentEffect(true, false, true)),
+                List.of(new CreateTokenCopyOfTargetPermanentEffect(
+                        List.of(), Set.of(), null, null, Map.of(), false, false, false, false, false, false,
+                        null, Set.of(Keyword.HASTE), false,
+                        Map.of(EffectSlot.END_STEP_TRIGGERED, List.<CardEffect>of(new SacrificeSelfEffect())))),
                 "+1: Create a token that's a copy of target creature you control, except it has haste and \"At the beginning of the end step, sacrifice this token.\"",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

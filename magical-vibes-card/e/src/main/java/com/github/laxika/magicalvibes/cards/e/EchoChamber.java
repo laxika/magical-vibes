@@ -19,7 +19,7 @@ public class EchoChamber extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}",
-                List.of(new CreateTokenCopyOfTargetPermanentEffect(true, true)),
+                List.of(new CreateTokenCopyOfTargetPermanentEffect(true, true).withHasteUntilEndOfTurn()),
                 "{4}, {T}: An opponent chooses target creature they control. Create a token that's a copy of that creature. "
                         + "That token gains haste until end of turn. Exile the token at the beginning of the next end step. "
                         + "Activate only as a sorcery.",

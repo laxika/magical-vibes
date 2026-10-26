@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -43,9 +44,13 @@ public class SaheeliRadiantCreator extends Card {
                                         5,
                                         5,
                                         Map.of(),
-                                        true,
+                                        false,
                                         false,
                                         true,
-                                        false)))));
+                                        false,
+                                        false,
+                                        false,
+                                        null,
+                                        Set.of(Keyword.HASTE))))));
     }
 }
