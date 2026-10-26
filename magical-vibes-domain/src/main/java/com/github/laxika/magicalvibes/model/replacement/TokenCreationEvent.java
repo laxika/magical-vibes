@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.replacement;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -22,6 +23,10 @@ import java.util.function.Predicate;
  * player creating the tokens orders the effects (CR 616.1); once all of them have applied, {@link #tokenCount()} tokens are created from
  * {@link #token()} together with every group of {@link #addedTokens()}.
  *
+ * <p>An event that creates copies of a token (populate, CR 701.36a) has no blueprint of its own: {@link #copyOf()}
+ * is the token being copied, {@link #tokenCount()} counts the copies and {@link #token()} only describes their kind
+ * (types, subtypes, name and colour) for the effects that look at it.
+ *
  * @param controllerId      the player creating the tokens, who orders the effects
  * @param tokenCount        the number of tokens from {@link #token()} as the event currently stands
  * @param token             the blueprint of the tokens being created
@@ -32,11 +37,13 @@ import java.util.function.Predicate;
  * @param creatureToken     whether the tokens of {@link #token()} are creatures, which decides whether creature-only effects apply
  * @param addedTokens       the other tokens created by the same event: the blueprint's simultaneous tokens and the
  *                          tokens replacement effects added, one group per distinct blueprint in a canonical order
+ * @param copyOf            the token whose copies {@link #tokenCount()} counts, or {@code null} when they are created
+ *                          from {@link #token()}
  */
 public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> appliedKeys, CreateTokenEffect token,
                                  int power, int toughness, String sourceSetCode,
                                  Map<EffectSlot, List<EffectRegistration>> additionalEffects,
-                                 boolean creatureToken, List<TokenGroup> addedTokens) implements ReplacementEvent {
+                                 boolean creatureToken, List<TokenGroup> addedTokens, Card copyOf) implements ReplacementEvent {
 
     private static final Comparator<TokenGroup> GROUP_ORDER = Comparator
             .comparing((TokenGroup group) -> group.blueprint().tokenName())
@@ -62,7 +69,25 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
                               int power, int toughness, String sourceSetCode,
                               Map<EffectSlot, List<EffectRegistration>> additionalEffects, boolean creatureToken) {
         this(controllerId, tokenCount, appliedKeys, token, power, toughness, sourceSetCode, additionalEffects,
-                creatureToken, List.of());
+                creatureToken, List.of(), null);
+    }
+
+    public TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> appliedKeys, CreateTokenEffect token,
+                              int power, int toughness, String sourceSetCode,
+                              Map<EffectSlot, List<EffectRegistration>> additionalEffects, boolean creatureToken,
+                              List<TokenGroup> addedTokens) {
+        this(controllerId, tokenCount, appliedKeys, token, power, toughness, sourceSetCode, additionalEffects,
+                creatureToken, addedTokens, null);
+    }
+
+    /**
+     * An event creating {@code count} copies of {@code copyOf}; {@code kind} describes those copies for the
+     * effects that look at the kind of token being created.
+     */
+    public static TokenCreationEvent copies(UUID controllerId, int count, Card copyOf, CreateTokenEffect kind,
+                                            boolean creatureToken, String sourceSetCode) {
+        return new TokenCreationEvent(controllerId, count, Set.of(), kind, 0, 0, sourceSetCode, Map.of(),
+                creatureToken, List.of(), copyOf);
     }
 
     /** Merges groups of equal blueprints and sorts them, so the order effects added them in doesn't matter. */
@@ -121,12 +146,12 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
 
     public TokenCreationEvent withTokenCount(int newTokenCount) {
         return new TokenCreationEvent(controllerId, newTokenCount, appliedKeys, token, power, toughness,
-                sourceSetCode, additionalEffects, creatureToken, addedTokens);
+                sourceSetCode, additionalEffects, creatureToken, addedTokens, copyOf);
     }
 
     public TokenCreationEvent withAddedTokens(List<TokenGroup> newAddedTokens) {
         return new TokenCreationEvent(controllerId, tokenCount, appliedKeys, token, power, toughness,
-                sourceSetCode, additionalEffects, creatureToken, newAddedTokens);
+                sourceSetCode, additionalEffects, creatureToken, newAddedTokens, copyOf);
     }
 
     /** This event with {@code count} more tokens of {@code blueprint}. */
@@ -141,12 +166,12 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
         Set<String> keys = new HashSet<>(appliedKeys);
         keys.add(key);
         return new TokenCreationEvent(controllerId, tokenCount, keys, token, power, toughness,
-                sourceSetCode, additionalEffects, creatureToken, addedTokens);
+                sourceSetCode, additionalEffects, creatureToken, addedTokens, copyOf);
     }
 
     @Override
     public TokenCreationEvent withoutAppliedKeys() {
         return new TokenCreationEvent(controllerId, tokenCount, Set.of(), token, power, toughness,
-                sourceSetCode, additionalEffects, creatureToken, addedTokens);
+                sourceSetCode, additionalEffects, creatureToken, addedTokens, copyOf);
     }
 }

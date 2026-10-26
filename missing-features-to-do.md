@@ -14,7 +14,9 @@ Remove an entry once the feature has landed and its tests pass.
 **Status:** partial · **Found:** 2026-10-25, while finishing entry 35 (token replacement ordering) ·
 **Progress:** 2026-10-26, every addition in the single-blueprint path is now ordered;
 `DestructionSupport.createTokenForPlayer` now delegates to `applyCreateToken` (ordered, Jinnie Fay asked,
-tokens created as one batch), tested in `BeastWithinTest` with Queen Allenal + Parallel Lives
+tokens created as one batch), tested in `BeastWithinTest` with Queen Allenal + Parallel Lives; populate now runs a
+copy-group `TokenCreationEvent` (`TokenCreationEvent.copies`, `copyOf` = the copied token) and resumes in
+`PopulateSupport.createCopiesAfterReplacementOrder`, tested in `RootbornDefensesTest`
 
 **Failing tests:**
 - None yet. Write one per path, e.g. Queen Allenal of Ruadach + Parallel Lives with a token copy
@@ -27,8 +29,11 @@ single-blueprint path) runs a `TokenCreationEvent` where count replacements (`To
 and every addition (`TokenAdditionReplacements`: Soldier, Frog, Squirrels, Map, Thopter, Mutagen, Tippy-Toe
 Food, solved-Case Clue, Bilbo Treasure, Academy Manufactor's "one of each") are ordered. Still fixed, with
 no prompt:
-- `TokenCopySupport`, `PopulateSupport` and the copy handlers
-  that call `getTokenCreationAmount` (multiplier first, additions unmultiplied).
+- `TokenCopySupport` and the copy handlers that call `getTokenCreationAmount` (multiplier first, additions
+  unmultiplied). The copy-group event form now exists; they need a completion that rebuilds their copies (copy
+  exceptions, haste/death riders, attack targets, Aura hosts) from the event, like populate's.
+- Populate never asks about Jinnie Fay, and its copies enter before the event's added tokens (two entry batches
+  rather than one simultaneous batch).
 - Jinnie Fay's choice is always asked first, before the event is ordered, so the player can't apply Tippy-Toe
   (or a doubler) before Jinnie Fay replaces the tokens.
 - `replaceTokenSubtypeIfApplicable` / `replaceCreatureTokenIfApplicable` (Divine Visitation and similar) apply
@@ -36,13 +41,14 @@ no prompt:
 
 **Why it's large.** Each remaining site creates tokens mid-effect and would need to suspend on the order
 prompt and resume (as `ChoiceHandlerService` does for `TokenCreationEvent`). Token copies have no
-`CreateTokenEffect` blueprint, so the event needs a copy-group form.
+`CreateTokenEffect` blueprint; `TokenCreationEvent.copies` gives the event a copy-group form, but its `copyOf`
+holds a single card, so multi-source copies (`TokenCopySupport` with several source cards) need a list of groups.
 
 **Prompt to start it:**
 
 ```
 Implement missing-features-to-do.md entry 53: route the remaining token creation paths
-(TokenCopySupport, PopulateSupport, the token copy handlers)
+(TokenCopySupport, the token copy handlers; populate is done, see PopulateSupport and TokenCreationEvent.copies)
 through TokenCreationEvent and ReplacementOrderService, as PermanentControlSupport.applyCreateToken does
 with TokenCreationReplacements and TokenAdditionReplacements. Write the tests first. Don't run the full
 test suite; ask me. Don't commit until I say so.

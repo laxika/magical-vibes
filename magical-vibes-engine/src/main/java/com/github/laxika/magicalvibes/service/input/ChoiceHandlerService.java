@@ -195,6 +195,7 @@ public class ChoiceHandlerService {
     private final EachPlayerChoosesColorThenExileOtherPermanentsEffectHandler
             eachPlayerChoosesColorThenExileOtherPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PopulateSupport populateSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport tokenCopySupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveUpToCountersFromAllPermanentsEffectHandler
@@ -2127,10 +2128,14 @@ public class ChoiceHandlerService {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             }
             case TokenCreationEvent tokens -> {
-                List<UUID> createdIds = permanentControlSupport.applyCreateTokenAfterReplacementOrder(gameData, tokens);
                 StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-                if (pendingEntry != null) {
-                    pendingEntry.getCreatedPermanentIds().addAll(createdIds);
+                if (tokens.copyOf() != null) {
+                    populateSupport.createCopiesAfterReplacementOrder(gameData, tokens, pendingEntry);
+                } else {
+                    List<UUID> createdIds = permanentControlSupport.applyCreateTokenAfterReplacementOrder(gameData, tokens);
+                    if (pendingEntry != null) {
+                        pendingEntry.getCreatedPermanentIds().addAll(createdIds);
+                    }
                 }
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             }

@@ -92,6 +92,17 @@ public final class TokenCreationReplacementSupport {
                         && !set.cardTypes().contains(CardType.CREATURE));
     }
 
+    /**
+     * A blueprint describing copies of {@code tokenCard} (its types, subtypes, name and colour) for the token
+     * creation replacements that look at the kind of token being created; the copies themselves are built from
+     * the card, not from this blueprint.
+     */
+    public static CreateTokenEffect copyKind(Card tokenCard) {
+        return new CreateTokenEffect(tokenCard.getType(), 1, tokenCard.getName(), 0, 0, tokenCard.getColor(),
+                null, List.copyOf(tokenCard.getSubtypes()), Set.of(), Set.copyOf(tokenCard.getAdditionalTypes()),
+                false, false, Map.of(), List.of(), false, false, false, 0, Set.of(), Set.of());
+    }
+
     /** Applies token-profile replacements before a token permanent is created. */
     public static CreateTokenEffect replaceTokenSubtypeIfApplicable(GameData gameData,
                                                                      UUID controllerId,

@@ -1,24 +1,26 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 
 /**
- * The two halves of populate (CR 701.36): finding the creature tokens a player controls, and
+ * The two halves of populate (CR 701.36a): finding the creature tokens a player controls, and
  * creating the copy of the one they chose.
  *
  * <p>{@link PopulateEffectHandler} needs the first half to decide between "no token, do nothing",
@@ -33,6 +35,8 @@ public class PopulateSupport {
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final ObjectProvider<ReplacementOrderService> replacementOrderService;
+    private final ObjectProvider<PermanentControlSupport> permanentControlSupport;
 
     /** The creature tokens {@code controllerId} controls that can be chosen — the legal populate choices. */
     public List<Permanent> creatureTokensControlledBy(GameData gameData, UUID controllerId) {
@@ -50,13 +54,31 @@ public class PopulateSupport {
         return tokens;
     }
 
-    /** Creates a token copy of {@code sourceToken} for {@code controllerId}, once per token multiplier. */
+    /**
+     * Creates a token copy of {@code sourceToken} for {@code controllerId} as a token creation event whose count
+     * replacements and additions the player orders (CR 616.1). The creation may pause for that choice and then
+     * continue through {@link #createCopiesAfterReplacementOrder}.
+     */
     public void createCopy(GameData gameData, UUID controllerId, Permanent sourceToken, StackEntry entry) {
         Card sourceCard = sourceToken.getCard();
-        int tokenMultiplier = gameQueryService.getTokenCreationAmount(
-                gameData, controllerId, 1, sourceCard.getSubtypes(), sourceCard.hasType(CardType.CREATURE));
+        TokenCreationEvent event = TokenCreationEvent.copies(controllerId, 1, sourceCard,
+                TokenCreationReplacementSupport.copyKind(sourceCard),
+                TokenCreationReplacementSupport.entersAsCreature(sourceCard),
+                entry == null || entry.getCard() == null ? null : entry.getCard().getSetCode());
+        var outcome = replacementOrderService.getObject().run(gameData, event);
+        if (outcome instanceof ReplacementOrderService.Outcome.Completed<TokenCreationEvent> completed) {
+            createCopiesAfterReplacementOrder(gameData, completed.event(), entry);
+        }
+    }
 
-        for (int copy = 0; copy < tokenMultiplier; copy++) {
+    /**
+     * Creates the copies and the added tokens of a populate event whose replacements have all been applied in the
+     * order the creating player chose, recording them on {@code entry} when there is one.
+     */
+    public void createCopiesAfterReplacementOrder(GameData gameData, TokenCreationEvent event, StackEntry entry) {
+        UUID controllerId = event.controllerId();
+        Card sourceCard = event.copyOf();
+        for (int copy = 0; copy < event.tokenCount(); copy++) {
             Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
                     sourceCard, new CreateTokenCopyOfTargetPermanentEffect());
             tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
@@ -80,16 +102,11 @@ public class PopulateSupport {
                     gameData, controllerId, List.of(tokenPermanent.getId()));
         }
 
-        int additionalMutagenCount = TokenCreationReplacementSupport.additionalMutagenTokenCount(
-                gameData, controllerId, tokenMultiplier);
-        for (int mutagen = 0; mutagen < additionalMutagenCount; mutagen++) {
-            Card mutagenCard = TokenCardFactory.create(
-                    TokenCreationReplacementSupport.additionalMutagenToken(false, false), 0, 0,
-                    entry == null || entry.getCard() == null ? null : entry.getCard().getSetCode());
-            Permanent mutagenPermanent = new Permanent(mutagenCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, mutagenPermanent);
+        if (!event.addedTokens().isEmpty()) {
+            List<UUID> addedIds = permanentControlSupport.getObject()
+                    .applyCreateTokenAfterReplacementOrder(gameData, event.withTokenCount(0));
             if (entry != null) {
-                entry.getCreatedPermanentIds().add(mutagenPermanent.getId());
+                entry.getCreatedPermanentIds().addAll(addedIds);
             }
         }
     }

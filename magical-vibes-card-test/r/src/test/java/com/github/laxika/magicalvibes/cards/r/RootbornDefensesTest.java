@@ -2,9 +2,13 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -19,7 +23,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RootbornDefenses.class, DoomBlade.class, GrizzlyBears.class})
+@CardUsed({RootbornDefenses.class, DoomBlade.class, GrizzlyBears.class, QueenAllenalOfRuadach.class,
+        ParallelLives.class})
 class RootbornDefensesTest extends BaseCardTest {
 
     @Test
@@ -117,6 +122,90 @@ class RootbornDefensesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
         doomBlade(player1, harness.getPermanentId(player2, "Soldier Token"));
         harness.assertNotOnBattlefield(player2, "Soldier Token");
+    }
+
+    @Test
+    @DisplayName("Queen Allenal adds a Soldier to the populated copy")
+    void queenAddsSoldierToPopulatedCopy() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, wolfToken());
+
+        cast(player1);
+
+        assertThat(countOf(player1, "Wolf Token")).isEqualTo(2);
+        assertThat(countOf(player1, "Soldier")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("With Queen Allenal and Parallel Lives, the populating player orders them before the copy is created")
+    void asksToOrderTokenReplacementsForPopulatedCopy() {
+        castWithQueenAndParallelLives();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(countOf(player1, "Wolf Token")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Applying Queen Allenal before Parallel Lives doubles both the copy and the added Soldier")
+    void queenFirstDoublesPopulatedCopyAndSoldier() {
+        castWithQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(countOf(player1, "Wolf Token")).isEqualTo(3);
+        assertThat(countOf(player1, "Soldier")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Applying Parallel Lives before Queen Allenal adds one undoubled Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        castWithQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(countOf(player1, "Wolf Token")).isEqualTo(3);
+        assertThat(countOf(player1, "Soldier")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The rest of the spell resolves after the order is chosen, protecting the new tokens")
+    void grantResumesAfterReplacementOrder() {
+        castWithQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        for (Permanent creature : List.copyOf(gd.playerBattlefields.get(player1.getId()))) {
+            if (creature.getCard().isToken()) {
+                doomBlade(player2, creature.getId());
+            }
+        }
+        assertThat(countOf(player1, "Wolf Token")).isEqualTo(3);
+        assertThat(countOf(player1, "Soldier")).isEqualTo(2);
+    }
+
+    private void castWithQueenAndParallelLives() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        harness.addToBattlefield(player1, wolfToken());
+        harness.setHand(player1, List.of(new RootbornDefenses()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
+    }
+
+    private static Card wolfToken() {
+        Card card = soldierToken();
+        card.setName("Wolf Token");
+        card.setColor(CardColor.GREEN);
+        return card;
     }
 
     private void cast(Player player) {
