@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -65,22 +66,34 @@ public class CreateTokenCopiesOfAttachedAurasAndEquipmentEffectHandler implement
             return;
         }
 
-        List<UUID> copiedIds = tokenCopySupport.createTokenCopiesAttachedTo(
+        UUID hostId = host.getId();
+        tokenCopySupport.createTokenCopiesAttachedToThen(
                 gameData,
                 entry,
                 attached.stream().map(Permanent::getCard).toList(),
                 source,
                 entry.getControllerId(),
                 new CreateTokenCopyOfTargetPermanentEffect(),
-                host);
+                Collections.nCopies(attached.size(), host),
+                (game, tokens) -> attachCopies(game, tokens, hostId));
+    }
 
-        for (UUID copiedId : copiedIds) {
-            Permanent copy = gameQueryService.findPermanentById(gameData, copiedId);
+    /**
+     * Attaches the Equipment copies to the host once every token of the creation event has entered; the Aura copies
+     * already entered attached to it.
+     */
+    private void attachCopies(GameData gameData, List<Permanent> tokens, UUID hostId) {
+        Permanent host = gameQueryService.findPermanentById(gameData, hostId);
+        if (host == null) {
+            return;
+        }
+        for (Permanent token : tokens) {
+            Permanent copy = gameQueryService.findPermanentById(gameData, token.getId());
             if (copy == null) {
                 continue;
             }
             if (copy.getCard().isAura()) {
-                if (host.getId().equals(copy.getAttachedTo())) {
+                if (hostId.equals(copy.getAttachedTo())) {
                     logAttachment(gameData, copy, host);
                 }
             } else if (copy.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {

@@ -114,7 +114,7 @@ public class TokenCopySupport {
                                                          Consumer<Card> copyException,
                                                          Consumer<Permanent> copyRider) {
         return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                effect, null, copyException, null, true,
+                effect, null, copyException,
                 copyRider == null ? null : (copiedCard, copy) -> copyRider.accept(copy));
     }
 
@@ -244,19 +244,47 @@ public class TokenCopySupport {
                                          List<UUID> attackTargetIds,
                                          Consumer<Card> copyException) {
         return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                effect, attackTargetIds, copyException, null, true, null);
+                effect, attackTargetIds, copyException, null);
     }
 
     /**
-     * Creates token copies of Auras that enter attached to {@code auraHost} rather than having their
-     * controller choose what they enchant. A copy that could not enchant the host is not created.
+     * Creates a copy of each of {@code sourceCards} attached to the permanent at the same index of {@code hosts}, as
+     * one ordered token creation event (CR 616.1), and then runs {@code afterEntry} as {@link #createTokenCopiesThen}
+     * does. An Aura copy enters attached to its host rather than having its controller choose what it enchants, and
+     * the copies a doubler adds are attached to the same host as the copies they double; an Aura copy that couldn't
+     * enchant its host isn't created (CR 303.4g). Attaching other copies, such as Equipment, is left to
+     * {@code afterEntry}.
      */
-    public List<UUID> createTokenCopiesAttachedTo(GameData gameData, StackEntry entry, List<Card> sourceCards,
-                                                  Permanent sourcePermanent, UUID tokenControllerId,
-                                                  CreateTokenCopyOfTargetPermanentEffect effect,
-                                                  Permanent auraHost) {
-        return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                effect, null, null, auraHost, false, null);
+    public void createTokenCopiesAttachedToThen(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                                Permanent sourcePermanent, UUID tokenControllerId,
+                                                CreateTokenCopyOfTargetPermanentEffect effect, List<Permanent> hosts,
+                                                BiConsumer<GameData, List<Permanent>> afterEntry) {
+        // The event keys copy groups by copied card, so a card copied onto a further host comes from a runtime copy
+        // of it: the same copiable values, but a group of its own attached to its own host.
+        List<Card> copiedCards = new ArrayList<>();
+        Map<Card, UUID> hostIds = new IdentityHashMap<>();
+        for (int i = 0; i < sourceCards.size(); i++) {
+            Card sourceCard = sourceCards.get(i);
+            Permanent host = hosts.get(i);
+            Card template = copyTemplate(entry, sourceCard, effect, null);
+            if (template.isAura() && !template.isEnchantZone()
+                    && !auraAttachmentService.canEnchant(gameData, template, tokenControllerId, host)) {
+                continue;
+            }
+            Card copiedCard = hostIds.containsKey(sourceCard) ? sourceCard.createRuntimeCopy() : sourceCard;
+            copiedCards.add(copiedCard);
+            hostIds.put(copiedCard, host.getId());
+        }
+        if (copiedCards.isEmpty()) {
+            return;
+        }
+        BiConsumer<Card, Permanent> attachToHost = (copiedCard, copy) -> {
+            if (copy.getCard().isAura() && !copy.getCard().isEnchantZone()) {
+                copy.setAttachedTo(hostIds.get(copiedCard));
+            }
+        };
+        createOrderedTokenCopies(gameData, entry, copiedCards, sourcePermanent, tokenControllerId, effect, null,
+                null, attachToHost, null, false, afterEntry);
     }
 
     private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
@@ -264,18 +292,15 @@ public class TokenCopySupport {
                                          CreateTokenCopyOfTargetPermanentEffect effect,
                                          List<UUID> attackTargetIds,
                                          Consumer<Card> copyException,
-                                         Permanent auraHost, boolean orderReplacements,
                                          BiConsumer<Card, Permanent> copyRider) {
         if (sourceCards == null || sourceCards.isEmpty()) {
             return List.of();
         }
-        if (orderReplacements && auraHost == null) {
-            Map<Card, UUID> attackTargets = attackTargetIds == null ? null
-                    : attackTargetsByCopiedCard(sourceCards, attackTargetIds);
-            if (attackTargetIds == null || attackTargets != null) {
-                return createOrderedTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                        effect, copyException, attackTargets, copyRider, null, false, null);
-            }
+        Map<Card, UUID> attackTargets = attackTargetIds == null ? null
+                : attackTargetsByCopiedCard(sourceCards, attackTargetIds);
+        if (attackTargetIds == null || attackTargets != null) {
+            return createOrderedTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
+                    effect, copyException, attackTargets, copyRider, null, false, null);
         }
 
         List<Permanent> tokens = new ArrayList<>();
@@ -325,12 +350,6 @@ public class TokenCopySupport {
                 }
                 if (copyRider != null) {
                     copyRider.accept(sourceCard, preparedToken);
-                }
-                if (auraHost != null && tokenCard.isAura() && !tokenCard.isEnchantZone()) {
-                    if (!auraAttachmentService.canEnchant(gameData, tokenCard, tokenControllerId, auraHost)) {
-                        continue;
-                    }
-                    preparedToken.setAttachedTo(auraHost.getId());
                 }
                 tokens.add(preparedToken);
                 expandedAttackTargets.add(sourceAttackTarget);

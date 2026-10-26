@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.l.LiquimetalCoating;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThreeDogGalaxyNewsDJ.class, GrizzlyBears.class, HolyStrength.class, LiquimetalCoating.class})
+@CardUsed({ThreeDogGalaxyNewsDJ.class, GrizzlyBears.class, HolyStrength.class, LiquimetalCoating.class,
+        DoublingSeason.class, TippyToeTerrificPartner.class})
 class ThreeDogGalaxyNewsDJTest extends BaseCardTest {
 
     @Test
@@ -170,5 +173,64 @@ class ThreeDogGalaxyNewsDJTest extends BaseCardTest {
         Permanent copy = findPermanents(player1, "Holy Strength").getFirst();
         assertThat(copy.getAttachedTo()).isEqualTo(attacker.getId());
         assertThat(gqs.isArtifact(gd, copy)).isFalse();
+    }
+
+    @Test
+    @DisplayName("With Doubling Season and Tippy-Toe, the copies wait for the order of the replacements")
+    void asksToOrderReplacementsForAuraCopies() {
+        attackAndSacrificeWithDoublingSeasonAndTippyToe();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(findPermanents(player1, "Holy Strength")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Applying Tippy-Toe before Doubling Season doubles every copy and the added Food")
+    void tippyToeFirstDoublesCopiesAndFood() {
+        Permanent[] attackers = attackAndSacrificeWithDoublingSeasonAndTippyToe();
+        chooseReplacement("Tippy-Toe");
+
+        assertThat(findPermanents(player1, "Holy Strength")).extracting(Permanent::getAttachedTo)
+                .containsExactlyInAnyOrder(attackers[0].getId(), attackers[0].getId(),
+                        attackers[1].getId(), attackers[1].getId());
+        assertThat(countPermanents(player1, "Food")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The copies for every attacker are one creation event, so Tippy-Toe adds a single Food")
+    void doublingSeasonFirstAddsOneFoodForAllCopies() {
+        Permanent[] attackers = attackAndSacrificeWithDoublingSeasonAndTippyToe();
+        chooseReplacement("Doubling Season");
+
+        assertThat(findPermanents(player1, "Holy Strength")).extracting(Permanent::getAttachedTo)
+                .containsExactlyInAnyOrder(attackers[0].getId(), attackers[0].getId(),
+                        attackers[1].getId(), attackers[1].getId());
+        assertThat(countPermanents(player1, "Food")).isOne();
+    }
+
+    private Permanent[] attackAndSacrificeWithDoublingSeasonAndTippyToe() {
+        Permanent dog = addCreatureReady(player1, new ThreeDogGalaxyNewsDJ());
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(dog.getId());
+        harness.addToBattlefield(player1, new DoublingSeason());
+        harness.addToBattlefield(player1, new TippyToeTerrificPartner());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        declareAttackers(player1, List.of(0, 1, 2));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, aura.getId());
+        harness.passBothPriorities();
+        return new Permanent[] {firstAttacker, secondAttacker};
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 }

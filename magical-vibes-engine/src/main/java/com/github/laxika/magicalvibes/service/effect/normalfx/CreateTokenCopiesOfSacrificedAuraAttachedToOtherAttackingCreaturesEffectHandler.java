@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -56,16 +57,19 @@ public class CreateTokenCopiesOfSacrificedAuraAttachedToOtherAttackingCreaturesE
                         gameData, sacrificedAura.getCard(), entry.getControllerId(), permanent))
                 .toList();
 
-        for (Permanent creature : otherAttackingCreatures) {
-            // The copy enters attached to this creature, so its controller isn't asked what it enchants.
-            tokenCopySupport.createTokenCopiesAttachedTo(
-                    gameData,
-                    entry,
-                    List.of(sacrificedAura.getOriginalCard()),
-                    null,
-                    entry.getControllerId(),
-                    new CreateTokenCopyOfTargetPermanentEffect(),
-                    creature);
+        if (otherAttackingCreatures.isEmpty()) {
+            return;
         }
+        // One token creation event: a copy attached to each creature, so its controller isn't asked what it
+        // enchants, and the token replacements are ordered once for all of them (CR 616.1).
+        tokenCopySupport.createTokenCopiesAttachedToThen(
+                gameData,
+                entry,
+                Collections.nCopies(otherAttackingCreatures.size(), sacrificedAura.getOriginalCard()),
+                null,
+                entry.getControllerId(),
+                new CreateTokenCopyOfTargetPermanentEffect(),
+                otherAttackingCreatures,
+                null);
     }
 }
