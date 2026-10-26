@@ -2,22 +2,17 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureAndCreateSpiritTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnLinkedCardToOwnerGraveyardEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,18 +23,18 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves Hofri Ghostforge's death trigger by exiling the dying card and creating linked Spirit
- * copies of it.
+ * copies of it through the shared token-copy pipeline, so the controller orders the token creation
+ * replacements they control (CR 616.1).
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler implements NormalEffectHandlerBean {
 
-    private final BattlefieldEntryService battlefieldEntryService;
     private final ExileService exileService;
-    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
+    private final TokenCopySupport tokenCopySupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -74,38 +69,18 @@ public class ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler implements 
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, graveyardCardId);
         exileService.exileCard(gameData, ownerId, dyingCard);
 
+        // "Except it's a Spirit in addition to its other types and has 'When this creature leaves the battlefield,
+        // return the exiled card to its owner's graveyard'" are copy exceptions, but the link to the exiled card
+        // belongs to the created tokens only: a copy of one of them has the ability and returns nothing.
         var copyOptions = new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(CardSubtype.SPIRIT), Set.of(), null, null, Map.of());
-        List<CardSubtype> tokenSubtypes = copySource.getSubtypes() == null
-                ? new ArrayList<>()
-                : new ArrayList<>(copySource.getSubtypes());
-        if (!tokenSubtypes.contains(CardSubtype.SPIRIT)) {
-            tokenSubtypes.add(CardSubtype.SPIRIT);
-        }
-        int tokenCount = gameQueryService.getTokenCreationAmount(
-                gameData, entry.getControllerId(), 1, tokenSubtypes, true);
-        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-        List<Permanent> batch = new ArrayList<>();
-        for (int i = 0; i < tokenCount; i++) {
-            Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(copySource, copyOptions);
-            tokenCard.addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                    new ReturnLinkedCardToOwnerGraveyardEffect());
+        UUID linkedCardId = graveyardCardId;
+        tokenCopySupport.createTokenCopiesWithCopyException(gameData, entry, List.of(copySource), null,
+                entry.getControllerId(), copyOptions,
+                tokenCard -> tokenCard.addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
+                        new ReturnLinkedCardToOwnerGraveyardEffect()),
+                token -> token.setChosenPermanentId(linkedCardId));
 
-            Permanent tokenPermanent = new Permanent(tokenCard);
-            tokenPermanent.setChosenPermanentId(graveyardCardId);
-            battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, entry.getControllerId(), tokenPermanent,
-                    enterTappedTypes, batch);
-            batch.add(tokenPermanent);
-            entry.getCreatedPermanentIds().add(tokenPermanent.getId());
-            if (tokenCard.hasType(CardType.CREATURE)) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(
-                        gameData, entry.getControllerId(), tokenCard, null, false);
-            }
-        }
-
-        gameLogService.append(gameData, GameLog.textCardText(
-                "A Spirit token copy of ", dyingCard, " is created."));
         log.info("Game {} - {} creates a Spirit token copy of {}",
                 gameData.id, entry.getCard().getName(), copySource.getName());
     }

@@ -20,7 +20,7 @@ copy-group `TokenCreationEvent` (`TokenCreationEvent.copies`, `copyOf` = the cop
 single card (no explicit attack targets, no Aura host) now run a copy-group event carrying a `TokenCopyBatch` and resume
 in `TokenCopySupport.createCopiesAfterReplacementOrder`, tested in `CacklingCounterpartTest`; copies of several
 different cards in the same paths now hold each other card's copies as a copy group (`TokenGroup.copyOf`) of the same
-event, tested in `SecondHarvestTest`; copies with explicit attack targets now join the ordered path when each copied card has one attack target (`TokenCopyBatch.attackTargets`, by card identity; added tokens take the first card's target), tested in `MirrorStyleMasterTest`, and the sole-defender branch of `CreateTokenCopyOfTargetPermanentEffectHandler` no longer applies the token multiplier twice; `CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler` (Echocasting Symposium) now creates its copy through `TokenCopySupport.createTokenCopies` for the target player (ordered by that player, additions now applied), tested in `EchocastingSymposiumTest`; `CreateTokenCopyOfImprintedCardEffectHandler` (Mimic Vat, Prototype Portal, Soul Foundry, Dollhouse of Horrors, Tawnos) now creates its copy through `TokenCopySupport.createTokenCopies` (its exceptions and riders expressed as a `CreateTokenCopyOfTargetPermanentEffect`), tested in `MimicVatTest`
+event, tested in `SecondHarvestTest`; copies with explicit attack targets now join the ordered path when each copied card has one attack target (`TokenCopyBatch.attackTargets`, by card identity; added tokens take the first card's target), tested in `MirrorStyleMasterTest`, and the sole-defender branch of `CreateTokenCopyOfTargetPermanentEffectHandler` no longer applies the token multiplier twice; `CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler` (Echocasting Symposium) now creates its copy through `TokenCopySupport.createTokenCopies` for the target player (ordered by that player, additions now applied), tested in `EchocastingSymposiumTest`; `CreateTokenCopyOfImprintedCardEffectHandler` (Mimic Vat, Prototype Portal, Soul Foundry, Dollhouse of Horrors, Tawnos) now creates its copy through `TokenCopySupport.createTokenCopies` (its exceptions and riders expressed as a `CreateTokenCopyOfTargetPermanentEffect`), tested in `MimicVatTest`; `ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler` (Hofri Ghostforge) now creates its Spirit copies through `TokenCopySupport.createTokenCopiesWithCopyException` with a per-copy permanent rider (`TokenCopyBatch.copyRider`) that links each copy (not added tokens) to the exiled card, tested in `HofriGhostforgeTest`
 
 **Failing tests:**
 - None yet. Write one per remaining path, e.g. Queen Allenal of Ruadach + Parallel Lives with Flamerush Rider
@@ -44,7 +44,7 @@ no prompt:
 - The copy handlers that call `getTokenCreationAmount` themselves (`CreateTokenCopyOfSourceEffectHandler`,
   `CreateTokenCopyAndLinkToSourceEffectHandler` (needs a per-token follow-up to link each token to Dance of Many),
   `CreateTokenCopiesOfExiledCardAttackingOpponentsEffectHandler`, `CreateTokenCopyOfEachTokenEnteredThisTurnEffectHandler`,
-  `ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler`, `GraveyardReturnSupport`, the attacking-copy branch of
+  `GraveyardReturnSupport`, the attacking-copy branch of
   `CreateTokenCopyOfTargetPermanentEffectHandler`, ...): multiplier first, additions unmultiplied.
 - Populate never asks about Jinnie Fay, and its copies enter before the event's added tokens (two entry batches
   rather than one simultaneous batch).
@@ -67,7 +67,7 @@ Implement missing-features-to-do.md entry 53: route the remaining token creation
 handlers that call getTokenCreationAmount; populate and TokenCopySupport batches without an Aura host whose copied
 cards each have at most one attack target are done, see TokenCopyBatch.attackTargets,
 PopulateSupport, TokenCopySupport.createCopiesAfterReplacementOrder, TokenCreationEvent.copies, TokenGroup.copies
-and TokenCopyBatch)
+and TokenCopyBatch, whose copyRider handles per-copy permanent set-up such as links)
 through TokenCreationEvent and ReplacementOrderService, as PermanentControlSupport.applyCreateToken does
 with TokenCreationReplacements and TokenAdditionReplacements. Write the tests first. Don't run the full
 test suite; ask me. Don't commit until I say so.

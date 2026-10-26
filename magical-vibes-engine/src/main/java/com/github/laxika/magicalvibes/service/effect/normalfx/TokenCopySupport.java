@@ -101,13 +101,27 @@ public class TokenCopySupport {
                 null, copyException);
     }
 
+    /**
+     * Creates token copies with a copy exception, also setting up each copy's permanent with {@code copyRider}
+     * before it enters, for state that belongs to the created tokens but isn't part of their copiable values (so a
+     * copy of one of the tokens doesn't get it). Added tokens such as Queen Allenal's Soldier don't get it.
+     */
+    public List<UUID> createTokenCopiesWithCopyException(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                                         Permanent sourcePermanent, UUID tokenControllerId,
+                                                         CreateTokenCopyOfTargetPermanentEffect effect,
+                                                         Consumer<Card> copyException,
+                                                         Consumer<Permanent> copyRider) {
+        return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
+                effect, null, copyException, false, null, true, copyRider);
+    }
+
     private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                          Permanent sourcePermanent, UUID tokenControllerId,
                                          CreateTokenCopyOfTargetPermanentEffect effect,
                                          List<UUID> attackTargetIds,
                                          Consumer<Card> copyException) {
         return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                effect, attackTargetIds, copyException, false, null, true);
+                effect, attackTargetIds, copyException, false, null, true, null);
     }
 
     /**
@@ -120,7 +134,7 @@ public class TokenCopySupport {
                                                                UUID tokenControllerId,
                                                                CreateTokenCopyOfTargetPermanentEffect effect) {
         return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                effect, null, null, false, null, false);
+                effect, null, null, false, null, false, null);
     }
 
     /**
@@ -132,7 +146,7 @@ public class TokenCopySupport {
                                                   CreateTokenCopyOfTargetPermanentEffect effect,
                                                   Permanent auraHost) {
         return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                effect, null, null, false, auraHost, false);
+                effect, null, null, false, auraHost, false, null);
     }
 
     /** Prepares all per-opponent copies, including token replacements, before choosing their attack targets. */
@@ -142,7 +156,7 @@ public class TokenCopySupport {
                                                                CreateTokenCopyOfTargetPermanentEffect effect,
                                                                List<UUID> opponentIds) {
         createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId, effect,
-                opponentIds, null, true, null, false);
+                opponentIds, null, true, null, false, null);
     }
 
     private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
@@ -150,7 +164,8 @@ public class TokenCopySupport {
                                          CreateTokenCopyOfTargetPermanentEffect effect,
                                          List<UUID> attackTargetIds,
                                          Consumer<Card> copyException, boolean chooseOpponentAttackTargets,
-                                         Permanent auraHost, boolean orderReplacements) {
+                                         Permanent auraHost, boolean orderReplacements,
+                                         Consumer<Permanent> copyRider) {
         if (sourceCards == null || sourceCards.isEmpty()) {
             return List.of();
         }
@@ -159,7 +174,7 @@ public class TokenCopySupport {
                     : attackTargetsByCopiedCard(sourceCards, attackTargetIds);
             if (attackTargetIds == null || attackTargets != null) {
                 return createOrderedTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                        effect, copyException, attackTargets);
+                        effect, copyException, attackTargets, copyRider);
             }
         }
 
@@ -207,6 +222,9 @@ public class TokenCopySupport {
                 Permanent preparedToken = withGrantedDeathEffects(withGrantedHaste(tokenCard, sourceCard, effect), effect);
                 if (tokenCard.hasType(CardType.PLANESWALKER) && tokenCard.getLoyalty() != null) {
                     preparedToken.setCounterCount(CounterType.LOYALTY, tokenCard.getLoyalty());
+                }
+                if (copyRider != null) {
+                    copyRider.accept(preparedToken);
                 }
                 if (auraHost != null && tokenCard.isAura() && !tokenCard.isEnchantZone()) {
                     if (!auraAttachmentService.canEnchant(gameData, tokenCard, tokenControllerId, auraHost)) {
@@ -360,7 +378,8 @@ public class TokenCopySupport {
     private List<UUID> createOrderedTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                                 Permanent sourcePermanent, UUID tokenControllerId,
                                                 CreateTokenCopyOfTargetPermanentEffect effect,
-                                                Consumer<Card> copyException, Map<Card, UUID> attackTargets) {
+                                                Consumer<Card> copyException, Map<Card, UUID> attackTargets,
+                                                Consumer<Permanent> copyRider) {
         List<Card> distinctCards = new ArrayList<>();
         List<Integer> counts = new ArrayList<>();
         for (Card sourceCard : sourceCards) {
@@ -390,7 +409,7 @@ public class TokenCopySupport {
                 TokenCreationReplacementSupport.copyKind(template),
                 TokenCreationReplacementSupport.entersAsCreature(template),
                 entry.getCard() == null ? null : entry.getCard().getSetCode(),
-                new TokenCopyBatch(entry, sourcePermanent, effect, copyException, attackTargets))
+                new TokenCopyBatch(entry, sourcePermanent, effect, copyException, attackTargets, copyRider))
                 .withAddedTokens(copyGroups);
         var outcome = replacementOrderService.getObject().run(gameData, event);
         if (outcome instanceof ReplacementOrderService.Outcome.Completed<TokenCreationEvent> completed) {
@@ -488,6 +507,9 @@ public class TokenCopySupport {
             Permanent preparedToken = withGrantedDeathEffects(withGrantedHaste(tokenCard, sourceCard, effect), effect);
             if (tokenCard.hasType(CardType.PLANESWALKER) && tokenCard.getLoyalty() != null) {
                 preparedToken.setCounterCount(CounterType.LOYALTY, tokenCard.getLoyalty());
+            }
+            if (batch.copyRider() != null) {
+                batch.copyRider().accept(preparedToken);
             }
             tokens.add(preparedToken);
         }

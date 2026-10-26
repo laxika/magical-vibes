@@ -2,14 +2,18 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.Clone;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -150,6 +154,87 @@ class HofriGhostforgeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("The controller is asked to order Queen Allenal and Parallel Lives for the Spirit copy")
+    void controllerIsAskedToOrderTokenReplacements() {
+        killBearsUnderQueenAndParallelLives();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(spiritCopies()).isEmpty();
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("Applying Queen Allenal before Parallel Lives doubles the Spirit copy and the added Soldier")
+    void queenFirstDoublesCopyAndSoldier() {
+        killBearsUnderQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(spiritCopies()).hasSize(2)
+                .allMatch(copy -> copy.getCard().getSubtypes().contains(CardSubtype.SPIRIT));
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2);
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("Applying Parallel Lives before Queen Allenal adds one undoubled Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        killBearsUnderQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(spiritCopies()).hasSize(2);
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("Every doubled Spirit copy is linked to the exiled card, the added Soldier is not")
+    void everyDoubledCopyIsLinkedButSoldierIsNot() {
+        killBearsUnderQueenAndParallelLives();
+        chooseReplacement("Parallel Lives");
+
+        Permanent soldier = findPermanent(player1, "Soldier");
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, soldier));
+        assertThat(gd.stack).isEmpty();
+
+        Permanent secondCopy = spiritCopies().getLast();
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, secondCopy));
+        assertThat(gd.stack).hasSize(1);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.exiledCards).noneMatch(exiled -> exiled.card().getName().equals("Grizzly Bears"));
+    }
+
+    private void killBearsUnderQueenAndParallelLives() {
+        harness.addToBattlefield(player1, new HofriGhostforge());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        destroyWithShock(findPermanent(player1, "Grizzly Bears"));
+        harness.passBothPriorities();
+    }
+
+    private List<Permanent> spiritCopies() {
+        return findPermanents(player1, "Grizzly Bears").stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 
     private Card spiritToken(String name, int power, int toughness) {

@@ -21,9 +21,12 @@ import java.util.function.Consumer;
  * @param copyException   an extra exception applied to each copy as it is built, or {@code null}
  * @param attackTargets   the player, planeswalker or battle the copies of each copied card (by identity) attack, or
  *                        {@code null} when the copies take {@code sourcePermanent}'s attack target
+ * @param copyRider       set-up applied to each copy's permanent (not to added tokens) before it enters, such as a
+ *                        link to a card that isn't part of the copiable values, or {@code null}
  */
 public record TokenCopyBatch(StackEntry entry, Permanent sourcePermanent, CreateTokenCopyOfTargetPermanentEffect effect,
-                             Consumer<Card> copyException, Map<Card, UUID> attackTargets) {
+                             Consumer<Card> copyException, Map<Card, UUID> attackTargets,
+                             Consumer<Permanent> copyRider) {
 
     public TokenCopyBatch {
         if (attackTargets != null) {
@@ -34,7 +37,7 @@ public record TokenCopyBatch(StackEntry entry, Permanent sourcePermanent, Create
 
     public TokenCopyBatch(StackEntry entry, Permanent sourcePermanent, CreateTokenCopyOfTargetPermanentEffect effect,
                           Consumer<Card> copyException) {
-        this(entry, sourcePermanent, effect, copyException, null);
+        this(entry, sourcePermanent, effect, copyException, null, null);
     }
 
     /** The attack target of the copies of {@code copiedCard}, or {@code null} when none was given for it. */
