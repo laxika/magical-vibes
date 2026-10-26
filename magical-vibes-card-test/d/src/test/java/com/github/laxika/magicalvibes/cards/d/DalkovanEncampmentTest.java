@@ -70,7 +70,7 @@ class DalkovanEncampmentTest extends BaseCardTest {
         activateAttackAbility();
 
         declareAttackers(List.of(1));
-        resolveTokenAttackTargetChoices();
+        resolveAttackTrigger();
 
         List<Permanent> tokens = warriorTokens();
         assertThat(tokens).hasSize(2).allSatisfy(token -> {
@@ -87,7 +87,7 @@ class DalkovanEncampmentTest extends BaseCardTest {
         activateAttackAbility();
 
         declareAttackers(List.of(1));
-        resolveTokenAttackTargetChoices();
+        resolveAttackTrigger();
         assertThat(warriorTokens()).hasSize(2);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -104,7 +104,7 @@ class DalkovanEncampmentTest extends BaseCardTest {
         addCreatureReady(player1, new TradeRouteEnvoy());
         activateAttackAbility();
         declareAttackers(List.of(1));
-        resolveTokenAttackTargetChoices();
+        resolveAttackTrigger();
         Permanent stolenToken = warriorTokens().getFirst();
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
                 .applyControlEffect(gd, player2.getId(), stolenToken,
@@ -126,7 +126,7 @@ class DalkovanEncampmentTest extends BaseCardTest {
         addCreatureReady(player1, new TradeRouteEnvoy());
         activateAttackAbility();
         declareAttackers(List.of(1));
-        resolveTokenAttackTargetChoices();
+        resolveAttackTrigger();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -156,7 +156,7 @@ class DalkovanEncampmentTest extends BaseCardTest {
         activateAttackAbility();
 
         declareAttackers(List.of(1, 2));
-        resolveTokenAttackTargetChoices();
+        resolveAttackTrigger();
 
         assertThat(warriorTokens()).hasSize(2);
         assertThat(gd.stack).isEmpty();
@@ -170,7 +170,7 @@ class DalkovanEncampmentTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(encampment);
 
         declareAttackers(List.of(0));
-        resolveTokenAttackTargetChoices();
+        resolveAttackTrigger();
 
         assertThat(warriorTokens()).hasSize(2);
     }
@@ -181,12 +181,12 @@ class DalkovanEncampmentTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new TradeRouteEnvoy());
         activateAttackAbility();
         declareAttackers(List.of(1));
-        resolveTokenAttackTargetChoices();
+        resolveAttackTrigger();
         assertThat(warriorTokens()).hasSize(2);
 
         attacker.untap();
         declareAttackers(List.of(1));
-        resolveTokenAttackTargetChoices();
+        resolveAttackTrigger();
 
         assertThat(warriorTokens()).hasSize(4);
     }
@@ -209,11 +209,9 @@ class DalkovanEncampmentTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void resolveTokenAttackTargetChoices() {
+    private void resolveAttackTrigger() {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             harness.passBothPriorities();
-            harness.handlePermanentChosen(player1, player2.getId());
-            harness.handlePermanentChosen(player1, player2.getId());
         });
     }
 

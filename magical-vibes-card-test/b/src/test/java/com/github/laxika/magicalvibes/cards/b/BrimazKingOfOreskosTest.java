@@ -26,7 +26,6 @@ class BrimazKingOfOreskosTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(List.of(0));
             harness.passBothPriorities();
-            harness.handlePermanentChosen(player1, player2.getId());
         });
 
         Permanent token = findPermanents(player1, "Cat Soldier").stream()

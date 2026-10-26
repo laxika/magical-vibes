@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.l.LeoninSkyhunter;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.a.AwakenedSkyclave;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -17,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HeroOfBladehold.class, LeoninSkyhunter.class})
+@CardUsed({HeroOfBladehold.class, LeoninSkyhunter.class, QueenAllenalOfRuadach.class, ParallelLives.class})
 class HeroOfBladeholdTest extends BaseCardTest {
 
     @Test
@@ -55,6 +58,34 @@ class HeroOfBladeholdTest extends BaseCardTest {
                     assertThat(token.getCard().getPower()).isEqualTo(1);
                     assertThat(token.getCard().getToughness()).isEqualTo(1);
                 });
+    }
+
+    @Test
+    @DisplayName("With Queen Allenal and Parallel Lives, the order is asked first and every Soldier then attacks")
+    void orderedTokenReplacementsStillMakeEverySoldierAttack() {
+        Permanent hero = harness.addToBattlefieldAndReturn(player1, new HeroOfBladehold());
+        hero.setSummoningSick(false);
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.passBothPriorities();
+            PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+            assertThat(order.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+            harness.handleListChoice(player1, order.options().stream()
+                    .filter(option -> option.startsWith("Queen Allenal of Ruadach")).findFirst().orElseThrow());
+        });
+
+        List<Permanent> soldiers = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Soldier"))
+                .toList();
+        assertThat(soldiers).hasSize(6).allSatisfy(token -> {
+            assertThat(token.isAttacking()).isTrue();
+            assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
+        });
     }
 
     @Test

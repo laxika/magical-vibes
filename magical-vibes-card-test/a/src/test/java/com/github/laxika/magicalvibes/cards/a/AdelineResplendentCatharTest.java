@@ -41,7 +41,6 @@ class AdelineResplendentCatharTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, player2.getId());
 
         Permanent token = findPermanents(player1, "Human").stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -63,7 +62,6 @@ class AdelineResplendentCatharTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(countPermanents(player1, "Human")).isEqualTo(1);
         assertThat(findPermanent(player1, "Human").isAttacking()).isTrue();
@@ -81,7 +79,6 @@ class AdelineResplendentCatharTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(adeline.isTapped()).isFalse();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(countPermanents(player1, "Human")).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, adeline)).isEqualTo(3);

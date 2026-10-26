@@ -1460,12 +1460,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** Remembers the attack target for each token entering tapped and attacking. */
-    record CreateTokensAttacking(UUID controllerId, Card sourceCard,
-                                 com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenEffect,
-                                 int amount, int tokenCount, boolean sacrificeAtEndStep,
-                                 List<UUID> chosenAttackTargets) implements PermanentChoiceContext {}
-
     /**
      * Controller's choice of which player or planeswalker each token that entered attacking is attacking
      * (CR 508.4); the first id in {@code tokenIds} is assigned by the next answer.

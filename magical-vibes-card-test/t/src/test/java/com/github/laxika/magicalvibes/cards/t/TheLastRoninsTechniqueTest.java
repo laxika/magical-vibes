@@ -61,10 +61,6 @@ class TheLastRoninsTechniqueTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(attacker.getCard());
 
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(ninjaTurtleSpiritTokens(player1)).hasSize(3).allSatisfy(token -> {
             assertThat(token.isTapped()).isTrue();

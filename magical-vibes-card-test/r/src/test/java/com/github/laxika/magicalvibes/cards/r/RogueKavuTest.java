@@ -49,7 +49,6 @@ class RogueKavuTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
             declareAttackers(player1, List.of(1));
             harness.passBothPriorities(); // resolve Fire Navy Trebuchet's token trigger
-            harness.handlePermanentChosen(player1, player2.getId());
             harness.passBothPriorities(); // resolve Rogue Kavu's attack-alone trigger
 
             assertThat(gqs.getEffectivePower(gd, kavu)).isEqualTo(3);

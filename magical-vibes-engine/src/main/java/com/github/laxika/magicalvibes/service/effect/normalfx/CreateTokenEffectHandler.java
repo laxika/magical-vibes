@@ -23,16 +23,11 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Stream;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Component
 public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
-
-    @org.springframework.beans.factory.annotation.Autowired
-    @Lazy
-    private com.github.laxika.magicalvibes.service.input.PlayerInputService playerInputService;
 
     private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
@@ -42,6 +37,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
     private final CreateTokenCopyOfChosenCreatureEffectHandler chosenCreatureTokenCopyHandler;
     private final TriggerCollectionService triggerCollectionService;
     private final EsixTokenReplacementSupport esixTokenReplacementSupport;
+    private final ChooseAttackTargetsForCreatedTokensEffectHandler attackTargetsHandler;
 
     public CreateTokenEffectHandler(PermanentControlSupport permanentControlSupport,
                                     GameQueryService gameQueryService,
@@ -50,7 +46,8 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                                     CreateTokenCopyOfEnchantedPermanentEffectHandler enchantedPermanentTokenCopyHandler,
                                     CreateTokenCopyOfChosenCreatureEffectHandler chosenCreatureTokenCopyHandler,
                                     @Lazy TriggerCollectionService triggerCollectionService,
-                                    EsixTokenReplacementSupport esixTokenReplacementSupport) {
+                                    EsixTokenReplacementSupport esixTokenReplacementSupport,
+                                    ChooseAttackTargetsForCreatedTokensEffectHandler attackTargetsHandler) {
         this.permanentControlSupport = permanentControlSupport;
         this.gameQueryService = gameQueryService;
         this.amountEvaluationService = amountEvaluationService;
@@ -59,6 +56,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         this.chosenCreatureTokenCopyHandler = chosenCreatureTokenCopyHandler;
         this.triggerCollectionService = triggerCollectionService;
         this.esixTokenReplacementSupport = esixTokenReplacementSupport;
+        this.attackTargetsHandler = attackTargetsHandler;
     }
 
     @Override
@@ -181,40 +179,13 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
 
         if (!e.simultaneousTokens().isEmpty()) amount = primaryAmount;
 
-        UUID attackingOpponentId = null;
-        if (e.tappedAndAttacking() && controllerId.equals(gameData.activePlayerId)
-                && gameData.currentStep != null && gameData.currentStep.isCombatPhase()) {
-            attackingOpponentId = gameQueryService.getOpponentId(gameData, controllerId);
-            UUID defendingOpponentId = attackingOpponentId;
-            List<UUID> attackTargets = Stream.concat(
-                            gameData.playerBattlefields.getOrDefault(attackingOpponentId, List.of()).stream()
-                                    .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent)),
-                            gameData.playerBattlefields.values().stream().flatMap(List::stream)
-                                    .filter(permanent -> gameQueryService.isBattle(gameData, permanent)
-                                            && defendingOpponentId.equals(permanent.getProtectorPlayerId())))
-                    .map(Permanent::getId).toList();
-            if (!attackTargets.isEmpty()) {
-                int tokenCount = gameQueryService.getTokenCreationAmount(
-                        gameData, controllerId, amount, e.subtypes(), e.primaryType() == com.github.laxika.magicalvibes.model.CardType.CREATURE);
-                gameData.interaction.setPermanentChoiceContext(
-                        new com.github.laxika.magicalvibes.model.PermanentChoiceContext.CreateTokensAttacking(
-                                controllerId, entry.getCard(), e.withPowerToughness(power, toughness),
-                                amount, tokenCount, false, List.of()));
-                playerInputService.beginAnyTargetChoice(gameData, controllerId, attackTargets,
-                        List.of(attackingOpponentId), "Choose what the next " + e.tokenName() + " token attacks.");
-                return;
-            }
-        }
+        int createdFromIndex = entry.getCreatedPermanentIds().size();
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(gameData, controllerId,
                 bindDeathReturn(e, entry), amount, entry.getCard().getSetCode(), power, toughness);
-        if (attackingOpponentId != null) {
-            for (UUID createdId : createdIds) {
-                Permanent token = gameQueryService.findPermanentById(gameData, createdId);
-                if (token != null) {
-                    token.enterAttacking(true);
-                    token.setAttackTarget(attackingOpponentId);
-                }
-            }
+        if (e.tappedAndAttacking() && controllerId.equals(gameData.activePlayerId)
+                && gameData.currentStep != null && gameData.currentStep.isCombatPhase()) {
+            // Their controller chooses what each one attacks once the ordered creation has finished (CR 508.4).
+            attackTargetsHandler.createdTokensAttack(gameData, entry, controllerId, createdFromIndex, false);
         }
         entry.getCreatedPermanentIds().addAll(createdIds);
         List<com.github.laxika.magicalvibes.model.action.DelayedPermanentAction> endOfCombatExiles =

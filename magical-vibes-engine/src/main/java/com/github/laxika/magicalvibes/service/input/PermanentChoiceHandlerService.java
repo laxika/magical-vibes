@@ -1097,8 +1097,6 @@ public class PermanentChoiceHandlerService {
             spellHandler.handleOpponentChosenSpellTargets(gameData, permanentId, opponentTargets);
         } else if (context instanceof PermanentChoiceContext.AttackTriggerTarget att) {
             triggerHandler.handleAttackTrigger(gameData, permanentId, att);
-        } else if (context instanceof PermanentChoiceContext.CreateTokensAttacking createTokens) {
-            triggerHandler.handleCreateTokensAttacking(gameData, permanentId, createTokens);
         } else if (context instanceof PermanentChoiceContext.TokenAttackTargetChoice tokenAttack) {
             triggerHandler.handleTokenAttackTargetChoice(gameData, permanentId, tokenAttack);
         } else if (context instanceof PermanentChoiceContext.PreparedTokenCopyAttachments tokenCopies) {

@@ -45,11 +45,7 @@ class BasriKetTest extends BaseCardTest {
         harness.passBothPriorities();
 
         declareAttackers(List.of(1, 2, 3));
-        harness.passBothPriorities();
-        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
-            harness.handlePermanentChosen(player1, player2.getId());
-            harness.handlePermanentChosen(player1, player2.getId());
-        });
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
 
         List<Permanent> soldiers = findPermanents(player1, "Soldier");
         assertThat(soldiers).hasSize(2);

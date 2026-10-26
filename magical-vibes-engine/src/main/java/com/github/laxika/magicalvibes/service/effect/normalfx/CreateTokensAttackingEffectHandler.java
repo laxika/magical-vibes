@@ -1,28 +1,24 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.UUID;
 
+/**
+ * Creates the tokens as one ordered token creation event (CR 616.1), then every creature token of the event,
+ * added tokens included, is attacking what its controller chooses (CR 508.4).
+ */
 @Component
 @RequiredArgsConstructor
 public class CreateTokensAttackingEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
-    private final PlayerInputService playerInputService;
+    private final PermanentControlSupport permanentControlSupport;
+    private final ChooseAttackTargetsForCreatedTokensEffectHandler attackTargetsHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,53 +37,10 @@ public class CreateTokensAttackingEffectHandler implements NormalEffectHandlerBe
         if (controllerId == null) {
             controllerId = entry.getControllerId();
         }
-        int tokenCount = gameQueryService.getTokenCreationAmount(
-                gameData, controllerId, create.amount(), create.tokenEffect().subtypes(), create.tokenEffect().primaryType() == CardType.CREATURE);
-        PermanentChoiceContext.CreateTokensAttacking context = new PermanentChoiceContext.CreateTokensAttacking(
-                controllerId, entry.getCard(), create.tokenEffect(), create.amount(), tokenCount,
-                create.sacrificeAtEndStep(), List.of());
-        beginTargetChoice(gameData, context);
-    }
-
-    /**
-     * Begins the per-token defender choice only when the defending player has a planeswalker or battle
-     * to attack besides the player. Returns {@code false} when there is no such choice to make.
-     */
-    public boolean beginTargetChoiceIfContested(GameData gameData, PermanentChoiceContext.CreateTokensAttacking context) {
-        if (defendingPlayerPlaneswalkersAndBattles(gameData, context.controllerId()).isEmpty()) {
-            return false;
-        }
-        beginTargetChoice(gameData, context);
-        return true;
-    }
-
-    public void beginTargetChoice(GameData gameData, PermanentChoiceContext.CreateTokensAttacking context) {
-        UUID opponentId = gameQueryService.getOpponentId(gameData, context.controllerId());
-        List<UUID> planeswalkerIds = defendingPlayerPlaneswalkersAndBattles(gameData, context.controllerId());
-
-        gameData.interaction.setPermanentChoiceContext(context);
-        playerInputService.beginAnyTargetChoice(
-                gameData,
-                context.controllerId(),
-                planeswalkerIds,
-                List.of(opponentId),
-                "Choose the player or planeswalker for the next " + context.tokenEffect().tokenName()
-                        + " token to attack.");
-    }
-
-    /**
-     * CR 508.4: a token put onto the battlefield attacking may attack a planeswalker the defending
-     * player controls or a battle the defending player protects.
-     */
-    private List<UUID> defendingPlayerPlaneswalkersAndBattles(GameData gameData, UUID controllerId) {
-        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
-        return gameData.playerBattlefields.values().stream()
-                .flatMap(List::stream)
-                .filter(permanent -> (gameQueryService.isPlaneswalker(gameData, permanent)
-                        && opponentId.equals(gameQueryService.findPermanentController(gameData, permanent.getId())))
-                        || (gameQueryService.isBattle(gameData, permanent)
-                        && opponentId.equals(permanent.getProtectorPlayerId())))
-                .map(Permanent::getId)
-                .toList();
+        int createdFromIndex = entry.getCreatedPermanentIds().size();
+        entry.getCreatedPermanentIds().addAll(permanentControlSupport.applyCreateToken(
+                gameData, controllerId, create.tokenEffect(), create.amount(), entry.getCard().getSetCode()));
+        attackTargetsHandler.createdTokensAttack(gameData, entry, controllerId, createdFromIndex,
+                create.sacrificeAtEndStep());
     }
 }
