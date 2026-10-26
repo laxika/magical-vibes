@@ -144,7 +144,11 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                 || esixTokenReplacementSupport.offer(gameData, entry.getControllerId(), replacedAmount, 0, 0);
     }
 
-    private Card copySourceFor(Permanent targetPermanent) {
+    /**
+     * The card a token copy of {@code targetPermanent} copies: its copiable values, or the original card of a
+     * transformed daybound permanent.
+     */
+    Card copySourceFor(Permanent targetPermanent) {
         return targetPermanent.isTransformed()
                 && targetPermanent.getOriginalCard().getBackFaceCard() != null
                 && targetPermanent.getOriginalCard().hasKeyword(com.github.laxika.magicalvibes.model.Keyword.DAYBOUND)

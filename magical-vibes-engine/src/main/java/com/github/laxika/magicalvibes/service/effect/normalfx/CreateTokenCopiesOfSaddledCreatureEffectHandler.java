@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -25,8 +24,6 @@ import org.springframework.stereotype.Component;
 public class CreateTokenCopiesOfSaddledCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private static final CreateTokenCopyOfTargetPermanentEffect TOKEN_PROFILE =
-            new CreateTokenCopyOfTargetPermanentEffect(false, false, true, true);
-    private static final CreateTokenCopyOfTargetPermanentEffect TOKEN_PROFILE_WITH_ATTACK_CHOICE =
             new CreateTokenCopyOfTargetPermanentEffect(
                     List.of(), Set.of(), null, null, Map.of(), false, false, true, true,
                     false, false, null, Set.of(), false, Map.of(), List.of(), false, false,
@@ -35,6 +32,7 @@ public class CreateTokenCopiesOfSaddledCreatureEffectHandler implements NormalEf
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final CreateTokenCopyOfTargetPermanentEffectHandler tokenCopyHandler;
+    private final TokenCopySupport tokenCopySupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -65,31 +63,25 @@ public class CreateTokenCopiesOfSaddledCreatureEffectHandler implements NormalEf
     }
 
     /**
-     * Creates the tapped and attacking copy. Its controller chooses which player or planeswalker it
-     * attacks when there is more than one option; returns {@code true} while that choice is pending.
+     * Creates the tapped and attacking copy as one ordered token creation event (CR 616.1). Once the replacements
+     * have fixed which tokens are created, its controller chooses which player or planeswalker each creature token
+     * attacks (CR 508.4), doubled copies and added tokens included, and every token of the event is sacrificed at
+     * the beginning of the next end step. The repeat runs once all of them have entered, whichever call the creation
+     * finishes on; returns {@code true} when the repeat has been handed to the creation.
      */
     private boolean copyAttacking(GameData gameData,
                                   MultiPermanentChoiceContext.CreateTokenCopiesOfSaddledCreature context,
                                   UUID saddlerId) {
         StackEntry entry = context.resolvingEntry();
-        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
-                .filter(playerId -> !playerId.equals(entry.getControllerId()))
-                .toList();
-        List<UUID> planeswalkerIds = opponentIds.stream()
-                .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
-                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
-                .map(Permanent::getId)
-                .toList();
-        if (opponentIds.size() + planeswalkerIds.size() <= 1
-                || gameQueryService.findPermanentById(gameData, saddlerId) == null) {
-            tokenCopyHandler.resolveForTarget(gameData, entry, TOKEN_PROFILE, saddlerId);
+        Permanent saddler = gameQueryService.findPermanentById(gameData, saddlerId);
+        if (saddler == null) {
             return false;
         }
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.CreateTokenCopiesAttacking(
-                entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), saddlerId,
-                TOKEN_PROFILE_WITH_ATTACK_CHOICE, 1, List.of(), context));
-        playerInputService.beginAnyTargetChoice(gameData, entry.getControllerId(), planeswalkerIds, opponentIds,
-                "Choose the player or planeswalker for the token to attack.");
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        tokenCopySupport.createTokenCopiesChoosingAttackTargetsThen(gameData, entry,
+                List.of(tokenCopyHandler.copySourceFor(saddler)), source, entry.getControllerId(), TOKEN_PROFILE,
+                (game, tokens) -> continueIterations(game, context));
         return true;
     }
 

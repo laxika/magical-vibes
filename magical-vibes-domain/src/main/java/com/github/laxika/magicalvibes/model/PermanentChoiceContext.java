@@ -1466,26 +1466,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                  int amount, int tokenCount, boolean sacrificeAtEndStep,
                                  List<UUID> chosenAttackTargets) implements PermanentChoiceContext {}
 
-    /** Remembers the attack target for each copy entering tapped and attacking. */
-    /**
-     * Attack-target choices for token copies entering attacking. {@code resumeSaddledCopies} is the
-     * Calamity, Galloping Inferno copy loop to continue once these tokens exist, or {@code null}.
-     */
-    record CreateTokenCopiesAttacking(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
-                                       UUID targetPermanentId,
-                                       com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect copyEffect,
-                                       int tokenCount, List<UUID> chosenAttackTargets,
-                                       MultiPermanentChoiceContext.CreateTokenCopiesOfSaddledCreature resumeSaddledCopies)
-            implements PermanentChoiceContext {
-        public CreateTokenCopiesAttacking(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
-                                          UUID targetPermanentId,
-                                          com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect copyEffect,
-                                          int tokenCount, List<UUID> chosenAttackTargets) {
-            this(controllerId, sourceCard, sourcePermanentId, targetPermanentId, copyEffect, tokenCount,
-                    chosenAttackTargets, null);
-        }
-    }
-
     /**
      * Controller's choice of which player or planeswalker each token that entered attacking is attacking
      * (CR 508.4); the first id in {@code tokenIds} is assigned by the next answer.

@@ -185,6 +185,23 @@ public class TokenCopySupport {
     }
 
     /**
+     * Creates the copies as {@link #createTokenCopiesChoosingAttackTargets(GameData, StackEntry, List, Permanent,
+     * UUID, CreateTokenCopyOfTargetPermanentEffect)} does, and then runs {@code afterEntry} as
+     * {@link #createTokenCopiesThen} does, once every token of the event has entered with its chosen attack target.
+     */
+    public void createTokenCopiesChoosingAttackTargetsThen(GameData gameData, StackEntry entry,
+                                                           List<Card> sourceCards, Permanent sourcePermanent,
+                                                           UUID tokenControllerId,
+                                                           CreateTokenCopyOfTargetPermanentEffect effect,
+                                                           BiConsumer<GameData, List<Permanent>> afterEntry) {
+        if (sourceCards == null || sourceCards.isEmpty()) {
+            return;
+        }
+        createOrderedTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId, effect, null,
+                null, null, null, true, afterEntry);
+    }
+
+    /**
      * Creates, for each of {@code opponentIds}, a copy of each of {@code sourceCards} attacking that opponent, as one
      * ordered token creation event (CR 616.1). The effect names what each copy attacks, so there is no choice
      * (CR 508.4): the copies a doubler adds attack the same opponent as the copies they double, and tokens a

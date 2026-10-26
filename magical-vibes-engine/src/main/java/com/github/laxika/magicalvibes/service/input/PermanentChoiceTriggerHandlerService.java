@@ -71,8 +71,6 @@ import org.springframework.stereotype.Service;
 public class PermanentChoiceTriggerHandlerService {
 
     private final GameQueryService gameQueryService;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopiesOfSaddledCreatureEffectHandler
-            createTokenCopiesOfSaddledCreatureEffectHandler;
     private final AttackLegalityService attackLegalityService;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
@@ -1361,45 +1359,6 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleCreateTokenCopiesAttacking(GameData gameData, UUID attackTargetId,
-                                                  PermanentChoiceContext.CreateTokenCopiesAttacking context) {
-        List<UUID> chosenTargets = new ArrayList<>(context.chosenAttackTargets());
-        chosenTargets.add(attackTargetId);
-
-        if (chosenTargets.size() < context.tokenCount()) {
-            beginCreateTokenCopiesAttackingTargetChoice(gameData,
-                    new PermanentChoiceContext.CreateTokenCopiesAttacking(
-                            context.controllerId(), context.sourceCard(), context.sourcePermanentId(),
-                            context.targetPermanentId(), context.copyEffect(), context.tokenCount(), chosenTargets,
-                            context.resumeSaddledCopies()));
-            return;
-        }
-
-        Permanent target = gameQueryService.findPermanentById(gameData, context.targetPermanentId());
-        if (target != null) {
-            Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    context.sourceCard(),
-                    context.controllerId(),
-                    context.sourceCard().getName() + "'s ability",
-                    List.of(context.copyEffect()),
-                    null,
-                    context.sourcePermanentId());
-            tokenCopySupport.createTokenCopies(gameData, entry, List.of(target.getCard()), source,
-                    context.controllerId(), context.copyEffect(), chosenTargets);
-        }
-
-        if (context.resumeSaddledCopies() != null) {
-            createTokenCopiesOfSaddledCreatureEffectHandler.continueIterations(
-                    gameData, context.resumeSaddledCopies());
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleCreateMemoryCounterTokenCopiesAttacking(
             GameData gameData, UUID attackTargetId,
             PermanentChoiceContext.CreateMemoryCounterTokenCopiesAttacking context) {
@@ -1513,23 +1472,6 @@ public class PermanentChoiceTriggerHandlerService {
                 gameData, context.controllerId(), planeswalkerIds, List.of(opponentId),
                 "Choose the player, planeswalker, or battle for the next " + context.tokenEffect().tokenName()
                         + " token to attack.");
-    }
-
-    private void beginCreateTokenCopiesAttackingTargetChoice(
-            GameData gameData, PermanentChoiceContext.CreateTokenCopiesAttacking context) {
-        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
-                .filter(playerId -> !playerId.equals(context.controllerId()))
-                .toList();
-        List<UUID> planeswalkerIds = opponentIds.stream()
-                .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
-                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
-                .map(Permanent::getId)
-                .toList();
-
-        gameData.interaction.setPermanentChoiceContext(context);
-        playerInputService.beginAnyTargetChoice(
-                gameData, context.controllerId(), planeswalkerIds, opponentIds,
-                "Choose the player or planeswalker for the token to attack.");
     }
 
     private void beginCreateMemoryCounterTokenCopiesAttackingTargetChoice(
