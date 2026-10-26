@@ -1,12 +1,17 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JinnieFayJetmirsSecond;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.v.ViviOrnitier;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -138,6 +143,97 @@ class SinSpirasPunishmentTest extends BaseCardTest {
         assertThat(tokens).hasSize(1);
         assertThat(gqs.getEffectiveColors(gd, tokens.getFirst()))
                 .containsExactlyInAnyOrder(CardColor.BLUE, CardColor.RED);
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("The controller orders the token replacements before the copy is created")
+    void controllerOrdersTokenReplacements() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+
+        resolveEnterTrigger(List.of(bears));
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(bears);
+        assertThat(createdTokens()).isEmpty();
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("Applying Queen Allenal before Parallel Lives doubles the tapped copy and the added Soldier")
+    void queenFirstDoublesCopyAndSoldier() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        resolveEnterTrigger(List.of(bears));
+
+        chooseReplacement("Queen Allenal of Ruadach");
+        resolveAllTriggers();
+
+        assertThat(tokensNamed(player1, bears.getName())).hasSize(2);
+        assertThat(tokensNamed(player1, "Soldier")).hasSize(2);
+        assertThat(createdTokens()).hasSize(4).allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("Applying Parallel Lives before Queen Allenal adds one undoubled Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        resolveEnterTrigger(List.of(bears));
+
+        chooseReplacement("Parallel Lives");
+        resolveAllTriggers();
+
+        assertThat(tokensNamed(player1, bears.getName())).hasSize(2);
+        assertThat(tokensNamed(player1, "Soldier")).hasSize(1);
+        assertThat(createdTokens()).hasSize(3).allMatch(Permanent::isTapped);
+    }
+
+    @Test
+    @CardUsed(JinnieFayJetmirsSecond.class)
+    @DisplayName("After a land card the process repeats once the paused copy creation is finished")
+    void repeatWaitsForPausedCopyCreation() {
+        Plains firstPlains = new Plains();
+        Plains secondPlains = new Plains();
+        harness.addToBattlefield(player1, new JinnieFayJetmirsSecond());
+
+        resolveEnterTrigger(List.of(firstPlains, secondPlains));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(createdTokens()).isEmpty();
+
+        harness.handleListChoice(player1, "Original tokens");
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactlyInAnyOrder(firstPlains, secondPlains);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(createdTokens()).hasSize(1);
+
+        harness.handleListChoice(player1, "Cat");
+        resolveAllTriggers();
+
+        assertThat(tokensNamed(player1, firstPlains.getName())).hasSize(1).allMatch(Permanent::isTapped);
+        assertThat(tokensNamed(player1, "Cat")).hasSize(1).allMatch(Permanent::isTapped);
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
+    }
+
+    private List<Permanent> createdTokens() {
+        return gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .toList();
     }
 
     private void resolveEnterTrigger(List<Card> graveyard) {
