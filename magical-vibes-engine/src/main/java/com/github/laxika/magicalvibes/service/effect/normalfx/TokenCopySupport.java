@@ -142,11 +142,24 @@ public class TokenCopySupport {
     public void createTokenCopiesChoosingAttackTargets(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                                        Permanent sourcePermanent, UUID tokenControllerId,
                                                        CreateTokenCopyOfTargetPermanentEffect effect) {
+        createTokenCopiesChoosingAttackTargets(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
+                effect, null);
+    }
+
+    /**
+     * Creates the copies as {@link #createTokenCopiesChoosingAttackTargets(GameData, StackEntry, List, Permanent,
+     * UUID, CreateTokenCopyOfTargetPermanentEffect)} does, setting up every token the event creates with
+     * {@code tokenRider} before it enters, as in {@link #createTokenCopiesWithTokenRider}.
+     */
+    public void createTokenCopiesChoosingAttackTargets(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                                       Permanent sourcePermanent, UUID tokenControllerId,
+                                                       CreateTokenCopyOfTargetPermanentEffect effect,
+                                                       Consumer<Permanent> tokenRider) {
         if (sourceCards == null || sourceCards.isEmpty()) {
             return;
         }
         createOrderedTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId, effect, null,
-                null, null, null, true);
+                null, null, tokenRider, true);
     }
 
     /**

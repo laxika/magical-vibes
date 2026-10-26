@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.m.Mulldrifter;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -9,6 +12,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.SacrificePermanentAtControllerEndStepUnlessPays;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -187,5 +191,64 @@ class AshlingTheLimitlessTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Mulldrifter").getCard().isToken()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
         harness.assertInGraveyard(player1, "Mulldrifter");
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("With Queen Allenal and Parallel Lives, the controller orders them before the copy enters")
+    void asksToOrderTokenReplacements() {
+        evokeAirElementalUnderQueenAndParallelLives();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(findPermanents(player1, "Air Elemental")).isEmpty();
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("Applying Queen Allenal first doubles the copy and the Soldier, all hasty and all at risk")
+    void queenFirstDoublesCopyAndSoldier() {
+        evokeAirElementalUnderQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Air Elemental")).hasSize(2)
+                .allSatisfy(token -> assertThat(token.hasKeyword(Keyword.HASTE)).isTrue());
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2)
+                .allSatisfy(token -> assertThat(token.hasKeyword(Keyword.HASTE)).isTrue());
+        assertThat(gd.getDelayedActions(SacrificePermanentAtControllerEndStepUnlessPays.class)).hasSize(4);
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("Applying Parallel Lives first adds one undoubled Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        evokeAirElementalUnderQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Air Elemental")).hasSize(2);
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+        assertThat(gd.getDelayedActions(SacrificePermanentAtControllerEndStepUnlessPays.class)).hasSize(3);
+    }
+
+    private void evokeAirElementalUnderQueenAndParallelLives() {
+        harness.addToBattlefield(player1, new AshlingTheLimitless());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        harness.setHand(player1, List.of(new AirElemental()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreatureWithEvoke(player1, 0, null);
+        resolveAllTriggers();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 }

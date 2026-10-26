@@ -46,22 +46,20 @@ public class CreateTokenCopyOfTargetPermanentUnlessPayEnergyEqualToManaValueEffe
 
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        UUID controllerId = entry.getControllerId();
         for (UUID targetId : targetIds) {
             Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
             if (targetPermanent == null) {
                 continue;
             }
-            List<UUID> tokenIds = tokenCopySupport.createTokenCopiesWithoutReplacementOrder(
-                    gameData, entry, Collections.singletonList(targetPermanent.getCard()), sourcePermanent,
-                    entry.getControllerId(), copyEffect.copyEffect());
-            for (UUID tokenId : tokenIds) {
-                Permanent token = gameQueryService.findPermanentById(gameData, tokenId);
-                if (token != null) {
-                    gameData.queueDelayedAction(new SacrificePermanentAtControllerEndStepUnlessPays(
-                            tokenId, entry.getControllerId(), entry.getCard(),
-                            new PayEnergyCost(token.getCard().getManaValue())));
-                }
-            }
+            // One ordered creation event (CR 616.1); the controller chooses what each token attacks, which need
+            // not be what the source attacks (CR 508.4). "That token" covers every token the event creates, added
+            // ones such as Queen Allenal's Soldier included.
+            tokenCopySupport.createTokenCopiesChoosingAttackTargets(gameData, entry,
+                    Collections.singletonList(targetPermanent.getCard()), sourcePermanent, controllerId,
+                    copyEffect.copyEffect(), token -> gameData.queueDelayedAction(
+                            new SacrificePermanentAtControllerEndStepUnlessPays(token.getId(), controllerId,
+                                    entry.getCard(), new PayEnergyCost(token.getCard().getManaValue()))));
         }
     }
 }

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.SacrificePermanentAtControllerEndStepUnlessPays;
@@ -10,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSacrificedPe
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -52,17 +50,13 @@ public class CreateTokenCopyOfSacrificedPermanentEffectHandler implements Normal
             return;
         }
 
-        List<UUID> tokenIds = tokenCopySupport.createTokenCopiesWithoutReplacementOrder(
-                gameData, entry, Collections.nCopies(copyEffect.amount(), copyEffect.copiedCard()), null,
-                entry.getControllerId(), new CreateTokenCopyOfTargetPermanentEffect());
-        for (UUID tokenId : tokenIds) {
-            Permanent token = gameQueryService.findPermanentById(gameData, tokenId);
-            if (token == null) {
-                continue;
-            }
-            token.getGrantedKeywords().add(Keyword.HASTE);
-            gameData.queueDelayedAction(new SacrificePermanentAtControllerEndStepUnlessPays(
-                    tokenId, entry.getControllerId(), entry.getCard(), TOKEN_SACRIFICE_COST));
-        }
+        // One ordered creation event (CR 616.1). "The token gains haste" and the delayed sacrifice cover every token
+        // the event creates, added ones such as Queen Allenal's Soldier included.
+        UUID controllerId = entry.getControllerId();
+        tokenCopySupport.createTokenCopiesWithTokenRider(gameData, entry,
+                Collections.nCopies(copyEffect.amount(), copyEffect.copiedCard()), controllerId,
+                new CreateTokenCopyOfTargetPermanentEffect(true, false).withHasteUntilEndOfTurn(),
+                token -> gameData.queueDelayedAction(new SacrificePermanentAtControllerEndStepUnlessPays(
+                        token.getId(), controllerId, entry.getCard(), TOKEN_SACRIFICE_COST)));
     }
 }
