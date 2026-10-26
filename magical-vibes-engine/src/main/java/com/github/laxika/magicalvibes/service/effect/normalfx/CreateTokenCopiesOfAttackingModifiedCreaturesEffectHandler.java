@@ -50,10 +50,9 @@ public class CreateTokenCopiesOfAttackingModifiedCreaturesEffectHandler
         if (attackers.isEmpty()) {
             return;
         }
-        List<UUID> attackTargets = attackers.stream().map(Permanent::getAttackTarget).toList();
-        tokenCopySupport.createTokenCopies(
+        // The effect doesn't say what the tokens attack, so their controller chooses for each one (CR 508.4).
+        tokenCopySupport.createTokenCopiesChoosingAttackTargets(
                 gameData, entry, attackers.stream().map(Permanent::getCard).toList(), attackers.getFirst(),
-                controllerId, TOKEN_COPY_PROFILE,
-                attackTargets.contains(null) ? null : attackTargets);
+                controllerId, TOKEN_COPY_PROFILE);
     }
 }

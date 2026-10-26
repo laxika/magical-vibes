@@ -808,16 +808,6 @@ public class PlayerInputService {
         }
     }
 
-    public void beginJinnieFayTokenCopyChoice(GameData gameData, ChoiceContext.JinnieFayTokenCopyChoice ctx) {
-        List<String> options = List.of(
-                com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect.CAT_OPTION,
-                com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect.DOG_OPTION,
-                com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect.ORIGINAL_OPTION);
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                ctx.controllerId(), null, null, ctx, options,
-                ctx.sourceCard().getName() + " — Choose Cat, Dog, or original tokens."));
-    }
-
     public void beginGainLifePerPermanentOfChosenColorChoice(GameData gameData, UUID controllerId,
             Card sourceCard, StackEntryType sourceEntryType) {
         ChoiceContext.GainLifePerPermanentOfChosenColorChoice ctx =

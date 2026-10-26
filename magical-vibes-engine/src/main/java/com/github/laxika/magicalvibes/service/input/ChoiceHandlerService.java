@@ -1116,19 +1116,6 @@ public class ChoiceHandlerService {
             handleJinnieFayTokenChoice(gameData, player, colorName, colorChoice, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.JinnieFayTokenCopyChoice ctx) {
-            if (!colorChoice.options().contains(colorName)) {
-                throw new IllegalArgumentException("Invalid Jinnie Fay token choice: " + colorName);
-            }
-            gameData.interaction.clearAwaitingInput();
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " chooses " + colorName + " for ", ctx.sourceCard(), "."));
-            tokenCopySupport.completeJinnieFayTokenCopyChoice(gameData, colorName, ctx);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.GainLifePerPermanentOfChosenColorChoice ctx) {
             handleGainLifePerPermanentOfChosenColorChoice(gameData, colorName, ctx);
             return;

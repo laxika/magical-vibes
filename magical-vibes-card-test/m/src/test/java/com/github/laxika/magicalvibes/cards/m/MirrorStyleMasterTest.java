@@ -63,19 +63,23 @@ class MirrorStyleMasterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Every doubled copy attacks the planeswalker its original attacks")
-    void doubledCopiesKeepTheOriginalsAttackTarget() {
+    @DisplayName("Each doubled copy chooses its own player or planeswalker to attack")
+    void doubledCopiesChooseTheirAttackTargetsIndependently() {
         Permanent elspeth = new Permanent(new ElspethSunsChampion());
         elspeth.setCounterCount(CounterType.LOYALTY, 4);
         gd.playerBattlefields.get(player2.getId()).add(elspeth);
         attackWithModifiedBearsUnderQueenAndParallelLives(elspeth);
 
         chooseReplacement("Parallel Lives");
+        chooseAttackTarget(player2.getId());
+        chooseAttackTarget(elspeth.getId());
+        chooseAttackTarget(player2.getId());
 
-        assertThat(bearTokens()).hasSize(2).allSatisfy(token -> {
-            assertThat(token.isAttacking()).isTrue();
-            assertThat(token.getAttackTarget()).isEqualTo(elspeth.getId());
-        });
+        assertThat(bearTokens()).hasSize(2).allSatisfy(token -> assertThat(token.isAttacking()).isTrue());
+        assertThat(bearTokens()).extracting(Permanent::getAttackTarget)
+                .containsExactlyInAnyOrder(player2.getId(), elspeth.getId());
+        assertThat(findPermanents(player1, "Soldier")).singleElement()
+                .satisfies(soldier -> assertThat(soldier.getAttackTarget()).isEqualTo(player2.getId()));
     }
 
     @Test
@@ -231,6 +235,11 @@ class MirrorStyleMasterTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.handleListChoice(player1, choice.options()
                 .stream().filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow()));
+    }
+
+    private void chooseAttackTarget(UUID targetId) {
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.handlePermanentChosen(player1, targetId));
     }
 
     private void castMirrorStyleMaster(Permanent target) {

@@ -2138,27 +2138,6 @@ public sealed interface ChoiceContext {
                                 com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent event)
             implements ChoiceContext {}
 
-    /**
-     * Jinnie Fay's replacement choice for a batch of already-prepared token copies whose copied cards' copies attack
-     * different targets, which {@code TokenCopySupport} creates without ordering their replacements; the choice resumes
-     * entering the batch (or enters Cat/Dog tokens that keep the creating effect's riders, including
-     * {@code tokenRider}, the set-up every token the creating effect makes gets, or {@code null}, and
-     * {@code instructionRider}, given for each Cat or Dog the entry of {@code copiedCards} (index-aligned with
-     * {@code tokens}: the card each prepared token copies, or {@code null} for an added token) of the token it
-     * replaces, or {@code null}), then runs {@code afterEntry}, the creating effect's follow-up on the entered
-     * tokens, or {@code null}.
-     */
-    record JinnieFayTokenCopyChoice(UUID controllerId, Card sourceCard, StackEntry entry,
-                                    com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect effect,
-                                    List<Permanent> tokens, Permanent sourcePermanent,
-                                    List<UUID> expandedAttackTargets, boolean explicitAttackTargets,
-                                    boolean chooseOpponentAttackTargets,
-                                    java.util.function.Consumer<Permanent> tokenRider,
-                                    List<Card> copiedCards,
-                                    java.util.function.BiConsumer<Card, Permanent> instructionRider,
-                                    java.util.function.BiConsumer<GameData, List<Permanent>> afterEntry)
-            implements ChoiceContext {}
-
     /** The controller chooses a color at resolution, then gains one life per matching permanent. */
     record GainLifePerPermanentOfChosenColorChoice(UUID controllerId, Card sourceCard,
                                                    StackEntryType sourceEntryType) implements ChoiceContext {}

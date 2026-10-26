@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddSquirrelTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCreatureTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -611,24 +610,6 @@ public final class TokenCreationReplacementSupport {
         return new TokenCreationEvent(event.controllerId(), event.amount(), event.appliedKeys(),
                 jinnieFayToken(event.token(), 1, cat), cat ? 2 : 3, cat ? 2 : 1, event.sourceSetCode(), Map.of(),
                 true, List.of());
-    }
-
-    static Card findJinnieFay(GameData gameData, UUID controllerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return null;
-        }
-        for (Permanent permanent : battlefield) {
-            if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                    || permanent.isStaticEffectSuppressed(JinnieFayTokenReplacementEffect.class)) {
-                continue;
-            }
-            if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(JinnieFayTokenReplacementEffect.class::isInstance)) {
-                return permanent.getCard();
-            }
-        }
-        return null;
     }
 
     private static boolean hasCreatureTokenReplacement(GameData gameData, UUID controllerId) {

@@ -13,9 +13,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -60,7 +58,6 @@ import org.springframework.stereotype.Component;
 public class TokenCopySupport {
 
     private final BattlefieldEntryService battlefieldEntryService;
-    private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
@@ -355,6 +352,11 @@ public class TokenCopySupport {
                 null, attachToHost, null, null, false, afterEntry);
     }
 
+    /**
+     * Creates a copy of each of {@code sourceCards} as one ordered token creation event (CR 616.1). With
+     * {@code attackTargetIds}, each copy enters attacking the target named for its copied card, as
+     * {@link #keyCopiesByAttackTarget} maps them.
+     */
     private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                          Permanent sourcePermanent, UUID tokenControllerId,
                                          CreateTokenCopyOfTargetPermanentEffect effect,
@@ -364,195 +366,18 @@ public class TokenCopySupport {
         if (sourceCards == null || sourceCards.isEmpty()) {
             return List.of();
         }
-        Map<Card, UUID> attackTargets = attackTargetIds == null ? null
-                : attackTargetsByCopiedCard(sourceCards, attackTargetIds);
-        if (attackTargetIds == null || attackTargets != null) {
+        if (attackTargetIds == null) {
             return createOrderedTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                    effect, copyException, attackTargets, copyRider, null, null, false, null);
+                    effect, copyException, null, copyRider, null, null, false, null);
         }
-
-        List<Permanent> tokens = new ArrayList<>();
-        List<UUID> expandedAttackTargets = new ArrayList<>();
-        int sourceCardIndex = 0;
-        Card artifactTokenTemplate = null;
-        CreateTokenEffect manufactorOriginal = null;
-        int manufactorAmount = 0;
-        for (Card sourceCard : sourceCards) {
-            UUID sourceAttackTarget = attackTargetIds != null && sourceCardIndex < attackTargetIds.size()
-                    ? attackTargetIds.get(sourceCardIndex) : null;
-            sourceCardIndex++;
-            Card tokenTemplate = buildTokenCopyCard(
-                    sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard(), true);
-            if (copyException != null) {
-                copyException.accept(tokenTemplate);
-            }
-            int tokenMultiplier = gameQueryService.getTokenCreationAmount(
-                    gameData, tokenControllerId, 1, tokenTemplate.getSubtypes(), TokenCreationReplacementSupport.entersAsCreature(tokenTemplate));
-            CreateTokenEffect replacementOriginal = CreateTokenEffect.ofArtifactToken(
-                    1, tokenTemplate.getName(), tokenTemplate.getSubtypes(), List.of());
-            if (!TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
-                    gameData, tokenControllerId, replacementOriginal, 1).isEmpty()) {
-                if (artifactTokenTemplate == null && tokenTemplate.hasType(CardType.ARTIFACT)) {
-                    artifactTokenTemplate = tokenTemplate;
-                }
-                manufactorOriginal = replacementOriginal;
-                manufactorAmount += tokenMultiplier;
-                continue;
-            }
-            for (int copy = 0; copy < tokenMultiplier; copy++) {
-                Card tokenCard = copy == 0
-                        ? tokenTemplate
-                        : buildTokenCopyCard(
-                                sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard(), true);
-                if (copy != 0 && copyException != null) {
-                    copyException.accept(tokenCard);
-                }
-                if (artifactTokenTemplate == null && tokenCard.hasType(CardType.ARTIFACT)) {
-                    artifactTokenTemplate = tokenCard;
-                }
-                tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                        gameData, tokenControllerId, tokenCard);
-                Permanent preparedToken = withGrantedDeathEffects(withGrantedHaste(tokenCard, sourceCard, effect), effect);
-                if (tokenCard.hasType(CardType.PLANESWALKER) && tokenCard.getLoyalty() != null) {
-                    preparedToken.setCounterCount(CounterType.LOYALTY, tokenCard.getLoyalty());
-                }
-                if (copyRider != null) {
-                    copyRider.accept(sourceCard, preparedToken);
-                }
-                tokens.add(preparedToken);
-                expandedAttackTargets.add(sourceAttackTarget);
-            }
-        }
-        if (manufactorOriginal != null) {
-            for (CreateTokenEffect blueprint : TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
-                    gameData, tokenControllerId, manufactorOriginal, manufactorAmount)) {
-                tokens.add(new Permanent(TokenCardFactory.create(blueprint, 0, 0,
-                        entry.getCard() == null ? null : entry.getCard().getSetCode())));
-            }
-        }
-        boolean creatureTokenEvent = tokens.stream()
-                .anyMatch(token -> token.getCard().hasType(CardType.CREATURE));
-        int additionalSoldierTokenCount = TokenCreationReplacementSupport.additionalSoldierTokenCountIfApplicable(
-                gameData, tokenControllerId, creatureTokenEvent);
-        CreateTokenEffect additionalSoldier = additionalSoldierTokenCount > 0
-                ? TokenCreationReplacementSupport.additionalSoldierTokenIfApplicable(
-                        gameData, tokenControllerId, creatureTokenEvent,
-                        effect.tappedAndAttacking(), effect.tapped())
-                : null;
-        for (int i = 0; i < additionalSoldierTokenCount; i++) {
-            Card soldierTokenCard = TokenCardFactory.create(additionalSoldier, 1, 1,
-                    entry.getCard() == null ? null : entry.getCard().getSetCode());
-            soldierTokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                    gameData, tokenControllerId, soldierTokenCard);
-            tokens.add(new Permanent(soldierTokenCard));
-        }
-        int additionalMapTokenCount = TokenCreationReplacementSupport.additionalMapTokenCount(
-                gameData, tokenControllerId, artifactTokenTemplate, 1);
-        for (int map = 0; map < additionalMapTokenCount; map++) {
-            Card mapTokenCard = TokenCardFactory.create(
-                    TokenCreationReplacementSupport.additionalMapToken(
-                            effect.tapped(), effect.tappedAndAttacking()),
-                    0,
-                    0,
-                    entry.getCard() == null ? null : entry.getCard().getSetCode());
-            tokens.add(new Permanent(mapTokenCard));
-        }
-        int additionalMutagenTokenCount = TokenCreationReplacementSupport.additionalMutagenTokenCount(
-                gameData, tokenControllerId, sourceCards.size());
-        for (int mutagen = 0; mutagen < additionalMutagenTokenCount; mutagen++) {
-            Card mutagenTokenCard = TokenCardFactory.create(
-                    TokenCreationReplacementSupport.additionalMutagenToken(effect.tapped(), effect.tappedAndAttacking()),
-                    0,
-                    0,
-                    entry.getCard() == null ? null : entry.getCard().getSetCode());
-            tokens.add(new Permanent(mutagenTokenCard));
-        }
-        int additionalFoodTokenCount = TokenCreationReplacementSupport.additionalFoodTokenCount(
-                gameData, tokenControllerId, sourceCards.size());
-        for (int food = 0; food < additionalFoodTokenCount; food++) {
-            Card foodTokenCard = TokenCardFactory.create(
-                    TokenCreationReplacementSupport.additionalFoodToken(effect.tapped(), effect.tappedAndAttacking()),
-                    0,
-                    0,
-                    entry.getCard() == null ? null : entry.getCard().getSetCode());
-            tokens.add(new Permanent(foodTokenCard));
-        }
-
-        int additionalClueCount = tokens.isEmpty() ? 0
-                : permanentControlSupport.solvedClueReplacementCount(gameData, tokenControllerId);
-        CreateTokenEffect clue = CreateTokenEffect.ofClueToken(1);
-        for (int i = 0; i < additionalClueCount; i++) {
-            int clueAmount = gameQueryService.getTokenCreationAmount(gameData, tokenControllerId,
-                    1, clue.subtypes(), false);
-            List<CreateTokenEffect> clueBlueprints = TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
-                    gameData, tokenControllerId, clue, clueAmount);
-            if (clueBlueprints.isEmpty()) {
-                for (int j = 0; j < clueAmount; j++) {
-                    tokens.add(new Permanent(TokenCardFactory.create(clue, 0, 0,
-                            entry.getCard() == null ? null : entry.getCard().getSetCode())));
-                }
-            } else {
-                for (CreateTokenEffect blueprint : clueBlueprints) {
-                    tokens.add(new Permanent(TokenCardFactory.create(blueprint, 0, 0,
-                            entry.getCard() == null ? null : entry.getCard().getSetCode())));
-                }
-            }
-        }
-
-        int additionalTreasureTokenCount = tokens.stream().mapToInt(token ->
-                TokenCreationReplacementSupport.additionalTreasureTokenCount(
-                        gameData, tokenControllerId, token.getCard(), 1)).sum();
-        for (int treasure = 0; treasure < additionalTreasureTokenCount; treasure++) {
-            Card treasureToken = TokenCardFactory.create(CreateTokenEffect.ofTreasureToken(1), 0, 0,
-                    entry.getCard() == null ? null : entry.getCard().getSetCode());
-            tokens.add(new Permanent(treasureToken));
-        }
-
-        int squirrelCount = TokenCreationReplacementSupport.additionalSquirrelTokenCount(
-                gameData, tokenControllerId, tokens.size());
-        CreateTokenEffect squirrel = squirrelCount == 0 ? null
-                : TokenCreationReplacementSupport.additionalSquirrelTokenIfApplicable(
-                        gameData, tokenControllerId,
-                        new CreateTokenEffect(1, "Squirrel", 1, 1,
-                                CardColor.GREEN, List.of(CardSubtype.SQUIRREL), Set.of(), Set.of()));
-        if (!creatureTokenEvent && squirrelCount > 0) {
-            squirrelCount = gameQueryService.getNewCreatureTokenCreationAmount(
-                    gameData, tokenControllerId, squirrelCount, squirrel.subtypes());
-        }
-        int originalAttackTargetCount = expandedAttackTargets.size();
-        for (int i = 0; i < squirrelCount; i++) {
-            Card squirrelCard = TokenCardFactory.create(squirrel, 1, 1,
-                    entry.getCard() == null ? null : entry.getCard().getSetCode());
-            squirrelCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                    gameData, tokenControllerId, squirrelCard);
-            tokens.add(withGrantedHaste(squirrelCard, squirrelCard, effect));
-            expandedAttackTargets.add(originalAttackTargetCount == 0 ? null
-                    : expandedAttackTargets.get(i % originalAttackTargetCount));
-        }
-
-        CreateTokenEffect frog = tokens.isEmpty() ? null
-                : TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
-                        gameData, tokenControllerId,
-                        new CreateTokenEffect(1, "Frog", 1, 1,
-                                CardColor.GREEN, List.of(CardSubtype.FROG), Set.of(), Set.of()));
-        if (frog != null) {
-            Card frogCard = TokenCardFactory.create(frog, 1, 1,
-                    entry.getCard() == null ? null : entry.getCard().getSetCode());
-            tokens.add(new Permanent(TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                    gameData, tokenControllerId, frogCard)));
-            expandedAttackTargets.add(null);
-        }
-
-        Card jinnieFay = tokens.isEmpty() ? null
-                : TokenCreationReplacementSupport.findJinnieFay(gameData, tokenControllerId);
-        if (jinnieFay != null) {
-            playerInputService.beginJinnieFayTokenCopyChoice(gameData, new ChoiceContext.JinnieFayTokenCopyChoice(
-                    tokenControllerId, jinnieFay, entry, effect, tokens, sourcePermanent,
-                    expandedAttackTargets, attackTargetIds != null, false, null, null, null, null));
-            return List.of();
-        }
-        return enterPreparedTokenCopies(gameData, entry, tokens, sourcePermanent, tokenControllerId, effect,
-                expandedAttackTargets, attackTargetIds != null, false, null);
+        List<Card> copiedCards = new ArrayList<>();
+        Map<Card, Card> originals = new IdentityHashMap<>();
+        Map<Card, UUID> attackTargets = keyCopiesByAttackTarget(sourceCards, attackTargetIds, copiedCards,
+                originals);
+        return createOrderedTokenCopies(gameData, entry, copiedCards, sourcePermanent, tokenControllerId,
+                effect, copyException, attackTargets,
+                copyRider == null ? null : (copiedCard, copy) -> copyRider.accept(originals.get(copiedCard), copy),
+                null, null, false, null);
     }
 
     /**
@@ -671,25 +496,39 @@ public class TokenCopySupport {
     }
 
     /**
-     * Maps each copied card to the attack target its copies take: {@code attackTargetIds} either names one
-     * target per copied card or a single target shared by all of them. Returns {@code null} when the copies of
-     * one card would attack different targets, which the ordered event can't express.
+     * Fills {@code copiedCards} with the card each copy copies and returns the attack target of each such card's
+     * copies: {@code attackTargetIds} names either one target per copied card (a {@code null} or missing entry: the
+     * copy enters attacking with no target named) or a single target shared by all of them. The event keys copy
+     * groups and attack targets by copied card, so the copies of one card attacking another target come from a
+     * runtime copy of it: the same copiable values, but a group of its own with its own target. {@code originals}
+     * maps each card put into {@code copiedCards} back to the source card it stands for.
      */
-    private static Map<Card, UUID> attackTargetsByCopiedCard(List<Card> sourceCards, List<UUID> attackTargetIds) {
+    private static Map<Card, UUID> keyCopiesByAttackTarget(List<Card> sourceCards, List<UUID> attackTargetIds,
+                                                           List<Card> copiedCards, Map<Card, Card> originals) {
         boolean perCard = attackTargetIds.size() == sourceCards.size();
-        if (!perCard && attackTargetIds.stream().distinct().count() != 1) {
-            return null;
-        }
+        boolean shared = !perCard && attackTargetIds.stream().distinct().count() == 1;
         Map<Card, UUID> attackTargets = new IdentityHashMap<>();
         for (int i = 0; i < sourceCards.size(); i++) {
-            UUID attackTarget = perCard ? attackTargetIds.get(i) : attackTargetIds.getFirst();
-            if (attackTarget == null) {
-                return null;
+            Card sourceCard = sourceCards.get(i);
+            UUID attackTarget = shared ? attackTargetIds.getFirst()
+                    : i < attackTargetIds.size() ? attackTargetIds.get(i) : null;
+            Card copiedCard = null;
+            boolean sourceCardKeyed = false;
+            for (Card keyed : attackTargets.keySet()) {
+                if (originals.get(keyed) == sourceCard) {
+                    sourceCardKeyed = true;
+                    if (Objects.equals(attackTargets.get(keyed), attackTarget)) {
+                        copiedCard = keyed;
+                        break;
+                    }
+                }
             }
-            UUID previous = attackTargets.putIfAbsent(sourceCards.get(i), attackTarget);
-            if (previous != null && !previous.equals(attackTarget)) {
-                return null;
+            if (copiedCard == null) {
+                copiedCard = sourceCardKeyed ? sourceCard.createRuntimeCopy() : sourceCard;
+                attackTargets.put(copiedCard, attackTarget);
+                originals.put(copiedCard, sourceCard);
             }
+            copiedCards.add(copiedCard);
         }
         return attackTargets;
     }
@@ -796,40 +635,6 @@ public class TokenCopySupport {
         }
         return putPreparedTokenCopiesOntoBattlefield(gameData, entry, tokens, sourcePermanent,
                 tokenControllerId, effect, expandedAttackTargets, explicitAttackTargets, afterEntry);
-    }
-
-    /**
-     * Resumes a token-copy batch after the controller answered Jinnie Fay's replacement prompt. A Cat or
-     * Dog replaces each prepared token but still receives the creating effect's riders (haste, granted
-     * death trigger, delayed sacrifice), since those apply to the tokens actually created, and the per-copied-card
-     * instructions of the token it replaces (Mirror Match's "blocking that creature"): anything else the creating
-     * effect specifies still applies to the replacement tokens (Jinnie Fay ruling, 2022-04-29).
-     */
-    public void completeJinnieFayTokenCopyChoice(GameData gameData, String choice,
-                                                 ChoiceContext.JinnieFayTokenCopyChoice context) {
-        List<Permanent> tokens = context.tokens();
-        if (!JinnieFayTokenReplacementEffect.ORIGINAL_OPTION.equals(choice)) {
-            boolean cat = JinnieFayTokenReplacementEffect.CAT_OPTION.equals(choice);
-            CreateTokenEffect replacement = TokenCreationReplacementSupport.jinnieFayToken(
-                    CreateTokenEffect.ofArtifactToken(1, "", List.of(), List.of()), 1, cat);
-            String setCode = context.entry().getCard() == null ? null : context.entry().getCard().getSetCode();
-            tokens = new ArrayList<>();
-            for (int i = 0; i < context.tokens().size(); i++) {
-                Card replacementCard = TokenCardFactory.create(replacement, cat ? 2 : 3, cat ? 2 : 1, setCode);
-                Permanent replacementToken = withGrantedDeathEffects(
-                        withGrantedHaste(replacementCard, replacementCard, context.effect()), context.effect());
-                if (context.tokenRider() != null) {
-                    context.tokenRider().accept(replacementToken);
-                }
-                if (context.instructionRider() != null) {
-                    context.instructionRider().accept(context.copiedCards().get(i), replacementToken);
-                }
-                tokens.add(replacementToken);
-            }
-        }
-        enterPreparedTokenCopies(gameData, context.entry(), tokens, context.sourcePermanent(),
-                context.controllerId(), context.effect(), context.expandedAttackTargets(),
-                context.explicitAttackTargets(), context.chooseOpponentAttackTargets(), context.afterEntry());
     }
 
     /** Continues a restricted player-or-planeswalker choice for each prepared myriad token. */
