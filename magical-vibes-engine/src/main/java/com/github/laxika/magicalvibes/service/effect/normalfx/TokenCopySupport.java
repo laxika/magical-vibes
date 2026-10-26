@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffe
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -28,12 +29,16 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.replacement.TokenCopyBatch;
+import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -59,6 +64,7 @@ public class TokenCopySupport {
     private final PlayerInputService playerInputService;
     private final com.github.laxika.magicalvibes.service.aura.AuraAttachmentService auraAttachmentService;
     private final ObjectProvider<AnimationSupport> animationSupport;
+    private final ObjectProvider<ReplacementOrderService> replacementOrderService;
 
     public List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                         Permanent sourcePermanent,
@@ -99,7 +105,20 @@ public class TokenCopySupport {
                                          List<UUID> attackTargetIds,
                                          Consumer<Card> copyException) {
         return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                effect, attackTargetIds, copyException, false, null);
+                effect, attackTargetIds, copyException, false, null, true);
+    }
+
+    /**
+     * Creates token copies without pausing for the creating player to order the token creation replacements, so
+     * the returned ids are always the tokens created, for callers that go on to act on them. The replacements then
+     * apply in a fixed order.
+     */
+    public List<UUID> createTokenCopiesWithoutReplacementOrder(GameData gameData, StackEntry entry,
+                                                               List<Card> sourceCards, Permanent sourcePermanent,
+                                                               UUID tokenControllerId,
+                                                               CreateTokenCopyOfTargetPermanentEffect effect) {
+        return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
+                effect, null, null, false, null, false);
     }
 
     /**
@@ -111,7 +130,7 @@ public class TokenCopySupport {
                                                   CreateTokenCopyOfTargetPermanentEffect effect,
                                                   Permanent auraHost) {
         return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                effect, null, null, false, auraHost);
+                effect, null, null, false, auraHost, false);
     }
 
     /** Prepares all per-opponent copies, including token replacements, before choosing their attack targets. */
@@ -121,7 +140,7 @@ public class TokenCopySupport {
                                                                CreateTokenCopyOfTargetPermanentEffect effect,
                                                                List<UUID> opponentIds) {
         createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId, effect,
-                opponentIds, null, true, null);
+                opponentIds, null, true, null, false);
     }
 
     private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
@@ -129,9 +148,14 @@ public class TokenCopySupport {
                                          CreateTokenCopyOfTargetPermanentEffect effect,
                                          List<UUID> attackTargetIds,
                                          Consumer<Card> copyException, boolean chooseOpponentAttackTargets,
-                                         Permanent auraHost) {
+                                         Permanent auraHost, boolean orderReplacements) {
         if (sourceCards == null || sourceCards.isEmpty()) {
             return List.of();
+        }
+        if (orderReplacements && attackTargetIds == null && !chooseOpponentAttackTargets && auraHost == null
+                && sourceCards.stream().allMatch(card -> card == sourceCards.getFirst())) {
+            return createOrderedTokenCopies(gameData, entry, sourceCards.getFirst(), sourceCards.size(),
+                    sourcePermanent, tokenControllerId, effect, copyException);
         }
 
         List<Permanent> tokens = new ArrayList<>();
@@ -319,6 +343,85 @@ public class TokenCopySupport {
         }
         return enterPreparedTokenCopies(gameData, entry, tokens, sourcePermanent, tokenControllerId, effect,
                 expandedAttackTargets, attackTargetIds != null, chooseOpponentAttackTargets);
+    }
+
+    /**
+     * Creates {@code count} copies of {@code sourceCard} as one token creation event whose count replacements and
+     * additions the creating player orders (CR 616.1). The creation may pause for that choice and then continue
+     * through {@link #createCopiesAfterReplacementOrder}; the ids are only returned when it doesn't.
+     */
+    private List<UUID> createOrderedTokenCopies(GameData gameData, StackEntry entry, Card sourceCard, int count,
+                                                Permanent sourcePermanent, UUID tokenControllerId,
+                                                CreateTokenCopyOfTargetPermanentEffect effect,
+                                                Consumer<Card> copyException) {
+        Card template = buildTokenCopyCard(
+                sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard(), true);
+        if (copyException != null) {
+            copyException.accept(template);
+        }
+        TokenCreationEvent event = TokenCreationEvent.copies(tokenControllerId, count, sourceCard,
+                TokenCreationReplacementSupport.copyKind(template),
+                TokenCreationReplacementSupport.entersAsCreature(template),
+                entry.getCard() == null ? null : entry.getCard().getSetCode(),
+                new TokenCopyBatch(entry, sourcePermanent, effect, copyException));
+        var outcome = replacementOrderService.getObject().run(gameData, event);
+        if (outcome instanceof ReplacementOrderService.Outcome.Completed<TokenCreationEvent> completed) {
+            return createCopiesAfterReplacementOrder(gameData, completed.event());
+        }
+        return List.of();
+    }
+
+    /**
+     * Builds and enters the copies and the added tokens of a token-copy event whose replacements have all been
+     * applied in the order the creating player chose. All of them enter together; Jinnie Fay and creature-token
+     * replacements such as Divine Visitation still apply to them afterwards.
+     */
+    public List<UUID> createCopiesAfterReplacementOrder(GameData gameData, TokenCreationEvent event) {
+        TokenCopyBatch batch = event.copyBatch();
+        StackEntry entry = batch.entry();
+        CreateTokenCopyOfTargetPermanentEffect effect = batch.effect();
+        UUID tokenControllerId = event.controllerId();
+        Card sourceCard = event.copyOf();
+        List<Permanent> tokens = new ArrayList<>();
+        for (int copy = 0; copy < event.tokenCount(); copy++) {
+            Card tokenCard = buildTokenCopyCard(
+                    sourceCard, effect, gameQueryService::isCreatureSubtype, entry.getCard(), true);
+            if (batch.copyException() != null) {
+                batch.copyException().accept(tokenCard);
+            }
+            tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                    gameData, tokenControllerId, tokenCard);
+            Permanent preparedToken = withGrantedDeathEffects(withGrantedHaste(tokenCard, sourceCard, effect), effect);
+            if (tokenCard.hasType(CardType.PLANESWALKER) && tokenCard.getLoyalty() != null) {
+                preparedToken.setCounterCount(CounterType.LOYALTY, tokenCard.getLoyalty());
+            }
+            tokens.add(preparedToken);
+        }
+        for (TokenCreationEvent.TokenGroup group : event.addedTokens()) {
+            CreateTokenEffect blueprint = group.blueprint();
+            for (int i = 0; i < group.count(); i++) {
+                Card addedCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
+                        gameData, tokenControllerId, TokenCardFactory.create(blueprint,
+                                fixedStat(blueprint.power()), fixedStat(blueprint.toughness()), event.sourceSetCode()));
+                tokens.add(blueprint.subtypes() != null && blueprint.subtypes().contains(CardSubtype.SQUIRREL)
+                        ? withGrantedHaste(addedCard, addedCard, effect) : new Permanent(addedCard));
+            }
+        }
+        List<UUID> attackTargets = new ArrayList<>(Collections.nCopies(tokens.size(), null));
+        Card jinnieFay = tokens.isEmpty() ? null
+                : TokenCreationReplacementSupport.findJinnieFay(gameData, tokenControllerId);
+        if (jinnieFay != null) {
+            playerInputService.beginJinnieFayTokenCopyChoice(gameData, new ChoiceContext.JinnieFayTokenCopyChoice(
+                    tokenControllerId, jinnieFay, entry, effect, tokens, batch.sourcePermanent(),
+                    attackTargets, false, false));
+            return List.of();
+        }
+        return enterPreparedTokenCopies(gameData, entry, tokens, batch.sourcePermanent(), tokenControllerId,
+                effect, attackTargets, false, false);
+    }
+
+    private static int fixedStat(DynamicAmount stat) {
+        return stat instanceof Fixed fixed ? fixed.value() : 0;
     }
 
     private List<UUID> enterPreparedTokenCopies(GameData gameData, StackEntry entry, List<Permanent> tokens,

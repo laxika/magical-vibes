@@ -2129,7 +2129,9 @@ public class ChoiceHandlerService {
             }
             case TokenCreationEvent tokens -> {
                 StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-                if (tokens.copyOf() != null) {
+                if (tokens.copyBatch() != null) {
+                    tokenCopySupport.createCopiesAfterReplacementOrder(gameData, tokens);
+                } else if (tokens.copyOf() != null) {
                     populateSupport.createCopiesAfterReplacementOrder(gameData, tokens, pendingEntry);
                 } else {
                     List<UUID> createdIds = permanentControlSupport.applyCreateTokenAfterReplacementOrder(gameData, tokens);

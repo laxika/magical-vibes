@@ -51,7 +51,7 @@ public class CreateTokenCopyOfEnteringTokenForTargetPlayerEffectHandler implemen
             return;
         }
 
-        List<UUID> createdTokenIds = tokenCopySupport.createTokenCopies(
+        List<UUID> createdTokenIds = tokenCopySupport.createTokenCopiesWithoutReplacementOrder(
                 gameData,
                 entry,
                 List.of(enteringCard),

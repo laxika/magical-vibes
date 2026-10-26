@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.cards.d.DelverOfSecrets;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HomaridExplorer;
 import com.github.laxika.magicalvibes.cards.m.MirriCatWarrior;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
@@ -31,10 +34,75 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({CacklingCounterpart.class, GrizzlyBears.class, HomaridExplorer.class,
-        BlisterstickShaman.class, BurningSunsAvatar.class, MirriCatWarrior.class, DelverOfSecrets.class})
+        BlisterstickShaman.class, BurningSunsAvatar.class, MirriCatWarrior.class, DelverOfSecrets.class,
+        QueenAllenalOfRuadach.class, ParallelLives.class})
 class CacklingCounterpartTest extends BaseCardTest {
 
-    
+    @Test
+    @DisplayName("Queen Allenal adds a Soldier to the token copy")
+    void queenAddsSoldierToTokenCopy() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        castOnGrizzlyBears();
+
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(2);
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("With Queen Allenal and Parallel Lives, the creating player orders them before the copy is created")
+    void asksToOrderTokenReplacementsForTokenCopy() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        castOnGrizzlyBears();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Applying Queen Allenal before Parallel Lives doubles both the copy and the added Soldier")
+    void queenFirstDoublesTokenCopyAndSoldier() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        castOnGrizzlyBears();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(3);
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Applying Parallel Lives before Queen Allenal adds one undoubled Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        castOnGrizzlyBears();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(3);
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Cackling Counterpart");
+    }
+
+    private void castOnGrizzlyBears() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CacklingCounterpart()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passBothPriorities();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
+    }
 
     @Test
     @DisplayName("Creates a token copy of target creature you control")

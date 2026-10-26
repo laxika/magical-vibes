@@ -45,9 +45,9 @@ public class CreateTokenCopyOfAttackingCreaturesBlockingEffectHandler implements
             return;
         }
         // The copies are created as one event, so each sees the others enter (CR 603.6a).
-        List<UUID> createdIds = tokenCopySupport.createTokenCopies(
+        List<UUID> createdIds = tokenCopySupport.createTokenCopiesWithoutReplacementOrder(
                 gameData, entry, attackers.stream().map(Permanent::getCard).toList(), attackers.getFirst(),
-                controllerId, copyEffect, null);
+                controllerId, copyEffect);
         if (createdIds.size() != attackers.size()) {
             return;
         }

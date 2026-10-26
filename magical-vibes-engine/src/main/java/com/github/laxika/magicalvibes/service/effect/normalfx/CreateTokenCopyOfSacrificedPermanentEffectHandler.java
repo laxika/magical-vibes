@@ -52,9 +52,9 @@ public class CreateTokenCopyOfSacrificedPermanentEffectHandler implements Normal
             return;
         }
 
-        List<UUID> tokenIds = tokenCopySupport.createTokenCopies(
+        List<UUID> tokenIds = tokenCopySupport.createTokenCopiesWithoutReplacementOrder(
                 gameData, entry, Collections.nCopies(copyEffect.amount(), copyEffect.copiedCard()), null,
-                new CreateTokenCopyOfTargetPermanentEffect());
+                entry.getControllerId(), new CreateTokenCopyOfTargetPermanentEffect());
         for (UUID tokenId : tokenIds) {
             Permanent token = gameQueryService.findPermanentById(gameData, tokenId);
             if (token == null) {

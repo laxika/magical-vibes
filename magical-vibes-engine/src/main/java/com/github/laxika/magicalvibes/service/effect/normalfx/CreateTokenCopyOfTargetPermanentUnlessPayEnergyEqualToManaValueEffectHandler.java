@@ -51,7 +51,7 @@ public class CreateTokenCopyOfTargetPermanentUnlessPayEnergyEqualToManaValueEffe
             if (targetPermanent == null) {
                 continue;
             }
-            List<UUID> tokenIds = tokenCopySupport.createTokenCopies(
+            List<UUID> tokenIds = tokenCopySupport.createTokenCopiesWithoutReplacementOrder(
                     gameData, entry, Collections.singletonList(targetPermanent.getCard()), sourcePermanent,
                     entry.getControllerId(), copyEffect.copyEffect());
             for (UUID tokenId : tokenIds) {

@@ -103,7 +103,7 @@ public class EachPlayerChoosesOneOrTwoCreaturesCreatesTokenCopyEffectHandler
             int expectedCopyCount = gameQueryService.getTokenCreationAmount(
                     gameData, choice.getKey(), 1, copiedCreature.getCard().getSubtypes(),
                     gameQueryService.isCreature(gameData, copiedCreature));
-            List<UUID> createdIds = tokenCopySupport.createTokenCopies(
+            List<UUID> createdIds = tokenCopySupport.createTokenCopiesWithoutReplacementOrder(
                     gameData, copyEntry, List.of(copiedCreature.getCard()), null,
                     choice.getKey(), TOKEN_PROFILE);
             int copyCount = Math.min(expectedCopyCount, createdIds.size());

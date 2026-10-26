@@ -23,7 +23,8 @@ import java.util.function.Predicate;
  * player creating the tokens orders the effects (CR 616.1); once all of them have applied, {@link #tokenCount()} tokens are created from
  * {@link #token()} together with every group of {@link #addedTokens()}.
  *
- * <p>An event that creates copies of a token (populate, CR 701.36a) has no blueprint of its own: {@link #copyOf()}
+ * <p>An event that creates copies of a token (populate, CR 701.36a, or a token-copy effect described by
+ * {@link #copyBatch()}) has no blueprint of its own: {@link #copyOf()}
  * is the token being copied, {@link #tokenCount()} counts the copies and {@link #token()} only describes their kind
  * (types, subtypes, name and colour) for the effects that look at it.
  *
@@ -39,11 +40,14 @@ import java.util.function.Predicate;
  *                          tokens replacement effects added, one group per distinct blueprint in a canonical order
  * @param copyOf            the token whose copies {@link #tokenCount()} counts, or {@code null} when they are created
  *                          from {@link #token()}
+ * @param copyBatch         how a token-copy effect builds and enters its copies of {@link #copyOf()}, or {@code null}
+ *                          for populate and blueprint events
  */
 public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> appliedKeys, CreateTokenEffect token,
                                  int power, int toughness, String sourceSetCode,
                                  Map<EffectSlot, List<EffectRegistration>> additionalEffects,
-                                 boolean creatureToken, List<TokenGroup> addedTokens, Card copyOf) implements ReplacementEvent {
+                                 boolean creatureToken, List<TokenGroup> addedTokens, Card copyOf,
+                                 TokenCopyBatch copyBatch) implements ReplacementEvent {
 
     private static final Comparator<TokenGroup> GROUP_ORDER = Comparator
             .comparing((TokenGroup group) -> group.blueprint().tokenName())
@@ -69,7 +73,7 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
                               int power, int toughness, String sourceSetCode,
                               Map<EffectSlot, List<EffectRegistration>> additionalEffects, boolean creatureToken) {
         this(controllerId, tokenCount, appliedKeys, token, power, toughness, sourceSetCode, additionalEffects,
-                creatureToken, List.of(), null);
+                creatureToken, List.of(), null, null);
     }
 
     public TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> appliedKeys, CreateTokenEffect token,
@@ -77,7 +81,7 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
                               Map<EffectSlot, List<EffectRegistration>> additionalEffects, boolean creatureToken,
                               List<TokenGroup> addedTokens) {
         this(controllerId, tokenCount, appliedKeys, token, power, toughness, sourceSetCode, additionalEffects,
-                creatureToken, addedTokens, null);
+                creatureToken, addedTokens, null, null);
     }
 
     /**
@@ -87,7 +91,17 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
     public static TokenCreationEvent copies(UUID controllerId, int count, Card copyOf, CreateTokenEffect kind,
                                             boolean creatureToken, String sourceSetCode) {
         return new TokenCreationEvent(controllerId, count, Set.of(), kind, 0, 0, sourceSetCode, Map.of(),
-                creatureToken, List.of(), copyOf);
+                creatureToken, List.of(), copyOf, null);
+    }
+
+    /**
+     * An event in which a token-copy effect creates {@code count} copies of {@code copyOf}, built and entered as
+     * {@code batch} describes once the event's replacements have applied.
+     */
+    public static TokenCreationEvent copies(UUID controllerId, int count, Card copyOf, CreateTokenEffect kind,
+                                            boolean creatureToken, String sourceSetCode, TokenCopyBatch batch) {
+        return new TokenCreationEvent(controllerId, count, Set.of(), kind, 0, 0, sourceSetCode, Map.of(),
+                creatureToken, List.of(), copyOf, batch);
     }
 
     /** Merges groups of equal blueprints and sorts them, so the order effects added them in doesn't matter. */
@@ -146,12 +160,12 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
 
     public TokenCreationEvent withTokenCount(int newTokenCount) {
         return new TokenCreationEvent(controllerId, newTokenCount, appliedKeys, token, power, toughness,
-                sourceSetCode, additionalEffects, creatureToken, addedTokens, copyOf);
+                sourceSetCode, additionalEffects, creatureToken, addedTokens, copyOf, copyBatch);
     }
 
     public TokenCreationEvent withAddedTokens(List<TokenGroup> newAddedTokens) {
         return new TokenCreationEvent(controllerId, tokenCount, appliedKeys, token, power, toughness,
-                sourceSetCode, additionalEffects, creatureToken, newAddedTokens, copyOf);
+                sourceSetCode, additionalEffects, creatureToken, newAddedTokens, copyOf, copyBatch);
     }
 
     /** This event with {@code count} more tokens of {@code blueprint}. */
@@ -166,12 +180,12 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
         Set<String> keys = new HashSet<>(appliedKeys);
         keys.add(key);
         return new TokenCreationEvent(controllerId, tokenCount, keys, token, power, toughness,
-                sourceSetCode, additionalEffects, creatureToken, addedTokens, copyOf);
+                sourceSetCode, additionalEffects, creatureToken, addedTokens, copyOf, copyBatch);
     }
 
     @Override
     public TokenCreationEvent withoutAppliedKeys() {
         return new TokenCreationEvent(controllerId, tokenCount, Set.of(), token, power, toughness,
-                sourceSetCode, additionalEffects, creatureToken, addedTokens, copyOf);
+                sourceSetCode, additionalEffects, creatureToken, addedTokens, copyOf, copyBatch);
     }
 }

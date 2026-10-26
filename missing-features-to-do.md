@@ -16,12 +16,14 @@ Remove an entry once the feature has landed and its tests pass.
 `DestructionSupport.createTokenForPlayer` now delegates to `applyCreateToken` (ordered, Jinnie Fay asked,
 tokens created as one batch), tested in `BeastWithinTest` with Queen Allenal + Parallel Lives; populate now runs a
 copy-group `TokenCreationEvent` (`TokenCreationEvent.copies`, `copyOf` = the copied token) and resumes in
-`PopulateSupport.createCopiesAfterReplacementOrder`, tested in `RootbornDefensesTest`
+`PopulateSupport.createCopiesAfterReplacementOrder`, tested in `RootbornDefensesTest`; `TokenCopySupport` copies of a
+single card (no explicit attack targets, no Aura host) now run a copy-group event carrying a `TokenCopyBatch` and resume
+in `TokenCopySupport.createCopiesAfterReplacementOrder`, tested in `CacklingCounterpartTest`
 
 **Failing tests:**
-- None yet. Write one per path, e.g. Queen Allenal of Ruadach + Parallel Lives with a token copy
-  (Cackling Counterpart) or a populate: the player must be asked, and Queen first must give the doubled
-  Soldier.
+- None yet. Write one per remaining path, e.g. Queen Allenal of Ruadach + Parallel Lives with a copy of two
+  different targets, an attacking copy (Kiki-Jiki-style tapped-and-attacking copy) or Mirror Match: the player must
+  be asked, and Queen first must give the doubled Soldier.
 
 **What the rules require.** CR 616.1 / 616.1e: the player creating the tokens chooses the order of every
 replacement that modifies the token creation event. `PermanentControlSupport.applyCreateToken` (the
@@ -29,9 +31,17 @@ single-blueprint path) runs a `TokenCreationEvent` where count replacements (`To
 and every addition (`TokenAdditionReplacements`: Soldier, Frog, Squirrels, Map, Thopter, Mutagen, Tippy-Toe
 Food, solved-Case Clue, Bilbo Treasure, Academy Manufactor's "one of each") are ordered. Still fixed, with
 no prompt:
-- `TokenCopySupport` and the copy handlers that call `getTokenCreationAmount` (multiplier first, additions
-  unmultiplied). The copy-group event form now exists; they need a completion that rebuilds their copies (copy
-  exceptions, haste/death riders, attack targets, Aura hosts) from the event, like populate's.
+- `TokenCopySupport` batches outside the ordered single-card path: copies of several different cards (one
+  `copyOf` per event; needs a list of copy groups), copies with explicit attack targets (`attackTargetIds`,
+  `createTokenCopiesChoosingOpponentAttackTargets`; a doubled copy must keep its source's attack target), Aura-host
+  copies (`createTokenCopiesAttachedTo`), and the callers that act on the returned ids
+  (`createTokenCopiesWithoutReplacementOrder`: Human Time Lord Meta-Crisis, Satya, Cleaver Skaab/Ashling's
+  copied-card form, Mirror Match, Lucy MacLean), which would need a continuation for their follow-up work.
+- The copy handlers that call `getTokenCreationAmount` themselves (`CreateTokenCopyOfSourceEffectHandler`,
+  `CreateTokenCopyAndLinkToSourceEffectHandler`, `CreateTokenCopyOfImprintedCardEffectHandler`,
+  `CreateTokenCopiesOfExiledCardAttackingOpponentsEffectHandler`, `CreateTokenCopyOfEachTokenEnteredThisTurnEffectHandler`,
+  `ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler`, `GraveyardReturnSupport`, the attacking-copy branch of
+  `CreateTokenCopyOfTargetPermanentEffectHandler`, ...): multiplier first, additions unmultiplied.
 - Populate never asks about Jinnie Fay, and its copies enter before the event's added tokens (two entry batches
   rather than one simultaneous batch).
 - Jinnie Fay's choice is always asked first, before the event is ordered, so the player can't apply Tippy-Toe
@@ -48,7 +58,9 @@ holds a single card, so multi-source copies (`TokenCopySupport` with several sou
 
 ```
 Implement missing-features-to-do.md entry 53: route the remaining token creation paths
-(TokenCopySupport, the token copy handlers; populate is done, see PopulateSupport and TokenCreationEvent.copies)
+(TokenCopySupport's multi-source/attacking/Aura-host/id-returning batches and the token copy handlers that call
+getTokenCreationAmount; populate and single-card TokenCopySupport batches are done, see PopulateSupport,
+TokenCopySupport.createCopiesAfterReplacementOrder, TokenCreationEvent.copies and TokenCopyBatch)
 through TokenCreationEvent and ReplacementOrderService, as PermanentControlSupport.applyCreateToken does
 with TokenCreationReplacements and TokenAdditionReplacements. Write the tests first. Don't run the full
 test suite; ask me. Don't commit until I say so.
