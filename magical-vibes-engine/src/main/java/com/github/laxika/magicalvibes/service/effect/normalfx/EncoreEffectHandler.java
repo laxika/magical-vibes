@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EncoreEffect;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,12 +13,18 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
+/**
+ * Encore: for each opponent, a token copy of the exiled card that attacks that opponent this turn if able. The copies
+ * are one ordered token creation event (CR 616.1); every token it creates, added ones included, gains haste and is
+ * sacrificed at the beginning of the next end step.
+ */
 @Component
 @RequiredArgsConstructor
 public class EncoreEffectHandler implements NormalEffectHandlerBean {
 
-    private final CreateTokenCopyOfSourceEffectHandler sourceCopyHandler;
+    private final TokenCopySupport tokenCopySupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,42 +33,25 @@ public class EncoreEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        for (var opponentId : gameData.orderedPlayerIds) {
-            if (!gameData.playerIds.contains(opponentId) || opponentId.equals(entry.getControllerId())) {
-                continue;
-            }
-
-            StackEntry copyEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    entry.getCard(),
-                    entry.getControllerId(),
-                    entry.getDescription(),
-                    List.of(new CreateTokenCopyOfSourceEffect(
-                            false, new Fixed(1), null, null, false, null, null,
-                            true, false, Map.of(), false, Set.of(), null, false, 0)),
-                    0,
-                    null,
-                    null,
-                    Map.of(),
-                    null,
-                    List.of(),
-                    List.of());
-            Permanent sourceSnapshot = new Permanent(entry.getCard());
-            sourceSnapshot.setAttackTarget(opponentId);
-            copyEntry.setSourcePermanentSnapshot(sourceSnapshot);
-
-            sourceCopyHandler.resolve(gameData, copyEntry, copyEntry.getEffectsToResolve().getFirst());
-            for (var permanentId : copyEntry.getCreatedPermanentIds()) {
-                Permanent token = gameData.playerBattlefields.values().stream().flatMap(List::stream)
-                        .filter(permanent -> permanent.getId().equals(permanentId)).findFirst().orElse(null);
-                if (token != null) {
+        if (entry.getCard() == null) {
+            return;
+        }
+        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> gameData.playerIds.contains(playerId)
+                        && !playerId.equals(entry.getControllerId()))
+                .toList();
+        CreateTokenCopyOfTargetPermanentEffect copyEffect = new CreateTokenCopyOfTargetPermanentEffect(
+                List.of(), Set.of(), null, null, Map.of(), false, false, true, false, false,
+                false, null, Set.of(), false, Map.of(), List.of(), false, false,
+                new Fixed(1), false, Set.of(), false,
+                List.of());
+        // "They gain haste" is granted to the tokens, not part of the copy (CR 707.2).
+        tokenCopySupport.createTokenCopiesForEachOpponent(gameData, entry, List.of(entry.getCard()),
+                entry.getControllerId(), copyEffect, opponentIds,
+                token -> token.getPersistentGrantedKeywords().add(Keyword.HASTE),
+                (opponentId, token) -> {
                     token.setMustAttackThisTurn(true);
                     token.setMustAttackTargetId(opponentId);
-                }
-                gameData.queueDelayedAction(new DelayedPermanentAction(
-                        permanentId, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                        false, null, null, entry.getControllerId(), false, entry.getCard()));
-            }
-        }
+                });
     }
 }

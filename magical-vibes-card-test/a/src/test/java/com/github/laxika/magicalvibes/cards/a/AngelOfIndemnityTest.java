@@ -60,7 +60,9 @@ class AngelOfIndemnityTest extends BaseCardTest {
 
         Permanent token = findPermanent(player1, "Angel of Indemnity");
         assertThat(token.getCard().isToken()).isTrue();
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+        // Encore: "They gain haste" is granted to the token, not part of its copiable values.
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(token.getCard().getKeywords()).doesNotContain(Keyword.HASTE);
         assertThat(token.isTapped()).isFalse();
         assertThat(token.isAttacking()).isFalse();
     }

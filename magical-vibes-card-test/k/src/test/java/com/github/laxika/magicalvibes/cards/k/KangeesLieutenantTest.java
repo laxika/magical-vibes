@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KangeesLieutenant.class, WindDrake.class, GrizzlyBears.class})
+@CardUsed({KangeesLieutenant.class, WindDrake.class, GrizzlyBears.class, QueenAllenalOfRuadach.class, ParallelLives.class})
 class KangeesLieutenantTest extends BaseCardTest {
 
     @Test
@@ -62,5 +66,46 @@ class KangeesLieutenantTest extends BaseCardTest {
         assertThat(token.isTapped()).isTrue();
         assertThat(token.isAttacking()).isTrue();
         assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Encore with Queen Allenal and Parallel Lives: the player orders them, and every token gains haste, must attack and is sacrificed")
+    void encoreOrdersQueenAndParallelLives() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        harness.setGraveyard(player1, List.of(new KangeesLieutenant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith("Queen Allenal")).findFirst().orElseThrow());
+
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .toList();
+        assertThat(tokens).filteredOn(token -> token.getCard().getName().equals("Kangee's Lieutenant")).hasSize(2);
+        assertThat(tokens).filteredOn(token -> token.getCard().getName().equals("Soldier")).hasSize(2);
+        assertThat(tokens).hasSize(4).allSatisfy(token -> {
+            assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+            assertThat(token.isMustAttackThisTurn()).isTrue();
+            assertThat(token.getMustAttackTargetId()).isEqualTo(player2.getId());
+        });
+
+        List<Integer> tokenIndices = tokens.stream()
+                .map(token -> gd.playerBattlefields.get(player1.getId()).indexOf(token)).toList();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(tokenIndices));
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
     }
 }

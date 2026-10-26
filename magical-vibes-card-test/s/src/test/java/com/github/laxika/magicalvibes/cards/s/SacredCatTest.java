@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SacredCat.class})
+@CardUsed({SacredCat.class, QueenAllenalOfRuadach.class, ParallelLives.class})
 class SacredCatTest extends BaseCardTest {
 
     private void setUpEmbalm() {
@@ -155,5 +159,55 @@ class SacredCatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Queen Allenal and Parallel Lives: Queen first gives a doubled Soldier with the doubled embalm copy")
+    void queenFirstDoublesTheAddedSoldier() {
+        embalmWithQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal");
+
+        assertThat(tokensNamed("Sacred Cat")).hasSize(2)
+                .allSatisfy(token -> {
+                    assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
+                    assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
+                    assertThat(token.getCard().getManaCost()).isEmpty();
+                });
+        assertThat(tokensNamed("Soldier")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Queen Allenal and Parallel Lives: Parallel Lives first adds a single Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        embalmWithQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(tokensNamed("Sacred Cat")).hasSize(2);
+        assertThat(tokensNamed("Soldier")).hasSize(1);
+    }
+
+    private void embalmWithQueenAndParallelLives() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        setUpEmbalm();
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        assertThat(tokensNamed("Sacred Cat")).isEmpty();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
+    }
+
+    private List<Permanent> tokensNamed(String name) {
+        return gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken() && p.getCard().getName().equals(name))
+                .toList();
     }
 }

@@ -157,6 +157,56 @@ public class TokenCopySupport {
     }
 
     /**
+     * Creates {@code amount} copies of {@code sourceCard} (the creating effect's own source, such as an embalm or
+     * eternalize copy) as one ordered token creation event (CR 616.1), applying {@code copyException} to each copy as
+     * it is built. With {@code chooseAttackTargets}, the creating player chooses the defending player or planeswalker
+     * each creature token attacks as it enters, as {@link #createTokenCopiesChoosingAttackTargets} does. Then runs
+     * {@code afterEntry} as {@link #createTokenCopiesThen} does.
+     */
+    public void createSourceTokenCopiesThen(GameData gameData, StackEntry entry, Card sourceCard, int amount,
+                                            Permanent sourcePermanent, CreateTokenCopyOfTargetPermanentEffect effect,
+                                            Consumer<Card> copyException, boolean chooseAttackTargets,
+                                            BiConsumer<GameData, List<Permanent>> afterEntry) {
+        if (sourceCard == null || amount <= 0) {
+            return;
+        }
+        createOrderedTokenCopies(gameData, entry, Collections.nCopies(amount, sourceCard), sourcePermanent,
+                entry.getControllerId(), effect, copyException, null, null, null, null, chooseAttackTargets,
+                afterEntry);
+    }
+
+    /**
+     * Creates, for each of {@code opponentIds}, a copy of each of {@code sourceCards} as one ordered token creation
+     * event (CR 616.1), for "for each opponent, create a token copy that [does something with] that opponent" (encore).
+     * Every token the event creates is set up with {@code tokenRider} and then with {@code opponentInstruction},
+     * given the opponent the token was created for, before it enters: the copies a doubler adds and Jinnie Fay's
+     * substitutes get the opponent of the copy they double or replace, and tokens a replacement adds (Queen Allenal's
+     * Soldier) the first opponent.
+     */
+    public void createTokenCopiesForEachOpponent(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                                 UUID tokenControllerId,
+                                                 CreateTokenCopyOfTargetPermanentEffect effect,
+                                                 List<UUID> opponentIds, Consumer<Permanent> tokenRider,
+                                                 BiConsumer<UUID, Permanent> opponentInstruction) {
+        if (sourceCards == null || sourceCards.isEmpty() || opponentIds == null || opponentIds.isEmpty()) {
+            return;
+        }
+        List<Card> copiedCards = new ArrayList<>();
+        Map<Card, UUID> opponentsByCard = new IdentityHashMap<>();
+        for (int i = 0; i < opponentIds.size(); i++) {
+            for (Card sourceCard : sourceCards) {
+                Card copiedCard = i == 0 ? sourceCard : sourceCard.createRuntimeCopy();
+                copiedCards.add(copiedCard);
+                opponentsByCard.put(copiedCard, opponentIds.get(i));
+            }
+        }
+        BiConsumer<Card, Permanent> instructionRider = (copiedCard, token) -> opponentInstruction.accept(
+                copiedCard == null ? opponentIds.getFirst() : opponentsByCard.get(copiedCard), token);
+        createOrderedTokenCopies(gameData, entry, copiedCards, null, tokenControllerId, effect, null, null, null,
+                tokenRider, instructionRider, false, null);
+    }
+
+    /**
      * Creates a copy of each of {@code sourceCards}, tapped and attacking, as one ordered token creation event
      * (CR 616.1). Once the replacements have fixed which tokens are created, the creating player chooses which
      * defending player or planeswalker each creature token attacks as it enters (CR 508.4), added tokens such as

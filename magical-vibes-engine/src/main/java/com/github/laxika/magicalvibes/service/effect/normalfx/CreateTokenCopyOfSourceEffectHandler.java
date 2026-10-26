@@ -1,52 +1,42 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import java.util.UUID;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.CloneService;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/**
+ * Creates token copies of the effect's source (embalm, eternalize, offspring, Splinter Twin, ...) as one ordered
+ * token creation event through {@link TokenCopySupport}, so the creating player orders the count replacements and
+ * additions that apply to it (CR 616.1).
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandlerBean {
 
-    private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
-    private final CloneService cloneService;
     private final AmountEvaluationService amountEvaluationService;
     private final PermanentCounterSupport permanentCounterSupport;
-    private final PlayerInputService playerInputService;
+    private final TokenCopySupport tokenCopySupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -56,264 +46,98 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CreateTokenCopyOfSourceEffect) effect;
-        
-                // Try to get the source card from the battlefield; if the source left (e.g. planeswalker
-                // at 0 loyalty after paying cost), fall back to the card stored on the stack entry
-                // (CR 608.2b: abilities resolve even if the source has left the zone).
-                Card sourceCard;
-                Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                Permanent sourceForRelativeValues = sourcePermanent != null
-                        ? sourcePermanent : entry.getSourcePermanentSnapshot();
-                if (sourcePermanent != null) {
-                    sourceCard = sourcePermanent.getCard();
-                } else {
-                    sourceCard = entry.getSourcePermanentSnapshot() != null
-                            ? entry.getSourcePermanentSnapshot().getCard() : entry.getCard();
-                    if (sourceCard == null) {
-                        log.info("Game {} - Source permanent no longer on battlefield and no card reference", gameData.id);
-                        return;
-                    }
-                }
 
-                List<CardSubtype> tokenSubtypes = sourceCard.getSubtypes() == null
-                        ? new ArrayList<>()
-                        : new ArrayList<>(sourceCard.getSubtypes());
-                if (e.addedSubtype() != null && !tokenSubtypes.contains(e.addedSubtype())) {
-                    tokenSubtypes.add(e.addedSubtype());
-                }
-                AmountContext amountContext = AmountContext.forStackEntry(entry, sourceForRelativeValues);
-                int amount = amountEvaluationService.evaluate(gameData, e.amount(), amountContext);
-                if (amount <= 0) {
-                    return;
-                }
-                boolean creatureToken = sourceCard.hasType(CardType.CREATURE)
-                        || (e.additionalTypes() != null && e.additionalTypes().contains(CardType.CREATURE));
-                int totalAmount = gameQueryService.getTokenCreationAmount(gameData, entry.getControllerId(), amount, tokenSubtypes, creatureToken);
-                Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-                List<Permanent> simultaneouslyEntered = new ArrayList<>();
-                List<Card> enteredTokenCards = new ArrayList<>();
-                List<UUID> attackingTokenIds = new ArrayList<>();
-                for (int copy = 0; copy < totalAmount; copy++) {
-                    // Create a token that's a copy of the source permanent (copying all copiable values per CR 707.2)
-                    Card tokenCard = new Card();
-                    tokenCard.setName(sourceCard.getName());
-                    tokenCard.setType(sourceCard.getType());
-                    EnumSet<CardType> additionalTypes = EnumSet.noneOf(CardType.class);
-                    if (sourceCard.getAdditionalTypes() != null) {
-                        additionalTypes.addAll(sourceCard.getAdditionalTypes());
-                    }
-                    if (e.additionalTypes() != null) {
-                        e.additionalTypes().stream()
-                                .filter(type -> type != sourceCard.getType())
-                                .forEach(additionalTypes::add);
-                    }
-                    tokenCard.setAdditionalTypes(additionalTypes);
-                    // Embalm / Eternalize copies have no mana cost.
-                    tokenCard.setManaCost(!e.removeManaCost() && sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
-                    tokenCard.setToken(true);
-                    // Embalm / Eternalize recolors the copy (e.g. a white Zombie); otherwise keep the source's color.
-                    if (e.colorOverride() != null) {
-                        tokenCard.setColor(e.colorOverride());
-                        tokenCard.setColors(List.of(e.colorOverride()));
-                    } else {
-                        tokenCard.setColor(sourceCard.getColor());
-                        tokenCard.setColors(sourceCard.getColors());
-                    }
-                    // The copy effect's loyalty modification is part of the token's copiable values, so a
-                    // copy of the token starts from the token's loyalty rather than the source's printed one (CR 707.2).
-                    tokenCard.setLoyalty(e.startingLoyaltyOverride() != null
-                            ? e.startingLoyaltyOverride()
-                            : sourceCard.getLoyalty());
-                    // Embalm keeps the source's P/T; Eternalize sets a fixed base P/T (e.g. a 4/4).
-                    tokenCard.setPower(e.powerOverride() != null ? e.powerOverride() : sourceCard.getPower());
-                    tokenCard.setToughness(e.toughnessOverride() != null ? e.toughnessOverride() : sourceCard.getToughness());
-                    // Embalm / Eternalize adds a creature type (e.g. Zombie) to the copy.
-                    if (e.addedSubtype() != null && !sourceCard.getSubtypes().contains(e.addedSubtype())) {
-                        List<CardSubtype> subtypes = new ArrayList<>(sourceCard.getSubtypes());
-                        subtypes.add(e.addedSubtype());
-                        tokenCard.setSubtypes(subtypes);
-                    } else {
-                        tokenCard.setSubtypes(sourceCard.getSubtypes());
-                    }
-                    tokenCard.setCardText(sourceCard.getCardText());
-                    tokenCard.setSetCode(sourceCard.getSetCode());
-                    tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
-
-                    // Handle supertypes: optionally remove LEGENDARY
-                    if (e.removeLegendary() && sourceCard.getSupertypes().contains(CardSupertype.LEGENDARY)) {
-                        EnumSet<CardSupertype> modifiedSupertypes = EnumSet.copyOf(sourceCard.getSupertypes());
-                        modifiedSupertypes.remove(CardSupertype.LEGENDARY);
-                        tokenCard.setSupertypes(modifiedSupertypes);
-                    } else {
-                        tokenCard.setSupertypes(sourceCard.getSupertypes());
-                    }
-
-                    // Copy keywords and apply any plain-copy exception.
-                    if ((sourceCard.getKeywords() != null && !sourceCard.getKeywords().isEmpty()) || e.grantHaste()) {
-                        EnumSet<Keyword> keywords = sourceCard.getKeywords() == null
-                                ? EnumSet.noneOf(Keyword.class)
-                                : EnumSet.copyOf(sourceCard.getKeywords());
-                        if (e.excludedKeywords() != null) {
-                            keywords.removeAll(e.excludedKeywords());
-                        }
-                        if (e.grantHaste()) {
-                            keywords.add(Keyword.HASTE);
-                        }
-                        tokenCard.setKeywords(keywords);
-                    }
-
-                    // Copy effects and activated abilities (copiable characteristics per CR 707.2)
-                    for (EffectSlot slot : EffectSlot.values()) {
-                        for (EffectRegistration reg : sourceCard.getEffectRegistrations(slot)) {
-                            if (e.excludedEffectType() != null
-                                    && reg.effect().getClass() == e.excludedEffectType()) {
-                                continue;
-                            }
-                            if (e.additionalExcludedEffectTypes() != null
-                                    && e.additionalExcludedEffectTypes().contains(reg.effect().getClass())) {
-                                continue;
-                            }
-                            tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
-                        }
-                    }
-                    for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
-                        tokenCard.addActivatedAbility(ability);
-                    }
-                    tokenCard.copyTargetingFrom(sourceCard);
-                    // Creature-token replacements (Divine Visitation) apply to the token as it is created,
-                    // before any copy-on-enter choice, so a replaced token never offers to copy anything.
-                    tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                            gameData, entry.getControllerId(), tokenCard);
-
-                    // Vizier of Many Faces: the embalm token is itself a Clone. Each copy goes through the
-                    // normal entry path so it enters as a copy of a chosen creature (CR 614.1c); copies
-                    // beyond the first (Anointed Procession) wait their turn in the pending entry-copy
-                    // queue. The clone flow re-applies the embalm color/type/no-mana-cost transformation.
-                    if (tokenCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                            .anyMatch(eff -> eff instanceof CopyPermanentOnEnterEffect)) {
-                        Permanent cloneToken = new Permanent(tokenCard);
-                        battlefieldEntryService.putPermanentOntoBattlefield(
-                                gameData, entry.getControllerId(), cloneToken,
-                                enterTappedTypesSnapshot, simultaneouslyEntered);
-                        simultaneouslyEntered.add(cloneToken);
-                        entry.getCreatedPermanentIds().add(cloneToken.getId());
-                        gameLogService.append(gameData, GameLog.textCardText(
-                                "A token copy of ", sourceCard, " is created."));
-                        log.info("Game {} - Token clone copy of {} created via embalm", gameData.id, sourceCard.getName());
-                        continue;
-                    }
-
-                    Permanent tokenPermanent = new Permanent(tokenCard);
-
-                    if (e.initialPlusOnePlusOneCounters() > 0
-                            && !gameQueryService.cantHavePlusOnePlusOneCounters(
-                            gameData, tokenPermanent, entry.getControllerId())) {
-                        int initialCounters = gameQueryService.doublePlusOnePlusOneCounters(
-                                gameData, tokenPermanent, entry.getControllerId(),
-                                e.initialPlusOnePlusOneCounters());
-                        if (initialCounters > 0) {
-                            tokenPermanent.setCounterCount(
-                                    CounterType.PLUS_ONE_PLUS_ONE, initialCounters);
-                        }
-                    }
-
-                    // Planeswalker tokens enter with loyalty counters and no summoning sickness
-                    if (tokenCard.getType() == CardType.PLANESWALKER) {
-                        int startingLoyalty = e.startingLoyaltyOverride() != null
-                                ? e.startingLoyaltyOverride()
-                                : tokenCard.getLoyalty() != null ? tokenCard.getLoyalty() : 0;
-                        tokenPermanent.setCounterCount(CounterType.LOYALTY, startingLoyalty);
-                        tokenPermanent.setSummoningSick(false);
-                    }
-                    if (e.tapped() || e.tappedAndAttacking()) {
-                        tokenPermanent.tap();
-                    }
-
-                    battlefieldEntryService.putPermanentOntoBattlefield(
-                            gameData, entry.getControllerId(), tokenPermanent,
-                            enterTappedTypesSnapshot, simultaneouslyEntered);
-                    simultaneouslyEntered.add(tokenPermanent);
-                    entry.getCreatedPermanentIds().add(tokenPermanent.getId());
-
-                    if (e.tappedAndAttacking()) {
-                        // CR 508.4: it is attacking but was never declared as an attacker.
-                        tokenPermanent.enterAttacking(true);
-                        attackingTokenIds.add(tokenPermanent.getId());
-                        if (sourceForRelativeValues != null) {
-                            tokenPermanent.setAttackTarget(sourceForRelativeValues.getAttackTarget());
-                        }
-                    }
-
-                    if (e.exileAtEndStep()) {
-                        // One delayed trigger exiles every token this resolution created (CR 603.7).
-                        gameData.queueDelayedAction(new DelayedPermanentAction(
-                                tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP,
-                                false, null, null, entry.getControllerId(), false, entry.getCard()));
-                    }
-                    if (e.exileAtEndOfCombat()) {
-                        gameData.queueDelayedAction(new DelayedPermanentAction(
-                                tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
-                    }
-
-                    if (e.removeLegendary()) {
-                        gameLogService.append(gameData, GameLog.textCardText(
-                                "A non-legendary token copy of ", sourceCard, " is created."));
-                    } else {
-                        gameLogService.append(gameData, GameLog.textCardText(
-                                "A token copy of ", sourceCard, " is created."));
-                    }
-                    log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(), sourceCard.getName());
-
-                    // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted
-                    // ETB ability chooses its target at trigger time (CR 603.3) via the ETBTokenTargetTrigger path.
-                    enteredTokenCards.add(tokenCard);
-
-                    if (e.initialCounters() != null && !e.initialCounters().isEmpty()
-                            && !gameQueryService.cantHaveCounters(gameData, tokenPermanent)) {
-                        for (var counterEntry : e.initialCounters().entrySet()) {
-                            int count = amountEvaluationService.evaluate(
-                                    gameData, counterEntry.getValue(), amountContext);
-                            if (count > 0) {
-                                permanentCounterSupport.placeCounterOnPermanent(
-                                        gameData, entry, tokenPermanent, counterEntry.getKey(), count);
-                            }
-                        }
-                    }
-                }
-
-                // The tokens enter simultaneously, so each one's entry triggers see all of them.
-                for (Card enteredTokenCard : enteredTokenCards) {
-                    battlefieldEntryService.handleCreatureEnteredBattlefield(
-                            gameData, entry.getControllerId(), enteredTokenCard, null, false);
-                }
-
-                if (!attackingTokenIds.isEmpty()) {
-                    chooseAttackTargets(gameData, entry.getControllerId(), attackingTokenIds);
-                }
-    }
-
-    /**
-     * CR 508.4: the controller of a creature put onto the battlefield attacking chooses which player or
-     * planeswalker it is attacking. With a single opposing player and no planeswalkers there is no choice.
-     */
-    private void chooseAttackTargets(GameData gameData, UUID controllerId, List<UUID> tokenIds) {
-        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
-                .filter(playerId -> !playerId.equals(controllerId)).toList();
-        List<UUID> planeswalkerIds = opponentIds.stream()
-                .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
-                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
-                .map(Permanent::getId).toList();
-        if (opponentIds.isEmpty()) return;
-        if (opponentIds.size() == 1 && planeswalkerIds.isEmpty()) {
-            for (UUID tokenId : tokenIds) {
-                Permanent token = gameQueryService.findPermanentById(gameData, tokenId);
-                if (token != null) token.setAttackTarget(opponentIds.getFirst());
+        // If the source left the battlefield (e.g. a planeswalker at 0 loyalty after paying its cost), copy the
+        // card stored on the stack entry (CR 113.7a: the ability exists independently of its source,
+        // which uses its last known information).
+        Card sourceCard;
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent sourceForRelativeValues = sourcePermanent != null
+                ? sourcePermanent : entry.getSourcePermanentSnapshot();
+        if (sourcePermanent != null) {
+            sourceCard = sourcePermanent.getCard();
+        } else {
+            sourceCard = entry.getSourcePermanentSnapshot() != null
+                    ? entry.getSourcePermanentSnapshot().getCard() : entry.getCard();
+            if (sourceCard == null) {
+                log.info("Game {} - Source permanent no longer on battlefield and no card reference", gameData.id);
+                return;
             }
+        }
+
+        AmountContext amountContext = AmountContext.forStackEntry(entry, sourceForRelativeValues);
+        int amount = amountEvaluationService.evaluate(gameData, e.amount(), amountContext);
+        if (amount <= 0) {
             return;
         }
-        gameData.interaction.setPermanentChoiceContext(
-                new PermanentChoiceContext.TokenAttackTargetChoice(controllerId, tokenIds));
-        playerInputService.beginAnyTargetChoice(gameData, controllerId, planeswalkerIds, opponentIds,
-                "Choose the player or planeswalker for the token to attack.");
+
+        Map<CounterType, Integer> entersWithCounters = e.initialPlusOnePlusOneCounters() > 0
+                ? Map.of(CounterType.PLUS_ONE_PLUS_ONE, e.initialPlusOnePlusOneCounters()) : Map.of();
+        // "Except it has haste" is part of the copy (CR 707.9b), so it is an added keyword rather than a grant.
+        CreateTokenCopyOfTargetPermanentEffect copyEffect = new CreateTokenCopyOfTargetPermanentEffect(
+                e.addedSubtype() == null ? List.of() : List.of(e.addedSubtype()),
+                e.additionalTypes() == null ? Set.of() : e.additionalTypes(),
+                e.powerOverride(), e.toughnessOverride(), entersWithCounters,
+                false, e.exileAtEndStep(), false, e.tappedAndAttacking(), false, false,
+                e.colorOverride(), e.grantHaste() ? Set.of(Keyword.HASTE) : Set.of(),
+                false, Map.of(), List.of(), e.tapped(), e.removeLegendary(), new Fixed(1),
+                e.exileAtEndOfCombat(), Set.of(), false, List.of());
+
+        // "Put N counters on that token" is measured as the effect resolves and done once the tokens have entered;
+        // the creating effect's instructions apply to every token of the event (Queen Allenal ruling).
+        Map<CounterType, Integer> putCounters = new EnumMap<>(CounterType.class);
+        if (e.initialCounters() != null) {
+            e.initialCounters().forEach((counterType, counterAmount) -> {
+                int count = amountEvaluationService.evaluate(gameData, counterAmount, amountContext);
+                if (count > 0) {
+                    putCounters.put(counterType, count);
+                }
+            });
+        }
+
+        tokenCopySupport.createSourceTokenCopiesThen(gameData, entry, sourceCard, amount, sourcePermanent,
+                copyEffect, copyException(e), e.tappedAndAttacking(),
+                putCounters.isEmpty() ? null : (game, tokens) -> putCounters(game, entry, tokens, putCounters));
+    }
+
+    /** The parts of the copy exception the shared token-copy effect doesn't express, or {@code null}. */
+    private static Consumer<Card> copyException(CreateTokenCopyOfSourceEffect e) {
+        boolean excludesEffects = e.excludedEffectType() != null
+                || (e.additionalExcludedEffectTypes() != null && !e.additionalExcludedEffectTypes().isEmpty());
+        boolean excludesKeywords = e.excludedKeywords() != null && !e.excludedKeywords().isEmpty();
+        if (!e.removeManaCost() && e.startingLoyaltyOverride() == null && !excludesEffects && !excludesKeywords) {
+            return null;
+        }
+        return tokenCard -> {
+            if (e.removeManaCost()) {
+                tokenCard.setManaCost("");
+            }
+            if (e.startingLoyaltyOverride() != null) {
+                tokenCard.setLoyalty(e.startingLoyaltyOverride());
+            }
+            if (excludesKeywords && tokenCard.getKeywords() != null) {
+                Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+                keywords.addAll(tokenCard.getKeywords());
+                keywords.removeAll(e.excludedKeywords());
+                tokenCard.setKeywords(keywords);
+            }
+            if (excludesEffects) {
+                tokenCard.removeEffectsIf(copied -> copied.getClass() == e.excludedEffectType()
+                        || (e.additionalExcludedEffectTypes() != null
+                        && e.additionalExcludedEffectTypes().contains(copied.getClass())));
+            }
+        };
+    }
+
+    private void putCounters(GameData gameData, StackEntry entry, List<Permanent> tokens,
+                             Map<CounterType, Integer> counters) {
+        for (Permanent token : tokens) {
+            Permanent onBattlefield = gameQueryService.findPermanentById(gameData, token.getId());
+            if (onBattlefield == null || gameQueryService.cantHaveCounters(gameData, onBattlefield)) {
+                continue;
+            }
+            counters.forEach((counterType, count) ->
+                    permanentCounterSupport.placeCounterOnPermanent(gameData, entry, onBattlefield, counterType, count));
+        }
     }
 }

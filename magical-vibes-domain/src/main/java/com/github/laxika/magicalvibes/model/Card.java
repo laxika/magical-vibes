@@ -73,6 +73,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 @Getter
 public class Card {
@@ -1551,6 +1552,13 @@ public class Card {
             mutable.remove(keyword);
             this.keywords = mutable;
         }
+    }
+
+    /** Removes every registered effect matching {@code filter} from every slot, such as a copy exception's omissions. */
+    public void removeEffectsIf(Predicate<CardEffect> filter) {
+        assertMutable();
+        effectRegistrations.values().forEach(registrations -> registrations.removeIf(reg -> filter.test(reg.effect())));
+        effectCache.clear();
     }
 
     public void addEffect(EffectSlot slot, CardEffect effect) {
