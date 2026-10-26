@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.e.ElspethSunsChampion;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,14 +15,16 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AltaRIbnLaAhad.class, AssassinInitiate.class, GrizzlyBears.class,
-        InvasionOfZendikar.class, ParallelLives.class})
+        InvasionOfZendikar.class, ParallelLives.class, QueenAllenalOfRuadach.class, ElspethSunsChampion.class})
 class AltaRIbnLaAhadTest extends BaseCardTest {
 
     @Test
@@ -39,13 +44,10 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
         PendingInteraction.MultiGraveyardChoice choice =
                 (PendingInteraction.MultiGraveyardChoice) gd.interaction.activeInteraction();
         assertThat(choice.minCount()).isZero();
-        harness.handleMultipleCardsChosen(player1, List.of(graveyardAssassin.getId()));
-        resolveAllTriggers();
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, player2.getId());
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.handleMultipleCardsChosen(player1, List.of(graveyardAssassin.getId()));
+            resolveAllTriggers();
+        });
 
         List<Permanent> tokens = findPermanents(player1, "Assassin Initiate");
         assertThat(tokens).hasSize(2);
@@ -93,9 +95,7 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        resolveAllTriggers();
-        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
-                () -> harness.handlePermanentChosen(player1, player2.getId()));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
 
         assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
         assertThat(findPermanents(player1, "Assassin Initiate")).isEmpty();
@@ -114,10 +114,10 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of());
-        resolveAllTriggers();
-        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
-                () -> harness.handlePermanentChosen(player1, player2.getId()));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.handleMultipleCardsChosen(player1, List.of());
+            resolveAllTriggers();
+        });
 
         assertThat(findPermanents(player1, "Assassin Initiate")).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardAssassin);
@@ -170,26 +170,74 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
     }
 
     @Test
-    void doubledTokensEachHaveAnAttackTarget() {
-        Card exiled = new AssassinInitiate();
-        harness.setExile(player1, List.of(exiled));
-        gd.exiledCardsWithMemoryCounters.add(exiled.getId());
-        addCreatureReady(player1, new AltaRIbnLaAhad());
-        harness.addToBattlefield(player1, new ParallelLives());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+    @DisplayName("With Queen Allenal and Parallel Lives, Altaïr's controller orders them before the copies are created")
+    void asksToOrderTokenReplacementsForTheCopies() {
+        attackWithAltairUnderQueenAndParallelLives(false);
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
-        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
-            while (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
-                harness.handlePermanentChosen(player1, player2.getId());
-            }
-        });
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(findPermanents(player1, "Assassin Initiate")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Applying Queen Allenal before Parallel Lives doubles the copy and the added Soldier, all attacking")
+    void queenFirstDoublesTheCopyAndTheSoldier() {
+        attackWithAltairUnderQueenAndParallelLives(false);
+
+        chooseReplacement("Queen Allenal of Ruadach");
 
         assertThat(findPermanents(player1, "Assassin Initiate")).hasSize(2).allSatisfy(token -> {
             assertThat(token.isTapped()).isTrue();
+            assertThat(token.isAttacking()).isTrue();
             assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
         });
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2)
+                .allSatisfy(soldier -> assertThat(soldier.getAttackTarget()).isEqualTo(player2.getId()));
+    }
+
+    @Test
+    @DisplayName("Applying Parallel Lives before Queen Allenal adds one undoubled Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        attackWithAltairUnderQueenAndParallelLives(false);
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(findPermanents(player1, "Assassin Initiate")).hasSize(2);
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each doubled copy and the added Soldier choose their own player or planeswalker to attack")
+    void doubledCopiesAndAddedSoldierChooseTheirAttackTargetsIndependently() {
+        Permanent elspeth = attackWithAltairUnderQueenAndParallelLives(true);
+
+        chooseReplacement("Parallel Lives");
+        chooseAttackTarget(player2.getId());
+        chooseAttackTarget(elspeth.getId());
+        chooseAttackTarget(elspeth.getId());
+
+        assertThat(findPermanents(player1, "Assassin Initiate")).hasSize(2)
+                .allSatisfy(token -> assertThat(token.isAttacking()).isTrue())
+                .extracting(Permanent::getAttackTarget)
+                .containsExactlyInAnyOrder(player2.getId(), elspeth.getId());
+        assertThat(findPermanents(player1, "Soldier")).singleElement().satisfies(soldier -> {
+            assertThat(soldier.isAttacking()).isTrue();
+            assertThat(soldier.getAttackTarget()).isEqualTo(elspeth.getId());
+        });
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Every token of the event, the added Soldier included, is exiled at end of combat")
+    void addedTokensAreExiledAtEndOfCombatToo() {
+        attackWithAltairUnderQueenAndParallelLives(false);
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
+                .filteredOn(action -> action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT)
+                .hasSize(4);
     }
 
     @Test
@@ -201,9 +249,7 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         declareAttackers(List.of(0));
-        resolveAllTriggers();
-        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
-                () -> harness.handlePermanentChosen(player1, player2.getId()));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
         harness.passUntil(TurnStep.DECLARE_BLOCKERS);
         gs.declareBlockers(gd, player2, List.of());
         harness.passUntil(TurnStep.END_OF_COMBAT);
@@ -213,5 +259,36 @@ class AltaRIbnLaAhadTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(findPermanents(player1, "Assassin Initiate")).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
+    }
+
+    private Permanent attackWithAltairUnderQueenAndParallelLives(boolean withOpposingPlaneswalker) {
+        Card exiled = new AssassinInitiate();
+        harness.setExile(player1, List.of(exiled));
+        gd.exiledCardsWithMemoryCounters.add(exiled.getId());
+        addCreatureReady(player1, new AltaRIbnLaAhad());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent elspeth = null;
+        if (withOpposingPlaneswalker) {
+            elspeth = new Permanent(new ElspethSunsChampion());
+            elspeth.setCounterCount(CounterType.LOYALTY, 4);
+            gd.playerBattlefields.get(player2.getId()).add(elspeth);
+        }
+
+        declareAttackers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+        return elspeth;
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.handleListChoice(player1, choice.options()
+                .stream().filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow()));
+    }
+
+    private void chooseAttackTarget(UUID targetId) {
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.handlePermanentChosen(player1, targetId));
     }
 }

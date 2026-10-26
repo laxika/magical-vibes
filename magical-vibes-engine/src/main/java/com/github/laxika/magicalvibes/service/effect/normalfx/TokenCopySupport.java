@@ -661,23 +661,21 @@ public class TokenCopySupport {
                 chosenTargets.add(null);
                 continue;
             }
-            List<UUID> playerIds = opponentId != null ? List.of(opponentId)
-                    : gameData.orderedPlayerIds.stream()
-                            .filter(playerId -> !playerId.equals(context.controllerId())).toList();
-            List<UUID> planeswalkerIds = playerIds.stream()
-                    .flatMap(playerId -> gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream())
-                    .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
-                    .map(Permanent::getId).toList();
-            if (planeswalkerIds.size() + playerIds.size() <= 1) {
-                chosenTargets.add(playerIds.isEmpty() ? null : playerIds.getFirst());
+            List<UUID> playerIds = attackablePlayers(gameData, context.controllerId(), opponentId);
+            List<UUID> permanentIds = attackablePermanents(gameData, playerIds, opponentId == null);
+            if (permanentIds.size() + playerIds.size() <= 1) {
+                chosenTargets.add(playerIds.isEmpty()
+                        ? (permanentIds.isEmpty() ? null : permanentIds.getFirst()) : playerIds.getFirst());
                 continue;
             }
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking(
                             context.controllerId(), context.entry(), context.copyEffect(), context.tokens(),
                             context.tokenOpponents(), chosenTargets, context.afterEntry()));
-            playerInputService.beginAnyTargetChoice(gameData, context.controllerId(), planeswalkerIds,
-                    playerIds, "Choose the player or planeswalker for the token to attack.");
+            playerInputService.beginAnyTargetChoice(gameData, context.controllerId(), permanentIds, playerIds,
+                    opponentId == null
+                            ? "Choose the player, planeswalker, or battle for the token to attack."
+                            : "Choose the player or planeswalker for the token to attack.");
             return;
         }
         UUID firstChosenTarget = chosenTargets.stream().filter(Objects::nonNull).findFirst().orElse(null);
@@ -687,19 +685,32 @@ public class TokenCopySupport {
     }
 
     /**
-     * The players and planeswalkers a prepared token may attack: {@code opponentId} or a planeswalker they control,
-     * or, when {@code opponentId} is {@code null}, any opponent of {@code controllerId} or a planeswalker one controls.
+     * What a prepared token may attack: {@code opponentId} or a planeswalker they control (myriad and "attacking
+     * that opponent" name the player, so no battle), or, when {@code opponentId} is {@code null}, any defending
+     * player, planeswalker a defending player controls or battle a defending player protects (CR 508.4).
      */
     private List<UUID> attackTargetOptions(GameData gameData, UUID controllerId, UUID opponentId) {
-        List<UUID> playerIds = opponentId != null ? List.of(opponentId)
-                : gameData.orderedPlayerIds.stream().filter(playerId -> !playerId.equals(controllerId)).toList();
+        List<UUID> playerIds = attackablePlayers(gameData, controllerId, opponentId);
         List<UUID> options = new ArrayList<>(playerIds);
-        playerIds.stream()
-                .flatMap(playerId -> gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream())
-                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
-                .map(Permanent::getId)
-                .forEach(options::add);
+        options.addAll(attackablePermanents(gameData, playerIds, opponentId == null));
         return options;
+    }
+
+    private static List<UUID> attackablePlayers(GameData gameData, UUID controllerId, UUID opponentId) {
+        return opponentId != null ? List.of(opponentId)
+                : gameData.orderedPlayerIds.stream().filter(playerId -> !playerId.equals(controllerId)).toList();
+    }
+
+    private List<UUID> attackablePermanents(GameData gameData, List<UUID> playerIds, boolean includeBattles) {
+        List<UUID> permanentIds = new ArrayList<>();
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if ((gameQueryService.isPlaneswalker(gameData, permanent) && playerIds.contains(controllerId))
+                    || (includeBattles && gameQueryService.isBattle(gameData, permanent)
+                    && playerIds.contains(permanent.getProtectorPlayerId()))) {
+                permanentIds.add(permanent.getId());
+            }
+        });
+        return permanentIds;
     }
 
     /**

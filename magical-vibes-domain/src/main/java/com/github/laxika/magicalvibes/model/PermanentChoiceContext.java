@@ -1514,12 +1514,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** Altaïr: remembers independent attack-target choices for copies of exiled creature cards. */
-    record CreateMemoryCounterTokenCopiesAttacking(UUID controllerId, Card sourceCard,
-                                                   UUID sourcePermanentId, List<Card> sourceCards,
-                                                   int cardIndex, List<UUID> chosenAttackTargets)
-            implements PermanentChoiceContext {}
-
     /** Raph & Mikey: choose the player, planeswalker, or battle the revealed creature attacks. */
     record RevealUntilCardPredicateAttackTarget(Card sourceCard, UUID controllerId, Card foundCard,
                                                 List<Card> remainingRevealedCards)

@@ -4,24 +4,31 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfMemoryCounterExiledCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.UUID;
 
+/**
+ * Resolves Altaïr Ibn-La'Ahad's "for each creature card you own in exile with a memory counter on it, create a
+ * tapped and attacking token that's a copy of it. Exile those tokens at end of combat." The copies are one ordered
+ * token creation event (CR 616.1), and the effect doesn't say what the tokens attack, so their controller chooses
+ * for each creature token, doubled copies and added tokens included (CR 508.4).
+ */
 @Component
 @RequiredArgsConstructor
 public class CreateTokenCopiesOfMemoryCounterExiledCreaturesEffectHandler implements NormalEffectHandlerBean {
 
-    private final PlayerInputService playerInputService;
+    private static final CreateTokenCopyOfTargetPermanentEffect TOKEN_COPY_PROFILE =
+            CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingExiledAtEndOfCombat();
+
     private final GameQueryService gameQueryService;
+    private final TokenCopySupport tokenCopySupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,26 +44,10 @@ public class CreateTokenCopiesOfMemoryCounterExiledCreaturesEffectHandler implem
         if (sourceCards.isEmpty()) {
             return;
         }
-
-        PermanentChoiceContext.CreateMemoryCounterTokenCopiesAttacking context =
-                new PermanentChoiceContext.CreateMemoryCounterTokenCopiesAttacking(
-                        entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(),
-                        sourceCards, 0, List.of());
-        gameData.interaction.setPermanentChoiceContext(context);
-
-        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
-                .filter(playerId -> !playerId.equals(entry.getControllerId()))
-                .toList();
-        List<UUID> planeswalkerIds = gameData.playerBattlefields.values().stream()
-                .flatMap(List::stream)
-                .filter(permanent -> (gameQueryService.isPlaneswalker(gameData, permanent)
-                        && opponentIds.contains(gameQueryService.findPermanentController(gameData, permanent.getId())))
-                        || (gameQueryService.isBattle(gameData, permanent)
-                        && opponentIds.contains(permanent.getProtectorPlayerId())))
-                .map(Permanent::getId)
-                .toList();
-        playerInputService.beginAnyTargetChoice(
-                gameData, entry.getControllerId(), planeswalkerIds, opponentIds,
-                "Choose the player, planeswalker, or battle for the next token to attack.");
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        tokenCopySupport.createTokenCopiesChoosingAttackTargets(
+                gameData, entry, sourceCards, source, entry.getControllerId(), TOKEN_COPY_PROFILE);
     }
 }
