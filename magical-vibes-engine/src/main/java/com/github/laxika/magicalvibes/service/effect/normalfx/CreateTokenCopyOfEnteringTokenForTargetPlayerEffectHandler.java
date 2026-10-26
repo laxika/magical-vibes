@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +21,6 @@ public class CreateTokenCopyOfEnteringTokenForTargetPlayerEffectHandler implemen
 
     private final GameQueryService gameQueryService;
     private final TokenCopySupport tokenCopySupport;
-    private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,15 +51,19 @@ public class CreateTokenCopyOfEnteringTokenForTargetPlayerEffectHandler implemen
             return;
         }
 
-        List<UUID> createdTokenIds = tokenCopySupport.createTokenCopiesWithoutReplacementOrder(
+        // The target player creates the copy, so they order the replacements of its creation (CR 616.1), which may
+        // pause for their choice; the draw is spliced in as the next step so it waits for the token. The copy is
+        // always created (a replacement can change it, but some token is still created), so an opponent always
+        // "created a token this way" when targeted.
+        tokenCopySupport.createTokenCopies(
                 gameData,
                 entry,
                 List.of(enteringCard),
                 enteringToken,
                 targetPlayerId,
                 new CreateTokenCopyOfTargetPermanentEffect());
-        if (!createdTokenIds.isEmpty() && !targetPlayerId.equals(entry.getControllerId())) {
-            playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), 1);
+        if (!targetPlayerId.equals(entry.getControllerId())) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(new DrawCardEffect(1)));
         }
     }
 }

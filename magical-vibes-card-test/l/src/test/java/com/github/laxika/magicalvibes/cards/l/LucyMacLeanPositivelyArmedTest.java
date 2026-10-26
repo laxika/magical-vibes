@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.r.RaiseTheAlarm;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -144,6 +147,67 @@ class LucyMacLeanPositivelyArmedTest extends BaseCardTest {
 
         assertThat(countTokens(player2)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("The opponent creating the copy orders their replacements, and the draw waits for the copy")
+    void opponentOrdersReplacementsBeforeTheDraw() {
+        acceptCopyForOpponentUnderQueenAndParallelLives();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(countTokens(player2)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("Applying Queen Allenal before Parallel Lives doubles the copy and the added Soldier, then draws")
+    void queenFirstDoublesCopyAndSoldierThenDraws() {
+        acceptCopyForOpponentUnderQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+        resolveAllTriggers();
+
+        assertThat(countTokens(player2)).isEqualTo(4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({QueenAllenalOfRuadach.class, ParallelLives.class})
+    @DisplayName("Applying Parallel Lives before Queen Allenal adds one undoubled Soldier, then draws")
+    void parallelLivesFirstAddsOneSoldierThenDraws() {
+        acceptCopyForOpponentUnderQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+        resolveAllTriggers();
+
+        assertThat(countTokens(player2)).isEqualTo(3);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    private void acceptCopyForOpponentUnderQueenAndParallelLives() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addLucy(player1);
+        harness.addToBattlefield(player2, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player2, new ParallelLives());
+
+        createTokens(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player2, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 
     private void addLucy(Player player) {
