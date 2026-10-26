@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JinnieFayJetmirsSecond;
 import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.model.Card;
@@ -24,7 +25,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RootbornDefenses.class, DoomBlade.class, GrizzlyBears.class, QueenAllenalOfRuadach.class,
-        ParallelLives.class})
+        ParallelLives.class, JinnieFayJetmirsSecond.class})
 class RootbornDefensesTest extends BaseCardTest {
 
     @Test
@@ -184,6 +185,58 @@ class RootbornDefensesTest extends BaseCardTest {
         assertThat(countOf(player1, "Soldier")).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Jinnie Fay is asked about the populated copy, and a Cat replaces it")
+    void jinnieFayReplacesPopulatedCopy() {
+        harness.addToBattlefield(player1, new JinnieFayJetmirsSecond());
+        harness.addToBattlefield(player1, wolfToken());
+        castWithoutResolving(player1);
+        harness.passBothPriorities();
+
+        harness.handleListChoice(player1, "Cat");
+
+        assertThat(countOf(player1, "Wolf Token")).isEqualTo(1);
+        assertThat(countOf(player1, "Cat")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Jinnie Fay replaces the populated copy and Queen Allenal's Soldier together, and the spell resumes")
+    void jinnieFayReplacesPopulatedCopyAndAddedSoldier() {
+        harness.addToBattlefield(player1, new JinnieFayJetmirsSecond());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, wolfToken());
+        castWithoutResolving(player1);
+        harness.passBothPriorities();
+
+        harness.handleListChoice(player1, "Cat");
+
+        assertThat(countOf(player1, "Wolf Token")).isEqualTo(1);
+        assertThat(countOf(player1, "Soldier")).isZero();
+        List<Permanent> cats = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> "Cat".equals(p.getCard().getName())).toList();
+        assertThat(cats).hasSize(2);
+        for (Permanent cat : cats) {
+            doomBlade(player2, cat.getId());
+        }
+        assertThat(countOf(player1, "Cat")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Keeping the original tokens under Jinnie Fay creates the copy and Queen Allenal's Soldier")
+    void jinnieFayKeepsPopulatedCopyAndAddedSoldier() {
+        harness.addToBattlefield(player1, new JinnieFayJetmirsSecond());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, wolfToken());
+        castWithoutResolving(player1);
+        harness.passBothPriorities();
+
+        harness.handleListChoice(player1, "Original tokens");
+
+        assertThat(countOf(player1, "Wolf Token")).isEqualTo(2);
+        assertThat(countOf(player1, "Soldier")).isEqualTo(1);
+        assertThat(countOf(player1, "Cat")).isZero();
+    }
+
     private void castWithQueenAndParallelLives() {
         harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
         harness.addToBattlefield(player1, new ParallelLives());
@@ -206,6 +259,12 @@ class RootbornDefensesTest extends BaseCardTest {
         card.setName("Wolf Token");
         card.setColor(CardColor.GREEN);
         return card;
+    }
+
+    private void castWithoutResolving(Player player) {
+        harness.setHand(player, List.of(new RootbornDefenses()));
+        harness.addMana(player, ManaColor.WHITE, 3);
+        harness.castInstant(player, 0);
     }
 
     private void cast(Player player) {

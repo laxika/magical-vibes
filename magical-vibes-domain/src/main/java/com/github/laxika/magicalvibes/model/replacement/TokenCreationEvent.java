@@ -23,8 +23,8 @@ import java.util.function.Predicate;
  * player creating the tokens orders the effects (CR 616.1); once all of them have applied, {@link #tokenCount()} tokens are created from
  * {@link #token()} together with every group of {@link #addedTokens()}.
  *
- * <p>An event that creates copies of a token (populate, CR 701.36a, or a token-copy effect described by
- * {@link #copyBatch()}) has no blueprint of its own: {@link #copyOf()}
+ * <p>An event in which a token-copy effect (populate, CR 701.36a, included) creates copies, described by
+ * {@link #copyBatch()}, has no blueprint of its own: {@link #copyOf()}
  * is the token being copied, {@link #tokenCount()} counts the copies and {@link #token()} only describes their kind
  * (types, subtypes, name and colour) for the effects that look at it. A token-copy effect copying several
  * different cards in one event puts the copies of each other card in a copy group of {@link #addedTokens()}
@@ -43,7 +43,7 @@ import java.util.function.Predicate;
  * @param copyOf            the token whose copies {@link #tokenCount()} counts, or {@code null} when they are created
  *                          from {@link #token()}
  * @param copyBatch         how a token-copy effect builds and enters its copies of {@link #copyOf()}, or {@code null}
- *                          for populate and blueprint events
+ *                          for blueprint events
  */
 public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> appliedKeys, CreateTokenEffect token,
                                  int power, int toughness, String sourceSetCode,
@@ -111,16 +111,6 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
                               List<TokenGroup> addedTokens) {
         this(controllerId, tokenCount, appliedKeys, token, power, toughness, sourceSetCode, additionalEffects,
                 creatureToken, addedTokens, null, null);
-    }
-
-    /**
-     * An event creating {@code count} copies of {@code copyOf}; {@code kind} describes those copies for the
-     * effects that look at the kind of token being created.
-     */
-    public static TokenCreationEvent copies(UUID controllerId, int count, Card copyOf, CreateTokenEffect kind,
-                                            boolean creatureToken, String sourceSetCode) {
-        return new TokenCreationEvent(controllerId, count, Set.of(), kind, 0, 0, sourceSetCode, Map.of(),
-                creatureToken, List.of(), copyOf, null);
     }
 
     /**
