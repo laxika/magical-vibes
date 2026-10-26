@@ -40,7 +40,9 @@ import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderServic
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -152,9 +154,13 @@ public class TokenCopySupport {
         if (sourceCards == null || sourceCards.isEmpty()) {
             return List.of();
         }
-        if (orderReplacements && attackTargetIds == null && !chooseOpponentAttackTargets && auraHost == null) {
-            return createOrderedTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                    effect, copyException);
+        if (orderReplacements && !chooseOpponentAttackTargets && auraHost == null) {
+            Map<Card, UUID> attackTargets = attackTargetIds == null ? null
+                    : attackTargetsByCopiedCard(sourceCards, attackTargetIds);
+            if (attackTargetIds == null || attackTargets != null) {
+                return createOrderedTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
+                        effect, copyException, attackTargets);
+            }
         }
 
         List<Permanent> tokens = new ArrayList<>();
@@ -354,7 +360,7 @@ public class TokenCopySupport {
     private List<UUID> createOrderedTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                                 Permanent sourcePermanent, UUID tokenControllerId,
                                                 CreateTokenCopyOfTargetPermanentEffect effect,
-                                                Consumer<Card> copyException) {
+                                                Consumer<Card> copyException, Map<Card, UUID> attackTargets) {
         List<Card> distinctCards = new ArrayList<>();
         List<Integer> counts = new ArrayList<>();
         for (Card sourceCard : sourceCards) {
@@ -384,7 +390,7 @@ public class TokenCopySupport {
                 TokenCreationReplacementSupport.copyKind(template),
                 TokenCreationReplacementSupport.entersAsCreature(template),
                 entry.getCard() == null ? null : entry.getCard().getSetCode(),
-                new TokenCopyBatch(entry, sourcePermanent, effect, copyException))
+                new TokenCopyBatch(entry, sourcePermanent, effect, copyException, attackTargets))
                 .withAddedTokens(copyGroups);
         var outcome = replacementOrderService.getObject().run(gameData, event);
         if (outcome instanceof ReplacementOrderService.Outcome.Completed<TokenCreationEvent> completed) {
@@ -404,10 +410,15 @@ public class TokenCopySupport {
         CreateTokenCopyOfTargetPermanentEffect effect = batch.effect();
         UUID tokenControllerId = event.controllerId();
         List<Permanent> tokens = new ArrayList<>();
+        List<UUID> attackTargets = new ArrayList<>();
+        UUID firstAttackTarget = batch.attackTargetOf(event.copyOf());
         addPreparedCopies(gameData, batch, tokenControllerId, event.copyOf(), event.tokenCount(), tokens);
+        attackTargets.addAll(Collections.nCopies(tokens.size() - attackTargets.size(), firstAttackTarget));
         for (TokenCreationEvent.TokenGroup group : event.addedTokens()) {
             if (group.copyOf() != null) {
                 addPreparedCopies(gameData, batch, tokenControllerId, group.copyOf(), group.count(), tokens);
+                attackTargets.addAll(Collections.nCopies(tokens.size() - attackTargets.size(),
+                        batch.attackTargetOf(group.copyOf())));
                 continue;
             }
             CreateTokenEffect blueprint = group.blueprint();
@@ -417,19 +428,44 @@ public class TokenCopySupport {
                                 fixedStat(blueprint.power()), fixedStat(blueprint.toughness()), event.sourceSetCode()));
                 tokens.add(blueprint.subtypes() != null && blueprint.subtypes().contains(CardSubtype.SQUIRREL)
                         ? withGrantedHaste(addedCard, addedCard, effect) : new Permanent(addedCard));
+                attackTargets.add(firstAttackTarget);
             }
         }
-        List<UUID> attackTargets = new ArrayList<>(Collections.nCopies(tokens.size(), null));
+        boolean explicitAttackTargets = batch.attackTargets() != null;
         Card jinnieFay = tokens.isEmpty() ? null
                 : TokenCreationReplacementSupport.findJinnieFay(gameData, tokenControllerId);
         if (jinnieFay != null) {
             playerInputService.beginJinnieFayTokenCopyChoice(gameData, new ChoiceContext.JinnieFayTokenCopyChoice(
                     tokenControllerId, jinnieFay, entry, effect, tokens, batch.sourcePermanent(),
-                    attackTargets, false, false));
+                    attackTargets, explicitAttackTargets, false));
             return List.of();
         }
         return enterPreparedTokenCopies(gameData, entry, tokens, batch.sourcePermanent(), tokenControllerId,
-                effect, attackTargets, false, false);
+                effect, attackTargets, explicitAttackTargets, false);
+    }
+
+    /**
+     * Maps each copied card to the attack target its copies take: {@code attackTargetIds} either names one
+     * target per copied card or a single target shared by all of them. Returns {@code null} when the copies of
+     * one card would attack different targets, which the ordered event can't express.
+     */
+    private static Map<Card, UUID> attackTargetsByCopiedCard(List<Card> sourceCards, List<UUID> attackTargetIds) {
+        boolean perCard = attackTargetIds.size() == sourceCards.size();
+        if (!perCard && attackTargetIds.stream().distinct().count() != 1) {
+            return null;
+        }
+        Map<Card, UUID> attackTargets = new IdentityHashMap<>();
+        for (int i = 0; i < sourceCards.size(); i++) {
+            UUID attackTarget = perCard ? attackTargetIds.get(i) : attackTargetIds.getFirst();
+            if (attackTarget == null) {
+                return null;
+            }
+            UUID previous = attackTargets.putIfAbsent(sourceCards.get(i), attackTarget);
+            if (previous != null && !previous.equals(attackTarget)) {
+                return null;
+            }
+        }
+        return attackTargets;
     }
 
     private Card copyTemplate(StackEntry entry, Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect,

@@ -182,7 +182,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             if (tokenCount > 0) {
                 UUID soleDefenderId = soleDefenderId(gameData, tokenControllerId);
                 if (soleDefenderId != null) {
-                    tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(tokenCount, copySourceFor(targetPermanent)),
+                    tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, copySourceFor(targetPermanent)),
                             sourcePermanent, tokenControllerId, effect, List.of(soleDefenderId));
                     return;
                 }

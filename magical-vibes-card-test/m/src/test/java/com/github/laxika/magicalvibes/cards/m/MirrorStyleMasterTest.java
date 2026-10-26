@@ -3,6 +3,10 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.e.ElspethSunsChampion;
 import com.github.laxika.magicalvibes.cards.n.NestingDovehawk;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,11 +16,67 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MirrorStyleMaster.class, GrizzlyBears.class, NestingDovehawk.class, ElspethSunsChampion.class})
+@CardUsed({MirrorStyleMaster.class, GrizzlyBears.class, NestingDovehawk.class, ElspethSunsChampion.class,
+        QueenAllenalOfRuadach.class, ParallelLives.class})
 class MirrorStyleMasterTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("With Queen Allenal and Parallel Lives, the attacking copy's creator orders them first")
+    void asksToOrderTokenReplacementsForAttackingCopy() {
+        attackWithModifiedBearsUnderQueenAndParallelLives(null);
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(bearTokens()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Applying Queen Allenal before Parallel Lives doubles the attacking copy and the added Soldier")
+    void queenFirstDoublesAttackingCopyAndSoldier() {
+        attackWithModifiedBearsUnderQueenAndParallelLives(null);
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(bearTokens()).hasSize(2).allSatisfy(token -> {
+            assertThat(token.isTapped()).isTrue();
+            assertThat(token.isAttacking()).isTrue();
+            assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
+        });
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Applying Parallel Lives before Queen Allenal adds one undoubled Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        attackWithModifiedBearsUnderQueenAndParallelLives(null);
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(bearTokens()).hasSize(2);
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Every doubled copy attacks the planeswalker its original attacks")
+    void doubledCopiesKeepTheOriginalsAttackTarget() {
+        Permanent elspeth = new Permanent(new ElspethSunsChampion());
+        elspeth.setCounterCount(CounterType.LOYALTY, 4);
+        gd.playerBattlefields.get(player2.getId()).add(elspeth);
+        attackWithModifiedBearsUnderQueenAndParallelLives(elspeth);
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(bearTokens()).hasSize(2).allSatisfy(token -> {
+            assertThat(token.isAttacking()).isTrue();
+            assertThat(token.getAttackTarget()).isEqualTo(elspeth.getId());
+        });
+    }
 
     @Test
     @DisplayName("Backup grants the attack trigger to another creature")
@@ -136,6 +196,41 @@ class MirrorStyleMasterTest extends BaseCardTest {
                     assertThat(token.isAttacking()).isTrue();
                     assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
                 });
+    }
+
+    private void attackWithModifiedBearsUnderQueenAndParallelLives(Permanent attackedPlaneswalker) {
+        Permanent master = addCreatureReady(player1, new MirrorStyleMaster());
+        Permanent modified = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        addCreatureReady(player2, new GrizzlyBears());
+        modified.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
+        int masterIndex = battlefield.indexOf(master);
+        int modifiedIndex = battlefield.indexOf(modified);
+        Map<Integer, UUID> attackTargets = attackedPlaneswalker == null
+                ? Map.of(masterIndex, player2.getId(), modifiedIndex, player2.getId())
+                : Map.of(masterIndex, player2.getId(), modifiedIndex, attackedPlaneswalker.getId());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            harness.beginAttackerDeclarationInput();
+            gs.declareAttackers(gd, player1, List.of(masterIndex, modifiedIndex), attackTargets);
+            resolveAllTriggers();
+        });
+    }
+
+    private List<Permanent> bearTokens() {
+        return findPermanents(player1, "Grizzly Bears").stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.handleListChoice(player1, choice.options()
+                .stream().filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow()));
     }
 
     private void castMirrorStyleMaster(Permanent target) {
