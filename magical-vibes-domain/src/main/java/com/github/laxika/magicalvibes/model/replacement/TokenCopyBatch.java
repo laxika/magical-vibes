@@ -29,7 +29,9 @@ import java.util.function.Consumer;
  *                        {@code null}
  * @param chooseAttackTargets whether the creating player chooses, as they enter, which defending player or
  *                        planeswalker each creature token of the event attacks (CR 508.4), once the replacements
- *                        have fixed how many tokens there are; {@code attackTargets} is then {@code null}
+ *                        have fixed how many tokens there are; {@code attackTargets} is then either {@code null}
+ *                        (any opponent or a planeswalker one controls) or names, for each copied card, the opponent
+ *                        whose planeswalkers its copies may attack instead of that opponent (myriad)
  */
 public record TokenCopyBatch(StackEntry entry, Permanent sourcePermanent, CreateTokenCopyOfTargetPermanentEffect effect,
                              Consumer<Card> copyException, Map<Card, UUID> attackTargets,

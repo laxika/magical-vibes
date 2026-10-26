@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,10 +24,11 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShredderShadowMaster.class, JaceBeleren.class})
+@CardUsed({ShredderShadowMaster.class, JaceBeleren.class, ParallelLives.class, QueenAllenalOfRuadach.class})
 class ShredderShadowMasterTest extends BaseCardTest {
 
     private Player player3;
+    private Player player4;
 
     @Test
     @DisplayName("Attacking a player creates a nonlegendary copy for each other opponent")
@@ -179,21 +184,98 @@ class ShredderShadowMasterTest extends BaseCardTest {
         return addCreatureReady(player1, new ShredderShadowMaster());
     }
 
+    @Test
+    @DisplayName("With two other opponents, Queen Allenal and Parallel Lives are ordered before the copies enter")
+    void asksToOrderTokenReplacementsForSeveralOpponents() {
+        attackWithFourPlayersUnderQueenAndParallelLives();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(shredderCopies()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Applying Queen Allenal first doubles each opponent's copy and the Soldier, all sacrificed")
+    void queenFirstDoublesEachOpponentsCopyAndSoldier() {
+        attackWithFourPlayersUnderQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+        resolveAllTriggers();
+
+        assertThat(shredderCopies()).hasSize(4).allSatisfy(copy -> {
+            assertThat(copy.isTapped()).isTrue();
+            assertThat(copy.isAttacking()).isTrue();
+        });
+        assertThat(shredderCopies()).extracting(Permanent::getAttackTarget).containsExactlyInAnyOrder(
+                player3.getId(), player3.getId(), player4.getId(), player4.getId());
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2).allSatisfy(soldier -> {
+            assertThat(soldier.isAttacking()).isTrue();
+            assertThat(soldier.getAttackTarget()).isEqualTo(player3.getId());
+        });
+        List<UUID> sacrificed = gd.getDelayedActions(SacrificeAtEndOfCombat.class).stream()
+                .map(SacrificeAtEndOfCombat::permanentId).toList();
+        assertThat(sacrificed).containsAll(shredderCopies().stream().map(Permanent::getId).toList());
+        assertThat(sacrificed).containsAll(findPermanents(player1, "Soldier").stream().map(Permanent::getId).toList());
+    }
+
+    @Test
+    @DisplayName("Applying Parallel Lives first doubles each opponent's copy and adds one Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        attackWithFourPlayersUnderQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+        resolveAllTriggers();
+
+        assertThat(shredderCopies()).extracting(Permanent::getAttackTarget).containsExactlyInAnyOrder(
+                player3.getId(), player3.getId(), player4.getId(), player4.getId());
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
+
+    private void attackWithFourPlayersUnderQueenAndParallelLives() {
+        addThirdPlayer();
+        player4 = addPlayer("Dana", "conn-4");
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        Permanent shredder = addReadyShredder();
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(shredder)));
+            harness.passBothPriorities();
+        });
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.handleListChoice(player1,
+                choice.options().stream().filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow()));
+    }
+
+    private List<Permanent> shredderCopies() {
+        return findPermanents(player1, "Shredder, Shadow Master").stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .toList();
+    }
+
     private void addThirdPlayer() {
-        UUID thirdPlayerId = UUID.randomUUID();
-        player3 = new Player(thirdPlayerId, "Charlie");
-        gd.playerIds.add(thirdPlayerId);
-        gd.orderedPlayerIds.add(thirdPlayerId);
-        gd.playerNames.add("Charlie");
-        gd.playerIdToName.put(thirdPlayerId, "Charlie");
-        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
-        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
-        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
-        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
-        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
-        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
-        gd.playerLifeTotals.put(thirdPlayerId, 20);
-        harness.getSessionManager().registerPlayer(
-                new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        player3 = addPlayer("Charlie", "conn-3");
+    }
+
+    private Player addPlayer(String name, String connectionId) {
+        UUID playerId = UUID.randomUUID();
+        Player player = new Player(playerId, name);
+        gd.playerIds.add(playerId);
+        gd.orderedPlayerIds.add(playerId);
+        gd.playerNames.add(name);
+        gd.playerIdToName.put(playerId, name);
+        gd.playerDecks.put(playerId, new ArrayList<>());
+        gd.playerHands.put(playerId, new ArrayList<>());
+        gd.playerBattlefields.put(playerId, new ArrayList<>());
+        gd.playerGraveyards.put(playerId, new ArrayList<>());
+        gd.playerCommandZones.put(playerId, new ArrayList<>());
+        gd.playerManaPools.put(playerId, new ManaPool());
+        gd.playerLifeTotals.put(playerId, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection(connectionId), playerId, name);
+        return player;
     }
 }

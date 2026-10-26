@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -23,7 +26,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BroodbirthViper.class, Forest.class, JaceBeleren.class})
+@CardUsed({BroodbirthViper.class, Forest.class, JaceBeleren.class, ParallelLives.class,
+        QueenAllenalOfRuadach.class})
 class BroodbirthViperTest extends BaseCardTest {
 
     private Player player3;
@@ -184,6 +188,112 @@ class BroodbirthViperTest extends BaseCardTest {
                     assertThat(copy.isAttacking()).isTrue();
                     assertThat(copy.getAttackTarget()).isEqualTo(planeswalker.getId());
                 });
+    }
+
+    @Test
+    @DisplayName("With Queen Allenal and Parallel Lives, the controller orders them before the myriad copy enters")
+    void asksToOrderTokenReplacements() {
+        attackUnderQueenAndParallelLives();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(myriadCopies()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Applying Queen Allenal first doubles the copy and the Soldier, all attacking the other opponent")
+    void queenFirstDoublesCopyAndSoldier() {
+        attackUnderQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(myriadCopies()).hasSize(2).allSatisfy(copy -> {
+            assertThat(copy.isTapped()).isTrue();
+            assertThat(copy.isAttacking()).isTrue();
+            assertThat(copy.getAttackTarget()).isEqualTo(player3.getId());
+        });
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2).allSatisfy(soldier -> {
+            assertThat(soldier.isTapped()).isTrue();
+            assertThat(soldier.isAttacking()).isTrue();
+            assertThat(soldier.getAttackTarget()).isEqualTo(player3.getId());
+        });
+        List<UUID> exiledAtEndOfCombat = gd.getDelayedActions(DelayedPermanentAction.class).stream()
+                .filter(action -> action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT)
+                .map(DelayedPermanentAction::permanentId).toList();
+        assertThat(exiledAtEndOfCombat).containsAll(myriadCopies().stream().map(Permanent::getId).toList());
+    }
+
+    @Test
+    @DisplayName("Applying Parallel Lives first doubles the copy and adds one undoubled Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        attackUnderQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(myriadCopies()).hasSize(2)
+                .allSatisfy(copy -> assertThat(copy.getAttackTarget()).isEqualTo(player3.getId()));
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each doubled myriad copy chooses between that opponent and their planeswalkers")
+    void eachDoubledCopyChoosesItsOwnTarget() {
+        addThirdPlayer();
+        Permanent otherPlaneswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        otherPlaneswalker.setCounterCount(CounterType.LOYALTY, 3);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player3, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
+        harness.addToBattlefield(player1, new ParallelLives());
+        Permanent viper = addCreatureReady(player1, new BroodbirthViper());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            int viperIndex = gd.playerBattlefields.get(player1.getId()).indexOf(viper);
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            harness.beginAttackerDeclarationInput();
+            gs.declareAttackers(gd, player1, List.of(viperIndex), Map.of(viperIndex, player2.getId()));
+            resolveAllTriggers();
+            harness.handleMayAbilityChosen(player1, true);
+            PendingInteraction.PermanentChoice first =
+                    (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+            assertThat(first.validIds()).containsExactlyInAnyOrder(player3.getId(), planeswalker.getId());
+            harness.handlePermanentChosen(player1, planeswalker.getId());
+            PendingInteraction.PermanentChoice second =
+                    (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+            assertThat(second.validIds()).containsExactlyInAnyOrder(player3.getId(), planeswalker.getId());
+            harness.handlePermanentChosen(player1, player3.getId());
+            resolveAllTriggers();
+        });
+
+        assertThat(myriadCopies()).extracting(Permanent::getAttackTarget)
+                .containsExactlyInAnyOrder(planeswalker.getId(), player3.getId());
+    }
+
+    private void attackUnderQueenAndParallelLives() {
+        addThirdPlayer();
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        Permanent viper = addCreatureReady(player1, new BroodbirthViper());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(viper)));
+            resolveAllTriggers();
+            harness.handleMayAbilityChosen(player1, true);
+        });
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.handleListChoice(player1,
+                choice.options().stream().filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow()));
+    }
+
+    private List<Permanent> myriadCopies() {
+        return findPermanents(player1, "Broodbirth Viper").stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .toList();
     }
 
     private void addThirdPlayer() {

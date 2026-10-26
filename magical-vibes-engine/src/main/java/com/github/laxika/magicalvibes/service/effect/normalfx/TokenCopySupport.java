@@ -113,7 +113,7 @@ public class TokenCopySupport {
                                                          Consumer<Card> copyException,
                                                          Consumer<Permanent> copyRider) {
         return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                effect, null, copyException, false, null, true, copyRider);
+                effect, null, copyException, null, true, copyRider);
     }
 
     /**
@@ -160,6 +160,31 @@ public class TokenCopySupport {
                                                        UUID tokenControllerId,
                                                        CreateTokenCopyOfTargetPermanentEffect effect,
                                                        List<UUID> opponentIds, Consumer<Permanent> tokenRider) {
+        createTokenCopiesForEachOpponent(gameData, entry, sourceCards, tokenControllerId, effect, opponentIds,
+                tokenRider, false);
+    }
+
+    /**
+     * Creates, for each of {@code opponentIds}, a copy of each of {@code sourceCards} attacking that opponent or a
+     * planeswalker they control (myriad), as one ordered token creation event (CR 616.1). Once the replacements have
+     * fixed which tokens are created, the creating player chooses for each creature token between its opponent and
+     * that opponent's planeswalkers as it enters (CR 508.4): the copies a doubler adds choose among the same
+     * opponent's, and tokens a replacement adds (Queen Allenal's Soldier) among the first opponent's.
+     */
+    public void createTokenCopiesAttackingEachOpponentOrTheirPlaneswalkers(GameData gameData, StackEntry entry,
+                                                                           List<Card> sourceCards,
+                                                                           UUID tokenControllerId,
+                                                                           CreateTokenCopyOfTargetPermanentEffect effect,
+                                                                           List<UUID> opponentIds) {
+        createTokenCopiesForEachOpponent(gameData, entry, sourceCards, tokenControllerId, effect, opponentIds,
+                null, true);
+    }
+
+    private void createTokenCopiesForEachOpponent(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                                  UUID tokenControllerId,
+                                                  CreateTokenCopyOfTargetPermanentEffect effect,
+                                                  List<UUID> opponentIds, Consumer<Permanent> tokenRider,
+                                                  boolean chooseAttackTargets) {
         if (sourceCards == null || sourceCards.isEmpty() || opponentIds == null || opponentIds.isEmpty()) {
             return;
         }
@@ -175,7 +200,7 @@ public class TokenCopySupport {
             }
         }
         createOrderedTokenCopies(gameData, entry, copiedCards, null, tokenControllerId, effect, null,
-                attackTargets, null, tokenRider, false);
+                attackTargets, null, tokenRider, chooseAttackTargets);
     }
 
     private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
@@ -184,7 +209,7 @@ public class TokenCopySupport {
                                          List<UUID> attackTargetIds,
                                          Consumer<Card> copyException) {
         return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                effect, attackTargetIds, copyException, false, null, true, null);
+                effect, attackTargetIds, copyException, null, true, null);
     }
 
     /**
@@ -197,7 +222,7 @@ public class TokenCopySupport {
                                                                UUID tokenControllerId,
                                                                CreateTokenCopyOfTargetPermanentEffect effect) {
         return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                effect, null, null, false, null, false, null);
+                effect, null, null, null, false, null);
     }
 
     /**
@@ -209,30 +234,20 @@ public class TokenCopySupport {
                                                   CreateTokenCopyOfTargetPermanentEffect effect,
                                                   Permanent auraHost) {
         return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                effect, null, null, false, auraHost, false, null);
-    }
-
-    /** Prepares all per-opponent copies, including token replacements, before choosing their attack targets. */
-    public void createTokenCopiesChoosingOpponentAttackTargets(GameData gameData, StackEntry entry,
-                                                               List<Card> sourceCards, Permanent sourcePermanent,
-                                                               UUID tokenControllerId,
-                                                               CreateTokenCopyOfTargetPermanentEffect effect,
-                                                               List<UUID> opponentIds) {
-        createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId, effect,
-                opponentIds, null, true, null, false, null);
+                effect, null, null, auraHost, false, null);
     }
 
     private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                          Permanent sourcePermanent, UUID tokenControllerId,
                                          CreateTokenCopyOfTargetPermanentEffect effect,
                                          List<UUID> attackTargetIds,
-                                         Consumer<Card> copyException, boolean chooseOpponentAttackTargets,
+                                         Consumer<Card> copyException,
                                          Permanent auraHost, boolean orderReplacements,
                                          Consumer<Permanent> copyRider) {
         if (sourceCards == null || sourceCards.isEmpty()) {
             return List.of();
         }
-        if (orderReplacements && !chooseOpponentAttackTargets && auraHost == null) {
+        if (orderReplacements && auraHost == null) {
             Map<Card, UUID> attackTargets = attackTargetIds == null ? null
                     : attackTargetsByCopiedCard(sourceCards, attackTargetIds);
             if (attackTargetIds == null || attackTargets != null) {
@@ -424,11 +439,11 @@ public class TokenCopySupport {
         if (jinnieFay != null) {
             playerInputService.beginJinnieFayTokenCopyChoice(gameData, new ChoiceContext.JinnieFayTokenCopyChoice(
                     tokenControllerId, jinnieFay, entry, effect, tokens, sourcePermanent,
-                    expandedAttackTargets, attackTargetIds != null, chooseOpponentAttackTargets, null));
+                    expandedAttackTargets, attackTargetIds != null, false, null));
             return List.of();
         }
         return enterPreparedTokenCopies(gameData, entry, tokens, sourcePermanent, tokenControllerId, effect,
-                expandedAttackTargets, attackTargetIds != null, chooseOpponentAttackTargets);
+                expandedAttackTargets, attackTargetIds != null, false);
     }
 
     /**
@@ -519,7 +534,7 @@ public class TokenCopySupport {
             tokens.forEach(batch.tokenRider());
         }
         boolean chooseAttackTargets = batch.chooseAttackTargets();
-        if (chooseAttackTargets) {
+        if (chooseAttackTargets && batch.attackTargets() == null) {
             attackTargets = new ArrayList<>(Collections.nCopies(tokens.size(), null));
         }
         boolean explicitAttackTargets = batch.attackTargets() != null || chooseAttackTargets;
@@ -657,7 +672,7 @@ public class TokenCopySupport {
         while (chosenTargets.size() < context.tokenOpponents().size()) {
             int index = chosenTargets.size();
             UUID opponentId = context.tokenOpponents().get(index);
-            if (opponentId == null && !context.tokens().get(index).getCard().hasType(CardType.CREATURE)) {
+            if (!context.tokens().get(index).getCard().hasType(CardType.CREATURE)) {
                 chosenTargets.add(null);
                 continue;
             }

@@ -59,7 +59,7 @@ public class CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler
                     .filter(id -> !id.equals(controllerId) && !id.equals(defendingPlayer)).toList();
             if (opponents.isEmpty()) return;
             if (!effect.mayCreate()) {
-                createTokenCopies(gameData, entry, effect, attacker, liveAttacker, controllerId, opponents);
+                createTokenCopies(gameData, entry, effect, attacker, controllerId, opponents);
                 return;
             }
             UUID batchId = UUID.randomUUID();
@@ -121,31 +121,24 @@ public class CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler
                 entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId());
         Permanent attacker = copyableAttacker(gameData, liveAttacker, entry);
         if (attacker == null) return;
-        createTokenCopies(gameData, entry, effect, attacker, liveAttacker, entry.getControllerId(), opponents);
+        createTokenCopies(gameData, entry, effect, attacker, entry.getControllerId(), opponents);
     }
 
     private void createTokenCopies(GameData gameData, StackEntry entry,
                                  CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect effect,
-                                 Permanent attacker, Permanent liveAttacker, UUID controllerId, List<UUID> opponents) {
+                                 Permanent attacker, UUID controllerId, List<UUID> opponents) {
         var tokenCopyEffect = effect.exileAtEndOfCombat()
                 ? CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingExiledAtEndOfCombat(
                         effect.removeLegendary())
                 : CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingCopy(
                         effect.removeLegendary(), effect.exileAtEndStep());
         if (!effect.exileAtEndOfCombat()) {
-            tokenCopySupport.createTokenCopies(gameData, entry,
-                    opponents.stream().map(ignored -> attacker.getCard()).toList(),
-                    liveAttacker == attacker ? liveAttacker : null, controllerId, tokenCopyEffect, opponents);
+            tokenCopySupport.createTokenCopiesAttackingEachOpponent(gameData, entry, List.of(attacker.getCard()),
+                    controllerId, tokenCopyEffect, opponents, null);
             return;
         }
-        tokenCopySupport.createTokenCopiesChoosingOpponentAttackTargets(
-                gameData,
-                entry,
-                opponents.stream().map(ignored -> attacker.getCard()).toList(),
-                liveAttacker == attacker ? liveAttacker : null,
-                controllerId,
-                tokenCopyEffect,
-                opponents);
+        tokenCopySupport.createTokenCopiesAttackingEachOpponentOrTheirPlaneswalkers(gameData, entry,
+                List.of(attacker.getCard()), controllerId, tokenCopyEffect, opponents);
     }
 
     private Permanent copyableAttacker(GameData gameData, Permanent liveAttacker, StackEntry entry) {
