@@ -43,6 +43,7 @@ import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -129,7 +130,23 @@ public class TokenCopySupport {
             return List.of();
         }
         return createOrderedTokenCopies(gameData, entry, sourceCards, null, tokenControllerId, effect, null, null,
-                null, tokenRider);
+                null, tokenRider, false);
+    }
+
+    /**
+     * Creates a copy of each of {@code sourceCards}, tapped and attacking, as one ordered token creation event
+     * (CR 616.1). Once the replacements have fixed which tokens are created, the creating player chooses which
+     * defending player or planeswalker each creature token attacks as it enters (CR 508.4), added tokens such as
+     * Queen Allenal's Soldier included.
+     */
+    public void createTokenCopiesChoosingAttackTargets(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                                       Permanent sourcePermanent, UUID tokenControllerId,
+                                                       CreateTokenCopyOfTargetPermanentEffect effect) {
+        if (sourceCards == null || sourceCards.isEmpty()) {
+            return;
+        }
+        createOrderedTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId, effect, null,
+                null, null, null, true);
     }
 
     private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
@@ -191,7 +208,7 @@ public class TokenCopySupport {
                     : attackTargetsByCopiedCard(sourceCards, attackTargetIds);
             if (attackTargetIds == null || attackTargets != null) {
                 return createOrderedTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                        effect, copyException, attackTargets, copyRider, null);
+                        effect, copyException, attackTargets, copyRider, null, false);
             }
         }
 
@@ -396,7 +413,8 @@ public class TokenCopySupport {
                                                 Permanent sourcePermanent, UUID tokenControllerId,
                                                 CreateTokenCopyOfTargetPermanentEffect effect,
                                                 Consumer<Card> copyException, Map<Card, UUID> attackTargets,
-                                                Consumer<Permanent> copyRider, Consumer<Permanent> tokenRider) {
+                                                Consumer<Permanent> copyRider, Consumer<Permanent> tokenRider,
+                                                boolean chooseAttackTargets) {
         List<Card> distinctCards = new ArrayList<>();
         List<Integer> counts = new ArrayList<>();
         for (Card sourceCard : sourceCards) {
@@ -427,7 +445,7 @@ public class TokenCopySupport {
                 TokenCreationReplacementSupport.entersAsCreature(template),
                 entry.getCard() == null ? null : entry.getCard().getSetCode(),
                 new TokenCopyBatch(entry, sourcePermanent, effect, copyException, attackTargets, copyRider,
-                        tokenRider))
+                        tokenRider, chooseAttackTargets))
                 .withAddedTokens(copyGroups);
         var outcome = replacementOrderService.getObject().run(gameData, event);
         if (outcome instanceof ReplacementOrderService.Outcome.Completed<TokenCreationEvent> completed) {
@@ -471,17 +489,21 @@ public class TokenCopySupport {
         if (batch.tokenRider() != null) {
             tokens.forEach(batch.tokenRider());
         }
-        boolean explicitAttackTargets = batch.attackTargets() != null;
+        boolean chooseAttackTargets = batch.chooseAttackTargets();
+        if (chooseAttackTargets) {
+            attackTargets = new ArrayList<>(Collections.nCopies(tokens.size(), null));
+        }
+        boolean explicitAttackTargets = batch.attackTargets() != null || chooseAttackTargets;
         Card jinnieFay = tokens.isEmpty() ? null
                 : TokenCreationReplacementSupport.findJinnieFay(gameData, tokenControllerId);
         if (jinnieFay != null) {
             playerInputService.beginJinnieFayTokenCopyChoice(gameData, new ChoiceContext.JinnieFayTokenCopyChoice(
                     tokenControllerId, jinnieFay, entry, effect, tokens, batch.sourcePermanent(),
-                    attackTargets, explicitAttackTargets, false, batch.tokenRider()));
+                    attackTargets, explicitAttackTargets, chooseAttackTargets, batch.tokenRider()));
             return List.of();
         }
         return enterPreparedTokenCopies(gameData, entry, tokens, batch.sourcePermanent(), tokenControllerId,
-                effect, attackTargets, explicitAttackTargets, false);
+                effect, attackTargets, explicitAttackTargets, chooseAttackTargets);
     }
 
     /**
@@ -590,10 +612,7 @@ public class TokenCopySupport {
         int index = context.chosenAttackTargets().size();
         if (index >= context.tokenOpponents().size()) return;
         UUID opponentId = context.tokenOpponents().get(index);
-        boolean legal = opponentId.equals(chosenTarget)
-                || gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
-                .anyMatch(permanent -> permanent.getId().equals(chosenTarget)
-                        && gameQueryService.isPlaneswalker(gameData, permanent));
+        boolean legal = attackTargetOptions(gameData, context.controllerId(), opponentId).contains(chosenTarget);
         if (!legal) throw new IllegalStateException("The token must attack that opponent or a planeswalker they control");
         List<UUID> chosenTargets = new ArrayList<>(context.chosenAttackTargets());
         chosenTargets.add(chosenTarget);
@@ -607,12 +626,21 @@ public class TokenCopySupport {
                                                       PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking context) {
         List<UUID> chosenTargets = new ArrayList<>(context.chosenAttackTargets());
         while (chosenTargets.size() < context.tokenOpponents().size()) {
-            UUID opponentId = context.tokenOpponents().get(chosenTargets.size());
-            List<UUID> planeswalkerIds = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+            int index = chosenTargets.size();
+            UUID opponentId = context.tokenOpponents().get(index);
+            if (opponentId == null && !context.tokens().get(index).getCard().hasType(CardType.CREATURE)) {
+                chosenTargets.add(null);
+                continue;
+            }
+            List<UUID> playerIds = opponentId != null ? List.of(opponentId)
+                    : gameData.orderedPlayerIds.stream()
+                            .filter(playerId -> !playerId.equals(context.controllerId())).toList();
+            List<UUID> planeswalkerIds = playerIds.stream()
+                    .flatMap(playerId -> gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream())
                     .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
                     .map(Permanent::getId).toList();
-            if (planeswalkerIds.isEmpty()) {
-                chosenTargets.add(opponentId);
+            if (planeswalkerIds.size() + playerIds.size() <= 1) {
+                chosenTargets.add(playerIds.isEmpty() ? null : playerIds.getFirst());
                 continue;
             }
             gameData.interaction.setPermanentChoiceContext(
@@ -620,11 +648,29 @@ public class TokenCopySupport {
                             context.controllerId(), context.entry(), context.copyEffect(), context.tokens(),
                             context.tokenOpponents(), chosenTargets));
             playerInputService.beginAnyTargetChoice(gameData, context.controllerId(), planeswalkerIds,
-                    List.of(opponentId), "Choose the player or planeswalker for the token to attack.");
+                    playerIds, "Choose the player or planeswalker for the token to attack.");
             return;
         }
+        UUID firstChosenTarget = chosenTargets.stream().filter(Objects::nonNull).findFirst().orElse(null);
+        chosenTargets.replaceAll(target -> target == null ? firstChosenTarget : target);
         putPreparedTokenCopiesOntoBattlefield(gameData, context.entry(), context.tokens(), null,
                 context.controllerId(), context.copyEffect(), chosenTargets, true);
+    }
+
+    /**
+     * The players and planeswalkers a prepared token may attack: {@code opponentId} or a planeswalker they control,
+     * or, when {@code opponentId} is {@code null}, any opponent of {@code controllerId} or a planeswalker one controls.
+     */
+    private List<UUID> attackTargetOptions(GameData gameData, UUID controllerId, UUID opponentId) {
+        List<UUID> playerIds = opponentId != null ? List.of(opponentId)
+                : gameData.orderedPlayerIds.stream().filter(playerId -> !playerId.equals(controllerId)).toList();
+        List<UUID> options = new ArrayList<>(playerIds);
+        playerIds.stream()
+                .flatMap(playerId -> gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream())
+                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                .map(Permanent::getId)
+                .forEach(options::add);
+        return options;
     }
 
     /**

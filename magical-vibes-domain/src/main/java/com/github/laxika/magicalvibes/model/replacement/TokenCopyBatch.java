@@ -27,10 +27,14 @@ import java.util.function.Consumer;
  *                        tokens a replacement adds or substitutes alike (Queen Allenal's Soldier, Jinnie Fay's Cats
  *                        or Dogs), for instructions of the creating effect such as a link to its source, or
  *                        {@code null}
+ * @param chooseAttackTargets whether the creating player chooses, as they enter, which defending player or
+ *                        planeswalker each creature token of the event attacks (CR 508.4), once the replacements
+ *                        have fixed how many tokens there are; {@code attackTargets} is then {@code null}
  */
 public record TokenCopyBatch(StackEntry entry, Permanent sourcePermanent, CreateTokenCopyOfTargetPermanentEffect effect,
                              Consumer<Card> copyException, Map<Card, UUID> attackTargets,
-                             Consumer<Permanent> copyRider, Consumer<Permanent> tokenRider) {
+                             Consumer<Permanent> copyRider, Consumer<Permanent> tokenRider,
+                             boolean chooseAttackTargets) {
 
     public TokenCopyBatch {
         if (attackTargets != null) {
@@ -41,7 +45,7 @@ public record TokenCopyBatch(StackEntry entry, Permanent sourcePermanent, Create
 
     public TokenCopyBatch(StackEntry entry, Permanent sourcePermanent, CreateTokenCopyOfTargetPermanentEffect effect,
                           Consumer<Card> copyException) {
-        this(entry, sourcePermanent, effect, copyException, null, null, null);
+        this(entry, sourcePermanent, effect, copyException, null, null, null, false);
     }
 
     /** The attack target of the copies of {@code copiedCard}, or {@code null} when none was given for it. */

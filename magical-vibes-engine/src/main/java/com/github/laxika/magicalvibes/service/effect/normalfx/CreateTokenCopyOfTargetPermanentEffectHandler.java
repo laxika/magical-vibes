@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.PendingTokenCreationReplacement;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenCreatureEffect;
@@ -16,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -31,7 +27,6 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
     private final GameQueryService gameQueryService;
     private final TokenCopySupport tokenCopySupport;
     private final com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService permanentCopierService;
-    private final PlayerInputService playerInputService;
     private final AmountEvaluationService amountEvaluationService;
     private final EsixTokenReplacementSupport esixTokenReplacementSupport;
     private final ObjectProvider<CreateTokenCopyOfChosenCreatureEffectHandler> chosenCreatureCopyHandler;
@@ -178,16 +173,9 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             }
         }
         if (effect.chooseAttackTarget()) {
-            int tokenCount = gameQueryService.getTokenCreationAmount(gameData, tokenControllerId, copyCount, tokenSubtypes(targetPermanent.getCard(), effect), true);
-            if (tokenCount > 0) {
-                UUID soleDefenderId = soleDefenderId(gameData, tokenControllerId);
-                if (soleDefenderId != null) {
-                    tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, copySourceFor(targetPermanent)),
-                            sourcePermanent, tokenControllerId, effect, List.of(soleDefenderId));
-                    return;
-                }
-                beginAttackTargetChoice(gameData, new PermanentChoiceContext.CreateTokenCopiesAttacking(tokenControllerId, entry.getCard(), entry.getSourcePermanentId(), targetId, effect, tokenCount, List.of()));
-            }
+            tokenCopySupport.createTokenCopiesChoosingAttackTargets(gameData, entry,
+                    Collections.nCopies(copyCount, copySourceFor(targetPermanent)), sourcePermanent,
+                    tokenControllerId, effect);
             return;
         }
         UUID attackTargetId = effect.tappedAndAttacking()
@@ -223,50 +211,5 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         List<UUID> attackTargetIds = attackTargetId == null ? null : List.of(attackTargetId);
         tokenCopySupport.createTokenCopies(gameData, entry, Collections.nCopies(copyCount, lastKnownCard),
                 sourcePermanent, tokenControllerId, effect, attackTargetIds);
-    }
-
-    private List<CardSubtype> tokenSubtypes(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
-        List<CardSubtype> subtypes =
-                sourceCard.getSubtypes() == null
-                        ? new java.util.ArrayList<>()
-                        : new java.util.ArrayList<>(sourceCard.getSubtypes());
-        if (effect.additionalSubtypes() != null) {
-            for (var subtype : effect.additionalSubtypes()) {
-                if (!subtypes.contains(subtype)) {
-                    subtypes.add(subtype);
-                }
-            }
-        }
-        return subtypes;
-    }
-
-    /**
-     * The one player the token could attack, when the controller's only opponent is that player and no
-     * opposing planeswalker exists; the choice of defender is then forced, so no prompt is needed.
-     */
-    private UUID soleDefenderId(GameData gameData, UUID controllerId) {
-        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
-                .filter(playerId -> !playerId.equals(controllerId))
-                .toList();
-        boolean opposingPlaneswalker = opponentIds.stream()
-                .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
-                .anyMatch(permanent -> gameQueryService.isPlaneswalker(gameData, permanent));
-        return opponentIds.size() == 1 && !opposingPlaneswalker ? opponentIds.getFirst() : null;
-    }
-
-    private void beginAttackTargetChoice(GameData gameData, PermanentChoiceContext.CreateTokenCopiesAttacking context) {
-        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
-                .filter(playerId -> !playerId.equals(context.controllerId()))
-                .toList();
-        List<UUID> planeswalkerIds = opponentIds.stream()
-                .flatMap(opponentId -> gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream())
-                .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
-                .map(Permanent::getId)
-                .toList();
-
-        gameData.interaction.setPermanentChoiceContext(context);
-        playerInputService.beginAnyTargetChoice(
-                gameData, context.controllerId(), planeswalkerIds, opponentIds,
-                "Choose the player or planeswalker for the token to attack.");
     }
 }

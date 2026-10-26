@@ -1515,15 +1515,19 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** Prepared copies whose player or planeswalker attack targets are chosen before their simultaneous entry. */
+    /**
+     * Prepared copies whose player or planeswalker attack targets are chosen before their simultaneous entry.
+     * Each token attacks the opponent at its index in {@code tokenOpponents} or a planeswalker they control; a
+     * {@code null} entry lets that token attack any defending player or a planeswalker one controls.
+     */
     record PreparedOpponentTokenCopiesAttacking(UUID controllerId, StackEntry entry,
                                                 CreateTokenCopyOfTargetPermanentEffect copyEffect,
                                                 List<Permanent> tokens, List<UUID> tokenOpponents,
                                                 List<UUID> chosenAttackTargets) implements PermanentChoiceContext {
         public PreparedOpponentTokenCopiesAttacking {
             tokens = List.copyOf(tokens);
-            tokenOpponents = List.copyOf(tokenOpponents);
-            chosenAttackTargets = List.copyOf(chosenAttackTargets);
+            tokenOpponents = java.util.Collections.unmodifiableList(new java.util.ArrayList<>(tokenOpponents));
+            chosenAttackTargets = java.util.Collections.unmodifiableList(new java.util.ArrayList<>(chosenAttackTargets));
         }
 
         public PreparedOpponentTokenCopiesAttacking deepCopy() {
