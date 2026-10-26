@@ -47,9 +47,9 @@ public class CreateTokenCopyOfAttackingCreaturesBlockingEffectHandler implements
             return;
         }
         // The copies are created as one event whose replacements the caster orders (CR 616.1), so each sees the
-        // others enter (CR 603.6a). Each copy, doubled copies included, blocks the creature it copies; a token a
-        // replacement adds or substitutes (Queen Allenal's Soldier, Jinnie Fay's Cat or Dog) follows the creating
-        // effect's instructions too, so it blocks the first attacker.
+        // others enter (CR 603.6a). Each copy, doubled copies included, blocks the creature it copies, and so does a
+        // Jinnie Fay Cat or Dog substituted for it (her substitutes keep the creating effect's instructions); a token
+        // a replacement adds (Queen Allenal's Soldier) follows those instructions too, so it blocks the first attacker.
         Map<Card, UUID> attackerByCard = new IdentityHashMap<>();
         attackers.forEach(attacker -> attackerByCard.put(attacker.getCard(), attacker.getId()));
         UUID firstAttackerId = attackers.getFirst().getId();
@@ -57,7 +57,8 @@ public class CreateTokenCopyOfAttackingCreaturesBlockingEffectHandler implements
         tokenCopySupport.createTokenCopiesThen(gameData, entry,
                 attackers.stream().map(Permanent::getCard).toList(), controllerId,
                 CreateTokenCopyOfTargetPermanentEffect.exiledAtEndOfCombat(),
-                (copiedCard, copy) -> blockedAttackerByToken.put(copy.getId(), attackerByCard.get(copiedCard)),
+                (copiedCard, token) -> blockedAttackerByToken.put(token.getId(),
+                        copiedCard == null ? firstAttackerId : attackerByCard.get(copiedCard)),
                 (game, tokens) -> {
                     for (Permanent token : tokens) {
                         Permanent entered = gameQueryService.findPermanentById(game, token.getId());

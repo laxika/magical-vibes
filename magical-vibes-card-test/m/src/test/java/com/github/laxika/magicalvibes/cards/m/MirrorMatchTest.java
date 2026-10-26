@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.j.JinnieFayJetmirsSecond;
 import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
@@ -270,6 +271,46 @@ class MirrorMatchTest extends BaseCardTest {
                 .filteredOn(action -> action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT)
                 .extracting(DelayedPermanentAction::permanentId)
                 .contains(soldiers.getFirst().getId());
+    }
+
+    @Test
+    @CardUsed(JinnieFayJetmirsSecond.class)
+    @DisplayName("Each Jinnie Fay Cat blocks the attacker whose copy it replaces")
+    void jinnieFayCatsBlockTheAttackersTheirReplacedCopiesWouldHaveBlocked() {
+        Permanent airElemental = addCreatureReady(player1, new AirElemental());
+        Permanent grizzlyBears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new JinnieFayJetmirsSecond());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        castMirrorMatch();
+
+        harness.handleListChoice(player2, "Cat");
+
+        List<Permanent> cats = tokensOf(player2, "Cat");
+        assertThat(cats).hasSize(2).allMatch(Permanent::isBlocking);
+        assertThat(cats).extracting(Permanent::getBlockingTargetIds)
+                .containsExactlyInAnyOrder(List.of(airElemental.getId()), List.of(grizzlyBears.getId()));
+        assertThat(tokensOf(player2, "Air Elemental")).isEmpty();
+        assertThat(tokensOf(player2, "Grizzly Bears")).isEmpty();
+    }
+
+    @Test
+    @CardUsed({JinnieFayJetmirsSecond.class, QueenAllenalOfRuadach.class})
+    @DisplayName("A Jinnie Fay Cat replacing Queen Allenal's Soldier blocks the first attacker")
+    void jinnieFayCatReplacingAddedSoldierBlocksFirstAttacker() {
+        Permanent airElemental = addCreatureReady(player1, new AirElemental());
+        Permanent grizzlyBears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new JinnieFayJetmirsSecond());
+        harness.addToBattlefield(player2, new QueenAllenalOfRuadach());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        castMirrorMatch();
+
+        harness.handleListChoice(player2, "Cat");
+
+        List<Permanent> cats = tokensOf(player2, "Cat");
+        assertThat(cats).hasSize(3).allMatch(Permanent::isBlocking);
+        assertThat(cats).extracting(Permanent::getBlockingTargetIds)
+                .containsExactlyInAnyOrder(List.of(airElemental.getId()), List.of(grizzlyBears.getId()),
+                        List.of(airElemental.getId()));
     }
 
     private List<Permanent> tokensOf(Player player, String name) {

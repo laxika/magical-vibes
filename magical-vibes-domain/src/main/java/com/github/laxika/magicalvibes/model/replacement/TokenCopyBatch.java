@@ -31,6 +31,12 @@ import java.util.function.Consumer;
  *                        tokens a replacement adds or substitutes alike (Queen Allenal's Soldier, Jinnie Fay's Cats
  *                        or Dogs), for instructions of the creating effect such as a link to its source, or
  *                        {@code null}
+ * @param instructionRider set-up applied to every token the event creates before it enters, given the copied card
+ *                        the token was created for, for per-copied-card instructions of the creating effect such as
+ *                        Mirror Match's "blocking that creature": a copy gets the card it copies, a token Jinnie Fay
+ *                        substitutes gets the card of the token it replaces (her substitutes keep the creating
+ *                        effect's instructions), and a token a replacement adds (Queen Allenal's Soldier) gets
+ *                        {@code null}; or {@code null}
  * @param chooseAttackTargets whether the creating player chooses, as they enter, which defending player or
  *                        planeswalker each creature token of the event attacks (CR 508.4), once the replacements
  *                        have fixed how many tokens there are; {@code attackTargets} is then either {@code null}
@@ -42,7 +48,7 @@ import java.util.function.Consumer;
 public record TokenCopyBatch(StackEntry entry, Permanent sourcePermanent, CreateTokenCopyOfTargetPermanentEffect effect,
                              Consumer<Card> copyException, Map<Card, UUID> attackTargets,
                              BiConsumer<Card, Permanent> copyRider, Consumer<Permanent> tokenRider,
-                             boolean chooseAttackTargets, BiConsumer<GameData, List<Permanent>> afterEntry) {
+                             BiConsumer<Card, Permanent> instructionRider, boolean chooseAttackTargets, BiConsumer<GameData, List<Permanent>> afterEntry) {
 
     public TokenCopyBatch {
         if (attackTargets != null) {
@@ -53,7 +59,7 @@ public record TokenCopyBatch(StackEntry entry, Permanent sourcePermanent, Create
 
     public TokenCopyBatch(StackEntry entry, Permanent sourcePermanent, CreateTokenCopyOfTargetPermanentEffect effect,
                           Consumer<Card> copyException) {
-        this(entry, sourcePermanent, effect, copyException, null, null, null, false, null);
+        this(entry, sourcePermanent, effect, copyException, null, null, null, null, false, null);
     }
 
     /** The attack target of the copies of {@code copiedCard}, or {@code null} when none was given for it. */

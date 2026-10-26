@@ -132,27 +132,28 @@ public class TokenCopySupport {
             return List.of();
         }
         return createOrderedTokenCopies(gameData, entry, sourceCards, null, tokenControllerId, effect, null, null,
-                null, tokenRider, false, null);
+                null, tokenRider, null, false, null);
     }
 
     /**
-     * Creates a copy of each of {@code sourceCards} as one ordered token creation event (CR 616.1), setting up each
-     * copy with {@code copyRider} (given the copied card and the copy's permanent; added tokens don't get it) before
-     * it enters, and then running {@code afterEntry} with the game and every token the event created, added and
-     * substituted tokens included, once they have all entered. {@code afterEntry} is the continuation for the
+     * Creates a copy of each of {@code sourceCards} as one ordered token creation event (CR 616.1), setting up every
+     * token the event creates with {@code instructionRider} before it enters (given the card the token was created
+     * for and its permanent, as {@link TokenCopyBatch#instructionRider()} describes: {@code null} for an added token,
+     * the replaced copy's card for a Jinnie Fay substitute), and then running {@code afterEntry} with the game and
+     * every token the event created, added and substituted tokens included, once they have all entered. {@code afterEntry} is the continuation for the
      * creating effect's follow-up work on its tokens, since the creation may pause for the replacement order,
      * Jinnie Fay or an Aura attachment choice and then finish on another call; it runs exactly once, on whichever
      * call the tokens enter, and must look permanents up through the given game rather than capture them.
      */
     public void createTokenCopiesThen(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                       UUID tokenControllerId, CreateTokenCopyOfTargetPermanentEffect effect,
-                                      BiConsumer<Card, Permanent> copyRider,
+                                      BiConsumer<Card, Permanent> instructionRider,
                                       BiConsumer<GameData, List<Permanent>> afterEntry) {
         if (sourceCards == null || sourceCards.isEmpty()) {
             return;
         }
         createOrderedTokenCopies(gameData, entry, sourceCards, null, tokenControllerId, effect, null, null,
-                copyRider, null, false, afterEntry);
+                null, null, instructionRider, false, afterEntry);
     }
 
     /**
@@ -181,7 +182,7 @@ public class TokenCopySupport {
             return;
         }
         createOrderedTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId, effect, null,
-                null, null, tokenRider, true, null);
+                null, null, tokenRider, null, true, null);
     }
 
     /**
@@ -198,7 +199,7 @@ public class TokenCopySupport {
             return;
         }
         createOrderedTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId, effect, null,
-                null, null, null, true, afterEntry);
+                null, null, null, null, true, afterEntry);
     }
 
     /**
@@ -252,7 +253,7 @@ public class TokenCopySupport {
             }
         }
         createOrderedTokenCopies(gameData, entry, copiedCards, null, tokenControllerId, effect, null,
-                attackTargets, null, tokenRider, chooseAttackTargets, null);
+                attackTargets, null, tokenRider, null, chooseAttackTargets, null);
     }
 
     private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
@@ -301,7 +302,7 @@ public class TokenCopySupport {
             }
         };
         createOrderedTokenCopies(gameData, entry, copiedCards, sourcePermanent, tokenControllerId, effect, null,
-                null, attachToHost, null, false, afterEntry);
+                null, attachToHost, null, null, false, afterEntry);
     }
 
     private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
@@ -317,7 +318,7 @@ public class TokenCopySupport {
                 : attackTargetsByCopiedCard(sourceCards, attackTargetIds);
         if (attackTargetIds == null || attackTargets != null) {
             return createOrderedTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
-                    effect, copyException, attackTargets, copyRider, null, false, null);
+                    effect, copyException, attackTargets, copyRider, null, null, false, null);
         }
 
         List<Permanent> tokens = new ArrayList<>();
@@ -497,7 +498,7 @@ public class TokenCopySupport {
         if (jinnieFay != null) {
             playerInputService.beginJinnieFayTokenCopyChoice(gameData, new ChoiceContext.JinnieFayTokenCopyChoice(
                     tokenControllerId, jinnieFay, entry, effect, tokens, sourcePermanent,
-                    expandedAttackTargets, attackTargetIds != null, false, null, null));
+                    expandedAttackTargets, attackTargetIds != null, false, null, null, null, null));
             return List.of();
         }
         return enterPreparedTokenCopies(gameData, entry, tokens, sourcePermanent, tokenControllerId, effect,
@@ -516,7 +517,9 @@ public class TokenCopySupport {
                                                 CreateTokenCopyOfTargetPermanentEffect effect,
                                                 Consumer<Card> copyException, Map<Card, UUID> attackTargets,
                                                 BiConsumer<Card, Permanent> copyRider,
-                                                Consumer<Permanent> tokenRider, boolean chooseAttackTargets,
+                                                Consumer<Permanent> tokenRider,
+                                                BiConsumer<Card, Permanent> instructionRider,
+                                                boolean chooseAttackTargets,
                                                 BiConsumer<GameData, List<Permanent>> afterEntry) {
         List<Card> distinctCards = new ArrayList<>();
         List<Integer> counts = new ArrayList<>();
@@ -548,7 +551,7 @@ public class TokenCopySupport {
                 TokenCreationReplacementSupport.entersAsCreature(template),
                 entry.getCard() == null ? null : entry.getCard().getSetCode(),
                 new TokenCopyBatch(entry, sourcePermanent, effect, copyException, attackTargets, copyRider,
-                        tokenRider, chooseAttackTargets, afterEntry))
+                        tokenRider, instructionRider, chooseAttackTargets, afterEntry))
                 .withAddedTokens(copyGroups);
         var outcome = replacementOrderService.getObject().run(gameData, event);
         if (outcome instanceof ReplacementOrderService.Outcome.Completed<TokenCreationEvent> completed) {
@@ -569,14 +572,17 @@ public class TokenCopySupport {
         UUID tokenControllerId = event.controllerId();
         List<Permanent> tokens = new ArrayList<>();
         List<UUID> attackTargets = new ArrayList<>();
+        List<Card> copiedCards = new ArrayList<>();
         UUID firstAttackTarget = batch.attackTargetOf(event.copyOf());
         addPreparedCopies(gameData, batch, tokenControllerId, event.copyOf(), event.tokenCount(), tokens);
         attackTargets.addAll(Collections.nCopies(tokens.size() - attackTargets.size(), firstAttackTarget));
+        copiedCards.addAll(Collections.nCopies(tokens.size() - copiedCards.size(), event.copyOf()));
         for (TokenCreationEvent.TokenGroup group : event.addedTokens()) {
             if (group.copyOf() != null) {
                 addPreparedCopies(gameData, batch, tokenControllerId, group.copyOf(), group.count(), tokens);
                 attackTargets.addAll(Collections.nCopies(tokens.size() - attackTargets.size(),
                         batch.attackTargetOf(group.copyOf())));
+                copiedCards.addAll(Collections.nCopies(tokens.size() - copiedCards.size(), group.copyOf()));
                 continue;
             }
             CreateTokenEffect blueprint = group.blueprint();
@@ -587,10 +593,16 @@ public class TokenCopySupport {
                 tokens.add(blueprint.subtypes() != null && blueprint.subtypes().contains(CardSubtype.SQUIRREL)
                         ? withGrantedHaste(addedCard, addedCard, effect) : new Permanent(addedCard));
                 attackTargets.add(firstAttackTarget);
+                copiedCards.add(null);
             }
         }
         if (batch.tokenRider() != null) {
             tokens.forEach(batch.tokenRider());
+        }
+        if (batch.instructionRider() != null) {
+            for (int i = 0; i < tokens.size(); i++) {
+                batch.instructionRider().accept(copiedCards.get(i), tokens.get(i));
+            }
         }
         boolean chooseAttackTargets = batch.chooseAttackTargets();
         if (chooseAttackTargets && batch.attackTargets() == null) {
@@ -602,8 +614,8 @@ public class TokenCopySupport {
         if (jinnieFay != null) {
             playerInputService.beginJinnieFayTokenCopyChoice(gameData, new ChoiceContext.JinnieFayTokenCopyChoice(
                     tokenControllerId, jinnieFay, entry, effect, tokens, batch.sourcePermanent(),
-                    attackTargets, explicitAttackTargets, chooseAttackTargets, batch.tokenRider(),
-                    batch.afterEntry()));
+                    attackTargets, explicitAttackTargets, chooseAttackTargets, batch.tokenRider(), copiedCards,
+                    batch.instructionRider(), batch.afterEntry()));
             return List.of();
         }
         return enterPreparedTokenCopies(gameData, entry, tokens, batch.sourcePermanent(), tokenControllerId,
@@ -723,7 +735,9 @@ public class TokenCopySupport {
     /**
      * Resumes a token-copy batch after the controller answered Jinnie Fay's replacement prompt. A Cat or
      * Dog replaces each prepared token but still receives the creating effect's riders (haste, granted
-     * death trigger, delayed sacrifice), since those apply to the tokens actually created.
+     * death trigger, delayed sacrifice), since those apply to the tokens actually created, and the per-copied-card
+     * instructions of the token it replaces (Mirror Match's "blocking that creature"): anything else the creating
+     * effect specifies still applies to the replacement tokens (Jinnie Fay ruling, 2022-04-29).
      */
     public void completeJinnieFayTokenCopyChoice(GameData gameData, String choice,
                                                  ChoiceContext.JinnieFayTokenCopyChoice context) {
@@ -740,6 +754,9 @@ public class TokenCopySupport {
                         withGrantedHaste(replacementCard, replacementCard, context.effect()), context.effect());
                 if (context.tokenRider() != null) {
                     context.tokenRider().accept(replacementToken);
+                }
+                if (context.instructionRider() != null) {
+                    context.instructionRider().accept(context.copiedCards().get(i), replacementToken);
                 }
                 tokens.add(replacementToken);
             }
