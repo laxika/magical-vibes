@@ -12,12 +12,14 @@ Remove an entry once the feature has landed and its tests pass.
 ## 53. Ordering token-creation replacements outside the single-blueprint creation path
 
 **Status:** partial · **Found:** 2026-10-25, while finishing entry 35 (token replacement ordering) ·
-**Progress:** 2026-10-26, every addition in the single-blueprint path is now ordered
+**Progress:** 2026-10-26, every addition in the single-blueprint path is now ordered;
+`DestructionSupport.createTokenForPlayer` now delegates to `applyCreateToken` (ordered, Jinnie Fay asked,
+tokens created as one batch), tested in `BeastWithinTest` with Queen Allenal + Parallel Lives
 
 **Failing tests:**
 - None yet. Write one per path, e.g. Queen Allenal of Ruadach + Parallel Lives with a token copy
-  (Cackling Counterpart) or a token created through `DestructionSupport.createTokenForPlayer`: the player
-  must be asked, and Queen first must give the doubled Soldier.
+  (Cackling Counterpart) or a populate: the player must be asked, and Queen first must give the doubled
+  Soldier.
 
 **What the rules require.** CR 616.1 / 616.1e: the player creating the tokens chooses the order of every
 replacement that modifies the token creation event. `PermanentControlSupport.applyCreateToken` (the
@@ -25,7 +27,7 @@ single-blueprint path) runs a `TokenCreationEvent` where count replacements (`To
 and every addition (`TokenAdditionReplacements`: Soldier, Frog, Squirrels, Map, Thopter, Mutagen, Tippy-Toe
 Food, solved-Case Clue, Bilbo Treasure, Academy Manufactor's "one of each") are ordered. Still fixed, with
 no prompt:
-- `DestructionSupport.createTokenForPlayer`, `TokenCopySupport`, `PopulateSupport` and the copy handlers
+- `TokenCopySupport`, `PopulateSupport` and the copy handlers
   that call `getTokenCreationAmount` (multiplier first, additions unmultiplied).
 - Jinnie Fay's choice is always asked first, before the event is ordered, so the player can't apply Tippy-Toe
   (or a doubler) before Jinnie Fay replaces the tokens.
@@ -40,7 +42,7 @@ prompt and resume (as `ChoiceHandlerService` does for `TokenCreationEvent`). Tok
 
 ```
 Implement missing-features-to-do.md entry 53: route the remaining token creation paths
-(DestructionSupport.createTokenForPlayer, TokenCopySupport, PopulateSupport, the token copy handlers)
+(TokenCopySupport, PopulateSupport, the token copy handlers)
 through TokenCreationEvent and ReplacementOrderService, as PermanentControlSupport.applyCreateToken does
 with TokenCreationReplacements and TokenAdditionReplacements. Write the tests first. Don't run the full
 test suite; ask me. Don't commit until I say so.

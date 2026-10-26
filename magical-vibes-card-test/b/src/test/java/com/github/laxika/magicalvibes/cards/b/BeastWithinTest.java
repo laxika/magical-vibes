@@ -3,14 +3,18 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.cards.p.PorcelainLegionnaire;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.s.ShrineOfLimitlessPower;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +26,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BeastWithin.class, PorcelainLegionnaire.class, Forest.class,
-        ShrineOfLimitlessPower.class, DarksteelRelic.class})
+        ShrineOfLimitlessPower.class, DarksteelRelic.class, QueenAllenalOfRuadach.class, ParallelLives.class})
 class BeastWithinTest extends BaseCardTest {
 
     @Test
@@ -225,5 +229,63 @@ class BeastWithinTest extends BaseCardTest {
                 .filteredOn(p -> p.getCard().isToken() && p.getCard().getName().equals("Beast"))
                 .hasSize(1);
         harness.assertNotOnBattlefield(player2, "Beast");
+    }
+
+    @Test
+    @DisplayName("The Beast's controller orders Queen Allenal and Parallel Lives before the Beast is created")
+    void asksBeastControllerToOrderTokenReplacements() {
+        castBeastWithinOnOwnCreatureWithQueenAndParallelLives();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        harness.assertNotOnBattlefield(player1, "Beast");
+    }
+
+    @Test
+    @DisplayName("Applying Queen Allenal before Parallel Lives doubles both the Beast and the added Soldier")
+    void queenFirstDoublesTheAddedSoldier() {
+        castBeastWithinOnOwnCreatureWithQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(tokensNamed("Beast")).isEqualTo(2);
+        assertThat(tokensNamed("Soldier")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Applying Parallel Lives before Queen Allenal adds one undoubled Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        castBeastWithinOnOwnCreatureWithQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(tokensNamed("Beast")).isEqualTo(2);
+        assertThat(tokensNamed("Soldier")).isEqualTo(1);
+    }
+
+    private void castBeastWithinOnOwnCreatureWithQueenAndParallelLives() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        var target = harness.addToBattlefieldAndReturn(player1, new PorcelainLegionnaire());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new BeastWithin()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
+    }
+
+    private long tokensNamed(String name) {
+        return gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken() && p.getCard().getName().equals(name))
+                .count();
     }
 }

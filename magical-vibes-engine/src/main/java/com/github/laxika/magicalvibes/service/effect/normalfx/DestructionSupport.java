@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -80,7 +79,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -135,6 +133,7 @@ public class DestructionSupport {
     private final DrawCardEffectHandler drawCardEffectHandler;
     private final ObjectProvider<DamageSupport> damageSupportProvider;
     private final ObjectProvider<TapUntapSupport> tapUntapSupportProvider;
+    private final ObjectProvider<PermanentControlSupport> permanentControlSupportProvider;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
                                            List<UUID> protectedIds, String sourceName) {
@@ -1109,102 +1108,23 @@ public class DestructionSupport {
         createTokenForPlayer(gameData, controllerId, token, 1, sourceName, sourceSetCode);
     }
 
+    /**
+     * Creates {@code tokenCount} tokens from {@code token} for {@code controllerId} as one token creation event,
+     * through {@link PermanentControlSupport#applyCreateToken}, so the creating player orders that event's
+     * count replacements and additions (CR 616.1); the creation may pause for that choice.
+     */
     public void createTokenForPlayer(GameData gameData, UUID controllerId,
                                        CreateTokenEffect token, int tokenCount,
                                        String sourceName, String sourceSetCode) {
-        boolean baseTokenIsCreature = token.primaryType() == CardType.CREATURE;
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId, baseTokenIsCreature);
-        CreateTokenEffect additionalFrog = TokenCreationReplacementSupport.additionalFrogTokenIfApplicable(
-                gameData, controllerId, token);
-        int additionalSoldierTokenCount = TokenCreationReplacementSupport.additionalSoldierTokenCountIfApplicable(
-                gameData, controllerId, token);
-        int additionalThopterTokenCount = TokenCreationReplacementSupport.additionalThopterTokenCount(
-                gameData, controllerId, token, tokenCount);
-        CreateTokenEffect additionalThopterToken = additionalThopterTokenCount > 0
-                ? TokenCreationReplacementSupport.additionalThopterToken(token)
-                : null;
-        CreateTokenEffect additionalSoldier = additionalSoldierTokenCount > 0
-                ? TokenCreationReplacementSupport.additionalSoldierTokenIfApplicable(
-                        gameData, controllerId, token)
-                : null;
-        int totalAmount = gameQueryService.getTokenCreationAmount(gameData, controllerId, tokenCount, token.subtypes(), baseTokenIsCreature);
-        int additionalFoodTokenCount = TokenCreationReplacementSupport.additionalFoodTokenCount(
-                gameData, controllerId, totalAmount);
-        CreateTokenEffect additionalFoodToken = additionalFoodTokenCount > 0
-                ? TokenCreationReplacementSupport.additionalFoodToken(token)
-                : null;
-        List<CreateTokenEffect> academyManufactorTokenBlueprints =
-                TokenCreationReplacementSupport.academyManufactorTokenBlueprints(
-                        gameData, controllerId, token, totalAmount);
-        Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
-        enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
-        List<CreateTokenEffect> tokenBlueprints = new ArrayList<>();
-        if (academyManufactorTokenBlueprints.isEmpty()) {
-            for (int count = 0; count < totalAmount; count++) {
-                tokenBlueprints.add(token);
-            }
-        } else {
-            tokenBlueprints.addAll(academyManufactorTokenBlueprints);
-        }
-        if (additionalFrog != null && totalAmount > 0) {
-            tokenBlueprints.add(additionalFrog);
-        }
-        if (totalAmount <= 0) {
-            additionalSoldierTokenCount = 0;
-        }
-        for (int i = 0; i < additionalSoldierTokenCount; i++) {
-            tokenBlueprints.add(additionalSoldier);
-        }
-        for (int i = 0; i < additionalThopterTokenCount; i++) {
-            tokenBlueprints.add(additionalThopterToken);
-        }
-        for (int i = 0; i < additionalFoodTokenCount; i++) {
-            tokenBlueprints.add(additionalFoodToken);
-        }
-        for (CreateTokenEffect tokenToCreate : tokenBlueprints) {
-            int tokenPower = tokenToCreate.tokenPower();
-            int tokenToughness = tokenToCreate.tokenToughness();
-            boolean isCreature = tokenToCreate.primaryType() == CardType.CREATURE;
-            Card tokenCard = TokenCardFactory.create(
-                    tokenToCreate, tokenPower, tokenToughness, sourceSetCode);
-            tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                    gameData, controllerId, tokenCard);
-
-            Permanent tokenPermanent = new Permanent(tokenCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
-            if (tokenToCreate.tappedAndAttacking()) {
-                tokenPermanent.tap();
-                tokenPermanent.setAttacking(true);
-            } else if (tokenToCreate.tapped()) {
-                tokenPermanent.tap();
-            }
-
-            String playerName = gameData.playerIdToName.get(controllerId);
-            String colorName = tokenToCreate.color() != null ? tokenToCreate.color().name().toLowerCase() + " " : "";
-            if (isCreature) {
-                gameLogService.append(gameData, GameLog.builder()
-                        .text(playerName + " creates a " + tokenPower + "/" + tokenToughness
-                                + " " + colorName)
-                        .card(tokenCard)
-                        .text(" creature token.")
-                        .build());
-                log.info("Game {} - {} creates a {}/{} {} token for {}", gameData.id, sourceName,
-                        tokenPower, tokenToughness, tokenToCreate.tokenName(), playerName);
-
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
-            } else {
-                gameLogService.append(gameData, GameLog.builder()
-                        .text(playerName + " creates a " + colorName)
-                        .card(tokenCard)
-                        .text(" token.")
-                        .build());
-                log.info("Game {} - {} creates a {} token for {}", gameData.id, sourceName,
-                        tokenToCreate.tokenName(), playerName);
-            }
-            if (tokenToCreate.investigate()) {
+        if (token.investigate()) {
+            for (int action = 0; action < tokenCount; action++) {
                 triggerCollectionService.checkInvestigateTriggers(gameData, controllerId);
             }
         }
+        List<UUID> createdIds = permanentControlSupportProvider.getObject()
+                .applyCreateToken(gameData, controllerId, token, tokenCount, sourceSetCode);
+        log.info("Game {} - {} creates {} token(s) for {}", gameData.id, sourceName, createdIds.size(),
+                gameData.playerIdToName.get(controllerId));
     }
 
     public void completePileSeparationStep1(GameData gameData, List<UUID> pile1Ids) {
