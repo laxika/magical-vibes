@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderServic
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -49,7 +48,6 @@ public class PermanentControlSupport {
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final PlayerInputService playerInputService;
 
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
@@ -90,20 +88,13 @@ public class PermanentControlSupport {
     }
 
     public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, Map<EffectSlot, List<EffectRegistration>> additionalEffects) {
-        Card jinnieFay = amount > 0
-                ? TokenCreationReplacementSupport.findJinnieFay(gameData, controllerId) : null;
-        if (jinnieFay != null) {
-            playerInputService.beginJinnieFayTokenChoice(
-                    gameData, controllerId, jinnieFay, token, amount, power, toughness, sourceSetCode, additionalEffects);
-            return List.of();
-        }
         return createOrdered(gameData, controllerId, token, amount, sourceSetCode, power, toughness, additionalEffects);
     }
 
     /**
-     * Creates the tokens after the player creating them has ordered the count replacements and additions
-     * (CR 616.1), so the creation may pause for a choice and then continue through
-     * {@link #applyCreateTokenAfterReplacementOrder}.
+     * Creates the tokens after the player creating them has ordered the count replacements, additions and Jinnie
+     * Fay's replacement (CR 616.1), so the creation may pause for the order prompt or Jinnie Fay's choice and then
+     * continue through {@link #applyCreateTokenAfterReplacementOrder}.
      */
     private List<UUID> createOrdered(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
                                      String sourceSetCode, int power, int toughness,
@@ -142,16 +133,6 @@ public class PermanentControlSupport {
             groups.add(new TokenCreationEvent.TokenGroup(simultaneousToken, fixedAmount.value()));
         }
         return groups;
-    }
-
-    /**
-     * Creates tokens after Jinnie Fay's replacement choice has already been made; the other replacements
-     * are then ordered as usual.
-     */
-    public List<UUID> applyCreateTokenAfterJinnieFayChoice(GameData gameData, UUID controllerId,
-                                                            CreateTokenEffect token, int amount,
-                                                            String sourceSetCode, int power, int toughness) {
-        return createOrdered(gameData, controllerId, token, amount, sourceSetCode, power, toughness, Map.of());
     }
 
     private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
@@ -441,10 +422,6 @@ public class PermanentControlSupport {
 
         log.info("Game {} - {} token(s) created for player {}", gameData.id, createdIds.size(), controllerId);
         return createdIds;
-    }
-
-    public List<UUID> applyCreateTokenAfterJinnieFayChoice(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, Map<EffectSlot, List<EffectRegistration>> additionalEffects) {
-        return createOrdered(gameData, controllerId, token, amount, sourceSetCode, power, toughness, additionalEffects);
     }
 
     int solvedClueReplacementCount(GameData gameData, UUID controllerId) {

@@ -2129,16 +2129,14 @@ public sealed interface ChoiceContext {
                                                        com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
                                                        String sourceSetCode) implements ChoiceContext {}
 
+    /**
+     * Jinnie Fay's Cat, Dog or original tokens choice as her replacement applies to {@code event}, a blueprint token
+     * creation event whose other replacements are ordered with hers (CR 616.1); the event continues with the chosen
+     * tokens through the replacement order once the player answers.
+     */
     record JinnieFayTokenChoice(UUID controllerId, Card sourceCard,
-                                com.github.laxika.magicalvibes.model.effect.CreateTokenEffect originalToken,
-                                int amount, int power, int toughness, String sourceSetCode, java.util.Map<EffectSlot, List<EffectRegistration>> additionalEffects)
-            implements ChoiceContext {
-        public JinnieFayTokenChoice(UUID controllerId, Card sourceCard,
-                                com.github.laxika.magicalvibes.model.effect.CreateTokenEffect originalToken,
-                                int amount, int power, int toughness, String sourceSetCode) {
-            this(controllerId, sourceCard, originalToken, amount, power, toughness, sourceSetCode, java.util.Map.of());
-        }
-}
+                                com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent event)
+            implements ChoiceContext {}
 
     /**
      * Jinnie Fay's replacement choice for a batch of already-prepared token copies; the choice resumes

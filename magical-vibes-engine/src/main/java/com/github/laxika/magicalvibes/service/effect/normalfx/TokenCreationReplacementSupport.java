@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceTokenSubtypeCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
 import java.util.ArrayList;
 
 import java.util.Collection;
@@ -581,6 +582,18 @@ public final class TokenCreationReplacementSupport {
                 original.initialPlusOnePlusOneCounters(),
                 original.grantedKeywordsUntilEndOfTurn(),
                 Set.of());
+    }
+
+    /**
+     * {@code event} after Jinnie Fay's replacement: "that many" Cats or Dogs, one for every token the event creates as
+     * it stands (its blueprint's tokens, simultaneous tokens and tokens additions put in it alike), keeping the
+     * creating effect's riders (tapped, attacking, exiled at end of combat, ...) but none of the replaced tokens'
+     * characteristics or abilities.
+     */
+    public static TokenCreationEvent jinnieFayEvent(TokenCreationEvent event, boolean cat) {
+        return new TokenCreationEvent(event.controllerId(), event.amount(), event.appliedKeys(),
+                jinnieFayToken(event.token(), 1, cat), cat ? 2 : 3, cat ? 2 : 1, event.sourceSetCode(), Map.of(),
+                true, List.of());
     }
 
     static Card findJinnieFay(GameData gameData, UUID controllerId) {

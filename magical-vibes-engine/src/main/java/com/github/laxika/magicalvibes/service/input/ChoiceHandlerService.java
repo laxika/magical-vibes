@@ -5419,17 +5419,6 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private static int simultaneousTokenCount(CreateTokenEffect token) {
-        int count = 0;
-        for (CreateTokenEffect simultaneous : token.simultaneousTokens()) {
-            if (!(simultaneous.amount() instanceof com.github.laxika.magicalvibes.model.amount.Fixed fixed)) {
-                throw new IllegalStateException("Simultaneous token counts must be evaluated");
-            }
-            count += fixed.value();
-        }
-        return count;
-    }
-
     private void handleJinnieFayTokenChoice(GameData gameData, Player player, String choice,
                                              PendingInteraction.ColorChoice colorChoice,
                                              ChoiceContext.JinnieFayTokenChoice ctx) {
@@ -5437,25 +5426,20 @@ public class ChoiceHandlerService {
             throw new IllegalArgumentException("Invalid Jinnie Fay token choice: " + choice);
         }
         gameData.interaction.clearAwaitingInput();
-        boolean replace = !JinnieFayTokenReplacementEffect.ORIGINAL_OPTION.equals(choice);
-        boolean cat = JinnieFayTokenReplacementEffect.CAT_OPTION.equals(choice);
-        // One choice covers the whole creation event, so a replacement also replaces every token of the
-        // event's simultaneous blueprints (Bestial Menace).
-        int replacedAmount = replace ? ctx.amount() + simultaneousTokenCount(ctx.originalToken()) : ctx.amount();
-        CreateTokenEffect replacement = replace
-                ? com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport
-                .jinnieFayToken(ctx.originalToken(), replacedAmount, cat)
-                : ctx.originalToken();
-        List<UUID> createdIds = permanentControlSupport.applyCreateTokenAfterJinnieFayChoice(
-                gameData, ctx.controllerId(), replacement, replacedAmount, ctx.sourceSetCode(),
-                replace ? (cat ? 2 : 3) : ctx.power(), replace ? (cat ? 2 : 1) : ctx.toughness(), replace ? Map.of() : ctx.additionalEffects());
-        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        if (pendingEntry != null) {
-            pendingEntry.getCreatedPermanentIds().addAll(createdIds);
-        }
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " chooses " + choice + " for ", ctx.sourceCard(), "."));
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        // One choice covers the whole creation event as it stands, so the Cats or Dogs also replace the event's
+        // simultaneous tokens (Bestial Menace) and the tokens additions put in it before Jinnie Fay applied.
+        TokenCreationEvent event = JinnieFayTokenReplacementEffect.ORIGINAL_OPTION.equals(choice)
+                ? ctx.event()
+                : com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport
+                .jinnieFayEvent(ctx.event(), JinnieFayTokenReplacementEffect.CAT_OPTION.equals(choice));
+        if (replacementOrderService.run(gameData, event)
+                instanceof ReplacementOrderService.Outcome.Completed<TokenCreationEvent> completed) {
+            finishReplacementEvent(gameData, player, completed.event());
+        } else {
+            inputCompletionService.publishStateAfterInput(gameData);
+        }
     }
 
     /** Treva, the Renewer: count every permanent of the chosen color on every battlefield. */

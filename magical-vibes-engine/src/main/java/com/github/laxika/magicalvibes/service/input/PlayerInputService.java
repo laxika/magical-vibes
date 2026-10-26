@@ -789,24 +789,23 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color (Rith token-per-permanent)", gameData.id, playerName);
     }
 
-    public void beginJinnieFayTokenChoice(GameData gameData, UUID controllerId, Card sourceCard,
-                                           CreateTokenEffect originalToken, int amount, int power,
-                                           int toughness, String sourceSetCode) {
-        beginJinnieFayTokenChoice(gameData, controllerId, sourceCard, originalToken, amount, power, toughness, sourceSetCode, java.util.Map.of());
-    }
-
-    public void beginJinnieFayTokenChoice(GameData gameData, UUID controllerId, Card sourceCard,
-                                           CreateTokenEffect originalToken, int amount, int power,
-                                           int toughness, String sourceSetCode, java.util.Map<com.github.laxika.magicalvibes.model.EffectSlot, java.util.List<com.github.laxika.magicalvibes.model.EffectRegistration>> additionalEffects) {
-        ChoiceContext.JinnieFayTokenChoice ctx = new ChoiceContext.JinnieFayTokenChoice(
-                controllerId, sourceCard, originalToken, amount, power, toughness, sourceSetCode, additionalEffects);
+    /**
+     * Asks for Jinnie Fay's Cat, Dog or original tokens as her replacement applies to a token creation event,
+     * queued behind any prompt already awaiting an answer.
+     */
+    public void beginJinnieFayTokenChoice(GameData gameData, ChoiceContext.JinnieFayTokenChoice ctx) {
         List<String> options = List.of(
                 com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect.CAT_OPTION,
                 com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect.DOG_OPTION,
                 com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect.ORIGINAL_OPTION);
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, null, null, ctx, options,
-                sourceCard.getName() + " — Choose Cat, Dog, or original tokens."));
+        PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
+                ctx.controllerId(), null, null, ctx, options,
+                ctx.sourceCard().getName() + " — Choose Cat, Dog, or original tokens.");
+        if (gameData.interaction.isAwaitingInput()) {
+            gameData.queueInteraction(choice);
+        } else {
+            interactionHandlerRegistry.begin(gameData, choice);
+        }
     }
 
     public void beginJinnieFayTokenCopyChoice(GameData gameData, ChoiceContext.JinnieFayTokenCopyChoice ctx) {
