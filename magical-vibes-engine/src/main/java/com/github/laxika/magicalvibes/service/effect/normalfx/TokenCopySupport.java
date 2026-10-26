@@ -611,11 +611,18 @@ public class TokenCopySupport {
     /**
      * A copy exception for "except it's a [creature type]" without "in addition to its other types": replaces the
      * copy's creature types with {@code creatureTypes}, keeping its other subtypes; a changeling copy loses
-     * changeling, since the exception defines its creature types (CR 707.9d). Does nothing for no creature types.
+     * changeling, since the exception defines its creature types (CR 707.9d). The copy's back face, built by the same
+     * copy (CR 707.8a), gets the exception too; a prepare spell back face ignores it. Does nothing for no creature
+     * types.
      */
     public void replaceCreatureTypes(Card tokenCard, List<CardSubtype> creatureTypes) {
         if (creatureTypes == null || creatureTypes.isEmpty()) {
             return;
+        }
+        Card backFace = tokenCard.getBackFaceCard();
+        if (backFace != null && !tokenCard.isModalDoubleFaced()
+                && !backFace.hasType(CardType.INSTANT) && !backFace.hasType(CardType.SORCERY)) {
+            replaceCreatureTypes(backFace, creatureTypes);
         }
         List<CardSubtype> subtypes = new ArrayList<>();
         if (tokenCard.getSubtypes() != null) {

@@ -58,6 +58,8 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerMayExile
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SpellweaverVoluteSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -112,6 +114,22 @@ public class GraveyardChoiceHandlerService {
     private final DredgeSupport dredgeSupport;
     private final ObjectProvider<DrawService> drawServiceProvider;
     private final SpellweaverVoluteSupport spellweaverVoluteSupport;
+    private final TokenCopySupport tokenCopySupport;
+
+    /**
+     * God-Pharaoh's Gift: creates a copy of the exiled card, except it's a 4/4 black Zombie, as one token creation
+     * event whose count replacements and additions the controller orders (CR 616.1). "It gains haste until end of
+     * turn" covers every token the event creates, added ones such as Queen Allenal's Soldier included. The creation
+     * may pause for the order prompt or Jinnie Fay; the paused trigger then resumes once it finishes.
+     */
+    private void createGodPharaohsGiftZombieCopy(GameData gameData, StackEntry entry, Card exiledCard) {
+        var zombieCopy = new CreateTokenCopyOfTargetPermanentEffect(List.of(), Set.of(), 4, 4, Map.of(), true,
+                false, false, false, false, false, CardColor.BLACK, Set.of(), false, Map.of(), List.of(), false,
+                false, new Fixed(1), false, Set.of(), false, List.of(), null, false, true);
+        tokenCopySupport.createTokenCopiesWithCopyException(gameData, entry, List.of(exiledCard), null,
+                entry.getControllerId(), zombieCopy,
+                tokenCard -> tokenCopySupport.replaceCreatureTypes(tokenCard, List.of(CardSubtype.ZOMBIE)));
+    }
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) == null) {
@@ -1857,18 +1875,7 @@ public class GraveyardChoiceHandlerService {
                         gameLogService.append(gameData, GameLog.textCardText(
                                 player.getUsername() + " exiles ", card, " from a graveyard."));
                         if (createZombieTokenCopy && gameData.pendingEffectResolutionEntry != null) {
-                            graveyardReturnSupport.createTokenCopyFromCard(
-                                    gameData,
-                                    gameData.pendingEffectResolutionEntry,
-                                    card,
-                                    List.of(CardSubtype.ZOMBIE),
-                                    false,
-                                    false,
-                                    CardColor.BLACK,
-                                    4,
-                                    4,
-                                    true,
-                                    true);
+                            createGodPharaohsGiftZombieCopy(gameData, gameData.pendingEffectResolutionEntry, card);
                         }
                     }
                 }
