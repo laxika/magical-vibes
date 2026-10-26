@@ -1107,8 +1107,6 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handlePreparedTokenCopyAttachment(gameData, permanentId, tokenCopies);
         } else if (context instanceof PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking tokenCopies) {
             triggerHandler.handlePreparedOpponentTokenCopiesAttacking(gameData, permanentId, tokenCopies);
-        } else if (context instanceof PermanentChoiceContext.CreateTokenCopiesOfEnteredThisTurnAttacking tokenCopies) {
-            triggerHandler.handleCreateTokenCopiesOfEnteredThisTurnAttacking(gameData, permanentId, tokenCopies);
         } else if (context instanceof PermanentChoiceContext.CreateMemoryCounterTokenCopiesAttacking tokenCopies) {
             triggerHandler.handleCreateMemoryCounterTokenCopiesAttacking(gameData, permanentId, tokenCopies);
         } else if (context instanceof PermanentChoiceContext.RevealUntilCardPredicateAttackTarget revealAttack) {

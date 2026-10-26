@@ -1,6 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
+import com.github.laxika.magicalvibes.cards.u.UginTheSpiritDragon;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +21,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RedoubledStormsinger.class, GrizzlyBears.class, RoleReversal.class})
+@CardUsed({RedoubledStormsinger.class, GrizzlyBears.class, RoleReversal.class, ParallelLives.class,
+        QueenAllenalOfRuadach.class, UginTheSpiritDragon.class})
 class RedoubledStormsingerTest extends BaseCardTest {
 
     @Test
@@ -29,9 +35,7 @@ class RedoubledStormsingerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
-        harness.handlePermanentChosen(player1, player2.getId());
-
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         List<Permanent> tokens = findPermanents(player1, "Grizzly Bears").stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
@@ -81,8 +85,6 @@ class RedoubledStormsingerTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
 
         List<Permanent> copies = findPermanents(player1, "Grizzly Bears").stream()
                 .filter(permanent -> permanent != first && permanent != second)
@@ -115,7 +117,6 @@ class RedoubledStormsingerTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
         Permanent lateToken = addEnteredCreatureToken(player1);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(3);
         assertThat(findPermanents(player1, "Grizzly Bears").stream()
@@ -135,7 +136,6 @@ class RedoubledStormsingerTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
         Permanent copy = findPermanents(player1, "Grizzly Bears").stream()
                 .filter(permanent -> permanent != original).findFirst().orElseThrow();
 
@@ -153,6 +153,116 @@ class RedoubledStormsingerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(copy);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(original);
+    }
+
+    @Test
+    @DisplayName("Each copy chooses its own player or planeswalker to attack")
+    void eachCopyChoosesItsAttackTarget() {
+        addCreatureReady(player1, new RedoubledStormsinger());
+        addEnteredCreatureToken(player1);
+        addEnteredCreatureToken(player1);
+        addCreatureReady(player2, new GrizzlyBears());
+        Permanent ugin = harness.addToBattlefieldAndReturn(player2, new UginTheSpiritDragon());
+        ugin.setCounterCount(CounterType.LOYALTY, 7);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, ugin.getId());
+
+        List<Permanent> copies = bearTokens().stream().filter(Permanent::isAttacking).toList();
+        assertThat(copies).hasSize(2).allSatisfy(copy -> assertThat(copy.isTapped()).isTrue());
+        assertThat(copies).extracting(Permanent::getAttackTarget)
+                .containsExactlyInAnyOrder(player2.getId(), ugin.getId());
+    }
+
+    @Test
+    @DisplayName("Each copy Parallel Lives doubles chooses its own attack target")
+    void doubledCopiesChooseTheirAttackTargetsIndependently() {
+        addCreatureReady(player1, new RedoubledStormsinger());
+        addEnteredCreatureToken(player1);
+        harness.addToBattlefield(player1, new ParallelLives());
+        addCreatureReady(player2, new GrizzlyBears());
+        Permanent ugin = harness.addToBattlefieldAndReturn(player2, new UginTheSpiritDragon());
+        ugin.setCounterCount(CounterType.LOYALTY, 7);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, ugin.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        List<Permanent> copies = bearTokens().stream().filter(Permanent::isAttacking).toList();
+        assertThat(copies).hasSize(2).allSatisfy(copy -> assertThat(copy.isTapped()).isTrue());
+        assertThat(copies).extracting(Permanent::getAttackTarget)
+                .containsExactlyInAnyOrder(player2.getId(), ugin.getId());
+    }
+
+    @Test
+    @DisplayName("With Queen Allenal and Parallel Lives, the controller orders them before the copies enter")
+    void asksToOrderTokenReplacements() {
+        attackUnderQueenAndParallelLives();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(bearTokens()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Applying Queen Allenal before Parallel Lives doubles the copy and the Soldier, all attacking")
+    void queenFirstDoublesCopyAndSoldier() {
+        Permanent original = attackUnderQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(bearTokens().stream().filter(token -> token != original)).hasSize(2).allSatisfy(token -> {
+            assertThat(token.isTapped()).isTrue();
+            assertThat(token.isAttacking()).isTrue();
+            assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
+        });
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2).allSatisfy(token -> {
+            assertThat(token.isAttacking()).isTrue();
+            assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
+        });
+    }
+
+    @Test
+    @DisplayName("Applying Parallel Lives before Queen Allenal adds one undoubled Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        Permanent original = attackUnderQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(bearTokens().stream().filter(token -> token != original)).hasSize(2);
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+    }
+
+    private Permanent attackUnderQueenAndParallelLives() {
+        addCreatureReady(player1, new RedoubledStormsinger());
+        Permanent original = addEnteredCreatureToken(player1);
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        return original;
+    }
+
+    private List<Permanent> bearTokens() {
+        return findPermanents(player1, "Grizzly Bears").stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 
     private Permanent addEnteredCreatureToken(Player player) {

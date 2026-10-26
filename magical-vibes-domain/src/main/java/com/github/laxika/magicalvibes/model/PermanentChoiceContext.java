@@ -1536,16 +1536,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** Redoubled Stormsinger: choose an attack target for each temporary token copy. */
-    record CreateTokenCopiesOfEnteredThisTurnAttacking(
-            UUID controllerId, Card sourceCard, UUID sourcePermanentId,
-            List<UUID> sourceTokenIds, int tokenCount, List<UUID> chosenAttackTargets)
-            implements PermanentChoiceContext {
-        public CreateTokenCopiesOfEnteredThisTurnAttacking {
-            sourceTokenIds = List.copyOf(sourceTokenIds);
-            chosenAttackTargets = List.copyOf(chosenAttackTargets);
-        }
-    }
     /** Altaïr: remembers independent attack-target choices for copies of exiled creature cards. */
     record CreateMemoryCounterTokenCopiesAttacking(UUID controllerId, Card sourceCard,
                                                    UUID sourcePermanentId, List<Card> sourceCards,

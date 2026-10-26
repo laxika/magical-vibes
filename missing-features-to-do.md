@@ -20,11 +20,11 @@ copy-group `TokenCreationEvent` (`TokenCreationEvent.copies`, `copyOf` = the cop
 single card (no explicit attack targets, no Aura host) now run a copy-group event carrying a `TokenCopyBatch` and resume
 in `TokenCopySupport.createCopiesAfterReplacementOrder`, tested in `CacklingCounterpartTest`; copies of several
 different cards in the same paths now hold each other card's copies as a copy group (`TokenGroup.copyOf`) of the same
-event, tested in `SecondHarvestTest`; copies with explicit attack targets now join the ordered path when each copied card has one attack target (`TokenCopyBatch.attackTargets`, by card identity; added tokens take the first card's target), tested in `MirrorStyleMasterTest`, and the sole-defender branch of `CreateTokenCopyOfTargetPermanentEffectHandler` no longer applies the token multiplier twice; `CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler` (Echocasting Symposium) now creates its copy through `TokenCopySupport.createTokenCopies` for the target player (ordered by that player, additions now applied), tested in `EchocastingSymposiumTest`; `CreateTokenCopyOfImprintedCardEffectHandler` (Mimic Vat, Prototype Portal, Soul Foundry, Dollhouse of Horrors, Tawnos) now creates its copy through `TokenCopySupport.createTokenCopies` (its exceptions and riders expressed as a `CreateTokenCopyOfTargetPermanentEffect`), tested in `MimicVatTest`; `ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler` (Hofri Ghostforge) now creates its Spirit copies through `TokenCopySupport.createTokenCopiesWithCopyException` with a per-copy permanent rider (`TokenCopyBatch.copyRider`) that links each copy (not added tokens) to the exiled card, tested in `HofriGhostforgeTest`; `CreateTokenCopyAndLinkToSourceEffectHandler` (Dance of Many) now creates its copy through `TokenCopySupport.createTokenCopiesWithTokenRider`, whose per-token rider (`TokenCopyBatch.tokenRider`, also carried through Jinnie Fay's choice) links every token the event creates, added Soldiers and Jinnie Fay's Cats/Dogs included (Queen Allenal ruling: the creating effect's instructions apply to the added tokens), with the "when the token leaves, sacrifice" trigger on each token's permanent rather than its copiable card, tested in `DanceOfManyTest`; tapped-and-attacking copies whose attack targets are chosen (`CreateTokenCopyOfTargetPermanentEffect.chooseAttackTarget`: Flamerush Rider, Thousand-Faced Shadow) now go through `TokenCopySupport.createTokenCopiesChoosingAttackTargets` (`TokenCopyBatch.chooseAttackTargets`): the event is ordered first and each creature token, added Soldiers included, then gets its own defending player or planeswalker (CR 508.4) through `PreparedOpponentTokenCopiesAttacking` with a `null` opponent entry, so doubled copies no longer all take the first chosen target, tested in `FlamerushRiderTest`
+event, tested in `SecondHarvestTest`; copies with explicit attack targets now join the ordered path when each copied card has one attack target (`TokenCopyBatch.attackTargets`, by card identity; added tokens take the first card's target), tested in `MirrorStyleMasterTest`, and the sole-defender branch of `CreateTokenCopyOfTargetPermanentEffectHandler` no longer applies the token multiplier twice; `CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler` (Echocasting Symposium) now creates its copy through `TokenCopySupport.createTokenCopies` for the target player (ordered by that player, additions now applied), tested in `EchocastingSymposiumTest`; `CreateTokenCopyOfImprintedCardEffectHandler` (Mimic Vat, Prototype Portal, Soul Foundry, Dollhouse of Horrors, Tawnos) now creates its copy through `TokenCopySupport.createTokenCopies` (its exceptions and riders expressed as a `CreateTokenCopyOfTargetPermanentEffect`), tested in `MimicVatTest`; `ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler` (Hofri Ghostforge) now creates its Spirit copies through `TokenCopySupport.createTokenCopiesWithCopyException` with a per-copy permanent rider (`TokenCopyBatch.copyRider`) that links each copy (not added tokens) to the exiled card, tested in `HofriGhostforgeTest`; `CreateTokenCopyAndLinkToSourceEffectHandler` (Dance of Many) now creates its copy through `TokenCopySupport.createTokenCopiesWithTokenRider`, whose per-token rider (`TokenCopyBatch.tokenRider`, also carried through Jinnie Fay's choice) links every token the event creates, added Soldiers and Jinnie Fay's Cats/Dogs included (Queen Allenal ruling: the creating effect's instructions apply to the added tokens), with the "when the token leaves, sacrifice" trigger on each token's permanent rather than its copiable card, tested in `DanceOfManyTest`; tapped-and-attacking copies whose attack targets are chosen (`CreateTokenCopyOfTargetPermanentEffect.chooseAttackTarget`: Flamerush Rider, Thousand-Faced Shadow) now go through `TokenCopySupport.createTokenCopiesChoosingAttackTargets` (`TokenCopyBatch.chooseAttackTargets`): the event is ordered first and each creature token, added Soldiers included, then gets its own defending player or planeswalker (CR 508.4) through `PreparedOpponentTokenCopiesAttacking` with a `null` opponent entry, so doubled copies no longer all take the first chosen target, tested in `FlamerushRiderTest`; Redoubled Stormsinger's copies (`CreateTokenCopyOfEachTokenEnteredThisTurnEffectHandler`) now go through `createTokenCopiesChoosingAttackTargets` too (the old pre-count with `getTokenCreationAmount` and the `CreateTokenCopiesOfEnteredThisTurnAttacking` context are gone), tested in `RedoubledStormsingerTest`
 
 **Failing tests:**
-- None yet. Write one per remaining path, e.g. Queen Allenal of Ruadach + Parallel Lives with Redoubled Stormsinger
-  or Calamity, Galloping Inferno, or Mirror Match: the player must be asked, and Queen first must give the
+- None yet. Write one per remaining path, e.g. Queen Allenal of Ruadach + Parallel Lives with
+  Calamity, Galloping Inferno, or Mirror Match: the player must be asked, and Queen first must give the
   doubled Soldier.
 
 **What the rules require.** CR 616.1 / 616.1e: the player creating the tokens chooses the order of every
@@ -36,14 +36,14 @@ no prompt:
 - `TokenCopySupport` batches outside the ordered path: copies whose attack targets are chosen before the creation
   (`CreateTokenCopiesAttacking` for Calamity, Galloping Inferno's saddler copies, which choose one target and then let
   the batch multiply, so a doubled copy takes the same target and the creation can pause after the saddle loop has
-  moved on; `CreateTokenCopiesOfEnteredThisTurnAttacking` for Redoubled Stormsinger, which counts the tokens with
-  `getTokenCreationAmount` before the choice; both could move to `createTokenCopiesChoosingAttackTargets`), per-opponent
+  moved on; moving it to `createTokenCopiesChoosingAttackTargets` needs a continuation that runs the saddle loop's
+  second iteration after every pause of the ordered creation: replacement order, Jinnie Fay, attack targets), per-opponent
   copies (`createTokenCopiesChoosingOpponentAttackTargets`), Aura-host
   copies (`createTokenCopiesAttachedTo`), and the callers that act on the returned ids
   (`createTokenCopiesWithoutReplacementOrder`: Human Time Lord Meta-Crisis, Satya, Cleaver Skaab/Ashling's
   copied-card form, Mirror Match, Lucy MacLean), which would need a continuation for their follow-up work.
 - The copy handlers that call `getTokenCreationAmount` themselves (`CreateTokenCopyOfSourceEffectHandler`,
-  `CreateTokenCopiesOfExiledCardAttackingOpponentsEffectHandler`, `CreateTokenCopyOfEachTokenEnteredThisTurnEffectHandler`,
+  `CreateTokenCopiesOfExiledCardAttackingOpponentsEffectHandler`,
   `GraveyardReturnSupport`, ...): multiplier first, additions unmultiplied.
 - Populate never asks about Jinnie Fay, and its copies enter before the event's added tokens (two entry batches
   rather than one simultaneous batch).
@@ -62,13 +62,13 @@ carry its source's attack target (and decide whether added tokens such as Queen'
 
 ```
 Implement missing-features-to-do.md entry 53: route the remaining token creation paths
-(TokenCopySupport's Calamity/Redoubled Stormsinger pre-chosen-attack-target, per-opponent, Aura-host and
+(TokenCopySupport's Calamity pre-chosen-attack-target, per-opponent, Aura-host and
 id-returning batches and the token copy
 handlers that call getTokenCreationAmount; populate and TokenCopySupport batches without an Aura host whose copied
 cards each have at most one attack target are done, see TokenCopyBatch.attackTargets, chosen-attacker copies via TokenCopyBatch.chooseAttackTargets,
 PopulateSupport, TokenCopySupport.createCopiesAfterReplacementOrder, TokenCreationEvent.copies, TokenGroup.copies
 and TokenCopyBatch, whose copyRider handles per-copy permanent set-up such as links and whose tokenRider
-sets up every token of the event, added tokens included; Hofri and Dance of Many are done)
+sets up every token of the event, added tokens included; Hofri, Dance of Many and Redoubled Stormsinger are done)
 through TokenCreationEvent and ReplacementOrderService, as PermanentControlSupport.applyCreateToken does
 with TokenCreationReplacements and TokenAdditionReplacements. Write the tests first. Don't run the full
 test suite; ask me. Don't commit until I say so.
