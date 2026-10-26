@@ -83,6 +83,20 @@ public class AiGameActions {
         }
     }
 
+    /**
+     * Special action (CR 116.2c): pays the "unless [that player] pays [cost] before that step"
+     * obligation of {@code sourceCardId}'s delayed triggered ability against {@code affectedId}.
+     */
+    public void handlePayDelayedTriggerCost(UUID sourceCardId, UUID affectedId) {
+        GameData gameData = game();
+        if (gameData == null) return;
+        try {
+            gameService.payDelayedTriggerCost(gameData, aiPlayer, sourceCardId, affectedId);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected payDelayedTriggerCost in game {}: {}", gameId, e.getMessage());
+        }
+    }
+
     public void handleKeepHand(KeepHandRequest request) {
         GameData gameData = game();
         if (gameData == null) return;

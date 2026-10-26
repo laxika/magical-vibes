@@ -35,7 +35,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
@@ -1104,32 +1103,9 @@ public class AbilityActivationService {
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
-    /** Pays for one outstanding draw-step life-loss obligation without using the stack. */
-    public void payDrawStepLifeLoss(GameData gameData, Player player, UUID sourceCardId) {
-        UUID playerId = player.getId();
-        LoseLifeAtNextDrawStepUnlessPays obligation = gameData
-                .getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class).stream()
-                .filter(action -> action.playerId().equals(playerId)
-                        && action.sourceCard().getId().equals(sourceCardId))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No unpaid draw-step life-loss obligation"));
-        ManaPool pool = gameData.playerManaPools.get(playerId);
-        ManaCost cost = new ManaCost("{" + obligation.payAmount() + "}");
-        if (pool == null || !cost.canPayForSpecialAction(pool)) {
-            throw new IllegalStateException("Not enough mana to pay for the draw-step life-loss obligation");
-        }
-        cost.payForSpecialAction(pool);
-        gameData.delayedActions.remove(obligation);
-        gameData.revertableManaActivations.clear();
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " pays {" + obligation.payAmount() + "} for ",
-                obligation.sourceCard(), "'s draw-step obligation."));
-        mutationCoordinator.invalidateAllPlayerViews(gameData);
-    }
-
     /**
      * Special action (CR 116.2c): pays one outstanding "unless [that player] pays [cost] before that
-     * step" obligation — Quenchable Fire's, Sabertooth Cobra's — from {@code sourceCardId} against
+     * step" obligation — Quenchable Fire's, Sabertooth Cobra's, Nafs Asp's — from {@code sourceCardId} against
      * {@code affectedId}, so its delayed ability won't trigger. Uses no stack; the player keeps
      * priority (CR 116.3), and earlier passes no longer count as passing in succession (CR 117.4).
      *

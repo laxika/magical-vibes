@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.*;
 import com.github.laxika.magicalvibes.model.action.DamageAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
+import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.action.PoisonAtNextUpkeepUnlessPays;
 import com.github.laxika.magicalvibes.model.effect.*;
 import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
@@ -414,8 +415,10 @@ public class GameActionAvailabilityService {
     /**
      * Every outstanding delayed-trigger payment {@code playerId} is the one allowed to make, whatever
      * the timing or the mana available: Quenchable Fire's (the damaged player, or the current
-     * controller of the damaged planeswalker) and Sabertooth Cobra's (the poisoned player). An
-     * obligation stays payable until its step begins and drains it, which is "before that step".
+     * controller of the damaged planeswalker), Sabertooth Cobra's (the poisoned player) and Nafs Asp's
+     * or Glass Asp's (the damaged player, before their next draw step). An obligation stays payable
+     * until its step begins and drains it, which is "before that step". Identical obligations (one
+     * source damaging the same player twice) are each listed, and a payment removes only one.
      */
     public List<DelayedTriggerPayment> getDelayedTriggerPaymentsOwedBy(GameData gameData, UUID playerId) {
         List<DelayedTriggerPayment> payments = new ArrayList<>();
@@ -432,6 +435,12 @@ public class GameActionAvailabilityService {
             if (playerId.equals(action.playerId())) {
                 payments.add(new DelayedTriggerPayment(action, action.sourceCard(), action.playerId(),
                         action.manaCost()));
+            }
+        }
+        for (LoseLifeAtNextDrawStepUnlessPays action : gameData.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)) {
+            if (playerId.equals(action.playerId())) {
+                payments.add(new DelayedTriggerPayment(action, action.sourceCard(), action.playerId(),
+                        "{" + action.payAmount() + "}"));
             }
         }
         return payments;

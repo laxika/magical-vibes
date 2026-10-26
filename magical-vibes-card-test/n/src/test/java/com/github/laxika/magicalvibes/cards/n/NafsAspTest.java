@@ -2,19 +2,26 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HermeticStudy;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.networking.model.DelayedTriggerPaymentView;
+import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NafsAsp.class, GrizzlyBears.class, HermeticStudy.class})
+@CardUsed({NafsAsp.class, GrizzlyBears.class, HermeticStudy.class, Plains.class})
 class NafsAspTest extends BaseCardTest {
 
     private Permanent addReadyAsp() {
@@ -65,7 +72,7 @@ class NafsAspTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
         gd.playerManaPools.get(player2.getId()).addPowerstoneOnlyColorless(1);
-        gs.payDrawStepLifeLoss(gd, player2, asp.getCard().getId());
+        gs.payDelayedTriggerCost(gd, player2, asp.getCard().getId(), player2.getId());
 
         assertThat(gd.playerManaPools.get(player2.getId()).getPowerstoneOnlyColorless()).isZero();
         assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
@@ -85,7 +92,7 @@ class NafsAspTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
         harness.addMana(player2, ManaColor.WHITE, 1);
-        gs.payDrawStepLifeLoss(gd, player2, asp.getCard().getId());
+        gs.payDelayedTriggerCost(gd, player2, asp.getCard().getId(), player2.getId());
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
         assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
@@ -145,7 +152,7 @@ class NafsAspTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeAfterCombat - 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        assertThatThrownBy(() -> gs.payDrawStepLifeLoss(gd, player2, asp.getCard().getId()))
+        assertThatThrownBy(() -> gs.payDelayedTriggerCost(gd, player2, asp.getCard().getId(), player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("No unpaid");
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -165,7 +172,7 @@ class NafsAspTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        gs.payDrawStepLifeLoss(gd, player2, firstAsp.getCard().getId());
+        gs.payDelayedTriggerCost(gd, player2, firstAsp.getCard().getId(), player2.getId());
         advanceToPlayer2DrawStepObligation();
 
         harness.assertLife(player2, lifeAfterCombat - 1);
@@ -186,7 +193,7 @@ class NafsAspTest extends BaseCardTest {
         assertThat(gd.currentStep).isEqualTo(TurnStep.DRAW);
         assertThat(gd.stack).hasSize(1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        assertThatThrownBy(() -> gs.payDrawStepLifeLoss(gd, player2, asp.getCard().getId()))
+        assertThatThrownBy(() -> gs.payDelayedTriggerCost(gd, player2, asp.getCard().getId(), player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("No unpaid");
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -248,6 +255,145 @@ class NafsAspTest extends BaseCardTest {
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 20);
         assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+    }
+
+    /** Player1 passes in their own end step, handing priority to player2 (who owes the payment). */
+    private void passToPlayer2InPlayer1EndStep() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passPriority(player1);
+    }
+
+    private List<DelayedTriggerPaymentView> offeredPayments(com.github.laxika.magicalvibes.testutil.FakeConnection connection)
+            throws Exception {
+        harness.publishState();
+        String message = connection.getMessagesContaining("\"type\":\"GAME_STATE\"").getLast();
+        return new JacksonConfig().objectMapper().readValue(message, GameStateMessage.class).delayedTriggerPayments();
+    }
+
+    @Test
+    @DisplayName("The damaged player is offered the {1} payment in their game state while holding priority")
+    void paymentIsOfferedToTheDamagedPlayerWithPriority() throws Exception {
+        Permanent asp = addReadyAsp();
+        asp.setAttacking(true);
+        dealCombatDamageToPlayer2();
+        resolveAllTriggers();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        passToPlayer2InPlayer1EndStep();
+
+        assertThat(gqs.getPriorityPlayerId(gd)).isEqualTo(player2.getId());
+        assertThat(offeredPayments(harness.getConn2())).singleElement().satisfies(payment -> {
+            assertThat(payment.sourceCardId()).isEqualTo(asp.getCard().getId());
+            assertThat(payment.affectedId()).isEqualTo(player2.getId());
+            assertThat(payment.manaCost()).isEqualTo("{1}");
+        });
+        assertThat(offeredPayments(harness.getConn1())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Auto-pass stops before the draw step while the damaged player can pay")
+    void autoPassStopsWhileThePaymentIsAffordable() {
+        Permanent asp = addReadyAsp();
+        asp.setAttacking(true);
+        dealCombatDamageToPlayer2();
+        resolveAllTriggers();
+        harness.addToBattlefield(player2, new Plains());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of());
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of());
+
+        passToPlayer2InPlayer1EndStep();
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gqs.getPriorityPlayerId(gd)).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Without mana to pay, auto-pass carries the damaged player past the end step")
+    void autoPassDoesNotStopWhenThePaymentIsUnaffordable() {
+        Permanent asp = addReadyAsp();
+        asp.setAttacking(true);
+        dealCombatDamageToPlayer2();
+        resolveAllTriggers();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        gd.playerAutoStopSteps.put(player1.getId(), Set.of());
+        gd.playerAutoStopSteps.put(player2.getId(), Set.of());
+
+        passToPlayer2InPlayer1EndStep();
+
+        assertThat(gd.currentStep).isNotEqualTo(TurnStep.END_STEP);
+    }
+
+    @Test
+    @DisplayName("Paying is a special action: the payer keeps priority and an earlier pass no longer counts")
+    void payingIsASpecialAction() {
+        Permanent asp = addReadyAsp();
+        asp.setAttacking(true);
+        dealCombatDamageToPlayer2();
+        resolveAllTriggers();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        passToPlayer2InPlayer1EndStep();
+        assertThat(gd.priorityPassedBy).containsExactly(player1.getId());
+
+        gs.payDelayedTriggerCost(gd, player2, asp.getCard().getId(), player2.getId());
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gqs.getPriorityPlayerId(gd)).isEqualTo(player2.getId());
+        assertThat(gd.priorityPassedBy).isEmpty();
+        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two identical obligations are offered as one payment until both are paid, one at a time")
+    void identicalObligationsArePaidOneAtATime() throws Exception {
+        NafsAsp aspCard = new NafsAsp();
+        LoseLifeAtNextDrawStepUnlessPays obligation =
+                new LoseLifeAtNextDrawStepUnlessPays(player2.getId(), 1, 1, aspCard, player1.getId());
+        gd.queueDelayedAction(obligation);
+        gd.queueDelayedAction(obligation);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        passToPlayer2InPlayer1EndStep();
+
+        assertThat(offeredPayments(harness.getConn2())).hasSize(1);
+        gs.payDelayedTriggerCost(gd, player2, aspCard.getId(), player2.getId());
+
+        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).containsExactly(obligation);
+        assertThat(offeredPayments(harness.getConn2())).hasSize(1);
+        gs.payDelayedTriggerCost(gd, player2, aspCard.getId(), player2.getId());
+
+        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+        assertThat(offeredPayments(harness.getConn2())).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Only the damaged player can pay, and only with enough mana")
+    void onlyTheDamagedPlayerCanPayWithEnoughMana() {
+        Permanent asp = addReadyAsp();
+        asp.setAttacking(true);
+        dealCombatDamageToPlayer2();
+        resolveAllTriggers();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> gs.payDelayedTriggerCost(gd, player1, asp.getCard().getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No unpaid");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        assertThatThrownBy(() -> gs.payDelayedTriggerCost(gd, player2, asp.getCard().getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
     }
 
     @Test

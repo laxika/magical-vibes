@@ -65,7 +65,7 @@ class GlassAspTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
         harness.addMana(player2, ManaColor.WHITE, 2);
-        gs.payDrawStepLifeLoss(gd, player2, asp.getCard().getId());
+        gs.payDelayedTriggerCost(gd, player2, asp.getCard().getId(), player2.getId());
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
         assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
@@ -138,7 +138,7 @@ class GlassAspTest extends BaseCardTest {
         gd.turnNumber = 2;
         advanceToUpkeep(player2);
         harness.addMana(player2, ManaColor.WHITE, 2);
-        gs.payDrawStepLifeLoss(gd, player2, firstAsp.getCard().getId());
+        gs.payDelayedTriggerCost(gd, player2, firstAsp.getCard().getId(), player2.getId());
 
         harness.passUntil(player2, TurnStep.DRAW);
         resolveAllTriggers();
@@ -157,7 +157,7 @@ class GlassAspTest extends BaseCardTest {
         advanceToPlayer2DrawStep();
         harness.addMana(player2, ManaColor.WHITE, 2);
 
-        assertThatThrownBy(() -> gs.payDrawStepLifeLoss(gd, player2, asp.getCard().getId()))
+        assertThatThrownBy(() -> gs.payDelayedTriggerCost(gd, player2, asp.getCard().getId(), player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isEqualTo(2);
         resolveAllTriggers();

@@ -2351,21 +2351,10 @@ public class GameService {
         }
     }
 
-    /** Pays for one pending life-loss obligation before the affected player's next draw step. */
-    public void payDrawStepLifeLoss(GameData gameData, Player player, UUID sourceCardId) {
-        Player actionPlayer = player;
-        if (runAsActionIfNeeded(gameData,
-                () -> payDrawStepLifeLoss(gameData, actionPlayer, sourceCardId))) return;
-        synchronized (gameData) {
-            player = resolveActingPlayer(gameData, player);
-            requirePriority(gameData, player);
-            abilityActivationService.payDrawStepLifeLoss(gameData, player, sourceCardId);
-        }
-    }
-
     /**
      * Special action (CR 116.2c): pays an "unless [that player] pays [cost] before that step"
-     * obligation of a delayed triggered ability, such as Quenchable Fire's, so it won't trigger.
+     * obligation of a delayed triggered ability, such as Quenchable Fire's or Nafs Asp's, so it won't
+     * trigger.
      */
     public void payDelayedTriggerCost(GameData gameData, Player player, UUID sourceCardId, UUID affectedId) {
         Player actionPlayer = player;

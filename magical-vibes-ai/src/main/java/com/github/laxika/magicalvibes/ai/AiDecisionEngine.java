@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGraveyardExileEffect;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -220,7 +221,10 @@ public abstract class AiDecisionEngine {
         }
 
         switch (kind) {
-            case GAME_STATE -> { if (!tryCastCommander(gameData) && !tryPlayFromOpponentHand(gameData)) handleGameState(gameData); }
+            case GAME_STATE -> {
+                if (!tryPayDelayedTriggerCosts(gameData) && !tryCastCommander(gameData)
+                        && !tryPlayFromOpponentHand(gameData)) handleGameState(gameData);
+            }
             case MULLIGAN -> handleInitialMulligan();
             case CARDS_TO_BOTTOM -> choiceHandler.handleBottomCards(gameData);
             case ATTACKER_DECLARATION -> {
@@ -243,6 +247,61 @@ public abstract class AiDecisionEngine {
     }
 
     // ===== Abstract Methods =====
+
+    /**
+     * Pays the AI's "unless [that player] pays [cost] before that step" obligations (Quenchable Fire,
+     * Sabertooth Cobra, Nafs Asp; a CR 116.2c special action) when doing so is worth the mana. The
+     * payment keeps priority (CR 116.3), so the decision carries on afterwards.
+     *
+     * @return true when tapping mana opened a pending decision, so this decision must stop
+     */
+    protected boolean tryPayDelayedTriggerCosts(GameData gameData) {
+        UUID playerId = aiPlayer.getId();
+        for (int attempt = 0; attempt < 16; attempt++) {
+            if (!hasPriority(gameData)) return false;
+            GameActionAvailabilityService.DelayedTriggerPayment payment = actionAvailabilityService
+                    .getAvailableDelayedTriggerPayments(gameData, playerId).stream()
+                    .filter(p -> isDelayedTriggerPaymentWorthIt(gameData, p))
+                    .findFirst().orElse(null);
+            if (payment == null) return false;
+            ManaCost cost = new ManaCost(payment.manaCost());
+            if (!cost.canPayForSpecialAction(gameData.playerManaPools.get(playerId))) {
+                manaManager.tapSourcesForCost(gameData, playerId, payment.manaCost(), 0, manaTapAction());
+                if (gameData.interaction.isAwaitingInput()) return true;
+                if (!cost.canPayForSpecialAction(gameData.playerManaPools.get(playerId))) return false;
+            }
+            int obligationsBefore = gameData.delayedActions.size();
+            log.info("AI: Paying {} for {}'s delayed ability in game {}", payment.manaCost(),
+                    payment.sourceCard().getName(), gameId);
+            send(() -> gameActions.handlePayDelayedTriggerCost(payment.sourceCard().getId(), payment.affectedId()));
+            if (gameData.delayedActions.size() >= obligationsBefore) return false;
+        }
+        return false;
+    }
+
+    /**
+     * Whether paying {@code payment} now beats letting its delayed ability trigger. Every such ability
+     * only hurts the AI (damage, poison, life loss), so the question is what the mana costs: in an
+     * end step with nothing on the stack the mana would otherwise sit idle, and an end step almost
+     * always comes before the obligation's step, so that is where the AI pays. Mana in its own
+     * upkeep is worth more than a point of life, so Nafs Asp's draw-step life loss is paid there
+     * (its last window, reached when the obligation arose after the last end step or the AI had no
+     * mana then) only when the pending loss would be lethal.
+     */
+    protected boolean isDelayedTriggerPaymentWorthIt(GameData gameData,
+                                                     GameActionAvailabilityService.DelayedTriggerPayment payment) {
+        if (!gameData.stack.isEmpty()) return false;
+        if (gameData.currentStep == TurnStep.END_STEP) return true;
+        UUID playerId = aiPlayer.getId();
+        if (gameData.currentStep != TurnStep.UPKEEP || !playerId.equals(gameData.activePlayerId)
+                || !(payment.obligation() instanceof LoseLifeAtNextDrawStepUnlessPays)) {
+            return false;
+        }
+        int pendingLoss = gameData.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class).stream()
+                .filter(action -> playerId.equals(action.playerId()))
+                .mapToInt(LoseLifeAtNextDrawStepUnlessPays::lifeLoss).sum();
+        return pendingLoss >= gameData.getLife(playerId);
+    }
 
     protected boolean tryCastCommander(GameData gameData) {
         UUID playerId = aiPlayer.getId();

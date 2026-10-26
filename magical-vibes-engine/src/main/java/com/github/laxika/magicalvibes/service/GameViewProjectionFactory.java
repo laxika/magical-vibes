@@ -1312,6 +1312,8 @@ public class GameViewProjectionFactory {
     /**
      * The delayed-trigger payments the viewer can make now. A Mindslaver controller acts for the
      * controlled player, so they see that player's payments and the controlled player sees none.
+     * Identical obligations (one Nafs Asp damaging the player twice) collapse into one entry, which
+     * stays offered until each has been paid one request at a time.
      */
     List<DelayedTriggerPaymentView> getDelayedTriggerPayments(GameData gameData, UUID playerId) {
         if (playerId.equals(gameData.mindControlledPlayerId)) return List.of();
@@ -1321,6 +1323,7 @@ public class GameViewProjectionFactory {
                 .map(payment -> new DelayedTriggerPaymentView(payment.sourceCard().getId(),
                         payment.sourceCard().getName(), payment.affectedId(),
                         affectedName(gameData, payment.affectedId()), payment.manaCost()))
+                .distinct()
                 .toList();
     }
 

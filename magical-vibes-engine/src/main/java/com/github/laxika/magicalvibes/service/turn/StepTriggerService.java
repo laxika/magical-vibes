@@ -3226,7 +3226,9 @@ public class StepTriggerService {
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.OPPONENT_DRAW_STEP);
         collectEmblemStepTriggers(gameData, EmblemTriggerStep.DRAW_STEP);
 
-        // Payment permissions expire as this draw step begins; only unpaid obligations remain.
+        // Nafs Asp / Glass Asp: paying before this draw step is a special action (CR 116.2c,
+        // AbilityActivationService.payDelayedTriggerCost) that removes the obligation; the payment
+        // window closes as this step begins, so every obligation still queued here was not paid.
         if (gameData.hasDelayedAction(LoseLifeAtNextDrawStepUnlessPays.class)) {
             List<LoseLifeAtNextDrawStepUnlessPays> pending = gameData.drainDelayedActions(
                     LoseLifeAtNextDrawStepUnlessPays.class, a -> a.playerId().equals(activePlayerId));

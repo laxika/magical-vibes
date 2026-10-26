@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MakeshiftMauler;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.n.NafsAsp;
 import com.github.laxika.magicalvibes.cards.n.NornsAnnex;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
@@ -61,6 +62,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -2904,5 +2906,69 @@ class AiDecisionEngineTest {
         boolean result = ai.tapManaForSpell(gd, land, null);
 
         assertThat(result).isFalse();
+    }
+
+    private Permanent owesNafsAspPaymentWithOnePlains() {
+        gd.queueDelayedAction(new LoseLifeAtNextDrawStepUnlessPays(
+                aiPlayer.getId(), 1, 1, new NafsAsp(), human.getId()));
+        harness.setHand(aiPlayer, List.of());
+        return addUntappedLand(aiPlayer, Plains.class);
+    }
+
+    private boolean aiPaidDelayedTrigger() {
+        return gd.gameLog.stream().anyMatch(entry -> entry.plainText().contains(aiPlayer.getUsername() + " pays {1} so"));
+    }
+
+    @Test
+    @CardUsed({NafsAsp.class, Plains.class})
+    @DisplayName("Pays a delayed-trigger cost with idle mana in the opponent's end step")
+    void paysDelayedTriggerCostInEndStep() {
+        owesNafsAspPaymentWithOnePlains();
+        giveAiPriority();
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        gd.priorityPassedBy.add(human.getId());
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(aiPaidDelayedTrigger()).isTrue();
+        assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
+    }
+
+    @Test
+    @CardUsed({NafsAsp.class, Plains.class})
+    @DisplayName("Keeps its mana in a main phase instead of paying a delayed-trigger cost")
+    void doesNotPayDelayedTriggerCostInMainPhase() {
+        Permanent plains = owesNafsAspPaymentWithOnePlains();
+        giveAiPriority();
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(aiPaidDelayedTrigger()).isFalse();
+        assertThat(plains.isTapped()).isFalse();
+    }
+
+    @Test
+    @CardUsed({NafsAsp.class, Plains.class})
+    @DisplayName("Pays Nafs Asp's cost in its own upkeep only when the life loss would be lethal")
+    void paysDrawStepLifeLossInUpkeepOnlyWhenLethal() {
+        Permanent plains = owesNafsAspPaymentWithOnePlains();
+        giveAiPriority();
+        harness.forceStep(TurnStep.UPKEEP);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+        assertThat(aiPaidDelayedTrigger()).isFalse();
+
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        plains.untap();
+        gd.playerLifeTotals.put(aiPlayer.getId(), 1);
+        gd.queueDelayedAction(new LoseLifeAtNextDrawStepUnlessPays(
+                aiPlayer.getId(), 1, 1, new NafsAsp(), human.getId()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(aiPaidDelayedTrigger()).isTrue();
     }
 }

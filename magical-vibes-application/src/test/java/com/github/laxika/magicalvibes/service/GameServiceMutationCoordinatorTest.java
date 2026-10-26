@@ -27,7 +27,7 @@ class GameServiceMutationCoordinatorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         long versionBeforeAction = gd.domainStateVersion();
 
-        gs.payDrawStepLifeLoss(gd, player1, source.getId());
+        gs.payDelayedTriggerCost(gd, player1, source.getId(), player1.getId());
 
         assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
         assertThat(gd.domainStateVersion()).isEqualTo(versionBeforeAction + 1);
@@ -45,9 +45,9 @@ class GameServiceMutationCoordinatorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passPriority(player1);
 
-        gs.payDrawStepLifeLoss(gd, player2, source.getId());
+        gs.payDelayedTriggerCost(gd, player2, source.getId(), player2.getId());
         assertThat(gqs.getPriorityPlayerId(gd)).isEqualTo(player2.getId());
-        gs.payDrawStepLifeLoss(gd, player2, source.getId());
+        gs.payDelayedTriggerCost(gd, player2, source.getId(), player2.getId());
 
         assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).isEmpty();
         assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
@@ -63,7 +63,7 @@ class GameServiceMutationCoordinatorTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.clearPriorityPassed();
 
-        assertThatThrownBy(() -> gs.payDrawStepLifeLoss(gd, player2, source.getId()))
+        assertThatThrownBy(() -> gs.payDelayedTriggerCost(gd, player2, source.getId(), player2.getId()))
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("priority");
 
         assertThat(gd.getDelayedActions(LoseLifeAtNextDrawStepUnlessPays.class)).containsExactly(obligation);
