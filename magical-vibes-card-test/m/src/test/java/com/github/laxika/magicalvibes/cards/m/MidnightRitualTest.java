@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.d.DeepwoodGhoul;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -23,7 +26,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MidnightRitual.class, DeepwoodGhoul.class, DarkRitual.class})
+@CardUsed({MidnightRitual.class, DeepwoodGhoul.class, DarkRitual.class,
+        QueenAllenalOfRuadach.class, ParallelLives.class})
 class MidnightRitualTest extends BaseCardTest {
 
     // ===== Casting with X > 0 enters graveyard choice =====
@@ -498,5 +502,59 @@ class MidnightRitualTest extends BaseCardTest {
         // Midnight Ritual should be in the graveyard
         harness.assertInGraveyard(player1, "Midnight Ritual");
     }
-}
 
+    @Test
+    @DisplayName("The caster orders Queen Allenal and Parallel Lives before the Zombies are created")
+    void asksCasterToOrderTokenReplacements() {
+        castAndResolveWithQueenAndParallelLives();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(countPermanents(player1, "Zombie")).isZero();
+    }
+
+    @Test
+    @DisplayName("Applying Queen Allenal before Parallel Lives doubles both the Zombies and the added Soldier")
+    void queenFirstDoublesTheAddedSoldier() {
+        castAndResolveWithQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(4);
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Midnight Ritual");
+    }
+
+    @Test
+    @DisplayName("Applying Parallel Lives before Queen Allenal adds one undoubled Soldier")
+    void parallelLivesFirstAddsOneSoldier() {
+        castAndResolveWithQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(4);
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
+    }
+
+    private void castAndResolveWithQueenAndParallelLives() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+        Card ghoul1 = new DeepwoodGhoul();
+        Card ghoul2 = new DeepwoodGhoul();
+        harness.setGraveyard(player1, List.of(ghoul1, ghoul2));
+        harness.setHand(player1, List.of(new MidnightRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.handleMultipleCardsChosen(player1, List.of(ghoul1.getId(), ghoul2.getId()));
+        harness.passBothPriorities();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
+    }
+}

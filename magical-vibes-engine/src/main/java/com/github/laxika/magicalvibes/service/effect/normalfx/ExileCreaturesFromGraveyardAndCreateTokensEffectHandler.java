@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,12 +8,10 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -28,8 +25,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements NormalEffectHandlerBean {
 
-    private final BattlefieldEntryService battlefieldEntryService;
-    private final GameQueryService gameQueryService;
+    private final PermanentControlSupport permanentControlSupport;
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
 
@@ -44,8 +40,6 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
 
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
-        Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
-        enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
 
         List<UUID> cardIdsToExile;
         if (e.targetPlayerGraveyard()) {
@@ -91,36 +85,12 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
             return;
         }
 
-        int tokensToCreate = exiledCards.size();
-        int totalTokens = gameQueryService.getTokenCreationAmount(
-                gameData, controllerId, tokensToCreate, List.of(CardSubtype.ZOMBIE), true);
-        // All the Zombie tokens are created at once, so none of them applies its own replacement or
-        // static abilities to the others as they enter (CR 614.12).
-        List<Permanent> batch = new ArrayList<>();
-        for (int i = 0; i < totalTokens; i++) {
-            Card tokenCard = new Card();
-            tokenCard.setName("Zombie");
-            tokenCard.setType(CardType.CREATURE);
-            tokenCard.setManaCost("");
-            tokenCard.setToken(true);
-            tokenCard.setColor(CardColor.BLACK);
-            tokenCard.setPower(2);
-            tokenCard.setToughness(2);
-            tokenCard.setSubtypes(List.of(CardSubtype.ZOMBIE));
-            tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                    gameData, controllerId, tokenCard);
-
-            Permanent tokenPermanent = new Permanent(tokenCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot, batch);
-            batch.add(tokenPermanent);
-
-            String tokenLog = "A 2/2 Zombie creature token enters the battlefield.";
-            gameLogService.append(gameData, GameLog.text(tokenLog));
-
-            graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, tokenPermanent, tokenCard);
-
-            log.info("Game {} - Zombie token created for player {}", gameData.id, controllerId);
+        // One token creation event for every Zombie, so the player orders its count replacements and
+        // additions (CR 616.1); the creation may pause for that choice.
+        if (!exiledCards.isEmpty()) {
+            permanentControlSupport.applyCreateToken(gameData, controllerId,
+                    CreateTokenEffect.blackZombie(exiledCards.size()), exiledCards.size(),
+                    entry.getCard().getSetCode());
         }
     }
 }
