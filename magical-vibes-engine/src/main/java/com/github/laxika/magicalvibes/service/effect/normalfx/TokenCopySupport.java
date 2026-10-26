@@ -149,6 +149,35 @@ public class TokenCopySupport {
                 null, null, null, true);
     }
 
+    /**
+     * Creates, for each of {@code opponentIds}, a copy of each of {@code sourceCards} attacking that opponent, as one
+     * ordered token creation event (CR 616.1). The effect names what each copy attacks, so there is no choice
+     * (CR 508.4): the copies a doubler adds attack the same opponent as the copies they double, and tokens a
+     * replacement adds (Queen Allenal's Soldier) attack the first opponent. Every token the event creates is set up
+     * with {@code tokenRider} before it enters, as in {@link #createTokenCopiesWithTokenRider}.
+     */
+    public void createTokenCopiesAttackingEachOpponent(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                                       UUID tokenControllerId,
+                                                       CreateTokenCopyOfTargetPermanentEffect effect,
+                                                       List<UUID> opponentIds, Consumer<Permanent> tokenRider) {
+        if (sourceCards == null || sourceCards.isEmpty() || opponentIds == null || opponentIds.isEmpty()) {
+            return;
+        }
+        // The event keys copy groups and attack targets by copied card, so each further opponent's copies come from
+        // a runtime copy of the card: the same copiable values, but a group of its own with its own target.
+        List<Card> copiedCards = new ArrayList<>();
+        Map<Card, UUID> attackTargets = new IdentityHashMap<>();
+        for (int i = 0; i < opponentIds.size(); i++) {
+            for (Card sourceCard : sourceCards) {
+                Card copiedCard = i == 0 ? sourceCard : sourceCard.createRuntimeCopy();
+                copiedCards.add(copiedCard);
+                attackTargets.put(copiedCard, opponentIds.get(i));
+            }
+        }
+        createOrderedTokenCopies(gameData, entry, copiedCards, null, tokenControllerId, effect, null,
+                attackTargets, null, tokenRider, false);
+    }
+
     private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                          Permanent sourcePermanent, UUID tokenControllerId,
                                          CreateTokenCopyOfTargetPermanentEffect effect,
@@ -780,7 +809,7 @@ public class TokenCopySupport {
             if (effect.tapped() || effect.tappedAndAttacking()) {
                 tokenPermanent.tap();
             }
-            if (effect.tappedAndAttacking()) {
+            if (effect.tappedAndAttacking() && gameQueryService.isCreature(gameData, tokenPermanent)) {
                 tokenPermanent.enterAttacking(true);
                 if (explicitAttackTargets && tokenIndex < expandedAttackTargets.size()) {
                     tokenPermanent.setAttackTarget(expandedAttackTargets.get(tokenIndex));

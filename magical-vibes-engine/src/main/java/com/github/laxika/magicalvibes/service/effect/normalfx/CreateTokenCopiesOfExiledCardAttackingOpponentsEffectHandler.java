@@ -1,11 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
@@ -13,26 +9,22 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfExiledCardAttackingOpponentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-@Slf4j
+/**
+ * Creates, for each opponent, a tapped copy of each card the source exiled attacking that opponent, as one token
+ * creation event the controller orders the replacements of (CR 616.1). Every token the event creates, added tokens
+ * such as Queen Allenal's Soldier included, is sacrificed at the beginning of the controller's next end step.
+ */
 @Component
 @RequiredArgsConstructor
 public class CreateTokenCopiesOfExiledCardAttackingOpponentsEffectHandler implements NormalEffectHandlerBean {
 
-    private final BattlefieldEntryService battlefieldEntryService;
-    private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
+    private final TokenCopySupport tokenCopySupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,55 +40,18 @@ public class CreateTokenCopiesOfExiledCardAttackingOpponentsEffectHandler implem
         if (cardsToCopy.isEmpty()) {
             return;
         }
-        List<UUID> opponentIds = opponentIds(gameData, entry.getControllerId());
+        UUID controllerId = entry.getControllerId();
+        List<UUID> opponentIds = opponentIds(gameData, controllerId);
         if (opponentIds.isEmpty()) {
             return;
         }
 
-        Set<CardType> enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-        List<Permanent> simultaneouslyEntered = new ArrayList<>();
         var copyEffect = (CreateTokenCopiesOfExiledCardAttackingOpponentsEffect) effect;
-        CreateTokenCopyOfTargetPermanentEffect tokenCopyEffect = new CreateTokenCopyOfTargetPermanentEffect();
-
-        for (Card exiledCard : List.copyOf(cardsToCopy)) {
-            int tokenMultiplier = gameQueryService.getTokenCreationAmount(
-                    gameData, entry.getControllerId(), 1, exiledCard.getSubtypes(), true);
-            for (UUID opponentId : opponentIds) {
-                for (int copy = 0; copy < tokenMultiplier; copy++) {
-                    Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(exiledCard, tokenCopyEffect);
-                    if (copyEffect.grantHaste()) {
-                        EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);
-                        if (tokenCard.getKeywords() != null) {
-                            keywords.addAll(tokenCard.getKeywords());
-                        }
-                        keywords.add(Keyword.HASTE);
-                        tokenCard.setKeywords(keywords);
-                    }
-                    tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                            gameData, entry.getControllerId(), tokenCard);
-                    Permanent tokenPermanent = new Permanent(tokenCard);
-                    battlefieldEntryService.putPermanentOntoBattlefield(
-                            gameData, entry.getControllerId(), tokenPermanent,
-                            enterTappedTypesSnapshot, simultaneouslyEntered);
-                    simultaneouslyEntered.add(tokenPermanent);
-
-                    tokenPermanent.tap();
-                    if (tokenCard.hasType(CardType.CREATURE)) {
-                        tokenPermanent.enterAttacking(true);
-                        tokenPermanent.setAttackTarget(opponentId);
-                    }
-                    gameData.queueDelayedAction(new DelayedPermanentAction(
-                            tokenPermanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                            false, null, entry.getControllerId(), entry.getControllerId(), false, entry.getCard()));
-
-                    gameLogService.append(gameData, GameLog.textCardText("A token copy of ", exiledCard, " is created."));
-                    log.info("Game {} - Token copy of {} created attacking {} via {}", gameData.id,
-                            exiledCard.getName(), opponentId, entry.getCard().getName());
-                    battlefieldEntryService.handleCreatureEnteredBattlefield(
-                            gameData, entry.getControllerId(), tokenCard, null, false);
-                }
-            }
-        }
+        tokenCopySupport.createTokenCopiesAttackingEachOpponent(gameData, entry, List.copyOf(cardsToCopy),
+                controllerId, new CreateTokenCopyOfTargetPermanentEffect(copyEffect.grantHaste(), false, false, true),
+                opponentIds, token -> gameData.queueDelayedAction(new DelayedPermanentAction(
+                        token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
+                        false, null, controllerId, controllerId, false, entry.getCard())));
     }
 
     private List<UUID> opponentIds(GameData gameData, UUID controllerId) {
