@@ -1,40 +1,32 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEachOtherControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
-@Slf4j
+/**
+ * Creates a token copy of each matching permanent the controller controls, other than the source, as one ordered
+ * token creation event through {@link TokenCopySupport} (CR 616.1): the copies of every permanent are created at the
+ * same time, so the creating player orders the doublers and additions once for all of them.
+ */
 @Component
 @RequiredArgsConstructor
 public class CreateTokenCopyOfEachOtherControlledPermanentEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final BattlefieldEntryService battlefieldEntryService;
-    private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final GameLogService gameLogService;
+    private final TokenCopySupport tokenCopySupport;
+    private final CreateTokenCopyOfTargetPermanentEffectHandler targetCopyHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,66 +46,17 @@ public class CreateTokenCopyOfEachOtherControlledPermanentEffectHandler
                 .withSourceControllerId(entry.getControllerId())
                 .withSourcePermanentId(entry.getSourcePermanentId())
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
-        List<Permanent> sourcePermanents = new ArrayList<>();
+        List<Card> sourceCards = new ArrayList<>();
         for (Permanent permanent : List.copyOf(battlefield)) {
             if (permanent.getId().equals(entry.getSourcePermanentId())) {
                 continue;
             }
             if (predicateEvaluationService.matchesPermanentPredicate(
                     permanent, copyEffect.filter(), filterContext)) {
-                sourcePermanents.add(permanent);
+                sourceCards.add(targetCopyHandler.copySourceFor(permanent));
             }
         }
 
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
-        List<Permanent> batch = new ArrayList<>();
-        List<UUID> createdTokenIds = new ArrayList<>();
-        var enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-        List<Card> sourceCardsOfBatch = new ArrayList<>();
-        for (Permanent sourcePermanent : sourcePermanents) {
-            Card sourceCard = sourcePermanent.getCard();
-            for (int copy = 0; copy < tokenMultiplier; copy++) {
-                Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
-                        sourceCard, copyEffect.copyEffect());
-                if (sourceCard.getType() == CardType.PLANESWALKER) {
-                    tokenCard.setLoyalty(sourceCard.getLoyalty());
-                }
-                tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(
-                        gameData, entry.getControllerId(), tokenCard);
-
-                Permanent tokenPermanent = new Permanent(tokenCard);
-                if (tokenCard.getType() == CardType.PLANESWALKER) {
-                    tokenPermanent.setCounterCount(CounterType.LOYALTY,
-                            tokenCard.getLoyalty() == null ? 0 : tokenCard.getLoyalty());
-                    tokenPermanent.setSummoningSick(false);
-                }
-                batch.add(tokenPermanent);
-                sourceCardsOfBatch.add(sourceCard);
-            }
-        }
-        for (int i = 0; i < batch.size(); i++) {
-            Permanent tokenPermanent = batch.get(i);
-            Card sourceCard = sourceCardsOfBatch.get(i);
-            battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, entry.getControllerId(), tokenPermanent, enterTappedTypes, batch);
-            entry.getCreatedPermanentIds().add(tokenPermanent.getId());
-            createdTokenIds.add(tokenPermanent.getId());
-
-            gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
-            log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(),
-                    entry.getCard() == null ? "ability" : entry.getCard().getName());
-        }
-        if (copyEffect.copyEffect().exileAtEndStep()) {
-            for (Permanent tokenPermanent : batch) {
-                gameData.queueDelayedAction(new DelayedPermanentAction(
-                        tokenPermanent.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
-            }
-        }
-        for (Permanent tokenPermanent : batch) {
-            battlefieldEntryService.handleCreatureEnteredBattlefield(
-                    gameData, entry.getControllerId(), tokenPermanent.getCard(), null, false);
-        }
-        battlefieldEntryService.checkAllyTokenEntersTriggers(
-                gameData, entry.getControllerId(), createdTokenIds);
+        tokenCopySupport.createTokenCopies(gameData, entry, sourceCards, null, copyEffect.copyEffect());
     }
 }

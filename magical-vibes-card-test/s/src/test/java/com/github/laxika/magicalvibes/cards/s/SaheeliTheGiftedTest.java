@@ -1,10 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
@@ -18,7 +23,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SaheeliTheGifted.class, GrizzlyBears.class, WornPowerstone.class})
+@CardUsed({SaheeliTheGifted.class, GrizzlyBears.class, WornPowerstone.class, Ornithopter.class,
+        QueenAllenalOfRuadach.class, ParallelLives.class})
 class SaheeliTheGiftedTest extends BaseCardTest {
 
     @Test
@@ -71,8 +77,8 @@ class SaheeliTheGiftedTest extends BaseCardTest {
         assertThat(copies).hasSize(1);
         assertThat(copies.getFirst().hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(
-                        copies.getFirst().getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+                .anyMatch(action -> action.permanentId().equals(copies.getFirst().getId())
+                        && action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -81,6 +87,72 @@ class SaheeliTheGiftedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Worn Powerstone")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("-7 with Queen Allenal and Parallel Lives asks to order them before any copy is created")
+    void minusSevenAsksToOrderTokenReplacements() {
+        activateMinusSevenWithQueenAndParallelLives();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ReplacementEffectOrder.class);
+        assertThat(tokenCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("-7 applying Queen Allenal before Parallel Lives doubles each artifact's copy and the Soldier")
+    void minusSevenQueenFirstDoublesCopiesAndSoldier() {
+        activateMinusSevenWithQueenAndParallelLives();
+
+        chooseReplacement("Queen Allenal of Ruadach");
+
+        assertThat(tokenCopies("Worn Powerstone")).hasSize(2);
+        assertThat(tokenCopies("Ornithopter")).hasSize(2);
+        assertThat(findPermanents(player1, "Soldier")).hasSize(2);
+        assertThat(tokenCopies("Ornithopter")).allMatch(copy -> copy.hasKeyword(Keyword.HASTE));
+    }
+
+    @Test
+    @DisplayName("-7 applying Parallel Lives before Queen Allenal doubles each artifact's copy and adds one Soldier")
+    void minusSevenParallelLivesFirstAddsOneSoldier() {
+        activateMinusSevenWithQueenAndParallelLives();
+
+        chooseReplacement("Parallel Lives");
+
+        assertThat(tokenCopies("Worn Powerstone")).hasSize(2);
+        assertThat(tokenCopies("Ornithopter")).hasSize(2);
+        assertThat(findPermanents(player1, "Soldier")).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void activateMinusSevenWithQueenAndParallelLives() {
+        Permanent saheeli = addReadySaheeli(7);
+        harness.addToBattlefield(player1, new WornPowerstone());
+        harness.addToBattlefield(player1, new Ornithopter());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        harness.addToBattlefield(player1, new ParallelLives());
+
+        harness.activateAbility(player1, battlefieldIndex(saheeli), 2, null, null);
+        harness.passBothPriorities();
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
+    }
+
+    private List<Permanent> tokenCopies(String name) {
+        return findPermanents(player1, name).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .toList();
+    }
+
+    private long tokenCount() {
+        return gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .count();
     }
 
     private Permanent addReadySaheeli(int loyalty) {
