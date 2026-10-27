@@ -57,13 +57,21 @@ as a `MayAnswerReplay`), so each disagreeing flip of a flip-a-coin cumulative up
 about before any flip is logged or triggers. Desperate Gambit's flip after its source choice is wrapped the same way
 (replayed as a `PermanentChosen` answer). Tests in `KrarksThumbTest`.
 
+**Progress (2026-10-27, fourth pass).** Entry flips: `CoinFlipService.flipAsPermanentEnters` returns a contested
+flip still awaiting its kept result (no stop, nothing to rerun). `FlipCoinOnEnterEffectHandler` leaves it on
+`Permanent.entryCoinFlipAwaitingChoice` instead of fixing the form, and `EtbTriggerService.processCreatureETBEffects`
+(reached by every entry path) asks `ChoiceContext.EntryCoinFlipResultChoice` (Heads/Tails) before any enter ability;
+`ChoiceHandlerService` fixes the form and logs the flip, then resumes the ETB processing with the stored context. If
+another prompt is already pending (e.g. a second Sentry in one simultaneous batch) heads is kept. AI keeps heads. Tests in
+`KrarksThumbTest` (Molten Sentry cast and put onto the battlefield; agreeing flips need no choice).
+
 **What remains** (these still keep heads when the physical flips disagree):
 - nested flips: flips of effects a handler dispatches (payloads of flip-until-lose, per-opponent
   branches, etc.) see a closed window;
 - the non-optional `FlipCoinsCost` path resolved directly in `ForcedCostOrElseEffectHandler` (no card uses it today:
-  cumulative upkeep's flip cost is always optional);
-- `FlipCoinOnEnterEffectHandler` (Molten Sentry's "as enters" flip, applied while the permanent enters) and
-  `D20RollService`'s Pokey coin flips. These need their own pause points.
+  cumulative upkeep's flip cost is always optional) — out of scope until a card needs it;
+- `D20RollService`'s Pokey coin flips (a d20 roll replaced by a coin flip); this needs the roll-making handlers to
+  stop and rerun like the coin-flip ones.
 
 **Prompt to continue it:**
 
@@ -71,7 +79,7 @@ about before any flip is logged or triggers. Desperate Gambit's flip after its s
 Continue missing-features-to-do.md entry 62: extend the Krark's Thumb result choice (journaled
 CoinFlipService flips, ChoosesCoinFlipResultsAtCheckpoints + CoinFlipService.checkpoint/resumePoint,
 answerChoosingResultsFirst + CoinFlipChoiceReplay for answer completions, CoinFlipChoicePending) to the
-remaining paths listed in the entry: nested flips, entry flips (Molten Sentry) and D20RollService. Keep replayed flips from repeating logs or triggers. Add Krark's Thumb tests
+remaining paths listed in the entry: nested flips and D20RollService. Keep replayed flips from repeating logs or triggers. Add Krark's Thumb tests
 with mocked mixed flips for each. Verify every CR number with the rules MCP. Don't run the full test suite;
 ask me. Don't commit until I say so.
 ```

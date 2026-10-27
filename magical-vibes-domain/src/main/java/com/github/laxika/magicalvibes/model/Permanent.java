@@ -269,6 +269,12 @@ public class Permanent {
      * (Molten Sentry): {@code true} for heads, {@code null} when no such flip happened.
      */
     @Setter private Boolean entryCoinFlipHeads;
+    /**
+     * The "as this enters, flip a coin" flip (Molten Sentry) whose Krark's Thumb results disagreed, while its
+     * flipping player has not yet chosen the kept result; {@code null} otherwise. The result is chosen before this
+     * permanent's enter abilities are processed.
+     */
+    @Setter private RecordedCoinFlip entryCoinFlipAwaitingChoice;
     /** Labels of modes chosen this turn for a turn-scoped modal trigger. */
     private final Set<String> chosenModeLabelsThisTurn = new HashSet<>();
     /** Room doors unlocked on this permanent, in door order. This state survives turn resets. */
@@ -1058,6 +1064,7 @@ public class Permanent {
         this.chosenNumberDigits = List.copyOf(source.chosenNumberDigits);
         this.crossedNumberDigitPositions.addAll(source.crossedNumberDigitPositions);
         this.entryCoinFlipHeads = source.entryCoinFlipHeads;
+        this.entryCoinFlipAwaitingChoice = source.entryCoinFlipAwaitingChoice;
         this.chosenModeLabels.addAll(source.chosenModeLabels);
         this.chosenModeLabelsThisTurn.addAll(source.chosenModeLabelsThisTurn);
         this.unlockedRoomDoors.addAll(source.unlockedRoomDoors);

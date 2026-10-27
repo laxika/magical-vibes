@@ -56,8 +56,9 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
-        if (context instanceof ChoiceContext.CoinFlipResultChoice) {
-            // Heads wins a called flip, so the AI keeps it.
+        if (context instanceof ChoiceContext.CoinFlipResultChoice
+                || context instanceof ChoiceContext.EntryCoinFlipResultChoice) {
+            // Heads wins a called flip (and gives an entering Molten Sentry its attacking form), so the AI keeps it.
             log.info("AI: Keeping heads for a Krark's Thumb coin flip in game {}", gameId);
             answerWith(ctx, interaction, ChoiceContext.CoinFlipResultChoice.HEADS);
             return;

@@ -1617,6 +1617,23 @@ public sealed interface ChoiceContext {
      * number between 0 and 7", both as it enters and at each upkeep). The answer is stored on the
      * permanent via {@code Permanent.setChosenNumber(int)}.
      */
+    /**
+     * Krark's Thumb: the controller of {@code permanentId} chooses which result to keep of the coin flipped as it
+     * entered (Molten Sentry, CR 614.1c) when the physical flips disagree. On the answer the result fixes the
+     * permanent's form and the deferred enter-the-battlefield abilities of {@code card} are processed with the rest of
+     * this context. Answered with {@link CoinFlipResultChoice#HEADS} or {@link CoinFlipResultChoice#TAILS}.
+     */
+    record EntryCoinFlipResultChoice(UUID permanentId, UUID controllerId, Card card, UUID targetId,
+                                     boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
+                                     List<UUID> targetIds, List<String> repeatedAdditionalCosts,
+                                     List<UUID> convokeCreatureIds) implements ChoiceContext {
+        public EntryCoinFlipResultChoice {
+            targetIds = targetIds == null ? List.of() : List.copyOf(targetIds);
+            repeatedAdditionalCosts = repeatedAdditionalCosts == null ? List.of() : List.copyOf(repeatedAdditionalCosts);
+            convokeCreatureIds = convokeCreatureIds == null ? List.of() : List.copyOf(convokeCreatureIds);
+        }
+    }
+
     record NumberChoice(UUID permanentId) implements ChoiceContext {}
 
     /**

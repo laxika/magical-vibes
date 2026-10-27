@@ -39,8 +39,9 @@ import org.springframework.stereotype.Component;
  *
  * <p>A player's answer whose completion flips a coin before changing anything else (a "flip again?" answer, a
  * choice made before a flip) opens the same window with {@link #answerChoosingResultsFirst}; when a flip stops it, the
- * answer is completed again by {@link #completeAgainAfterResultChoices} once every kept result is chosen. Anywhere
- * else the heads result is kept.</p>
+ * answer is completed again by {@link #completeAgainAfterResultChoices} once every kept result is chosen. A flip made
+ * as a permanent enters ({@link #flipAsPermanentEnters}) is asked about before the permanent's enter abilities.
+ * Anywhere else the heads result is kept.</p>
  */
 @Component
 @RequiredArgsConstructor
@@ -70,7 +71,7 @@ public class CoinFlipService {
 
     /** Performs a single event that flips {@code count} coins at once. */
     public List<CoinFlipResult> flipCoins(GameData gameData, UUID playerId, int count) {
-        return flipEvent(gameData, playerId, count, true, consumeChoiceWindow(gameData));
+        return toResults(flipEvent(gameData, playerId, count, true, consumeChoiceWindow(gameData), false));
     }
 
     /**
@@ -81,14 +82,42 @@ public class CoinFlipService {
         boolean choiceWindow = consumeChoiceWindow(gameData);
         List<CoinFlipResult> results = new ArrayList<>(playerIds.size());
         for (UUID playerId : playerIds) {
-            results.add(flipEvent(gameData, playerId, 1, true, choiceWindow).getFirst());
+            results.add(toResult(flipEvent(gameData, playerId, 1, true, choiceWindow, false).getFirst()));
         }
         return results;
     }
 
     /** Performs coin-flip replacement without allowing Pokey to replace the event again. */
     public CoinFlipResult flipWithoutPokey(GameData gameData, UUID playerId) {
-        return flipEvent(gameData, playerId, 1, false, consumeChoiceWindow(gameData)).getFirst();
+        return toResult(flipEvent(gameData, playerId, 1, false, consumeChoiceWindow(gameData), false).getFirst());
+    }
+
+    /**
+     * Flips one coin for a replacement effect applied while a permanent enters the battlefield ("as this enters, flip
+     * a coin"; Molten Sentry, CR 614.1c). Nothing can be resolved again there, so when the physical results of a
+     * Krark's Thumb flip disagree the returned flip still {@linkplain RecordedCoinFlip#awaitsChoice() awaits} its kept
+     * result: the flipping player chooses it through {@link #beginEntryResultChoice} before the permanent's enter
+     * abilities are processed.
+     */
+    public RecordedCoinFlip flipAsPermanentEnters(GameData gameData, UUID playerId) {
+        consumeChoiceWindow(gameData);
+        return flipEvent(gameData, playerId, 1, true, false, true).getFirst();
+    }
+
+    /**
+     * Asks the player who made {@code flip}, a flip of {@link #flipAsPermanentEnters} still awaiting its kept result,
+     * which result to keep; {@code context} carries the entering permanent to the answer.
+     */
+    public void beginEntryResultChoice(GameData gameData, RecordedCoinFlip flip, ChoiceContext context) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                flip.playerId(), null, null, context,
+                List.of(ChoiceContext.CoinFlipResultChoice.HEADS, ChoiceContext.CoinFlipResultChoice.TAILS),
+                resultChoicePrompt(flip, "a coin")));
+    }
+
+    /** The kept result of {@code flip}, a flip of {@link #flipAsPermanentEnters}, once it is chosen. */
+    public CoinFlipResult keptResult(RecordedCoinFlip flip, boolean heads) {
+        return toResult(flip.withHeads(heads));
     }
 
     /**
@@ -185,8 +214,13 @@ public class CoinFlipService {
         return choiceWindow;
     }
 
-    private List<CoinFlipResult> flipEvent(GameData gameData, UUID playerId, int count,
-                                           boolean applyPokey, boolean choiceWindow) {
+    /**
+     * @param leaveChoiceOpen return a Krark's Thumb flip whose physical results disagree as still awaiting its kept
+     *                        result, for a caller that asks it later; otherwise such a flip stops the effect inside
+     *                        an open choice window, or keeps heads outside one
+     */
+    private List<RecordedCoinFlip> flipEvent(GameData gameData, UUID playerId, int count,
+                                             boolean applyPokey, boolean choiceWindow, boolean leaveChoiceOpen) {
         if (choiceWindow && gameData.replayedCoinFlips < gameData.recordedCoinFlips.size()) {
             return replayRecordedFlips(gameData, count);
         }
@@ -206,7 +240,7 @@ public class CoinFlipService {
                 triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
                         gameData, playerId, count, rolls.getLast().pokeyD20Result());
             }
-            return rolls.stream().map(CoinFlipService::toResult).toList();
+            return rolls;
         }
 
         int thumbCount = gameQueryService.countPlayerControlledStaticEffects(
@@ -237,7 +271,7 @@ public class CoinFlipService {
         // The effect can stop only while no other question of it is waiting for an answer.
         boolean choiceCanStopEffect = choiceWindow && interactionHandlerRegistry != null
                 && !gameData.interaction.isAwaitingInput();
-        if (!choiceCanStopEffect) {
+        if (!choiceCanStopEffect && !leaveChoiceOpen) {
             // No resumable choice on this path: keep a heads result if any physical flip came up heads.
             flips.replaceAll(flip -> flip.awaitsChoice() ? flip.withHeads(true) : flip);
         }
@@ -249,6 +283,10 @@ public class CoinFlipService {
             beginNextResultChoice(gameData);
             throw new CoinFlipChoicePending();
         }
+        return flips;
+    }
+
+    private static List<CoinFlipResult> toResults(List<RecordedCoinFlip> flips) {
         return flips.stream().map(CoinFlipService::toResult).toList();
     }
 
@@ -257,13 +295,12 @@ public class CoinFlipService {
         gameData.replayedCoinFlips += flips.size();
     }
 
-    private List<CoinFlipResult> replayRecordedFlips(GameData gameData, int count) {
+    private List<RecordedCoinFlip> replayRecordedFlips(GameData gameData, int count) {
         int from = gameData.replayedCoinFlips;
         int to = Math.min(from + count, gameData.recordedCoinFlips.size());
         gameData.replayedCoinFlips = to;
         return gameData.recordedCoinFlips.subList(from, to).stream()
                 .map(flip -> flip.awaitsChoice() ? flip.withHeads(true) : flip)
-                .map(CoinFlipService::toResult)
                 .toList();
     }
 
@@ -286,18 +323,22 @@ public class CoinFlipService {
             List<RecordedCoinFlip> playerFlips = flips.stream()
                     .filter(other -> other.playerId().equals(flip.playerId()))
                     .toList();
-            int tails = flip.physicalFlips() - flip.physicalHeads();
             String coin = playerFlips.size() == 1 ? "a coin"
                     : "coin " + (playerFlips.indexOf(flip) + 1) + " of " + playerFlips.size();
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     flip.playerId(), null, null,
                     new ChoiceContext.CoinFlipResultChoice(flip.playerId(), index),
                     List.of(ChoiceContext.CoinFlipResultChoice.HEADS, ChoiceContext.CoinFlipResultChoice.TAILS),
-                    "Krark's Thumb: flipping " + coin + " came up " + flip.physicalHeads() + " heads and "
-                            + tails + " tails. Choose the result to keep; the others are ignored."));
+                    resultChoicePrompt(flip, coin)));
             return true;
         }
         return false;
+    }
+
+    private static String resultChoicePrompt(RecordedCoinFlip flip, String coin) {
+        int tails = flip.physicalFlips() - flip.physicalHeads();
+        return "Krark's Thumb: flipping " + coin + " came up " + flip.physicalHeads() + " heads and "
+                + tails + " tails. Choose the result to keep; the others are ignored.";
     }
 
     /** Records the result {@code playerId} keeps for the recorded flip at {@code coinIndex}. */

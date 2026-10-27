@@ -299,6 +299,10 @@ public class ChoiceHandlerService {
     private ReplacementOrderService replacementOrderService;
 
     @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.entryfx.FlipCoinOnEnterEffectHandler
+            flipCoinOnEnterEffectHandler;
+
+    @Autowired @Lazy
     private LandManaReplacementService landManaReplacementService;
 
     /**
@@ -604,6 +608,11 @@ public class ChoiceHandlerService {
             }
             gameData.rerunCurrentEffectAfterInteraction = false;
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.EntryCoinFlipResultChoice choice) {
+            handleEntryCoinFlipResultChoice(gameData, player, colorName, colorChoice, choice);
             return;
         }
 
@@ -6000,6 +6009,35 @@ public class ChoiceHandlerService {
         }
         permanentChoiceHandlerService.runAskingDeathReplacementsFirst(gameData,
                 () -> destroyUnpaidEnchantedPermanent(gameData, ctx), replay);
+    }
+
+    /**
+     * Krark's Thumb: keeps the chosen result of the coin flipped as {@code ctx.permanentId()} entered, which fixes its
+     * form, then processes the enter abilities that waited for it.
+     */
+    private void handleEntryCoinFlipResultChoice(GameData gameData, Player player, String result,
+                                                 PendingInteraction.ColorChoice colorChoice,
+                                                 ChoiceContext.EntryCoinFlipResultChoice ctx) {
+        if (!player.getId().equals(colorChoice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!colorChoice.options().contains(result)) {
+            throw new IllegalArgumentException("Invalid coin flip result: " + result);
+        }
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        if (perm != null) {
+            flipCoinOnEnterEffectHandler.keepResult(gameData, ctx.controllerId(), perm,
+                    ChoiceContext.CoinFlipResultChoice.HEADS.equals(result));
+        }
+        battlefieldEntryService.processCreatureETBEffects(gameData, ctx.controllerId(), ctx.card(), ctx.targetId(),
+                ctx.wasCastFromHand(), ctx.etbMode(), ctx.xValue(), ctx.kicked(), ctx.targetIds(),
+                ctx.repeatedAdditionalCosts(), ctx.convokeCreatureIds());
+
+        if (!gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }
     }
 
     private void handleSubtypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.SubtypeChoice ctx) {

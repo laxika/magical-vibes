@@ -14,10 +14,12 @@ import com.github.laxika.magicalvibes.cards.g.GameOfChaos;
 import com.github.laxika.magicalvibes.cards.g.GoblinAssassin;
 import com.github.laxika.magicalvibes.cards.m.ManaClash;
 import com.github.laxika.magicalvibes.cards.m.ManaCrypt;
+import com.github.laxika.magicalvibes.cards.m.MoltenSentry;
 import com.github.laxika.magicalvibes.cards.r.RiskyMove;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -39,7 +41,7 @@ import static org.mockito.Mockito.when;
 @CardUsed({KrarksThumb.class, FieryGambit.class, AlphaMyr.class, ManaCrypt.class, CrazedFirecat.class,
         ManaClash.class, GoblinAssassin.class, FugitiveWizard.class, GameOfChaos.class, RiskyMove.class,
         ElvishWarrior.class, AmuletOfQuoz.class, CrookedScales.class, FreshVolunteers.class, DesperateGambit.class,
-        DwarvenBerserker.class, KarplusanMinotaur.class})
+        DwarvenBerserker.class, KarplusanMinotaur.class, MoltenSentry.class})
 class KrarksThumbTest extends BaseCardTest {
 
     @Test
@@ -501,6 +503,74 @@ class KrarksThumbTest extends BaseCardTest {
         return gd.gameLog.stream()
                 .map(GameLogEntry::plainText)
                 .filter(log -> log.startsWith("Game of Chaos:"))
+                .toList();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"Heads, 5, 2", "Tails, 2, 5"})
+    @DisplayName("Molten Sentry's entry flip asks for the kept result before it enters with that form")
+    void moltenSentryEntryFlipAsksForKeptResult(String kept, int power, int toughness) {
+        harness.addToBattlefield(player1, new KrarksThumb());
+        try (var coins = mockFlips(false, true)) {
+            harness.castFromHand(player1, new MoltenSentry(), "{3}{R}");
+            harness.passBothPriorities();
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+            assertThat(sentryFlipLogs()).isEmpty();
+            harness.handleListChoice(player1, kept);
+        }
+
+        Permanent sentry = gd.playerBattlefields.get(player1.getId()).getLast();
+        assertThat(sentry.getCard().getName()).isEqualTo("Molten Sentry");
+        assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(power);
+        assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(toughness);
+        assertThat(gqs.hasKeyword(gd, sentry, Keyword.HASTE)).isEqualTo(kept.equals("Heads"));
+        assertThat(gqs.hasKeyword(gd, sentry, Keyword.DEFENDER)).isEqualTo(kept.equals("Tails"));
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(sentryFlipLogs()).singleElement().asString()
+                .contains(kept.equals("Heads") ? "wins the coin flip" : "loses the coin flip")
+                .contains("(flipped 2 coins and ignored 1)");
+    }
+
+    @Test
+    @DisplayName("Molten Sentry's entry flip needs no choice when both physical flips agree")
+    void moltenSentryAgreeingFlipsNeedNoChoice() {
+        harness.addToBattlefield(player1, new KrarksThumb());
+        try (var coins = mockFlips(false, false)) {
+            harness.castFromHand(player1, new MoltenSentry(), "{3}{R}");
+            harness.passBothPriorities();
+        }
+
+        Permanent sentry = gd.playerBattlefields.get(player1.getId()).getLast();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(5);
+        assertThat(sentryFlipLogs()).singleElement().asString().contains("loses the coin flip");
+    }
+
+    @Test
+    @DisplayName("Molten Sentry put onto the battlefield by an effect also asks for the kept result")
+    void moltenSentryEnteringWithoutCastAsksForKeptResult() {
+        harness.addToBattlefield(player1, new KrarksThumb());
+        Permanent sentry;
+        try (var coins = mockFlips(true, false)) {
+            sentry = harness.enterBattlefieldAndReturn(player1, new MoltenSentry());
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+            harness.handleListChoice(player1, "Tails");
+        }
+
+        assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, sentry, Keyword.DEFENDER)).isTrue();
+    }
+
+    private List<String> sentryFlipLogs() {
+        return gd.gameLog.stream()
+                .map(GameLogEntry::plainText)
+                .filter(log -> log.contains("coin flip for Molten Sentry"))
                 .toList();
     }
 

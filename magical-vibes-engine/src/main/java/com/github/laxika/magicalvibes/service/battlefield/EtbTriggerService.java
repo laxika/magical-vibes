@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseRandomNumberOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToExileEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftProteanWarEngineSpellbookEffect;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.service.effect.entryfx.FlipCoinOnEnterEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DraftCardFromSpellbookToExileEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DraftProteanWarEngineSpellbookEffectHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,6 +109,7 @@ public class EtbTriggerService {
     private LegendRuleService legendRuleService;
     private DraftProteanWarEngineSpellbookEffectHandler proteanWarEngineSpellbookDraft;
     private DraftCardFromSpellbookToExileEffectHandler spellbookDraft;
+    private FlipCoinOnEnterEffectHandler flipCoinOnEnterEffectHandler;
 
     public EtbTriggerService(GameQueryService gameQueryService,
                              GameLogService gameLogService,
@@ -145,6 +148,11 @@ public class EtbTriggerService {
     @Autowired
     void setSpellbookDraft(@Lazy DraftCardFromSpellbookToExileEffectHandler draft) {
         this.spellbookDraft = draft;
+    }
+
+    @Autowired
+    void setFlipCoinOnEnterEffectHandler(@Lazy FlipCoinOnEnterEffectHandler flipCoinOnEnterEffectHandler) {
+        this.flipCoinOnEnterEffectHandler = flipCoinOnEnterEffectHandler;
     }
 
     public void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId, int count) {
@@ -306,6 +314,15 @@ public class EtbTriggerService {
             if (!card.isAura()) {
                 targetId = null;
             }
+        }
+        // Krark's Thumb: the kept result of an "as this enters, flip a coin" flip is chosen as the permanent enters,
+        // so its form is fixed before any of its enter abilities (CR 614.1c).
+        if (enteringPermanent != null && flipCoinOnEnterEffectHandler != null
+                && flipCoinOnEnterEffectHandler.beginPendingResultChoice(gameData, enteringPermanent,
+                new ChoiceContext.EntryCoinFlipResultChoice(enteringPermanent.getId(), controllerId, card, targetId,
+                        wasCastFromHand, etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
+                        convokeCreatureIds))) {
+            return;
         }
         // A permanent that lost its printed abilities as it entered makes none of its own as-enters choices.
         boolean printedAbilitiesRemoved = enteringPermanent != null
