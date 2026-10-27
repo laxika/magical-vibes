@@ -725,6 +725,10 @@ public class TurnCleanupService {
         }
         gameData.graveyardAdventureCastPermissions.entrySet()
                 .removeIf(entry -> entry.getValue().expireTurn() <= currentTurn);
+        EndOfTurnStateShare retainedGameState = retainedState.get(GameData.GAME_END_OF_TURN_STATE_ID);
+        if (retainedGameState != null) {
+            gameData.addGameEndOfTurnState(retainedGameState);
+        }
 
         // Clear persistent mana tracking so the next drain empties pools fully
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -793,7 +797,8 @@ public class TurnCleanupService {
         return retained;
     }
 
-    /** The current "until end of turn" state of every battlefield permanent and every player, by id. */
+    /** The current "until end of turn" state of every battlefield permanent and every player, by id, plus
+     *  the game-wide state under {@link GameData#GAME_END_OF_TURN_STATE_ID}. */
     private Map<UUID, EndOfTurnStateShare> captureEndOfTurnStates(GameData gameData) {
         Map<UUID, EndOfTurnStateShare> states = new HashMap<>();
         gameData.forEachPermanent((ownerId, permanent) ->
@@ -806,6 +811,7 @@ public class TurnCleanupService {
                     gameData.playerCombatDamagePreventionShields.get(playerId));
             states.put(playerId, EndOfTurnStateShare.of(raw));
         }
+        states.put(GameData.GAME_END_OF_TURN_STATE_ID, gameData.captureGameEndOfTurnState());
         return states;
     }
 

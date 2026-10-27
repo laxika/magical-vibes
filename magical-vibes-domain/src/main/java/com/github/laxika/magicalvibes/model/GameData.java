@@ -4789,6 +4789,172 @@ public class GameData {
                 && !reduction.expiresAtCleanup()));
     }
 
+    /** The id under which {@link #phaseSequenceEndOfTurnShares} tracks the game-wide {@code GAME_} stores; it is
+     *  the nil UUID, which no player or permanent has. */
+    public static final UUID GAME_END_OF_TURN_STATE_ID = new UUID(0L, 0L);
+
+    /**
+     * Captures the game-wide "until end of turn" / "this turn" stores named by the {@code GAME_}
+     * {@link EndOfTurnStateField}s (damage prevention flags, shields and sets, and the turn-long
+     * life, search and attack restrictions), which the cleanup step clears (CR 514.2). Used to split
+     * that state between the players active when it was created under Runed Terror's sequential phases.
+     */
+    public EndOfTurnStateShare captureGameEndOfTurnState() {
+        Map<EndOfTurnStateField, Object> raw = new EnumMap<>(EndOfTurnStateField.class);
+        for (EndOfTurnStateField field : EndOfTurnStateField.values()) {
+            raw.put(field, gameEndOfTurnStateValue(field));
+        }
+        return EndOfTurnStateShare.of(raw);
+    }
+
+    /**
+     * Adds {@code share} onto the current game-wide "until end of turn" state: flags become true, the
+     * shield grows and set elements (or map entries) are added. The cleanup step calls this after
+     * clearing those stores, to re-apply what other players created under Runed Terror's sequential
+     * phases.
+     */
+    public void addGameEndOfTurnState(EndOfTurnStateShare share) {
+        share.values().forEach(this::addGameEndOfTurnStateValue);
+    }
+
+    private Object gameEndOfTurnStateValue(EndOfTurnStateField field) {
+        return switch (field) {
+            case GAME_DAMAGE_PREVENTION_SHIELD -> globalDamagePreventionShield;
+            case GAME_PREVENT_ALL_COMBAT_DAMAGE -> preventAllCombatDamage;
+            case GAME_PREVENT_ALL_COMBAT_DAMAGE_BY_ATTACKING_CREATURES -> preventAllCombatDamageByAttackingCreatures;
+            case GAME_PREVENT_ALL_COMBAT_DAMAGE_TO_PLAYERS -> preventAllCombatDamageToPlayers;
+            case GAME_PREVENT_ALL_DAMAGE_TO_ALL_CREATURES -> preventAllDamageToAllCreatures;
+            case GAME_PREVENT_ALL_DAMAGE_BY_CREATURES -> preventAllDamageByCreatures;
+            case GAME_DAMAGE_BY_CREATURES_PREVENTION_LIFE_GAIN_PLAYERS -> {
+                synchronized (damageByCreaturesPreventionLifeGainPlayers) {
+                    yield new ArrayList<>(damageByCreaturesPreventionLifeGainPlayers);
+                }
+            }
+            case GAME_PREVENT_ALL_DAMAGE_FROM_NON_HUMAN_SOURCES -> preventAllDamageFromNonHumanSources;
+            case GAME_COMBAT_DAMAGE_EXEMPT_PREDICATES_BY_CONTROLLER -> mapEntries(combatDamageExemptPredicatesByController);
+            case GAME_PREVENT_DAMAGE_FROM_COLORS -> preventDamageFromColors;
+            case GAME_COLOR_DAMAGE_PREVENTION -> mapEntries(colorDamagePreventionUntilEndOfTurn);
+            case GAME_COLOR_DAMAGE_PREVENTION_FOR_CONTROLLED_CREATURES ->
+                    mapEntries(colorDamagePreventionForControlledCreaturesUntilEndOfTurn);
+            case GAME_COLORLESS_DAMAGE_PREVENTION -> colorlessDamagePreventionUntilEndOfTurn;
+            case GAME_PERMANENTS_PREVENTED_FROM_DEALING_DAMAGE -> permanentsPreventedFromDealingDamage;
+            case GAME_CREATURES_PROTECTED_FROM_TARGETING_DAMAGE -> creaturesProtectedFromTargetingDamage;
+            case GAME_PLAYERS_WITH_ALL_DAMAGE_PREVENTED -> playersWithAllDamagePrevented;
+            case GAME_PLAYERS_WITH_ALL_PERMANENT_DAMAGE_PREVENTED -> playersWithAllPermanentDamagePrevented;
+            case GAME_PLAYERS_WITH_ALL_CREATURE_DAMAGE_PREVENTED -> playersWithAllCreatureDamagePrevented;
+            case GAME_PLAYERS_WITH_ALL_PLAYER_DAMAGE_PREVENTED -> playersWithAllPlayerDamagePrevented;
+            case GAME_PLAYERS_WITH_ALL_COMBAT_DAMAGE_TO_PLAYER_AND_PLANESWALKERS_PREVENTED ->
+                    playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented;
+            case GAME_PLAYERS_WITH_DAMAGE_FROM_ATTACKERS_PREVENTED -> playersWithDamageFromAttackersPrevented;
+            case GAME_PLAYERS_WITH_DAMAGE_FROM_OPPONENT_CREATURES_PREVENTED -> playersWithDamageFromOpponentCreaturesPrevented;
+            case GAME_PLAYERS_WITH_COMBAT_DAMAGE_FROM_TARGET_OPPONENT_CREATURES_PREVENTED ->
+                    playersWithCombatDamageFromTargetOpponentCreaturesPrevented;
+            case GAME_PLAYERS_WITH_DAMAGE_FROM_MATCHING_SOURCES_PREVENTED ->
+                    mapEntries(playersWithDamageFromMatchingSourcesPrevented);
+            case GAME_PLAYERS_WITH_DAMAGE_TO_CONTROLLED_CREATURES_FROM_MATCHING_SOURCES_PREVENTED ->
+                    mapEntries(playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented);
+            case GAME_CREATURES_WITH_ALL_DAMAGE_PREVENTED -> creaturesWithAllDamagePrevented;
+            case GAME_PLAYERS_REDIRECTING_ALL_CREATURE_DAMAGE -> playersRedirectingAllCreatureDamage;
+            case GAME_ALL_DAMAGE_PREVENTION_PREDICATES -> allDamagePreventionPredicates;
+            case GAME_ALL_DAMAGE_PREVENTION_PREDICATES_BY_CONTROLLER -> mapEntries(allDamagePreventionPredicatesByController);
+            case GAME_COMBAT_DAMAGE_PREVENTION_PREDICATES_BY_CONTROLLER ->
+                    mapEntries(combatDamagePreventionPredicatesByController);
+            case GAME_CREATURES_WITH_COMBAT_DAMAGE_PREVENTED -> creaturesWithCombatDamagePrevented;
+            case GAME_CREATURES_PREVENTED_FROM_DEALING_COMBAT_DAMAGE -> creaturesPreventedFromDealingCombatDamage;
+            case GAME_CREATURES_ASSIGNING_NO_COMBAT_DAMAGE -> creaturesAssigningNoCombatDamageThisTurn;
+            case GAME_DAMAGE_CANT_BE_PREVENTED -> damageCantBePreventedThisTurn;
+            case GAME_PLAYERS_CANT_GAIN_LIFE -> playersCantGainLifeThisTurn;
+            case GAME_PLAYERS_CANT_LOSE_LIFE -> playersCantLoseLifeThisTurn;
+            case GAME_PLAYERS_CANT_SEARCH_LIBRARIES -> playersCantSearchLibrariesThisTurn;
+            case GAME_CREATURES_CANT_ATTACK -> creaturesCantAttackThisTurn;
+            case GAME_PLAYERS_WHO_CANT_GAIN_LIFE -> playersWhoCantGainLifeThisTurn;
+            case GAME_PLAYERS_WHO_GAIN_NO_LIFE -> playersWhoGainNoLifeThisTurn;
+            case GAME_PLAYERS_WHO_CANT_LOSE_LIFE -> playersWhoCantLoseLifeThisTurn;
+            default -> null;
+        };
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addGameEndOfTurnStateValue(EndOfTurnStateField field, Object value) {
+        switch (field) {
+            case GAME_DAMAGE_PREVENTION_SHIELD -> globalDamagePreventionShield += (Integer) value;
+            case GAME_PREVENT_ALL_COMBAT_DAMAGE -> preventAllCombatDamage = true;
+            case GAME_PREVENT_ALL_COMBAT_DAMAGE_BY_ATTACKING_CREATURES -> preventAllCombatDamageByAttackingCreatures = true;
+            case GAME_PREVENT_ALL_COMBAT_DAMAGE_TO_PLAYERS -> preventAllCombatDamageToPlayers = true;
+            case GAME_PREVENT_ALL_DAMAGE_TO_ALL_CREATURES -> preventAllDamageToAllCreatures = true;
+            case GAME_PREVENT_ALL_DAMAGE_BY_CREATURES -> preventAllDamageByCreatures = true;
+            case GAME_DAMAGE_BY_CREATURES_PREVENTION_LIFE_GAIN_PLAYERS ->
+                    damageByCreaturesPreventionLifeGainPlayers.addAll((List<UUID>) value);
+            case GAME_PREVENT_ALL_DAMAGE_FROM_NON_HUMAN_SOURCES -> preventAllDamageFromNonHumanSources = true;
+            case GAME_COMBAT_DAMAGE_EXEMPT_PREDICATES_BY_CONTROLLER ->
+                    addMapEntries(combatDamageExemptPredicatesByController, (Set<Map.Entry<UUID, PermanentPredicate>>) value);
+            case GAME_PREVENT_DAMAGE_FROM_COLORS -> preventDamageFromColors.addAll((Set<CardColor>) value);
+            case GAME_COLOR_DAMAGE_PREVENTION ->
+                    addMapEntries(colorDamagePreventionUntilEndOfTurn, (Set<Map.Entry<UUID, CardColor>>) value);
+            case GAME_COLOR_DAMAGE_PREVENTION_FOR_CONTROLLED_CREATURES ->
+                    addMapEntries(colorDamagePreventionForControlledCreaturesUntilEndOfTurn,
+                            (Set<Map.Entry<UUID, CardColor>>) value);
+            case GAME_COLORLESS_DAMAGE_PREVENTION -> colorlessDamagePreventionUntilEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_PERMANENTS_PREVENTED_FROM_DEALING_DAMAGE -> permanentsPreventedFromDealingDamage.addAll((Set<UUID>) value);
+            case GAME_CREATURES_PROTECTED_FROM_TARGETING_DAMAGE -> creaturesProtectedFromTargetingDamage.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WITH_ALL_DAMAGE_PREVENTED -> playersWithAllDamagePrevented.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WITH_ALL_PERMANENT_DAMAGE_PREVENTED ->
+                    playersWithAllPermanentDamagePrevented.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WITH_ALL_CREATURE_DAMAGE_PREVENTED ->
+                    playersWithAllCreatureDamagePrevented.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WITH_ALL_PLAYER_DAMAGE_PREVENTED -> playersWithAllPlayerDamagePrevented.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WITH_ALL_COMBAT_DAMAGE_TO_PLAYER_AND_PLANESWALKERS_PREVENTED ->
+                    playersWithAllCombatDamageToPlayerAndPlaneswalkersPrevented.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WITH_DAMAGE_FROM_ATTACKERS_PREVENTED ->
+                    playersWithDamageFromAttackersPrevented.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WITH_DAMAGE_FROM_OPPONENT_CREATURES_PREVENTED ->
+                    playersWithDamageFromOpponentCreaturesPrevented.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WITH_COMBAT_DAMAGE_FROM_TARGET_OPPONENT_CREATURES_PREVENTED ->
+                    playersWithCombatDamageFromTargetOpponentCreaturesPrevented.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WITH_DAMAGE_FROM_MATCHING_SOURCES_PREVENTED ->
+                    addMapEntries(playersWithDamageFromMatchingSourcesPrevented,
+                            (Set<Map.Entry<UUID, PermanentPredicate>>) value);
+            case GAME_PLAYERS_WITH_DAMAGE_TO_CONTROLLED_CREATURES_FROM_MATCHING_SOURCES_PREVENTED ->
+                    addMapEntries(playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented,
+                            (Set<Map.Entry<UUID, PermanentPredicate>>) value);
+            case GAME_CREATURES_WITH_ALL_DAMAGE_PREVENTED -> creaturesWithAllDamagePrevented.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_REDIRECTING_ALL_CREATURE_DAMAGE -> playersRedirectingAllCreatureDamage.addAll((Set<UUID>) value);
+            case GAME_ALL_DAMAGE_PREVENTION_PREDICATES ->
+                    allDamagePreventionPredicates.addAll((Set<PermanentPredicate>) value);
+            case GAME_ALL_DAMAGE_PREVENTION_PREDICATES_BY_CONTROLLER ->
+                    addMapEntries(allDamagePreventionPredicatesByController,
+                            (Set<Map.Entry<UUID, PermanentPredicate>>) value);
+            case GAME_COMBAT_DAMAGE_PREVENTION_PREDICATES_BY_CONTROLLER ->
+                    addMapEntries(combatDamagePreventionPredicatesByController,
+                            (Set<Map.Entry<UUID, PermanentPredicate>>) value);
+            case GAME_CREATURES_WITH_COMBAT_DAMAGE_PREVENTED -> creaturesWithCombatDamagePrevented.addAll((Set<UUID>) value);
+            case GAME_CREATURES_PREVENTED_FROM_DEALING_COMBAT_DAMAGE ->
+                    creaturesPreventedFromDealingCombatDamage.addAll((Set<UUID>) value);
+            case GAME_CREATURES_ASSIGNING_NO_COMBAT_DAMAGE -> creaturesAssigningNoCombatDamageThisTurn.addAll((Set<UUID>) value);
+            case GAME_DAMAGE_CANT_BE_PREVENTED -> damageCantBePreventedThisTurn = true;
+            case GAME_PLAYERS_CANT_GAIN_LIFE -> playersCantGainLifeThisTurn = true;
+            case GAME_PLAYERS_CANT_LOSE_LIFE -> playersCantLoseLifeThisTurn = true;
+            case GAME_PLAYERS_CANT_SEARCH_LIBRARIES -> playersCantSearchLibrariesThisTurn = true;
+            case GAME_CREATURES_CANT_ATTACK -> creaturesCantAttackThisTurn = true;
+            case GAME_PLAYERS_WHO_CANT_GAIN_LIFE -> playersWhoCantGainLifeThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WHO_GAIN_NO_LIFE -> playersWhoGainNoLifeThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WHO_CANT_LOSE_LIFE -> playersWhoCantLoseLifeThisTurn.addAll((Set<UUID>) value);
+            default -> {
+            }
+        }
+    }
+
+    private static <K, V> Set<Map.Entry<K, V>> mapEntries(Map<K, Set<V>> map) {
+        Set<Map.Entry<K, V>> entries = new HashSet<>();
+        map.forEach((key, values) -> values.forEach(value -> entries.add(Map.entry(key, value))));
+        return entries;
+    }
+
+    private static <K, V> void addMapEntries(Map<K, Set<V>> map, Set<Map.Entry<K, V>> entries) {
+        entries.forEach(entry ->
+                map.computeIfAbsent(entry.getKey(), key -> ConcurrentHashMap.newKeySet()).add(entry.getValue()));
+    }
+
     /** Removes and returns all floating effects that expire at the beginning of the next end step. */
     public List<FloatingContinuousEffect> expireFloatingEffectsAtNextEndStep() {
         return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_NEXT_END_STEP);

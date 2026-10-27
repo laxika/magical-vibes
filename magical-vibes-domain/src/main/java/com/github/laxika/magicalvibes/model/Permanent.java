@@ -2316,7 +2316,7 @@ public class Permanent {
             case LAND_DESTRUCTION_SHIELD -> landDestructionShield;
             case REGENERATION_SHIELD -> regenerationShield;
             case MINUS_ONE_COUNTER_REGENERATION_SHIELD -> minusOneCounterRegenerationShield;
-            case PLAYER_DAMAGE_PREVENTION_SHIELD, PLAYER_COMBAT_DAMAGE_PREVENTION_SHIELD -> null;
+            default -> null;
         };
     }
 
@@ -2399,7 +2399,7 @@ public class Permanent {
             case LAND_DESTRUCTION_SHIELD -> landDestructionShield += (Integer) value;
             case REGENERATION_SHIELD -> regenerationShield += (Integer) value;
             case MINUS_ONE_COUNTER_REGENERATION_SHIELD -> minusOneCounterRegenerationShield += (Integer) value;
-            case PLAYER_DAMAGE_PREVENTION_SHIELD, PLAYER_COMBAT_DAMAGE_PREVENTION_SHIELD -> {
+            default -> {
             }
         }
     }

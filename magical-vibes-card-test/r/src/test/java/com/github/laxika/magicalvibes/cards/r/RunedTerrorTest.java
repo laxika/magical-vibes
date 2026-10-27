@@ -2,6 +2,10 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AbandonThePost;
 import com.github.laxika.magicalvibes.cards.a.AerialManeuver;
+import com.github.laxika.magicalvibes.cards.e.EerieInterference;
+import com.github.laxika.magicalvibes.cards.f.Fog;
+import com.github.laxika.magicalvibes.cards.s.SafePassage;
+import com.github.laxika.magicalvibes.cards.s.Skullcrack;
 import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.cards.t.TitanicGrowth;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
@@ -18,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RunedTerror.class, TitanicGrowth.class, TurnToFrog.class, AerialManeuver.class, AbandonThePost.class,
-        SamiteHealer.class})
+        SamiteHealer.class, Fog.class, SafePassage.class, EerieInterference.class, Skullcrack.class})
 class RunedTerrorTest extends BaseCardTest {
 
     @Test
@@ -218,5 +222,97 @@ class RunedTerrorTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    void fogFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new Fog()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player2, 0);
+        assertThat(gd.preventAllCombatDamage).isTrue();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.preventAllCombatDamage).isTrue();
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.preventAllCombatDamage).isFalse();
+    }
+
+    @Test
+    void activePlayersOwnFogEndsAtTheirCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Fog()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(gd.preventAllCombatDamage).isFalse();
+    }
+
+    @Test
+    void playerDamagePreventionFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new SafePassage()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0);
+        assertThat(gd.playersWithAllDamagePrevented).containsExactly(player2.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.playersWithAllDamagePrevented).containsExactly(player2.getId());
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.playersWithAllDamagePrevented).isEmpty();
+    }
+
+    @Test
+    void matchingSourcePreventionFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new EerieInterference()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0);
+        assertThat(gd.playersWithDamageFromMatchingSourcesPrevented.get(player2.getId())).hasSize(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.playersWithDamageFromMatchingSourcesPrevented.get(player2.getId())).hasSize(1);
+        assertThat(gd.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented.get(player2.getId()))
+                .hasSize(1);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.playersWithDamageFromMatchingSourcesPrevented).isEmpty();
+        assertThat(gd.playersWithDamageToControlledCreaturesFromMatchingSourcesPrevented).isEmpty();
+    }
+
+    @Test
+    void cantGainLifeFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new Skullcrack()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(gd.playersCantGainLifeThisTurn).isTrue();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.playersCantGainLifeThisTurn).isTrue();
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.playersCantGainLifeThisTurn).isFalse();
     }
 }

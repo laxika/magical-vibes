@@ -18,15 +18,30 @@ Remove an entry once the feature has landed and its tests pass.
 `GameData.phaseSequenceEndOfTurnShares` plus `phaseSequenceAttributedEndOfTurnState`, and credited by
 `TurnCleanupService.attributeEndOfTurnStateToActivePlayer`. It now covers every `Permanent.resetModifiers` store
 except the combat-only ones (`mustAttackThisCombat`, `animatedUntilEndOfCombat`, `mustBlockIdsUntilEndOfCombat`) and
-the `creaturesThatCrewedThisTurn` tracker, the simple per-permanent prevention/destruction/regeneration shields, and
-`GameData.playerDamagePreventionShields` / `playerCombatDamagePreventionShields`. A shield used up in between is not
-restored (capped by what remains). RunedTerrorTest covers can't-block, a creature prevention shield, a used-up shield
-and a player prevention shield. **Still open:** the paired-list regeneration shields
-(`opponentDrawRegenerationShield*`, `plusOnePlusOneCounterRegenerationShield*`, `gainControlRegenerationShields`),
-`tappedPermanentsForAbilityThisTurn`, `temporaryGraveyardCardAnimationsUntilEndOfTurn`, and every other `GameData`
-store cleared in `resetEndOfTurnModifiers` (redirect shields, source/colour prevention, the global `preventAll*`
-flags, `playerStaticEffectsUntilEndOfTurn`, enter-tapped / extra-counter "this turn" stores, block requirements,
-graveyard cast permissions). Known limitation: a flag or set element (including a keyword) that another player's
+the `creaturesThatCrewedThisTurn` tracker, the simple per-permanent prevention/destruction/regeneration shields,
+`GameData.playerDamagePreventionShields` / `playerCombatDamagePreventionShields`, and (second pass) the game-wide
+`GAME_` fields: `globalDamagePreventionShield`, the `preventAll*` flags (with `damageByCreaturesPreventionLifeGainPlayers`
+and `combatDamageExemptPredicatesByController`), `preventDamageFromColors`, the colour / colorless prevention maps,
+the `playersWith*Prevented` / `creatures*Prevented` / `creaturesAssigningNoCombatDamageThisTurn` sets and
+predicate maps, `playersRedirectingAllCreatureDamage`, `damageCantBePreventedThisTurn`, the global
+`playersCantGainLife` / `playersCantLoseLife` / `playersCantSearchLibraries` / `creaturesCantAttack` "this turn"
+flags and the `playersWhoCantGainLife` / `GainNoLife` / `CantLoseLife` sets (`GameData.captureGameEndOfTurnState`,
+tracked under `GameData.GAME_END_OF_TURN_STATE_ID`; a map of sets is a `SET` of `Map.entry` pairs). A shield used up
+in between is not restored (capped by what remains). RunedTerrorTest covers can't-block, creature and player
+prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference and Skullcrack. **Still open:** the
+paired-list regeneration shields (`opponentDrawRegenerationShield*`, `plusOnePlusOneCounterRegenerationShield*`,
+`gainControlRegenerationShields`), `tappedPermanentsForAbilityThisTurn`,
+`temporaryGraveyardCardAnimationsUntilEndOfTurn`, and the remaining `GameData` stores cleared in
+`resetEndOfTurnModifiers`: one-shot redirect/prevention shield lists and maps (`damageRedirectShields`,
+`sourceDamageRedirectShields`, `playerSourceNextDamageShields`, `targetSourceDamagePreventionShields`, Eye for an
+Eye, `playerColorDamagePreventionCount`, `playerSourceDamagePreventionIds` with its paired colour/life-gain maps,
+`playerNextDamageFromMatchingSourcesPrevented`, `combatDamagePreventionTokenShields`, `channelHarmShields`, ...),
+`playerStaticEffectsUntilEndOfTurn`, enter-tapped / extra-counter "this turn" stores, block requirements, damage
+bonuses / doublings / life floors / replacements, "this turn" replacement and rule sets (exile-instead,
+hexproof/shroud/protection for players, can't-cast / can't-activate, flash and cost grants, next-spell copy
+counters, mana-fixing), and graveyard / exile / library-top cast permissions. Count-valued maps
+(`Map<UUID, Integer>`) and one-shot shield lists need a per-key `SHIELD`-style split rather than the entry-set
+`SET` used so far. Known limitation: a flag or set element (including a keyword) that another player's
 effect sets again while it is already set stays credited to the first player only, and with three or more players a
 single-value field kept for several other players takes the value of the most recently credited player.
 
