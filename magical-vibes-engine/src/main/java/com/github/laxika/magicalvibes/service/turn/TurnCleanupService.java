@@ -609,7 +609,16 @@ public class TurnCleanupService {
         gameData.mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn.clear();
         gameData.graveyardCardCastPermissionsUntilEndOfTurn.clear();
         gameData.graveyardCardCastPermissionGrantsUntilEndOfTurn.clear();
+        EndOfTurnStateShare retainedGameState = retainedState.getOrDefault(
+                GameData.GAME_END_OF_TURN_STATE_ID, EndOfTurnStateShare.EMPTY);
+        // A retained id's permission belongs to another player's phase (Runed Terror ruling, CR 514.2): its records
+        // stay, and the id is put back on the expiry list when the retained state is re-applied below.
+        Set<UUID> retainedGraveyardPlayPermissions = Set.copyOf(retainedGameState.<UUID>elements(
+                EndOfTurnStateField.GAME_GRAVEYARD_PLAY_PERMISSIONS_ENDING_THIS_TURN));
         for (var cardId : gameData.graveyardPlayPermissionsExpireEndOfTurn) {
+            if (retainedGraveyardPlayPermissions.contains(cardId)) {
+                continue;
+            }
             gameData.graveyardPlayPermissions.remove(cardId);
             gameData.graveyardCardsEnterTapped.remove(cardId);
         }
@@ -677,7 +686,12 @@ public class TurnCleanupService {
         gameData.creatureExileCountThisTurn.clear();
 
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)
+        Set<UUID> retainedExilePlayPermissions = Set.copyOf(retainedGameState.<UUID>elements(
+                EndOfTurnStateField.GAME_EXILE_PLAY_PERMISSIONS_ENDING_THIS_TURN));
         for (var cardId : gameData.exilePlayPermissionsExpireEndOfTurn) {
+            if (retainedExilePlayPermissions.contains(cardId)) {
+                continue;
+            }
             gameData.exilePlayPermissions.remove(cardId);
             gameData.exilePlayPermissionSpellFilters.remove(cardId);
             gameData.clearExilePlayPermissionGroup(cardId);
@@ -725,10 +739,7 @@ public class TurnCleanupService {
         }
         gameData.graveyardAdventureCastPermissions.entrySet()
                 .removeIf(entry -> entry.getValue().expireTurn() <= currentTurn);
-        EndOfTurnStateShare retainedGameState = retainedState.get(GameData.GAME_END_OF_TURN_STATE_ID);
-        if (retainedGameState != null) {
-            gameData.addGameEndOfTurnState(retainedGameState);
-        }
+        gameData.addGameEndOfTurnState(retainedGameState);
 
         // Clear persistent mana tracking so the next drain empties pools fully
         for (UUID playerId : gameData.orderedPlayerIds) {

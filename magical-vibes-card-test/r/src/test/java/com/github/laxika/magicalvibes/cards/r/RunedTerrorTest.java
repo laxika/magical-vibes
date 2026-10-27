@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AbandonThePost;
+import com.github.laxika.magicalvibes.cards.a.ActOnImpulse;
 import com.github.laxika.magicalvibes.cards.a.AegisOfHonor;
 import com.github.laxika.magicalvibes.cards.a.AerialManeuver;
 import com.github.laxika.magicalvibes.cards.a.AngelOfGrace;
 import com.github.laxika.magicalvibes.cards.a.AngelsGrace;
+import com.github.laxika.magicalvibes.cards.a.ArkOfHunger;
 import com.github.laxika.magicalvibes.cards.a.AuriokReplica;
 import com.github.laxika.magicalvibes.cards.b.BlindFury;
 import com.github.laxika.magicalvibes.cards.b.BorneUponAWind;
@@ -19,6 +21,7 @@ import com.github.laxika.magicalvibes.cards.g.GildedLight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Inkshield;
 import com.github.laxika.magicalvibes.cards.i.IrencragFeat;
+import com.github.laxika.magicalvibes.cards.k.KaylasMusicBox;
 import com.github.laxika.magicalvibes.cards.m.Microscope;
 import com.github.laxika.magicalvibes.cards.o.Overblaze;
 import com.github.laxika.magicalvibes.cards.o.Overmaster;
@@ -66,7 +69,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         ZameckGuildmage.class, DueRespect.class, AngelsGrace.class, AngelOfGrace.class, IrencragFeat.class,
         Comeuppance.class, Inkshield.class, AegisOfHonor.class, Shock.class, Quicken.class, Divination.class,
         PastInFlames.class, Overmaster.class, AuriokReplica.class, RepeatedReverberation.class,
-        SenTriplets.class})
+        SenTriplets.class, ActOnImpulse.class, ArkOfHunger.class, KaylasMusicBox.class})
 class RunedTerrorTest extends BaseCardTest {
 
     @Test
@@ -1203,6 +1206,79 @@ class RunedTerrorTest extends BaseCardTest {
         assertThat(gd.senControllerPlayerId).isNull();
         assertThat(gd.senControlledPlayerId).isNull();
         assertThat(gd.playersSilencedThisTurn).isEmpty();
+    }
+
+    @Test
+    void impulseAndGraveyardPlayPermissionsEndAtTheCleanupOfThePlayerActiveWhenTheyWereGranted() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.addToBattlefield(player2, new ArkOfHunger());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        List<Card> impulseCards = List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+        harness.setLibrary(player1, impulseCards);
+        harness.castFromHand(player1, new ActOnImpulse(), "{2}{R}");
+        harness.passBothPriorities();
+        impulseCards.forEach(card -> assertThat(gd.exilePlayPermissions).containsEntry(card.getId(), player1.getId()));
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        Card milled = new Shock();
+        harness.setLibrary(player2, List.of(milled));
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.graveyardPlayPermissions).containsEntry(milled.getId(), player2.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        impulseCards.forEach(card -> assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId()));
+        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).isEmpty();
+        assertThat(gd.graveyardPlayPermissions).containsEntry(milled.getId(), player2.getId());
+        assertThat(gd.graveyardPlayPermissionsExpireEndOfTurn).containsExactly(milled.getId());
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.graveyardPlayPermissions).doesNotContainKey(milled.getId());
+        assertThat(gd.graveyardPlayPermissionsExpireEndOfTurn).isEmpty();
+    }
+
+    @Test
+    void impulsePermissionFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        List<Card> impulseCards = List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+        harness.setLibrary(player2, impulseCards);
+        harness.castFromHand(player2, new ActOnImpulse(), "{2}{R}");
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        impulseCards.forEach(card -> assertThat(gd.exilePlayPermissions).containsEntry(card.getId(), player2.getId()));
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        impulseCards.forEach(card -> assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId()));
+        assertThat(gd.exilePlayPermissionsExpireEndOfTurn).isEmpty();
+    }
+
+    @Test
+    void playCardsExiledWithSourceGrantFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        Permanent musicBox = harness.addToBattlefieldAndReturn(player2, new KaylasMusicBox());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        Card exiled = new GrizzlyBears();
+        gd.addToExile(player2.getId(), exiled, musicBox.getId());
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.exilePlayUntilEndOfTurnGrantsBySource).containsKey(musicBox.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.exilePlayUntilEndOfTurnGrantsBySource).containsKey(musicBox.getId());
+        assertThat(gd.exilePlayPermissions).containsEntry(exiled.getId(), player2.getId());
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.exilePlayUntilEndOfTurnGrantsBySource).isEmpty();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
     }
 
     private void castQuicken(Player caster) {

@@ -4826,7 +4826,9 @@ public class GameData {
      * triggers, the source-linked exile and foretold cast grants, the whole-turn chosen-source prevention with its
      * colour and life-gain riders, the one-shot "next damage from a matching source" shields, the pending extra
      * counters for the next enchantment creature entry, the pending "next instant or sorcery / loyalty / exhaust
-     * ability this turn" copy triggers with their sources, and Sen Triplets' hand permission), which the cleanup step clears
+     * ability this turn" copy triggers with their sources, Sen Triplets' hand permission, the per-card exile / graveyard
+     * play permissions that end this turn with their current-turn any-mana-type riders, and the source-linked "until end
+     * of turn, you may play cards exiled with it" grants), which the cleanup step clears
      * (CR 514.2). Used to split that state between the players active when it was created under Runed Terror's sequential phases.
      */
     public EndOfTurnStateShare captureGameEndOfTurnState() {
@@ -5082,6 +5084,12 @@ public class GameData {
             case GAME_NEXT_EXHAUST_ABILITY_COPY_SOURCES -> listMapEntries(pendingNextExhaustAbilityCopySourcesThisTurn);
             case GAME_SEN_TRIPLETS_HAND_PERMISSION -> senControllerPlayerId == null || senControlledPlayerId == null
                     ? null : Map.entry(senControllerPlayerId, senControlledPlayerId);
+            case GAME_EXILE_PLAY_PERMISSIONS_ENDING_THIS_TURN -> exilePlayPermissionsExpireEndOfTurn;
+            case GAME_GRAVEYARD_PLAY_PERMISSIONS_ENDING_THIS_TURN -> graveyardPlayPermissionsExpireEndOfTurn;
+            case GAME_EXILE_PLAY_GRANTS_BY_SOURCE -> Set.copyOf(plainMapEntries(exilePlayUntilEndOfTurnGrantsBySource));
+            case GAME_EXILE_PLAY_ANY_MANA_TYPE_THIS_TURN -> exilePlayAnyManaType.stream()
+                    .filter(cardId -> !exilePlayPermissionsExpireAtTurnEnd.containsKey(cardId))
+                    .collect(java.util.stream.Collectors.toSet());
             default -> null;
         };
     }
@@ -5410,6 +5418,13 @@ public class GameData {
                 senControllerPlayerId = permission.getKey();
                 senControlledPlayerId = permission.getValue();
             }
+            case GAME_EXILE_PLAY_PERMISSIONS_ENDING_THIS_TURN ->
+                    exilePlayPermissionsExpireEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_GRAVEYARD_PLAY_PERMISSIONS_ENDING_THIS_TURN ->
+                    graveyardPlayPermissionsExpireEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_EXILE_PLAY_GRANTS_BY_SOURCE -> ((Set<Map.Entry<UUID, ExilePlayCostModifier>>) value).forEach(entry ->
+                    exilePlayUntilEndOfTurnGrantsBySource.putIfAbsent(entry.getKey(), entry.getValue()));
+            case GAME_EXILE_PLAY_ANY_MANA_TYPE_THIS_TURN -> exilePlayAnyManaType.addAll((Set<UUID>) value);
             default -> {
             }
         }

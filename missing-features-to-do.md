@@ -97,7 +97,13 @@ now records its source too instead of falling through and adding a `null` max ma
 `PendingCopySource` lists (`LIST` of `(player, source)` entries), `pendingNextSpellOrLoyaltyCopyLinkedThisTurn` (`SET`),
 and Sen Triplets' `senControllerPlayerId` / `senControlledPlayerId` (`GAME_SEN_TRIPLETS_HAND_PERMISSION`, a `VALUE`
 `(controller, controlled)` entry). The next matching spell or ability consumes all of a player's pending copies at
-once, so a used trigger is not restored. RunedTerrorTest covers can't-block, creature and player
+once, so a used trigger is not restored. A twelfth pass moved the per-card "you may play that card this turn" exile and
+graveyard permissions: the `exilePlayPermissionsExpireEndOfTurn` / `graveyardPlayPermissionsExpireEndOfTurn` id lists
+are `SET`s, and the cleanup step removes the permission records (`exilePlayPermissions` with its spell filters, group,
+pay-life, cost-modifier and free-cast riders; `graveyardPlayPermissions` with `graveyardCardsEnterTapped`) only for the
+ids not retained for another player; the current-turn `exilePlayAnyManaType` riders (a `SET`, excluding cards whose
+permission lasts to a later turn) and `exilePlayUntilEndOfTurnGrantsBySource` (a `SET` of map entries, restored with
+`putIfAbsent`) moved too. A card played in between leaves the zone, so its permission is not restored. RunedTerrorTest covers can't-block, creature and player
 prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference, Skullcrack, Silence, Gilded Light,
 Borne Upon a Wind, Debt of Loyalty, Skeleton Scavengers, Soldevi Sentry, Microscope, Blind Fury, Overblaze (two
 doublings split between phases), Zameck Guildmage, Due Respect, Angel's Grace, Irencrag Feat, a tighter spell limit
@@ -109,8 +115,9 @@ exile / foretold cast grants (one used before the active player's cleanup), Auri
 the colour and life-gain riders) from either player's phase, Circle of Solace shields (one used before the active
 player's cleanup), Storyweave counters split between phases, Repeated Reverberation from either player's phase,
 instant/sorcery copy triggers (plain, single-trigger, source, mana-value-limited, dynamic) and exhaust copies split
-between phases (one used before the active player's cleanup), and Sen Triplets' upkeep trigger during another
-player's phase. **Still open:**
+between phases (one used before the active player's cleanup), Sen Triplets' upkeep trigger during another
+player's phase, Act on Impulse / Ark of Hunger permissions from either player's phase, and Kayla's Music Box's
+grant from another player's phase. **Still open:**
 `Permanent.tappedPermanentsForAbilityThisTurn` (Vodalian War Machine's "Merfolk tapped this turn" record; it is a
 turn-history record, not an effect, so the Runed Terror ruling about effects ending doesn't settle it — it arguably
 should last the whole turn rather than be split per active player; look for a ruling first), and the remaining
@@ -126,10 +133,8 @@ or whose order matters and is restored with `addFirst` (`sourceNextDamageToAnyTa
 per-spell entry riders `spellAdditionalEnterCounters` / `spellEntryCounters` / `spellGrantedSubtypesOnEntry` /
 `spellsGranted*OnEntry` (keyed by a spell's card id and consumed when it enters; they likely never outlive the spell,
 since a step ends only once the stack is empty, so check whether any can be left pending across a cleanup before
-splitting them), the `graveyardPlayPermissionsExpireEndOfTurn` / `exilePlayPermissionsExpireEndOfTurn`
-indirections (they remove entries from the permanent permission maps, so they need the expiring card ids split rather
-than a plain store), `exilePlayUntilEndOfTurnGrantsBySource`, the current-turn `exilePlayAnyManaType` riders,
-`outsideGamePlayPermissions` and
+splitting them), `outsideGamePlayPermissions` (an `OutsideGamePlayPermissionSet` with single-play groups) with
+`outsideGameAdditionalModalModePermissions`, `exileInsteadOfGraveyard` (Nita's "exile it instead" rider), and
 the turn watchers cleared alongside them. Known limitation: a flag or set element (including a keyword) that another player's
 effect sets again while it is already set stays credited to the first player only, and with three or more players a
 single-value field kept for several other players takes the value of the most recently credited player.

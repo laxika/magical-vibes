@@ -43,6 +43,12 @@ package com.github.laxika.magicalvibes.model;
  * {@link Kind#SET}. The next matching spell or ability consumes all of a player's pending copies at once, so a used
  * trigger is not restored. Sen Triplets' "play from that player's hand this turn" pair is a {@link Kind#VALUE}
  * {@code (controller, controlled player)} entry.
+ * The per-card "you may play that card this turn" exile and graveyard permissions (impulse draw, Ark of Hunger) are
+ * tracked through the {@link Kind#SET}s of card ids whose permission ends this turn; the cleanup step removes the
+ * permission records only for the ids not retained for another player. Their current-turn any-mana-type riders are a
+ * {@link Kind#SET} of card ids, and the source-linked "until end of turn, you may play cards exiled with it" grants
+ * (Kayla's Music Box, Urianger Augurelt) a {@link Kind#SET} of {@code (source, cost modifier)} entries. A card
+ * played or cast in between leaves exile or the graveyard, so its permission is not restored.
  */
 public enum EndOfTurnStateField {
 
@@ -301,7 +307,11 @@ public enum EndOfTurnStateField {
     GAME_NEXT_SPELL_OR_LOYALTY_COPY_LINKED(Kind.SET),
     GAME_NEXT_EXHAUST_ABILITY_COPIES(Kind.COUNTS),
     GAME_NEXT_EXHAUST_ABILITY_COPY_SOURCES(Kind.LIST),
-    GAME_SEN_TRIPLETS_HAND_PERMISSION(Kind.VALUE);
+    GAME_SEN_TRIPLETS_HAND_PERMISSION(Kind.VALUE),
+    GAME_EXILE_PLAY_PERMISSIONS_ENDING_THIS_TURN(Kind.SET),
+    GAME_GRAVEYARD_PLAY_PERMISSIONS_ENDING_THIS_TURN(Kind.SET),
+    GAME_EXILE_PLAY_GRANTS_BY_SOURCE(Kind.SET),
+    GAME_EXILE_PLAY_ANY_MANA_TYPE_THIS_TURN(Kind.SET);
 
     /** How a field's value is split between players and recombined. */
     public enum Kind {
