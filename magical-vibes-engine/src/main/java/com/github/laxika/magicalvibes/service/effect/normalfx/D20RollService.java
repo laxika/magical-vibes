@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PokeyTheScallywaggEffect;
 import com.github.laxika.magicalvibes.model.effect.RollWithAdvantageEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -47,12 +48,12 @@ public class D20RollService {
         if (baseDiceCount < 1) {
             throw new IllegalArgumentException("At least one d20 must be rolled");
         }
-        if (gameData != null && rollingPlayerId != null
-                && gameQueryService != null && coinFlipService != null
-                && gameQueryService.countPlayerControlledStaticEffects(
-                        gameData, rollingPlayerId, PokeyTheScallywaggEffect.class) > 0) {
+        if (pokeyReplacesRoll(gameData, rollingPlayerId)) {
             CoinFlipService.CoinFlipResult result = coinFlipService.flipWithoutPokey(gameData, rollingPlayerId);
             return new D20RollResult(result.heads() ? 20 : 1, false);
+        }
+        if (gameData != null && coinFlipService != null) {
+            coinFlipService.closeChoiceWindow(gameData);
         }
 
         int diceCount = baseDiceCount;
@@ -74,6 +75,36 @@ public class D20RollService {
             result = Math.max(result, roll());
         }
         return new D20RollResult(result, true);
+    }
+
+    /**
+     * Has each of {@code playerIds} roll one d20, as one roll per player ("each player rolls a d20"). The rolls Pokey,
+     * the Scallywagg replaces with coin flips are flipped first, before any d20 is rolled, so a Krark's Thumb choice
+     * on one of those flips can still stop the resolving effect without a d20 already rolled being rolled again.
+     *
+     * @return the results in the order of {@code playerIds}
+     */
+    public List<D20RollResult> rollEach(GameData gameData, List<UUID> playerIds) {
+        List<UUID> pokeyPlayers = playerIds.stream()
+                .filter(playerId -> pokeyReplacesRoll(gameData, playerId))
+                .toList();
+        List<CoinFlipService.CoinFlipResult> flips = coinFlipService == null || gameData == null
+                ? List.of() : coinFlipService.flipEachWithoutPokey(gameData, pokeyPlayers);
+        List<D20RollResult> results = new ArrayList<>(playerIds.size());
+        for (UUID playerId : playerIds) {
+            int flipIndex = pokeyPlayers.indexOf(playerId);
+            results.add(flipIndex >= 0
+                    ? new D20RollResult(flips.get(flipIndex).heads() ? 20 : 1, false)
+                    : new D20RollResult(roll(gameData, playerId), true));
+        }
+        return results;
+    }
+
+    private boolean pokeyReplacesRoll(GameData gameData, UUID rollingPlayerId) {
+        return gameData != null && rollingPlayerId != null
+                && gameQueryService != null && coinFlipService != null
+                && gameQueryService.countPlayerControlledStaticEffects(
+                        gameData, rollingPlayerId, PokeyTheScallywaggEffect.class) > 0;
     }
 
     public record D20RollResult(int result, boolean wasD20Roll) {

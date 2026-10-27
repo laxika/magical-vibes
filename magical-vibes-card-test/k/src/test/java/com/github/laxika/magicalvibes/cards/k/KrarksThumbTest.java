@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.a.AmuletOfQuoz;
+import com.github.laxika.magicalvibes.cards.c.ChaosDragon;
+import com.github.laxika.magicalvibes.cards.c.ContactOtherPlane;
 import com.github.laxika.magicalvibes.cards.c.CrazedFirecat;
 import com.github.laxika.magicalvibes.cards.c.CrookedScales;
 import com.github.laxika.magicalvibes.cards.d.DesperateGambit;
@@ -11,10 +13,13 @@ import com.github.laxika.magicalvibes.cards.f.FieryGambit;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GameOfChaos;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GoblinAssassin;
 import com.github.laxika.magicalvibes.cards.m.ManaClash;
 import com.github.laxika.magicalvibes.cards.m.ManaCrypt;
 import com.github.laxika.magicalvibes.cards.m.MoltenSentry;
+import com.github.laxika.magicalvibes.cards.p.PokeyTheScallywagg;
+import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.r.RiskyMove;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -23,6 +28,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -41,7 +47,8 @@ import static org.mockito.Mockito.when;
 @CardUsed({KrarksThumb.class, FieryGambit.class, AlphaMyr.class, ManaCrypt.class, CrazedFirecat.class,
         ManaClash.class, GoblinAssassin.class, FugitiveWizard.class, GameOfChaos.class, RiskyMove.class,
         ElvishWarrior.class, AmuletOfQuoz.class, CrookedScales.class, FreshVolunteers.class, DesperateGambit.class,
-        DwarvenBerserker.class, KarplusanMinotaur.class, MoltenSentry.class})
+        DwarvenBerserker.class, KarplusanMinotaur.class, MoltenSentry.class, RagingGoblin.class,
+        PokeyTheScallywagg.class, ContactOtherPlane.class, GrizzlyBears.class, ChaosDragon.class})
 class KrarksThumbTest extends BaseCardTest {
 
     @Test
@@ -571,6 +578,112 @@ class KrarksThumbTest extends BaseCardTest {
         return gd.gameLog.stream()
                 .map(GameLogEntry::plainText)
                 .filter(log -> log.contains("coin flip for Molten Sentry"))
+                .toList();
+    }
+
+    @Test
+    @DisplayName("Goblin Assassin's trigger for another Goblin entering asks for the kept result")
+    void goblinAssassinOtherGoblinTriggerAsksForKeptResult() {
+        harness.addToBattlefield(player1, new GoblinAssassin());
+        harness.addToBattlefield(player2, new KrarksThumb());
+        harness.addToBattlefield(player2, new FugitiveWizard());
+        harness.setHand(player1, List.of(new RagingGoblin()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        // Player 1 flips heads; player 2's two coins disagree and it keeps tails.
+        try (var coins = mockFlips(true, true, false)) {
+            harness.passBothPriorities();
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player2.getId());
+            harness.assertOnBattlefield(player2, "Fugitive Wizard");
+            assertThat(assassinFlipLogs()).isEmpty();
+            harness.handleListChoice(player2, "Tails");
+        }
+
+        harness.assertNotOnBattlefield(player2, "Fugitive Wizard");
+        harness.assertOnBattlefield(player1, "Raging Goblin");
+        assertThat(assassinFlipLogs()).hasSize(2);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"Heads, 20", "Tails, 1"})
+    @DisplayName("A d20 roll Pokey replaces with a Thumb-replaced coin flip asks for the kept result")
+    void pokeyReplacedD20RollAsksForKeptResult(String kept, int result) {
+        harness.addToBattlefield(player1, new PokeyTheScallywagg());
+        harness.addToBattlefield(player1, new KrarksThumb());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears()));
+        harness.setHand(player1, List.of(new ContactOtherPlane()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        try (var coins = mockFlips(true, false)) {
+            harness.castAndResolveInstant(player1, 0);
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+            assertThat(contactOtherPlaneLogs()).isEmpty();
+            harness.handleListChoice(player1, kept);
+        }
+
+        assertThat(contactOtherPlaneLogs()).singleElement().asString()
+                .contains("flips a coin for Contact Other Plane: " + result + ".");
+        if (result == 1) {
+            assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"Heads, false", "Tails, true"})
+    @DisplayName("Chaos Dragon asks for a Pokey player's kept flip before any d20 is rolled or logged")
+    void chaosDragonPokeyFlipAsksForKeptResult(String kept, boolean dragonCanAttackOpponent) {
+        Permanent dragon = addCreatureReady(player1, new ChaosDragon());
+        harness.addToBattlefield(player2, new PokeyTheScallywagg());
+        harness.addToBattlefield(player2, new KrarksThumb());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        ThreadLocalRandom random = mock(ThreadLocalRandom.class);
+        when(random.nextBoolean()).thenReturn(true, false);
+        when(random.nextInt(1, 21)).thenReturn(10, 2);
+        try (var dice = mockStatic(ThreadLocalRandom.class)) {
+            dice.when(ThreadLocalRandom::current).thenReturn(random);
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player2.getId());
+            assertThat(chaosDragonLogs()).isEmpty();
+            harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> harness.handleListChoice(player2, kept));
+        }
+
+        assertThat(chaosDragonLogs()).containsExactly(
+                gd.playerIdToName.get(player1.getId()) + " rolls a d20 for Chaos Dragon: 10.",
+                gd.playerIdToName.get(player2.getId()) + " flips a coin for Chaos Dragon: " + (kept.equals("Heads") ? 20 : 1) + ".");
+        assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(als.canAttackDefender(gd, dragon, player2.getId())).isEqualTo(dragonCanAttackOpponent);
+    }
+
+    private List<String> assassinFlipLogs() {
+        return gd.gameLog.stream()
+                .map(GameLogEntry::plainText)
+                .filter(log -> log.contains("coin flip for Goblin Assassin"))
+                .toList();
+    }
+
+    private List<String> contactOtherPlaneLogs() {
+        return gd.gameLog.stream()
+                .map(GameLogEntry::plainText)
+                .filter(log -> log.contains("for Contact Other Plane:"))
+                .toList();
+    }
+
+    private List<String> chaosDragonLogs() {
+        return gd.gameLog.stream()
+                .map(GameLogEntry::plainText)
+                .filter(log -> log.contains("for Chaos Dragon:"))
                 .toList();
     }
 

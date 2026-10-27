@@ -488,10 +488,17 @@ public class EffectResolutionService {
                     gameData.deathReplacementsCanRerunEffect = deathReplacementRerunWindow;
                     // Krark's Thumb: the handler's first coin flip (or one after its last checkpoint) may stop
                     // it while its player chooses which results to ignore; it is then resolved again and reads
-                    // those flips back.
+                    // those flips back. A wrapper that changes nothing before resolving its wrapped effect passes
+                    // the window on to that effect's handler.
+                    EffectHandler coinFlipHandler = handler;
+                    CardEffect coinFlipEffect = effectToResolve;
+                    while (coinFlipHandler instanceof ResolvesWrappedEffectFirst wrapper && coinFlipEffect != null) {
+                        coinFlipEffect = wrapper.wrappedEffect(coinFlipEffect);
+                        coinFlipHandler = coinFlipEffect == null ? null : registry.getHandler(coinFlipEffect);
+                    }
                     boolean coinFlipRerunWindow = gameData.effectResolutionDepth == 1
-                            && (handler instanceof ChoosesCoinFlipResultsFirst
-                            || handler instanceof ChoosesCoinFlipResultsAtCheckpoints)
+                            && (coinFlipHandler instanceof ChoosesCoinFlipResultsFirst
+                            || coinFlipHandler instanceof ChoosesCoinFlipResultsAtCheckpoints)
                             && (gameData.pendingEffectResolutionEntry == null
                             || gameData.pendingEffectResolutionEntry == entry);
                     gameData.coinFlipChoicesCanRerunEffect = coinFlipRerunWindow;
@@ -499,7 +506,7 @@ public class EffectResolutionService {
                         gameData.replayedCoinFlips = 0;
                     }
                     gameData.coinFlipCheckpointEffect = coinFlipRerunWindow
-                            && handler instanceof ChoosesCoinFlipResultsAtCheckpoints ? effectToResolve : null;
+                            && coinFlipHandler instanceof ChoosesCoinFlipResultsAtCheckpoints ? coinFlipEffect : null;
                     // Only this step's own departure may end it on a pending question (CR 616.1): not one in a
                     // nested resolution, nor one a handler dispatches for another effect.
                     gameData.stepDepartureEffect = gameData.effectResolutionDepth == 1

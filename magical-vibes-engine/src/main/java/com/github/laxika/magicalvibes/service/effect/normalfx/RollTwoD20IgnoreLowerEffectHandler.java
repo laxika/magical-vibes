@@ -7,14 +7,19 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RollTwoD20IgnoreLowerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Rolls two d20, keeps the higher result and resolves the branch for it. The roll comes before anything else, so a
+ * roll Pokey, the Scallywagg replaces with a coin flip is {@link ChoosesCoinFlipResultsFirst} for Krark's Thumb.
+ */
 @Component
 @RequiredArgsConstructor
-public class RollTwoD20IgnoreLowerEffectHandler implements NormalEffectHandlerBean {
+public class RollTwoD20IgnoreLowerEffectHandler implements NormalEffectHandlerBean, ChoosesCoinFlipResultsFirst {
 
     private final GameLogService gameLogService;
     private final D20RollService d20RollService;

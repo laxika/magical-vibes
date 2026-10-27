@@ -8,15 +8,21 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.ResolvesWrappedEffectFirst;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/**
+ * Resolves the wrapped effect only when the triggering card matches the predicate. It checks the card and changes
+ * nothing before resolving the wrapped effect, so it {@linkplain ResolvesWrappedEffectFirst passes} the Krark's Thumb
+ * choice window on to it (Goblin Assassin's "whenever another Goblin enters" flips).
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TriggeringCardConditionalEffectHandler implements NormalEffectHandlerBean {
+public class TriggeringCardConditionalEffectHandler implements NormalEffectHandlerBean, ResolvesWrappedEffectFirst {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -25,6 +31,11 @@ public class TriggeringCardConditionalEffectHandler implements NormalEffectHandl
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return TriggeringCardConditionalEffect.class;
+    }
+
+    @Override
+    public CardEffect wrappedEffect(CardEffect effect) {
+        return ((TriggeringCardConditionalEffect) effect).wrapped();
     }
 
     @Override

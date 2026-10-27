@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -16,9 +17,13 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Rolls a d20 and resolves the branch for its result. The roll comes before anything else, so a roll Pokey, the
+ * Scallywagg replaces with a coin flip is {@link ChoosesCoinFlipResultsFirst} for Krark's Thumb.
+ */
 @Component
 @RequiredArgsConstructor
-public class RollD20EffectHandler implements NormalEffectHandlerBean {
+public class RollD20EffectHandler implements NormalEffectHandlerBean, ChoosesCoinFlipResultsFirst {
 
     private final GameLogService gameLogService;
     private final D20RollService d20RollService;

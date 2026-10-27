@@ -11,17 +11,25 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Each player rolls a d20; the source can't attack the opponents with the highest result this combat. Every roll is
+ * made before anything is logged or triggers, and the rolls Pokey, the Scallywagg replaces with coin flips are
+ * flipped before any d20, so it is marked {@link ChoosesCoinFlipResultsFirst} for Krark's Thumb.
+ */
 @Component
 @RequiredArgsConstructor
-public class RollD20ForEachPlayerAndRestrictSourceAttacksEffectHandler implements NormalEffectHandlerBean {
+public class RollD20ForEachPlayerAndRestrictSourceAttacksEffectHandler implements NormalEffectHandlerBean,
+        ChoosesCoinFlipResultsFirst {
 
     private final D20RollService d20RollService;
     private final GameLogService gameLogService;
@@ -35,18 +43,29 @@ public class RollD20ForEachPlayerAndRestrictSourceAttacksEffectHandler implement
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
+        List<UUID> playerIds = List.copyOf(gameData.orderedPlayerIds);
+        List<D20RollService.D20RollResult> rolls = d20RollService.rollEach(gameData, playerIds);
         Map<UUID, Integer> results = new LinkedHashMap<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            int result = d20RollService.roll(gameData, playerId);
+        for (int i = 0; i < playerIds.size(); i++) {
+            UUID playerId = playerIds.get(i);
+            D20RollService.D20RollResult roll = rolls.get(i);
+            int result = roll.result();
             results.put(playerId, result);
             gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.getOrDefault(playerId, "A player")
-                    + " rolls a d20 for " + entry.getCard().getName() + ": " + result + "."));
-            triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
-                    gameData, playerId, 1, result);
-            triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
-                    gameData, playerId, 20, result);
-            if (result == 20) {
-                triggerCollectionService.checkControllerRollsNaturalTwentyTriggers(gameData, playerId);
+                    + (roll.wasD20Roll() ? " rolls a d20 for " : " flips a coin for ")
+                    + entry.getCard().getName() + ": " + result + "."));
+            if (roll.wasD20Roll()) {
+                triggerCollectionService.checkControllerRollsOneOrMoreDiceTriggers(
+                        gameData, playerId, 1, result);
+                triggerCollectionService.checkControllerRollsHighestNaturalResultTriggers(
+                        gameData, playerId, 20, result);
+                if (result == 20) {
+                    triggerCollectionService.checkControllerRollsNaturalTwentyTriggers(gameData, playerId);
+                }
+            } else if (result == 20) {
+                triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, playerId);
+            } else {
+                triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, playerId);
             }
         }
 

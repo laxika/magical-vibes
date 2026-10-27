@@ -79,12 +79,32 @@ public class CoinFlipService {
      * Thumb choice on any of these flips can still stop the resolving effect.
      */
     public List<CoinFlipResult> flipEach(GameData gameData, List<UUID> playerIds) {
+        return flipEach(gameData, playerIds, true);
+    }
+
+    /**
+     * Like {@link #flipEach}, for d20 rolls Pokey, the Scallywagg replaced with coin flips, which Pokey does not
+     * replace again. With no players it still closes the choice window, as any die roll does.
+     */
+    public List<CoinFlipResult> flipEachWithoutPokey(GameData gameData, List<UUID> playerIds) {
+        return flipEach(gameData, playerIds, false);
+    }
+
+    private List<CoinFlipResult> flipEach(GameData gameData, List<UUID> playerIds, boolean applyPokey) {
         boolean choiceWindow = consumeChoiceWindow(gameData);
         List<CoinFlipResult> results = new ArrayList<>(playerIds.size());
         for (UUID playerId : playerIds) {
-            results.add(toResult(flipEvent(gameData, playerId, 1, true, choiceWindow, false).getFirst()));
+            results.add(toResult(flipEvent(gameData, playerId, 1, applyPokey, choiceWindow, false).getFirst()));
         }
         return results;
+    }
+
+    /**
+     * Closes the Krark's Thumb choice window for a die roll that is not replaced by a coin flip: a roll is not read
+     * back when the effect is resolved again, so no later flip of the effect may stop it.
+     */
+    void closeChoiceWindow(GameData gameData) {
+        consumeChoiceWindow(gameData);
     }
 
     /** Performs coin-flip replacement without allowing Pokey to replace the event again. */
