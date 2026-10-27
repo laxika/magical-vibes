@@ -3,9 +3,13 @@ package com.github.laxika.magicalvibes.service.ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseThisActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromExileToBattlefieldEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -21,7 +25,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Activation limits ("Activate only once each turn") follow the ability, not its position in the
  * effective ability list: when an earlier ability is lost ("loses this ability"), later abilities
  * move up the list but keep their own activation counts. Exile-only abilities are not part of a
- * battlefield permanent's ability list, so ability indices match the list the client shows.
+ * battlefield permanent's ability list, so ability indices match the list the client shows. Granted
+ * abilities are counted per granting object (CR 602.5c), so they too keep their counts when an earlier
+ * granted ability goes away.
  */
 class ActivationLimitAbilityIdentityTest extends BaseCardTest {
 
@@ -130,5 +136,88 @@ class ActivationLimitAbilityIdentityTest extends BaseCardTest {
         activateAndResolve(0);
 
         assertThat(life()).isEqualTo(22);
+    }
+
+    private static Card createGrantingEquipment(String name, int life) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.ARTIFACT);
+        card.setSubtypes(List.of(CardSubtype.EQUIPMENT));
+        card.setManaCost("{1}");
+        card.addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                new ActivatedAbility(false, null, List.of(new GainLifeEffect(life)),
+                        "Gain " + life + " life. Activate only once each turn.", 1),
+                GrantScope.EQUIPPED_CREATURE));
+        return card;
+    }
+
+    private Permanent[] equipCreatureWithTwoGrantingEquipment() {
+        Permanent creature = addCreatureReady(player1, createBearer());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, createGrantingEquipment("Test First Gear", 2));
+        Permanent second = harness.addToBattlefieldAndReturn(player1, createGrantingEquipment("Test Second Gear", 3));
+        first.setAttachedTo(creature.getId());
+        second.setAttachedTo(creature.getId());
+        assertThat(gs.getEffectiveActivatedAbilities(gd, creature))
+                .extracting(ActivatedAbility::getDescription)
+                .containsExactly("Gain 2 life. Activate only once each turn.",
+                        "Gain 3 life. Activate only once each turn.");
+        return new Permanent[]{creature, first, second};
+    }
+
+    private static Card createBearer() {
+        Card card = new Card();
+        card.setName("Test Bearer");
+        card.setType(CardType.CREATURE);
+        card.setManaCost("{1}");
+        card.setColor(CardColor.WHITE);
+        card.setPower(1);
+        card.setToughness(1);
+        return card;
+    }
+
+    @Test
+    @DisplayName("A granted once-per-turn ability stays used after an earlier granted ability goes away")
+    void grantedAbilityStaysUsedAfterEarlierGrantEnds() {
+        Permanent first = equipCreatureWithTwoGrantingEquipment()[1];
+        activateAndResolve(1);
+
+        first.setAttachedTo(null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        assertThat(life()).isEqualTo(23);
+    }
+
+    @Test
+    @DisplayName("A granted once-per-turn ability doesn't inherit the count of an earlier granted ability that went away")
+    void grantedAbilityDoesNotInheritEarlierGrantCount() {
+        Permanent first = equipCreatureWithTwoGrantingEquipment()[1];
+        activateAndResolve(0);
+
+        first.setAttachedTo(null);
+        activateAndResolve(0);
+
+        assertThat(life()).isEqualTo(25);
+    }
+
+    @Test
+    @DisplayName("Identically worded abilities granted by two objects are each limited separately")
+    void identicallyWordedGrantsFromTwoObjectsCountSeparately() {
+        Permanent creature = addCreatureReady(player1, createBearer());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, createGrantingEquipment("Test First Gear", 2));
+        Permanent second = harness.addToBattlefieldAndReturn(player1, createGrantingEquipment("Test Second Gear", 2));
+        first.setAttachedTo(creature.getId());
+        second.setAttachedTo(creature.getId());
+        activateAndResolve(1);
+
+        first.setAttachedTo(null);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        first.setAttachedTo(creature.getId());
+        activateAndResolve(0);
+
+        assertThat(life()).isEqualTo(24);
     }
 }

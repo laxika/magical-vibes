@@ -1448,6 +1448,12 @@ public class GameData {
      *  permanent id, so a permanent that leaves and re-enters the battlefield is a new object and may
      *  activate again (CR 400.7). Never cleared at turn cleanup — only by Karn's game restart. */
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisGame = new ConcurrentHashMap<>();
+    /** Per-permanent activation-count keys of abilities its card doesn't print (granted, temporary, ...):
+     *  each such ability's identity (its acquisition, or granting object and wording, CR 602.5c) maps to
+     *  the key its uses are counted under in {@link #activatedAbilityUsesThisTurn} and
+     *  {@link #activatedAbilityUsesThisGame}. Kept for the whole game so a key never moves to another
+     *  ability when an earlier granted ability goes away. */
+    public final Map<UUID, Map<String, Integer>> nonPrintedAbilityUseKeys = new ConcurrentHashMap<>();
      /** Per-permanent count of how many times its resolution-counting ability has resolved
      *  this turn (the {@code NthAbilityResolutionThisTurn} condition, e.g. Ashling the Pilgrim or
      *  Nissa, Resurgent Animist).
@@ -10749,6 +10755,8 @@ public class GameData {
                 copy.activatedAbilityUsesThisTurn.put(k, new HashMap<>(v)));
         this.activatedAbilityUsesThisGame.forEach((k, v) ->
                 copy.activatedAbilityUsesThisGame.put(k, new HashMap<>(v)));
+        this.nonPrintedAbilityUseKeys.forEach((k, v) ->
+                copy.nonPrintedAbilityUseKeys.put(k, new ConcurrentHashMap<>(v)));
         copy.permanentAbilityResolutionsThisTurn.putAll(this.permanentAbilityResolutionsThisTurn);
 
         // --- Deques ---

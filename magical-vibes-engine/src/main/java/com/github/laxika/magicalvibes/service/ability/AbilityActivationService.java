@@ -10849,9 +10849,14 @@ public class AbilityActivationService {
      * The key an ability's activations are counted under for "activate only once each turn" and
      * similar limits. Each activated ability is its own ability (CR 113.2c), so the key follows the
      * ability rather than its position in {@link #getEffectiveActivatedAbilities}, which shifts when
-     * an earlier ability is lost ("loses this ability", losing all abilities). A printed ability is
-     * keyed by its position among the card's printed abilities (the index {@code ActivationCount}
-     * names); any other ability by its position among the permanent's non-printed abilities.
+     * an earlier ability is lost ("loses this ability", losing all abilities) or an earlier granted
+     * ability goes away. A printed ability is keyed by its position among the card's printed abilities
+     * (the index {@code ActivationCount} names). Any other ability is keyed by its identity: a restriction
+     * on an acquired ability applies only to that ability as acquired from that object (CR 602.5c), so
+     * the identity is the acquisition, or else the granting object and the ability's wording, with
+     * identically worded abilities from the same grantor told apart by their order. Static grants are
+     * rebuilt as copies on every layer pass, so object identity can't key them; the identity is mapped
+     * to a game-long key in {@code GameData.nonPrintedAbilityUseKeys}.
      */
     private int perTurnUseKey(GameData gameData, Permanent permanent, ActivatedAbility ability, int abilityIndex) {
         List<ActivatedAbility> printed = permanent.getCard().getActivatedAbilities();
@@ -10862,13 +10867,30 @@ public class AbilityActivationService {
         List<ActivatedAbility> effective = getEffectiveActivatedAbilities(gameData, permanent);
         int effectiveIndex = indexOfIdentity(effective, ability);
         int position = effectiveIndex >= 0 ? effectiveIndex : Math.min(abilityIndex, effective.size());
-        int nonPrintedBefore = 0;
+        String identity = nonPrintedAbilityIdentity(ability);
+        int earlierWithSameIdentity = 0;
         for (int i = 0; i < position; i++) {
-            if (indexOfIdentity(printed, effective.get(i)) < 0) {
-                nonPrintedBefore++;
+            ActivatedAbility earlier = effective.get(i);
+            if (indexOfIdentity(printed, earlier) < 0 && identity.equals(nonPrintedAbilityIdentity(earlier))) {
+                earlierWithSameIdentity++;
             }
         }
-        return NON_PRINTED_USE_KEY_OFFSET + nonPrintedBefore;
+        String useKeyName = identity + "#" + earlierWithSameIdentity;
+        Map<String, Integer> useKeys = gameData.nonPrintedAbilityUseKeys
+                .computeIfAbsent(permanent.getId(), ignored -> new ConcurrentHashMap<>());
+        Integer useKey = useKeys.get(useKeyName);
+        if (useKey == null) {
+            useKey = NON_PRINTED_USE_KEY_OFFSET + useKeys.size();
+            useKeys.put(useKeyName, useKey);
+        }
+        return useKey;
+    }
+
+    private static String nonPrintedAbilityIdentity(ActivatedAbility ability) {
+        if (ability.getAcquisitionId() != null) {
+            return "acquisition:" + ability.getAcquisitionId();
+        }
+        return "grantor:" + ability.getGrantSourcePermanentId() + ":" + ability.getDescription();
     }
 
     private static int indexOfIdentity(List<ActivatedAbility> abilities, ActivatedAbility ability) {

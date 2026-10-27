@@ -145,6 +145,8 @@ new ActivatedAbility(false, "{2}", List.of(new BoostSelfEffect(2, 2)),
 
 **Note:** This overload has the same parameter types as the targetFilter variant (`String` for description, then `Integer` vs `TargetFilter`), so the compiler resolves them by type. Use this when you need a per-turn limit but no target filter.
 
+**Counting:** uses are counted per ability, not per position in the effective ability list (`AbilityActivationService.perTurnUseKey`). A printed ability is keyed by its index among the card's printed abilities (what `ActivationCount` names); a granted/temporary ability by its acquisition id, or else its granting permanent + description (CR 602.5c), mapped to a stable game-long key in `GameData.nonPrintedAbilityUseKeys`. Losing an ability or an earlier grant ending therefore never moves a count onto another ability.
+
 ---
 
 ### 3b. Ability with max activations per *game* (`.withMaxActivationsPerGame`)
@@ -167,7 +169,7 @@ new ActivatedAbility(false, "{1}{R}",
             new PermanentHasSupertypePredicate(CardSupertype.SNOW))), 1, "snow Mountains")
 ```
 
-Counted in `GameData.activatedAbilityUsesThisGame` (permanent id → ability index → count), which is never cleared at turn cleanup — only by Karn's game restart. Because the count is keyed by permanent id, a permanent that leaves and re-enters the battlefield is a new object and may activate again (CR 400.7). Goblin Ski Patrol.
+Counted in `GameData.activatedAbilityUsesThisGame` (permanent id → ability use key → count), which is never cleared at turn cleanup — only by Karn's game restart. Because the count is keyed by permanent id, a permanent that leaves and re-enters the battlefield is a new object and may activate again (CR 400.7). Goblin Ski Patrol.
 
 ---
 

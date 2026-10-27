@@ -264,6 +264,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.pendingNextExhaustAbilityCopyThisTurnCount.clear();
         gameData.pendingNextExhaustAbilityCopySourcesThisTurn.clear();
         gameData.activatedAbilityUsesThisGame.clear();
+        gameData.nonPrintedAbilityUseKeys.clear();
         gameData.permanentAbilityResolutionsThisTurn.clear();
         gameData.firstResolutionTriggerKeysThisTurn.clear();
         gameData.playersWhoSearchedLibraryThisTurn.clear();
