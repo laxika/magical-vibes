@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
+import com.github.laxika.magicalvibes.service.effect.GrantedEffectAttribution;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 @CardUsed({SpectralShield.class, BalduvianBears.class, GiantGrowth.class, IcyManipulator.class, DressDown.class})
 class SpectralShieldTest extends BaseCardTest {
@@ -183,5 +186,25 @@ class SpectralShieldTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The enchanted creature lists the spell restriction attributed to Spectral Shield")
+    void enchantedCreatureListsRestrictionFromAura() {
+        Permanent bears = bearsOf(player2);
+        enchant(bears);
+        harness.addToBattlefield(player2, new DressDown());
+
+        assertThat(gqs.attachedRestrictionAttributions(gd, bears))
+                .extracting(GrantedEffectAttribution::sourceName, GrantedEffectAttribution::effect)
+                .containsExactly(tuple("Spectral Shield", TargetingRestrictionEffect.spells()));
+    }
+
+    @Test
+    @DisplayName("An unenchanted creature lists no attached restrictions")
+    void unenchantedCreatureListsNoRestriction() {
+        Permanent bears = bearsOf(player2);
+
+        assertThat(gqs.attachedRestrictionAttributions(gd, bears)).isEmpty();
     }
 }

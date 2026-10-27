@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBecomeSuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHavePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -175,6 +177,8 @@ public class GrantedAbilityViewFactory {
                     "Can't have \u22121/\u22121 counters put on it";
             case CantHavePlusOnePlusOneCountersEffect ignored ->
                     "Can't have +1/+1 counters put on it";
+            case CantBeSacrificedEffect ignored -> "Can't be sacrificed";
+            case CantBecomeSuspectedEffect ignored -> "Can't become suspected";
             default -> null;
         };
     }

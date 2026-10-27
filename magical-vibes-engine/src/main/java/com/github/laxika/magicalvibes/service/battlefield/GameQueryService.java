@@ -4706,6 +4706,19 @@ public class GameQueryService {
                 .anyMatch(attached -> matcher.test(attached.restriction()));
     }
 
+    /**
+     * Display-only attribution of the restrictions attached Auras and Equipment currently impose on
+     * {@code permanent} through {@link AttachedPermanentRestrictionEffect}, each named after the
+     * attachment imposing it, so the client can list them on the restricted permanent even though
+     * they are not abilities granted to it.
+     */
+    public List<GrantedEffectAttribution> attachedRestrictionAttributions(GameData gameData, Permanent permanent) {
+        return attachedPermanentRestrictions(gameData, permanent).stream()
+                .map(attached -> new GrantedEffectAttribution(
+                        attached.source().getCard().getName(), attached.restriction()))
+                .toList();
+    }
+
     /** One {@link AttachedPermanentRestrictionEffect} restriction and the attachment imposing it. */
     private record AttachedRestriction(Permanent source, CardEffect restriction) {
     }

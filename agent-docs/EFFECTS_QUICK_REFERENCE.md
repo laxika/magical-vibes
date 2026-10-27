@@ -5330,7 +5330,7 @@ The `CONTROLLER` form of `GivePoisonCountersEffect` is also supported as a mana-
 - `CantBeBlockedByCreaturesWithLessPowerEffect()` — STATIC: creatures with power less than this creature's power can't block it (Shrill Howler / Howling Chorus). Compared against effective powers at declaration in `GameQueryService.findBlockDenial`
 - `CantBeBlockedByCreaturesWithPowerLessThanIslandCountEffect()` — STATIC: creatures with power less than the number of Islands controlled by this creature's controller can't block it (Kraken of the Straits). Compared against current effective powers and Island count at declaration in `BlockLegalityService`
 - `CantBeBlockedIfAttackingAloneEffect()` — can't be blocked while attacking alone (static)
-- `AssignCombatDamageAsThoughUnblockedEffect()` — while blocked, may assign combat damage as though unblocked (Rhox/Thorn Elemental) (static)
+- `AssignCombatDamageAsThoughUnblockedEffect()` — while blocked, may assign combat damage as though unblocked (Rhox/Thorn Elemental) (static); an Aura carries it directly in its own STATIC (Indomitable Might), not via `GrantEffectEffect`
 - `GrantStaticEffectToOwnCreaturesUntilEndOfTurnEffect(CardEffect)` — dynamically grants a static effect to your creatures until end of turn, including creatures entering later that turn (Predatory Focus)
 - `GrantStaticEffectToOpponentCreaturesUntilEndOfTurnEffect(CardEffect)` — grants a static effect to each creature controlled by the resolving effect's controller's opponents until end of turn (Arcane Lighthouse)
 - `GrantStaticEffectToOwnPermanentsUntilEndOfTurnEffect(CardEffect)` — dynamically grants a static effect to your permanents until end of turn, including permanents entering later that turn (Display of Dominance)

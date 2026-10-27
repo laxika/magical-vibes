@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.Rancor;
@@ -18,7 +19,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IndomitableMight.class, GrizzlyBears.class, FountainOfYouth.class, Rancor.class})
+@CardUsed({IndomitableMight.class, GrizzlyBears.class, FountainOfYouth.class, Rancor.class, DressDown.class})
 class IndomitableMightTest extends BaseCardTest {
 
     @Test
@@ -131,6 +132,23 @@ class IndomitableMightTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
     }
+    @Test
+    @DisplayName("The damage option is the Aura's own and survives the creature losing all abilities")
+    void damageOptionSurvivesCreatureLosingAllAbilities() {
+        harness.setLife(player2, 20);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachAura(creature);
+        harness.addToBattlefield(player2, new DressDown());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        declareBlockers(creature, blocker);
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 5));
+
+        harness.assertLife(player2, 15);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
     private void attachAura(Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new IndomitableMight());
         aura.setAttachedTo(creature.getId());

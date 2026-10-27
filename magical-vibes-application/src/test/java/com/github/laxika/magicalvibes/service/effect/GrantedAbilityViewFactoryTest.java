@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBecomeSuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
@@ -63,6 +65,22 @@ class GrantedAbilityViewFactoryTest {
                 "Can't be the target of spells",
                 "Can't be enchanted by other Auras",
                 "Can't have \u22121/\u22121 counters put on it");
+    }
+
+    @Test
+    @DisplayName("Lists attachment-imposed restrictions that are attributed but not granted")
+    void listsAttributedAttachmentRestrictions() {
+        List<GrantedAbilityView> views = factory.create(
+                permanent("Creature"),
+                bonus(Set.of(), List.of()),
+                List.of(new GrantedEffectAttribution("Assault Suit", new CantBeSacrificedEffect()),
+                        new GrantedEffectAttribution("Airtight Alibi", new CantBecomeSuspectedEffect()),
+                        new GrantedEffectAttribution("Anti-Magic Aura", new CantBeEnchantedByOtherAurasEffect())));
+
+        assertThat(views).containsExactly(
+                new GrantedAbilityView("Can't be sacrificed", "Assault Suit"),
+                new GrantedAbilityView("Can't become suspected", "Airtight Alibi"),
+                new GrantedAbilityView("Can't be enchanted by other Auras", "Anti-Magic Aura"));
     }
 
     @Test

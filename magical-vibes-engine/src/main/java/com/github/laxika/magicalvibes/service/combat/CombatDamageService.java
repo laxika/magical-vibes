@@ -5440,6 +5440,30 @@ public class CombatDamageService {
         if (attackerControllerId != null) {
             effects.addAll(gameData.playerStaticEffectsUntilEndOfTurn.getOrDefault(attackerControllerId, List.of()));
         }
+        effects.addAll(attachedAssignAsThoughUnblockedEffects(gameData, attacker, attackerControllerId));
+        return effects;
+    }
+
+    /**
+     * The {@link AssignCombatDamageAsThoughUnblockedEffect}s that Auras attached to {@code attacker}
+     * carry as their own static abilities (Indomitable Might). They are not abilities of the
+     * creature (CR 113.10), so they keep applying after the creature loses all its abilities, but
+     * not once the Aura itself has lost its abilities or its effects are ignored for the creature's
+     * controller (Volrath's Curse).
+     */
+    private List<CardEffect> attachedAssignAsThoughUnblockedEffects(GameData gameData, Permanent attacker,
+                                                                   UUID attackerControllerId) {
+        List<CardEffect> effects = new ArrayList<>();
+        gameData.forEachPermanent((controllerId, attachment) -> {
+            if (!attachment.isAttached() || !attacker.getId().equals(attachment.getAttachedTo())
+                    || attachment.isAuraEffectsIgnoredFor(attackerControllerId)
+                    || gameQueryService.hasLostPrintedAbilities(gameData, attachment)) {
+                return;
+            }
+            attachment.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(AssignCombatDamageAsThoughUnblockedEffect.class::isInstance)
+                    .forEach(effects::add);
+        });
         return effects;
     }
 

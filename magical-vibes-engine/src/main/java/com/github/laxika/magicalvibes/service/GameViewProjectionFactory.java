@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.GrantedAbilityViewFactory;
+import com.github.laxika.magicalvibes.service.effect.GrantedEffectAttribution;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -262,8 +263,11 @@ public class GameViewProjectionFactory {
                         }
                     }
                     PermanentView view = permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.cardTypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.losesAllNonManaAbilities(), bonus.grantedSupertypes(), explained.lines(), faceUpExiledWith, faceDownExiledCount, bonus.name());
+                    List<GrantedEffectAttribution> attributions =
+                            new ArrayList<>(explained.grantedEffectAttributions());
+                    attributions.addAll(gameQueryService.attachedRestrictionAttributions(data, p));
                     views.add(view.withGrantedAbilities(grantedAbilityViewFactory.create(
-                            p, bonus, explained.grantedEffectAttributions())));
+                            p, bonus, attributions)));
                 }
                 battlefields.add(views);
             }
