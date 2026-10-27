@@ -244,6 +244,17 @@ public class ETBTokenTargetService {
             }
 
             gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
+            if (optionalTarget && validPlayerTargets.contains(pending.controllerId())) {
+                // The controller is a legal target, so "choose yourself" can't also mean "no target":
+                // an empty answer chooses zero targets for the "up to one" target (CR 601.2c, CR 603.3d).
+                playerInputService.beginMultiPermanentOrPlayerChoice(gameData, pending.controllerId(),
+                        validTargetObjects, validPlayerTargets, 1,
+                        new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.EtbOptionalTarget(pending),
+                        pending.sourceCard().getName() + "'s ability — Choose up to one target, or choose none.");
+                log.info("Game {} - {} ETB optional-target trigger awaiting target selection",
+                        gameData.id, pending.sourceCard().getName());
+                return;
+            }
             gameData.interaction.setPermanentChoiceContext(pending);
             List<UUID> validPlayerChoiceTargets = new ArrayList<>(validPlayerTargets);
             boolean controllerDeclines = optionalTarget && !validPlayerChoiceTargets.contains(pending.controllerId());
@@ -252,8 +263,6 @@ public class ETBTokenTargetService {
             }
             String targetDescription = controllerDeclines
                     ? "Choose up to one target, or choose yourself to decline."
-                    : optionalTarget
-                    ? "Choose up to one target."
                     : validSpellTargets.isEmpty()
                             ? "Choose a target."
                             : "Choose a target creature or spell.";
@@ -600,14 +609,16 @@ public class ETBTokenTargetService {
             boolean minMet = chosenInGroup >= effectiveMinTargets;
             // An optional group that can target the controller can't use "choose yourself" to stop,
             // so it asks for the whole group at once and an empty answer chooses no targets for it
-            // (CR 601.2c, CR 603.3d) — even a single-slot "up to one target player" group.
+            // (CR 601.2c, CR 603.3d) — even a single-slot "up to one target player" group, and a
+            // group that may also target graveyard or exiled cards.
             if (effectiveMinTargets == 0
-                    && validExiledCardTargets.isEmpty()
-                    && validGraveyardCardTargets.isEmpty()
                     && validPlayerTargets.contains(pending.controllerId())) {
+                List<UUID> validCardTargets = new ArrayList<>(validExiledCardTargets);
+                validCardTargets.addAll(validGraveyardCardTargets);
                 playerInputService.beginMultiPermanentOrPlayerChoice(gameData, pending.controllerId(),
-                        validPermanentTargets, validPlayerTargets,
-                        Math.min(validPermanentTargets.size() + validPlayerTargets.size(), effectiveMaxTargets - chosenInGroup),
+                        validPermanentTargets, validPlayerTargets, validCardTargets,
+                        Math.min(validPermanentTargets.size() + validPlayerTargets.size() + validCardTargets.size(),
+                                effectiveMaxTargets - chosenInGroup),
                         new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.EtbPlayerTargetGroup(pending),
                         card.getName() + "'s ability — Choose targets, or choose none.");
                 return;

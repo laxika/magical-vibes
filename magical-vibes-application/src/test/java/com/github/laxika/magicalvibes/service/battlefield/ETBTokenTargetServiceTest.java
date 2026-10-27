@@ -67,7 +67,7 @@ class ETBTokenTargetServiceTest {
         service.processNextETBTokenMultiTargetTrigger(gd);
 
         verify(playerInputService).beginMultiPermanentOrPlayerChoice(eq(gd), eq(player1Id),
-                eq(List.of()), eq(List.of(player1Id, otherPlayer)), eq(2),
+                eq(List.of()), eq(List.of(player1Id, otherPlayer)), eq(List.of()), eq(2),
                 eq(new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.EtbPlayerTargetGroup(pending)),
                 org.mockito.ArgumentMatchers.anyString());
     }
@@ -354,6 +354,24 @@ class ETBTokenTargetServiceTest {
 
         assertThat(service.controllerChoiceDeclines(gd, playerTrigger)).isFalse();
         assertThat(service.controllerChoiceDeclines(gd, creatureTrigger)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An optional single-target prompt that may target yourself asks for up to one target, so none can be chosen")
+    void optionalSingleTargetThatMayTargetTheControllerUsesAnUpToOnePrompt() {
+        gd.playerIds.add(player1Id);
+        Card card = optionalPlayerTargetCard();
+        var pending = new PermanentChoiceContext.ETBTokenTargetTrigger(card, player1Id,
+                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD), null, card.getTargetFilter(), null);
+        gd.queueInteraction(pending);
+
+        service.processNextETBTokenTargetTrigger(gd);
+
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)).isFalse();
+        verify(playerInputService).beginMultiPermanentOrPlayerChoice(eq(gd), eq(player1Id),
+                eq(List.of()), eq(List.of(player1Id)), eq(1),
+                eq(new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.EtbOptionalTarget(pending)),
+                org.mockito.ArgumentMatchers.anyString());
     }
 
     private static Card optionalPlayerTargetCard() {

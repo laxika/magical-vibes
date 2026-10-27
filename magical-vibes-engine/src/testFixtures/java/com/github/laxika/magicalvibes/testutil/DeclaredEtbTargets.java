@@ -215,7 +215,29 @@ final class DeclaredEtbTargets {
                 && etbTargetGroup(choice.context()) != null) {
             return answerTargetGroup(choice, etbTargetGroup(choice.context()));
         }
+        if (active instanceof PendingInteraction.MultiPermanentChoice choice
+                && choice.context() instanceof MultiPermanentChoiceContext.EtbOptionalTarget optional) {
+            return answerOptionalTarget(choice, optional.pending());
+        }
         return false;
+    }
+
+    /** Answers an optional single-target prompt, choosing no target when none were declared. */
+    private boolean answerOptionalTarget(PendingInteraction.MultiPermanentChoice choice,
+                                         PermanentChoiceContext.ETBTokenTargetTrigger single) {
+        Declaration declaration = find(single.sourceCard(), single.sourcePermanentId());
+        if (declaration == null) {
+            return false;
+        }
+        List<UUID> chosen = declaration.targetIds.stream()
+                .filter(id -> choice.validIds().contains(id) || choice.validPlayerIds().contains(id))
+                .limit(1)
+                .toList();
+        if (chosen.isEmpty() && !declaration.targetIds.isEmpty()) {
+            return false;
+        }
+        answer(choice.playerId(), new InteractionAnswer.PermanentsChosen(chosen), declaration, single.sourceCard());
+        return true;
     }
 
     private boolean answerSingleTarget(PendingInteraction.PermanentChoice choice,
@@ -369,6 +391,9 @@ final class DeclaredEtbTargets {
         } else if (interaction instanceof PendingInteraction.MultiPermanentChoice choice
                 && etbTargetGroup(choice.context()) != null) {
             context = etbTargetGroup(choice.context());
+        } else if (interaction instanceof PendingInteraction.MultiPermanentChoice choice
+                && choice.context() instanceof MultiPermanentChoiceContext.EtbOptionalTarget optional) {
+            context = optional.pending();
         }
         if (context instanceof PermanentChoiceContext.ETBTokenTargetTrigger single) {
             return single.sourceCard().getId().equals(card.getId());

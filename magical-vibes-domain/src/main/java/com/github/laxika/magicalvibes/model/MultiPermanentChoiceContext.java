@@ -28,6 +28,14 @@ public sealed interface MultiPermanentChoiceContext {
     record EtbPlayerTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending)
             implements MultiPermanentChoiceContext {}
 
+    /**
+     * Selects at most one target for a single-target trigger whose "up to one" target may be the
+     * controller, so an empty answer chooses no target rather than reusing the controller as a
+     * decline sentinel (CR 601.2c, CR 603.3d).
+     */
+    record EtbOptionalTarget(PermanentChoiceContext.ETBTokenTargetTrigger pending)
+            implements MultiPermanentChoiceContext {}
+
     /** Selects the two players remembered by a permanent as it enters the battlefield. */
     record ChoosePlayersAsEnter(PermanentChoiceContext.ChoosePlayerAsEnter pending)
             implements MultiPermanentChoiceContext {}

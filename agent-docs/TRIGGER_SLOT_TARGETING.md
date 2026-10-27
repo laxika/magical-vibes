@@ -822,10 +822,16 @@ source zone is the library. It includes non-mill moves such as Call of the Wild;
 Optional target groups of the slot-by-slot walker (any size, including a single "up to one
 target player" slot such as Volatile Arsonist's) use
 `MultiPermanentChoiceContext.EtbPlayerTargetGroup` when the controller is a legal target for the
-group and it has no graveyard or exiled-card candidates. The whole group is chosen in one answer
-(`harness.handleMultiplePermanentsChosen`); an empty selection declines it, leaving the controller
-available as an actual target. Groups that can't target the controller keep the single-slot prompt,
-where choosing yourself stops the group.
+group; any exiled-card candidates are offered in the same prompt (`validCardIds`). The whole group
+is chosen in one answer (`harness.handleMultiplePermanentsChosen`); an empty selection declines it,
+leaving the controller available as an actual target. Groups that can't target the controller keep
+the single-slot prompt, where choosing yourself stops the group.
+
+The single-target `PermanentChoiceContext.ETBTokenTargetTrigger` prompt works the same way: an
+optional ("up to one") target that the controller could legally take opens a
+`MultiPermanentChoiceContext.EtbOptionalTarget` prompt with at most one pick, and an empty answer
+puts the ability on the stack without a target. Only when the controller isn't a legal target does
+the prompt keep "choose yourself to decline" (`ETBTokenTargetService.controllerChoiceDeclines`).
 
 End-of-combat planar abilities with multiple declared target groups use the same slot-by-slot
 walker as ETB token triggers. A dependent constraint can filter later groups from the first

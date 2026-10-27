@@ -396,6 +396,9 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.EtbGraveyardCardTargetGroup graveyardGroup) {
             validateAtMostOneCardPerGraveyard(gameData, graveyardGroup.pending().sourceCard(), permanentIds);
         }
+        if (context instanceof MultiPermanentChoiceContext.EtbPlayerTargetGroup playerGroup) {
+            validateAtMostOneCardPerGraveyard(gameData, playerGroup.pending().sourceCard(), permanentIds);
+        }
         if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice
                 && permanentIds.size() != maxCount) {
             throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to sacrifice");
@@ -946,6 +949,8 @@ public class MultiPermanentChoiceHandlerService {
             battlefieldHandler.handleChoosePlayersAsEnter(gameData, permanentIds, ctx.pending());
         } else if (context instanceof MultiPermanentChoiceContext.EtbPlayerTargetGroup ctx) {
             triggerHandler.handleEtbPlayerTargetGroup(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EtbOptionalTarget ctx) {
+            triggerHandler.handleEtbOptionalTarget(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EtbGraveyardCardTargetGroup ctx) {
             triggerHandler.handleEtbGraveyardCardTargetGroup(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SelfTriggeredAbilityTargets ctx) {

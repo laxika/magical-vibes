@@ -2272,17 +2272,39 @@ public class PermanentChoiceTriggerHandlerService {
         advanceETBTokenMultiTargetTrigger(gameData, completedGroup, null);
     }
 
+    /**
+     * Completes an optional single-target trigger whose prompt could not use the controller as a
+     * decline sentinel: no chosen target puts the ability on the stack without one (CR 601.2c,
+     * CR 603.3d), and a chosen controller is targeted.
+     */
+    public void handleEtbOptionalTarget(GameData gameData, List<UUID> targets,
+            MultiPermanentChoiceContext.EtbOptionalTarget context) {
+        if (targets.isEmpty()) {
+            completeETBTokenTargetTrigger(gameData, null, context.pending(), true);
+            return;
+        }
+        UUID targetId = targets.getFirst();
+        if (etbTokenTargetService.handleETBTokenTargetChosen(gameData, targetId, context.pending())) {
+            return;
+        }
+        completeETBTokenTargetTrigger(gameData, targetId, context.pending(), false);
+    }
+
     public void handleETBTokenTargetTrigger(GameData gameData, UUID targetId, PermanentChoiceContext.ETBTokenTargetTrigger etbTtt) {
         if (etbTokenTargetService.handleETBTokenTargetChosen(gameData, targetId, etbTtt)) {
             return;
         }
-
-        StackEntry entry;
-        StackEntry selectedSpell = gameQueryService.findStackEntryByCardId(gameData, targetId);
-        boolean spellTarget = selectedSpell != null && isSpell(selectedSpell);
-        boolean declined = !spellTarget
-                && etbTtt.controllerId().equals(targetId)
+        boolean declined = etbTtt.controllerId().equals(targetId)
                 && etbTokenTargetService.controllerChoiceDeclines(gameData, etbTtt);
+        completeETBTokenTargetTrigger(gameData, targetId, etbTtt, declined);
+    }
+
+    private void completeETBTokenTargetTrigger(GameData gameData, UUID targetId,
+            PermanentChoiceContext.ETBTokenTargetTrigger etbTtt, boolean declinedTarget) {
+        StackEntry entry;
+        StackEntry selectedSpell = targetId == null ? null : gameQueryService.findStackEntryByCardId(gameData, targetId);
+        boolean spellTarget = selectedSpell != null && isSpell(selectedSpell);
+        boolean declined = !spellTarget && declinedTarget;
         if (spellTarget) {
             entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -2306,7 +2328,7 @@ public class PermanentChoiceTriggerHandlerService {
                      etbTtt.sourceCard().getName() + "'s ETB ability",
                      new ArrayList<>(etbTtt.effects()),
                      declined ? (UUID) null : targetId,
-                     gameData.findExiledCard(targetId) != null ? Zone.EXILE : null,
+                     targetId != null && gameData.findExiledCard(targetId) != null ? Zone.EXILE : null,
                      etbTtt.sourcePermanentId()
              );
         }

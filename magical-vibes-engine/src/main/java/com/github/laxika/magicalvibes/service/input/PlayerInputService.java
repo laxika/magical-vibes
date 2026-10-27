@@ -467,9 +467,19 @@ public class PlayerInputService {
                                                    List<UUID> validPermanentIds,
                                                    List<UUID> validPlayerIds, int maxCount,
                                                    MultiPermanentChoiceContext context, String prompt) {
+        beginMultiPermanentOrPlayerChoice(gameData, playerId, validPermanentIds, validPlayerIds, List.of(),
+                maxCount, context, prompt);
+    }
+
+    /** Selects any mix of permanents, players and graveyard or exiled cards, up to {@code maxCount}. */
+    public void beginMultiPermanentOrPlayerChoice(GameData gameData, UUID playerId,
+                                                   List<UUID> validPermanentIds,
+                                                   List<UUID> validPlayerIds, List<UUID> validCardIds,
+                                                   int maxCount, MultiPermanentChoiceContext context,
+                                                   String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiPermanentChoice(
                 playerId, new ArrayList<>(validPermanentIds), new ArrayList<>(validPlayerIds),
-                maxCount, context, prompt));
+                new ArrayList<>(validCardIds), maxCount, context, prompt));
     }
 
     /** Asks the spell's controller whether rebound or plot replaces the spell going to the graveyard (CR 616.1). */

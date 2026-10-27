@@ -9,43 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 63. Declining "up to one target player" in single-target and graveyard-mixed trigger prompts
-
-**Status:** open · **Found:** 2026-10-26, while finishing entry 48 (declining optional player groups)
-
-**Failing tests:**
-- None yet; found by reading the code. Write a test first (a single-group "up to one target player"
-  trigger whose controller declines).
-
-**What the rules require.** "Up to one target" lets the controller choose zero targets for that
-instance of "target" (CR 601.2c, applied to triggered abilities by CR 603.3d). Entry 48 gave the
-slot-by-slot walker (`ETBTokenTargetService.processNextETBTokenMultiTargetTrigger`) an empty-answer
-decline for optional groups that can target the controller. Two prompts still treat "choose
-yourself" as both "decline" and "target myself": the single-target `ETBTokenTargetTrigger`
-(`ETBTokenTargetService.controllerChoiceDeclines` only declines when the controller is not a legal
-target, so an optional "up to one target player" trigger can't be declined), and walker groups that
-mix player targets with graveyard or exiled-card candidates (they skip the `EtbPlayerTargetGroup`
-prompt).
-
-**Why it's large.** The single-target prompt is a `PermanentChoice` shared by many trigger types
-and the AI; it needs a distinct decline answer (or routing through a multi-choice prompt) and the
-tests and AI that answer it must follow.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 63: let the controller decline an optional ("up to one")
-trigger target that they could also legally target themselves, in the single-target
-ETBTokenTargetTrigger prompt and in walker groups that mix players with graveyard/exiled cards.
-Find a card with a single "up to one target player" trigger, write a failing decline test, then
-give the prompt a decline answer distinct from choosing the controller (see how entry 48 used
-MultiPermanentChoiceContext.EtbPlayerTargetGroup). Update the AI and harness answering code.
-Verify every CR number with the rules MCP. Don't run the full test suite; ask me. Don't commit
-until I say so.
-```
-
----
-
 ## 64. Own library top hidden while a temporary grant opens another player's library
 
 **Status:** open · **Found:** 2026-10-26, while finishing entry 49 (playing from any player's library)
