@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +28,9 @@ import java.util.UUID;
  * @param deferredTriggers  triggers this activation deferred into
  *                          {@link GameData#pendingManaAbilityTriggers}
  * @param allManaBefore     per-colour totals across all mana buckets before resolution
+ * @param standalone        the activation was made with priority and no payment in progress, so
+ *                          once its colour is chosen its controller receives priority and its
+ *                          non-mana triggers go on the stack instead of being held revertable
  */
 public record PendingManaActivation(
         UUID playerId,
@@ -34,12 +38,38 @@ public record PendingManaActivation(
         EnumMap<ManaColor, Integer> poolBefore,
         EnumMap<ManaColor, Integer> creatureManaBefore,
         List<StackEntry> deferredTriggers,
-        EnumMap<ManaColor, Integer> allManaBefore
+        EnumMap<ManaColor, Integer> allManaBefore,
+        boolean standalone
 ) {
     public PendingManaActivation(UUID playerId, UUID permanentId,
                                  EnumMap<ManaColor, Integer> poolBefore,
                                  EnumMap<ManaColor, Integer> creatureManaBefore,
+                                 List<StackEntry> deferredTriggers,
+                                 EnumMap<ManaColor, Integer> allManaBefore) {
+        this(playerId, permanentId, poolBefore, creatureManaBefore, deferredTriggers, allManaBefore, false);
+    }
+
+    public PendingManaActivation(UUID playerId, UUID permanentId,
+                                 EnumMap<ManaColor, Integer> poolBefore,
+                                 EnumMap<ManaColor, Integer> creatureManaBefore,
                                  List<StackEntry> deferredTriggers) {
-        this(playerId, permanentId, poolBefore, creatureManaBefore, deferredTriggers, poolBefore);
+        this(playerId, permanentId, poolBefore, creatureManaBefore, deferredTriggers, poolBefore, false);
+    }
+
+    /** This activation marked as made on its own, with no payment in progress. */
+    public PendingManaActivation asStandalone() {
+        return new PendingManaActivation(playerId, permanentId, poolBefore, creatureManaBefore,
+                deferredTriggers, allManaBefore, true);
+    }
+
+    /** This activation with {@code moreTriggers} also deferred by it. */
+    public PendingManaActivation withMoreDeferredTriggers(List<StackEntry> moreTriggers) {
+        if (moreTriggers.isEmpty()) {
+            return this;
+        }
+        List<StackEntry> all = new ArrayList<>(deferredTriggers);
+        all.addAll(moreTriggers);
+        return new PendingManaActivation(playerId, permanentId, poolBefore, creatureManaBefore,
+                List.copyOf(all), allManaBefore, standalone);
     }
 }

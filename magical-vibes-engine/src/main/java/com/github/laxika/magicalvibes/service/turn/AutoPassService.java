@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaActivation;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -23,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -119,11 +123,7 @@ public class AutoPassService {
 
         // CR 603.3 / 117.5: Flush any mana-ability triggers that are still pending.
         // This ensures they reach the stack before auto-pass can skip past them.
-        if (!gameData.pendingManaAbilityTriggers.isEmpty()) {
-            gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
-            gameData.pendingManaAbilityTriggers.clear();
-            gameData.priorityPassedBy.clear();
-        }
+        flushUnheldManaAbilityTriggers(gameData);
 
         // CR 603.3c: modal triggers already on the stack announce their mode before anyone gets priority.
         if (stackedModalTriggerService.announceNextMode(gameData)) {
@@ -341,6 +341,14 @@ public class AutoPassService {
             log.info("Game {} - Auto-passing priority for {} on step {}",
                     gameData.id, playerName, gameData.currentStep);
 
+            // Passing closes the cancel-casting undo window, so triggers still held for it go on
+            // the stack first, as an explicit pass would put them there.
+            if (!gameData.pendingManaAbilityTriggers.isEmpty()) {
+                gameData.revertableManaActivations.clear();
+                gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
+                gameData.pendingManaAbilityTriggers.clear();
+                gameData.priorityPassedBy.clear();
+            }
             gameData.priorityPassedBy.add(priorityHolder);
 
             // CR 117.4: the step ends only once every player has passed in succession.
@@ -358,6 +366,30 @@ public class AutoPassService {
         // Safety: if we somehow looped 100 times, broadcast current state and stop
         log.warn("Game {} - resolveAutoPass hit safety limit", gameData.id);
         invalidateForAllPlayers(gameData);
+    }
+
+    /**
+     * Puts pending mana-ability triggers on the stack, except those deferred by an activation the
+     * cancel-casting UI can still undo: that activation was made to pay for a cast or activation the
+     * client is holding back, and its triggers wait to go on the stack above it.
+     */
+    private void flushUnheldManaAbilityTriggers(GameData gameData) {
+        if (gameData.pendingManaAbilityTriggers.isEmpty()) {
+            return;
+        }
+        Set<StackEntry> held = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (ManaActivation revertable : gameData.revertableManaActivations) {
+            held.addAll(revertable.deferredTriggers());
+        }
+        List<StackEntry> ready = gameData.pendingManaAbilityTriggers.stream()
+                .filter(entry -> !held.contains(entry))
+                .toList();
+        if (ready.isEmpty()) {
+            return;
+        }
+        gameData.stack.addAll(ready);
+        gameData.pendingManaAbilityTriggers.removeIf(entry -> !held.contains(entry));
+        gameData.priorityPassedBy.clear();
     }
 
     /**

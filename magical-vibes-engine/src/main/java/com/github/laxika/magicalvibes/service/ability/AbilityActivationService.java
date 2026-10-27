@@ -727,8 +727,15 @@ public class AbilityActivationService {
      * Completes an activation that tapped its source and then stopped for a colour choice: the
      * parked snapshot is diffed against the pool now that the chosen mana has landed. Called by the
      * colour-choice answer handler, which is the first moment the produced mana exists.
+     *
+     * <p>A standalone activation (no payment in progress) whose triggers are about to go on the
+     * stack is not recorded: a trigger on the stack can't be taken back, so the activation leaves
+     * the cancel-casting undo window, as one that finishes without a prompt does.
      */
     public static void completeParkedManaActivation(GameData gameData, PendingManaActivation parked) {
+        if (parked.standalone() && !parked.deferredTriggers().isEmpty()) {
+            return;
+        }
         if (parked.poolBefore() != null) {
             recordRevertableManaActivation(gameData, parked.playerId(), parked.permanentId(),
                     parked.poolBefore(), parked.creatureManaBefore(), parked.deferredTriggers());

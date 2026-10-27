@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingManaActivation;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaActivation;
@@ -2287,8 +2288,9 @@ public class GameService {
                 activateDuringManaPayment(gameData, activation);
             } else {
                 int revertableBefore = gameData.revertableManaActivations.size();
+                PendingManaActivation parkedBefore = gameData.pendingRevertableManaActivation;
                 activation.run();
-                finishPriorityManaActivation(gameData, revertableBefore, paymentIntent);
+                finishPriorityManaActivation(gameData, revertableBefore, parkedBefore, paymentIntent);
             }
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
         }
@@ -2443,6 +2445,7 @@ public class GameService {
             Runnable activation = () -> abilityActivationService.activateAbility(gameData, activatingPlayer,
                     permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments);
             int revertableBefore = gameData.revertableManaActivations.size();
+            PendingManaActivation parkedBefore = gameData.pendingRevertableManaActivation;
             if (normalPriorityActivation) {
                 activation.run();
             } else {
@@ -2450,7 +2453,7 @@ public class GameService {
             }
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
             if (normalPriorityActivation && manaActivation) {
-                finishPriorityManaActivation(gameData, revertableBefore, paymentIntent);
+                finishPriorityManaActivation(gameData, revertableBefore, parkedBefore, paymentIntent);
             }
         }
     }
@@ -2478,13 +2481,30 @@ public class GameService {
      * activation leaves the cancel-casting undo window. One activated to pay for a cast or
      * activation the client is holding back keeps its triggers waiting, still revertable, until
      * that spell or ability is put on the stack.
+     *
+     * <p>A standalone activation that stopped for a colour choice is marked standalone, so the
+     * answer finishes it the same way once the mana exists (see {@link #handleInteractionAnswer}).
      */
     private void finishPriorityManaActivation(GameData gameData, int revertableBefore,
+                                              PendingManaActivation parkedBefore,
                                               ManaPaymentIntent paymentIntent) {
         if (paymentIntent != null) {
             flushManaAbilityTriggersAfterActivation(gameData);
             return;
         }
+        PendingManaActivation parked = gameData.pendingRevertableManaActivation;
+        if (parked != null && parked != parkedBefore) {
+            gameData.pendingRevertableManaActivation = parked.asStandalone();
+        }
+        flushStandaloneManaActivationTriggers(gameData, revertableBefore);
+    }
+
+    /**
+     * Puts the triggers of a standalone mana activation on the stack and drops the activations
+     * recorded since {@code revertableBefore} that deferred them from the undo window. Triggers
+     * still held by an earlier revertable activation (one tapped to pay for a held-back cast) wait.
+     */
+    private void flushStandaloneManaActivationTriggers(GameData gameData, int revertableBefore) {
         List<ManaActivation> activations = gameData.revertableManaActivations;
         for (int i = activations.size() - 1; i >= Math.min(revertableBefore, activations.size()); i--) {
             if (!activations.get(i).deferredTriggers().isEmpty()) {
@@ -2725,6 +2745,8 @@ public class GameService {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             int deferredManaTriggersBefore = gameData.pendingManaAbilityTriggers.size();
+            int revertableBefore = gameData.revertableManaActivations.size();
+            PendingManaActivation parkedBefore = gameData.pendingRevertableManaActivation;
             if (!interactionHandlerRegistry.dispatchAnswer(gameData, player, answer)) {
                 throw new IllegalStateException(
                         "Not awaiting " + answer.getClass().getSimpleName() + " input");
@@ -2734,8 +2756,13 @@ public class GameService {
             if (gameData.status != GameStatus.FINISHED && !gameData.interaction.isAwaitingInput()) {
                 interactionHandlerRegistry.resumeSuspended(gameData);
             }
-            // A cost choice (sacrifice, graveyard exile, ...) can complete a mana ability.
-            if (gameData.pendingManaAbilityTriggers.size() > deferredManaTriggersBefore) {
+            // A standalone activation that stopped for its colour has now resolved, and its
+            // controller receives priority (CR 117.3c), so its triggers go on the stack (CR 603.3).
+            if (parkedBefore != null && parkedBefore.standalone()
+                    && gameData.pendingRevertableManaActivation != parkedBefore) {
+                flushStandaloneManaActivationTriggers(gameData, revertableBefore);
+            } else if (gameData.pendingManaAbilityTriggers.size() > deferredManaTriggersBefore) {
+                // A cost choice (sacrifice, graveyard exile, ...) can complete a mana ability.
                 flushManaAbilityTriggersAfterActivation(gameData);
             }
         }

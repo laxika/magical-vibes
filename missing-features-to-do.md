@@ -9,42 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 56. A standalone "any colour" mana activation still holds its non-mana triggers
-
-**Status:** open · **Found:** 2026-10-25, while finishing entry 39 (mana-ability trigger timing)
-
-**Failing tests:**
-- None yet. Write one: activate Birds of Paradise (or a land whose mana needs a colour prompt) with no
-  payment intent while a non-mana trigger watches it, answer the colour prompt, and expect the trigger on
-  the stack.
-
-**What the rules require.** CR 603.3: a triggered ability goes on the stack the next time a player would
-receive priority. A mana ability activated with no payment in progress resolves, and its controller then
-receives priority (CR 117.3c), so its non-mana triggers belong on the stack then. Since entry 39,
-`GameService.finishPriorityManaActivation` does this for activations that finish at once. An activation that
-stops for a colour choice parks in `GameData.pendingRevertableManaActivation`. The answer handlers then
-complete it into a revertable `ManaActivation`, and `GameService.handleInteractionAnswer` still uses the
-old flush, which waits while any revertable activation exists. So with no payment intent, its triggers
-wait until the next priority pass or cast.
-
-**Why it's large.** The payment intent is only known on the `tapPermanent`/`activateAbility` call. To
-carry it across the colour prompt, `PendingManaActivation` (or a sibling field) has to record "standalone",
-and every `completeParkedManaActivation` call site in `ChoiceHandlerService` (about ten) has to commit
-instead of recording a revertable activation. Then the answer path needs the standalone flush.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 56: when a mana ability activated with no ManaPaymentIntent
-parks for a colour choice (pendingRevertableManaActivation), make its non-mana triggers go on the stack once
-the colour is chosen (CR 603.3, CR 117.3c), and make that activation non-revertable, matching what
-GameService.finishPriorityManaActivation already does for activations that finish at once. Keep
-intent-tagged (payment) activations held and revertable. Add tests next to ManaActivationRevertTest. Don't
-run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 57. Per-unit copy riders for Pyromancer's Goggles and Primal Wellspring
 
 **Status:** open · **Found:** 2026-10-25, while finishing entry 40 (Sunken Palace's per-unit copy rider)

@@ -2134,6 +2134,7 @@ public class ChoiceHandlerService {
         if (parkedActivation == null || !parkedActivation.playerId().equals(playerId)) {
             return;
         }
+        List<StackEntry> answerTriggers = new ArrayList<>();
         Permanent source = gameQueryService.findPermanentById(gameData, parkedActivation.permanentId());
         if (source == null) {
             // The source left the battlefield as its mana ability resolved (Gemstone Mine's final
@@ -2150,6 +2151,7 @@ public class ChoiceHandlerService {
                             gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));
                     gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()).clear();
                     gameData.pendingManaAbilityTriggers.addAll(triggers);
+                    answerTriggers.addAll(triggers);
                 }
             }
         }
@@ -2166,9 +2168,13 @@ public class ChoiceHandlerService {
                         gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));
                 gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()).clear();
                 gameData.pendingManaAbilityTriggers.addAll(triggers);
+                answerTriggers.addAll(triggers);
             }
         }
-        AbilityActivationService.completeParkedManaActivation(gameData, parkedActivation);
+        // Triggers the chosen colour fires belong to the activation too: reverting it removes them,
+        // and a standalone activation that has any stops being revertable.
+        AbilityActivationService.completeParkedManaActivation(gameData,
+                parkedActivation.withMoreDeferredTriggers(answerTriggers));
     }
 
     private java.util.Set<ManaColor> newlyProducedColors(GameData gameData, PendingManaActivation parkedActivation,

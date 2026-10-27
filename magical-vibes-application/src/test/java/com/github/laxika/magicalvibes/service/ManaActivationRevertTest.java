@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.Manalith;
 import com.github.laxika.magicalvibes.cards.r.RelicPutrescence;
 import com.github.laxika.magicalvibes.cards.s.SilverMyr;
 import com.github.laxika.magicalvibes.cards.w.WanderwineHub;
@@ -258,6 +259,83 @@ class ManaActivationRevertTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+    }
+
+    @Test
+    @DisplayName("An any-colour mana ability activated on its own puts its trigger on the stack once the colour is chosen")
+    void standaloneAnyColorActivationCommitsAfterColorChoice() {
+        Permanent manalith = enchantedManalith();
+        harness.ensurePriority(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).isEmpty();
+
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY));
+        assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+        assertThat(gd.revertableManaActivations).isEmpty();
+
+        gs.revertManaActivations(gd, player1);
+
+        assertThat(manalith.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A standalone any-colour activation leaves earlier payment taps revertable and their triggers held")
+    void standaloneAnyColorActivationKeepsEarlierPaymentTapsHeld() {
+        Permanent myr = enchantedSilverMyr();
+        Permanent manalith = enchantedManalith();
+        harness.setHand(player1, List.of(createGreenCreature()));
+        harness.ensurePriority(player1);
+
+        harness.tapPermanentToPayFor(player1, 0, ManaPaymentIntent.forCast(0, 0));
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+
+        gs.revertManaActivations(gd, player1);
+
+        assertThat(myr.isTapped()).isFalse();
+        assertThat(manalith.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An any-colour mana ability activated to pay for a cast holds its trigger past the colour choice")
+    void paymentAnyColorActivationHoldsTriggerAfterColorChoice() {
+        Permanent manalith = enchantedManalith();
+        harness.setHand(player1, List.of(createGreenCreature()));
+        harness.ensurePriority(player1);
+
+        harness.activateAbilityToPayFor(player1, 0, ManaPaymentIntent.forCast(0, 0));
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+
+        gs.revertManaActivations(gd, player1);
+
+        assertThat(manalith.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private Permanent enchantedManalith() {
+        Permanent manalith = harness.addToBattlefieldAndReturn(player1, new Manalith());
+        manalith.setSummoningSick(false);
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new RelicPutrescence());
+        aura.setAttachedTo(manalith.getId());
+        return manalith;
     }
 
     private Permanent enchantedSilverMyr() {
