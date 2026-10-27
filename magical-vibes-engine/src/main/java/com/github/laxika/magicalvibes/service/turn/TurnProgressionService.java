@@ -1144,7 +1144,7 @@ public class TurnProgressionService {
         gameData.creaturesAttackedCountBySubtypeThisTurn.clear();
         gameData.permanentsThatAttackedBattlesThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
-        gameData.playersMaxSpellsThisTurn.clear();
+        gameData.clearSpellLimitsThisTurn();
         Set<CardType> nextTurnRestrictedTypes = gameData.playersCantCastSpellTypesNextTurn.remove(nextActive);
         if (nextTurnRestrictedTypes != null) {
             gameData.playersCantCastSpellTypesThisTurn.merge(nextActive, nextTurnRestrictedTypes,

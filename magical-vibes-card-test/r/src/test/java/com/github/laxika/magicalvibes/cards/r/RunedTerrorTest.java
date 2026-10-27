@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AbandonThePost;
 import com.github.laxika.magicalvibes.cards.a.AerialManeuver;
+import com.github.laxika.magicalvibes.cards.a.AngelOfGrace;
+import com.github.laxika.magicalvibes.cards.a.AngelsGrace;
 import com.github.laxika.magicalvibes.cards.b.BlindFury;
 import com.github.laxika.magicalvibes.cards.b.BorneUponAWind;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
@@ -11,6 +13,7 @@ import com.github.laxika.magicalvibes.cards.e.EerieInterference;
 import com.github.laxika.magicalvibes.cards.f.Fog;
 import com.github.laxika.magicalvibes.cards.g.GildedLight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IrencragFeat;
 import com.github.laxika.magicalvibes.cards.m.Microscope;
 import com.github.laxika.magicalvibes.cards.o.Overblaze;
 import com.github.laxika.magicalvibes.cards.s.SafePassage;
@@ -42,7 +45,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         SamiteHealer.class, Fog.class, SafePassage.class, EerieInterference.class, Skullcrack.class, Silence.class,
         GildedLight.class, BorneUponAWind.class, DebtOfLoyalty.class, SkeletonScavengers.class, SoldeviSentry.class,
         Microscope.class, DarksteelCitadel.class, BlindFury.class, Overblaze.class, GrizzlyBears.class,
-        ZameckGuildmage.class, DueRespect.class})
+        ZameckGuildmage.class, DueRespect.class, AngelsGrace.class, AngelOfGrace.class, IrencragFeat.class})
 class RunedTerrorTest extends BaseCardTest {
 
     @Test
@@ -594,5 +597,99 @@ class RunedTerrorTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gd.allPermanentsEnterTappedThisTurn).isFalse();
+    }
+
+    @Test
+    void playerStaticEffectsFromOtherPlayersPhaseSurviveActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new AngelsGrace()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0);
+        assertThat(gd.playerStaticEffectsUntilEndOfTurn.get(player2.getId())).hasSize(2);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.playerStaticEffectsUntilEndOfTurn.get(player2.getId())).hasSize(2);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.playerStaticEffectsUntilEndOfTurn).isEmpty();
+    }
+
+    @Test
+    void spellLimitFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new IrencragFeat()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player2, 0);
+        harness.passBothPriorities();
+        assertThat(gd.playersMaxSpellsThisTurn).containsEntry(player2.getId(), 2);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.playersMaxSpellsThisTurn).containsEntry(player2.getId(), 2);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.playersMaxSpellsThisTurn).isEmpty();
+    }
+
+    @Test
+    void looserSpellLimitHiddenByTighterOneOutlivesTheTighterOnesCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gd.limitSpellsThisTurn(player1.getId(), 1);
+        gs.advanceStep(gd);
+        gd.limitSpellsThisTurn(player1.getId(), 3);
+        assertThat(gd.playersMaxSpellsThisTurn).containsEntry(player1.getId(), 1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.playersMaxSpellsThisTurn).containsEntry(player1.getId(), 3);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.playersMaxSpellsThisTurn).isEmpty();
+    }
+
+    @Test
+    void lifeFloorRepeatedDuringOtherPlayersPhaseOutlivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        castAngelOfGrace();
+        gs.advanceStep(gd);
+        castAngelOfGrace();
+        assertThat(gd.damageLifeFloorsUntilEndOfTurn).containsEntry(player1.getId(), 1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.damageLifeFloorsUntilEndOfTurn).containsEntry(player1.getId(), 1);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.damageLifeFloorsUntilEndOfTurn).isEmpty();
+    }
+
+    @Test
+    void activePlayersOwnLifeFloorEndsAtTheirCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        castAngelOfGrace();
+        assertThat(gd.damageLifeFloorsUntilEndOfTurn).containsEntry(player1.getId(), 1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(gd.damageLifeFloorsUntilEndOfTurn).isEmpty();
+    }
+
+    private void castAngelOfGrace() {
+        harness.setHand(player1, List.of(new AngelOfGrace()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 }

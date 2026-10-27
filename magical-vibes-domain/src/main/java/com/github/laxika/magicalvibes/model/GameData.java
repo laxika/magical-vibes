@@ -1752,6 +1752,12 @@ public class GameData {
     public boolean damageCantBePreventedThisTurn = false;
     /** Per-player life floors imposed by resolving effects until end of turn (Angel of Grace). */
     public final Map<UUID, Integer> damageLifeFloorsUntilEndOfTurn = new ConcurrentHashMap<>();
+    /**
+     * Every floor merged into {@link #damageLifeFloorsUntilEndOfTurn} this turn, as {@code (player, floor)} pairs.
+     * The map keeps only the highest floor, so these are what lets a lower floor created during another player's
+     * phase outlive the cleanup step that ends the higher one under Runed Terror's sequential phases.
+     */
+    public final List<Map.Entry<UUID, Integer>> damageLifeFloorContributionsUntilEndOfTurn = new CopyOnWriteArrayList<>();
     /** Active global damage replacement effects registered by spells for the current turn. */
     public final List<ReplaceDamageAboveThresholdThisTurnEffect> damageReplacementsThisTurn =
             Collections.synchronizedList(new ArrayList<>());
@@ -2075,6 +2081,12 @@ public class GameData {
 
     /** Maximum total spells each player may cast this turn from resolution-time restrictions. */
     public final Map<UUID, Integer> playersMaxSpellsThisTurn = new ConcurrentHashMap<>();
+    /**
+     * Every limit merged into {@link #playersMaxSpellsThisTurn} this turn, as {@code (player, limit)} pairs. The map
+     * keeps only the most restrictive limit, so these are what lets a looser limit created during another player's
+     * phase outlive the cleanup step that ends the tighter one under Runed Terror's sequential phases.
+     */
+    public final List<Map.Entry<UUID, Integer>> playersMaxSpellsContributionsThisTurn = new CopyOnWriteArrayList<>();
 
     /** Players who can't cast spells for the rest of the game because an Epic spell resolved. */
     public final Set<UUID> playersCantCastSpellsForRestOfGame = ConcurrentHashMap.newKeySet();
@@ -4799,7 +4811,8 @@ public class GameData {
      * and attack restrictions, player protections, casting / activation restrictions and permissions,
      * "this turn" zone-change replacements, graveyard card animations, Circle of Protection colour shields, damage
      * doublings, bonuses and replacements, enter-tapped and extra-counter replacements, block requirements, extra
-     * loyalty activations and the mana-fixing / mana-replacement stores), which the cleanup step clears
+     * loyalty activations, the mana-fixing / mana-replacement stores, player-granted static effects, damage life
+     * floors and spell limits), which the cleanup step clears
      * (CR 514.2). Used to split that state between the players active when it was created under Runed Terror's sequential phases.
      */
     public EndOfTurnStateShare captureGameEndOfTurnState() {
@@ -4941,6 +4954,9 @@ public class GameData {
             case GAME_PLAYERS_WITH_WHITE_MANA_AS_ANY_COLOR -> playersWithWhiteManaAsAnyColorThisTurn;
             case GAME_PLAYERS_WITH_LAND_MANA_CHOICE_REPLACEMENT -> playersWithLandManaChoiceReplacementThisTurn;
             case GAME_LAND_MANA_FIXED_COLOR -> Set.copyOf(plainMapEntries(landManaFixedColorThisTurn));
+            case GAME_PLAYER_STATIC_EFFECTS -> listMapEntries(playerStaticEffectsUntilEndOfTurn);
+            case GAME_DAMAGE_LIFE_FLOORS -> List.copyOf(damageLifeFloorContributionsUntilEndOfTurn);
+            case GAME_SPELL_LIMITS -> List.copyOf(playersMaxSpellsContributionsThisTurn);
             default -> null;
         };
     }
@@ -5109,6 +5125,13 @@ public class GameData {
                     playersWithLandManaChoiceReplacementThisTurn.addAll((Set<UUID>) value);
             case GAME_LAND_MANA_FIXED_COLOR -> ((Set<Map.Entry<UUID, ManaColor>>) value)
                     .forEach(entry -> landManaFixedColorThisTurn.put(entry.getKey(), entry.getValue()));
+            case GAME_PLAYER_STATIC_EFFECTS -> ((List<Map.Entry<UUID, CardEffect>>) value).forEach(entry ->
+                    playerStaticEffectsUntilEndOfTurn.computeIfAbsent(entry.getKey(), key -> new ArrayList<>())
+                            .add(entry.getValue()));
+            case GAME_DAMAGE_LIFE_FLOORS -> ((List<Map.Entry<UUID, Integer>>) value)
+                    .forEach(entry -> addDamageLifeFloorUntilEndOfTurn(entry.getKey(), entry.getValue()));
+            case GAME_SPELL_LIMITS -> ((List<Map.Entry<UUID, Integer>>) value)
+                    .forEach(entry -> limitSpellsThisTurn(entry.getKey(), entry.getValue()));
             default -> {
             }
         }
@@ -6973,6 +6996,29 @@ public class GameData {
     public void limitSpellsThisTurn(UUID playerId, int maxSpells) {
         if (playerId == null) return;
         playersMaxSpellsThisTurn.merge(playerId, maxSpells, Math::min);
+        playersMaxSpellsContributionsThisTurn.add(Map.entry(playerId, maxSpells));
+    }
+
+    /** Clears every "this turn" spell limit set by {@link #limitSpellsThisTurn}. */
+    public void clearSpellLimitsThisTurn() {
+        playersMaxSpellsThisTurn.clear();
+        playersMaxSpellsContributionsThisTurn.clear();
+    }
+
+    /**
+     * Until end of turn, damage can't reduce {@code playerId}'s life total below {@code floor} (Angel of Grace); the
+     * highest floor applies.
+     */
+    public void addDamageLifeFloorUntilEndOfTurn(UUID playerId, int floor) {
+        if (playerId == null) return;
+        damageLifeFloorsUntilEndOfTurn.merge(playerId, floor, Math::max);
+        damageLifeFloorContributionsUntilEndOfTurn.add(Map.entry(playerId, floor));
+    }
+
+    /** Clears every floor set by {@link #addDamageLifeFloorUntilEndOfTurn}. */
+    public void clearDamageLifeFloorsUntilEndOfTurn() {
+        damageLifeFloorsUntilEndOfTurn.clear();
+        damageLifeFloorContributionsUntilEndOfTurn.clear();
     }
 
     /** Prevents {@code playerId} from casting any further spells this turn. */
@@ -9131,6 +9177,7 @@ public class GameData {
         });
         copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
         copy.damageLifeFloorsUntilEndOfTurn.putAll(this.damageLifeFloorsUntilEndOfTurn);
+        copy.damageLifeFloorContributionsUntilEndOfTurn.addAll(this.damageLifeFloorContributionsUntilEndOfTurn);
         copy.damageReplacementsThisTurn.addAll(this.damageReplacementsThisTurn);
         copy.playersCantGainLifeThisTurn = this.playersCantGainLifeThisTurn;
         copy.playersCantLoseLifeThisTurn = this.playersCantLoseLifeThisTurn;
@@ -10224,6 +10271,7 @@ public class GameData {
         // --- Silence-style "opponents can't cast" flag ---
         copy.playersSilencedThisTurn.addAll(this.playersSilencedThisTurn);
         copy.playersMaxSpellsThisTurn.putAll(this.playersMaxSpellsThisTurn);
+        copy.playersMaxSpellsContributionsThisTurn.addAll(this.playersMaxSpellsContributionsThisTurn);
         copy.playersCantCastSpellsForRestOfGame.addAll(this.playersCantCastSpellsForRestOfGame);
         this.opponentsCantCastNamedSpellsUntilControllerNextTurn.forEach((k, v) ->
                 copy.opponentsCantCastNamedSpellsUntilControllerNextTurn.put(k, new HashSet<>(v)));

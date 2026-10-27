@@ -10,7 +10,9 @@ package com.github.laxika.magicalvibes.model;
  * map of sets is a {@link Kind#SET} of its {@code Map.entry(key, element)} pairs, one backed by a map of
  * lists is a {@link Kind#LIST} of them, one backed by a plain map is a {@link Kind#SET} of its entries, and one
  * backed by a map of {@code int} counts is a {@link Kind#COUNTS} (a nested colour-count map is keyed by
- * {@code Map.entry(player, colour)}).
+ * {@code Map.entry(player, colour)}). A store that keeps only the strongest of several values (the highest damage
+ * life floor, the tightest spell limit) is a {@link Kind#LIST} of every {@code (player, value)} contribution, re-merged
+ * on restore, so a weaker value outlives the cleanup step that ends the stronger one.
  * Two aligned per-permanent lists (Soldevi Sentry's shield recipients and their controllers) are one
  * {@link Kind#LIST} of {@code (recipient, controller)} entries, so a share keeps them paired.
  */
@@ -192,7 +194,10 @@ public enum EndOfTurnStateField {
     GAME_PLAYERS_WITH_COLORED_MANA_REPLACEMENT(Kind.SET),
     GAME_PLAYERS_WITH_WHITE_MANA_AS_ANY_COLOR(Kind.SET),
     GAME_PLAYERS_WITH_LAND_MANA_CHOICE_REPLACEMENT(Kind.SET),
-    GAME_LAND_MANA_FIXED_COLOR(Kind.SET);
+    GAME_LAND_MANA_FIXED_COLOR(Kind.SET),
+    GAME_PLAYER_STATIC_EFFECTS(Kind.LIST),
+    GAME_DAMAGE_LIFE_FLOORS(Kind.LIST),
+    GAME_SPELL_LIMITS(Kind.LIST);
 
     /** How a field's value is split between players and recombined. */
     public enum Kind {

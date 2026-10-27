@@ -47,10 +47,18 @@ per key like a shield, capped by what is left for that key) and moved `playerCol
 `additionalEnterCountersThisTurn`, `matchingCreatureBlockRestrictionsThisTurn`,
 `counterHolderMustBlockRequirementsThisTurn`, `playerExtraLoyaltyActivationsThisTurn` and the mana-fixing / mana
 replacement stores (`extraManaOnLandSubtypeTapThisTurn`, `landSubtypeFixedManaColorThisTurn`, the nonbasic / all-lands
-fixed colours, the three `playersWith*Mana*ThisTurn` sets, `landManaFixedColorThisTurn`). RunedTerrorTest covers can't-block, creature and player
+fixed colours, the three `playersWith*Mana*ThisTurn` sets, `landManaFixedColorThisTurn`). A sixth pass moved
+`playerStaticEffectsUntilEndOfTurn` (Angel's Grace and the "creatures must attack/block this turn" grants; a `LIST`
+of `Map.entry(player, effect)`) and the keep-the-strongest maps `damageLifeFloorsUntilEndOfTurn` (`Math::max`) and
+`playersMaxSpellsThisTurn` (`Math::min`): each now has a parallel contributions list
+(`damageLifeFloorContributionsUntilEndOfTurn`, `playersMaxSpellsContributionsThisTurn`, written through
+`GameData.addDamageLifeFloorUntilEndOfTurn` / `limitSpellsThisTurn`, cleared by `clearDamageLifeFloorsUntilEndOfTurn` /
+`clearSpellLimitsThisTurn`) captured as a `LIST` and re-merged on restore, so a superseded value (or a repeated equal
+one) from another player's phase is no longer lost when the stronger one ends. RunedTerrorTest covers can't-block, creature and player
 prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference, Skullcrack, Silence, Gilded Light,
 Borne Upon a Wind, Debt of Loyalty, Skeleton Scavengers, Soldevi Sentry, Microscope, Blind Fury, Overblaze (two
-doublings split between phases), Zameck Guildmage and Due Respect. **Still open:**
+doublings split between phases), Zameck Guildmage, Due Respect, Angel's Grace, Irencrag Feat, a tighter spell limit
+hiding a looser one, and Angel of Grace cast again during another player's phase. **Still open:**
 `Permanent.tappedPermanentsForAbilityThisTurn` (Vodalian War Machine's "Merfolk tapped this turn" record; it is a
 turn-history record, not an effect, so the Runed Terror ruling about effects ending doesn't settle it — it arguably
 should last the whole turn rather than be split per active player; look for a ruling first), and the remaining
@@ -59,10 +67,7 @@ should last the whole turn rather than be split per active player; look for a ru
 `sourceDamageRedirectShields`, `playerSourceNextDamageShields`, `targetSourceDamagePreventionShields`, Eye for an
 Eye, `playerSourceDamagePreventionIds` with its paired colour/life-gain maps,
 `playerNextDamageFromMatchingSourcesPrevented`, `combatDamagePreventionTokenShields`, `channelHarmShields`, ...),
-`playerStaticEffectsUntilEndOfTurn`, `pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn`, the
-merge-by-min/max maps `damageLifeFloorsUntilEndOfTurn` (`Math::max`) and `playersMaxSpellsThisTurn` (`Math::min`) —
-these need every contribution kept (the stored value hides a superseded one, so a `SET` of entries would drop the
-other player's value when the winning one ends; consider a `LIST` of contributions re-merged on restore) — the
+`pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn`, the
 remaining "this turn" rule stores (`spellColorOverridesUntilEndOfTurn`, Sen Triplets' controller ids, next-spell
 flash / convoke / cost / free-cast grants, next-spell copy counters), and graveyard / exile / library-top cast
 permissions. One-shot shield lists still need a per-element split (`LIST` works when the shield record is removed

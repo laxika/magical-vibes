@@ -493,7 +493,7 @@ public class TurnCleanupService {
         gameData.creaturesPreventedFromDealingCombatDamageThisCombat.clear();
         gameData.combatDamagePreventionPredicatesByController.clear();
         gameData.damageCantBePreventedThisTurn = false;
-        gameData.damageLifeFloorsUntilEndOfTurn.clear();
+        gameData.clearDamageLifeFloorsUntilEndOfTurn();
         gameData.damageReplacementsThisTurn.clear();
         gameData.playersCantGainLifeThisTurn = false;
         gameData.playersCantLoseLifeThisTurn = false;
@@ -551,7 +551,7 @@ public class TurnCleanupService {
         gameData.playerKeywordsUntilEndOfTurn.clear();
         gameData.spellColorOverridesUntilEndOfTurn.clear();
         gameData.playersSilencedThisTurn.clear();
-        gameData.playersMaxSpellsThisTurn.clear();
+        gameData.clearSpellLimitsThisTurn();
         gameData.extraManaOnLandSubtypeTapThisTurn.clear();
         gameData.landSubtypeFixedManaColorThisTurn.clear();
         gameData.nonbasicLandsFixedManaColorThisTurn = null;

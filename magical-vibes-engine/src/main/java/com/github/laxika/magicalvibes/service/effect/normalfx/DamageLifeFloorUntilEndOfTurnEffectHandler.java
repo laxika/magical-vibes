@@ -23,8 +23,7 @@ public class DamageLifeFloorUntilEndOfTurnEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var floorEffect = (DamageLifeFloorUntilEndOfTurnEffect) effect;
-        gameData.damageLifeFloorsUntilEndOfTurn.merge(
-                entry.getControllerId(), floorEffect.floor(), Math::max);
+        gameData.addDamageLifeFloorUntilEndOfTurn(entry.getControllerId(), floorEffect.floor());
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 ": damage can't reduce its controller's life total below " + floorEffect.floor() + " this turn."));
     }
