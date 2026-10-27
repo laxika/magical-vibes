@@ -30,6 +30,33 @@ public final class OutsideGamePlayPermissionSet extends AbstractSet<UUID> {
         permitted.addAll(cardIds);
     }
 
+    /**
+     * The grants this set holds, for splitting them between players under Runed Terror's sequential
+     * phases: an immutable {@code Set<UUID>} per single-play group, and the {@code UUID} of each card
+     * permitted on its own (in no group).
+     */
+    public List<Object> grants() {
+        List<Object> grants = new ArrayList<>(singlePlayGroups);
+        for (UUID cardId : permitted) {
+            if (singlePlayGroups.stream().noneMatch(group -> group.contains(cardId))) {
+                grants.add(cardId);
+            }
+        }
+        return grants;
+    }
+
+    /** Adds grants in the form {@link #grants()} returns them. */
+    @SuppressWarnings("unchecked")
+    public void addGrants(Collection<?> grants) {
+        for (Object grant : grants) {
+            if (grant instanceof Set<?> group) {
+                addSinglePlayGroup((Set<UUID>) group);
+            } else {
+                add((UUID) grant);
+            }
+        }
+    }
+
     /** Replaces this set's contents with an independent copy of {@code other}'s. */
     public void copyFrom(OutsideGamePlayPermissionSet other) {
         permitted.clear();

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.c.Comeuppance;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.d.DebtOfLoyalty;
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.d.DueRespect;
 import com.github.laxika.magicalvibes.cards.e.EerieInterference;
 import com.github.laxika.magicalvibes.cards.f.Fog;
@@ -39,6 +40,8 @@ import com.github.laxika.magicalvibes.cards.s.SenTriplets;
 import com.github.laxika.magicalvibes.cards.t.TitanicGrowth;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.cards.v.VengefulArchon;
+import com.github.laxika.magicalvibes.cards.v.VoharVodalianDesecrator;
+import com.github.laxika.magicalvibes.cards.w.Wish;
 import com.github.laxika.magicalvibes.cards.z.ZameckGuildmage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -58,6 +61,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,7 +77,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         Comeuppance.class, Inkshield.class, AegisOfHonor.class, Shock.class, Quicken.class, Divination.class,
         PastInFlames.class, Overmaster.class, AuriokReplica.class, RepeatedReverberation.class,
         SenTriplets.class, ActOnImpulse.class, ArkOfHunger.class, KaylasMusicBox.class, VengefulArchon.class,
-        AweStrike.class})
+        AweStrike.class, VoharVodalianDesecrator.class, Wish.class, Forest.class})
 class RunedTerrorTest extends BaseCardTest {
 
     @Test
@@ -1356,6 +1360,81 @@ class RunedTerrorTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+    }
+
+    @Test
+    void graveyardCastExileRiderFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        Permanent vohar = harness.addToBattlefieldAndReturn(player2, new VoharVodalianDesecrator());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        Card fog = new Fog();
+        harness.setGraveyard(player2, List.of(fog));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(vohar), 1, null,
+                fog.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        assertThat(gd.exileInsteadOfGraveyard).containsExactly(fog.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.graveyardPlayPermissions).containsEntry(fog.getId(), player2.getId());
+        assertThat(gd.exileInsteadOfGraveyard).containsExactly(fog.getId());
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castFromGraveyard(player2, fog.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(fog);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(fog);
+        assertThat(gd.exileInsteadOfGraveyard).isEmpty();
+    }
+
+    @Test
+    void activePlayersOwnGraveyardCastExileRiderEndsAtTheirCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        Permanent vohar = harness.addToBattlefieldAndReturn(player1, new VoharVodalianDesecrator());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card fog = new Fog();
+        harness.setGraveyard(player1, List.of(fog));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(vohar), 1, null,
+                fog.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        assertThat(gd.exileInsteadOfGraveyard).containsExactly(fog.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.graveyardPlayPermissions).doesNotContainKey(fog.getId());
+        assertThat(gd.exileInsteadOfGraveyard).isEmpty();
+    }
+
+    @Test
+    void outsideGamePlayPermissionsEndAtTheCleanupOfThePlayerActiveWhenTheyWereGranted() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card firstSideboardCard = new GrizzlyBears();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(firstSideboardCard)));
+        harness.castFromHand(player1, new Wish(), "{2}{R}");
+        harness.passBothPriorities();
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        Card bears = new GrizzlyBears();
+        Card forest = new Forest();
+        gd.playerSideboards.put(player2.getId(), new ArrayList<>(List.of(bears, forest)));
+        harness.castFromHand(player2, new Wish(), "{2}{R}");
+        harness.passBothPriorities();
+        assertThat(gd.outsideGamePlayPermissions)
+                .containsExactlyInAnyOrder(firstSideboardCard.getId(), bears.getId(), forest.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.outsideGamePlayPermissions).containsExactlyInAnyOrder(bears.getId(), forest.getId());
+        assertThat(gd.outsideGamePlayPermissions.grants()).containsExactly(Set.of(bears.getId(), forest.getId()));
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.outsideGamePlayPermissions).isEmpty();
     }
 
     private void castQuicken(Player caster) {

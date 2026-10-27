@@ -115,7 +115,13 @@ reports every reduced copy through the new `GameData.replaceGameEndOfTurnElement
 player it was credited to, so a partly used shield stays with the player active when it was created, and two equal
 shields are never merged. A capped `LIST` share now keeps the live list order, so an ordered shield list is restored
 in order. The in-place `replaceAll` rewrites (a shield following a spell that became a permanent) happen while that
-spell resolves, so in the phase that created the shield. RunedTerrorTest covers can't-block, creature and player
+spell resolves, so in the phase that created the shield. A fourteenth pass moved Nita's / Vohar's "exile it instead" rider set `exileInsteadOfGraveyard`
+(`GAME_EXILE_INSTEAD_OF_GRAVEYARD`, a `SET`, so a rider retained with its graveyard permission for another player no
+longer lapses at the active player's cleanup), the outside-the-game play permissions `outsideGamePlayPermissions`
+(`GAME_OUTSIDE_GAME_PLAY_PERMISSIONS`, a `LIST` from `OutsideGamePlayPermissionSet.grants()`: one `Set<UUID>` per
+single-play group, one `UUID` per lone card; restored with `addGrants`, so a group spent in between is not restored)
+and `outsideGameAdditionalModalModePermissions` (a `SET`; it only lives during a resolution cast, kept for safety).
+RunedTerrorTest covers can't-block, creature and player
 prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference, Skullcrack, Silence, Gilded Light,
 Borne Upon a Wind, Debt of Loyalty, Skeleton Scavengers, Soldevi Sentry, Microscope, Blind Fury, Overblaze (two
 doublings split between phases), Zameck Guildmage, Due Respect, Angel's Grace, Irencrag Feat, a tighter spell limit
@@ -130,7 +136,9 @@ instant/sorcery copy triggers (plain, single-trigger, source, mana-value-limited
 between phases (one used before the active player's cleanup), Sen Triplets' upkeep trigger during another
 player's phase, Act on Impulse / Ark of Hunger permissions from either player's phase, Kayla's Music Box's
 grant from another player's phase, a Vengeful Archon shield partly used during the other player's phase (from either
-player's phase), and an Awe Strike shield from another player's phase. **Still open:**
+player's phase), an Awe Strike shield from another player's phase, a Vohar graveyard cast from another player's phase (still
+exiled after the active player's cleanup; the active player's own rider ends at their cleanup), and Wish grants from
+both players' phases (each group ends at its own player's cleanup). **Still open:**
 `Permanent.tappedPermanentsForAbilityThisTurn` (Vodalian War Machine's "Merfolk tapped this turn" record; it is a
 turn-history record, not an effect, so the Runed Terror ruling about effects ending doesn't settle it — it arguably
 should last the whole turn rather than be split per active player; look for a ruling first), and the remaining
@@ -139,9 +147,10 @@ should last the whole turn rather than be split per active player; look for a ru
 per-spell entry riders `spellAdditionalEnterCounters` / `spellEntryCounters` / `spellGrantedSubtypesOnEntry` /
 `spellsGranted*OnEntry` (keyed by a spell's card id and consumed when it enters; they likely never outlive the spell,
 since a step ends only once the stack is empty, so check whether any can be left pending across a cleanup before
-splitting them), `outsideGamePlayPermissions` (an `OutsideGamePlayPermissionSet` with single-play groups) with
-`outsideGameAdditionalModalModePermissions`, `exileInsteadOfGraveyard` (Nita's "exile it instead" rider), and
-the turn watchers cleared alongside them. Known limitation: a flag or set element (including a keyword) that another player's
+splitting them), and the turn watchers cleared alongside them. Note
+`ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffectHandler` adds an `exileInsteadOfGraveyard` rider for
+a cast at the next upkeep, which every cleanup (with or without Runed Terror) clears first; check whether that cast
+still exiles the spell. Known limitation: a flag or set element (including a keyword) that another player's
 effect sets again while it is already set stays credited to the first player only, and with three or more players a
 single-value field kept for several other players takes the value of the most recently credited player. When two
 equal shield records are credited to different players and one is partly used, the reduced copy is credited to the

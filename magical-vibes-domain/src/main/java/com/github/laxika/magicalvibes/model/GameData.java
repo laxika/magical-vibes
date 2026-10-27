@@ -2794,7 +2794,9 @@ public class GameData {
     public final Map<UUID, Integer> exilePlayPermissionGroupUsesRemaining = new ConcurrentHashMap<>();
     /** Spell type choices already used by permissions allowing one spell of each card type. */
     public final Map<UUID, List<Set<CardType>>> exileSpellTypePermissionHistory = new ConcurrentHashMap<>();
-    /** Card UUIDs the controller may play from their outside-the-game card pool this turn. */
+    /** Card UUIDs the controller may play from their outside-the-game card pool this turn. Under Runed Terror's
+     *  sequential phases each grant (single-play group or lone card) ends at the cleanup step of the player active
+     *  when it was granted ({@code GAME_OUTSIDE_GAME_PLAY_PERMISSIONS}). */
     public final OutsideGamePlayPermissionSet outsideGamePlayPermissions = new OutsideGamePlayPermissionSet();
     /** One-shot permission for the additional modal mode granted by Your Wish Is My Command. */
     public final Set<UUID> outsideGameAdditionalModalModePermissions = ConcurrentHashMap.newKeySet();
@@ -2854,7 +2856,8 @@ public class GameData {
     public final Set<UUID> exileCardsEnterTapped = ConcurrentHashMap.newKeySet();
     /** Card UUIDs that are exiled instead of being put into a graveyard (e.g. a spell cast via
      *  Nita, Forum Conciliator: "If that spell would be put into a graveyard, exile it instead").
-     *  Cleared during cleanup step. */
+     *  Cleared during cleanup step; under Runed Terror's sequential phases each rider is kept until the cleanup
+     *  step of the player active when it was granted ({@code GAME_EXILE_INSTEAD_OF_GRAVEYARD}). */
     public final Set<UUID> exileInsteadOfGraveyard = ConcurrentHashMap.newKeySet();
     /** Maps graveyard card UUID → player UUID who may play it this turn (e.g. Ark of Hunger).
      *  Cleared during cleanup step for entries in {@link #graveyardPlayPermissionsExpireEndOfTurn}. */
@@ -5102,6 +5105,9 @@ public class GameData {
             case GAME_EXILE_PLAY_ANY_MANA_TYPE_THIS_TURN -> exilePlayAnyManaType.stream()
                     .filter(cardId -> !exilePlayPermissionsExpireAtTurnEnd.containsKey(cardId))
                     .collect(java.util.stream.Collectors.toSet());
+            case GAME_EXILE_INSTEAD_OF_GRAVEYARD -> exileInsteadOfGraveyard;
+            case GAME_OUTSIDE_GAME_PLAY_PERMISSIONS -> outsideGamePlayPermissions.grants();
+            case GAME_OUTSIDE_GAME_ADDITIONAL_MODAL_MODE_PERMISSIONS -> outsideGameAdditionalModalModePermissions;
             default -> null;
         };
     }
@@ -5437,6 +5443,10 @@ public class GameData {
             case GAME_EXILE_PLAY_GRANTS_BY_SOURCE -> ((Set<Map.Entry<UUID, ExilePlayCostModifier>>) value).forEach(entry ->
                     exilePlayUntilEndOfTurnGrantsBySource.putIfAbsent(entry.getKey(), entry.getValue()));
             case GAME_EXILE_PLAY_ANY_MANA_TYPE_THIS_TURN -> exilePlayAnyManaType.addAll((Set<UUID>) value);
+            case GAME_EXILE_INSTEAD_OF_GRAVEYARD -> exileInsteadOfGraveyard.addAll((Set<UUID>) value);
+            case GAME_OUTSIDE_GAME_PLAY_PERMISSIONS -> outsideGamePlayPermissions.addGrants((List<?>) value);
+            case GAME_OUTSIDE_GAME_ADDITIONAL_MODAL_MODE_PERMISSIONS ->
+                    outsideGameAdditionalModalModePermissions.addAll((Set<UUID>) value);
             case GAME_PLAYER_SOURCE_NEXT_DAMAGE_SHIELDS ->
                     playerSourceNextDamageShields.addAll((List<PlayerSourceNextDamageShield>) value);
             case GAME_SOURCE_NEXT_DAMAGE_TO_ANY_TARGET_SHIELDS ->
