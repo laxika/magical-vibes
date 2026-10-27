@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.replacement.mana;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -88,11 +89,23 @@ public class LandManaReplacementService {
     public Resolution produce(GameData gameData, UUID playerId, Permanent land, Set<ManaColor> baseColors,
                               int baseAmount, ChoiceContext.ManaColorChoice production, boolean spellOnly,
                               ManaRestriction restriction) {
+        return produce(gameData, playerId, land, baseColors, baseAmount, production, spellOnly, restriction, Set.of());
+    }
+
+    /**
+     * {@link #produce(GameData, UUID, Permanent, Set, int, ChoiceContext.ManaColorChoice, boolean, ManaRestriction)}
+     * for a mana ability whose mana carries {@code copyRiders} (Sunken Palace). Mana added right away
+     * is tagged by the caller from the pool; mana that lands only after a prompt (the order of the
+     * replacements, or the color of the mana) is tagged here when it lands (CR 106.6a).
+     */
+    public Resolution produce(GameData gameData, UUID playerId, Permanent land, Set<ManaColor> baseColors,
+                              int baseAmount, ChoiceContext.ManaColorChoice production, boolean spellOnly,
+                              ManaRestriction restriction, Set<ManaCopyRider> copyRiders) {
         if (baseAmount <= 0) {
             return new Resolution.Unchanged();
         }
         LandManaEvent event = new LandManaEvent(playerId, land.getId(), baseColors, baseAmount, production, Set.of(),
-                spellOnly, restriction);
+                spellOnly, restriction, copyRiders);
         return switch (replacementOrderService.run(gameData, event)) {
             case ReplacementOrderService.Outcome.Prompted<LandManaEvent> ignored -> new Resolution.Prompted();
             case ReplacementOrderService.Outcome.Suspended<LandManaEvent> ignored ->
@@ -145,11 +158,16 @@ public class LandManaReplacementService {
     /**
      * Finishes an event whose last replacement was chosen through a prompt. Returns the single
      * color to add through the mana-color choice handler, or {@code null} after asking the player
-     * to choose among several colors.
+     * to choose among several colors. Either way the event's copy riders go on the mana it adds.
      */
     public ManaColor finishAfterChoice(GameData gameData, LandManaEvent event) {
         if (event.colors().size() == 1) {
-            return event.colors().iterator().next();
+            ManaColor color = event.colors().iterator().next();
+            ManaPool pool = gameData.playerManaPools.get(event.playerId());
+            for (ManaCopyRider rider : event.copyRiders()) {
+                pool.addCopyGrantingMana(rider, color, event.amount());
+            }
+            return color;
         }
         askForColor(gameData, event);
         return null;
@@ -213,10 +231,21 @@ public class LandManaReplacementService {
             }
             return;
         }
-        ChoiceContext context = event.spellOnly()
-                ? new ChoiceContext.SpellOnlyManaColorChoice(event.playerId(), event.production().fromCreature(),
-                        event.amount(), false).withReplacementsApplied()
-                : event.production().withAmount(event.amount()).withReplacementsApplied();
+        ChoiceContext context;
+        if (event.spellOnly()) {
+            context = new ChoiceContext.SpellOnlyManaColorChoice(event.playerId(), event.production().fromCreature(),
+                    event.amount(), false).withReplacementsApplied();
+        } else {
+            ChoiceContext.ManaColorChoice production = event.production().withAmount(event.amount())
+                    .withReplacementsApplied();
+            if (!event.copyRiders().isEmpty()) {
+                production = production.withSourcePermanentId(event.permanentId());
+                for (ManaCopyRider rider : event.copyRiders()) {
+                    gameData.markPendingCopyRiderManaChoice(event.permanentId(), rider, event.amount());
+                }
+            }
+            context = production;
+        }
         PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
                 event.playerId(), null, null, context, colors,
                 event.spellOnly() ? "Choose a color of mana to add (spells only)." : "Choose a color of mana to add.");

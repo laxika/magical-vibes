@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
@@ -318,7 +319,7 @@ public final class AnyColorManaChoiceSupport {
         }
         if (effect.restriction() == ManaSpendRestriction.INSTANT_SORCERY_COPY) {
             // Every unit of the chosen mana carries the instant/sorcery copy rider (CR 106.6a).
-            gameData.markPendingInstantSorceryCopyManaChoice(sourcePermanentId, amount);
+            gameData.markPendingCopyRiderManaChoice(sourcePermanentId, ManaCopyRider.INSTANT_OR_SORCERY_SPELL, amount);
         }
         beginOrQueueChoice(interactionHandlerRegistry, gameData, choice);
         return true;

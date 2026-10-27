@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingManaActivation;
@@ -1308,6 +1309,17 @@ public class ActivatedAbilityExecutionService {
         }
     }
 
+    /** The copy riders a mana ability puts on its mana (Sunken Palace, Pyromancer's Goggles). */
+    private static Set<ManaCopyRider> manaCopyRiders(List<CardEffect> effects) {
+        Set<ManaCopyRider> riders = EnumSet.noneOf(ManaCopyRider.class);
+        for (CardEffect effect : effects) {
+            if (effect instanceof ManaCopyRiderEffect copyRider) {
+                riders.add(copyRider.rider());
+            }
+        }
+        return riders;
+    }
+
     private List<CardEffect> snapshotEffects(GameData gameData, List<CardEffect> abilityEffects,
                                              Permanent permanent, ActivatedAbility ability,
                                              UUID activatedPermanentControllerId) {
@@ -1476,7 +1488,7 @@ public class ActivatedAbilityExecutionService {
                             .withCaveSource(caveSource)
                             .withDesertSource(desertSource)
                             .withArtifactSource(nonTreasureArtifactSource),
-                    false, sharedManaRestriction(snapshotEffects));
+                    false, sharedManaRestriction(snapshotEffects), manaCopyRiders(snapshotEffects));
             landManaReplaced = !(resolution instanceof LandManaReplacementService.Resolution.Unchanged);
             if (resolution instanceof LandManaReplacementService.Resolution.Produced produced
                     && produced.event().colors().size() == 1) {

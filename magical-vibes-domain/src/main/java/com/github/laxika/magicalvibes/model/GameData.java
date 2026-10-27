@@ -2539,9 +2539,10 @@ public class GameData {
     /** Path of Ancestry mana choices awaiting completion, keyed by source permanent id. */
     public final Map<UUID, Integer> pendingPathOfAncestryManaChoices = new ConcurrentHashMap<>();
 
-    /** Primal Wellspring mana choices awaiting completion, keyed by source permanent id: the chosen
-     *  mana is tagged with the {@link ManaCopyRider#INSTANT_OR_SORCERY_SPELL} copy rider. */
-    public final Map<UUID, Integer> pendingInstantSorceryCopyManaChoices = new ConcurrentHashMap<>();
+    /** Mana choices awaiting completion whose chosen mana carries a {@link ManaCopyRider} (Primal
+     *  Wellspring's color choice; Sunken Palace's mana after a land-mana replacement prompt), keyed by
+     *  source permanent id, then by rider, to the number of units still to be tagged. */
+    public final Map<UUID, Map<ManaCopyRider, Integer>> pendingCopyRiderManaChoices = new ConcurrentHashMap<>();
 
     /** Pending one-shot "when you next cast an instant or sorcery spell this turn, copy that spell"
      *  delayed triggers (e.g. Chandra, the Firebrand's −2). Each value tracks how many copies are
@@ -7239,25 +7240,36 @@ public class GameData {
         return consumePendingManaChoice(pendingPathOfAncestryManaChoices, sourcePermanentId, amount);
     }
 
-    /** Records that {@code amount} mana Primal Wellspring is about to add once its color is chosen carries the copy rider. */
-    public void markPendingInstantSorceryCopyManaChoice(UUID sourcePermanentId, int amount) {
+    /** Records that {@code amount} mana {@code sourcePermanentId} is about to add once its color is chosen carries {@code rider}. */
+    public void markPendingCopyRiderManaChoice(UUID sourcePermanentId, ManaCopyRider rider, int amount) {
         if (sourcePermanentId != null && amount > 0) {
-            pendingInstantSorceryCopyManaChoices.merge(sourcePermanentId, amount, Integer::sum);
+            pendingCopyRiderManaChoices.computeIfAbsent(sourcePermanentId, ignored -> new ConcurrentHashMap<>())
+                    .merge(rider, amount, Integer::sum);
         }
     }
 
-    /** How much of the {@code amount} mana just chosen for {@code sourcePermanentId} carries Primal Wellspring's copy rider. */
-    public int consumePendingInstantSorceryCopyManaChoice(UUID sourcePermanentId, int amount) {
-        return consumePendingManaChoice(pendingInstantSorceryCopyManaChoices, sourcePermanentId, amount);
+    /** How much of the {@code amount} mana just chosen for {@code sourcePermanentId} carries {@code rider}. */
+    public int consumePendingCopyRiderManaChoice(UUID sourcePermanentId, ManaCopyRider rider, int amount) {
+        if (sourcePermanentId == null) {
+            return 0;
+        }
+        Map<ManaCopyRider, Integer> pending = pendingCopyRiderManaChoices.get(sourcePermanentId);
+        if (pending == null) {
+            return 0;
+        }
+        int consumed = consumePendingManaChoice(pending, rider, amount);
+        if (pending.isEmpty()) {
+            pendingCopyRiderManaChoices.remove(sourcePermanentId);
+        }
+        return consumed;
     }
 
-    private static int consumePendingManaChoice(Map<UUID, Integer> pendingChoices, UUID sourcePermanentId,
-                                                int amount) {
-        if (sourcePermanentId == null || amount <= 0) {
+    private static <K> int consumePendingManaChoice(Map<K, Integer> pendingChoices, K key, int amount) {
+        if (key == null || amount <= 0) {
             return 0;
         }
         int[] consumed = {0};
-        pendingChoices.computeIfPresent(sourcePermanentId, (ignored, pending) -> {
+        pendingChoices.computeIfPresent(key, (ignored, pending) -> {
             consumed[0] = Math.min(pending, amount);
             int remaining = pending - consumed[0];
             return remaining > 0 ? remaining : null;
@@ -10875,7 +10887,8 @@ public class GameData {
 
         // --- Pending one-shot spell copy triggers (Primal Wellspring) ---
         copy.pendingPathOfAncestryManaChoices.putAll(this.pendingPathOfAncestryManaChoices);
-        copy.pendingInstantSorceryCopyManaChoices.putAll(this.pendingInstantSorceryCopyManaChoices);
+        this.pendingCopyRiderManaChoices.forEach((sourceId, riders) ->
+                copy.pendingCopyRiderManaChoices.put(sourceId, new ConcurrentHashMap<>(riders)));
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
         copy.pendingNextInstantSorceryCopyThisTurnCountSource.putAll(this.pendingNextInstantSorceryCopyThisTurnCountSource);
         copy.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.putAll(this.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount);

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.replacement;
 
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 
 import java.util.HashSet;
@@ -21,20 +22,30 @@ import java.util.UUID;
  * @param restriction the spending restriction the mana ability puts on its mana, or {@code null};
  *                    it stays on the mana whatever type and amount the replacements make it
  *                    (CR 106.6a)
+ * @param copyRiders  the "when this mana is spent ..., copy that spell" riders the mana ability puts
+ *                    on every unit of its mana (Sunken Palace); like {@code restriction} they stay on
+ *                    the mana whatever the replacements make it (CR 106.6a)
  */
 public record LandManaEvent(UUID playerId, UUID permanentId, Set<ManaColor> colors, int amount,
                             ChoiceContext.ManaColorChoice production, Set<String> appliedKeys, boolean spellOnly,
-                            ManaRestriction restriction)
+                            ManaRestriction restriction, Set<ManaCopyRider> copyRiders)
         implements ReplacementEvent {
 
     public LandManaEvent {
         colors = Set.copyOf(colors);
         appliedKeys = Set.copyOf(appliedKeys);
+        copyRiders = Set.copyOf(copyRiders);
+    }
+
+    public LandManaEvent(UUID playerId, UUID permanentId, Set<ManaColor> colors, int amount,
+                         ChoiceContext.ManaColorChoice production, Set<String> appliedKeys, boolean spellOnly,
+                         ManaRestriction restriction) {
+        this(playerId, permanentId, colors, amount, production, appliedKeys, spellOnly, restriction, Set.of());
     }
 
     public LandManaEvent(UUID playerId, UUID permanentId, Set<ManaColor> colors, int amount,
                          ChoiceContext.ManaColorChoice production, Set<String> appliedKeys, boolean spellOnly) {
-        this(playerId, permanentId, colors, amount, production, appliedKeys, spellOnly, null);
+        this(playerId, permanentId, colors, amount, production, appliedKeys, spellOnly, null, Set.of());
     }
 
     @Override
@@ -43,22 +54,22 @@ public record LandManaEvent(UUID playerId, UUID permanentId, Set<ManaColor> colo
     }
 
     public LandManaEvent withColors(Set<ManaColor> newColors) {
-        return new LandManaEvent(playerId, permanentId, newColors, amount, production, appliedKeys, spellOnly, restriction);
+        return new LandManaEvent(playerId, permanentId, newColors, amount, production, appliedKeys, spellOnly, restriction, copyRiders);
     }
 
     public LandManaEvent withAmount(int newAmount) {
-        return new LandManaEvent(playerId, permanentId, colors, newAmount, production, appliedKeys, spellOnly, restriction);
+        return new LandManaEvent(playerId, permanentId, colors, newAmount, production, appliedKeys, spellOnly, restriction, copyRiders);
     }
 
     @Override
     public LandManaEvent withApplied(String key) {
         Set<String> keys = new HashSet<>(appliedKeys);
         keys.add(key);
-        return new LandManaEvent(playerId, permanentId, colors, amount, production, keys, spellOnly, restriction);
+        return new LandManaEvent(playerId, permanentId, colors, amount, production, keys, spellOnly, restriction, copyRiders);
     }
 
     @Override
     public LandManaEvent withoutAppliedKeys() {
-        return new LandManaEvent(playerId, permanentId, colors, amount, production, Set.of(), spellOnly, restriction);
+        return new LandManaEvent(playerId, permanentId, colors, amount, production, Set.of(), spellOnly, restriction, copyRiders);
     }
 }

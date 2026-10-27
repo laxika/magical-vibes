@@ -2659,8 +2659,10 @@ public class ChoiceHandlerService {
             if (pathOfAncestryAmount > 0) {
                 manaPool.addPathOfAncestryManaTag(manaColor, pathOfAncestryAmount);
             }
-            manaPool.addCopyGrantingMana(ManaCopyRider.INSTANT_OR_SORCERY_SPELL, manaColor,
-                    gameData.consumePendingInstantSorceryCopyManaChoice(ctx.sourcePermanentId(), amount));
+            for (ManaCopyRider rider : ManaCopyRider.values()) {
+                manaPool.addCopyGrantingMana(rider, manaColor,
+                        gameData.consumePendingCopyRiderManaChoice(ctx.sourcePermanentId(), rider, amount));
+            }
             if (ctx.tracksSourceForSpellCastTriggers() && ctx.sourcePermanentId() != null) {
                 manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, amount);
             }

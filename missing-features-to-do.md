@@ -24,22 +24,32 @@ trigger per unit only when the spell matches. `GameData.pendingNextInstantSorcer
 (mana abilities; spell-only riders on any ability; non-matching spells cast from hand) are held back so
 untagged mana is spent first. PyromancersGogglesTest and the Wellspring cases in PrimalAmuletTest pass.
 
-**What remains.** CR 106.6a: mana that `ManaCopyRiderEffect` abilities add only after a prompt (a
-land-mana replacement order or a color choice from a replacement effect) is still not tagged —
-`tagCopyGrantingMana` in `ActivatedAbilityExecutionService` runs only when no mana choice is pending.
-Also, the hold-back for non-matching spells is only set when the spell is cast from hand
-(`SpellCastingService.playCardInternalOnce` knows the candidate only there).
+**Progress (2026-10-27, later):** prompted mana is now tagged. `LandManaEvent` carries the ability's
+`copyRiders` (passed by `ActivatedAbilityExecutionService.doResolveManaAbility` through the new
+`LandManaReplacementService.produce(..., copyRiders)` overload). When the replacement order is chosen and
+one color remains, `finishAfterChoice` tags the mana; when a color choice is still needed, `askForColor`
+records it through the generalized `GameData.markPendingCopyRiderManaChoice(source, rider, amount)`
+(replacing the Wellspring-only `pendingInstantSorceryCopyManaChoices`) and gives the plain color choice
+the land as `sourcePermanentId`, so `ChoiceHandlerService` claims every pending rider when the mana lands.
+SunkenPalaceTest covers both prompts (Deep Water + Infernal Darkness order; Prismatic Omen + Reality
+Twist color).
 
-**Failing tests:** none yet — add a Sunken Palace / Goggles test with a mana replacement that prompts.
+**What remains.** The hold-back for non-matching spells is only set when the spell is cast from hand
+(`SpellCastingService.playCardInternalOnce` knows the candidate only there); graveyard/other-zone casts
+can still spend Goggles/Wellspring mana before untagged mana. Also a land tapped through Piracy
+(`spellOnly`) that both needs a color choice and carries a copy rider isn't tagged (the
+`SpellOnlyManaColorChoice` has no source); no card hits this today.
+
+**Failing tests:** none.
 
 **Prompt to start it:**
 
 ```
-Implement the remainder of missing-features-to-do.md entry 57: tag mana produced by a
-ManaCopyRiderEffect ability even when its mana lands only after a prompt (land-mana replacement
-order or color choice), mirroring how Primal Wellspring's pending choice is tagged in
-ChoiceHandlerService (CR 106.6a). Add focused tests. Don't run the full test suite; ask me. Don't
-commit until I say so.
+Implement the remainder of missing-features-to-do.md entry 57: set ManaPool's copy-rider hold-back for
+spells cast from zones other than the hand (graveyard flashback, exile, etc.), not only in
+SpellCastingService.playCardInternalOnce's hand branch, so Pyromancer's Goggles / Primal Wellspring
+mana is spent last on spells it can't copy. Add focused tests. Don't run the full test suite; ask me.
+Don't commit until I say so.
 ```
 
 ---

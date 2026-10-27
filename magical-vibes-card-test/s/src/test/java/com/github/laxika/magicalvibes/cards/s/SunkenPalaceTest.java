@@ -1,13 +1,19 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AuguryRaven;
+import com.github.laxika.magicalvibes.cards.d.DeepWater;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InfernalDarkness;
+import com.github.laxika.magicalvibes.cards.p.PrismaticOmen;
+import com.github.laxika.magicalvibes.cards.r.RealityTwist;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -191,6 +197,75 @@ class SunkenPalaceTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({DeepWater.class, InfernalDarkness.class})
+    void copyRiderStaysOnManaAddedAfterAReplacementOrderPrompt() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new DeepWater());
+        harness.addToBattlefield(player1, new SunkenPalace());
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player2, new InfernalDarkness());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setGraveyard(player1, graveyardCards());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, order.options().stream()
+                .filter(option -> option.startsWith("Your lands produce")).findFirst().orElseThrow());
+
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(pool.getCopyGrantingMana(ManaCopyRider.SPELL_OR_ABILITY, ManaColor.BLACK)).isEqualTo(1);
+
+        harness.activateAbility(player1, 2, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @CardUsed({PrismaticOmen.class, RealityTwist.class})
+    void copyRiderStaysOnManaWhoseColorIsChosenAfterReplacement() {
+        harness.addToBattlefield(player1, new SunkenPalace());
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addToBattlefield(player1, new PrismaticOmen());
+        harness.addToBattlefield(player2, new RealityTwist());
+        harness.setGraveyard(player1, graveyardCards());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, copyManaAbilityIndex(), null, null);
+        PendingInteraction.ColorChoice color = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(color.options()).contains("GREEN");
+        harness.handleListChoice(player1, "GREEN");
+
+        ManaPool pool = gd.playerManaPools.get(player1.getId());
+        assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(pool.getCopyGrantingMana(ManaCopyRider.SPELL_OR_ABILITY, ManaColor.GREEN)).isEqualTo(1);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 22);
+    }
+
+    private int copyManaAbilityIndex() {
+        List<com.github.laxika.magicalvibes.model.ActivatedAbility> abilities =
+                findPermanent(player1, "Sunken Palace").getCard().getActivatedAbilities();
+        for (int i = 0; i < abilities.size(); i++) {
+            if (abilities.get(i).getManaCost() != null) {
+                return i;
+            }
+        }
+        throw new AssertionError("Sunken Palace has no copy-mana ability");
     }
 
     private List<Card> graveyardCards() {
