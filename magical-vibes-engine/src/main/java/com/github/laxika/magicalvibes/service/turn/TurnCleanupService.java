@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TemporaryModifierShare;
+import com.github.laxika.magicalvibes.model.EndOfTurnStateField;
+import com.github.laxika.magicalvibes.model.EndOfTurnStateShare;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerDamageMultiplication;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
@@ -54,14 +54,15 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.DelayedCleanupTrigger;
@@ -275,14 +276,15 @@ public class TurnCleanupService {
         // Runed Terror ruling (CR 514.2): while players take their phases sequentially, an "until end
         // of turn" effect ends only at the cleanup step of the player who was active when it began.
         boolean phaseSequence = gameData.runedTerrorPhaseSequenceActive && gameData.activePlayerId != null;
-        Map<UUID, TemporaryModifierShare> retainedModifiers = phaseSequence
-                ? releaseActivePlayerModifierShares(gameData)
+        Map<UUID, EndOfTurnStateShare> retainedState = phaseSequence
+                ? releaseActivePlayerEndOfTurnState(gameData)
                 : Map.of();
         List<FloatingContinuousEffect> expiredFloatingEffects;
         if (phaseSequence) {
             expiredFloatingEffects = gameData.expireEndOfTurnFloatingEffectsCreatedDuring(gameData.activePlayerId);
         } else {
-            gameData.phaseSequenceModifierShares.clear();
+            gameData.phaseSequenceEndOfTurnShares.clear();
+            gameData.phaseSequenceAttributedEndOfTurnState.clear();
             expiredFloatingEffects = gameData.expireEndOfTurnFloatingEffects();
             Set<UUID> liveFloatingEffectIds = new HashSet<>();
             synchronized (gameData.floatingEffects) {
@@ -352,12 +354,6 @@ public class TurnCleanupService {
             // state it clears (must-be-blocked, must-block, transient type overrides, ...) survive cleanup
             // whenever that was the permanent's only modification.
             p.resetModifiers();
-            TemporaryModifierShare retained = retainedModifiers.get(p.getId());
-            if (retained != null) {
-                p.setPowerModifier(retained.power());
-                p.setToughnessModifier(retained.toughness());
-                p.getGrantedKeywords().addAll(retained.keywords());
-            }
             p.setDamagePreventionShield(0);
             p.setDamageToCounterPreventionShield(0);
             p.setDamageToPlusOnePlusOneCounterPreventionShield(0);
@@ -373,11 +369,21 @@ public class TurnCleanupService {
             p.getPlusOnePlusOneCounterRegenerationShieldControllers().clear();
             p.getGainControlRegenerationShields().clear();
             p.clearTappedPermanentsForAbilityThisTurn();
+            EndOfTurnStateShare retained = retainedState.get(p.getId());
+            if (retained != null) {
+                p.addEndOfTurnState(retained);
+            }
         });
         gameData.endSacredBoonShieldsAtCleanup();
 
         gameData.playerDamagePreventionShields.clear();
         gameData.playerCombatDamagePreventionShields.clear();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            EndOfTurnStateShare retained = retainedState.get(playerId);
+            if (retained != null) {
+                addPlayerEndOfTurnState(gameData, playerId, retained);
+            }
+        }
         gameData.combatDamagePreventionTokenShields.clear();
         gameData.channelHarmShields.clear();
         gameData.playerStaticEffectsUntilEndOfTurn.clear();
@@ -730,58 +736,88 @@ public class TurnCleanupService {
     }
 
     /**
-     * Credits the active player with every permanent's "until end of turn" power/toughness
-     * modifiers and granted keywords that no player's share accounts for yet, i.e. those created
-     * since the last attribution. Called under Runed Terror's sequential phases whenever the active
-     * player is about to change and at each cleanup step, so each player's share can end at that
-     * player's own cleanup step (Runed Terror ruling, CR 514.2).
+     * Credits the active player with every permanent's and player's "until end of turn" / "this turn"
+     * state that no player's share accounts for yet, i.e. what was created since the last attribution.
+     * Called under Runed Terror's sequential phases whenever the active player is about to change and
+     * at each cleanup step, so each player's share can end at that player's own cleanup step (Runed
+     * Terror ruling, CR 514.2). A flag or set element that was already present when another player's
+     * effect set it again stays credited to the first player only.
      *
      * @param gameData the current game state to modify
      */
-    public void attributeTemporaryModifiersToActivePlayer(GameData gameData) {
+    public void attributeEndOfTurnStateToActivePlayer(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
         if (activePlayerId == null) {
             return;
         }
-        gameData.forEachPermanent((ownerId, permanent) -> {
-            Map<UUID, TemporaryModifierShare> shares =
-                    gameData.phaseSequenceModifierShares.getOrDefault(permanent.getId(), Map.of());
-            TemporaryModifierShare attributed = shares.values().stream()
-                    .reduce(new TemporaryModifierShare(0, 0, Set.of()), TemporaryModifierShare::plus);
-            Set<Keyword> newKeywords = EnumSet.noneOf(Keyword.class);
-            newKeywords.addAll(permanent.getGrantedKeywords());
-            newKeywords.removeAll(attributed.keywords());
-            int power = permanent.getPowerModifier() - attributed.power();
-            int toughness = permanent.getToughnessModifier() - attributed.toughness();
-            if (power == 0 && toughness == 0 && newKeywords.isEmpty()) {
+        captureEndOfTurnStates(gameData).forEach((objectId, current) -> {
+            EndOfTurnStateShare attributed =
+                    gameData.phaseSequenceAttributedEndOfTurnState.getOrDefault(objectId, EndOfTurnStateShare.EMPTY);
+            EndOfTurnStateShare fresh = current.since(attributed);
+            if (fresh.isEmpty()) {
                 return;
             }
-            gameData.phaseSequenceModifierShares
-                    .computeIfAbsent(permanent.getId(), id -> new ConcurrentHashMap<>())
-                    .merge(activePlayerId, new TemporaryModifierShare(power, toughness, newKeywords),
-                            TemporaryModifierShare::plus);
+            gameData.phaseSequenceAttributedEndOfTurnState.put(objectId, attributed.plus(fresh));
+            Map<UUID, EndOfTurnStateShare> shares =
+                    gameData.phaseSequenceEndOfTurnShares.computeIfAbsent(objectId, id -> new LinkedHashMap<>());
+            EndOfTurnStateShare previous = shares.remove(activePlayerId);
+            shares.put(activePlayerId, previous == null ? fresh : previous.plus(fresh));
         });
     }
 
     /**
-     * Attributes the outstanding modifiers to the active player, drops that player's shares and
-     * returns, per permanent id, the combined shares of the other players, which outlive this
-     * cleanup step.
+     * Attributes the outstanding state to the active player, drops that player's shares and returns,
+     * per permanent or player id, the combined shares of the other players (limited to what is still
+     * present), which outlive this cleanup step.
      */
-    private Map<UUID, TemporaryModifierShare> releaseActivePlayerModifierShares(GameData gameData) {
-        attributeTemporaryModifiersToActivePlayer(gameData);
-        Map<UUID, TemporaryModifierShare> retained = new HashMap<>();
-        gameData.phaseSequenceModifierShares.entrySet().removeIf(entry -> {
-            Map<UUID, TemporaryModifierShare> shares = entry.getValue();
+    private Map<UUID, EndOfTurnStateShare> releaseActivePlayerEndOfTurnState(GameData gameData) {
+        attributeEndOfTurnStateToActivePlayer(gameData);
+        Map<UUID, EndOfTurnStateShare> current = captureEndOfTurnStates(gameData);
+        Map<UUID, EndOfTurnStateShare> retained = new HashMap<>();
+        gameData.phaseSequenceEndOfTurnShares.entrySet().removeIf(entry -> {
+            UUID objectId = entry.getKey();
+            Map<UUID, EndOfTurnStateShare> shares = entry.getValue();
             shares.remove(gameData.activePlayerId);
-            if (shares.isEmpty()) {
+            EndOfTurnStateShare now = current.get(objectId);
+            if (now == null || shares.isEmpty()) {
+                gameData.phaseSequenceAttributedEndOfTurnState.remove(objectId);
                 return true;
             }
-            retained.put(entry.getKey(), shares.values().stream()
-                    .reduce(new TemporaryModifierShare(0, 0, Set.of()), TemporaryModifierShare::plus));
+            EndOfTurnStateShare kept = EndOfTurnStateShare.sum(shares.values()).cappedBy(now);
+            retained.put(objectId, kept);
+            gameData.phaseSequenceAttributedEndOfTurnState.put(objectId, kept);
             return false;
         });
+        gameData.phaseSequenceAttributedEndOfTurnState.keySet()
+                .retainAll(gameData.phaseSequenceEndOfTurnShares.keySet());
         return retained;
+    }
+
+    /** The current "until end of turn" state of every battlefield permanent and every player, by id. */
+    private Map<UUID, EndOfTurnStateShare> captureEndOfTurnStates(GameData gameData) {
+        Map<UUID, EndOfTurnStateShare> states = new HashMap<>();
+        gameData.forEachPermanent((ownerId, permanent) ->
+                states.put(permanent.getId(), permanent.captureEndOfTurnState()));
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            Map<EndOfTurnStateField, Object> raw = new EnumMap<>(EndOfTurnStateField.class);
+            raw.put(EndOfTurnStateField.PLAYER_DAMAGE_PREVENTION_SHIELD,
+                    gameData.playerDamagePreventionShields.get(playerId));
+            raw.put(EndOfTurnStateField.PLAYER_COMBAT_DAMAGE_PREVENTION_SHIELD,
+                    gameData.playerCombatDamagePreventionShields.get(playerId));
+            states.put(playerId, EndOfTurnStateShare.of(raw));
+        }
+        return states;
+    }
+
+    private void addPlayerEndOfTurnState(GameData gameData, UUID playerId, EndOfTurnStateShare share) {
+        int shield = share.intValue(EndOfTurnStateField.PLAYER_DAMAGE_PREVENTION_SHIELD);
+        if (shield > 0) {
+            gameData.playerDamagePreventionShields.merge(playerId, shield, Integer::sum);
+        }
+        int combatShield = share.intValue(EndOfTurnStateField.PLAYER_COMBAT_DAMAGE_PREVENTION_SHIELD);
+        if (combatShield > 0) {
+            gameData.playerCombatDamagePreventionShields.merge(playerId, combatShield, Integer::sum);
+        }
     }
 
     private boolean isCreatureForCleanup(GameData gameData, Permanent permanent) {

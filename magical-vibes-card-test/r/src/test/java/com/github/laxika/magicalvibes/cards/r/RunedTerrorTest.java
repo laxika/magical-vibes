@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.a.AbandonThePost;
 import com.github.laxika.magicalvibes.cards.a.AerialManeuver;
+import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.cards.t.TitanicGrowth;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -15,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RunedTerror.class, TitanicGrowth.class, TurnToFrog.class, AerialManeuver.class})
+@CardUsed({RunedTerror.class, TitanicGrowth.class, TurnToFrog.class, AerialManeuver.class, AbandonThePost.class,
+        SamiteHealer.class})
 class RunedTerrorTest extends BaseCardTest {
 
     @Test
@@ -128,5 +131,92 @@ class RunedTerrorTest extends BaseCardTest {
 
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
         assertThat(gd.currentStep).isEqualTo(TurnStep.BEGINNING_OF_COMBAT);
+    }
+
+    @Test
+    void cantBlockFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        Permanent terror = harness.addToBattlefieldAndReturn(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        harness.setHand(player2, List.of(new AbandonThePost()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveSorcery(player2, 0, List.of(terror.getId()));
+        assertThat(terror.isCantBlockThisTurn()).isTrue();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(terror.isCantBlockThisTurn()).isTrue();
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(terror.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    void activePlayersOwnCantBlockEndsAtTheirCleanup() {
+        Permanent terror = harness.addToBattlefieldAndReturn(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new AbandonThePost()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveSorcery(player1, 0, List.of(terror.getId()));
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(terror.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    void creaturePreventionShieldFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        Permanent terror = harness.addToBattlefieldAndReturn(player1, new RunedTerror());
+        addCreatureReady(player2, new SamiteHealer());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.activateAbility(player2, 0, null, terror.getId());
+        harness.passBothPriorities();
+        assertThat(terror.getDamagePreventionShield()).isEqualTo(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(terror.getDamagePreventionShield()).isEqualTo(1);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(terror.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    void usedUpPreventionShieldIsNotRestoredAtOtherPlayersCleanup() {
+        Permanent terror = harness.addToBattlefieldAndReturn(player1, new RunedTerror());
+        addCreatureReady(player2, new SamiteHealer());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.activateAbility(player2, 0, null, terror.getId());
+        harness.passBothPriorities();
+        terror.setDamagePreventionShield(0);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(terror.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    void playerPreventionShieldFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        addCreatureReady(player2, new SamiteHealer());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.activateAbility(player2, 0, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.playerDamagePreventionShields.get(player2.getId())).isEqualTo(1);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
     }
 }

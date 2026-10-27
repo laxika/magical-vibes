@@ -2219,6 +2219,191 @@ public class Permanent {
         expireTemporaryTextReplacements();
     }
 
+    /**
+     * Captures every "until end of turn" / "this turn" store that {@link #resetModifiers()} or the
+     * cleanup step's shield reset clears (CR 514.2), except the combat-only and turn-tracking ones.
+     * Used to split that state between the players active when it was created under Runed Terror's
+     * sequential phases.
+     */
+    public EndOfTurnStateShare captureEndOfTurnState() {
+        Map<EndOfTurnStateField, Object> raw = new EnumMap<>(EndOfTurnStateField.class);
+        for (EndOfTurnStateField field : EndOfTurnStateField.values()) {
+            raw.put(field, endOfTurnStateValue(field));
+        }
+        return EndOfTurnStateShare.of(raw);
+    }
+
+    /**
+     * Adds {@code share} onto this permanent's current "until end of turn" state: flags become true,
+     * counts and modifiers are increased, single values are overwritten and collection elements are
+     * added. The cleanup step calls this right after resetting the permanent to re-apply the state other
+     * players created under Runed Terror's sequential phases.
+     */
+    public void addEndOfTurnState(EndOfTurnStateShare share) {
+        share.values().forEach(this::addEndOfTurnStateValue);
+    }
+
+    private Object endOfTurnStateValue(EndOfTurnStateField field) {
+        return switch (field) {
+            case POWER_MODIFIER -> powerModifier;
+            case TOUGHNESS_MODIFIER -> toughnessModifier;
+            case ADDITIONAL_BLOCKS -> additionalBlocksUntilEndOfTurn;
+            case BASE_POWER_TOUGHNESS_OVERRIDDEN -> basePowerToughnessOverriddenUntilEndOfTurn;
+            case BASE_POWER_OVERRIDE -> basePowerOverride;
+            case BASE_TOUGHNESS_OVERRIDE -> baseToughnessOverride;
+            case CANT_BE_BLOCKED -> cantBeBlocked;
+            case CANT_BE_BLOCKED_GRANTED_ABILITY -> cantBeBlockedGrantedAbility;
+            case CANT_ATTACK_THIS_TURN -> cantAttackThisTurn;
+            case CANT_BLOCK_THIS_TURN -> cantBlockThisTurn;
+            case CANT_BLOCK_GRANTED_ABILITY_THIS_TURN -> cantBlockGrantedAbilityThisTurn;
+            case MUST_BLOCK_THIS_TURN_IF_ABLE -> mustBlockThisTurnIfAble;
+            case MUST_BLOCK_EACH_ATTACKING_CREATURE_THIS_TURN_IF_ABLE -> mustBlockEachAttackingCreatureThisTurnIfAble;
+            case MUST_ATTACK_THIS_TURN -> mustAttackThisTurn;
+            case MUST_ATTACK_TARGET_ID -> mustAttackTargetId;
+            case MUST_BE_BLOCKED_THIS_TURN -> mustBeBlockedThisTurn;
+            case MUST_BE_BLOCKED_BY_ALL_THIS_TURN -> mustBeBlockedByAllThisTurn;
+            case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers;
+            case AURA_EFFECTS_IGNORED_BY_PLAYERS -> auraEffectsIgnoredByPlayersThisTurn;
+            case DAMPING_ENGINE_IGNORED_BY_PLAYERS -> dampingEngineIgnoredByPlayersThisTurn;
+            case CANT_REGENERATE_THIS_TURN -> cantRegenerateThisTurn;
+            case DAMAGE_CANT_BE_PREVENTED_OR_REDIRECTED -> damageCantBePreventedOrRedirectedThisTurn;
+            case DAMAGED_CREATURES_CANT_REGENERATE -> damagedCreaturesCantRegenerateThisTurn;
+            case EXILE_DAMAGED_CREATURES_INSTEAD_OF_DYING -> exileDamagedCreaturesInsteadOfDyingThisTurn;
+            case EXILE_INSTEAD_OF_DIE -> exileInsteadOfDieThisTurn;
+            case EXILE_INSTEAD_OF_DIE_SOURCE_PERMANENT_ID -> exileInsteadOfDieSourcePermanentId;
+            case DAMAGE_TO_OPPONENT_CREATURE_BOUNCE -> hasDamageToOpponentCreatureBounce;
+            case TEMPORARY_TRIGGERED_EFFECTS -> temporaryTriggeredEffects;
+            case SADDLED -> saddled;
+            case ANIMATED_UNTIL_END_OF_TURN -> animatedUntilEndOfTurn;
+            case ANIMATED_POWER -> animatedPower;
+            case ANIMATED_TOUGHNESS -> animatedToughness;
+            case ANIMATED_COLOR -> animatedColor;
+            case GRANTED_KEYWORDS -> grantedKeywords;
+            case REMOVED_KEYWORDS -> removedKeywords;
+            case TRANSIENT_COLORS -> transientColors;
+            case COLOR_OVERRIDDEN -> colorOverridden;
+            case TRANSIENT_SUBTYPES -> transientSubtypes;
+            case TRANSIENT_LAND_TYPE_OVERRIDE -> transientLandTypeOverride;
+            case TRANSIENT_CREATURE_TYPE_OVERRIDE -> transientCreatureTypeOverride;
+            case TRANSIENT_CREATURE_TYPE_OVERRIDES -> transientCreatureTypeOverrides;
+            case GRANTED_CARD_TYPES -> grantedCardTypes;
+            case PROTECTION_FROM_CARD_TYPES -> protectionFromCardTypes;
+            case PROTECTION_FROM_COLORS -> protectionFromColorsUntilEndOfTurn;
+            case PROTECTION_FROM_PLAYERS -> protectionFromPlayerIdsUntilEndOfTurn;
+            case PROTECTION_FROM_COLORLESS -> protectionFromColorlessUntilEndOfTurn;
+            case PROTECTION_FROM_NON_SUBTYPE_CREATURES -> protectionFromNonSubtypeCreaturesUntilEndOfTurn;
+            case PROTECTION_FROM_OPPONENT_CREATURES -> protectionFromOpponentCreaturesUntilEndOfTurn;
+            case PROTECTION_REMOVED -> protectionRemovedUntilEndOfTurn;
+            case BLOCK_RESTRICTIONS -> blockRestrictionsUntilEndOfTurn;
+            case UNBLOCKABLE_IF_DEFENDER_CONTROLS -> unblockableIfDefenderControlsUntilEndOfTurn;
+            case EXILE_IF_LEAVES_BATTLEFIELD -> exileIfLeavesBattlefieldUntilEndOfTurn;
+            case SHROUD_IGNORED_BY_PLAYERS -> shroudIgnoredByPlayersUntilEndOfTurn;
+            case CANT_BLOCK_IDS -> cantBlockIds;
+            case MUST_BLOCK_IDS -> mustBlockIds;
+            case LOSES_ALL_ABILITIES -> losesAllAbilitiesUntilEndOfTurn;
+            case SUPPRESSED_STATIC_EFFECT_TYPES -> suppressedStaticEffectsUntilEndOfTurn;
+            case SUPPRESSED_STATIC_EFFECT_INSTANCES -> new ArrayList<>(suppressedStaticEffectInstancesUntilEndOfTurn);
+            case LOSES_ALL_CREATURE_TYPES -> losesAllCreatureTypesUntilEndOfTurn;
+            case TRANSIENT_REMOVED_SUBTYPES -> transientRemovedSubtypes;
+            case TEMPORARY_ACTIVATED_ABILITIES -> temporaryActivatedAbilities;
+            case ADAPT_OVERRIDES -> adaptOverridesUntilEndOfTurn;
+            case TEXT_REPLACEMENTS -> textReplacements.stream().filter(TextReplacement::untilEndOfTurn).toList();
+            case DAMAGE_PREVENTION_SHIELD -> damagePreventionShield;
+            case DAMAGE_TO_COUNTER_PREVENTION_SHIELD -> damageToCounterPreventionShield;
+            case DAMAGE_TO_PLUS_ONE_PLUS_ONE_COUNTER_PREVENTION_SHIELD -> damageToPlusOnePlusOneCounterPreventionShield;
+            case ALL_DAMAGE_TO_PLUS_ONE_PLUS_ONE_COUNTER_PREVENTION_SHIELD -> allDamageToPlusOnePlusOneCounterPreventionShield;
+            case DAMAGE_DESTRUCTION_SHIELD -> damageDestructionShield;
+            case LAND_DESTRUCTION_SHIELD -> landDestructionShield;
+            case REGENERATION_SHIELD -> regenerationShield;
+            case MINUS_ONE_COUNTER_REGENERATION_SHIELD -> minusOneCounterRegenerationShield;
+            case PLAYER_DAMAGE_PREVENTION_SHIELD, PLAYER_COMBAT_DAMAGE_PREVENTION_SHIELD -> null;
+        };
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void addEndOfTurnStateValue(EndOfTurnStateField field, Object value) {
+        switch (field) {
+            case POWER_MODIFIER -> powerModifier = SaturatingMath.add(powerModifier, (Integer) value);
+            case TOUGHNESS_MODIFIER -> toughnessModifier = SaturatingMath.add(toughnessModifier, (Integer) value);
+            case ADDITIONAL_BLOCKS -> additionalBlocksUntilEndOfTurn += (Integer) value;
+            case BASE_POWER_TOUGHNESS_OVERRIDDEN -> basePowerToughnessOverriddenUntilEndOfTurn = true;
+            case BASE_POWER_OVERRIDE -> basePowerOverride = (Integer) value;
+            case BASE_TOUGHNESS_OVERRIDE -> baseToughnessOverride = (Integer) value;
+            case CANT_BE_BLOCKED -> cantBeBlocked = true;
+            case CANT_BE_BLOCKED_GRANTED_ABILITY -> cantBeBlockedGrantedAbility = true;
+            case CANT_ATTACK_THIS_TURN -> cantAttackThisTurn = true;
+            case CANT_BLOCK_THIS_TURN -> cantBlockThisTurn = true;
+            case CANT_BLOCK_GRANTED_ABILITY_THIS_TURN -> cantBlockGrantedAbilityThisTurn = true;
+            case MUST_BLOCK_THIS_TURN_IF_ABLE -> mustBlockThisTurnIfAble = true;
+            case MUST_BLOCK_EACH_ATTACKING_CREATURE_THIS_TURN_IF_ABLE -> mustBlockEachAttackingCreatureThisTurnIfAble = true;
+            case MUST_ATTACK_THIS_TURN -> mustAttackThisTurn = true;
+            case MUST_ATTACK_TARGET_ID -> mustAttackTargetId = (UUID) value;
+            case MUST_BE_BLOCKED_THIS_TURN -> mustBeBlockedThisTurn = true;
+            case MUST_BE_BLOCKED_BY_ALL_THIS_TURN -> mustBeBlockedByAllThisTurn = true;
+            case BLOCKED_WITHOUT_BLOCKERS -> blockedWithoutBlockers = true;
+            case AURA_EFFECTS_IGNORED_BY_PLAYERS -> auraEffectsIgnoredByPlayersThisTurn.addAll((Set<UUID>) value);
+            case DAMPING_ENGINE_IGNORED_BY_PLAYERS -> dampingEngineIgnoredByPlayersThisTurn.addAll((Set<UUID>) value);
+            case CANT_REGENERATE_THIS_TURN -> cantRegenerateThisTurn = true;
+            case DAMAGE_CANT_BE_PREVENTED_OR_REDIRECTED -> damageCantBePreventedOrRedirectedThisTurn = true;
+            case DAMAGED_CREATURES_CANT_REGENERATE -> damagedCreaturesCantRegenerateThisTurn = true;
+            case EXILE_DAMAGED_CREATURES_INSTEAD_OF_DYING -> exileDamagedCreaturesInsteadOfDyingThisTurn = true;
+            case EXILE_INSTEAD_OF_DIE -> exileInsteadOfDieThisTurn = true;
+            case EXILE_INSTEAD_OF_DIE_SOURCE_PERMANENT_ID -> exileInsteadOfDieSourcePermanentId = (UUID) value;
+            case DAMAGE_TO_OPPONENT_CREATURE_BOUNCE -> hasDamageToOpponentCreatureBounce = true;
+            case TEMPORARY_TRIGGERED_EFFECTS -> ((Map<EffectSlot, List<CardEffect>>) value).forEach((slot, effects) ->
+                    temporaryTriggeredEffects.computeIfAbsent(slot, s -> new ArrayList<>()).addAll(effects));
+            case SADDLED -> saddled = true;
+            case ANIMATED_UNTIL_END_OF_TURN -> animatedUntilEndOfTurn = true;
+            case ANIMATED_POWER -> animatedPower = (Integer) value;
+            case ANIMATED_TOUGHNESS -> animatedToughness = (Integer) value;
+            case ANIMATED_COLOR -> animatedColor = (CardColor) value;
+            case GRANTED_KEYWORDS -> grantedKeywords.addAll((Set<Keyword>) value);
+            case REMOVED_KEYWORDS -> removedKeywords.addAll((Set<Keyword>) value);
+            case TRANSIENT_COLORS -> transientColors.addAll((Set<CardColor>) value);
+            case COLOR_OVERRIDDEN -> colorOverridden = true;
+            case TRANSIENT_SUBTYPES -> transientSubtypes.addAll((List<CardSubtype>) value);
+            case TRANSIENT_LAND_TYPE_OVERRIDE -> transientLandTypeOverride = (CardSubtype) value;
+            case TRANSIENT_CREATURE_TYPE_OVERRIDE -> transientCreatureTypeOverride = (CardSubtype) value;
+            case TRANSIENT_CREATURE_TYPE_OVERRIDES -> transientCreatureTypeOverrides.addAll((List<CardSubtype>) value);
+            case GRANTED_CARD_TYPES -> grantedCardTypes.addAll((Set<CardType>) value);
+            case PROTECTION_FROM_CARD_TYPES -> protectionFromCardTypes.addAll((Set<CardType>) value);
+            case PROTECTION_FROM_COLORS -> protectionFromColorsUntilEndOfTurn.addAll((Set<CardColor>) value);
+            case PROTECTION_FROM_PLAYERS -> protectionFromPlayerIdsUntilEndOfTurn.addAll((Set<UUID>) value);
+            case PROTECTION_FROM_COLORLESS -> protectionFromColorlessUntilEndOfTurn = true;
+            case PROTECTION_FROM_NON_SUBTYPE_CREATURES ->
+                    protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll((Set<CardSubtype>) value);
+            case PROTECTION_FROM_OPPONENT_CREATURES -> protectionFromOpponentCreaturesUntilEndOfTurn = true;
+            case PROTECTION_REMOVED -> protectionRemovedUntilEndOfTurn = true;
+            case BLOCK_RESTRICTIONS -> blockRestrictionsUntilEndOfTurn.addAll((List<CanBeBlockedOnlyByFilterEffect>) value);
+            case UNBLOCKABLE_IF_DEFENDER_CONTROLS ->
+                    unblockableIfDefenderControlsUntilEndOfTurn.addAll((List<PermanentPredicate>) value);
+            case EXILE_IF_LEAVES_BATTLEFIELD -> exileIfLeavesBattlefieldUntilEndOfTurn = true;
+            case SHROUD_IGNORED_BY_PLAYERS -> shroudIgnoredByPlayersUntilEndOfTurn.addAll((Set<UUID>) value);
+            case CANT_BLOCK_IDS -> cantBlockIds.addAll((Set<UUID>) value);
+            case MUST_BLOCK_IDS -> mustBlockIds.addAll((Set<UUID>) value);
+            case LOSES_ALL_ABILITIES -> losesAllAbilitiesUntilEndOfTurn = true;
+            case SUPPRESSED_STATIC_EFFECT_TYPES -> suppressedStaticEffectsUntilEndOfTurn.addAll((Set) value);
+            case SUPPRESSED_STATIC_EFFECT_INSTANCES ->
+                    suppressedStaticEffectInstancesUntilEndOfTurn.addAll((List<CardEffect>) value);
+            case LOSES_ALL_CREATURE_TYPES -> losesAllCreatureTypesUntilEndOfTurn = true;
+            case TRANSIENT_REMOVED_SUBTYPES -> transientRemovedSubtypes.addAll((Set<CardSubtype>) value);
+            case TEMPORARY_ACTIVATED_ABILITIES -> temporaryActivatedAbilities.addAll((List<ActivatedAbility>) value);
+            case ADAPT_OVERRIDES -> adaptOverridesUntilEndOfTurn += (Integer) value;
+            case TEXT_REPLACEMENTS -> textReplacements.addAll((List<TextReplacement>) value);
+            case DAMAGE_PREVENTION_SHIELD -> damagePreventionShield += (Integer) value;
+            case DAMAGE_TO_COUNTER_PREVENTION_SHIELD -> damageToCounterPreventionShield += (Integer) value;
+            case DAMAGE_TO_PLUS_ONE_PLUS_ONE_COUNTER_PREVENTION_SHIELD ->
+                    damageToPlusOnePlusOneCounterPreventionShield += (Integer) value;
+            case ALL_DAMAGE_TO_PLUS_ONE_PLUS_ONE_COUNTER_PREVENTION_SHIELD -> allDamageToPlusOnePlusOneCounterPreventionShield = true;
+            case DAMAGE_DESTRUCTION_SHIELD -> damageDestructionShield += (Integer) value;
+            case LAND_DESTRUCTION_SHIELD -> landDestructionShield += (Integer) value;
+            case REGENERATION_SHIELD -> regenerationShield += (Integer) value;
+            case MINUS_ONE_COUNTER_REGENERATION_SHIELD -> minusOneCounterRegenerationShield += (Integer) value;
+            case PLAYER_DAMAGE_PREVENTION_SHIELD, PLAYER_COMBAT_DAMAGE_PREVENTION_SHIELD -> {
+            }
+        }
+    }
+
     /** Drops the "until end of turn" word substitutions (CR 612). */
     private void expireTemporaryTextReplacements() {
         this.textReplacements.removeIf(TextReplacement::untilEndOfTurn);

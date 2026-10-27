@@ -544,7 +544,7 @@ public class TurnProgressionService {
         }
 
         boolean phaseComplete = firstPlayerId.equals(nextPlayerId);
-        turnCleanupService.attributeTemporaryModifiersToActivePlayer(gameData);
+        turnCleanupService.attributeEndOfTurnStateToActivePlayer(gameData);
         gameData.activePlayerId = phaseComplete ? firstPlayerId : nextPlayerId;
         TurnStep nextStep = nextRunedTerrorStep(gameData.currentStep, phaseComplete);
         gameData.resetPriorityToActivePlayer();

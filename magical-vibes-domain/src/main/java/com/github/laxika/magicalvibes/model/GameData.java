@@ -4606,10 +4606,16 @@ public class GameData {
      *  the player who was active when it began (Runed Terror ruling, CR 514.2). */
     public final Map<UUID, UUID> floatingEffectCreatingActivePlayerIds = new ConcurrentHashMap<>();
 
-    /** Under Runed Terror's sequential phases: each permanent's "until end of turn" power/toughness
-     *  modifiers and granted keywords, split by the active player they were created under (keyed by
-     *  permanent id, then player id), so a cleanup step ends only the active player's share. */
-    public final Map<UUID, Map<UUID, TemporaryModifierShare>> phaseSequenceModifierShares = new ConcurrentHashMap<>();
+    /** Under Runed Terror's sequential phases: each permanent's (and each player's) "until end of turn" /
+     *  "this turn" state, split by the active player it was created under (keyed by permanent or player
+     *  id, then active player id, ordered by most recent credit), so a cleanup step ends only the active
+     *  player's share (Runed Terror ruling, CR 514.2). */
+    public final Map<UUID, Map<UUID, EndOfTurnStateShare>> phaseSequenceEndOfTurnShares = new ConcurrentHashMap<>();
+
+    /** Under Runed Terror's sequential phases: per permanent or player id, the state already credited
+     *  to some player in {@link #phaseSequenceEndOfTurnShares}, so the next attribution credits only
+     *  what changed since. */
+    public final Map<UUID, EndOfTurnStateShare> phaseSequenceAttributedEndOfTurnState = new ConcurrentHashMap<>();
 
     /** Keywords that remain with a card through zone changes. */
     public final Map<UUID, Set<Keyword>> perpetualCardKeywords = new ConcurrentHashMap<>();
@@ -9796,8 +9802,9 @@ public class GameData {
         // --- Floating continuous effects (immutable records, safe to share) ---
         copy.floatingEffects.addAll(this.floatingEffects);
         copy.floatingEffectCreatingActivePlayerIds.putAll(this.floatingEffectCreatingActivePlayerIds);
-        this.phaseSequenceModifierShares.forEach((permanentId, shares) ->
-                copy.phaseSequenceModifierShares.put(permanentId, new ConcurrentHashMap<>(shares)));
+        this.phaseSequenceEndOfTurnShares.forEach((objectId, shares) ->
+                copy.phaseSequenceEndOfTurnShares.put(objectId, new LinkedHashMap<>(shares)));
+        copy.phaseSequenceAttributedEndOfTurnState.putAll(this.phaseSequenceAttributedEndOfTurnState);
         copy.temporaryGraveyardCardAnimationsUntilEndOfTurn
                 .putAll(this.temporaryGraveyardCardAnimationsUntilEndOfTurn);
         copy.perpetualCardPowerToughnessModifiers.putAll(this.perpetualCardPowerToughnessModifiers);

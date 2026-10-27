@@ -11,7 +11,24 @@ Remove an entry once the feature has landed and its tests pass.
 
 ## 55. Other "until end of turn" stores under Runed Terror's sequential phases
 
-**Status:** open · **Found:** 2026-10-25, while finishing entry 38 (Runed Terror durations)
+**Status:** partial · **Found:** 2026-10-25, while finishing entry 38 (Runed Terror durations)
+
+**Progress (2026-10-27):** Generalized the per-player split. `TemporaryModifierShare` became
+`EndOfTurnStateShare` (one value per `EndOfTurnStateField`, split/merged/capped by the field's `Kind`), stored in
+`GameData.phaseSequenceEndOfTurnShares` plus `phaseSequenceAttributedEndOfTurnState`, and credited by
+`TurnCleanupService.attributeEndOfTurnStateToActivePlayer`. It now covers every `Permanent.resetModifiers` store
+except the combat-only ones (`mustAttackThisCombat`, `animatedUntilEndOfCombat`, `mustBlockIdsUntilEndOfCombat`) and
+the `creaturesThatCrewedThisTurn` tracker, the simple per-permanent prevention/destruction/regeneration shields, and
+`GameData.playerDamagePreventionShields` / `playerCombatDamagePreventionShields`. A shield used up in between is not
+restored (capped by what remains). RunedTerrorTest covers can't-block, a creature prevention shield, a used-up shield
+and a player prevention shield. **Still open:** the paired-list regeneration shields
+(`opponentDrawRegenerationShield*`, `plusOnePlusOneCounterRegenerationShield*`, `gainControlRegenerationShields`),
+`tappedPermanentsForAbilityThisTurn`, `temporaryGraveyardCardAnimationsUntilEndOfTurn`, and every other `GameData`
+store cleared in `resetEndOfTurnModifiers` (redirect shields, source/colour prevention, the global `preventAll*`
+flags, `playerStaticEffectsUntilEndOfTurn`, enter-tapped / extra-counter "this turn" stores, block requirements,
+graveyard cast permissions). Known limitation: a flag or set element (including a keyword) that another player's
+effect sets again while it is already set stays credited to the first player only, and with three or more players a
+single-value field kept for several other players takes the value of the most recently credited player.
 
 **Failing tests:**
 - None yet. Write one per store moved, in the style of `RunedTerrorTest.temporaryBoostSurvivesOtherPlayersCleanup`
