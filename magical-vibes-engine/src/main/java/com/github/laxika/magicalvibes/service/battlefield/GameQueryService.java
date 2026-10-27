@@ -4926,9 +4926,9 @@ public class GameQueryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                if (!hasLostPrintedAbilities(gameData, permanent)
-                        && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(IgnoreOpponentCreatureHexproofEffect.class::isInstance)) {
+                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(IgnoreOpponentCreatureHexproofEffect.class::isInstance)
+                        && !hasLostPrintedAbilities(gameData, permanent)) {
                     return true;
                 }
             }
@@ -4968,12 +4968,10 @@ public class GameQueryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
-                if (hasLostAllAbilities(gameData, permanent)
-                        || permanent.isStaticEffectSuppressed(IgnoreOpponentHexproofEffect.class)) {
-                    continue;
-                }
                 if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(IgnoreOpponentHexproofEffect.class::isInstance)) {
+                        .anyMatch(IgnoreOpponentHexproofEffect.class::isInstance)
+                        && !permanent.isStaticEffectSuppressed(IgnoreOpponentHexproofEffect.class)
+                        && !hasLostAllAbilities(gameData, permanent)) {
                     return true;
                 }
             }

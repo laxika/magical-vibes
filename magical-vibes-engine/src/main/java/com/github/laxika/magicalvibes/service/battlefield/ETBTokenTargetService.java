@@ -473,20 +473,26 @@ public class ETBTokenTargetService {
 
             List<UUID> validPermanentTargets = new ArrayList<>();
             if (canTargetPermanent) {
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                    if (battlefield == null) continue;
-                    for (Permanent p : battlefield) {
-                        if (targetAlreadyChosen(pending, p.getId())) continue;
-                        if (matchesPermanentTargetFilter(gameData, p, group.getFilter(),
-                                pending.controllerId(), card, pending.sourcePermanentId(), pending.xValue())
-                                // Shroud, hexproof and protection still apply (Gilded Drake vs Morphling).
-                                && targetLegalityService.checkTriggeredPermanentTargetableReason(
-                                        gameData, p, card, pending.controllerId()).isEmpty()) {
-                            validPermanentTargets.add(p.getId());
+                // One shared layered pass for the whole candidate scan: every per-candidate
+                // legality query reads the same board instead of re-fingerprinting it.
+                validPermanentTargets.addAll(gameQueryService.withQueryScope(gameData, () -> {
+                    List<UUID> candidates = new ArrayList<>();
+                    for (UUID pid : gameData.orderedPlayerIds) {
+                        List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                        if (battlefield == null) continue;
+                        for (Permanent p : battlefield) {
+                            if (targetAlreadyChosen(pending, p.getId())) continue;
+                            if (matchesPermanentTargetFilter(gameData, p, group.getFilter(),
+                                    pending.controllerId(), card, pending.sourcePermanentId(), pending.xValue())
+                                    // Shroud, hexproof and protection still apply (Gilded Drake vs Morphling).
+                                    && targetLegalityService.checkTriggeredPermanentTargetableReason(
+                                            gameData, p, card, pending.controllerId()).isEmpty()) {
+                                candidates.add(p.getId());
+                            }
                         }
                     }
-                }
+                    return candidates;
+                }));
             }
 
             List<UUID> validExiledCardTargets = new ArrayList<>();

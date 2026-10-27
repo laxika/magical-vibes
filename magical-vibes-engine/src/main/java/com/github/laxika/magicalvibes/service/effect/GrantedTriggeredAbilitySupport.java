@@ -58,7 +58,7 @@ public class GrantedTriggeredAbilitySupport {
             GrantScope.ENCHANTED_CREATURE, GrantScope.ENCHANTED_PERMANENT, GrantScope.EQUIPPED_CREATURE);
 
     public List<CardEffect> grantedTriggeredEffects(GameData gameData, Permanent permanent, EffectSlot slot) {
-        return grantedTriggeredEffects(gameData, permanent, null, slot);
+        return grantedTriggeredEffects(gameData, permanent, (UUID) null, slot);
     }
 
     /**
@@ -67,9 +67,18 @@ public class GrantedTriggeredAbilitySupport {
      */
     public List<CardEffect> grantedTriggeredEffects(
             GameData gameData, Permanent permanent, UUID controllerId, EffectSlot slot) {
+        return grantedTriggeredEffects(gameData, permanent,
+                gameQueryService.computeStaticBonus(gameData, permanent, controllerId), slot);
+    }
+
+    /**
+     * Form for callers that already hold the permanent's static bonus for the current game state,
+     * sparing a second layered query.
+     */
+    public List<CardEffect> grantedTriggeredEffects(
+            GameData gameData, Permanent permanent, GameQueryService.StaticBonus staticBonus, EffectSlot slot) {
         List<CardEffect> result = new ArrayList<>();
-        for (CardEffect granted : gameQueryService.computeStaticBonus(
-                gameData, permanent, controllerId).grantedEffects()) {
+        for (CardEffect granted : staticBonus.grantedEffects()) {
             if (granted instanceof GrantTriggeredAbilityEffect grant && grant.slot() == slot) {
                 result.add(grant.grantedEffect());
             }

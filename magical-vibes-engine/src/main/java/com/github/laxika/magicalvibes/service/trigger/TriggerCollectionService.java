@@ -18907,9 +18907,14 @@ public class TriggerCollectionService {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, perm);
         if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()) return false;
         boolean triggered = false;
-        if (!gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+        // Reused for the granted-trigger lookup below unless a printed trigger was processed in
+        // between and may have changed the game state.
+        boolean staticBonusCurrent = true;
+        List<EffectRegistration> printedRegistrations = perm.getCard().getEffectRegistrations(slot);
+        if (!printedRegistrations.isEmpty() && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+            staticBonusCurrent = false;
             List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
-            for (EffectRegistration registration : perm.getCard().getEffectRegistrations(slot)) {
+            for (EffectRegistration registration : printedRegistrations) {
                 if (oncePerBatchOnly != null
                         && (registration.triggerMode() == TriggerMode.ONCE_PER_BATCH) != oncePerBatchOnly) {
                     continue;
@@ -18952,6 +18957,8 @@ public class TriggerCollectionService {
         // Triggered abilities granted continuously by another permanent (e.g. Pontiff of Blight
         // giving other creatures you control extort) fire off the permanent that has them.
         for (CardEffect effect : Boolean.TRUE.equals(oncePerBatchOnly) ? List.<CardEffect>of()
+                : staticBonusCurrent
+                ? grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, perm, staticBonus, slot)
                 : grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, perm, slot)) {
             if ((slot == EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE
                     || slot == EffectSlot.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)

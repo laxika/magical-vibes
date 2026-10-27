@@ -123,13 +123,11 @@ public class PermanentCounterSupport {
             return;
         }
         for (Permanent source : new ArrayList<>(battlefield)) {
-            if (source.isLosesAllAbilitiesUntilEndOfTurn()
-                    || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
-                continue;
-            }
             Card card = source.getCard();
             List<CardEffect> effects = card.getEffects(EffectSlot.ON_YOU_PUT_COUNTERS_ON_CREATURE);
-            if (effects.isEmpty()) {
+            if (effects.isEmpty()
+                    || source.isLosesAllAbilitiesUntilEndOfTurn()
+                    || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
                 continue;
             }
 
@@ -1984,14 +1982,12 @@ public class PermanentCounterSupport {
         Set<UUID> excludedSourceIds = excludedSources.stream().map(Permanent::getId)
                 .collect(java.util.stream.Collectors.toSet());
         for (Permanent watcher : new ArrayList<>(battlefield)) {
-            if (watcher.getId().equals(target.getId()) || excludedSourceIds.contains(watcher.getId())
-                    || gameQueryService.hasLostAllAbilities(gameData, watcher)) {
-                continue;
-            }
             Card card = watcher.getCard();
             List<CardEffect> effects = card.getEffects(
                     EffectSlot.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE);
-            if (effects.isEmpty()) {
+            if (effects.isEmpty()
+                    || watcher.getId().equals(target.getId()) || excludedSourceIds.contains(watcher.getId())
+                    || gameQueryService.hasLostAllAbilities(gameData, watcher)) {
                 continue;
             }
 
