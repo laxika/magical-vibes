@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.e.Evangelize;
+import com.github.laxika.magicalvibes.cards.j.JungleBasin;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.v.VolcanicOffering;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -22,7 +25,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SenTriplets.class, Shock.class, ProdigalPyromancer.class, Forest.class, GrizzlyBears.class})
+@CardUsed({SenTriplets.class, Shock.class, ProdigalPyromancer.class, Forest.class, GrizzlyBears.class,
+        Evangelize.class, VolcanicOffering.class, JungleBasin.class})
 class SenTripletsTest extends BaseCardTest {
 
     /** Resolve Sen Triplets' upkeep trigger with {@code target} chosen; play1 controls Sen. */
@@ -214,6 +218,92 @@ class SenTripletsTest extends BaseCardTest {
                 () -> harness.castInstant(player1, 0, player2.getId())))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A spell whose creature target an opponent chooses can be cast from the opponent's hand")
+    void opponentChosenTargetSpellFromOpponentsHand() {
+        Shock ownCard = new Shock();
+        harness.setHand(player1, List.of(ownCard));
+        Evangelize evangelize = new Evangelize();
+        harness.setHand(player2, List.of(evangelize));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        lockOpponent(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        gs.playFromHandOf(gd, player1, player2.getId(), () -> harness.castSorcery(player1, 0, player2.getId()));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player2, bears.getId());
+
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getCard()).isSameAs(evangelize);
+            assertThat(entry.getControllerId()).isEqualTo(player1.getId());
+            assertThat(entry.getOpponentChosenTargetPlayerId()).isEqualTo(player2.getId());
+        });
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(evangelize);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+        harness.assertInGraveyard(player2, "Evangelize");
+        harness.assertNotInGraveyard(player1, "Evangelize");
+    }
+
+    @Test
+    @DisplayName("Buyback on a spell cast from the opponent's hand returns it to its owner's hand")
+    void opponentChosenTargetSpellWithBuybackReturnsToOwner() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Evangelize()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        lockOpponent(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        gs.playFromHandOf(gd, player1, player2.getId(),
+                () -> harness.castSorceryWithBuyback(player1, 0, player2.getId()));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player2, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+        assertThat(gd.playerHands.get(player2.getId())).singleElement().isInstanceOf(Evangelize.class);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A spell with some opponent-chosen targets can be cast from the opponent's hand")
+    void opponentChosenTargetsSpellFromOpponentsHand() {
+        Shock ownCard = new Shock();
+        harness.setHand(player1, List.of(ownCard));
+        harness.setHand(player2, List.of(new VolcanicOffering()));
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new JungleBasin());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        lockOpponent(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        gs.playFromHandOf(gd, player1, player2.getId(),
+                () -> harness.castInstant(player1, 0, List.of(land.getId(), creature.getId())));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player2, land.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player2, creature.getId());
+
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getCard()).isInstanceOf(VolcanicOffering.class);
+            assertThat(entry.getControllerId()).isEqualTo(player1.getId());
+        });
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ownCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(land, creature);
+        harness.assertInGraveyard(player2, "Volcanic Offering");
+        harness.assertNotInGraveyard(player1, "Volcanic Offering");
     }
 
     @Test

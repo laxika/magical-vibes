@@ -2410,15 +2410,23 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     }
 
-    /** A spell whose controller chooses an opponent, then that opponent chooses the creature target. */
+    /**
+     * A spell whose controller chooses an opponent, then that opponent chooses the creature target.
+     * {@code handOwnerId} is the player whose hand the spell is cast from when it isn't the caster's own
+     * (Sen Triplets), or {@code null}; {@code cardIndex} indexes that hand.
+     */
     record OpponentChosenSpellTarget(Player caster, Card cardToCast, int cardIndex, Integer xValue,
-                                     boolean buyback, UUID chosenOpponentId)
+                                     boolean buyback, UUID chosenOpponentId, UUID handOwnerId)
             implements PermanentChoiceContext {}
 
-    /** A spell whose controller chooses the first targets, then opponents choose the marked targets. */
+    /**
+     * A spell whose controller chooses the first targets, then opponents choose the marked targets.
+     * {@code handOwnerId} is the player whose hand the spell is cast from when it isn't the caster's own
+     * (Sen Triplets), or {@code null}; {@code cardIndex} indexes that hand.
+     */
     record OpponentChosenSpellTargets(Player caster, Card cardToCast, int cardIndex, Integer xValue,
                                       boolean buyback, Map<Integer, UUID> selectedTargets,
-                                      int nextTargetIndex, UUID chosenOpponentId)
+                                      int nextTargetIndex, UUID chosenOpponentId, UUID handOwnerId)
             implements PermanentChoiceContext {
         public OpponentChosenSpellTargets {
             selectedTargets = Map.copyOf(selectedTargets);

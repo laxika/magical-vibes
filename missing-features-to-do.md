@@ -9,34 +9,35 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 58. Opponent-chosen-target spells cast from another player's hand (Sen Triplets)
+## 58. Hard AI's MCTS search doesn't list plays from another player's hand (Sen Triplets)
 
-**Status:** open · **Found:** 2026-10-25, while finishing entry 41 (casting from another player's hand)
+**Status:** partial · **Found:** 2026-10-25, while finishing entry 41 (casting from another player's hand)
 
-**Failing tests:** none yet. Casting such a spell from another player's hand is refused with an
-`IllegalStateException`.
+**Failing tests:** none.
 
-**What the rules require.** Sen Triplets' rulings say a card played from that player's hand is played
-"just like playing any other card", so a spell whose targets an opponent chooses (a
-`GainControlOfTargetEffect` with `opponentChoosesTarget`, or `Card.getOpponentChosenSpellTargetIndices`)
-can be cast from it. The engine stops the cast for the opponent's choice
-(`PermanentChoiceContext.OpponentChosenSpellTarget(s)`) and resumes it with
-`SpellCastingService.playCardAfterOpponentChosenTarget(s)`, which indexes the caster's own hand, so it
-would cast the wrong card. `SpellCastingService.rejectOpponentChosenTargetsFromAnotherHand` refuses the
-cast instead. Also open: the hard AI's MCTS search (`GameSimulator`) doesn't list plays from another
-player's hand; only the base `AiDecisionEngine.tryPlayFromOpponentHand` heuristic plays them.
+**Progress (2026-10-27).** Rules side done: spells whose targets an opponent chooses (Evangelize's
+`GainControlOfTargetEffect.opponentChosenTarget`, Volcanic Offering's `Card.getOpponentChosenSpellTargetIndices`)
+can now be cast from another player's hand. `PermanentChoiceContext.OpponentChosenSpellTarget(s)` carry
+`handOwnerId`, `SpellCastingService.playCardAfterOpponentChosenTarget(s)` resume through `playFromHandOf`, and
+`rejectOpponentChosenTargetsFromAnotherHand` is gone. Covered by `SenTripletsTest`
+(`opponentChosenTargetSpellFromOpponentsHand`, `opponentChosenTargetSpellWithBuybackReturnsToOwner`,
+`opponentChosenTargetsSpellFromOpponentsHand`).
 
-**Why it's large.** Small to medium: the two prompt contexts need the hand owner, and their resume path
-has to run inside `SpellCastingService.playFromHandOf` so the owner gets stamped.
+**What remains.** AI only: the hard AI's MCTS search (`GameSimulator.enumerateCastableSpells`) doesn't list
+plays from another player's hand; only the base `AiDecisionEngine.tryPlayFromOpponentHand` heuristic plays
+them. Adding them needs a hand-owner field on `SimulationAction.PlayCard`, a `playFromHandOf` wrapper in
+`GameSimulator.executePlayCard`, MCTS action keys/hand lookup (`MCTSEngine`) that tell the two hands apart,
+and `HardAiDecisionEngine` turning the chosen action into a `PlayCardRequest.withHandOwner` request.
 
 **Prompt to start it:**
 
 ```
-Implement missing-features-to-do.md entry 58: let a spell whose targets an opponent chooses be cast from
-another player's hand under Sen Triplets. Carry the hand owner in PermanentChoiceContext.OpponentChosenSpellTarget
-and OpponentChosenSpellTargets, resume the cast through SpellCastingService.playFromHandOf, and remove
-rejectOpponentChosenTargetsFromAnotherHand. Optionally add foreign-hand plays to GameSimulator's action list.
-Add SenTripletsTest coverage. Don't run the full test suite; ask me. Don't commit until I say so.
+Implement missing-features-to-do.md entry 58: let the hard AI's MCTS search (GameSimulator) list and play
+cards from another player's hand under Sen Triplets. Add the hand owner to SimulationAction.PlayCard,
+enumerate the castable cards of gd.senControlledPlayerId's hand when GameData.canPlayFromHandOf allows it,
+execute them inside GameService.playFromHandOf, keep MCTSEngine's action keys distinct, and have
+HardAiDecisionEngine send PlayCardRequest.withHandOwner. Add focused AI tests. Don't run the full test
+suite; ask me. Don't commit until I say so.
 ```
 
 ---

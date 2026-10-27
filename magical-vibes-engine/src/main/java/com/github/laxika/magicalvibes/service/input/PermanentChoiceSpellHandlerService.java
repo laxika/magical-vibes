@@ -994,7 +994,7 @@ public class PermanentChoiceSpellHandlerService {
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.OpponentChosenSpellTarget(
                             context.caster(), context.cardToCast(), context.cardIndex(), context.xValue(),
-                            context.buyback(), chosenId));
+                            context.buyback(), chosenId, context.handOwnerId()));
             playerInputService.beginPermanentChoice(gameData, chosenId, validTargets,
                     "Choose a creature for " + context.cardToCast().getName() + ".");
             return;
@@ -1009,7 +1009,7 @@ public class PermanentChoiceSpellHandlerService {
         }
 
         spellCastingService.playCardAfterOpponentChosenTarget(
-                gameData, context.caster(), context.cardIndex(), context.xValue(), chosenId,
+                gameData, context.caster(), context.handOwnerId(), context.cardIndex(), context.xValue(), chosenId,
                 context.chosenOpponentId(), context.buyback());
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1031,7 +1031,7 @@ public class PermanentChoiceSpellHandlerService {
             }
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.OpponentChosenSpellTargets(
                     context.caster(), card, context.cardIndex(), context.xValue(), context.buyback(),
-                    context.selectedTargets(), context.nextTargetIndex(), chosenId));
+                    context.selectedTargets(), context.nextTargetIndex(), chosenId, context.handOwnerId()));
             playerInputService.beginPermanentChoice(gameData, chosenId, validTargets,
                     "Choose a target for " + card.getName() + ".");
             return;
@@ -1056,7 +1056,7 @@ public class PermanentChoiceSpellHandlerService {
             }
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.OpponentChosenSpellTargets(
                     context.caster(), card, context.cardIndex(), context.xValue(), context.buyback(),
-                    selectedTargets, nextTargetIndex, null));
+                    selectedTargets, nextTargetIndex, null, context.handOwnerId()));
             playerInputService.beginPermanentChoice(gameData, context.caster().getId(), validOpponentIds,
                     "Choose an opponent to choose a target for " + card.getName() + ".");
             return;
@@ -1071,7 +1071,8 @@ public class PermanentChoiceSpellHandlerService {
             targetIds.add(targetId);
         }
         spellCastingService.playCardAfterOpponentChosenTargets(
-                gameData, context.caster(), context.cardIndex(), context.xValue(), targetIds, context.buyback());
+                gameData, context.caster(), context.handOwnerId(), context.cardIndex(), context.xValue(), targetIds,
+                context.buyback());
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }

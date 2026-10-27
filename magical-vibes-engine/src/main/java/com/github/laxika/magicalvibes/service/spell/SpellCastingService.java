@@ -1915,19 +1915,27 @@ public class SpellCastingService {
         }
     }
 
-    public void playCardAfterOpponentChosenTarget(GameData gameData, Player player, int cardIndex,
+    /**
+     * Resumes a cast stopped for an opponent's choice of its creature target. A spell cast from another player's
+     * hand ({@code handOwnerId}, Sen Triplets) resumes from that hand, so the card keeps its owner.
+     */
+    public void playCardAfterOpponentChosenTarget(GameData gameData, Player player, UUID handOwnerId, int cardIndex,
                                                   Integer xValue, UUID targetId, UUID chosenOpponentId,
                                                   boolean buyback) {
-        Card card = gameData.playerHands.getOrDefault(player.getId(), List.of()).get(cardIndex);
-        playCard(gameData, player, cardIndex, xValue, targetId, Map.of(), List.of(), List.of(),
-                false, null, null, null, null, null, false, null, null, null, null, null,
-                List.of(), buyback);
-        if (gameData.pendingDeathReplacementChoiceReplay instanceof GameData.SpellCastReplay replay
-                && card.getId().equals(replay.castCardId())) {
-            gameData.pendingDeathReplacementChoiceReplay = replay.withOpponentChosenTargetPlayerId(chosenOpponentId);
-            return;
-        }
-        stampOpponentChosenTargetPlayer(gameData, card, chosenOpponentId);
+        Runnable resume = () -> {
+            Card card = gameData.castingSourceCards(player.getId()).get(cardIndex);
+            playCard(gameData, player, cardIndex, xValue, targetId, Map.of(), List.of(), List.of(),
+                    false, null, null, null, null, null, false, null, null, null, null, null,
+                    List.of(), buyback);
+            if (gameData.pendingDeathReplacementChoiceReplay instanceof GameData.SpellCastReplay replay
+                    && card.getId().equals(replay.castCardId())) {
+                gameData.pendingDeathReplacementChoiceReplay =
+                        replay.withOpponentChosenTargetPlayerId(chosenOpponentId);
+                return;
+            }
+            stampOpponentChosenTargetPlayer(gameData, card, chosenOpponentId);
+        };
+        resumeFromHand(gameData, player, handOwnerId, resume);
     }
 
     private static void stampOpponentChosenTargetPlayer(GameData gameData, Card card, UUID chosenOpponentId) {
@@ -1937,11 +1945,29 @@ public class SpellCastingService {
                 .ifPresent(entry -> entry.setOpponentChosenTargetPlayerId(chosenOpponentId));
     }
 
-    public void playCardAfterOpponentChosenTargets(GameData gameData, Player player, int cardIndex,
-                                                   Integer xValue, List<UUID> targetIds, boolean buyback) {
-        playCard(gameData, player, cardIndex, xValue, null, Map.of(), targetIds, List.of(),
-                false, null, null, null, null, null, false, null, null, null, null, null,
-                List.of(), buyback);
+    /**
+     * Resumes a cast stopped for opponents' choices of its marked targets. A spell cast from another player's
+     * hand ({@code handOwnerId}, Sen Triplets) resumes from that hand, so the card keeps its owner.
+     */
+    public void playCardAfterOpponentChosenTargets(GameData gameData, Player player, UUID handOwnerId,
+                                                   int cardIndex, Integer xValue, List<UUID> targetIds,
+                                                   boolean buyback) {
+        resumeFromHand(gameData, player, handOwnerId, () -> playCard(gameData, player, cardIndex, xValue, null,
+                Map.of(), targetIds, List.of(), false, null, null, null, null, null, false, null, null, null, null,
+                null, List.of(), buyback));
+    }
+
+    private void resumeFromHand(GameData gameData, Player player, UUID handOwnerId, Runnable resume) {
+        if (handOwnerId == null) {
+            resume.run();
+        } else {
+            playFromHandOf(gameData, player, handOwnerId, resume);
+        }
+    }
+
+    /** The owner of the other player's hand {@code player} is casting from (Sen Triplets), or {@code null}. */
+    private static UUID foreignHandOwnerOf(GameData gameData, Player player) {
+        return gameData.isForeignHandPlay(player.getId()) ? gameData.foreignHandOwnerId : null;
     }
 
     private boolean isOpponentChosenTargetSpell(Card card) {
@@ -1959,7 +1985,6 @@ public class SpellCastingService {
                 || targetIds == null) {
             return false;
         }
-        rejectOpponentChosenTargetsFromAnotherHand(gameData, player);
 
         List<Integer> opponentTargetIndices = attempted.getOpponentChosenSpellTargetIndices();
         int targetPositionCount = attempted.getMultiTargetFilters().size();
@@ -1999,7 +2024,8 @@ public class SpellCastingService {
             throw new IllegalStateException("No legal opponent can choose a target");
         }
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.OpponentChosenSpellTargets(
-                player, card, cardIndex, xValue, buyback, selectedTargets, nextTargetIndex, null));
+                player, card, cardIndex, xValue, buyback, selectedTargets, nextTargetIndex, null,
+                foreignHandOwnerOf(gameData, player)));
         playerInputService.beginPermanentChoice(gameData, player.getId(), validOpponentIds,
                 "Choose an opponent to choose a target for " + card.getName() + ".");
     }
@@ -2031,20 +2057,8 @@ public class SpellCastingService {
                 || !isOpponentChosenTargetSpell(attempted)) {
             return false;
         }
-        rejectOpponentChosenTargetsFromAnotherHand(gameData, player);
         beginOpponentChosenTargetChoice(gameData, player, cardIndex, xValue, attempted, buyback);
         return true;
-    }
-
-    /**
-     * The opponent-chosen target prompt resumes the cast by an index into the caster's own hand, so it can't yet
-     * resume a spell cast from another player's hand (Sen Triplets); such a cast is refused rather than resumed
-     * with the wrong card.
-     */
-    private static void rejectOpponentChosenTargetsFromAnotherHand(GameData gameData, Player player) {
-        if (gameData.isForeignHandPlay(player.getId())) {
-            throw new IllegalStateException("Spells whose targets an opponent chooses can't yet be cast from another player's hand");
-        }
     }
 
     private void beginOpponentChosenTargetChoice(GameData gameData, Player player, int cardIndex,
@@ -2056,7 +2070,7 @@ public class SpellCastingService {
             throw new IllegalStateException("No legal opponent can choose a target");
         }
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.OpponentChosenSpellTarget(
-                player, card, cardIndex, xValue, buyback, null));
+                player, card, cardIndex, xValue, buyback, null, foreignHandOwnerOf(gameData, player)));
         playerInputService.beginPermanentChoice(gameData, player.getId(), validOpponentIds,
                 "Choose an opponent to choose a creature for " + card.getName() + ".");
     }
