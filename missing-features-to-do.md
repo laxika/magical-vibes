@@ -103,7 +103,19 @@ are `SET`s, and the cleanup step removes the permission records (`exilePlayPermi
 pay-life, cost-modifier and free-cast riders; `graveyardPlayPermissions` with `graveyardCardsEnterTapped`) only for the
 ids not retained for another player; the current-turn `exilePlayAnyManaType` riders (a `SET`, excluding cards whose
 permission lasts to a later turn) and `exilePlayUntilEndOfTurnGrantsBySource` (a `SET` of map entries, restored with
-`putIfAbsent`) moved too. A card played in between leaves the zone, so its permission is not restored. RunedTerrorTest covers can't-block, creature and player
+`putIfAbsent`) moved too. A card played in between leaves the zone, so its permission is not restored. A thirteenth
+pass moved the shield lists whose record is replaced by a reduced copy when partly used (`damageRedirectShields`,
+`sourceDamageRedirectShields`, `targetSourceDamagePreventionShields`, `damagePreventionLifeGainShields`,
+`playerNextDamageRedirectShields`, `creatureDamageRedirectShields` with its `UNLIMITED` / `NEXT_EVENT` sentinels,
+`sourceNextDamageToAnyTargetShields`) and the lists rewritten in place or restored with `addFirst`
+(`playerSourceNextDamageShields`, `targetSpellDamagePreventionShields`,
+`sourcePermanentAndControllerNextDamageRedirectShields`), each a `LIST` of its records. `DamagePreventionService`
+reports every reduced copy through the new `GameData.replaceGameEndOfTurnElement` (backed by
+`EndOfTurnStateShare.withElementReplaced`), which swaps the record in the attributed state and in the share of the
+player it was credited to, so a partly used shield stays with the player active when it was created, and two equal
+shields are never merged. A capped `LIST` share now keeps the live list order, so an ordered shield list is restored
+in order. The in-place `replaceAll` rewrites (a shield following a spell that became a permanent) happen while that
+spell resolves, so in the phase that created the shield. RunedTerrorTest covers can't-block, creature and player
 prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference, Skullcrack, Silence, Gilded Light,
 Borne Upon a Wind, Debt of Loyalty, Skeleton Scavengers, Soldevi Sentry, Microscope, Blind Fury, Overblaze (two
 doublings split between phases), Zameck Guildmage, Due Respect, Angel's Grace, Irencrag Feat, a tighter spell limit
@@ -116,20 +128,14 @@ the colour and life-gain riders) from either player's phase, Circle of Solace sh
 player's cleanup), Storyweave counters split between phases, Repeated Reverberation from either player's phase,
 instant/sorcery copy triggers (plain, single-trigger, source, mana-value-limited, dynamic) and exhaust copies split
 between phases (one used before the active player's cleanup), Sen Triplets' upkeep trigger during another
-player's phase, Act on Impulse / Ark of Hunger permissions from either player's phase, and Kayla's Music Box's
-grant from another player's phase. **Still open:**
+player's phase, Act on Impulse / Ark of Hunger permissions from either player's phase, Kayla's Music Box's
+grant from another player's phase, a Vengeful Archon shield partly used during the other player's phase (from either
+player's phase), and an Awe Strike shield from another player's phase. **Still open:**
 `Permanent.tappedPermanentsForAbilityThisTurn` (Vodalian War Machine's "Merfolk tapped this turn" record; it is a
 turn-history record, not an effect, so the Runed Terror ruling about effects ending doesn't settle it — it arguably
 should last the whole turn rather than be split per active player; look for a ruling first), and the remaining
 `GameData` stores cleared in
-`resetEndOfTurnModifiers`: the amount shields whose record is replaced by a reduced copy when partly used
-(`damageRedirectShields`, `sourceDamageRedirectShields`, `targetSourceDamagePreventionShields`,
-`damagePreventionLifeGainShields`, `playerNextDamageRedirectShields`, `creatureDamageRedirectShields` with its
-`UNLIMITED` / `NEXT_EVENT` sentinels — they need a per-shield amount split keyed by the record minus its amount,
-without merging two equal shields into one, since each shield redirects as its own damage event), the shield
-lists modified in place by `replaceAll` (`playerSourceNextDamageShields`, `targetSpellDamagePreventionShields`)
-or whose order matters and is restored with `addFirst` (`sourceNextDamageToAnyTargetShields`,
-`sourcePermanentAndControllerNextDamageRedirectShields`), the
+`resetEndOfTurnModifiers`: the
 per-spell entry riders `spellAdditionalEnterCounters` / `spellEntryCounters` / `spellGrantedSubtypesOnEntry` /
 `spellsGranted*OnEntry` (keyed by a spell's card id and consumed when it enters; they likely never outlive the spell,
 since a step ends only once the stack is empty, so check whether any can be left pending across a cleanup before
@@ -137,7 +143,9 @@ splitting them), `outsideGamePlayPermissions` (an `OutsideGamePlayPermissionSet`
 `outsideGameAdditionalModalModePermissions`, `exileInsteadOfGraveyard` (Nita's "exile it instead" rider), and
 the turn watchers cleared alongside them. Known limitation: a flag or set element (including a keyword) that another player's
 effect sets again while it is already set stays credited to the first player only, and with three or more players a
-single-value field kept for several other players takes the value of the most recently credited player.
+single-value field kept for several other players takes the value of the most recently credited player. When two
+equal shield records are credited to different players and one is partly used, the reduced copy is credited to the
+first player whose share holds that record (normally the older shield, which the consuming code also hits first).
 
 **Failing tests:**
 - None yet. Write one per store moved, in the style of `RunedTerrorTest.temporaryBoostSurvivesOtherPlayersCleanup`

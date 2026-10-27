@@ -17,8 +17,13 @@ package com.github.laxika.magicalvibes.model;
  * {@link Kind#LIST} of {@code (recipient, controller)} entries, so a share keeps them paired.
  * A one-shot or turn-long redirection / prevention shield list whose records are only ever added and removed
  * whole (Eye for an Eye, Comeuppance, Mirror Strike, Saving Grace, ...) is a {@link Kind#LIST} of its records, so
- * a shield used up in between is not restored. Shields whose remaining amount is reduced in place (a reduced
- * copy replaces the record) are not tracked yet.
+ * a shield used up in between is not restored. A shield list whose record is replaced by a reduced copy when it is
+ * partly used (Healing Salve-style amount shields, the amount-limited redirections, Zealous Inquisitor) is a
+ * {@link Kind#LIST} of its records too: the consuming code reports the replacement through
+ * {@link GameData#replaceGameEndOfTurnElement}, so the reduced copy stays credited to the player active when the
+ * shield was created. A list whose first matching shield applies first is restored in its live order. A record
+ * rewritten in place to follow a spell that became a permanent changes only while that spell resolves, so in the
+ * same player's phase that created it.
  * The pending "next spell you cast this turn" grants (Quicken, Savage Summoning, ...) are a {@link Kind#LIST} of
  * {@code (player, grant)} entries or a {@link Kind#COUNTS} by player; casting the spell consumes them, so a used
  * grant is not restored. Per-card "this turn" casting permissions and granted alternative costs (flashback,
@@ -311,7 +316,17 @@ public enum EndOfTurnStateField {
     GAME_EXILE_PLAY_PERMISSIONS_ENDING_THIS_TURN(Kind.SET),
     GAME_GRAVEYARD_PLAY_PERMISSIONS_ENDING_THIS_TURN(Kind.SET),
     GAME_EXILE_PLAY_GRANTS_BY_SOURCE(Kind.SET),
-    GAME_EXILE_PLAY_ANY_MANA_TYPE_THIS_TURN(Kind.SET);
+    GAME_EXILE_PLAY_ANY_MANA_TYPE_THIS_TURN(Kind.SET),
+    GAME_PLAYER_SOURCE_NEXT_DAMAGE_SHIELDS(Kind.LIST),
+    GAME_SOURCE_NEXT_DAMAGE_TO_ANY_TARGET_SHIELDS(Kind.LIST),
+    GAME_TARGET_SPELL_DAMAGE_PREVENTION_SHIELDS(Kind.LIST),
+    GAME_SOURCE_PERMANENT_AND_CONTROLLER_NEXT_DAMAGE_REDIRECT_SHIELDS(Kind.LIST),
+    GAME_DAMAGE_REDIRECT_SHIELDS(Kind.LIST),
+    GAME_SOURCE_DAMAGE_REDIRECT_SHIELDS(Kind.LIST),
+    GAME_TARGET_SOURCE_DAMAGE_PREVENTION_SHIELDS(Kind.LIST),
+    GAME_DAMAGE_PREVENTION_LIFE_GAIN_SHIELDS(Kind.LIST),
+    GAME_PLAYER_NEXT_DAMAGE_REDIRECT_SHIELDS(Kind.LIST),
+    GAME_CREATURE_DAMAGE_REDIRECT_SHIELDS(Kind.LIST);
 
     /** How a field's value is split between players and recombined. */
     public enum Kind {

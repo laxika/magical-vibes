@@ -189,6 +189,27 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
         return new EndOfTurnStateShare(capped);
     }
 
+    /**
+     * Returns this share with one occurrence of {@code previous} in the {@link EndOfTurnStateField.Kind#LIST} field
+     * {@code field} replaced by {@code replacement}, or this share itself when the field holds no such element. Used
+     * when a shield's record is replaced by a reduced copy, so the copy stays credited to the same player.
+     */
+    public EndOfTurnStateShare withElementReplaced(EndOfTurnStateField field, Object previous, Object replacement) {
+        if (field.kind() != EndOfTurnStateField.Kind.LIST) {
+            throw new IllegalArgumentException("Not a LIST field: " + field);
+        }
+        List<Object> elements = new ArrayList<>(listValue(values.get(field)));
+        int index = elements.indexOf(previous);
+        if (index < 0) {
+            return this;
+        }
+        elements.set(index, replacement);
+        Map<EndOfTurnStateField, Object> replaced = new EnumMap<>(EndOfTurnStateField.class);
+        replaced.putAll(values);
+        replaced.put(field, elements);
+        return new EndOfTurnStateShare(replaced);
+    }
+
     /** Reads an {@code int} field, {@code 0} when absent. */
     public int intValue(EndOfTurnStateField field) {
         return intValue(values.get(field));
@@ -291,12 +312,16 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
         return remaining;
     }
 
-    /** The elements of {@code mine} that still occur in {@code current}, counting multiplicity. */
+    /**
+     * The elements of {@code mine} that still occur in {@code current}, counting multiplicity, in their order in
+     * {@code current}, so an ordered store (a shield list whose first matching shield applies first) is restored in
+     * its live order.
+     */
     private static <T> List<T> listIntersection(List<T> mine, List<T> current, boolean identity) {
-        List<T> available = new ArrayList<>(current);
+        List<T> wanted = new ArrayList<>(mine);
         List<T> kept = new ArrayList<>();
-        for (T element : mine) {
-            if (removeOne(available, element, identity)) {
+        for (T element : current) {
+            if (removeOne(wanted, element, identity)) {
                 kept.add(element);
             }
         }

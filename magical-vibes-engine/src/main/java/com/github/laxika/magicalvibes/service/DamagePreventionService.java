@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeReflection;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
+import com.github.laxika.magicalvibes.model.EndOfTurnStateField;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.JudgmentOfAlexanderDamagePreventionShield;
@@ -349,7 +350,10 @@ public class DamagePreventionService {
             it.remove();
 
             if (prevented < shield.remainingAmount()) {
-                toReAdd.add(shield.withReducedAmount(prevented));
+                var reduced = shield.withReducedAmount(prevented);
+                toReAdd.add(reduced);
+                gameData.replaceGameEndOfTurnElement(
+                        EndOfTurnStateField.GAME_TARGET_SOURCE_DAMAGE_PREVENTION_SHIELDS, shield, reduced);
             }
         }
 
@@ -1482,7 +1486,10 @@ public class DamagePreventionService {
             remaining -= prevented;
             it.remove();
             if (prevented < shield.remainingAmount()) {
-                toReAdd.add(shield.withReducedAmount(prevented));
+                var reduced = shield.withReducedAmount(prevented);
+                toReAdd.add(reduced);
+                gameData.replaceGameEndOfTurnElement(
+                        EndOfTurnStateField.GAME_DAMAGE_PREVENTION_LIFE_GAIN_SHIELDS, shield, reduced);
             }
             if (prevented > 0 && shield.lifeGainPlayerId() != null) {
                 lifeSupport.applyGainLife(gameData, shield.lifeGainPlayerId(), prevented, "prevented damage");
@@ -1557,7 +1564,9 @@ public class DamagePreventionService {
 
             // If shield is not fully consumed, save reduced version to re-add after iteration
             if (prevented < shield.remainingAmount()) {
-                toReAdd.add(shield.withReducedAmount(prevented));
+                var reduced = shield.withReducedAmount(prevented);
+                toReAdd.add(reduced);
+                gameData.replaceGameEndOfTurnElement(EndOfTurnStateField.GAME_DAMAGE_REDIRECT_SHIELDS, shield, reduced);
             }
 
             if (prevented > 0) {
@@ -1944,8 +1953,10 @@ public class DamagePreventionService {
             it.remove();
             int prevented = Math.min(damage, shield.remainingDamage());
             if (prevented < shield.remainingDamage() && shield.remainingDamage() != Integer.MAX_VALUE) {
-                gameData.sourceNextDamageToAnyTargetShields.addLast(
-                        shield.withRemainingDamage(shield.remainingDamage() - prevented));
+                var reduced = shield.withRemainingDamage(shield.remainingDamage() - prevented);
+                gameData.sourceNextDamageToAnyTargetShields.addLast(reduced);
+                gameData.replaceGameEndOfTurnElement(
+                        EndOfTurnStateField.GAME_SOURCE_NEXT_DAMAGE_TO_ANY_TARGET_SHIELDS, shield, reduced);
             }
             if (shield.damageRedSourceController()) {
                 Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
@@ -2204,7 +2215,10 @@ public class DamagePreventionService {
             it.remove();
 
             if (prevented < shield.remainingAmount()) {
-                toReAdd.add(shield.withReducedAmount(prevented));
+                var reduced = shield.withReducedAmount(prevented);
+                toReAdd.add(reduced);
+                gameData.replaceGameEndOfTurnElement(
+                        EndOfTurnStateField.GAME_SOURCE_DAMAGE_REDIRECT_SHIELDS, shield, reduced);
             }
 
             if (prevented > 0) {
@@ -2301,7 +2315,10 @@ public class DamagePreventionService {
                 remaining -= redirected;
                 it.remove();
                 if (redirected < shield.remainingAmount()) {
-                    toReAdd.add(shield.withReducedAmount(redirected));
+                    var reduced = shield.withReducedAmount(redirected);
+                    toReAdd.add(reduced);
+                    gameData.replaceGameEndOfTurnElement(
+                            EndOfTurnStateField.GAME_CREATURE_DAMAGE_REDIRECT_SHIELDS, shield, reduced);
                 }
                 if (redirected > 0) {
                     gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
@@ -2377,7 +2394,10 @@ public class DamagePreventionService {
         // Amount-limited: redirect up to the remaining amount, then consume or reduce the shield.
         int redirected = Math.min(shield.remainingAmount(), damage);
         if (redirected < shield.remainingAmount()) {
-            shields.add(index, shield.withReducedAmount(redirected));
+            var reduced = shield.withReducedAmount(redirected);
+            shields.add(index, reduced);
+            gameData.replaceGameEndOfTurnElement(
+                    EndOfTurnStateField.GAME_CREATURE_DAMAGE_REDIRECT_SHIELDS, shield, reduced);
         }
         if (redirected > 0) {
             gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
@@ -2624,7 +2644,10 @@ public class DamagePreventionService {
             remaining -= redirected;
             it.remove();
             if (redirected < shield.remainingAmount()) {
-                toReAdd.add(shield.withReducedAmount(redirected));
+                var reduced = shield.withReducedAmount(redirected);
+                toReAdd.add(reduced);
+                gameData.replaceGameEndOfTurnElement(
+                        EndOfTurnStateField.GAME_PLAYER_NEXT_DAMAGE_REDIRECT_SHIELDS, shield, reduced);
             }
             if (redirected > 0) {
                 gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(

@@ -4827,8 +4827,9 @@ public class GameData {
      * colour and life-gain riders, the one-shot "next damage from a matching source" shields, the pending extra
      * counters for the next enchantment creature entry, the pending "next instant or sorcery / loyalty / exhaust
      * ability this turn" copy triggers with their sources, Sen Triplets' hand permission, the per-card exile / graveyard
-     * play permissions that end this turn with their current-turn any-mana-type riders, and the source-linked "until end
-     * of turn, you may play cards exiled with it" grants), which the cleanup step clears
+     * play permissions that end this turn with their current-turn any-mana-type riders, the source-linked "until end
+     * of turn, you may play cards exiled with it" grants, and the shield lists whose records are rewritten in place or
+     * replaced by a reduced copy when partly used), which the cleanup step clears
      * (CR 514.2). Used to split that state between the players active when it was created under Runed Terror's sequential phases.
      */
     public EndOfTurnStateShare captureGameEndOfTurnState() {
@@ -4991,6 +4992,17 @@ public class GameData {
                     synchronizedCopy(turnSourceDamageRedirectToControllerShields);
             case GAME_TURN_DAMAGE_REDIRECT_TO_CREATURE_SHIELDS -> synchronizedCopy(turnDamageRedirectToCreatureShields);
             case GAME_TARGET_SORCERY_DAMAGE_REDIRECT_SHIELDS -> synchronizedCopy(targetSorceryDamageRedirectShields);
+            case GAME_PLAYER_SOURCE_NEXT_DAMAGE_SHIELDS -> synchronizedCopy(playerSourceNextDamageShields);
+            case GAME_SOURCE_NEXT_DAMAGE_TO_ANY_TARGET_SHIELDS -> synchronizedCopy(sourceNextDamageToAnyTargetShields);
+            case GAME_TARGET_SPELL_DAMAGE_PREVENTION_SHIELDS -> synchronizedCopy(targetSpellDamagePreventionShields);
+            case GAME_SOURCE_PERMANENT_AND_CONTROLLER_NEXT_DAMAGE_REDIRECT_SHIELDS ->
+                    synchronizedCopy(sourcePermanentAndControllerNextDamageRedirectShields);
+            case GAME_DAMAGE_REDIRECT_SHIELDS -> synchronizedCopy(damageRedirectShields);
+            case GAME_SOURCE_DAMAGE_REDIRECT_SHIELDS -> synchronizedCopy(sourceDamageRedirectShields);
+            case GAME_TARGET_SOURCE_DAMAGE_PREVENTION_SHIELDS -> synchronizedCopy(targetSourceDamagePreventionShields);
+            case GAME_DAMAGE_PREVENTION_LIFE_GAIN_SHIELDS -> synchronizedCopy(damagePreventionLifeGainShields);
+            case GAME_PLAYER_NEXT_DAMAGE_REDIRECT_SHIELDS -> synchronizedCopy(playerNextDamageRedirectShields);
+            case GAME_CREATURE_DAMAGE_REDIRECT_SHIELDS -> synchronizedCopy(creatureDamageRedirectShields);
             case GAME_COMBAT_DAMAGE_PREVENTION_TOKEN_SHIELDS -> Set.copyOf(plainMapEntries(combatDamagePreventionTokenShields));
             case GAME_NEXT_SPELL_FLASH_GRANTS -> synchronizedListMapEntries(nextSpellFlashGrantsThisTurn);
             case GAME_NEXT_SPELL_CHOSEN_SUBTYPE_FLASH_GRANTS ->
@@ -5425,7 +5437,57 @@ public class GameData {
             case GAME_EXILE_PLAY_GRANTS_BY_SOURCE -> ((Set<Map.Entry<UUID, ExilePlayCostModifier>>) value).forEach(entry ->
                     exilePlayUntilEndOfTurnGrantsBySource.putIfAbsent(entry.getKey(), entry.getValue()));
             case GAME_EXILE_PLAY_ANY_MANA_TYPE_THIS_TURN -> exilePlayAnyManaType.addAll((Set<UUID>) value);
+            case GAME_PLAYER_SOURCE_NEXT_DAMAGE_SHIELDS ->
+                    playerSourceNextDamageShields.addAll((List<PlayerSourceNextDamageShield>) value);
+            case GAME_SOURCE_NEXT_DAMAGE_TO_ANY_TARGET_SHIELDS ->
+                    sourceNextDamageToAnyTargetShields.addAll((List<SourceNextDamageToAnyTargetShield>) value);
+            case GAME_TARGET_SPELL_DAMAGE_PREVENTION_SHIELDS ->
+                    targetSpellDamagePreventionShields.addAll((List<TargetSpellDamagePreventionShield>) value);
+            case GAME_SOURCE_PERMANENT_AND_CONTROLLER_NEXT_DAMAGE_REDIRECT_SHIELDS ->
+                    sourcePermanentAndControllerNextDamageRedirectShields
+                            .addAll((List<SourcePermanentAndControllerNextDamageRedirectShield>) value);
+            case GAME_DAMAGE_REDIRECT_SHIELDS -> damageRedirectShields.addAll((List<DamageRedirectShield>) value);
+            case GAME_SOURCE_DAMAGE_REDIRECT_SHIELDS ->
+                    sourceDamageRedirectShields.addAll((List<SourceDamageRedirectShield>) value);
+            case GAME_TARGET_SOURCE_DAMAGE_PREVENTION_SHIELDS ->
+                    targetSourceDamagePreventionShields.addAll((List<TargetSourceDamagePreventionShield>) value);
+            case GAME_DAMAGE_PREVENTION_LIFE_GAIN_SHIELDS ->
+                    damagePreventionLifeGainShields.addAll((List<DamagePreventionLifeGainShield>) value);
+            case GAME_PLAYER_NEXT_DAMAGE_REDIRECT_SHIELDS ->
+                    playerNextDamageRedirectShields.addAll((List<PlayerNextDamageRedirectShield>) value);
+            case GAME_CREATURE_DAMAGE_REDIRECT_SHIELDS ->
+                    creatureDamageRedirectShields.addAll((List<CreatureDamageRedirectShield>) value);
             default -> {
+            }
+        }
+    }
+
+    /**
+     * Reports that the record {@code previous} of the game-wide {@link EndOfTurnStateField.Kind#LIST} store
+     * {@code field} was replaced by {@code replacement} (a partly used shield replaced by a reduced copy). Under
+     * Runed Terror's sequential phases the replacement is credited to whichever player the replaced record was
+     * credited to, so it still ends at that player's cleanup step (Runed Terror ruling, CR 514.2) instead of being
+     * taken for new state of the current active player. A record not yet credited to anyone needs no bookkeeping.
+     */
+    public void replaceGameEndOfTurnElement(EndOfTurnStateField field, Object previous, Object replacement) {
+        EndOfTurnStateShare attributed = phaseSequenceAttributedEndOfTurnState.get(GAME_END_OF_TURN_STATE_ID);
+        if (attributed == null) {
+            return;
+        }
+        EndOfTurnStateShare replacedAttribution = attributed.withElementReplaced(field, previous, replacement);
+        if (replacedAttribution == attributed) {
+            return;
+        }
+        phaseSequenceAttributedEndOfTurnState.put(GAME_END_OF_TURN_STATE_ID, replacedAttribution);
+        Map<UUID, EndOfTurnStateShare> shares = phaseSequenceEndOfTurnShares.get(GAME_END_OF_TURN_STATE_ID);
+        if (shares == null) {
+            return;
+        }
+        for (Map.Entry<UUID, EndOfTurnStateShare> share : shares.entrySet()) {
+            EndOfTurnStateShare replacedShare = share.getValue().withElementReplaced(field, previous, replacement);
+            if (replacedShare != share.getValue()) {
+                share.setValue(replacedShare);
+                return;
             }
         }
     }

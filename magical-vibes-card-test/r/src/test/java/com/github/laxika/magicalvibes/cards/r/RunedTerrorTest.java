@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.a.AngelOfGrace;
 import com.github.laxika.magicalvibes.cards.a.AngelsGrace;
 import com.github.laxika.magicalvibes.cards.a.ArkOfHunger;
 import com.github.laxika.magicalvibes.cards.a.AuriokReplica;
+import com.github.laxika.magicalvibes.cards.a.AweStrike;
 import com.github.laxika.magicalvibes.cards.b.BlindFury;
 import com.github.laxika.magicalvibes.cards.b.BorneUponAWind;
 import com.github.laxika.magicalvibes.cards.c.Comeuppance;
@@ -37,11 +38,13 @@ import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.cards.s.SenTriplets;
 import com.github.laxika.magicalvibes.cards.t.TitanicGrowth;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.cards.v.VengefulArchon;
 import com.github.laxika.magicalvibes.cards.z.ZameckGuildmage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -69,7 +72,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         ZameckGuildmage.class, DueRespect.class, AngelsGrace.class, AngelOfGrace.class, IrencragFeat.class,
         Comeuppance.class, Inkshield.class, AegisOfHonor.class, Shock.class, Quicken.class, Divination.class,
         PastInFlames.class, Overmaster.class, AuriokReplica.class, RepeatedReverberation.class,
-        SenTriplets.class, ActOnImpulse.class, ArkOfHunger.class, KaylasMusicBox.class})
+        SenTriplets.class, ActOnImpulse.class, ArkOfHunger.class, KaylasMusicBox.class, VengefulArchon.class,
+        AweStrike.class})
 class RunedTerrorTest extends BaseCardTest {
 
     @Test
@@ -1279,6 +1283,79 @@ class RunedTerrorTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gd.exilePlayUntilEndOfTurnGrantsBySource).isEmpty();
         assertThat(gd.exilePlayPermissions).doesNotContainKey(exiled.getId());
+    }
+
+    @Test
+    void partlyUsedAmountShieldFromOtherPlayersPhaseKeepsItsRestAfterActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.addToBattlefield(player2, new VengefulArchon());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player2, 0, 3, player1.getId());
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 18);
+        assertThat(gd.damageRedirectShields).singleElement()
+                .extracting(DamageRedirectShield::remainingAmount).isEqualTo(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.damageRedirectShields).singleElement()
+                .extracting(DamageRedirectShield::remainingAmount).isEqualTo(1);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.damageRedirectShields).isEmpty();
+    }
+
+    @Test
+    void activePlayersOwnPartlyUsedAmountShieldEndsAtTheirCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.addToBattlefield(player1, new VengefulArchon());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 1, 3, player2.getId());
+        harness.passBothPriorities();
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        assertThat(gd.damageRedirectShields).singleElement()
+                .extracting(DamageRedirectShield::remainingAmount).isEqualTo(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(gd.damageRedirectShields).isEmpty();
+    }
+
+    @Test
+    void nextDamageFromTargetCreatureShieldFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        harness.setHand(player2, List.of(new AweStrike()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        assertThat(gd.sourceNextDamageToAnyTargetShields).hasSize(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.sourceNextDamageToAnyTargetShields).hasSize(1);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
     }
 
     private void castQuicken(Player caster) {
