@@ -1195,7 +1195,7 @@ public class CastingPermissionService {
     }
 
     private boolean hasTopLibraryFlashGrant(GameData gameData, UUID playerId, Card card) {
-        if (card.hasType(CardType.LAND)) return false;
+        if (card.hasType(CardType.LAND) || !ownLibraryTopPermissionCovers(gameData, playerId, card)) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
@@ -1682,7 +1682,8 @@ public class CastingPermissionService {
      * nonland card on top of their library.
      */
     public boolean canPlotNonlandCardsFromTopOfLibrary(GameData gameData, UUID playerId, Card card) {
-        if (card.hasType(CardType.LAND) || card.getManaCost() == null) return false;
+        if (card.hasType(CardType.LAND) || card.getManaCost() == null
+                || !ownLibraryTopPermissionCovers(gameData, playerId, card)) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
@@ -1774,7 +1775,7 @@ public class CastingPermissionService {
     /** Finds an unused shared top-library permission that matches a land. */
     public Optional<UUID> findOncePerTurnTopLibraryPermissionSource(GameData gameData, UUID playerId,
                                                                     Card card) {
-        if (!card.hasType(CardType.LAND)) {
+        if (!card.hasType(CardType.LAND) || !ownLibraryTopPermissionCovers(gameData, playerId, card)) {
             return Optional.empty();
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -2450,7 +2451,8 @@ public class CastingPermissionService {
     /**
      * Returns every nonempty library whose top card the player may play from: each library a temporary grant opens
      * to them, then every player's library while they control a plane letting them play from the top of any player's
-     * library (Windriddle Palaces), and otherwise their own library.
+     * library (Windriddle Palaces), and their own library. Each permission covers only the library it names: see
+     * {@link #ownLibraryTopPermissionCovers}.
      */
     public List<UUID> findLibraryTopOwners(GameData gameData, UUID playerId) {
         Set<UUID> owners = new LinkedHashSet<>();
@@ -2467,7 +2469,7 @@ public class CastingPermissionService {
                 }
             }
         }
-        if (owners.isEmpty() && hasNonemptyLibrary(gameData, playerId)) {
+        if (hasNonemptyLibrary(gameData, playerId)) {
             owners.add(playerId);
         }
         return List.copyOf(owners);
@@ -2485,6 +2487,25 @@ public class CastingPermissionService {
             throw new IllegalStateException("You can't play cards from the top of that player's library");
         }
         return requestedOwnerId;
+    }
+
+    /**
+     * Returns whether a permission to play from the top of the player's own library (Future Sight, Courser of
+     * Kruphix, Bolas's Citadel, a "you may play cards from the top of your library this turn" effect) may cover
+     * {@code card}: not when the card is the top card of another player's library, which only a grant on that
+     * library or a permission covering any player's library opens (Xanathar, Guild Kingpin).
+     */
+    private boolean ownLibraryTopPermissionCovers(GameData gameData, UUID playerId, Card card) {
+        for (UUID libraryOwnerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(libraryOwnerId)) {
+                continue;
+            }
+            List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
+            if (deck != null && !deck.isEmpty() && deck.getFirst().getId().equals(card.getId())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean hasNonemptyLibrary(GameData gameData, UUID playerId) {
@@ -2576,7 +2597,8 @@ public class CastingPermissionService {
             return true;
         }
         if (!card.hasType(CardType.LAND)
-                && gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)) {
+                && gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)
+                && ownLibraryTopPermissionCovers(gameData, playerId, card)) {
             return true;
         }
         return canCastFromTopOfLibraryNormally(gameData, playerId, card, xValue)
@@ -2586,7 +2608,7 @@ public class CastingPermissionService {
     /** Returns whether a specific card may use the mana-value life alternative from the library top. */
     public boolean canCastFromTopOfLibraryByPayingLifeEqualToManaValue(
             GameData gameData, UUID playerId, Card card) {
-        if (card.hasType(CardType.LAND)) return false;
+        if (card.hasType(CardType.LAND) || !ownLibraryTopPermissionCovers(gameData, playerId, card)) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
@@ -2653,7 +2675,7 @@ public class CastingPermissionService {
 
     private TopLibraryCastPermissionSource findTopLibraryCastPermissionSourceInternal(
             GameData gameData, UUID playerId, Card card, Integer xValue) {
-        if (card.hasType(CardType.LAND)) return null;
+        if (card.hasType(CardType.LAND) || !ownLibraryTopPermissionCovers(gameData, playerId, card)) return null;
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return null;
         TopLibraryCastPermissionSource oncePerTurnFallback = null;
@@ -2710,7 +2732,9 @@ public class CastingPermissionService {
      */
     public OptionalInt findAdditionalCounterCostFromTopOfLibrary(GameData gameData, UUID playerId,
                                                                   Card card) {
-        if (card.hasType(CardType.LAND)) return OptionalInt.empty();
+        if (card.hasType(CardType.LAND) || !ownLibraryTopPermissionCovers(gameData, playerId, card)) {
+            return OptionalInt.empty();
+        }
         if (gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)) {
             return OptionalInt.of(0);
         }
@@ -2767,6 +2791,7 @@ public class CastingPermissionService {
     /** Returns the additional casting costs imposed by the selected top-library permission. */
     public List<CastingCost> findTopLibraryAdditionalCosts(GameData gameData, UUID playerId, Card card) {
         if (card.hasType(CardType.LAND)
+                || !ownLibraryTopPermissionCovers(gameData, playerId, card)
                 || gameData.playersAllowedToPlayFromLibraryTopUntilEndOfTurn.contains(playerId)
                 || hasAnyLibraryTopPermission(gameData, playerId)
                 || hasLibraryTopPermissionForCard(gameData, playerId, card)) {

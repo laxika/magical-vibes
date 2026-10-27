@@ -9,41 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 64. Own library top hidden while a temporary grant opens another player's library
-
-**Status:** open · **Found:** 2026-10-26, while finishing entry 49 (playing from any player's library)
-
-**Failing tests:**
-- none yet (write one: Future Sight plus Xanathar, Guild Kingpin's grant on the opponent's library)
-
-**What the rules require.** Each permission works on its own library: Future Sight still lets its
-controller play the top card of their own library while Xanathar lets them play the top card of the
-target opponent's library, so both cards should be playable. `CastingPermissionService.findLibraryTopOwners`
-only adds the player's own library when no temporary grant opens a nonempty library (and no
-any-library permission applies), so the own top card is not offered. Its top-library permission checks
-(`canCastFromTopOfLibrary`, `canCastFromTopOfLibraryNormally`, `hasAnyLibraryTopPermission`, the free
-and life play permissions) are not library-aware either, so simply adding the own library could let a
-permission meant for one library authorize the other's card.
-
-**Why it's large.** Every top-library permission check needs a library owner (own-library sources like
-Future Sight, Courser of Kruphix, Bolas's Citadel vs. grants on a specific library), through the
-projection, the cast and land paths, and the AI's playability query.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 64: make the top-library permission checks in
-CastingPermissionService library-aware (own-library permissions only for the player's own library,
-grants only for their granted library, any-library permissions for all), then let
-findLibraryTopOwners include the player's own library alongside temporarily granted ones. Add a test
-with Future Sight plus Xanathar, Guild Kingpin showing both top cards are offered and playable, and
-keep WindriddlePalacesTest, XanatharGuildKingpinTest, FutureSightTest, CourserOfKruphixTest and
-BolassCitadelTest passing. Verify every CR number with the rules MCP. Don't run the full test suite;
-ask me. Don't commit until I say so.
-```
-
----
-
 ## 65. Indomitable Might's damage option and attached restrictions in the client listing
 
 **Status:** open · **Found:** 2026-10-26, while finishing entry 51 (Aura/Equipment restrictions as the attachment's own abilities)

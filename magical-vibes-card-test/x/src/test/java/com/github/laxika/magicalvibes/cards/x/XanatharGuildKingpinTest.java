@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.x;
 
+import com.github.laxika.magicalvibes.cards.b.BolassCitadel;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FutureSight;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 
@@ -22,7 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({XanatharGuildKingpin.class, Forest.class, GrizzlyBears.class, Shock.class,
-        FutureSight.class, VoidmageProdigy.class, KozilekTheGreatDistortion.class, Boomerang.class})
+        FutureSight.class, VoidmageProdigy.class, KozilekTheGreatDistortion.class, Boomerang.class,
+        BolassCitadel.class})
 class XanatharGuildKingpinTest extends BaseCardTest {
 
     private void resolveUpkeepTrigger(Card topCard) {
@@ -281,6 +284,73 @@ class XanatharGuildKingpinTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).contains(forest);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);
+    }
+
+    @Test
+    @DisplayName("Future Sight still opens the controller's own library top alongside the granted opponent's")
+    void offersOwnAndGrantedTopCardsTogether() {
+        GrizzlyBears ownBears = new GrizzlyBears();
+        Shock opponentsShock = new Shock();
+        harness.addToBattlefield(player1, new FutureSight());
+        resolveUpkeepTrigger(opponentsShock);
+        harness.setLibrary(player1, List.of(ownBears));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.clearMessages();
+
+        harness.publishState();
+
+        var mapper = JsonMapper.builder().build();
+        assertThat(harness.getConn1().getSentMessages()).anyMatch(message -> {
+            var playable = mapper.readTree(message).get("playableLibraryTopCards");
+            return playable != null && playable.toString().contains(ownBears.getId().toString())
+                    && playable.toString().contains(opponentsShock.getId().toString())
+                    && playable.toString().contains(player1.getId().toString())
+                    && playable.toString().contains(player2.getId().toString());
+        });
+    }
+
+    @Test
+    @DisplayName("Future Sight and the grant each let the controller play their own library's top card")
+    void castsOwnAndGrantedTopCardsInTheSameTurn() {
+        GrizzlyBears ownBears = new GrizzlyBears();
+        Shock opponentsShock = new Shock();
+        harness.addToBattlefield(player1, new FutureSight());
+        resolveUpkeepTrigger(opponentsShock);
+        harness.setLibrary(player1, List.of(ownBears));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castFromLibraryTopOf(player1, player1);
+        harness.passBothPriorities();
+        harness.ensurePriority(player1);
+        gs.playCardFromLibraryTop(gd, player1, null, player2.getId(), List.of(), List.of(), false, false,
+                player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(ownBears);
+        assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(opponentsShock);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentsShock);
+    }
+
+    @Test
+    @DisplayName("Bolas's Citadel's pay-life casting covers only its controller's own library")
+    void ownLibraryLifePermissionDoesNotCoverGrantedLibrary() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.addToBattlefield(player1, new BolassCitadel());
+        resolveUpkeepTrigger(bears);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castFromLibraryTopOf(player1, player2))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(bears);
+        harness.assertLife(player1, 20);
     }
 
     @Test
