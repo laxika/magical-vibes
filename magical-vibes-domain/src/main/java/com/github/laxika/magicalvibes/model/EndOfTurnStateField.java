@@ -359,7 +359,8 @@ public enum EndOfTurnStateField {
     GAME_NEXT_DRAW_EXILE_TOP_CARD(Kind.COUNTS),
     GAME_PENDING_MYSTIC_REFLECTIONS(Kind.LIST),
     GAME_THIS_TURN_DELAYED_ACTIONS(Kind.LIST),
-    GAME_DRAW_REPLACEMENT_TARGET_TO_CONTROLLER(Kind.SET);
+    GAME_DRAW_REPLACEMENT_TARGET_TO_CONTROLLER(Kind.SET),
+    GAME_TEMPORARY_CHOSEN_SUBTYPE_PERMANENTS(Kind.SET);
 
     /** How a field's value is split between players and recombined. */
     public enum Kind {

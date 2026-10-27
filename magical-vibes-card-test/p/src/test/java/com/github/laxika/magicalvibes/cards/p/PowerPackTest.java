@@ -110,9 +110,11 @@ class PowerPackTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == divination);
         resolveAllTriggers();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+        // Two cards from Divination, then the turn moves on through player 1's draw step.
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 3);
         assertThat(gd.findExiledCard(divination.getId())).isNotNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(divination);
     }

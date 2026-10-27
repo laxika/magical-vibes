@@ -4846,7 +4846,8 @@ public class GameData {
      * replaced by a reduced copy when partly used, the "this turn" delayed-trigger watchers and "until end of turn"
      * global triggered abilities, the pending "the next time you would draw a card this turn" replacements and
      * Mystic Reflection's pending entry copies, the "this turn" delayed triggers and effects in the delayed-action
-     * queue selected by {@link #isThisTurnDelayedAction} and Plagiarize's draw redirections), which the cleanup step clears
+     * queue selected by {@link #isThisTurnDelayedAction}, Plagiarize's draw redirections and the permanents whose
+     * source subtype choice lasts until end of turn), which the cleanup step clears
      * (CR 514.2). Used to split that state between the players active when it was created under Runed Terror's sequential phases.
      */
     public EndOfTurnStateShare captureGameEndOfTurnState() {
@@ -5146,6 +5147,7 @@ public class GameData {
                     .toList();
             case GAME_DRAW_REPLACEMENT_TARGET_TO_CONTROLLER ->
                     Set.copyOf(plainMapEntries(drawReplacementTargetToController));
+            case GAME_TEMPORARY_CHOSEN_SUBTYPE_PERMANENTS -> temporaryChosenSubtypePermanentIds;
             default -> null;
         };
     }
@@ -5518,6 +5520,8 @@ public class GameData {
             case GAME_THIS_TURN_DELAYED_ACTIONS -> delayedActions.addAll((List<DelayedAction>) value);
             case GAME_DRAW_REPLACEMENT_TARGET_TO_CONTROLLER -> ((Set<Map.Entry<UUID, UUID>>) value).forEach(entry ->
                     drawReplacementTargetToController.putIfAbsent(entry.getKey(), entry.getValue()));
+            case GAME_TEMPORARY_CHOSEN_SUBTYPE_PERMANENTS ->
+                    temporaryChosenSubtypePermanentIds.addAll((Set<UUID>) value);
             case GAME_PLAYER_SOURCE_NEXT_DAMAGE_SHIELDS ->
                     playerSourceNextDamageShields.addAll((List<PlayerSourceNextDamageShield>) value);
             case GAME_SOURCE_NEXT_DAMAGE_TO_ANY_TARGET_SHIELDS ->

@@ -972,6 +972,9 @@ public class StepTriggerService {
                 if (gameData.findExiledCard(action.card().getId()) == null) {
                     continue;
                 }
+                if (action.exileInsteadOfGraveyard()) {
+                    gameData.exileInsteadOfGraveyard.add(action.card().getId());
+                }
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         action.card(),

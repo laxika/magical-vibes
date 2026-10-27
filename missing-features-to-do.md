@@ -136,7 +136,16 @@ a `LIST` of the records `GameData.isThisTurnDelayedAction` selects: until-end-of
 turn" pairs and this-turn-only `DelayedDestroyTargetWhenSourceLeaves`; the cleanup step now clears them through that
 one predicate, so a trigger that fired and left the queue in between is not restored) and Plagiarize's
 `drawReplacementTargetToController` (`GAME_DRAW_REPLACEMENT_TARGET_TO_CONTROLLER`, a `SET` of
-`(target player, controller)` entries, restored with `putIfAbsent`).
+`(target player, controller)` entries, restored with `putIfAbsent`). A seventeenth pass moved
+`temporaryChosenSubtypePermanentIds` (Leori's "until end of turn" chosen planeswalker type,
+`GAME_TEMPORARY_CHOSEN_SUBTYPE_PERMANENTS`, a `SET`; the cleanup step keeps a retained permanent's chosen subtype),
+checked the per-spell entry riders (`spellAdditionalEnterCounters`, `spellEntryCounters`,
+`spellGrantedSubtypesOnEntry`, `spellsGranted*OnEntry`, `conspiredSpellCopyCounts`, `casualtySpellCopyCounts`): they
+are all written when the spell is cast (or when the may-cast that casts it resolves) and consumed when it resolves,
+and a step ends only with the stack empty (CR 500.2), so none can be pending across a cleanup step and they need no
+split. It also fixed Power Pack's "if that spell would be put into your graveyard, exile it instead" rider, which was
+added when the card was exiled and so was cleared by the cleanup step before the next-upkeep cast (with or without
+Runed Terror): `ReboundAtNextUpkeep` now carries the rider and applies it when the upkeep trigger fires.
 RunedTerrorTest covers can't-block, creature and player
 prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference, Skullcrack, Silence, Gilded Light,
 Borne Upon a Wind, Debt of Loyalty, Skeleton Scavengers, Soldevi Sentry, Microscope, Blind Fury, Overblaze (two
@@ -157,22 +166,19 @@ exiled after the active player's cleanup; the active player's own rider ends at 
 both players' phases (each group ends at its own player's cleanup), the "this turn" trigger watchers from both
 players' phases, and next-draw replacements / Mystic Reflection split between phases (one used before the active
 player's cleanup), and "this turn" delayed actions / Plagiarize redirects from both players' phases (a delayed
-trigger that fired before the active player's cleanup is not restored; an "until your next turn" watch is untouched).
+trigger that fired before the active player's cleanup is not restored; an "until your next turn" watch is untouched), and until-end-of-turn source subtype choices from both players' phases.
 **Still open:**
 `Permanent.tappedPermanentsForAbilityThisTurn` (Vodalian War Machine's "Merfolk tapped this turn" record; it is a
 turn-history record, not an effect, so the Runed Terror ruling about effects ending doesn't settle it — it arguably
 should last the whole turn rather than be split per active player; look for a ruling first), and the remaining
 `GameData` stores cleared in
-`resetEndOfTurnModifiers`: the
-per-spell entry riders `spellAdditionalEnterCounters` / `spellEntryCounters` / `spellGrantedSubtypesOnEntry` /
-`spellsGranted*OnEntry` (keyed by a spell's card id and consumed when it enters; they likely never outlive the spell,
-since a step ends only once the stack is empty, so check whether any can be left pending across a cleanup before
-splitting them), and the turn-history records cleared alongside them (`chainsDrawReplacementsApplied`,
+`resetEndOfTurnModifiers`, which are turn-history records rather than effects (`chainsDrawReplacementsApplied`,
 `drawStepFirstDrawTaken`, `firstNonDrawStepDrawReplacementsUsedThisTurn`, `playersWhoseSpeedIncreasedThisTurn`,
-`playersWhoPlayedCardFromExileThisTurn`, ...; they are not effects and should probably not be split; check each). Note
-`ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffectHandler` adds an `exileInsteadOfGraveyard` rider for
-a cast at the next upkeep, which every cleanup (with or without Runed Terror) clears first; check whether that cast
-still exiles the spell. Known limitation: a flag or set element (including a keyword) that another player's
+`playersWhoPlayedCardFromExileThisTurn`, `playersWhoPlayedOrCastFromOutsideHandThisTurn`, `playersWhoForetoldThisTurn`,
+`cardsExiledThisTurn`, `skippedStepOrPhasesThisTurn`, `spellsPaidUsingPendingAnyManaTypeThisTurn`, ...). The Runed
+Terror rulings only cover effects ending and effects that care whose turn it is, so whether
+such a record should last the whole sequential turn, be split per active player, or keep ending at each cleanup is
+not settled; check each against its card's wording and rulings before changing it. Known limitation: a flag or set element (including a keyword) that another player's
 effect sets again while it is already set stays credited to the first player only, and with three or more players a
 single-value field kept for several other players takes the value of the most recently credited player. When two
 equal shield records are credited to different players and one is partly used, the reduced copy is credited to the

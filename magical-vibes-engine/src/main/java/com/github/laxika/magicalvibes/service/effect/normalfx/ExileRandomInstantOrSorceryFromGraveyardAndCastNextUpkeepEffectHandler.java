@@ -49,8 +49,7 @@ public class ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffectHand
 
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, exiled.getId());
         exileService.exileCard(gameData, controllerId, exiled);
-        gameData.exileInsteadOfGraveyard.add(exiled.getId());
-        gameData.queueDelayedAction(new ReboundAtNextUpkeep(controllerId, controllerId, exiled));
+        gameData.queueDelayedAction(new ReboundAtNextUpkeep(controllerId, controllerId, exiled, true));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.builder()
