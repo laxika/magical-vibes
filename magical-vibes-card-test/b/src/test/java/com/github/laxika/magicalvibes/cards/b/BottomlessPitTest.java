@@ -70,7 +70,8 @@ class BottomlessPitTest extends BaseCardTest {
         harness.setHand(player2, List.of(firstCard, secondCard));
 
         advanceToUpkeep(player2);
-        harness.passBothPriorities();
+        harness.passPriority(player2);
+        harness.passPriority(player1);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);

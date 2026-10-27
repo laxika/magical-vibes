@@ -26,7 +26,8 @@ class BasrisAegisTest extends BaseCardTest {
     void countersCreaturesAndFindsBasriFromGraveyard() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setGraveyard(player1, List.of(new BasriDevotedPaladin()));
+        Card basri = new BasriDevotedPaladin();
+        harness.setGraveyard(player1, List.of(basri));
         cast(List.of(first.getId(), second.getId()));
 
         harness.passBothPriorities();
@@ -34,6 +35,7 @@ class BasrisAegisTest extends BaseCardTest {
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(basri.getId()));
 
         harness.assertInHand(player1, "Basri, Devoted Paladin");
         harness.assertNotInGraveyard(player1, "Basri, Devoted Paladin");
@@ -62,11 +64,12 @@ class BasrisAegisTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
-                .containsExactly(basri);
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice search =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(search.pool()).containsExactly(basri);
+        assertThat(search.libraryCardIds()).containsExactly(basri.getId());
 
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(basri.getId()));
 
         harness.assertInHand(player1, "Basri, Devoted Paladin");
     }

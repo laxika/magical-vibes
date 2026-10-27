@@ -335,6 +335,7 @@ public sealed interface Condition permits
         PermanentEnteredThisTurn,
         PermanentLeftBattlefieldUnderYourControlThisTurn,
         PermanentLeftThisWay,
+        CardDrawnThisWay,
         PermanentTurnedFaceUpThisTurn,
         VoidCondition,
         PermanentPutIntoYourHandFromBattlefieldThisTurn,

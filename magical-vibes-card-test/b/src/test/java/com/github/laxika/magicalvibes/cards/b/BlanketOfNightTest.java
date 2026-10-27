@@ -108,6 +108,7 @@ class BlanketOfNightTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         harness.tapPermanent(player1, 1);
+        harness.handleListChoice(player1, "GREEN");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();

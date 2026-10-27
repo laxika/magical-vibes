@@ -16,8 +16,8 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -62,11 +62,12 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
         // Multi-target / optional "up to N" ETB path: targets land on targetIds with targetId null.
         // When this effect is bound to a target group, narrow the flat list to that group so a
         // modal spell does not apply the same effect to targets belonging to another effect.
-        Map<UUID, Integer> damageBefore = e.exileInsteadOfDie()
-                ? new HashMap<>(gameData.damageDealtToPermanentsThisTurn) : Map.of();
         List<UUID> effectTargets = entry.targetsForEffect(e);
+        Map<UUID, Integer> damageBefore = e.exileInsteadOfDie() && e.exileOnlyIfDealtDamage()
+                ? new HashMap<>(gameData.damageDealtToPermanentsThisTurn) : Map.of();
         if (effectTargets != null && !effectTargets.isEmpty()
                 && (effectTargets.size() > 1 || entry.getTargetId() == null)) {
+            markTargetsForExile(gameData, e, effectTargets);
             for (UUID targetId : effectTargets) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) continue;
@@ -78,6 +79,8 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
             return;
         }
 
+        markTargetsForExile(gameData, e,
+                singleTarget == null ? List.of() : List.of(singleTarget.getId()));
         int damageDealt = damageSupport.resolveCreatureTargetDamage(gameData, entry, damage);
         markDamagedPermanentsForExile(gameData, e, damageBefore);
         if (tracksExcess) {
@@ -96,12 +99,28 @@ public class DealDamageToTargetCreatureOrPlaneswalkerEffectHandler implements No
     }
 
     /**
-     * Marks each permanent this effect actually dealt damage to so it is exiled instead of dying this turn;
-     * a target whose damage was fully prevented is not marked.
+     * Marks each targeted permanent still on the battlefield so it is exiled instead of dying this turn.
+     * The mark does not depend on damage being dealt: a target whose damage was prevented or was zero is marked too,
+     * since the effect says "if that creature would die this turn", which applies to any later death this turn.
+     */
+    private void markTargetsForExile(GameData gameData,
+            DealDamageToTargetCreatureOrPlaneswalkerEffect effect, List<UUID> targetIds) {
+        if (!effect.exileInsteadOfDie() || effect.exileOnlyIfDealtDamage()) return;
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target != null) {
+                target.setExileInsteadOfDieThisTurn(true);
+            }
+        }
+    }
+
+    /**
+     * Marks each permanent this effect actually dealt damage to so it is exiled instead of dying this turn
+     * ("a permanent dealt damage this way"); a target whose damage was prevented or was zero is not marked.
      */
     private void markDamagedPermanentsForExile(GameData gameData,
             DealDamageToTargetCreatureOrPlaneswalkerEffect effect, Map<UUID, Integer> damageBefore) {
-        if (!effect.exileInsteadOfDie()) return;
+        if (!effect.exileInsteadOfDie() || !effect.exileOnlyIfDealtDamage()) return;
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
                 if (gameData.damageDealtToPermanentsThisTurn.getOrDefault(permanent.getId(), 0)

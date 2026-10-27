@@ -24,7 +24,15 @@ class BloodrageAlphaTest extends BaseCardTest {
         Permanent wolf = addCreatureReady(player1, new WickedWolf());
         Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
 
-        castBloodrage(0, List.of(wolf.getId(), opponent.getId()));
+        harness.setHand(player1, List.of(new BloodrageAlpha()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        gs.playCard(gd, player1, 0, -1, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1,
+                "Another target Wolf or Werewolf you control fights target creature you don't control");
+        harness.handlePermanentChosen(player1, wolf.getId());
+        harness.handlePermanentChosen(player1, opponent.getId());
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");

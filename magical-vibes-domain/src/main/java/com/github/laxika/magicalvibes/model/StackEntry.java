@@ -455,6 +455,14 @@ public class StackEntry {
         resolutionResults = resolutionResults.withDepartures(departures);
     }
 
+    /**
+     * Records the cards the step being resolved actually drew, replacing those of earlier steps. A draw
+     * step calls this even when nothing was drawn (an empty list), so "if you do" reads this step's result.
+     */
+    public void recordDrawnCards(List<UUID> drawnCardIds) {
+        resolutionResults = resolutionResults.withDrawnCardIds(drawnCardIds);
+    }
+
     /** Records what a player picked in the step being resolved, for the next step to act on. */
     public void recordPicks(List<UUID> pickedIds) {
         resolutionResults = resolutionResults.withPickedIds(pickedIds);

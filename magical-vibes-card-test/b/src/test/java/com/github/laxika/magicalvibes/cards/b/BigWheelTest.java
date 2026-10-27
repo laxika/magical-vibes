@@ -94,7 +94,7 @@ class BigWheelTest extends BaseCardTest {
         harness.castFromHand(player1, new BigWheel(), "{2}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);

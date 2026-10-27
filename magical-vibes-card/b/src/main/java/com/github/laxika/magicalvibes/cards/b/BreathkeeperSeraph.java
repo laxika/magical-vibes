@@ -28,7 +28,7 @@ public class BreathkeeperSeraph extends Card {
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_DEATH,
                         new MayEffect(
-                                new RegisterDelayedSelfReturnFromGraveyardEffect(null, 0, true, false),
+                                RegisterDelayedSelfReturnFromGraveyardEffect.returningAtControllersNextUpkeep(),
                                 "Return this creature to the battlefield at the beginning of your next upkeep?"),
                         GrantScope.SELF_AND_PAIRED)));
     }

@@ -348,6 +348,7 @@ public class TurnCleanupService {
             p.setDamageToCounterPreventionShield(0);
             p.setDamageToPlusOnePlusOneCounterPreventionShield(0);
             p.setAllDamageToPlusOnePlusOneCounterPreventionShield(false);
+            p.setDamageReplacedByPlusOnePlusOneCounters(false);
             p.setDamageDestructionShield(0);
             p.setLandDestructionShield(0);
             p.setRegenerationShield(0);

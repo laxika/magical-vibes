@@ -61,6 +61,7 @@ class BallynockTrapperTest extends BaseCardTest {
         assertThat(trapper.isTapped()).isTrue();
 
         harness.castFromHand(player1, new BallynockTrapper(), "{3}{W}");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -81,6 +82,7 @@ class BallynockTrapperTest extends BaseCardTest {
         assertThat(trapper.isTapped()).isTrue();
 
         harness.castFromHand(player1, new BallynockTrapper(), "{3}{W}");
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
@@ -111,6 +113,7 @@ class BallynockTrapperTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DuergarAssailant()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -181,6 +184,7 @@ class BallynockTrapperTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, firstTarget.getId());
         harness.passBothPriorities();
         harness.castFromHand(player1, new BallynockTrapper(), "{3}{W}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         assertThat(trapper.isTapped()).isFalse();

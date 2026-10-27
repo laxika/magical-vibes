@@ -536,7 +536,7 @@ public class GraveyardReturnSupport {
         if (card == null) {
             return false;
         }
-        if (card.isToken() || gameData.dynamicTokenCardIds.contains(card.getId())) {
+        if ((card.isToken() || gameData.dynamicTokenCardIds.contains(card.getId())) && !card.isTokenCard()) {
             return false;
         }
         if (effect.requiresPowerAtMostSacrificedPower()) {

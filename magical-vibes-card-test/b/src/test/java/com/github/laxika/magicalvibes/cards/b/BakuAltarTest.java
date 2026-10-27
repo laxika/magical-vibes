@@ -25,6 +25,7 @@ class BakuAltarTest extends BaseCardTest {
     void arcaneSpellAddsKiCounterWhenAccepted() {
         Permanent altar = addAltar(player1);
         harness.castFromHand(player1, new VitalSurge(), "{1}{G}");
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
@@ -37,6 +38,7 @@ class BakuAltarTest extends BaseCardTest {
     void decliningTriggerDoesNotAddKiCounter() {
         Permanent altar = addAltar(player1);
         harness.castFromHand(player1, new VitalSurge(), "{1}{G}");
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
@@ -49,6 +51,7 @@ class BakuAltarTest extends BaseCardTest {
     void spiritSpellAddsKiCounterWhenAccepted() {
         Permanent altar = addAltar(player1);
         harness.castFromHand(player1, new TeardropKami(), "{U}");
+        harness.passBothPriorities();
 
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();

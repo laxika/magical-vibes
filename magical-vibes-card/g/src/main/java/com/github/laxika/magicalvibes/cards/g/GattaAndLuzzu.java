@@ -14,7 +14,7 @@ public class GattaAndLuzzu extends Card {
     public GattaAndLuzzu() {
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        PreventDamageEffect.allToTargetCreaturesAndAddPlusOnePlusOneCounters(
+                        PreventDamageEffect.allToTargetCreaturesReplacedByPlusOnePlusOneCounters(
                                 new PermanentIsCreaturePredicate()));
     }
 }

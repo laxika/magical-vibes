@@ -50,7 +50,7 @@ public class ChandraAwakenedInferno extends Card {
         ));
 
         addActivatedAbility(ActivatedAbility.variableLoyaltyAbility(
-                List.of(new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue(), null, true)),
+                List.of(DealDamageToTargetCreatureOrPlaneswalkerEffect.exilingIfDealtDamage(new XValue())),
                 "\u2212X: Chandra, Awakened Inferno deals X damage to target creature or planeswalker. "
                         + "If a permanent dealt damage this way would die this turn, exile it instead.",
                 null

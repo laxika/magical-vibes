@@ -16,24 +16,32 @@ import java.util.UUID;
  *                   regenerated). A removal step records its results even when nothing left, so a later
  *                   step never reads an older step's departures
  * @param pickedIds  the ids a player picked in an earlier step, for the next step to act on
+ * @param drawnCardIds the cards the most recent draw step actually drew ("this way"); a draw step records
+ *                   its result even when nothing was drawn, so a later step never reads an older draw
  */
-public record ResolutionResults(List<DepartureResult> departures, List<UUID> pickedIds) {
+public record ResolutionResults(List<DepartureResult> departures, List<UUID> pickedIds, List<UUID> drawnCardIds) {
 
-    public static final ResolutionResults EMPTY = new ResolutionResults(List.of(), List.of());
+    public static final ResolutionResults EMPTY = new ResolutionResults(List.of(), List.of(), List.of());
 
     public ResolutionResults {
         departures = List.copyOf(departures);
         pickedIds = List.copyOf(pickedIds);
+        drawnCardIds = List.copyOf(drawnCardIds);
     }
 
     /** These results with {@code results} as the latest step's departures, replacing the earlier ones. */
     public ResolutionResults withDepartures(List<DepartureResult> results) {
-        return new ResolutionResults(results, pickedIds);
+        return new ResolutionResults(results, pickedIds, drawnCardIds);
     }
 
     /** These results with {@code ids} as the latest picks, replacing the earlier ones. */
     public ResolutionResults withPickedIds(List<UUID> ids) {
-        return new ResolutionResults(departures, ids);
+        return new ResolutionResults(departures, ids, drawnCardIds);
+    }
+
+    /** These results with {@code ids} as the latest draw step's drawn cards, replacing the earlier ones. */
+    public ResolutionResults withDrawnCardIds(List<UUID> ids) {
+        return new ResolutionResults(departures, pickedIds, ids);
     }
 
     /** Whether a permanent was sacrificed this way, wherever it ended up. */

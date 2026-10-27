@@ -13,7 +13,7 @@ public class BrazenBlademaster extends Card {
 
     public BrazenBlademaster() {
         addEffect(EffectSlot.ON_ATTACK,
-                new ConditionalEffect(
+                ConditionalEffect.atTriggerTime(
                         new ControlsPermanentCount(2, new PermanentIsArtifactPredicate()),
                         new BoostSelfEffect(2, 1)));
     }

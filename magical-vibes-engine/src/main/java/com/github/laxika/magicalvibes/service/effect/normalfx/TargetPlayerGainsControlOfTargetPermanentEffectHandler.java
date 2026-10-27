@@ -53,8 +53,9 @@ public class TargetPlayerGainsControlOfTargetPermanentEffectHandler implements N
         if (currentControllerId == null) {
             return;
         }
-        boolean controlChanged = !newControllerId.equals(currentControllerId)
-                && creatureControlService.applyControlEffect(
+        // Gaining control of a permanent you already control still stamps a new indefinite control
+        // effect, which outlasts any limited-duration control effect over it (Bazaar Trader's ruling).
+        boolean controlApplied = creatureControlService.applyControlEffect(
                 gameData,
                 newControllerId,
                 target,
@@ -62,6 +63,7 @@ public class TargetPlayerGainsControlOfTargetPermanentEffectHandler implements N
                 EffectDuration.PERMANENT,
                 null,
                 entry.getCard().getName());
+        boolean controlChanged = controlApplied && !newControllerId.equals(currentControllerId);
 
         if (controlChanged && transfer.thenEffect() != null) {
             CardEffect thenEffect = transfer.thenEffect();

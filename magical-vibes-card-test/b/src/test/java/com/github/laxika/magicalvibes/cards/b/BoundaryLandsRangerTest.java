@@ -103,8 +103,8 @@ class BoundaryLandsRangerTest extends BaseCardTest {
 
         advanceToCombat(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

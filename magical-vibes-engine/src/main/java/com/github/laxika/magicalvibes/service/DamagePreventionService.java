@@ -522,7 +522,8 @@ public class DamagePreventionService {
                 (gd, c, damage) -> applyCombatDamageToSelfAndAddPlusOneCounter(gd, c.permanent(), c.damageSource(), damage)));
         steps.add(step("PlusOneCounterShieldUnpreventable", "Put +1/+1 counters on it equal to the damage (can't be prevented)", replacement, false,
                 (gd, c, damage) -> damage > 0 && !preventable(gd, c)
-                        && c.permanent().isAllDamageToPlusOnePlusOneCounterPreventionShield(),
+                        && c.permanent().isAllDamageToPlusOnePlusOneCounterPreventionShield()
+                        && c.permanent().isDamageReplacedByPlusOnePlusOneCounters(),
                 (gd, c, damage) -> {
                     putShieldPlusOneCounters(gd, c.permanent(), damage);
                     return damage;

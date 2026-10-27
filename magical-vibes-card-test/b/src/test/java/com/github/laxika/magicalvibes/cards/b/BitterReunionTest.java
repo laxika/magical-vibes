@@ -105,7 +105,6 @@ class BitterReunionTest extends BaseCardTest {
         harness.castFromHand(player1, new BitterReunion(), "{1}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);

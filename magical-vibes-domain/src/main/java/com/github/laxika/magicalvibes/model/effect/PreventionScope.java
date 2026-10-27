@@ -59,6 +59,12 @@ public enum PreventionScope {
     ALL_TO_TARGET_CREATURES,
     /** "Prevent all damage that would be dealt to target creature(s) this turn; put a +1/+1 counter on it for each 1 damage prevented" (Brace for Impact). */
     ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS,
+    /**
+     * "If damage would be dealt to that creature this turn, prevent that damage and put that many +1/+1
+     * counters on it" (Gatta and Luzzu): a replacement, so the counters are put even when the damage can't
+     * be prevented.
+     */
+    ALL_TO_TARGET_CREATURES_REPLACED_BY_PLUS_ONE_PLUS_ONE_COUNTERS,
     /** "Prevent all [combat] damage target creature(s) would deal this turn" (Soul Parry, Resistance Fighter). */
     ALL_BY_TARGET_CREATURES,
     /** Prevents all damage target creature would deal while the source remains on the battlefield. */

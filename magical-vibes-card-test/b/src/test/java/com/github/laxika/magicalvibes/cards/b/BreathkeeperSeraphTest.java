@@ -6,10 +6,16 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -84,7 +90,7 @@ class BreathkeeperSeraphTest extends BaseCardTest {
     @Test
     void stolenPartnerReturnsAtDeathControllersUpkeepUnderOwnersControl() {
         Permanent bears = castAndPairWithBears();
-        gd.stolenCreatures.put(bears.getId(), player2.getId());
+        stealPartner(bears);
         bears.setMarkedDamage(2);
         harness.runStateBasedActions();
         harness.passBothPriorities();
@@ -100,7 +106,7 @@ class BreathkeeperSeraphTest extends BaseCardTest {
     @Test
     void stolenPartnerDoesNotReturnAtOwnersEarlierUpkeep() {
         Permanent bears = castAndPairWithBears();
-        gd.stolenCreatures.put(bears.getId(), player2.getId());
+        stealPartner(bears);
         bears.setMarkedDamage(2);
         harness.runStateBasedActions();
         harness.passBothPriorities();
@@ -185,6 +191,14 @@ class BreathkeeperSeraphTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bears.getId());
         return bears;
+    }
+
+    private void stealPartner(Permanent bears) {
+        gd.stolenCreatures.put(bears.getId(), player2.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                "Control change", null, player1.getId(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT), bears.getId(),
+                null, null, EffectDuration.PERMANENT, 0));
     }
 
     private void runUpkeepOf(Player player) {

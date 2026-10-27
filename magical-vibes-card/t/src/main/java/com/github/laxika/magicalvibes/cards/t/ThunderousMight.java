@@ -13,6 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ThunderousMight extends Card {
 
     public ThunderousMight() {
+        // The attack trigger is the Aura's own ability, so its controller (whose devotion counts) is the Aura's
+        // controller even when the enchanted creature is an opponent's.
+        setAttackTriggerOwnedByAura(true);
+
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_ATTACK,
                 new BoostEquippedCreatureUntilEndOfTurnEffect(
                         new ColorManaSymbolsAmongControlledPermanents(ManaColor.RED),

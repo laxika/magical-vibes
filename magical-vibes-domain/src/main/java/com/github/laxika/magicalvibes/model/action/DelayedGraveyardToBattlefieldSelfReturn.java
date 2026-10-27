@@ -9,8 +9,9 @@ import java.util.UUID;
  * owner's control, entering with {@code counterAmount} counters of {@code counterType} (no counters
  * when {@code counterType} is null). Used by Sand Golem.
  *
- * <p>{@code atNextUpkeep} moves the timing from the next end step to the beginning of the owner's
- * next upkeep (Phytotitan), and {@code tapped} makes it enter tapped.
+ * <p>{@code atNextUpkeep} moves the timing from the next end step to the beginning of the next upkeep of
+ * {@code upkeepPlayerId} (the owner for Phytotitan, the controller at death for Breathkeeper Seraph), and
+ * {@code tapped} makes it enter tapped.
  */
 public record DelayedGraveyardToBattlefieldSelfReturn(
         UUID cardId,

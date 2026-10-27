@@ -97,6 +97,7 @@ public record PreventDamageEffect(
                 || scope == PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS_AT_RESOLUTION
                 || scope == PreventionScope.ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS
                 || scope == PreventionScope.ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS
+                || scope == PreventionScope.ALL_TO_TARGET_CREATURES_REPLACED_BY_PLUS_ONE_PLUS_ONE_COUNTERS
                 || scope == PreventionScope.NEXT_TO_TARGET_CREATURE;
         if (victimPredicate != null && !acceptsVictimPredicate) {
             throw new IllegalArgumentException(
@@ -106,6 +107,7 @@ public record PreventDamageEffect(
                 || scope == PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS
                 || scope == PreventionScope.ALL_TO_CONTROLLED_MATCHING_PERMANENTS_AT_RESOLUTION
                 || scope == PreventionScope.ALL_COMBAT_TO_CONTROLLED_MATCHING_PERMANENTS
+                || scope == PreventionScope.ALL_TO_TARGET_CREATURES_REPLACED_BY_PLUS_ONE_PLUS_ONE_COUNTERS
                 || scope == PreventionScope.ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS)) {
             throw new IllegalArgumentException(scope + " requires a victimPredicate");
         }
@@ -280,6 +282,16 @@ public record PreventDamageEffect(
                 null, false, null, null, victimPredicate);
     }
 
+    /**
+     * "If damage would be dealt to that creature this turn, prevent that damage and put that many +1/+1
+     * counters on it" (Gatta and Luzzu); the counters are put even when the damage can't be prevented.
+     */
+    public static PreventDamageEffect allToTargetCreaturesReplacedByPlusOnePlusOneCounters(PermanentPredicate victimPredicate) {
+        return new PreventDamageEffect(
+                PreventionScope.ALL_TO_TARGET_CREATURES_REPLACED_BY_PLUS_ONE_PLUS_ONE_COUNTERS,
+                null, false, null, null, victimPredicate);
+    }
+
     /** "Prevent all combat damage that would be dealt to target creature(s) this turn" (Foxfire). */
     public static PreventDamageEffect allCombatToTargetCreatures() {
         return new PreventDamageEffect(PreventionScope.ALL_TO_TARGET_CREATURES, null, true, null, null, null);
@@ -450,7 +462,8 @@ public record PreventDamageEffect(
             case NEXT_TO_TARGET_PLAYER_OR_PLANESWALKER -> TargetSpec.benign(TargetPredicates.playerOrPlaneswalker());
             case ALL_TO_TARGET_CREATURES, ALL_BY_TARGET_CREATURES,
                  ALL_BY_TARGET_CREATURES_WHILE_SOURCE_REMAINS -> TargetSpec.benign(TargetPredicates.creature());
-            case ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS -> TargetSpec.benign(
+            case ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS,
+                 ALL_TO_TARGET_CREATURES_REPLACED_BY_PLUS_ONE_PLUS_ONE_COUNTERS -> TargetSpec.benign(
                     TargetPredicates.creature(), victimPredicate);
             case ALL_COMBAT_BY_TARGET_OPPONENT_CREATURES -> TargetSpec.benign(TargetPredicates.player());
             case ALL_BY_TARGET_PERMANENT_UNTIL_NEXT_TURN,

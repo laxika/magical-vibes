@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -123,6 +124,8 @@ class BraidOfFireTest extends BaseCardTest {
     @DisplayName("Unused mana empties before the draw step without losing life")
     void unusedManaEmptiesBeforeDrawStep() {
         harness.addToBattlefield(player1, new BraidOfFire());
+        harness.setHand(player2, List.of());
+        gd.turnNumber = 2;
         int startingLife = gd.getLife(player1.getId());
 
         harness.withAutoStop(TurnStep.UPKEEP, () -> {

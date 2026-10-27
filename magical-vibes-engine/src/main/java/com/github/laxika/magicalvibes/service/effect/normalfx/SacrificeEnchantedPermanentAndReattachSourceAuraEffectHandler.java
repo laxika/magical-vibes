@@ -59,7 +59,9 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
         Permanent aura = gameQueryService.findPermanentById(gameData, originalAura.getId());
         boolean auraOnBattlefield = aura != null;
         if (aura == null) aura = originalAura;
-        UUID enchantedPermanentId = entry.getSourcePermanentId();
+        // The enchanted permanent is the one the Aura was attached to when the trigger went on the stack. A
+        // combat-damage trigger's source is the Aura itself, so the entry's source id can't be used here.
+        UUID enchantedPermanentId = originalAura.getAttachedTo();
         Permanent enchanted = gameQueryService.findPermanentById(gameData, enchantedPermanentId);
         if (enchanted == null || gameQueryService.cantBeSacrificed(gameData, enchanted)
                 || !gameQueryService.triggeredAbilityCanMoveCreatureToken(gameData, enchanted)) {

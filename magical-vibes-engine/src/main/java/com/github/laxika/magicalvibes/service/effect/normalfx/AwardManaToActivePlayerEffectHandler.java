@@ -23,6 +23,9 @@ import java.util.UUID;
  * Resolves {@link AwardManaToActivePlayerEffect} — Eladamri's Vineyard's "that player adds
  * {@code {G}{G}}". The mana goes to the entry's active player (the active player at trigger time),
  * falling back to the entry's target and then its controller when no active player was recorded.
+ * The amount is evaluated from the recipient's perspective, so a {@code CountScope.CONTROLLER}
+ * amount counts what that player controls (Blinkmoth Urn's "that player adds {C} for each artifact
+ * they control").
  */
 @Slf4j
 @Component
@@ -48,14 +51,14 @@ public class AwardManaToActivePlayerEffectHandler implements NormalEffectHandler
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
+        UUID recipientId = entry.getActivePlayerId() != null ? entry.getActivePlayerId()
+                : entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
         int amount = amountEvaluationService.evaluate(gameData, e.amount(),
-                AmountContext.forStackEntry(entry, source));
+                AmountContext.forStackEntry(entry, source).withControllerId(recipientId));
         if (amount <= 0) {
             return;
         }
 
-        UUID recipientId = entry.getActivePlayerId() != null ? entry.getActivePlayerId()
-                : entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
         ManaPool pool = gameData.playerManaPools.get(recipientId);
         if (pool == null) {
             return;

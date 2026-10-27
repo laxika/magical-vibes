@@ -42,12 +42,18 @@ public class RegisterDelayedSelfReturnFromGraveyardEffectHandler implements Norm
             return;
         }
 
+        long graveyardEntryVersion = entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                ? entry.getTriggeringCardGraveyardEntryVersion()
+                : gameData.graveyardEntryVersion(card.getId());
+        UUID upkeepPlayerId = e.atNextUpkeep() && !e.atControllersNextUpkeep() ? ownerId : entry.getControllerId();
         gameData.queueDelayedAction(new DelayedGraveyardToBattlefieldSelfReturn(
                 card.getId(), ownerId, e.counterType(), e.counterAmount(), e.atNextUpkeep(), e.tapped(),
-                e.atNextUpkeep() ? ownerId : entry.getControllerId(), entry.getTriggeringCardGraveyardEntryVersion()));
-        gameLogService.append(gameData, GameLog.cardThen(card, e.atNextUpkeep()
-                ? " will return to the battlefield at the beginning of its owner's next upkeep."
-                : " will return to the battlefield at the beginning of the next end step."));
+                upkeepPlayerId, graveyardEntryVersion));
+        gameLogService.append(gameData, GameLog.cardThen(card, !e.atNextUpkeep()
+                ? " will return to the battlefield at the beginning of the next end step."
+                : e.atControllersNextUpkeep()
+                ? " will return to the battlefield at the beginning of the next upkeep of the player who controlled it."
+                : " will return to the battlefield at the beginning of its owner's next upkeep."));
         log.info("Game {} - Delayed graveyard return registered for {} (owner {})",
                 gameData.id, card.getName(), ownerId);
     }

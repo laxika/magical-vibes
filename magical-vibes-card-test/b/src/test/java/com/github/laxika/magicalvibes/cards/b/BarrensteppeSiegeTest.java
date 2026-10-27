@@ -118,7 +118,7 @@ class BarrensteppeSiegeTest extends BaseCardTest {
         advanceToEndStep(player1);
 
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
+        harness.handlePermanentChosen(player2, chosen.getId());
 
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(chosen.getCard());
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(kept).doesNotContain(chosen);

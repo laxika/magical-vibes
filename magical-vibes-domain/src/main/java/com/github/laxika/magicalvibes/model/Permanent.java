@@ -164,6 +164,9 @@ public class Permanent {
     /** Brace for Impact-style shield: prevent all damage to this permanent and convert it into +1/+1
      *  counters as the damage is prevented. Reset at turn cleanup. */
     @Setter private boolean allDamageToPlusOnePlusOneCounterPreventionShield;
+    /** Gatta and Luzzu-style replacement: on top of the all-damage shield, the counters are put even when the
+     *  damage can't be prevented. Reset at turn cleanup. */
+    @Setter private boolean damageReplacedByPlusOnePlusOneCounters;
     /** Kill-Suit Cultist-style shield: destroy this creature instead of dealing the next damage to it.
      *  Reset at turn cleanup. */
     @Setter private int damageDestructionShield;
@@ -1028,6 +1031,7 @@ public class Permanent {
         this.damageToCounterPreventionShield = source.damageToCounterPreventionShield;
         this.damageToPlusOnePlusOneCounterPreventionShield = source.damageToPlusOnePlusOneCounterPreventionShield;
         this.allDamageToPlusOnePlusOneCounterPreventionShield = source.allDamageToPlusOnePlusOneCounterPreventionShield;
+        this.damageReplacedByPlusOnePlusOneCounters = source.damageReplacedByPlusOnePlusOneCounters;
         this.damageDestructionShield = source.damageDestructionShield;
         this.landDestructionShield = source.landDestructionShield;
         this.regenerationShield = source.regenerationShield;
@@ -2338,6 +2342,7 @@ public class Permanent {
             case DAMAGE_TO_COUNTER_PREVENTION_SHIELD -> damageToCounterPreventionShield;
             case DAMAGE_TO_PLUS_ONE_PLUS_ONE_COUNTER_PREVENTION_SHIELD -> damageToPlusOnePlusOneCounterPreventionShield;
             case ALL_DAMAGE_TO_PLUS_ONE_PLUS_ONE_COUNTER_PREVENTION_SHIELD -> allDamageToPlusOnePlusOneCounterPreventionShield;
+            case DAMAGE_REPLACED_BY_PLUS_ONE_PLUS_ONE_COUNTERS -> damageReplacedByPlusOnePlusOneCounters;
             case DAMAGE_DESTRUCTION_SHIELD -> damageDestructionShield;
             case LAND_DESTRUCTION_SHIELD -> landDestructionShield;
             case REGENERATION_SHIELD -> regenerationShield;
@@ -2431,6 +2436,7 @@ public class Permanent {
             case DAMAGE_TO_PLUS_ONE_PLUS_ONE_COUNTER_PREVENTION_SHIELD ->
                     damageToPlusOnePlusOneCounterPreventionShield += (Integer) value;
             case ALL_DAMAGE_TO_PLUS_ONE_PLUS_ONE_COUNTER_PREVENTION_SHIELD -> allDamageToPlusOnePlusOneCounterPreventionShield = true;
+            case DAMAGE_REPLACED_BY_PLUS_ONE_PLUS_ONE_COUNTERS -> damageReplacedByPlusOnePlusOneCounters = true;
             case DAMAGE_DESTRUCTION_SHIELD -> damageDestructionShield += (Integer) value;
             case LAND_DESTRUCTION_SHIELD -> landDestructionShield += (Integer) value;
             case REGENERATION_SHIELD -> regenerationShield += (Integer) value;

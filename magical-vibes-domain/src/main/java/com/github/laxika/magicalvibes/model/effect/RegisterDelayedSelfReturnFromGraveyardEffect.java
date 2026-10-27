@@ -14,16 +14,22 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * <p>Phytotitan uses {@link #tappedAtOwnersNextUpkeep()}: "return it to the battlefield tapped under
  * its owner's control at the beginning of their next upkeep."
  *
- * @param counterType   counter to enter with, or {@code null} for none
- * @param counterAmount number of counters (ignored when {@code counterType} is null)
- * @param atNextUpkeep  {@code true} to return at the owner's next upkeep instead of the next end step
- * @param tapped        {@code true} to have it enter the battlefield tapped
+ * <p>Breathkeeper Seraph uses {@link #returningAtControllersNextUpkeep()}: the card returns under its owner's
+ * control at the beginning of the next upkeep of the player who controlled it when it died.
+ *
+ * @param counterType             counter to enter with, or {@code null} for none
+ * @param counterAmount           number of counters (ignored when {@code counterType} is null)
+ * @param atNextUpkeep            {@code true} to return at an upkeep instead of the next end step
+ * @param tapped                  {@code true} to have it enter the battlefield tapped
+ * @param atControllersNextUpkeep with {@code atNextUpkeep}, {@code true} to time the upkeep by the player
+ *                                who controlled the card when it died rather than by its owner
  */
 public record RegisterDelayedSelfReturnFromGraveyardEffect(
         CounterType counterType,
         int counterAmount,
         boolean atNextUpkeep,
-        boolean tapped
+        boolean tapped,
+        boolean atControllersNextUpkeep
 ) implements CardEffect {
 
     /** No counters, next end step, untapped. */
@@ -36,8 +42,18 @@ public record RegisterDelayedSelfReturnFromGraveyardEffect(
         this(counterType, counterAmount, false, false);
     }
 
+    public RegisterDelayedSelfReturnFromGraveyardEffect(CounterType counterType, int counterAmount,
+                                                        boolean atNextUpkeep, boolean tapped) {
+        this(counterType, counterAmount, atNextUpkeep, tapped, false);
+    }
+
     /** Returns tapped at the beginning of the owner's next upkeep (Phytotitan). */
     public static RegisterDelayedSelfReturnFromGraveyardEffect tappedAtOwnersNextUpkeep() {
         return new RegisterDelayedSelfReturnFromGraveyardEffect(null, 0, true, true);
+    }
+
+    /** Returns at the beginning of the next upkeep of the player who controlled it when it died (Breathkeeper Seraph). */
+    public static RegisterDelayedSelfReturnFromGraveyardEffect returningAtControllersNextUpkeep() {
+        return new RegisterDelayedSelfReturnFromGraveyardEffect(null, 0, true, false, true);
     }
 }

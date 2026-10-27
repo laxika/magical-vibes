@@ -163,7 +163,9 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             }
             case ALL_TO_TARGET_CREATURES -> allToTargetCreatures(gameData, entry, e);
             case ALL_TO_TARGET_CREATURES_AND_ADD_PLUS_ONE_PLUS_ONE_COUNTERS ->
-                    allToTargetCreaturesAndAddPlusOnePlusOneCounters(gameData, entry, e);
+                    allToTargetCreaturesAndAddPlusOnePlusOneCounters(gameData, entry, e, false);
+            case ALL_TO_TARGET_CREATURES_REPLACED_BY_PLUS_ONE_PLUS_ONE_COUNTERS ->
+                    allToTargetCreaturesAndAddPlusOnePlusOneCounters(gameData, entry, e, true);
             case ALL_BY_TARGET_CREATURES -> allByTargetCreatures(gameData, entry, e);
             case ALL_BY_TARGET_CREATURES_WHILE_SOURCE_REMAINS ->
                     allByTargetCreatureWhileSourceRemains(gameData, entry, e);
@@ -537,7 +539,7 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void allToTargetCreaturesAndAddPlusOnePlusOneCounters(
-            GameData gameData, StackEntry entry, PreventDamageEffect effect) {
+            GameData gameData, StackEntry entry, PreventDamageEffect effect, boolean evenIfUnpreventable) {
         List<UUID> targetIds = entry.targetsForEffect(effect);
         if (targetIds.isEmpty() && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
@@ -549,6 +551,9 @@ public class PreventDamageEffectHandler implements NormalEffectHandlerBean {
             }
 
             target.setAllDamageToPlusOnePlusOneCounterPreventionShield(true);
+            if (evenIfUnpreventable) {
+                target.setDamageReplacedByPlusOnePlusOneCounters(true);
+            }
             gameLogService.append(gameData, GameLog.textCardText(
                     "All damage that would be dealt to ", target.getCard(),
                     " this turn is prevented; a +1/+1 counter is put on it for each 1 damage prevented this way."));

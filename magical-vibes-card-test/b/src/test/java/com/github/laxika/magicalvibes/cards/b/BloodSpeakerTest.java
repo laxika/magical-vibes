@@ -135,13 +135,11 @@ class BloodSpeakerTest extends BaseCardTest {
         var bloodSpeaker = findPermanent(player1, "Blood Speaker");
         gd.playerBattlefields.get(player1.getId()).remove(bloodSpeaker);
         gd.playerBattlefields.get(player2.getId()).add(bloodSpeaker);
-        harness.passBothPriorities(); // resolve the upkeep trigger -> may prompt
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities(); // resolve the upkeep trigger; the controller can't sacrifice it, so nothing is offered
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player2, "Blood Speaker");
+        assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> "Gutwrencher Oni".equals(c.getName()));
     }
 
     @Test

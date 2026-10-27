@@ -86,6 +86,9 @@ public class DrawCardEffectHandler implements NormalEffectHandlerBean {
         // Archive); those cards were not drawn by this effect's instruction, so "that card" does not exist.
         if (newlyDrawn.size() <= amount) {
             newlyDrawn.forEach(card -> entry.recordCardDrawnThisResolution(card.getId()));
+            entry.recordDrawnCards(newlyDrawn.stream().map(Card::getId).toList());
+        } else {
+            entry.recordDrawnCards(List.of());
         }
     }
 }

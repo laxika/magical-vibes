@@ -115,7 +115,7 @@ class BirthOfTheImperiumTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         advanceToNextChapter();
-        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
+        harness.handlePermanentChosen(player2, chosen.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(kept).doesNotContain(chosen);
         harness.assertInGraveyard(player2, "Grizzly Bears");

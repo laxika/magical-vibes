@@ -91,7 +91,9 @@ class BoldwyrIntimidatorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, blocker.getId());
         harness.passBothPriorities();
-        blocker.resetModifiers(); // end-of-turn cleanup
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

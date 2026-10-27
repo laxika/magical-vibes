@@ -168,6 +168,8 @@ class BristlyBillSpineSowerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
+        // Targeting an opponent is committing a crime, so Hardbristle Bandit's trigger resolves first.
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);

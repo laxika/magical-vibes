@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -41,8 +42,8 @@ public class TorchTheTower extends Card {
                 creatureOrPlaneswalker, "Target must be a creature or planeswalker"))
                 .addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
                         new Kicked(),
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(2, null, true),
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(3, null, true)
+                        DealDamageToTargetCreatureOrPlaneswalkerEffect.exilingIfDealtDamage(new Fixed(2)),
+                        DealDamageToTargetCreatureOrPlaneswalkerEffect.exilingIfDealtDamage(new Fixed(3))
                 ));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), new ScryEffect(1)));
     }

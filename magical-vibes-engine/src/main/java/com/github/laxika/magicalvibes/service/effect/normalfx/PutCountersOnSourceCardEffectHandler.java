@@ -36,6 +36,12 @@ public class PutCountersOnSourceCardEffectHandler implements NormalEffectHandler
                 : gameData.playerBattlefields.values().stream().flatMap(java.util.Collection::stream)
                 .filter(permanent -> permanent.getId().equals(entry.getSourcePermanentId()))
                 .findFirst().orElse(null);
+        // A may ability queued for an attacking creature carries that creature as its source permanent
+        // ("that creature" for damage effects), so a counter placed on the ability's own source card must
+        // still go to the permanent that card is on.
+        if (source != null && !isPermanentOf(source, sourceCard)) {
+            source = findSourcePermanent(gameData, sourceCard);
+        }
         if (source != null) {
             PutCountersOnSourceCardEffect counters = (PutCountersOnSourceCardEffect) effect;
             int count = counters.amount() == null
@@ -50,12 +56,16 @@ public class PutCountersOnSourceCardEffectHandler implements NormalEffectHandler
     private Permanent findSourcePermanent(GameData gameData, Card sourceCard) {
         for (var battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getId().equals(sourceCard.getId())
-                        || permanent.getOriginalCard().getId().equals(sourceCard.getId())) {
+                if (isPermanentOf(permanent, sourceCard)) {
                     return permanent;
                 }
             }
         }
         return null;
+    }
+
+    private static boolean isPermanentOf(Permanent permanent, Card sourceCard) {
+        return permanent.getCard().getId().equals(sourceCard.getId())
+                || permanent.getOriginalCard().getId().equals(sourceCard.getId());
     }
 }

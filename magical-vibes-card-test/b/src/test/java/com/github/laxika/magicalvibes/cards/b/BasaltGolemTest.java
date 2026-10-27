@@ -163,8 +163,12 @@ class BasaltGolemTest extends BaseCardTest {
         assertThat(gqs.isLand(gd, blocker)).isTrue();
 
         harness.passBothPriorities();
-        assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class))
-                .anyMatch(a -> a.permanentId().equals(blocker.getId()));
+        // With the blocker no longer in combat, nobody has anything to do, so the game proceeds to end of
+        // combat during this pass and turns the scheduled sacrifice into its delayed trigger on the stack.
+        assertThat(gd.stack).anyMatch(se ->
+                se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        && se.getCard().getName().equals("Basalt Golem")
+                        && blocker.getId().equals(se.getSourcePermanentId()));
     }
 
     @Test

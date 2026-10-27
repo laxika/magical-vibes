@@ -22,8 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({BebopWarthogWarrior.class, GrizzlyBears.class, Skinshifter.class, Swamp.class})
 class BebopWarthogWarriorTest extends BaseCardTest {
 
-    private static final String RHINO_MODE =
-            "Until end of turn, this creature becomes a Rhino with base power and toughness 4/4 and gains trample.";
+    private static final int RHINO_MODE_INDEX = 0;
 
     @Test
     @DisplayName("Gives menace to Rhinos you control, but not other creatures or an opponent's Rhinos")
@@ -148,9 +147,8 @@ class BebopWarthogWarriorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.addMana(player, ManaColor.GREEN, 1);
         int permanentIndex = gd.playerBattlefields.get(player.getId()).indexOf(skinshifter);
-        harness.activateAbility(player, permanentIndex, null, null);
+        harness.activateAbility(player, permanentIndex, RHINO_MODE_INDEX, null);
         harness.passBothPriorities();
-        harness.handleListChoice(player, RHINO_MODE);
         return skinshifter;
     }
 }

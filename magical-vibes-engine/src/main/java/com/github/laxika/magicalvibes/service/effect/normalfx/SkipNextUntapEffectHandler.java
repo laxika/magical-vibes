@@ -139,6 +139,9 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
                     && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
 
             p.setSkipUntapCount(Math.max(p.getSkipUntapCount(), e.untapSteps()));
+            // The restriction is for the controller's next untap step, so a permanent that changes control
+            // before then untaps normally during its new controller's untap step.
+            if (e.matchAtUntap()) p.setSkipUntapControllerId(controllerId);
             count++;
         }
 

@@ -3674,10 +3674,13 @@ public class PermanentRemovalService {
                         && exile.returnsOnSourceLeavesTrigger());
         // Tidehollow Sculler / Mesmeric Fiend style: the return is a separate leaves-the-battlefield trigger
         // that goes on the stack even if the enters ability has not exiled anything yet (CR 603.6c).
+        // Brain Maggot style "until" exiles return immediately with no ability on the stack, so they are not
+        // included here.
         boolean hasLeavesTriggerHandExile = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
                 .stream()
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect hand
                         && hand.returnOnSourceLeave()
+                        && hand.returnsOnSourceLeavesTrigger()
                         && hand.destination() == com.github.laxika.magicalvibes.model.effect.HandChoiceDestination.EXILE);
         boolean hasLeavesTriggerExileAll = removedPermanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)
                 .stream()

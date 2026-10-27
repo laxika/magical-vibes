@@ -54,7 +54,8 @@ class BereavedSurvivorTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(avenger.isAttackedThisTurn()).isTrue();
         assertThat(returned.isTapped()).isTrue();
-        assertThat(returned.isAttackedThisTurn()).isTrue();
+        // CR 508.4: a creature put onto the battlefield attacking is attacking but never "attacked".
+        assertThat(returned.isAttackedThisTurn()).isFalse();
     }
 
     @Test

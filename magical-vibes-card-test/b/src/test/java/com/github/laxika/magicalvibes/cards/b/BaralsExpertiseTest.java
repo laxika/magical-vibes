@@ -117,7 +117,9 @@ class BaralsExpertiseTest extends BaseCardTest {
     @Test
     @DisplayName("Can cast a creature just returned to its controller's hand")
     void canCastReturnedCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        GrizzlyBears bears = new GrizzlyBears();
+        bears.setOwnerId(player1.getId());
+        harness.addToBattlefield(player1, bears);
         castExpertise(List.of(new BaralsExpertise()),
                 List.of(harness.getPermanentId(player1, "Grizzly Bears")));
 

@@ -130,7 +130,6 @@ class BrownOupheTest extends BaseCardTest {
         harness.passPriority(player2);
 
         harness.activateAbility(player1, 0, null, cannoneers.getCard().getId());
-        harness.passPriority(player2);
         harness.castAndResolveInstant(player1, 0, cannoneers.getId());
 
         harness.assertNotOnBattlefield(player2, "Orcish Cannoneers");

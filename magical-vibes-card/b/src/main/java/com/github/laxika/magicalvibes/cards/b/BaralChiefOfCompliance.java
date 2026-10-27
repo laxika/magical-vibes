@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.CardDrawnThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -36,7 +38,8 @@ public class BaralChiefOfCompliance extends Card {
                 INSTANT_OR_SORCERY, 1, CostModificationScope.SELF));
 
         addEffect(EffectSlot.ON_CONTROLLER_COUNTERS_SPELL, new MayEffect(
-                SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
-                "Draw a card and discard a card?"));
+                SequenceEffect.of(new DrawCardEffect(1), ConditionalEffect.unless(new CardDrawnThisWay(),
+                        new DiscardEffect(1, DiscardRecipient.CONTROLLER))),
+                "Draw a card? If you do, discard a card."));
     }
 }

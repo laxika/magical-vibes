@@ -350,6 +350,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.condition.OpponentPutThreeOrMoreCardsIntoGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentSearchedLibraryThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
+import com.github.laxika.magicalvibes.model.condition.CardDrawnThisWay;
 import com.github.laxika.magicalvibes.model.condition.OwnsCardInAllZones;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentLeftBattlefieldUnderYourControlThisTurn;
@@ -1368,6 +1369,7 @@ public class ConditionEvaluationService {
             case PermanentLeftThisWay c -> c.how() == PermanentLeftThisWay.How.SACRIFICED
                     ? ctx.resolutionResults().anySacrificed()
                     : ctx.resolutionResults().anyDestroyed();
+            case CardDrawnThisWay ignored -> !ctx.resolutionResults().drawnCardIds().isEmpty();
             case VoidCondition ignored ->
                     gameData.nonlandPermanentLeftBattlefieldThisTurn || gameData.spellWarpedThisTurn;
             case DidntActivateLoyaltyAbilityThisTurn ignored ->

@@ -22,6 +22,7 @@ class BejeweledWargTest extends BaseCardTest {
         resolveCombatAndTrigger();
         harness.handleListChoice(player1, "Put a +1/+1 counter on target Wolf you control");
         harness.handlePermanentChosen(player1, wolf.getId());
+        resolveAllTriggers();
 
         assertThat(wolf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
@@ -34,6 +35,7 @@ class BejeweledWargTest extends BaseCardTest {
 
         resolveCombatAndTrigger();
         harness.handleListChoice(player1, "Create a Treasure token");
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
@@ -50,6 +52,7 @@ class BejeweledWargTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, wolf.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, ownWolf.getId());
+        resolveAllTriggers();
 
         assertThat(wolf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(ownWolf.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
