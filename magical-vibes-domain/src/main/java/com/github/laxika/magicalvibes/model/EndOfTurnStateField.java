@@ -23,6 +23,11 @@ package com.github.laxika.magicalvibes.model;
  * {@code (player, grant)} entries or a {@link Kind#COUNTS} by player; casting the spell consumes them, so a used
  * grant is not restored. Per-card "this turn" casting permissions and granted alternative costs (flashback,
  * unearth, graveyard / library-top cast permissions) are {@link Kind#SET}s of card ids or map entries.
+ * The other pending one-shot "next spell / ability this turn" grants that are not paired with a source map (Storm,
+ * copy, uncounterable and any-mana-type grants, the X-ability copies) are {@link Kind#COUNTS} by player or a
+ * {@link Kind#LIST} of {@code (player, grant)} entries; the "this turn" delayed triggers (The Mirari Conjecture's copy
+ * grants, Beck, Leori) and the source-linked exile / foretold cast grants are counts or {@link Kind#LIST}s of their
+ * records. A grant used up in between is not restored.
  */
 public enum EndOfTurnStateField {
 
@@ -250,7 +255,22 @@ public enum EndOfTurnStateField {
     GAME_GRAVEYARD_CARD_CAST_PERMISSIONS(Kind.SET),
     GAME_GRAVEYARD_CARD_CAST_PERMISSION_GRANTS(Kind.LIST),
     GAME_GRAVEYARD_CAST_FILTER_PERMISSIONS(Kind.LIST),
-    GAME_GRAVEYARD_PLAY_FILTER_PERMISSIONS(Kind.LIST);
+    GAME_GRAVEYARD_PLAY_FILTER_PERMISSIONS(Kind.LIST),
+    GAME_SPELL_COPY_GRANTS(Kind.COUNTS),
+    GAME_NEXT_INSTANT_SORCERY_STORM(Kind.COUNTS),
+    GAME_NEXT_INSTANT_SORCERY_CAST_FROM_HAND_TO_HAND(Kind.COUNTS),
+    GAME_NEXT_SPELL_COPIES(Kind.COUNTS),
+    GAME_NEXT_FILTERED_SPELL_COPIES(Kind.LIST),
+    GAME_NEXT_X_ACTIVATED_ABILITY_COPIES(Kind.COUNTS),
+    GAME_NEXT_SPELL_UNCOUNTERABLE(Kind.COUNTS),
+    GAME_NEXT_INSTANT_SORCERY_UNCOUNTERABLE(Kind.COUNTS),
+    GAME_ANY_MANA_TYPE_FOR_NEXT_SPELL(Kind.COUNTS),
+    GAME_CHOSEN_SUBTYPE_ACTIVATION_COPIES(Kind.LIST),
+    GAME_CREATURE_ENTERS_DRAW_SOURCES(Kind.LIST),
+    GAME_UNTAP_ATTACKED_CREATURES_EACH_COMBAT_SOURCES(Kind.LIST),
+    GAME_EXILE_CAST_PERMISSIONS(Kind.LIST),
+    GAME_EXILE_CAST_WILDCARD_PERMISSIONS(Kind.LIST),
+    GAME_FORETOLD_CARD_CAST_PERMISSIONS(Kind.LIST);
 
     /** How a field's value is split between players and recombined. */
     public enum Kind {

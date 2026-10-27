@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.cards.i.Inkshield;
 import com.github.laxika.magicalvibes.cards.i.IrencragFeat;
 import com.github.laxika.magicalvibes.cards.m.Microscope;
 import com.github.laxika.magicalvibes.cards.o.Overblaze;
+import com.github.laxika.magicalvibes.cards.o.Overmaster;
 import com.github.laxika.magicalvibes.cards.p.PastInFlames;
 import com.github.laxika.magicalvibes.cards.q.Quicken;
 import com.github.laxika.magicalvibes.cards.s.SafePassage;
@@ -35,6 +36,7 @@ import com.github.laxika.magicalvibes.cards.z.ZameckGuildmage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -46,6 +48,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,7 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         Microscope.class, DarksteelCitadel.class, BlindFury.class, Overblaze.class, GrizzlyBears.class,
         ZameckGuildmage.class, DueRespect.class, AngelsGrace.class, AngelOfGrace.class, IrencragFeat.class,
         Comeuppance.class, Inkshield.class, AegisOfHonor.class, Shock.class, Quicken.class, Divination.class,
-        PastInFlames.class})
+        PastInFlames.class, Overmaster.class})
 class RunedTerrorTest extends BaseCardTest {
 
     @Test
@@ -862,6 +865,89 @@ class RunedTerrorTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).isEmpty();
+    }
+
+    @Test
+    void nextInstantSorceryUncounterableGrantFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+        harness.castFromHand(player2, new Overmaster(), "{R}");
+        harness.passBothPriorities();
+        assertThat(gd.pendingNextInstantSorceryUncounterableThisTurnCount).containsEntry(player2.getId(), 1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.pendingNextInstantSorceryUncounterableThisTurnCount).containsEntry(player2.getId(), 1);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.pendingNextInstantSorceryUncounterableThisTurnCount).isEmpty();
+    }
+
+    @Test
+    void activePlayersOwnNextInstantSorceryUncounterableGrantEndsAtTheirCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.castFromHand(player1, new Overmaster(), "{R}");
+        harness.passBothPriorities();
+        assertThat(gd.pendingNextInstantSorceryUncounterableThisTurnCount).containsEntry(player1.getId(), 1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(gd.pendingNextInstantSorceryUncounterableThisTurnCount).isEmpty();
+    }
+
+    @Test
+    void pendingCopyGrantsAreSplitBetweenTheActivePlayersTheyWereCreatedUnder() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gd.pendingNextSpellCopyThisTurnCount.merge(player1.getId(), 1, Integer::sum);
+        gd.spellCopyGrantsUntilEndOfTurn.merge(player1.getId(), 1, Integer::sum);
+        gs.advanceStep(gd);
+        gd.pendingNextSpellCopyThisTurnCount.merge(player1.getId(), 1, Integer::sum);
+        gd.spellCopyGrantsUntilEndOfTurn.merge(player2.getId(), 1, Integer::sum);
+        assertThat(gd.pendingNextSpellCopyThisTurnCount).containsEntry(player1.getId(), 2);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.pendingNextSpellCopyThisTurnCount).containsEntry(player1.getId(), 1);
+        assertThat(gd.spellCopyGrantsUntilEndOfTurn).doesNotContainKey(player1.getId())
+                .containsEntry(player2.getId(), 1);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.pendingNextSpellCopyThisTurnCount).isEmpty();
+        assertThat(gd.spellCopyGrantsUntilEndOfTurn).isEmpty();
+    }
+
+    @Test
+    void exileCastGrantsFromOtherPlayersPhaseOutliveActivePlayersCleanupUnlessUsed() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        var kept = new GameData.ExileCastPermission(UUID.randomUUID(), UUID.randomUUID(), player2.getId(),
+                UUID.randomUUID(), true);
+        var used = new GameData.ExileCastPermission(UUID.randomUUID(), UUID.randomUUID(), player2.getId(),
+                UUID.randomUUID(), true);
+        var foretold = new GameData.ForetoldCardCastPermission(player2.getId(), true);
+        gd.exileCastPermissionsUntilEndOfTurn.add(kept);
+        gd.exileCastPermissionsUntilEndOfTurn.add(used);
+        gd.foretoldCardCastPermissionsThisTurn.add(foretold);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        gd.exileCastPermissionsUntilEndOfTurn.remove(used);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.exileCastPermissionsUntilEndOfTurn).containsExactly(kept);
+        assertThat(gd.foretoldCardCastPermissionsThisTurn).containsExactly(foretold);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.exileCastPermissionsUntilEndOfTurn).isEmpty();
+        assertThat(gd.foretoldCardCastPermissionsThisTurn).isEmpty();
     }
 
     private void castQuicken(Player caster) {

@@ -4813,8 +4813,10 @@ public class GameData {
      * doublings, bonuses and replacements, enter-tapped and extra-counter replacements, block requirements, extra
      * loyalty activations, the mana-fixing / mana-replacement stores, player-granted static effects, damage life
      * floors and spell limits, the one-shot or turn-long redirection / prevention shields that are added and
-     * removed whole, the pending "next spell you cast this turn" grants, spell colour overrides, and the per-card
-     * "this turn" casting permissions and granted alternative costs), which the cleanup step clears
+     * removed whole, the pending "next spell you cast this turn" grants, spell colour overrides, the per-card
+     * "this turn" casting permissions and granted alternative costs, the unpaired pending "next spell / ability this
+     * turn" copy, Storm, uncounterable and any-mana-type grants, the "this turn" delayed copy / draw / untap
+     * triggers, and the source-linked exile and foretold cast grants), which the cleanup step clears
      * (CR 514.2). Used to split that state between the players active when it was created under Runed Terror's sequential phases.
      */
     public EndOfTurnStateShare captureGameEndOfTurnState() {
@@ -5014,6 +5016,24 @@ public class GameData {
             case GAME_GRAVEYARD_CARD_CAST_PERMISSION_GRANTS -> listMapEntries(graveyardCardCastPermissionGrantsUntilEndOfTurn);
             case GAME_GRAVEYARD_CAST_FILTER_PERMISSIONS -> new ArrayList<>(graveyardCastFilterPermissionsThisTurn);
             case GAME_GRAVEYARD_PLAY_FILTER_PERMISSIONS -> new ArrayList<>(graveyardPlayFilterPermissionsThisTurn);
+            case GAME_SPELL_COPY_GRANTS -> new HashMap<>(spellCopyGrantsUntilEndOfTurn);
+            case GAME_NEXT_INSTANT_SORCERY_STORM -> new HashMap<>(pendingNextInstantSorceryStormThisTurnCount);
+            case GAME_NEXT_INSTANT_SORCERY_CAST_FROM_HAND_TO_HAND ->
+                    new HashMap<>(pendingNextInstantSorceryCastFromHandToHandThisTurnCount);
+            case GAME_NEXT_SPELL_COPIES -> new HashMap<>(pendingNextSpellCopyThisTurnCount);
+            case GAME_NEXT_FILTERED_SPELL_COPIES -> listMapEntries(pendingNextFilteredSpellCopiesThisTurn);
+            case GAME_NEXT_X_ACTIVATED_ABILITY_COPIES -> new HashMap<>(pendingNextXActivatedAbilityCopyThisTurnCount);
+            case GAME_NEXT_SPELL_UNCOUNTERABLE -> new HashMap<>(pendingNextSpellUncounterableThisTurnCount);
+            case GAME_NEXT_INSTANT_SORCERY_UNCOUNTERABLE ->
+                    new HashMap<>(pendingNextInstantSorceryUncounterableThisTurnCount);
+            case GAME_ANY_MANA_TYPE_FOR_NEXT_SPELL -> new HashMap<>(pendingAnyManaTypeForNextSpellThisTurnCount);
+            case GAME_CHOSEN_SUBTYPE_ACTIVATION_COPIES -> new ArrayList<>(chosenSubtypeActivationCopiesThisTurn);
+            case GAME_CREATURE_ENTERS_DRAW_SOURCES -> synchronizedListMapEntries(creatureEntersDrawSourcesThisTurn);
+            case GAME_UNTAP_ATTACKED_CREATURES_EACH_COMBAT_SOURCES ->
+                    synchronizedListMapEntries(untapAttackedCreaturesEachCombatThisTurnSources);
+            case GAME_EXILE_CAST_PERMISSIONS -> new ArrayList<>(exileCastPermissionsUntilEndOfTurn);
+            case GAME_EXILE_CAST_WILDCARD_PERMISSIONS -> new ArrayList<>(exileCastWildcardPermissionsUntilEndOfTurn);
+            case GAME_FORETOLD_CARD_CAST_PERMISSIONS -> new ArrayList<>(foretoldCardCastPermissionsThisTurn);
             default -> null;
         };
     }
@@ -5268,6 +5288,34 @@ public class GameData {
                     graveyardCastFilterPermissionsThisTurn.addAll((List<GraveyardCastFilterPermission>) value);
             case GAME_GRAVEYARD_PLAY_FILTER_PERMISSIONS ->
                     graveyardPlayFilterPermissionsThisTurn.addAll((List<GraveyardPlayFilterPermission>) value);
+            case GAME_SPELL_COPY_GRANTS -> addCounts(spellCopyGrantsUntilEndOfTurn, (Map<UUID, Integer>) value);
+            case GAME_NEXT_INSTANT_SORCERY_STORM ->
+                    addCounts(pendingNextInstantSorceryStormThisTurnCount, (Map<UUID, Integer>) value);
+            case GAME_NEXT_INSTANT_SORCERY_CAST_FROM_HAND_TO_HAND ->
+                    addCounts(pendingNextInstantSorceryCastFromHandToHandThisTurnCount, (Map<UUID, Integer>) value);
+            case GAME_NEXT_SPELL_COPIES -> addCounts(pendingNextSpellCopyThisTurnCount, (Map<UUID, Integer>) value);
+            case GAME_NEXT_FILTERED_SPELL_COPIES -> addListMapEntries(pendingNextFilteredSpellCopiesThisTurn,
+                    (List<Map.Entry<UUID, CopyNextSpellCastThisTurnEffect>>) value);
+            case GAME_NEXT_X_ACTIVATED_ABILITY_COPIES ->
+                    addCounts(pendingNextXActivatedAbilityCopyThisTurnCount, (Map<UUID, Integer>) value);
+            case GAME_NEXT_SPELL_UNCOUNTERABLE ->
+                    addCounts(pendingNextSpellUncounterableThisTurnCount, (Map<UUID, Integer>) value);
+            case GAME_NEXT_INSTANT_SORCERY_UNCOUNTERABLE ->
+                    addCounts(pendingNextInstantSorceryUncounterableThisTurnCount, (Map<UUID, Integer>) value);
+            case GAME_ANY_MANA_TYPE_FOR_NEXT_SPELL ->
+                    addCounts(pendingAnyManaTypeForNextSpellThisTurnCount, (Map<UUID, Integer>) value);
+            case GAME_CHOSEN_SUBTYPE_ACTIVATION_COPIES ->
+                    chosenSubtypeActivationCopiesThisTurn.addAll((List<ChosenSubtypeActivationCopy>) value);
+            case GAME_CREATURE_ENTERS_DRAW_SOURCES -> addSynchronizedListMapEntries(
+                    creatureEntersDrawSourcesThisTurn, (List<Map.Entry<UUID, Card>>) value);
+            case GAME_UNTAP_ATTACKED_CREATURES_EACH_COMBAT_SOURCES -> addSynchronizedListMapEntries(
+                    untapAttackedCreaturesEachCombatThisTurnSources, (List<Map.Entry<UUID, Card>>) value);
+            case GAME_EXILE_CAST_PERMISSIONS ->
+                    exileCastPermissionsUntilEndOfTurn.addAll((List<ExileCastPermission>) value);
+            case GAME_EXILE_CAST_WILDCARD_PERMISSIONS ->
+                    exileCastWildcardPermissionsUntilEndOfTurn.addAll((List<ExileCastWildcardPermission>) value);
+            case GAME_FORETOLD_CARD_CAST_PERMISSIONS ->
+                    foretoldCardCastPermissionsThisTurn.addAll((List<ForetoldCardCastPermission>) value);
             default -> {
             }
         }

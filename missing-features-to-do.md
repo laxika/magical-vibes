@@ -73,14 +73,24 @@ flashback (with the despite-lost-abilities set and fixed costs), warp, harmonize
 its graveyard versions) stores, the four library-top play permissions, `mayTapLandsForSpellsUntilEndOfTurn`,
 `mayPayLifeForColorlessManaUntilEndOfTurn`, `guardianAngelTargetsUntilEndOfTurn`,
 `mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn`, `graveyardCardCastPermissionsUntilEndOfTurn` with its grants
-list, and the `graveyardCastFilterPermissionsThisTurn` / `graveyardPlayFilterPermissionsThisTurn` lists. RunedTerrorTest covers can't-block, creature and player
+list, and the `graveyardCastFilterPermissionsThisTurn` / `graveyardPlayFilterPermissionsThisTurn` lists. A ninth pass moved
+the pending one-shot grants that have no paired source map (`COUNTS` by player: `spellCopyGrantsUntilEndOfTurn`,
+`pendingNextInstantSorceryStormThisTurnCount`, `pendingNextInstantSorceryCastFromHandToHandThisTurnCount`,
+`pendingNextSpellCopyThisTurnCount`, `pendingNextXActivatedAbilityCopyThisTurnCount`,
+`pendingNextSpellUncounterableThisTurnCount`, `pendingNextInstantSorceryUncounterableThisTurnCount`,
+`pendingAnyManaTypeForNextSpellThisTurnCount`; `LIST` of `(player, grant)` entries: `pendingNextFilteredSpellCopiesThisTurn`),
+the "this turn" delayed triggers `chosenSubtypeActivationCopiesThisTurn`, `creatureEntersDrawSourcesThisTurn`,
+`untapAttackedCreaturesEachCombatThisTurnSources`, and the source-linked `exileCastPermissionsUntilEndOfTurn` /
+`exileCastWildcardPermissionsUntilEndOfTurn` / `foretoldCardCastPermissionsThisTurn` lists (a used grant is not
+restored; a wildcard re-materializes its per-card permissions on demand). RunedTerrorTest covers can't-block, creature and player
 prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference, Skullcrack, Silence, Gilded Light,
 Borne Upon a Wind, Debt of Loyalty, Skeleton Scavengers, Soldevi Sentry, Microscope, Blind Fury, Overblaze (two
 doublings split between phases), Zameck Guildmage, Due Respect, Angel's Grace, Irencrag Feat, a tighter spell limit
 hiding a looser one, Angel of Grace cast again during another player's phase, Comeuppance, Inkshield, and two Aegis of
 Honor shields from another player's phase of which one is used before the active player's cleanup, Quicken (kept,
 and used during the active player's phase so not restored), convoke / cascade grants split between phases, and Past in
-Flames from either player's phase. **Still open:**
+Flames from either player's phase, Overmaster from either player's phase, copy grants split between phases, and
+exile / foretold cast grants (one used before the active player's cleanup). **Still open:**
 `Permanent.tappedPermanentsForAbilityThisTurn` (Vodalian War Machine's "Merfolk tapped this turn" record; it is a
 turn-history record, not an effect, so the Runed Terror ruling about effects ending doesn't settle it — it arguably
 should last the whole turn rather than be split per active player; look for a ruling first), and the remaining
@@ -95,13 +105,16 @@ or whose order matters and is restored with `addFirst` (`sourceNextDamageToAnyTa
 `sourcePermanentAndControllerNextDamageRedirectShields`), `playerSourceDamagePreventionIds` with its paired
 colour/life-gain maps, `playerNextDamageFromMatchingSourcesPrevented`,
 `pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn`, the
-remaining "this turn" rule stores (Sen Triplets' controller ids, the `pendingNext*ThisTurn` spell / ability copy and
-uncounterable / any-mana-type counters and their paired source maps, `spellCopyGrantsUntilEndOfTurn`, the per-spell
+remaining "this turn" rule stores (Sen Triplets' controller ids, the copy counters paired with source maps —
+`pendingNextInstantSorceryCopyThisTurnCount` with its `Source` / `SingleTriggerCount` / `MaxManaValues` /
+`DynamicCounts` / `DynamicSources`, `pendingNextLoyaltyAbilityCopyThisTurnCount` with its sources and
+`pendingNextSpellOrLoyaltyCopyLinkedThisTurn`, `pendingNextExhaustAbilityCopyThisTurnCount` with its sources — which
+need each count and its source entries split together, the per-spell
 entry riders `spellAdditionalEnterCounters` / `spellEntryCounters` / `spellGrantedSubtypesOnEntry` /
 `spellsGranted*OnEntry`), the `graveyardPlayPermissionsExpireEndOfTurn` / `exilePlayPermissionsExpireEndOfTurn`
 indirections (they remove entries from the permanent permission maps, so they need the expiring card ids split rather
-than a plain store), `exileCastPermissionsUntilEndOfTurn` / `exileCastWildcardPermissionsUntilEndOfTurn` /
-`exilePlayUntilEndOfTurnGrantsBySource`, `foretoldCardCastPermissionsThisTurn`, `outsideGamePlayPermissions` and
+than a plain store), `exilePlayUntilEndOfTurnGrantsBySource`, the current-turn `exilePlayAnyManaType` riders,
+`outsideGamePlayPermissions` and
 the turn watchers cleared alongside them. Known limitation: a flag or set element (including a keyword) that another player's
 effect sets again while it is already set stays credited to the first player only, and with three or more players a
 single-value field kept for several other players takes the value of the most recently credited player.
