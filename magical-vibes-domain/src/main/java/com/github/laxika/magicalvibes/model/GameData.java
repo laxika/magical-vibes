@@ -2,6 +2,17 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.action.CyclopeanTombUpkeepCleanup;
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
+import com.github.laxika.magicalvibes.model.action.DelayedCamouflage;
+import com.github.laxika.magicalvibes.model.action.DelayedControllerDamageMultiplication;
+import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
+import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DestroyChosenCreaturesIfDidNotAttackAtEndStep;
 import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
@@ -4834,7 +4845,8 @@ public class GameData {
      * of turn, you may play cards exiled with it" grants, and the shield lists whose records are rewritten in place or
      * replaced by a reduced copy when partly used, the "this turn" delayed-trigger watchers and "until end of turn"
      * global triggered abilities, the pending "the next time you would draw a card this turn" replacements and
-     * Mystic Reflection's pending entry copies), which the cleanup step clears
+     * Mystic Reflection's pending entry copies, the "this turn" delayed triggers and effects in the delayed-action
+     * queue selected by {@link #isThisTurnDelayedAction} and Plagiarize's draw redirections), which the cleanup step clears
      * (CR 514.2). Used to split that state between the players active when it was created under Runed Terror's sequential phases.
      */
     public EndOfTurnStateShare captureGameEndOfTurnState() {
@@ -5129,6 +5141,11 @@ public class GameData {
             case GAME_NEXT_DRAW_FROM_OUTSIDE_GAME -> new HashMap<>(pendingNextDrawFromOutsideGame);
             case GAME_NEXT_DRAW_EXILE_TOP_CARD -> new HashMap<>(pendingNextDrawExileTopCard);
             case GAME_PENDING_MYSTIC_REFLECTIONS -> synchronizedCopy(pendingMysticReflections);
+            case GAME_THIS_TURN_DELAYED_ACTIONS -> synchronizedCopy(delayedActions).stream()
+                    .filter(GameData::isThisTurnDelayedAction)
+                    .toList();
+            case GAME_DRAW_REPLACEMENT_TARGET_TO_CONTROLLER ->
+                    Set.copyOf(plainMapEntries(drawReplacementTargetToController));
             default -> null;
         };
     }
@@ -5498,6 +5515,9 @@ public class GameData {
             case GAME_NEXT_DRAW_EXILE_TOP_CARD -> addCounts(pendingNextDrawExileTopCard, (Map<UUID, Integer>) value);
             case GAME_PENDING_MYSTIC_REFLECTIONS ->
                     pendingMysticReflections.addAll((List<PendingMysticReflection>) value);
+            case GAME_THIS_TURN_DELAYED_ACTIONS -> delayedActions.addAll((List<DelayedAction>) value);
+            case GAME_DRAW_REPLACEMENT_TARGET_TO_CONTROLLER -> ((Set<Map.Entry<UUID, UUID>>) value).forEach(entry ->
+                    drawReplacementTargetToController.putIfAbsent(entry.getKey(), entry.getValue()));
             case GAME_PLAYER_SOURCE_NEXT_DAMAGE_SHIELDS ->
                     playerSourceNextDamageShields.addAll((List<PlayerSourceNextDamageShield>) value);
             case GAME_SOURCE_NEXT_DAMAGE_TO_ANY_TARGET_SHIELDS ->
@@ -6282,6 +6302,31 @@ public class GameData {
      */
     public void clearDelayedActions(Class<? extends DelayedAction> type) {
         delayedActions.removeIf(type::isInstance);
+    }
+
+    /**
+     * Whether {@code action} is a "this turn" delayed trigger or effect that the cleanup step ends (CR 514.2):
+     * a watched-creature combat damage trigger registered until end of turn (Tamiyo, Field Researcher's form or a
+     * chosen-name one), the watched-creature damage / attack / dealt-damage triggers, Camouflage's blocking
+     * replacement, a controller damage multiplier, the "when it leaves the battlefield this turn, sacrifice" pairs
+     * and a this-turn-only "when it leaves the battlefield, destroy that creature" trigger. Under Runed Terror's
+     * sequential phases these are split between the players active when they were registered.
+     */
+    public static boolean isThisTurnDelayedAction(DelayedAction action) {
+        return switch (action) {
+            case DelayedWatchedCreaturesCombatDamage watch -> watch.untilEndOfTurn();
+            case DelayedNamedCreatureCombatDamage watch -> watch.untilEndOfTurn();
+            case DelayedDestroyTargetWhenSourceLeaves destroy -> destroy.thisTurnOnly();
+            case DelayedCamouflage ignored -> true;
+            case DelayedWatchedCreatureDealsDamage ignored -> true;
+            case DelayedWatchedCreatureAttack ignored -> true;
+            case DelayedWatchedCreatureDealtDamageByAttackingCreature ignored -> true;
+            case DelayedWatchedCreatureDealtDamage ignored -> true;
+            case DelayedControllerDamageMultiplication ignored -> true;
+            case DelayedSacrificeSourceWhenTargetLeaves ignored -> true;
+            case DelayedSacrificeTargetWhenSourceLeaves ignored -> true;
+            default -> false;
+        };
     }
 
     /**

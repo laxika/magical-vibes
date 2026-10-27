@@ -60,6 +60,12 @@ package com.github.laxika.magicalvibes.model;
  * Ma'rûf, Urabrask) are {@link Kind#COUNTS} by player or a {@link Kind#LIST} of {@code (player, replacement)}
  * entries, and Mystic Reflection's pending "next time creatures or planeswalkers enter this turn" copies a
  * {@link Kind#LIST} of its records. A replacement used up in between is not restored.
+ * The "this turn" delayed triggers and effects kept in the delayed-action queue (the ones
+ * {@link GameData#isThisTurnDelayedAction} selects: Tamiyo-style watched-creature combat damage triggers registered
+ * until end of turn, the watched-creature damage / attack / dealt-damage triggers, Camouflage, the controller damage
+ * multipliers, the "when it leaves the battlefield this turn, sacrifice / destroy" pairs) are a {@link Kind#LIST} of
+ * their records, so one that fired and left the queue in between is not restored. Plagiarize's "until end of turn,
+ * that player's draws are yours instead" is a {@link Kind#SET} of {@code (target player, controller)} entries.
  */
 public enum EndOfTurnStateField {
 
@@ -351,7 +357,9 @@ public enum EndOfTurnStateField {
     GAME_NEXT_DRAW_FROM_EXILED_PILE(Kind.LIST),
     GAME_NEXT_DRAW_FROM_OUTSIDE_GAME(Kind.COUNTS),
     GAME_NEXT_DRAW_EXILE_TOP_CARD(Kind.COUNTS),
-    GAME_PENDING_MYSTIC_REFLECTIONS(Kind.LIST);
+    GAME_PENDING_MYSTIC_REFLECTIONS(Kind.LIST),
+    GAME_THIS_TURN_DELAYED_ACTIONS(Kind.LIST),
+    GAME_DRAW_REPLACEMENT_TARGET_TO_CONTROLLER(Kind.SET);
 
     /** How a field's value is split between players and recombined. */
     public enum Kind {

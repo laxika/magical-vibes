@@ -128,7 +128,15 @@ A fifteenth pass moved the "this turn" delayed-trigger watchers `opponentGraveya
 pending "the next time you would draw a card this turn" replacements (`pendingNextDrawGainLife`, `ReturnPermanents`,
 `DiscardOpponents`, `FromOutsideGame`, `ExileTopCard` as `COUNTS` by player; `pendingNextDrawLookAtTop`,
 `CreateBears`, `Damage`, `FromExiledPile` as a `LIST` of `(player, replacement)` entries) and Mystic Reflection's
-`pendingMysticReflections` (a `LIST`). A replacement used in between is not restored.
+`pendingMysticReflections` (a `LIST`). A replacement used in between is not restored. A sixteenth pass moved the
+"this turn" delayed actions the cleanup step cleared from the delayed-action queue (`GAME_THIS_TURN_DELAYED_ACTIONS`,
+a `LIST` of the records `GameData.isThisTurnDelayedAction` selects: until-end-of-turn
+`DelayedWatchedCreaturesCombatDamage` / `DelayedNamedCreatureCombatDamage`, `DelayedCamouflage`, the four
+`DelayedWatchedCreature*` watchers, `DelayedControllerDamageMultiplication`, the two "sacrifice when it leaves this
+turn" pairs and this-turn-only `DelayedDestroyTargetWhenSourceLeaves`; the cleanup step now clears them through that
+one predicate, so a trigger that fired and left the queue in between is not restored) and Plagiarize's
+`drawReplacementTargetToController` (`GAME_DRAW_REPLACEMENT_TARGET_TO_CONTROLLER`, a `SET` of
+`(target player, controller)` entries, restored with `putIfAbsent`).
 RunedTerrorTest covers can't-block, creature and player
 prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference, Skullcrack, Silence, Gilded Light,
 Borne Upon a Wind, Debt of Loyalty, Skeleton Scavengers, Soldevi Sentry, Microscope, Blind Fury, Overblaze (two
@@ -148,7 +156,9 @@ player's phase), an Awe Strike shield from another player's phase, a Vohar grave
 exiled after the active player's cleanup; the active player's own rider ends at their cleanup), and Wish grants from
 both players' phases (each group ends at its own player's cleanup), the "this turn" trigger watchers from both
 players' phases, and next-draw replacements / Mystic Reflection split between phases (one used before the active
-player's cleanup). **Still open:**
+player's cleanup), and "this turn" delayed actions / Plagiarize redirects from both players' phases (a delayed
+trigger that fired before the active player's cleanup is not restored; an "until your next turn" watch is untouched).
+**Still open:**
 `Permanent.tappedPermanentsForAbilityThisTurn` (Vodalian War Machine's "Merfolk tapped this turn" record; it is a
 turn-history record, not an effect, so the Runed Terror ruling about effects ending doesn't settle it — it arguably
 should last the whole turn rather than be split per active player; look for a ruling first), and the remaining
@@ -157,12 +167,9 @@ should last the whole turn rather than be split per active player; look for a ru
 per-spell entry riders `spellAdditionalEnterCounters` / `spellEntryCounters` / `spellGrantedSubtypesOnEntry` /
 `spellsGranted*OnEntry` (keyed by a spell's card id and consumed when it enters; they likely never outlive the spell,
 since a step ends only once the stack is empty, so check whether any can be left pending across a cleanup before
-splitting them), the `untilEndOfTurn` delayed actions cleared there (`DelayedWatchedCreaturesCombatDamage`,
-`DelayedNamedCreatureCombatDamage`, `DelayedCamouflage`, the `DelayedWatchedCreature*` watchers,
-`DelayedControllerDamageMultiplication`, the "sacrifice when it leaves" pairs, this-turn-only
-`DelayedDestroyTargetWhenSourceLeaves`; they live in the delayed-action store, so they need a capture that filters
-it by type), `drawReplacementTargetToController`, and the turn-history records cleared alongside them (which are not
-effects and should probably not be split; check each). Note
+splitting them), and the turn-history records cleared alongside them (`chainsDrawReplacementsApplied`,
+`drawStepFirstDrawTaken`, `firstNonDrawStepDrawReplacementsUsedThisTurn`, `playersWhoseSpeedIncreasedThisTurn`,
+`playersWhoPlayedCardFromExileThisTurn`, ...; they are not effects and should probably not be split; check each). Note
 `ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffectHandler` adds an `exileInsteadOfGraveyard` rider for
 a cast at the next upkeep, which every cleanup (with or without Runed Terror) clears first; check whether that cast
 still exiles the spell. Known limitation: a flag or set element (including a keyword) that another player's

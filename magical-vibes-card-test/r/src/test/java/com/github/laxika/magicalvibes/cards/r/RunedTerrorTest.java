@@ -64,6 +64,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.DelayedControllerDamageMultiplication;
+import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
+import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
+import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -1527,6 +1532,60 @@ class RunedTerrorTest extends BaseCardTest {
         assertThat(gd.pendingNextDrawExileTopCard).isEmpty();
         assertThat(gd.pendingNextDrawDamage).isEmpty();
         assertThat(gd.pendingMysticReflections).isEmpty();
+    }
+
+    @Test
+    void thisTurnDelayedActionsAndDrawRedirectsEndAtTheCleanupOfThePlayerActiveWhenTheyWereRegistered() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card source = new GrizzlyBears();
+        var effect = new GainLifeEffect(1);
+        UUID watchedId = UUID.randomUUID();
+        gd.queueDelayedAction(new DelayedWatchedCreatureDealsDamage(watchedId, player1.getId(), List.of(effect), source));
+        gd.queueDelayedAction(new DelayedControllerDamageMultiplication(player1.getId(), 2, false));
+        gd.drawReplacementTargetToController.put(player2.getId(), player1.getId());
+        var untilNextTurnWatch = new DelayedWatchedCreaturesCombatDamage(
+                Set.of(watchedId), player1.getId(), List.of(effect), source, false, false);
+        gd.queueDelayedAction(untilNextTurnWatch);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        var thisTurnWatch = new DelayedWatchedCreaturesCombatDamage(
+                Set.of(watchedId), player2.getId(), List.of(effect), source, false, true);
+        var multiplier = new DelayedControllerDamageMultiplication(player2.getId(), 2, true);
+        var sacrifice = new DelayedSacrificeSourceWhenTargetLeaves(
+                watchedId, UUID.randomUUID(), player2.getId(), source);
+        var destroy = new DelayedDestroyTargetWhenSourceLeaves(
+                watchedId, UUID.randomUUID(), player2.getId(), source, false, true);
+        var firedDestroy = new DelayedDestroyTargetWhenSourceLeaves(
+                UUID.randomUUID(), UUID.randomUUID(), player2.getId(), source, false, true);
+        gd.queueDelayedAction(thisTurnWatch);
+        gd.queueDelayedAction(multiplier);
+        gd.queueDelayedAction(sacrifice);
+        gd.queueDelayedAction(destroy);
+        gd.queueDelayedAction(firedDestroy);
+        gd.drawReplacementTargetToController.put(player1.getId(), player2.getId());
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        gd.drainDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class, firedDestroy::equals);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.getDelayedActions(DelayedWatchedCreatureDealsDamage.class)).isEmpty();
+        assertThat(gd.getDelayedActions(DelayedWatchedCreaturesCombatDamage.class))
+                .containsExactlyInAnyOrder(untilNextTurnWatch, thisTurnWatch);
+        assertThat(gd.getDelayedActions(DelayedControllerDamageMultiplication.class)).containsExactly(multiplier);
+        assertThat(gd.getDelayedActions(DelayedSacrificeSourceWhenTargetLeaves.class)).containsExactly(sacrifice);
+        assertThat(gd.getDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class)).containsExactly(destroy);
+        assertThat(gd.drawReplacementTargetToController)
+                .containsExactly(Map.entry(player1.getId(), player2.getId()));
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.getDelayedActions(DelayedWatchedCreaturesCombatDamage.class))
+                .containsExactly(untilNextTurnWatch);
+        assertThat(gd.getDelayedActions(DelayedControllerDamageMultiplication.class)).isEmpty();
+        assertThat(gd.getDelayedActions(DelayedSacrificeSourceWhenTargetLeaves.class)).isEmpty();
+        assertThat(gd.getDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class)).isEmpty();
+        assertThat(gd.drawReplacementTargetToController).isEmpty();
     }
 
     private void castQuicken(Player caster) {

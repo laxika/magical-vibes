@@ -8,19 +8,10 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.EndOfTurnStateField;
 import com.github.laxika.magicalvibes.model.EndOfTurnStateShare;
+import com.github.laxika.magicalvibes.model.action.DelayedAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.action.DelayedControllerDamageMultiplication;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedNamedCreatureCombatDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
 import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.action.PhasedOutUntilEndOfNextTurn;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamageByAttackingCreature;
-import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealtDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedDestroyTargetWhenSourceLeaves;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeSourceWhenTargetLeaves;
-import com.github.laxika.magicalvibes.model.action.DelayedSacrificeTargetWhenSourceLeaves;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeTargetPermanentCopyOfTriggeringSpellUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -441,20 +432,7 @@ public class TurnCleanupService {
         gameData.playerSourceNextDamageRedirectShields.clear();
         gameData.pendingEyeForAnEyeReflections.clear();
         gameData.pendingSourceDamageForReflection.clear();
-        gameData.clearDelayedActions(DelayedWatchedCreaturesCombatDamage.class,
-                watch -> watch.untilEndOfTurn());
-        gameData.clearDelayedActions(DelayedNamedCreatureCombatDamage.class,
-                watch -> watch.untilEndOfTurn());
-        gameData.clearDelayedActions(com.github.laxika.magicalvibes.model.action.DelayedCamouflage.class);
-        gameData.clearDelayedActions(DelayedWatchedCreatureDealsDamage.class);
-        gameData.clearDelayedActions(DelayedWatchedCreatureAttack.class);
-        gameData.clearDelayedActions(DelayedWatchedCreatureDealtDamageByAttackingCreature.class);
-        gameData.clearDelayedActions(DelayedWatchedCreatureDealtDamage.class);
-        gameData.clearDelayedActions(DelayedControllerDamageMultiplication.class);
-        gameData.clearDelayedActions(DelayedSacrificeSourceWhenTargetLeaves.class);
-        gameData.clearDelayedActions(DelayedSacrificeTargetWhenSourceLeaves.class);
-        gameData.drainDelayedActions(DelayedDestroyTargetWhenSourceLeaves.class,
-                DelayedDestroyTargetWhenSourceLeaves::thisTurnOnly);
+        gameData.clearDelayedActions(DelayedAction.class, GameData::isThisTurnDelayedAction);
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.creaturesProtectedFromTargetingDamage.clear();
         gameData.targetSpellDamagePreventionShields.clear();
