@@ -121,6 +121,14 @@ longer lapses at the active player's cleanup), the outside-the-game play permiss
 (`GAME_OUTSIDE_GAME_PLAY_PERMISSIONS`, a `LIST` from `OutsideGamePlayPermissionSet.grants()`: one `Set<UUID>` per
 single-play group, one `UUID` per lone card; restored with `addGrants`, so a group spent in between is not restored)
 and `outsideGameAdditionalModalModePermissions` (a `SET`; it only lives during a resolution cast, kept for safety).
+A fifteenth pass moved the "this turn" delayed-trigger watchers `opponentGraveyardLifeLossWatchers`,
+`lifeGainOpponentLifeLossWatchers`, `creatureDeathTriggerWatchers`, `damagedCreatureDeathTriggerWatchers`,
+`allyCreatureEntersTriggerWatchers` and the until-end-of-turn entries of `temporaryGlobalTriggeredAbilities` (the
+"until end of next turn" / "until your next turn" ones keep their own expiry), each a `LIST` of its records; the
+pending "the next time you would draw a card this turn" replacements (`pendingNextDrawGainLife`, `ReturnPermanents`,
+`DiscardOpponents`, `FromOutsideGame`, `ExileTopCard` as `COUNTS` by player; `pendingNextDrawLookAtTop`,
+`CreateBears`, `Damage`, `FromExiledPile` as a `LIST` of `(player, replacement)` entries) and Mystic Reflection's
+`pendingMysticReflections` (a `LIST`). A replacement used in between is not restored.
 RunedTerrorTest covers can't-block, creature and player
 prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference, Skullcrack, Silence, Gilded Light,
 Borne Upon a Wind, Debt of Loyalty, Skeleton Scavengers, Soldevi Sentry, Microscope, Blind Fury, Overblaze (two
@@ -138,7 +146,9 @@ player's phase, Act on Impulse / Ark of Hunger permissions from either player's 
 grant from another player's phase, a Vengeful Archon shield partly used during the other player's phase (from either
 player's phase), an Awe Strike shield from another player's phase, a Vohar graveyard cast from another player's phase (still
 exiled after the active player's cleanup; the active player's own rider ends at their cleanup), and Wish grants from
-both players' phases (each group ends at its own player's cleanup). **Still open:**
+both players' phases (each group ends at its own player's cleanup), the "this turn" trigger watchers from both
+players' phases, and next-draw replacements / Mystic Reflection split between phases (one used before the active
+player's cleanup). **Still open:**
 `Permanent.tappedPermanentsForAbilityThisTurn` (Vodalian War Machine's "Merfolk tapped this turn" record; it is a
 turn-history record, not an effect, so the Runed Terror ruling about effects ending doesn't settle it — it arguably
 should last the whole turn rather than be split per active player; look for a ruling first), and the remaining
@@ -147,7 +157,12 @@ should last the whole turn rather than be split per active player; look for a ru
 per-spell entry riders `spellAdditionalEnterCounters` / `spellEntryCounters` / `spellGrantedSubtypesOnEntry` /
 `spellsGranted*OnEntry` (keyed by a spell's card id and consumed when it enters; they likely never outlive the spell,
 since a step ends only once the stack is empty, so check whether any can be left pending across a cleanup before
-splitting them), and the turn watchers cleared alongside them. Note
+splitting them), the `untilEndOfTurn` delayed actions cleared there (`DelayedWatchedCreaturesCombatDamage`,
+`DelayedNamedCreatureCombatDamage`, `DelayedCamouflage`, the `DelayedWatchedCreature*` watchers,
+`DelayedControllerDamageMultiplication`, the "sacrifice when it leaves" pairs, this-turn-only
+`DelayedDestroyTargetWhenSourceLeaves`; they live in the delayed-action store, so they need a capture that filters
+it by type), `drawReplacementTargetToController`, and the turn-history records cleared alongside them (which are not
+effects and should probably not be split; check each). Note
 `ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffectHandler` adds an `exileInsteadOfGraveyard` rider for
 a cast at the next upkeep, which every cleanup (with or without Runed Terror) clears first; check whether that cast
 still exiles the spell. Known limitation: a flag or set element (including a keyword) that another player's

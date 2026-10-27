@@ -54,6 +54,12 @@ package com.github.laxika.magicalvibes.model;
  * {@link Kind#SET} of card ids, and the source-linked "until end of turn, you may play cards exiled with it" grants
  * (Kayla's Music Box, Urianger Augurelt) a {@link Kind#SET} of {@code (source, cost modifier)} entries. A card
  * played or cast in between leaves exile or the graveyard, so its permission is not restored.
+ * The "this turn" delayed-trigger watchers (Duskmantle / Vizkopa Guildmage, "whenever a creature dies this turn",
+ * the "until end of turn" global triggered abilities) are {@link Kind#LIST}s of their records; the pending "the next
+ * time you would draw a card this turn" replacements (the Words cycle, Aladdin's Lamp, Mangara's Tome, Ring of
+ * Ma'rûf, Urabrask) are {@link Kind#COUNTS} by player or a {@link Kind#LIST} of {@code (player, replacement)}
+ * entries, and Mystic Reflection's pending "next time creatures or planeswalkers enter this turn" copies a
+ * {@link Kind#LIST} of its records. A replacement used up in between is not restored.
  */
 public enum EndOfTurnStateField {
 
@@ -329,7 +335,23 @@ public enum EndOfTurnStateField {
     GAME_CREATURE_DAMAGE_REDIRECT_SHIELDS(Kind.LIST),
     GAME_EXILE_INSTEAD_OF_GRAVEYARD(Kind.SET),
     GAME_OUTSIDE_GAME_PLAY_PERMISSIONS(Kind.LIST),
-    GAME_OUTSIDE_GAME_ADDITIONAL_MODAL_MODE_PERMISSIONS(Kind.SET);
+    GAME_OUTSIDE_GAME_ADDITIONAL_MODAL_MODE_PERMISSIONS(Kind.SET),
+    GAME_OPPONENT_GRAVEYARD_LIFE_LOSS_WATCHERS(Kind.LIST),
+    GAME_LIFE_GAIN_OPPONENT_LIFE_LOSS_WATCHERS(Kind.LIST),
+    GAME_CREATURE_DEATH_TRIGGER_WATCHERS(Kind.LIST),
+    GAME_DAMAGED_CREATURE_DEATH_TRIGGER_WATCHERS(Kind.LIST),
+    GAME_ALLY_CREATURE_ENTERS_TRIGGER_WATCHERS(Kind.LIST),
+    GAME_TEMPORARY_GLOBAL_TRIGGERED_ABILITIES_THIS_TURN(Kind.LIST),
+    GAME_NEXT_DRAW_LOOK_AT_TOP(Kind.LIST),
+    GAME_NEXT_DRAW_GAIN_LIFE(Kind.COUNTS),
+    GAME_NEXT_DRAW_CREATE_BEARS(Kind.LIST),
+    GAME_NEXT_DRAW_DAMAGE(Kind.LIST),
+    GAME_NEXT_DRAW_RETURN_PERMANENTS(Kind.COUNTS),
+    GAME_NEXT_DRAW_DISCARD_OPPONENTS(Kind.COUNTS),
+    GAME_NEXT_DRAW_FROM_EXILED_PILE(Kind.LIST),
+    GAME_NEXT_DRAW_FROM_OUTSIDE_GAME(Kind.COUNTS),
+    GAME_NEXT_DRAW_EXILE_TOP_CARD(Kind.COUNTS),
+    GAME_PENDING_MYSTIC_REFLECTIONS(Kind.LIST);
 
     /** How a field's value is split between players and recombined. */
     public enum Kind {

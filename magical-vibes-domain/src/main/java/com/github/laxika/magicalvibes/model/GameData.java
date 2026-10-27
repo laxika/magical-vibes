@@ -4832,7 +4832,9 @@ public class GameData {
      * ability this turn" copy triggers with their sources, Sen Triplets' hand permission, the per-card exile / graveyard
      * play permissions that end this turn with their current-turn any-mana-type riders, the source-linked "until end
      * of turn, you may play cards exiled with it" grants, and the shield lists whose records are rewritten in place or
-     * replaced by a reduced copy when partly used), which the cleanup step clears
+     * replaced by a reduced copy when partly used, the "this turn" delayed-trigger watchers and "until end of turn"
+     * global triggered abilities, the pending "the next time you would draw a card this turn" replacements and
+     * Mystic Reflection's pending entry copies), which the cleanup step clears
      * (CR 514.2). Used to split that state between the players active when it was created under Runed Terror's sequential phases.
      */
     public EndOfTurnStateShare captureGameEndOfTurnState() {
@@ -5108,6 +5110,25 @@ public class GameData {
             case GAME_EXILE_INSTEAD_OF_GRAVEYARD -> exileInsteadOfGraveyard;
             case GAME_OUTSIDE_GAME_PLAY_PERMISSIONS -> outsideGamePlayPermissions.grants();
             case GAME_OUTSIDE_GAME_ADDITIONAL_MODAL_MODE_PERMISSIONS -> outsideGameAdditionalModalModePermissions;
+            case GAME_OPPONENT_GRAVEYARD_LIFE_LOSS_WATCHERS -> synchronizedCopy(opponentGraveyardLifeLossWatchers);
+            case GAME_LIFE_GAIN_OPPONENT_LIFE_LOSS_WATCHERS -> synchronizedCopy(lifeGainOpponentLifeLossWatchers);
+            case GAME_CREATURE_DEATH_TRIGGER_WATCHERS -> synchronizedCopy(creatureDeathTriggerWatchers);
+            case GAME_DAMAGED_CREATURE_DEATH_TRIGGER_WATCHERS -> synchronizedCopy(damagedCreatureDeathTriggerWatchers);
+            case GAME_ALLY_CREATURE_ENTERS_TRIGGER_WATCHERS -> synchronizedCopy(allyCreatureEntersTriggerWatchers);
+            case GAME_TEMPORARY_GLOBAL_TRIGGERED_ABILITIES_THIS_TURN -> synchronizedCopy(temporaryGlobalTriggeredAbilities)
+                    .stream()
+                    .filter(watcher -> !watcher.untilEndOfNextTurn() && !watcher.untilNextTurn())
+                    .toList();
+            case GAME_NEXT_DRAW_LOOK_AT_TOP -> synchronizedListMapEntries(pendingNextDrawLookAtTop);
+            case GAME_NEXT_DRAW_GAIN_LIFE -> new HashMap<>(pendingNextDrawGainLife);
+            case GAME_NEXT_DRAW_CREATE_BEARS -> synchronizedListMapEntries(pendingNextDrawCreateBears);
+            case GAME_NEXT_DRAW_DAMAGE -> synchronizedListMapEntries(pendingNextDrawDamage);
+            case GAME_NEXT_DRAW_RETURN_PERMANENTS -> new HashMap<>(pendingNextDrawReturnPermanents);
+            case GAME_NEXT_DRAW_DISCARD_OPPONENTS -> new HashMap<>(pendingNextDrawDiscardOpponents);
+            case GAME_NEXT_DRAW_FROM_EXILED_PILE -> synchronizedListMapEntries(pendingNextDrawFromExiledPile);
+            case GAME_NEXT_DRAW_FROM_OUTSIDE_GAME -> new HashMap<>(pendingNextDrawFromOutsideGame);
+            case GAME_NEXT_DRAW_EXILE_TOP_CARD -> new HashMap<>(pendingNextDrawExileTopCard);
+            case GAME_PENDING_MYSTIC_REFLECTIONS -> synchronizedCopy(pendingMysticReflections);
             default -> null;
         };
     }
@@ -5447,6 +5468,36 @@ public class GameData {
             case GAME_OUTSIDE_GAME_PLAY_PERMISSIONS -> outsideGamePlayPermissions.addGrants((List<?>) value);
             case GAME_OUTSIDE_GAME_ADDITIONAL_MODAL_MODE_PERMISSIONS ->
                     outsideGameAdditionalModalModePermissions.addAll((Set<UUID>) value);
+            case GAME_OPPONENT_GRAVEYARD_LIFE_LOSS_WATCHERS ->
+                    opponentGraveyardLifeLossWatchers.addAll((List<OpponentGraveyardLifeLossWatcher>) value);
+            case GAME_LIFE_GAIN_OPPONENT_LIFE_LOSS_WATCHERS ->
+                    lifeGainOpponentLifeLossWatchers.addAll((List<LifeGainOpponentLifeLossWatcher>) value);
+            case GAME_CREATURE_DEATH_TRIGGER_WATCHERS ->
+                    creatureDeathTriggerWatchers.addAll((List<CreatureDeathTriggerWatcher>) value);
+            case GAME_DAMAGED_CREATURE_DEATH_TRIGGER_WATCHERS ->
+                    damagedCreatureDeathTriggerWatchers.addAll((List<DamagedCreatureDeathTriggerWatcher>) value);
+            case GAME_ALLY_CREATURE_ENTERS_TRIGGER_WATCHERS ->
+                    allyCreatureEntersTriggerWatchers.addAll((List<CreatureEntersTriggerWatcher>) value);
+            case GAME_TEMPORARY_GLOBAL_TRIGGERED_ABILITIES_THIS_TURN ->
+                    temporaryGlobalTriggeredAbilities.addAll((List<TemporaryGlobalTriggeredAbility>) value);
+            case GAME_NEXT_DRAW_LOOK_AT_TOP -> addSynchronizedListMapEntries(
+                    pendingNextDrawLookAtTop, (List<Map.Entry<UUID, Integer>>) value);
+            case GAME_NEXT_DRAW_GAIN_LIFE -> addCounts(pendingNextDrawGainLife, (Map<UUID, Integer>) value);
+            case GAME_NEXT_DRAW_CREATE_BEARS -> addSynchronizedListMapEntries(
+                    pendingNextDrawCreateBears, (List<Map.Entry<UUID, String>>) value);
+            case GAME_NEXT_DRAW_DAMAGE -> addSynchronizedListMapEntries(
+                    pendingNextDrawDamage, (List<Map.Entry<UUID, PendingNextDrawDamageReplacement>>) value);
+            case GAME_NEXT_DRAW_RETURN_PERMANENTS ->
+                    addCounts(pendingNextDrawReturnPermanents, (Map<UUID, Integer>) value);
+            case GAME_NEXT_DRAW_DISCARD_OPPONENTS ->
+                    addCounts(pendingNextDrawDiscardOpponents, (Map<UUID, Integer>) value);
+            case GAME_NEXT_DRAW_FROM_EXILED_PILE -> addSynchronizedListMapEntries(
+                    pendingNextDrawFromExiledPile, (List<Map.Entry<UUID, UUID>>) value);
+            case GAME_NEXT_DRAW_FROM_OUTSIDE_GAME ->
+                    addCounts(pendingNextDrawFromOutsideGame, (Map<UUID, Integer>) value);
+            case GAME_NEXT_DRAW_EXILE_TOP_CARD -> addCounts(pendingNextDrawExileTopCard, (Map<UUID, Integer>) value);
+            case GAME_PENDING_MYSTIC_REFLECTIONS ->
+                    pendingMysticReflections.addAll((List<PendingMysticReflection>) value);
             case GAME_PLAYER_SOURCE_NEXT_DAMAGE_SHIELDS ->
                     playerSourceNextDamageShields.addAll((List<PlayerSourceNextDamageShield>) value);
             case GAME_SOURCE_NEXT_DAMAGE_TO_ANY_TARGET_SHIELDS ->

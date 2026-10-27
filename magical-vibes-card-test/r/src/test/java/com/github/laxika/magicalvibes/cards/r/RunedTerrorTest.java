@@ -49,13 +49,23 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CreatureDeathTriggerWatcher;
+import com.github.laxika.magicalvibes.model.CreatureEntersTriggerWatcher;
+import com.github.laxika.magicalvibes.model.DamagedCreatureDeathTriggerWatcher;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
+import com.github.laxika.magicalvibes.model.OpponentGraveyardLifeLossWatcher;
+import com.github.laxika.magicalvibes.model.PendingMysticReflection;
+import com.github.laxika.magicalvibes.model.PendingNextDrawDamageReplacement;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -1435,6 +1445,88 @@ class RunedTerrorTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gd.outsideGamePlayPermissions).isEmpty();
+    }
+
+    @Test
+    void thisTurnTriggerWatchersEndAtTheCleanupOfThePlayerActiveWhenTheyWereRegistered() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card source = new GrizzlyBears();
+        var effect = new GainLifeEffect(1);
+        gd.opponentGraveyardLifeLossWatchers.add(new OpponentGraveyardLifeLossWatcher(player1.getId(), source));
+        gd.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
+                player1.getId(), source, EffectSlot.ON_ANY_CREATURE_BLOCKS, effect));
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        var graveyardWatcher = new OpponentGraveyardLifeLossWatcher(player2.getId(), source);
+        var lifeGainWatcher = new LifeGainOpponentLifeLossWatcher(player2.getId(), source);
+        var deathWatcher = new CreatureDeathTriggerWatcher(player2.getId(), source, effect);
+        var damagedDeathWatcher = new DamagedCreatureDeathTriggerWatcher(
+                UUID.randomUUID(), player2.getId(), source, effect, false);
+        var entersWatcher = new CreatureEntersTriggerWatcher(player2.getId(), source, effect);
+        var globalTrigger = new TemporaryGlobalTriggeredAbility(
+                player2.getId(), source, EffectSlot.ON_ANY_CREATURE_BLOCKS, effect);
+        gd.opponentGraveyardLifeLossWatchers.add(graveyardWatcher);
+        gd.lifeGainOpponentLifeLossWatchers.add(lifeGainWatcher);
+        gd.creatureDeathTriggerWatchers.add(deathWatcher);
+        gd.damagedCreatureDeathTriggerWatchers.add(damagedDeathWatcher);
+        gd.allyCreatureEntersTriggerWatchers.add(entersWatcher);
+        gd.temporaryGlobalTriggeredAbilities.add(globalTrigger);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.opponentGraveyardLifeLossWatchers).containsExactly(graveyardWatcher);
+        assertThat(gd.lifeGainOpponentLifeLossWatchers).containsExactly(lifeGainWatcher);
+        assertThat(gd.creatureDeathTriggerWatchers).containsExactly(deathWatcher);
+        assertThat(gd.damagedCreatureDeathTriggerWatchers).containsExactly(damagedDeathWatcher);
+        assertThat(gd.allyCreatureEntersTriggerWatchers).containsExactly(entersWatcher);
+        assertThat(gd.temporaryGlobalTriggeredAbilities).containsExactly(globalTrigger);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.opponentGraveyardLifeLossWatchers).isEmpty();
+        assertThat(gd.lifeGainOpponentLifeLossWatchers).isEmpty();
+        assertThat(gd.creatureDeathTriggerWatchers).isEmpty();
+        assertThat(gd.damagedCreatureDeathTriggerWatchers).isEmpty();
+        assertThat(gd.allyCreatureEntersTriggerWatchers).isEmpty();
+        assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
+    }
+
+    @Test
+    void pendingNextDrawReplacementsAreSplitBetweenTheActivePlayersTheyWereCreatedUnder() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gd.pendingNextDrawGainLife.merge(player1.getId(), 1, Integer::sum);
+        gd.pendingNextDrawCreateBears.computeIfAbsent(player1.getId(),
+                id -> java.util.Collections.synchronizedList(new ArrayList<>())).add("ULG");
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        gd.pendingNextDrawGainLife.merge(player1.getId(), 1, Integer::sum);
+        gd.pendingNextDrawCreateBears.get(player1.getId()).add("MB2");
+        gd.pendingNextDrawExileTopCard.merge(player2.getId(), 2, Integer::sum);
+        var damage = new PendingNextDrawDamageReplacement(new GrizzlyBears(), UUID.randomUUID(), player1.getId());
+        gd.pendingNextDrawDamage.computeIfAbsent(player2.getId(),
+                id -> java.util.Collections.synchronizedList(new ArrayList<>())).add(damage);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        var reflection = new PendingMysticReflection(bears.getId(), bears.getCard(), bears);
+        gd.pendingMysticReflections.add(reflection);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        gd.pendingNextDrawExileTopCard.put(player2.getId(), 1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.pendingNextDrawGainLife).containsExactly(Map.entry(player1.getId(), 1));
+        assertThat(gd.pendingNextDrawCreateBears.get(player1.getId())).containsExactly("MB2");
+        assertThat(gd.pendingNextDrawExileTopCard).containsExactly(Map.entry(player2.getId(), 1));
+        assertThat(gd.pendingNextDrawDamage.get(player2.getId())).containsExactly(damage);
+        assertThat(gd.pendingMysticReflections).containsExactly(reflection);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.pendingNextDrawGainLife).isEmpty();
+        assertThat(gd.pendingNextDrawCreateBears).isEmpty();
+        assertThat(gd.pendingNextDrawExileTopCard).isEmpty();
+        assertThat(gd.pendingNextDrawDamage).isEmpty();
+        assertThat(gd.pendingMysticReflections).isEmpty();
     }
 
     private void castQuicken(Player caster) {
