@@ -9,51 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 57. Copy-rider mana added only after a prompt (Sunken Palace, Pyromancer's Goggles)
-
-**Status:** partial · **Found:** 2026-10-25, while finishing entry 40 (Sunken Palace's per-unit copy rider)
-
-**Progress (2026-10-27):** the per-unit riders landed. `ManaPool.copyGrantingMana` is now keyed by
-`ManaCopyRider` (`SPELL_OR_ABILITY`, `INSTANT_OR_SORCERY_SPELL`, `RED_INSTANT_OR_SORCERY_SPELL`);
-Sunken Palace and Pyromancer's Goggles use one parameterized `ManaCopyRiderEffect(rider)` (replacing
-`RegisterNextSpellOrAbilityCopyEffect` / `RegisterNextRedInstantSorceryCopyEffect`), Primal Wellspring
-tags its chosen mana through `GameData.markPendingInstantSorceryCopyManaChoice`, and
-`TriggerCollectionService.checkSpellCastTriggers` claims each rider's spent units, queuing one copy
-trigger per unit only when the spell matches. `GameData.pendingNextInstantSorceryCopyCount` /
-`pendingNextRedInstantSorceryCopyCount` are gone. Riders that can't fire for the current payment
-(mana abilities; spell-only riders on any ability; non-matching spells cast from hand) are held back so
-untagged mana is spent first. PyromancersGogglesTest and the Wellspring cases in PrimalAmuletTest pass.
-
-**Progress (2026-10-27, later):** prompted mana is now tagged. `LandManaEvent` carries the ability's
-`copyRiders` (passed by `ActivatedAbilityExecutionService.doResolveManaAbility` through the new
-`LandManaReplacementService.produce(..., copyRiders)` overload). When the replacement order is chosen and
-one color remains, `finishAfterChoice` tags the mana; when a color choice is still needed, `askForColor`
-records it through the generalized `GameData.markPendingCopyRiderManaChoice(source, rider, amount)`
-(replacing the Wellspring-only `pendingInstantSorceryCopyManaChoices`) and gives the plain color choice
-the land as `sourcePermanentId`, so `ChoiceHandlerService` claims every pending rider when the mana lands.
-SunkenPalaceTest covers both prompts (Deep Water + Infernal Darkness order; Prismatic Omen + Reality
-Twist color).
-
-**What remains.** The hold-back for non-matching spells is only set when the spell is cast from hand
-(`SpellCastingService.playCardInternalOnce` knows the candidate only there); graveyard/other-zone casts
-can still spend Goggles/Wellspring mana before untagged mana. Also a land tapped through Piracy
-(`spellOnly`) that both needs a color choice and carries a copy rider isn't tagged (the
-`SpellOnlyManaColorChoice` has no source); no card hits this today.
-
-**Failing tests:** none.
-
-**Prompt to start it:**
-
-```
-Implement the remainder of missing-features-to-do.md entry 57: set ManaPool's copy-rider hold-back for
-spells cast from zones other than the hand (graveyard flashback, exile, etc.), not only in
-SpellCastingService.playCardInternalOnce's hand branch, so Pyromancer's Goggles / Primal Wellspring
-mana is spent last on spells it can't copy. Add focused tests. Don't run the full test suite; ask me.
-Don't commit until I say so.
-```
-
----
-
 ## 58. Opponent-chosen-target spells cast from another player's hand (Sen Triplets)
 
 **Status:** open · **Found:** 2026-10-25, while finishing entry 41 (casting from another player's hand)

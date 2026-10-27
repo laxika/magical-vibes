@@ -1978,6 +1978,11 @@ public class ManaPool {
         }
     }
 
+    /** See {@link #copyGrantingManaHeldBack}; returns a snapshot. */
+    public Set<ManaCopyRider> getCopyGrantingManaHeldBack() {
+        return EnumSet.copyOf(copyGrantingManaHeldBack);
+    }
+
     /** See {@link #copyGrantingManaHeldBack}. */
     public void setCopyGrantingManaHeldBack(Set<ManaCopyRider> heldBack) {
         copyGrantingManaHeldBack.clear();

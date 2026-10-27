@@ -3568,6 +3568,7 @@ public class SpellCastingService {
                 && casterPool.isKickedOrInstantSorceryOnlyManaUsableForInstantSorcery();
         boolean instantOrSorcery = false;
         boolean bargainedFromHand = false;
+        Set<ManaCopyRider> previousCopyRiderHoldBack = null;
         if (!fromGraveyard) {
             List<Card> hand = gameData.castingSourceCards(player.getId());
             if (hand != null && cardIndex >= 0 && cardIndex < hand.size()) {
@@ -3579,16 +3580,7 @@ public class SpellCastingService {
                 instantOrSorcery = candidate.hasType(CardType.INSTANT)
                         || candidate.hasType(CardType.SORCERY);
                 if (casterPool != null) {
-                    // Copy-rider mana that can't fire for this spell is the last mana its caster spends.
-                    EnumSet<ManaCopyRider> heldBackRiders = EnumSet.noneOf(ManaCopyRider.class);
-                    if (!instantOrSorcery) {
-                        heldBackRiders.add(ManaCopyRider.INSTANT_OR_SORCERY_SPELL);
-                    }
-                    if (!instantOrSorcery || candidate.getColors() == null
-                            || !candidate.getColors().contains(CardColor.RED)) {
-                        heldBackRiders.add(ManaCopyRider.RED_INSTANT_OR_SORCERY_SPELL);
-                    }
-                    casterPool.setCopyGrantingManaHeldBack(heldBackRiders);
+                    previousCopyRiderHoldBack = spendUnmatchedCopyRiderManaLast(casterPool, candidate);
                 }
                 bargainedFromHand = candidate.hasKeyword(Keyword.BARGAIN);
                 if (candidate.getAdditionalCostPerExtraTarget() > 0 && targetIds != null
@@ -3647,7 +3639,9 @@ public class SpellCastingService {
                 casterPool.setInstantSorceryOrClassLevelManaUsableForInstantSorcery(previousPermission);
                 casterPool.setKickedOrInstantSorceryOnlyManaUsableForKickedSpell(previousUnionKickedPermission);
                 casterPool.setKickedOrInstantSorceryOnlyManaUsableForInstantSorcery(previousUnionInstantPermission);
-                casterPool.setCopyGrantingManaHeldBack(Set.of());
+                if (previousCopyRiderHoldBack != null) {
+                    casterPool.setCopyGrantingManaHeldBack(previousCopyRiderHoldBack);
+                }
             }
         }
     }
@@ -10544,6 +10538,9 @@ public class SpellCastingService {
                                      Integer sharedColorDiscardHandCardIndex) {
         Card attempted = graveyard != null && graveyardCardIndex >= 0 && graveyardCardIndex < graveyard.size()
                 ? graveyard.get(graveyardCardIndex) : null;
+        ManaPool casterPool = gameData.playerManaPools.get(player.getId());
+        Set<ManaCopyRider> previousCopyRiderHoldBack = casterPool != null && attempted != null
+                ? spendUnmatchedCopyRiderManaLast(casterPool, attempted) : null;
         try {
             playFlashbackSpellFromLocationOnce(gameData, player, graveyard, graveyardCardIndex, xValue, targetId,
                     targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
@@ -10560,6 +10557,10 @@ public class SpellCastingService {
                     immutableCopy(beholdHandCardIndices), immutableCopy(discardHandCardIndices),
                     immutableCopy(convokeCreatureIds), sharedColorDiscardHandCardIndex);
             mutationCoordinator.invalidateAllPlayerViews(gameData);
+        } finally {
+            if (previousCopyRiderHoldBack != null) {
+                casterPool.setCopyGrantingManaHeldBack(previousCopyRiderHoldBack);
+            }
         }
     }
 
@@ -14030,7 +14031,12 @@ public class SpellCastingService {
         if (!cost.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
             throw new IllegalStateException("Not enough mana to pay spell");
         }
-        cost.payWithAdditionalGenericCost(pool, 0, additionalCost);
+        Set<ManaCopyRider> previousCopyRiderHoldBack = spendUnmatchedCopyRiderManaLast(pool, card);
+        try {
+            cost.payWithAdditionalGenericCost(pool, 0, additionalCost);
+        } finally {
+            pool.setCopyGrantingManaHeldBack(previousCopyRiderHoldBack);
+        }
         gameData.addSpellCastManaSpent(card.getId(), before - pool.getTotalAllMana());
     }
 
@@ -14949,6 +14955,29 @@ public class SpellCastingService {
                 replacementManaCost, List.of());
     }
 
+    /**
+     * Makes the copy riders whose "when this mana is spent to cast ..." trigger can't fire for
+     * {@code spell} the last mana {@code pool}'s owner spends on it, wherever the spell is cast from.
+     * Returns the previous hold-back for the caller to restore.
+     */
+    private static Set<ManaCopyRider> spendUnmatchedCopyRiderManaLast(ManaPool pool, Card spell) {
+        Set<ManaCopyRider> previous = pool.getCopyGrantingManaHeldBack();
+        pool.setCopyGrantingManaHeldBack(copyRidersUnmatchedBySpell(spell));
+        return previous;
+    }
+
+    private static Set<ManaCopyRider> copyRidersUnmatchedBySpell(Card spell) {
+        boolean instantOrSorcery = spell.hasType(CardType.INSTANT) || spell.hasType(CardType.SORCERY);
+        EnumSet<ManaCopyRider> unmatched = EnumSet.noneOf(ManaCopyRider.class);
+        if (!instantOrSorcery) {
+            unmatched.add(ManaCopyRider.INSTANT_OR_SORCERY_SPELL);
+        }
+        if (!instantOrSorcery || spell.getColors() == null || !spell.getColors().contains(CardColor.RED)) {
+            unmatched.add(ManaCopyRider.RED_INSTANT_OR_SORCERY_SPELL);
+        }
+        return unmatched;
+    }
+
     private SpellManaPayment computeSpellManaPayment(GameData gameData, UUID playerId, Card card, int effectiveXValue,
                                         List<ManaColor> convokeContributions, Integer phyrexianLifeCount,
                                         boolean kicked, int extraCostReduction, int targetingTax,
@@ -14970,6 +14999,7 @@ public class SpellCastingService {
             pool.setKickedOrInstantSorceryOnlyManaUsableForKickedSpell(false);
             pool.setKickedOrInstantSorceryOnlyManaUsableForInstantSorcery(true);
         }
+        Set<ManaCopyRider> previousCopyRiderHoldBack = spendUnmatchedCopyRiderManaLast(pool, card);
         final Zone effectiveSourceZone = playerId.equals(gameData.commandCastPlayerId) ? Zone.COMMAND : sourceZone;
         ManaPool.InstantSorceryOrSubtypeSpellManaState seanceBoardMana = isSeanceBoardSpell(gameData, playerId, card)
                 ? pool.promoteInstantSorceryOrSubtypeSpellOnlyMana(SEANCE_BOARD_SUBTYPES) : null;
@@ -15101,6 +15131,7 @@ public class SpellCastingService {
             pool.setInstantSorceryOrClassLevelManaUsableForInstantSorcery(previousClassPermission);
             pool.setKickedOrInstantSorceryOnlyManaUsableForKickedSpell(previousUnionKickedPermission);
             pool.setKickedOrInstantSorceryOnlyManaUsableForInstantSorcery(previousUnionInstantPermission);
+            pool.setCopyGrantingManaHeldBack(previousCopyRiderHoldBack);
             if (exactlyThreeColorMana != null) {
                 pool.restorePromotedExactlyThreeColorSpellOnlyMana(exactlyThreeColorMana);
             }

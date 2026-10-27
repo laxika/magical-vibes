@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.e.ExquisiteFirecraft;
+import com.github.laxika.magicalvibes.cards.f.FaithlessLooting;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.m.ManaReflection;
+import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +22,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PyromancersGoggles.class, LightningBolt.class, Divination.class, GrizzlyBears.class, ExquisiteFirecraft.class})
+@CardUsed({PyromancersGoggles.class, LightningBolt.class, Divination.class, GrizzlyBears.class, ExquisiteFirecraft.class,
+        ThinkTwice.class, FaithlessLooting.class})
 class PyromancersGogglesTest extends BaseCardTest {
 
     @Test
@@ -233,6 +236,39 @@ class PyromancersGogglesTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
 
+        assertThat(copyTriggers()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A non-red spell cast with flashback spends untagged red before the Goggles mana")
+    void flashbackNonRedSpellSpendsGogglesManaLast() {
+        activateGoggles();
+        harness.setGraveyard(player1, List.of(new ThinkTwice()));
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castFlashback(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gogglesMana()).isEqualTo(1);
+        assertThat(copyTriggers()).isZero();
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(copyTriggers()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A red sorcery cast with flashback using Goggles mana is copied")
+    void flashbackRedSpellIsCopied() {
+        activateGoggles();
+        harness.setGraveyard(player1, List.of(new FaithlessLooting()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFlashback(player1, 0);
+
+        assertThat(gogglesMana()).isZero();
         assertThat(copyTriggers()).isEqualTo(1);
     }
 
