@@ -8,7 +8,9 @@ package com.github.laxika.magicalvibes.model;
  * {@link GameData}'s per-player prevention shield maps; the {@code GAME_} fields are game-wide
  * {@link GameData} stores ({@link GameData#captureGameEndOfTurnState()}). A {@code GAME_} field backed by a
  * map of sets is a {@link Kind#SET} of its {@code Map.entry(key, element)} pairs, one backed by a map of
- * lists is a {@link Kind#LIST} of them, and one backed by a plain map is a {@link Kind#SET} of its entries.
+ * lists is a {@link Kind#LIST} of them, one backed by a plain map is a {@link Kind#SET} of its entries, and one
+ * backed by a map of {@code int} counts is a {@link Kind#COUNTS} (a nested colour-count map is keyed by
+ * {@code Map.entry(player, colour)}).
  * Two aligned per-permanent lists (Soldevi Sentry's shield recipients and their controllers) are one
  * {@link Kind#LIST} of {@code (recipient, controller)} entries, so a share keeps them paired.
  */
@@ -169,7 +171,28 @@ public enum EndOfTurnStateField {
     GAME_PLAYERS_MAY_PLAY_FACE_UP_CARDS_FROM_EXILE(Kind.SET),
     GAME_CARD_TYPE_FLASH_GRANTS(Kind.SET),
     GAME_PLAYERS_ALLOWED_TWICE_LOYALTY_ACTIVATIONS(Kind.SET),
-    GAME_GRAVEYARD_CARD_ANIMATIONS(Kind.SET);
+    GAME_GRAVEYARD_CARD_ANIMATIONS(Kind.SET),
+    GAME_PLAYER_COLOR_DAMAGE_PREVENTION_COUNTS(Kind.COUNTS),
+    GAME_COMBAT_DAMAGE_TO_CREATURES_DOUBLINGS(Kind.ADDITIVE),
+    GAME_CONTROLLER_DAMAGE_DOUBLINGS(Kind.COUNTS),
+    GAME_PERMANENT_DAMAGE_DOUBLINGS(Kind.COUNTS),
+    GAME_COLOR_SOURCE_DAMAGE_BONUSES(Kind.LIST),
+    GAME_CONTROLLER_DAMAGE_BONUSES(Kind.LIST),
+    GAME_DAMAGE_REPLACEMENTS(Kind.LIST),
+    GAME_ALL_PERMANENTS_ENTER_TAPPED(Kind.FLAG),
+    GAME_PERMANENT_ENTER_TAPPED_FILTERS(Kind.SET),
+    GAME_ADDITIONAL_ENTER_COUNTERS(Kind.COUNTS),
+    GAME_MATCHING_CREATURE_BLOCK_RESTRICTIONS(Kind.LIST),
+    GAME_COUNTER_HOLDER_MUST_BLOCK_REQUIREMENTS(Kind.SET),
+    GAME_PLAYER_EXTRA_LOYALTY_ACTIVATIONS(Kind.COUNTS),
+    GAME_EXTRA_MANA_ON_LAND_SUBTYPE_TAP(Kind.LIST),
+    GAME_LAND_SUBTYPE_FIXED_MANA_COLOR(Kind.SET),
+    GAME_NONBASIC_LANDS_FIXED_MANA_COLOR(Kind.VALUE),
+    GAME_ALL_LANDS_FIXED_MANA_COLOR(Kind.VALUE),
+    GAME_PLAYERS_WITH_COLORED_MANA_REPLACEMENT(Kind.SET),
+    GAME_PLAYERS_WITH_WHITE_MANA_AS_ANY_COLOR(Kind.SET),
+    GAME_PLAYERS_WITH_LAND_MANA_CHOICE_REPLACEMENT(Kind.SET),
+    GAME_LAND_MANA_FIXED_COLOR(Kind.SET);
 
     /** How a field's value is split between players and recombined. */
     public enum Kind {
@@ -187,6 +210,9 @@ public enum EndOfTurnStateField {
         SET,
         /** A list compared by {@code equals}: each added element is credited to the active player. */
         LIST,
+        /** A map of {@code int} counts by key (per-key doublings, extra activations, one-shot colour
+         *  shields): each player keeps their per-key delta, never more than what is left for that key. */
+        COUNTS,
         /** A list compared by identity (CR 611.2c effect instances). */
         IDENTITY_LIST,
         /** An {@link EffectSlot}-keyed map of lists: each added element is credited to the active player. */

@@ -39,24 +39,34 @@ added the regeneration-shield riders (`opponentDrawRegenerationShield` with its 
 as one `LIST` of entries, `plusOnePlusOneCounterRegenerationShield` with its controllers,
 `gainControlRegenerationShields`), so a rider shield from another player's phase no longer degrades to a plain shield,
 and `temporaryGraveyardCardAnimationsUntilEndOfTurn` (`GAME_GRAVEYARD_CARD_ANIMATIONS`, a `SET` of map entries). A shield used up
-in between is not restored (capped by what remains). RunedTerrorTest covers can't-block, creature and player
+in between is not restored (capped by what remains). A fifth pass added `Kind.COUNTS` (a map of `int` counts split
+per key like a shield, capped by what is left for that key) and moved `playerColorDamagePreventionCount` (keyed by
+`Map.entry(player, colour)`), `combatDamageToCreaturesDoublingsThisTurn`, `controllerDamageDoublingsThisTurn`,
+`permanentDamageDoublingsThisTurn`, `colorSourceDamageBonusThisTurn`, `controllerDamageBonusThisTurn`,
+`damageReplacementsThisTurn`, `allPermanentsEnterTappedThisTurn`, `permanentEnterTappedFiltersThisTurn`,
+`additionalEnterCountersThisTurn`, `matchingCreatureBlockRestrictionsThisTurn`,
+`counterHolderMustBlockRequirementsThisTurn`, `playerExtraLoyaltyActivationsThisTurn` and the mana-fixing / mana
+replacement stores (`extraManaOnLandSubtypeTapThisTurn`, `landSubtypeFixedManaColorThisTurn`, the nonbasic / all-lands
+fixed colours, the three `playersWith*Mana*ThisTurn` sets, `landManaFixedColorThisTurn`). RunedTerrorTest covers can't-block, creature and player
 prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference, Skullcrack, Silence, Gilded Light,
-Borne Upon a Wind, Debt of Loyalty, Skeleton Scavengers, Soldevi Sentry and Microscope. **Still open:**
+Borne Upon a Wind, Debt of Loyalty, Skeleton Scavengers, Soldevi Sentry, Microscope, Blind Fury, Overblaze (two
+doublings split between phases), Zameck Guildmage and Due Respect. **Still open:**
 `Permanent.tappedPermanentsForAbilityThisTurn` (Vodalian War Machine's "Merfolk tapped this turn" record; it is a
 turn-history record, not an effect, so the Runed Terror ruling about effects ending doesn't settle it — it arguably
 should last the whole turn rather than be split per active player; look for a ruling first), and the remaining
 `GameData` stores cleared in
 `resetEndOfTurnModifiers`: one-shot redirect/prevention shield lists and maps (`damageRedirectShields`,
 `sourceDamageRedirectShields`, `playerSourceNextDamageShields`, `targetSourceDamagePreventionShields`, Eye for an
-Eye, `playerColorDamagePreventionCount`, `playerSourceDamagePreventionIds` with its paired colour/life-gain maps,
+Eye, `playerSourceDamagePreventionIds` with its paired colour/life-gain maps,
 `playerNextDamageFromMatchingSourcesPrevented`, `combatDamagePreventionTokenShields`, `channelHarmShields`, ...),
-`playerStaticEffectsUntilEndOfTurn`, enter-tapped / extra-counter "this turn" stores, block requirements, damage
-bonuses / doublings / life floors / replacements, the remaining "this turn" rule stores (`playersMaxSpellsThisTurn`,
-`playerExtraLoyaltyActivationsThisTurn`, `spellColorOverridesUntilEndOfTurn`, Sen Triplets' controller ids,
-next-spell flash / convoke / cost / free-cast grants, next-spell copy counters, mana-fixing and mana replacement
-stores), and graveyard / exile / library-top cast permissions. Count-valued maps
-(`Map<UUID, Integer>`) and one-shot shield lists need a per-key `SHIELD`-style split rather than the entry-set
-`SET` used so far. Known limitation: a flag or set element (including a keyword) that another player's
+`playerStaticEffectsUntilEndOfTurn`, `pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn`, the
+merge-by-min/max maps `damageLifeFloorsUntilEndOfTurn` (`Math::max`) and `playersMaxSpellsThisTurn` (`Math::min`) —
+these need every contribution kept (the stored value hides a superseded one, so a `SET` of entries would drop the
+other player's value when the winning one ends; consider a `LIST` of contributions re-merged on restore) — the
+remaining "this turn" rule stores (`spellColorOverridesUntilEndOfTurn`, Sen Triplets' controller ids, next-spell
+flash / convoke / cost / free-cast grants, next-spell copy counters), and graveyard / exile / library-top cast
+permissions. One-shot shield lists still need a per-element split (`LIST` works when the shield record is removed
+whole when used). Known limitation: a flag or set element (including a keyword) that another player's
 effect sets again while it is already set stays credited to the first player only, and with three or more players a
 single-value field kept for several other players takes the value of the most recently credited player.
 

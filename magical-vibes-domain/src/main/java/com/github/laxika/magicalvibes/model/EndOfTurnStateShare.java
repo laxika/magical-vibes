@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -92,6 +93,7 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
                 }
                 case LIST -> delta.put(field, listMinus(listValue(current), listValue(old), false));
                 case IDENTITY_LIST -> delta.put(field, listMinus(listValue(current), listValue(old), true));
+                case COUNTS -> delta.put(field, combineCounts(countsValue(current), countsValue(old), -1));
                 case SLOT_LISTS -> {
                     Map<EffectSlot, List<CardEffect>> added = new EnumMap<>(EffectSlot.class);
                     Map<EffectSlot, List<CardEffect>> oldSlots = slotValue(old);
@@ -131,6 +133,7 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
                     concat.addAll(listValue(theirs));
                     combined.put(field, concat);
                 }
+                case COUNTS -> combined.put(field, combineCounts(countsValue(mine), countsValue(theirs), 1));
                 case SLOT_LISTS -> {
                     Map<EffectSlot, List<CardEffect>> merged = new EnumMap<>(EffectSlot.class);
                     slotValue(mine).forEach((slot, effects) -> merged.put(slot, new ArrayList<>(effects)));
@@ -167,6 +170,13 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
                 }
                 case LIST -> capped.put(field, listIntersection(listValue(mine), listValue(now), false));
                 case IDENTITY_LIST -> capped.put(field, listIntersection(listValue(mine), listValue(now), true));
+                case COUNTS -> {
+                    Map<Object, Integer> nowCounts = countsValue(now);
+                    Map<Object, Integer> kept = new HashMap<>();
+                    countsValue(mine).forEach((key, count) ->
+                            kept.put(key, Math.max(0, Math.min(count, nowCounts.getOrDefault(key, 0)))));
+                    capped.put(field, kept);
+                }
                 case SLOT_LISTS -> {
                     Map<EffectSlot, List<CardEffect>> kept = new EnumMap<>(EffectSlot.class);
                     Map<EffectSlot, List<CardEffect>> nowSlots = slotValue(now);
@@ -199,6 +209,12 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
         return value instanceof Set<?> set ? List.copyOf((Set<T>) set) : (List<T>) value;
     }
 
+    /** Reads a {@code COUNTS} field (empty when absent). */
+    @SuppressWarnings("unchecked")
+    public <K> Map<K, Integer> counts(EndOfTurnStateField field) {
+        return (Map<K, Integer>) countsValue(values.get(field));
+    }
+
     /** Reads the {@code SLOT_LISTS} field (empty when absent). */
     public Map<EffectSlot, List<CardEffect>> slotLists(EndOfTurnStateField field) {
         return slotValue(values.get(field));
@@ -214,6 +230,15 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
             case VALUE -> value instanceof Integer i && i == 0 ? null : value;
             case SET -> setValue(value).isEmpty() ? null : Set.copyOf(setValue(value));
             case LIST, IDENTITY_LIST -> listValue(value).isEmpty() ? null : List.copyOf(listValue(value));
+            case COUNTS -> {
+                Map<Object, Integer> counts = new HashMap<>();
+                countsValue(value).forEach((key, count) -> {
+                    if (count != null && count != 0) {
+                        counts.put(key, count);
+                    }
+                });
+                yield counts.isEmpty() ? null : Map.copyOf(counts);
+            }
             case SLOT_LISTS -> {
                 Map<EffectSlot, List<CardEffect>> slots = new EnumMap<>(EffectSlot.class);
                 slotValue(value).forEach((slot, effects) -> {
@@ -238,6 +263,18 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
     @SuppressWarnings("unchecked")
     private static List<Object> listValue(Object value) {
         return value == null ? List.of() : (List<Object>) value;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<Object, Integer> countsValue(Object value) {
+        return value == null ? Map.of() : (Map<Object, Integer>) value;
+    }
+
+    /** Per key, {@code first + sign * second}. */
+    private static Map<Object, Integer> combineCounts(Map<Object, Integer> first, Map<Object, Integer> second, int sign) {
+        Map<Object, Integer> combined = new HashMap<>(first);
+        second.forEach((key, count) -> combined.merge(key, sign * count, SaturatingMath::add));
+        return combined;
     }
 
     @SuppressWarnings("unchecked")

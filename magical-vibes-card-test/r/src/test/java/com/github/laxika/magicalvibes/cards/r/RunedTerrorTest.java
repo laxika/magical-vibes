@@ -2,13 +2,17 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AbandonThePost;
 import com.github.laxika.magicalvibes.cards.a.AerialManeuver;
+import com.github.laxika.magicalvibes.cards.b.BlindFury;
 import com.github.laxika.magicalvibes.cards.b.BorneUponAWind;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.d.DebtOfLoyalty;
+import com.github.laxika.magicalvibes.cards.d.DueRespect;
 import com.github.laxika.magicalvibes.cards.e.EerieInterference;
 import com.github.laxika.magicalvibes.cards.f.Fog;
 import com.github.laxika.magicalvibes.cards.g.GildedLight;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Microscope;
+import com.github.laxika.magicalvibes.cards.o.Overblaze;
 import com.github.laxika.magicalvibes.cards.s.SafePassage;
 import com.github.laxika.magicalvibes.cards.s.Silence;
 import com.github.laxika.magicalvibes.cards.s.Skullcrack;
@@ -17,6 +21,7 @@ import com.github.laxika.magicalvibes.cards.s.SoldeviSentry;
 import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.cards.t.TitanicGrowth;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.cards.z.ZameckGuildmage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -36,7 +41,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({RunedTerror.class, TitanicGrowth.class, TurnToFrog.class, AerialManeuver.class, AbandonThePost.class,
         SamiteHealer.class, Fog.class, SafePassage.class, EerieInterference.class, Skullcrack.class, Silence.class,
         GildedLight.class, BorneUponAWind.class, DebtOfLoyalty.class, SkeletonScavengers.class, SoldeviSentry.class,
-        Microscope.class, DarksteelCitadel.class})
+        Microscope.class, DarksteelCitadel.class, BlindFury.class, Overblaze.class, GrizzlyBears.class,
+        ZameckGuildmage.class, DueRespect.class})
 class RunedTerrorTest extends BaseCardTest {
 
     @Test
@@ -505,5 +511,88 @@ class RunedTerrorTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gqs.cardHasType(target, CardType.CREATURE, gd, player1.getId())).isFalse();
+    }
+
+    @Test
+    void combatDamageDoublingFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new BlindFury()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0);
+        assertThat(gd.combatDamageToCreaturesDoublingsThisTurn).isEqualTo(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.combatDamageToCreaturesDoublingsThisTurn).isEqualTo(1);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.combatDamageToCreaturesDoublingsThisTurn).isZero();
+    }
+
+    @Test
+    void permanentDamageDoublingsAreSplitBetweenTheActivePlayersTheyWereCreatedUnder() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Overblaze()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new Overblaze()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        assertThat(gd.permanentDamageDoublingsThisTurn.get(bears.getId())).isEqualTo(2);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.permanentDamageDoublingsThisTurn.get(bears.getId())).isEqualTo(1);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.permanentDamageDoublingsThisTurn).isEmpty();
+    }
+
+    @Test
+    void additionalEnterCountersFromOtherPlayersPhaseSurviveActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        Permanent guildmage = harness.addToBattlefieldAndReturn(player2, new ZameckGuildmage());
+        guildmage.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.additionalEnterCountersThisTurn.get(player2.getId())).isEqualTo(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.additionalEnterCountersThisTurn.get(player2.getId())).isEqualTo(1);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.additionalEnterCountersThisTurn).isEmpty();
+    }
+
+    @Test
+    void enterTappedFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new DueRespect()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0);
+        assertThat(gd.allPermanentsEnterTappedThisTurn).isTrue();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.allPermanentsEnterTappedThisTurn).isTrue();
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.allPermanentsEnterTappedThisTurn).isFalse();
     }
 }

@@ -4797,7 +4797,9 @@ public class GameData {
      * Captures the game-wide "until end of turn" / "this turn" stores named by the {@code GAME_}
      * {@link EndOfTurnStateField}s (damage prevention flags, shields and sets, the turn-long life, search
      * and attack restrictions, player protections, casting / activation restrictions and permissions,
-     * "this turn" zone-change replacements and graveyard card animations), which the cleanup step clears
+     * "this turn" zone-change replacements, graveyard card animations, Circle of Protection colour shields, damage
+     * doublings, bonuses and replacements, enter-tapped and extra-counter replacements, block requirements, extra
+     * loyalty activations and the mana-fixing / mana-replacement stores), which the cleanup step clears
      * (CR 514.2). Used to split that state between the players active when it was created under Runed Terror's sequential phases.
      */
     public EndOfTurnStateShare captureGameEndOfTurnState() {
@@ -4914,6 +4916,31 @@ public class GameData {
             case GAME_GRAVEYARD_CARD_ANIMATIONS -> Set.copyOf(temporaryGraveyardCardAnimationsUntilEndOfTurn.entrySet().stream()
                     .map(entry -> Map.entry(entry.getKey(), entry.getValue()))
                     .toList());
+            case GAME_PLAYER_COLOR_DAMAGE_PREVENTION_COUNTS -> nestedCounts(playerColorDamagePreventionCount);
+            case GAME_COMBAT_DAMAGE_TO_CREATURES_DOUBLINGS -> combatDamageToCreaturesDoublingsThisTurn;
+            case GAME_CONTROLLER_DAMAGE_DOUBLINGS -> new HashMap<>(controllerDamageDoublingsThisTurn);
+            case GAME_PERMANENT_DAMAGE_DOUBLINGS -> new HashMap<>(permanentDamageDoublingsThisTurn);
+            case GAME_COLOR_SOURCE_DAMAGE_BONUSES -> listMapEntries(colorSourceDamageBonusThisTurn);
+            case GAME_CONTROLLER_DAMAGE_BONUSES -> listMapEntries(controllerDamageBonusThisTurn);
+            case GAME_DAMAGE_REPLACEMENTS -> {
+                synchronized (damageReplacementsThisTurn) {
+                    yield new ArrayList<>(damageReplacementsThisTurn);
+                }
+            }
+            case GAME_ALL_PERMANENTS_ENTER_TAPPED -> allPermanentsEnterTappedThisTurn;
+            case GAME_PERMANENT_ENTER_TAPPED_FILTERS -> mapEntries(permanentEnterTappedFiltersThisTurn);
+            case GAME_ADDITIONAL_ENTER_COUNTERS -> new HashMap<>(additionalEnterCountersThisTurn);
+            case GAME_MATCHING_CREATURE_BLOCK_RESTRICTIONS -> listMapEntries(matchingCreatureBlockRestrictionsThisTurn);
+            case GAME_COUNTER_HOLDER_MUST_BLOCK_REQUIREMENTS -> mapEntries(counterHolderMustBlockRequirementsThisTurn);
+            case GAME_PLAYER_EXTRA_LOYALTY_ACTIVATIONS -> new HashMap<>(playerExtraLoyaltyActivationsThisTurn);
+            case GAME_EXTRA_MANA_ON_LAND_SUBTYPE_TAP -> listMapEntries(extraManaOnLandSubtypeTapThisTurn);
+            case GAME_LAND_SUBTYPE_FIXED_MANA_COLOR -> Set.copyOf(plainMapEntries(landSubtypeFixedManaColorThisTurn));
+            case GAME_NONBASIC_LANDS_FIXED_MANA_COLOR -> nonbasicLandsFixedManaColorThisTurn;
+            case GAME_ALL_LANDS_FIXED_MANA_COLOR -> allLandsFixedManaColorThisTurn;
+            case GAME_PLAYERS_WITH_COLORED_MANA_REPLACEMENT -> playersWithColoredManaReplacementThisTurn;
+            case GAME_PLAYERS_WITH_WHITE_MANA_AS_ANY_COLOR -> playersWithWhiteManaAsAnyColorThisTurn;
+            case GAME_PLAYERS_WITH_LAND_MANA_CHOICE_REPLACEMENT -> playersWithLandManaChoiceReplacementThisTurn;
+            case GAME_LAND_MANA_FIXED_COLOR -> Set.copyOf(plainMapEntries(landManaFixedColorThisTurn));
             default -> null;
         };
     }
@@ -5045,6 +5072,43 @@ public class GameData {
                     playersAllowedTwiceLoyaltyActivationsThisTurn.addAll((Set<UUID>) value);
             case GAME_GRAVEYARD_CARD_ANIMATIONS -> ((Set<Map.Entry<UUID, GraveyardCardAnimation>>) value)
                     .forEach(entry -> temporaryGraveyardCardAnimationsUntilEndOfTurn.put(entry.getKey(), entry.getValue()));
+            case GAME_PLAYER_COLOR_DAMAGE_PREVENTION_COUNTS -> ((Map<Map.Entry<UUID, CardColor>, Integer>) value)
+                    .forEach((key, count) -> playerColorDamagePreventionCount
+                            .computeIfAbsent(key.getKey(), id -> new ConcurrentHashMap<>())
+                            .merge(key.getValue(), count, Integer::sum));
+            case GAME_COMBAT_DAMAGE_TO_CREATURES_DOUBLINGS -> combatDamageToCreaturesDoublingsThisTurn += (Integer) value;
+            case GAME_CONTROLLER_DAMAGE_DOUBLINGS -> addCounts(controllerDamageDoublingsThisTurn, (Map<UUID, Integer>) value);
+            case GAME_PERMANENT_DAMAGE_DOUBLINGS -> addCounts(permanentDamageDoublingsThisTurn, (Map<UUID, Integer>) value);
+            case GAME_COLOR_SOURCE_DAMAGE_BONUSES -> ((List<Map.Entry<UUID, DamageBonusGrant>>) value)
+                    .forEach(entry -> addDamageBonusGrant(colorSourceDamageBonusThisTurn, entry.getKey(), entry.getValue()));
+            case GAME_CONTROLLER_DAMAGE_BONUSES -> ((List<Map.Entry<UUID, DamageBonusGrant>>) value)
+                    .forEach(entry -> addDamageBonusGrant(controllerDamageBonusThisTurn, entry.getKey(), entry.getValue()));
+            case GAME_DAMAGE_REPLACEMENTS ->
+                    damageReplacementsThisTurn.addAll((List<ReplaceDamageAboveThresholdThisTurnEffect>) value);
+            case GAME_ALL_PERMANENTS_ENTER_TAPPED -> allPermanentsEnterTappedThisTurn = true;
+            case GAME_PERMANENT_ENTER_TAPPED_FILTERS ->
+                    addMapEntries(permanentEnterTappedFiltersThisTurn, (Set<Map.Entry<UUID, PermanentPredicate>>) value);
+            case GAME_ADDITIONAL_ENTER_COUNTERS -> addCounts(additionalEnterCountersThisTurn, (Map<UUID, Integer>) value);
+            case GAME_MATCHING_CREATURE_BLOCK_RESTRICTIONS -> addListMapEntries(matchingCreatureBlockRestrictionsThisTurn,
+                    (List<Map.Entry<UUID, GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect>>) value);
+            case GAME_COUNTER_HOLDER_MUST_BLOCK_REQUIREMENTS ->
+                    addMapEntries(counterHolderMustBlockRequirementsThisTurn, (Set<Map.Entry<UUID, CounterType>>) value);
+            case GAME_PLAYER_EXTRA_LOYALTY_ACTIVATIONS ->
+                    addCounts(playerExtraLoyaltyActivationsThisTurn, (Map<UUID, Integer>) value);
+            case GAME_EXTRA_MANA_ON_LAND_SUBTYPE_TAP -> addListMapEntries(extraManaOnLandSubtypeTapThisTurn,
+                    (List<Map.Entry<CardSubtype, TemporaryLandTapMana>>) value);
+            case GAME_LAND_SUBTYPE_FIXED_MANA_COLOR -> ((Set<Map.Entry<CardSubtype, ManaColor>>) value)
+                    .forEach(entry -> landSubtypeFixedManaColorThisTurn.put(entry.getKey(), entry.getValue()));
+            case GAME_NONBASIC_LANDS_FIXED_MANA_COLOR -> nonbasicLandsFixedManaColorThisTurn = (ManaColor) value;
+            case GAME_ALL_LANDS_FIXED_MANA_COLOR -> allLandsFixedManaColorThisTurn = (ManaColor) value;
+            case GAME_PLAYERS_WITH_COLORED_MANA_REPLACEMENT ->
+                    playersWithColoredManaReplacementThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WITH_WHITE_MANA_AS_ANY_COLOR ->
+                    playersWithWhiteManaAsAnyColorThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WITH_LAND_MANA_CHOICE_REPLACEMENT ->
+                    playersWithLandManaChoiceReplacementThisTurn.addAll((Set<UUID>) value);
+            case GAME_LAND_MANA_FIXED_COLOR -> ((Set<Map.Entry<UUID, ManaColor>>) value)
+                    .forEach(entry -> landManaFixedColorThisTurn.put(entry.getKey(), entry.getValue()));
             default -> {
             }
         }
@@ -5059,6 +5123,20 @@ public class GameData {
     private static <K, V> void addMapEntries(Map<K, Set<V>> map, Set<Map.Entry<K, V>> entries) {
         entries.forEach(entry ->
                 map.computeIfAbsent(entry.getKey(), key -> ConcurrentHashMap.newKeySet()).add(entry.getValue()));
+    }
+
+    private static <K, V> List<Map.Entry<K, V>> plainMapEntries(Map<K, V> map) {
+        return map.entrySet().stream().map(entry -> Map.entry(entry.getKey(), entry.getValue())).toList();
+    }
+
+    private static <K, V> Map<Map.Entry<K, V>, Integer> nestedCounts(Map<K, Map<V, Integer>> map) {
+        Map<Map.Entry<K, V>, Integer> counts = new HashMap<>();
+        map.forEach((key, inner) -> inner.forEach((value, count) -> counts.put(Map.entry(key, value), count)));
+        return counts;
+    }
+
+    private static <K> void addCounts(Map<K, Integer> map, Map<K, Integer> counts) {
+        counts.forEach((key, count) -> map.merge(key, count, Integer::sum));
     }
 
     private static <K, V> List<Map.Entry<K, V>> listMapEntries(Map<K, List<V>> map) {
