@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.b.BorneUponAWind;
 import com.github.laxika.magicalvibes.cards.c.Comeuppance;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.d.DebtOfLoyalty;
+import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.d.DueRespect;
 import com.github.laxika.magicalvibes.cards.e.EerieInterference;
 import com.github.laxika.magicalvibes.cards.f.Fog;
@@ -19,6 +20,8 @@ import com.github.laxika.magicalvibes.cards.i.Inkshield;
 import com.github.laxika.magicalvibes.cards.i.IrencragFeat;
 import com.github.laxika.magicalvibes.cards.m.Microscope;
 import com.github.laxika.magicalvibes.cards.o.Overblaze;
+import com.github.laxika.magicalvibes.cards.p.PastInFlames;
+import com.github.laxika.magicalvibes.cards.q.Quicken;
 import com.github.laxika.magicalvibes.cards.s.SafePassage;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Silence;
@@ -51,7 +54,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         GildedLight.class, BorneUponAWind.class, DebtOfLoyalty.class, SkeletonScavengers.class, SoldeviSentry.class,
         Microscope.class, DarksteelCitadel.class, BlindFury.class, Overblaze.class, GrizzlyBears.class,
         ZameckGuildmage.class, DueRespect.class, AngelsGrace.class, AngelOfGrace.class, IrencragFeat.class,
-        Comeuppance.class, Inkshield.class, AegisOfHonor.class, Shock.class})
+        Comeuppance.class, Inkshield.class, AegisOfHonor.class, Shock.class, Quicken.class, Divination.class,
+        PastInFlames.class})
 class RunedTerrorTest extends BaseCardTest {
 
     @Test
@@ -767,6 +771,103 @@ class RunedTerrorTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(gd.playerNextInstantOrSorceryDamageRedirectShields).isEmpty();
+    }
+
+    @Test
+    void nextSpellFlashGrantFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        castQuicken(player2);
+        assertThat(gd.nextSpellFlashGrantsThisTurn.get(player2.getId())).containsExactly(CardType.SORCERY);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.nextSpellFlashGrantsThisTurn.get(player2.getId())).containsExactly(CardType.SORCERY);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.nextSpellFlashGrantsThisTurn).isEmpty();
+    }
+
+    @Test
+    void nextSpellFlashGrantUsedDuringActivePlayersPhaseIsNotRestoredAtTheirCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        castQuicken(player2);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        harness.clearPriorityPassed();
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.castFromHand(player2, new Divination(), "{2}{U}");
+        harness.passBothPriorities();
+        assertThat(gd.nextSpellFlashGrantsThisTurn.getOrDefault(player2.getId(), List.of())).isEmpty();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(gd.nextSpellFlashGrantsThisTurn.getOrDefault(player2.getId(), List.of())).isEmpty();
+    }
+
+    @Test
+    void nextSpellCountGrantsAreSplitBetweenTheActivePlayersTheyWereCreatedUnder() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gd.addNextSpellConvokeGrant(player1.getId());
+        gs.advanceStep(gd);
+        gd.addNextSpellConvokeGrant(player1.getId());
+        gd.addNextCreatureSpellCascade(player2.getId());
+        assertThat(gd.nextSpellConvokeGrantsThisTurn).containsEntry(player1.getId(), 2);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.nextSpellConvokeGrantsThisTurn).containsEntry(player1.getId(), 1);
+        assertThat(gd.nextCreatureSpellCascadeThisTurn).containsEntry(player2.getId(), 1);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.nextSpellConvokeGrantsThisTurn).isEmpty();
+        assertThat(gd.nextCreatureSpellCascadeThisTurn).isEmpty();
+    }
+
+    @Test
+    void grantedFlashbackFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        Card shock = new Shock();
+        harness.setGraveyard(player2, List.of(shock));
+        harness.castFromHand(player2, new PastInFlames(), "{3}{R}");
+        harness.passBothPriorities();
+        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(shock.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(shock.getId());
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).isEmpty();
+    }
+
+    @Test
+    void activePlayersOwnGrantedFlashbackEndsAtTheirCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card shock = new Shock();
+        harness.setGraveyard(player1, List.of(shock));
+        harness.castFromHand(player1, new PastInFlames(), "{3}{R}");
+        harness.passBothPriorities();
+        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).contains(shock.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(gd.cardsGrantedFlashbackUntilEndOfTurn).isEmpty();
+    }
+
+    private void castQuicken(Player caster) {
+        harness.setLibrary(caster, List.of(new GrizzlyBears()));
+        harness.castFromHand(caster, new Quicken(), "{U}");
+        harness.passBothPriorities();
     }
 
     private void activateAegis(Player controller, Permanent aegis) {

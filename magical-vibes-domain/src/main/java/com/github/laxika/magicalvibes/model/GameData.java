@@ -4812,8 +4812,9 @@ public class GameData {
      * "this turn" zone-change replacements, graveyard card animations, Circle of Protection colour shields, damage
      * doublings, bonuses and replacements, enter-tapped and extra-counter replacements, block requirements, extra
      * loyalty activations, the mana-fixing / mana-replacement stores, player-granted static effects, damage life
-     * floors and spell limits, and the one-shot or turn-long redirection / prevention shields that are added and
-     * removed whole), which the cleanup step clears
+     * floors and spell limits, the one-shot or turn-long redirection / prevention shields that are added and
+     * removed whole, the pending "next spell you cast this turn" grants, spell colour overrides, and the per-card
+     * "this turn" casting permissions and granted alternative costs), which the cleanup step clears
      * (CR 514.2). Used to split that state between the players active when it was created under Runed Terror's sequential phases.
      */
     public EndOfTurnStateShare captureGameEndOfTurnState() {
@@ -4977,6 +4978,42 @@ public class GameData {
             case GAME_TURN_DAMAGE_REDIRECT_TO_CREATURE_SHIELDS -> synchronizedCopy(turnDamageRedirectToCreatureShields);
             case GAME_TARGET_SORCERY_DAMAGE_REDIRECT_SHIELDS -> synchronizedCopy(targetSorceryDamageRedirectShields);
             case GAME_COMBAT_DAMAGE_PREVENTION_TOKEN_SHIELDS -> Set.copyOf(plainMapEntries(combatDamagePreventionTokenShields));
+            case GAME_NEXT_SPELL_FLASH_GRANTS -> synchronizedListMapEntries(nextSpellFlashGrantsThisTurn);
+            case GAME_NEXT_SPELL_CHOSEN_SUBTYPE_FLASH_GRANTS ->
+                    synchronizedListMapEntries(nextSpellChosenSubtypeFlashGrantsThisTurn);
+            case GAME_NEXT_SPELL_CONVOKE_GRANTS -> new HashMap<>(nextSpellConvokeGrantsThisTurn);
+            case GAME_NEXT_SPELL_COST_REDUCTIONS -> synchronizedListMapEntries(nextSpellCostReductionsThisTurn);
+            case GAME_NEXT_SPELL_PAY_LIFE_EQUAL_TO_MANA_VALUE -> new HashMap<>(nextSpellPayLifeEqualToManaValueThisTurn);
+            case GAME_NEXT_SPELL_FREE_CAST_PERMISSIONS -> synchronizedListMapEntries(nextSpellFreeCastPermissionsThisTurn);
+            case GAME_NEXT_CREATURE_SPELL_EMPOWERMENTS -> synchronizedListMapEntries(nextCreatureSpellEmpowermentsThisTurn);
+            case GAME_NEXT_CREATURE_SPELL_DELAYED_TRIGGERS ->
+                    synchronizedListMapEntries(nextCreatureSpellDelayedTriggersThisTurn);
+            case GAME_NEXT_CREATURE_SPELL_CASCADE -> new HashMap<>(nextCreatureSpellCascadeThisTurn);
+            case GAME_SPELL_COLOR_OVERRIDES -> Set.copyOf(plainMapEntries(spellColorOverridesUntilEndOfTurn));
+            case GAME_CARDS_GRANTED_FLASHBACK -> cardsGrantedFlashbackUntilEndOfTurn;
+            case GAME_CARDS_GRANTED_FLASHBACK_DESPITE_LOST_ABILITIES -> cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn;
+            case GAME_CARDS_GRANTED_FLASHBACK_COSTS -> Set.copyOf(plainMapEntries(cardsGrantedFlashbackCostsUntilEndOfTurn));
+            case GAME_CARDS_GRANTED_WARP -> cardsGrantedWarpUntilEndOfTurn;
+            case GAME_CARDS_GRANTED_HARMONIZE -> cardsGrantedHarmonizeUntilEndOfTurn;
+            case GAME_CARDS_GRANTED_JUMP_START -> cardsGrantedJumpStartUntilEndOfTurn;
+            case GAME_CARDS_GRANTED_EMBALM -> cardsGrantedEmbalmUntilEndOfTurn;
+            case GAME_CARDS_GRANTED_UNEARTH -> Set.copyOf(plainMapEntries(cardsGrantedUnearthUntilEndOfTurn));
+            case GAME_CARDS_GRANTED_UNEARTH_GRAVEYARD_VERSIONS ->
+                    Set.copyOf(plainMapEntries(cardsGrantedUnearthGraveyardVersions));
+            case GAME_LIBRARY_TOP_CARD_FREE_PLAY_PERMISSIONS ->
+                    Set.copyOf(plainMapEntries(libraryTopCardFreePlayPermissionsUntilEndOfTurn));
+            case GAME_LIBRARY_TOP_CARD_PERMISSIONS -> libraryTopCardPermissionsUntilEndOfTurn;
+            case GAME_PLAYERS_ALLOWED_TO_PLAY_FROM_LIBRARY_TOP -> playersAllowedToPlayFromLibraryTopUntilEndOfTurn;
+            case GAME_LIBRARY_TOP_CARD_LIFE_PLAY_PERMISSIONS -> libraryTopCardLifePlayPermissionsUntilEndOfTurn;
+            case GAME_MAY_TAP_LANDS_FOR_SPELLS -> mayTapLandsForSpellsUntilEndOfTurn;
+            case GAME_MAY_PAY_LIFE_FOR_COLORLESS_MANA -> mayPayLifeForColorlessManaUntilEndOfTurn;
+            case GAME_GUARDIAN_ANGEL_TARGETS -> mapEntries(guardianAngelTargetsUntilEndOfTurn);
+            case GAME_MAY_CAST_TOP_INSTANT_OR_SORCERY_FROM_GRAVEYARD -> mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn;
+            case GAME_GRAVEYARD_CARD_CAST_PERMISSIONS ->
+                    Set.copyOf(plainMapEntries(graveyardCardCastPermissionsUntilEndOfTurn));
+            case GAME_GRAVEYARD_CARD_CAST_PERMISSION_GRANTS -> listMapEntries(graveyardCardCastPermissionGrantsUntilEndOfTurn);
+            case GAME_GRAVEYARD_CAST_FILTER_PERMISSIONS -> new ArrayList<>(graveyardCastFilterPermissionsThisTurn);
+            case GAME_GRAVEYARD_PLAY_FILTER_PERMISSIONS -> new ArrayList<>(graveyardPlayFilterPermissionsThisTurn);
             default -> null;
         };
     }
@@ -5178,6 +5215,59 @@ public class GameData {
                     targetSorceryDamageRedirectShields.addAll((List<TargetSorceryDamageRedirectShield>) value);
             case GAME_COMBAT_DAMAGE_PREVENTION_TOKEN_SHIELDS -> ((Set<Map.Entry<UUID, CombatDamagePreventionTokenShield>>) value)
                     .forEach(entry -> combatDamagePreventionTokenShields.putIfAbsent(entry.getKey(), entry.getValue()));
+            case GAME_NEXT_SPELL_FLASH_GRANTS ->
+                    addSynchronizedListMapEntries(nextSpellFlashGrantsThisTurn, (List<Map.Entry<UUID, CardType>>) value);
+            case GAME_NEXT_SPELL_CHOSEN_SUBTYPE_FLASH_GRANTS -> addSynchronizedListMapEntries(
+                    nextSpellChosenSubtypeFlashGrantsThisTurn, (List<Map.Entry<UUID, CardSubtype>>) value);
+            case GAME_NEXT_SPELL_CONVOKE_GRANTS -> addCounts(nextSpellConvokeGrantsThisTurn, (Map<UUID, Integer>) value);
+            case GAME_NEXT_SPELL_COST_REDUCTIONS -> addSynchronizedListMapEntries(
+                    nextSpellCostReductionsThisTurn, (List<Map.Entry<UUID, NextSpellCostReduction>>) value);
+            case GAME_NEXT_SPELL_PAY_LIFE_EQUAL_TO_MANA_VALUE ->
+                    addCounts(nextSpellPayLifeEqualToManaValueThisTurn, (Map<UUID, Integer>) value);
+            case GAME_NEXT_SPELL_FREE_CAST_PERMISSIONS -> addSynchronizedListMapEntries(
+                    nextSpellFreeCastPermissionsThisTurn, (List<Map.Entry<UUID, CardPredicate>>) value);
+            case GAME_NEXT_CREATURE_SPELL_EMPOWERMENTS -> addSynchronizedListMapEntries(
+                    nextCreatureSpellEmpowermentsThisTurn, (List<Map.Entry<UUID, CreatureSpellEmpowerment>>) value);
+            case GAME_NEXT_CREATURE_SPELL_DELAYED_TRIGGERS -> addSynchronizedListMapEntries(
+                    nextCreatureSpellDelayedTriggersThisTurn, (List<Map.Entry<UUID, DelayedSpellCastTrigger>>) value);
+            case GAME_NEXT_CREATURE_SPELL_CASCADE -> addCounts(nextCreatureSpellCascadeThisTurn, (Map<UUID, Integer>) value);
+            case GAME_SPELL_COLOR_OVERRIDES -> ((Set<Map.Entry<UUID, Set<CardColor>>>) value)
+                    .forEach(entry -> spellColorOverridesUntilEndOfTurn.putIfAbsent(entry.getKey(), entry.getValue()));
+            case GAME_CARDS_GRANTED_FLASHBACK -> cardsGrantedFlashbackUntilEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_CARDS_GRANTED_FLASHBACK_DESPITE_LOST_ABILITIES ->
+                    cardsGrantedFlashbackDespiteLostAbilitiesUntilEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_CARDS_GRANTED_FLASHBACK_COSTS -> ((Set<Map.Entry<UUID, String>>) value)
+                    .forEach(entry -> cardsGrantedFlashbackCostsUntilEndOfTurn.putIfAbsent(entry.getKey(), entry.getValue()));
+            case GAME_CARDS_GRANTED_WARP -> cardsGrantedWarpUntilEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_CARDS_GRANTED_HARMONIZE -> cardsGrantedHarmonizeUntilEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_CARDS_GRANTED_JUMP_START -> cardsGrantedJumpStartUntilEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_CARDS_GRANTED_EMBALM -> cardsGrantedEmbalmUntilEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_CARDS_GRANTED_UNEARTH -> ((Set<Map.Entry<UUID, String>>) value)
+                    .forEach(entry -> cardsGrantedUnearthUntilEndOfTurn.putIfAbsent(entry.getKey(), entry.getValue()));
+            case GAME_CARDS_GRANTED_UNEARTH_GRAVEYARD_VERSIONS -> ((Set<Map.Entry<UUID, Long>>) value)
+                    .forEach(entry -> cardsGrantedUnearthGraveyardVersions.putIfAbsent(entry.getKey(), entry.getValue()));
+            case GAME_LIBRARY_TOP_CARD_FREE_PLAY_PERMISSIONS -> ((Set<Map.Entry<UUID, UUID>>) value).forEach(entry ->
+                    libraryTopCardFreePlayPermissionsUntilEndOfTurn.putIfAbsent(entry.getKey(), entry.getValue()));
+            case GAME_LIBRARY_TOP_CARD_PERMISSIONS ->
+                    libraryTopCardPermissionsUntilEndOfTurn.addAll((Set<LibraryTopCardPermission>) value);
+            case GAME_PLAYERS_ALLOWED_TO_PLAY_FROM_LIBRARY_TOP ->
+                    playersAllowedToPlayFromLibraryTopUntilEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_LIBRARY_TOP_CARD_LIFE_PLAY_PERMISSIONS ->
+                    libraryTopCardLifePlayPermissionsUntilEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_MAY_TAP_LANDS_FOR_SPELLS -> mayTapLandsForSpellsUntilEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_MAY_PAY_LIFE_FOR_COLORLESS_MANA -> mayPayLifeForColorlessManaUntilEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_GUARDIAN_ANGEL_TARGETS ->
+                    addMapEntries(guardianAngelTargetsUntilEndOfTurn, (Set<Map.Entry<UUID, UUID>>) value);
+            case GAME_MAY_CAST_TOP_INSTANT_OR_SORCERY_FROM_GRAVEYARD ->
+                    mayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_GRAVEYARD_CARD_CAST_PERMISSIONS -> ((Set<Map.Entry<UUID, GraveyardCardCastPermission>>) value)
+                    .forEach(entry -> graveyardCardCastPermissionsUntilEndOfTurn.putIfAbsent(entry.getKey(), entry.getValue()));
+            case GAME_GRAVEYARD_CARD_CAST_PERMISSION_GRANTS -> addListMapEntries(graveyardCardCastPermissionGrantsUntilEndOfTurn,
+                    (List<Map.Entry<UUID, GraveyardCardCastPermission>>) value);
+            case GAME_GRAVEYARD_CAST_FILTER_PERMISSIONS ->
+                    graveyardCastFilterPermissionsThisTurn.addAll((List<GraveyardCastFilterPermission>) value);
+            case GAME_GRAVEYARD_PLAY_FILTER_PERMISSIONS ->
+                    graveyardPlayFilterPermissionsThisTurn.addAll((List<GraveyardPlayFilterPermission>) value);
             default -> {
             }
         }
@@ -5218,6 +5308,21 @@ public class GameData {
         List<Map.Entry<K, V>> entries = new ArrayList<>();
         map.forEach((key, values) -> values.forEach(value -> entries.add(Map.entry(key, value))));
         return entries;
+    }
+
+    private static <K, V> List<Map.Entry<K, V>> synchronizedListMapEntries(Map<K, List<V>> map) {
+        List<Map.Entry<K, V>> entries = new ArrayList<>();
+        map.forEach((key, values) -> {
+            synchronized (values) {
+                values.forEach(value -> entries.add(Map.entry(key, value)));
+            }
+        });
+        return entries;
+    }
+
+    private static <K, V> void addSynchronizedListMapEntries(Map<K, List<V>> map, List<Map.Entry<K, V>> entries) {
+        entries.forEach(entry -> map.computeIfAbsent(entry.getKey(),
+                key -> Collections.synchronizedList(new ArrayList<>())).add(entry.getValue()));
     }
 
     private static <K, V> void addListMapEntries(Map<K, List<V>> map, List<Map.Entry<K, V>> entries) {

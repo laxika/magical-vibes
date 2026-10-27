@@ -19,6 +19,10 @@ package com.github.laxika.magicalvibes.model;
  * whole (Eye for an Eye, Comeuppance, Mirror Strike, Saving Grace, ...) is a {@link Kind#LIST} of its records, so
  * a shield used up in between is not restored. Shields whose remaining amount is reduced in place (a reduced
  * copy replaces the record) are not tracked yet.
+ * The pending "next spell you cast this turn" grants (Quicken, Savage Summoning, ...) are a {@link Kind#LIST} of
+ * {@code (player, grant)} entries or a {@link Kind#COUNTS} by player; casting the spell consumes them, so a used
+ * grant is not restored. Per-card "this turn" casting permissions and granted alternative costs (flashback,
+ * unearth, graveyard / library-top cast permissions) are {@link Kind#SET}s of card ids or map entries.
  */
 public enum EndOfTurnStateField {
 
@@ -215,7 +219,38 @@ public enum EndOfTurnStateField {
     GAME_TURN_SOURCE_DAMAGE_REDIRECT_TO_CONTROLLER_SHIELDS(Kind.LIST),
     GAME_TURN_DAMAGE_REDIRECT_TO_CREATURE_SHIELDS(Kind.LIST),
     GAME_TARGET_SORCERY_DAMAGE_REDIRECT_SHIELDS(Kind.LIST),
-    GAME_COMBAT_DAMAGE_PREVENTION_TOKEN_SHIELDS(Kind.SET);
+    GAME_COMBAT_DAMAGE_PREVENTION_TOKEN_SHIELDS(Kind.SET),
+    GAME_NEXT_SPELL_FLASH_GRANTS(Kind.LIST),
+    GAME_NEXT_SPELL_CHOSEN_SUBTYPE_FLASH_GRANTS(Kind.LIST),
+    GAME_NEXT_SPELL_CONVOKE_GRANTS(Kind.COUNTS),
+    GAME_NEXT_SPELL_COST_REDUCTIONS(Kind.LIST),
+    GAME_NEXT_SPELL_PAY_LIFE_EQUAL_TO_MANA_VALUE(Kind.COUNTS),
+    GAME_NEXT_SPELL_FREE_CAST_PERMISSIONS(Kind.LIST),
+    GAME_NEXT_CREATURE_SPELL_EMPOWERMENTS(Kind.LIST),
+    GAME_NEXT_CREATURE_SPELL_DELAYED_TRIGGERS(Kind.LIST),
+    GAME_NEXT_CREATURE_SPELL_CASCADE(Kind.COUNTS),
+    GAME_SPELL_COLOR_OVERRIDES(Kind.SET),
+    GAME_CARDS_GRANTED_FLASHBACK(Kind.SET),
+    GAME_CARDS_GRANTED_FLASHBACK_DESPITE_LOST_ABILITIES(Kind.SET),
+    GAME_CARDS_GRANTED_FLASHBACK_COSTS(Kind.SET),
+    GAME_CARDS_GRANTED_WARP(Kind.SET),
+    GAME_CARDS_GRANTED_HARMONIZE(Kind.SET),
+    GAME_CARDS_GRANTED_JUMP_START(Kind.SET),
+    GAME_CARDS_GRANTED_EMBALM(Kind.SET),
+    GAME_CARDS_GRANTED_UNEARTH(Kind.SET),
+    GAME_CARDS_GRANTED_UNEARTH_GRAVEYARD_VERSIONS(Kind.SET),
+    GAME_LIBRARY_TOP_CARD_FREE_PLAY_PERMISSIONS(Kind.SET),
+    GAME_LIBRARY_TOP_CARD_PERMISSIONS(Kind.SET),
+    GAME_PLAYERS_ALLOWED_TO_PLAY_FROM_LIBRARY_TOP(Kind.SET),
+    GAME_LIBRARY_TOP_CARD_LIFE_PLAY_PERMISSIONS(Kind.SET),
+    GAME_MAY_TAP_LANDS_FOR_SPELLS(Kind.SET),
+    GAME_MAY_PAY_LIFE_FOR_COLORLESS_MANA(Kind.SET),
+    GAME_GUARDIAN_ANGEL_TARGETS(Kind.SET),
+    GAME_MAY_CAST_TOP_INSTANT_OR_SORCERY_FROM_GRAVEYARD(Kind.SET),
+    GAME_GRAVEYARD_CARD_CAST_PERMISSIONS(Kind.SET),
+    GAME_GRAVEYARD_CARD_CAST_PERMISSION_GRANTS(Kind.LIST),
+    GAME_GRAVEYARD_CAST_FILTER_PERMISSIONS(Kind.LIST),
+    GAME_GRAVEYARD_PLAY_FILTER_PERMISSIONS(Kind.LIST);
 
     /** How a field's value is split between players and recombined. */
     public enum Kind {
