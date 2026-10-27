@@ -1167,7 +1167,7 @@ public class AbilityActivationService {
         }
 
         // Pithing Needle / Phyrexian Revoker check: sacrifice abilities are activated abilities (never mana abilities)
-        validateNotBlockedByNameLock(gameData, permanent.getCard().getName(), false);
+        validateNotBlockedByNameLock(gameData, permanent, false);
         if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
         }
@@ -1529,7 +1529,7 @@ public class AbilityActivationService {
         // Validate timing restrictions applicable to graveyard abilities (e.g. Raid, activation conditions)
         validateGraveyardTimingRestrictions(gameData, playerId, ability, card);
 
-        validateNotBlockedByNameLock(gameData, card.getName(), isManaAbility(ability));
+        validateNotBlockedByNameLock(gameData, card, isManaAbility(ability));
 
         // Overwhelming Splendor: the enchanted player may activate only mana / loyalty abilities
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
@@ -2291,7 +2291,7 @@ public class AbilityActivationService {
         validateGraveyardTimingRestrictions(gameData, playerId, ability, card);
 
         validateEnchantedPlayerAbilityRestriction(gameData, playerId, ability);
-        validateNotBlockedByNameLock(gameData, card.getName(), isManaAbility(ability));
+        validateNotBlockedByNameLock(gameData, card, isManaAbility(ability));
         validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
         validateNotBlockedByCombatActionLock(gameData, ability);
 
@@ -2403,7 +2403,7 @@ public class AbilityActivationService {
         ActivatedAbility ability = abilities.get(idx);
         if (!ability.isSuspendsSourceFromHand() && !ability.isDiscardSourceAsSpecialAction()) {
             validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
-            validateNotBlockedByNameLock(gameData, card.getName(), isManaAbility(ability));
+            validateNotBlockedByNameLock(gameData, card, isManaAbility(ability));
             validateNotBlockedByCyclingRestriction(gameData, ability);
         }
         List<CardEffect> abilityEffects = ability.getEffects();
@@ -10862,7 +10862,7 @@ public class AbilityActivationService {
     }
 
     private void validateNotBlockedByPithingNeedle(GameData gameData, Permanent permanent, ActivatedAbility ability) {
-        validateNotBlockedByNameLock(gameData, permanent.getCard().getName(), isManaAbility(ability));
+        validateNotBlockedByNameLock(gameData, permanent, isManaAbility(ability));
     }
 
     /**
@@ -10970,10 +10970,22 @@ public class AbilityActivationService {
         }
     }
 
-    private void validateNotBlockedByNameLock(GameData gameData, String cardName, boolean manaAbility) {
+    private void validateNotBlockedByNameLock(GameData gameData, Permanent permanent, boolean manaAbility) {
+        validateNotBlockedByNameLock(gameData, permanent.getCard().getName(),
+                chosenName -> gameQueryService.permanentHasName(gameData, permanent, chosenName), manaAbility);
+    }
+
+    private void validateNotBlockedByNameLock(GameData gameData, Card card, boolean manaAbility) {
+        validateNotBlockedByNameLock(gameData, card.getName(),
+                chosenName -> gameQueryService.cardHasChosenName(gameData, card, chosenName), manaAbility);
+    }
+
+    /** Pithing Needle: a source with the chosen name has either split half's name (CR 709.4a). */
+    private void validateNotBlockedByNameLock(GameData gameData, String cardName,
+                                              java.util.function.Predicate<String> hasName, boolean manaAbility) {
         for (UUID pid : gameData.playerIds) {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
-                if (!java.util.Objects.equals(cardName, p.getChosenName())) continue;
+                if (!hasName.test(p.getChosenName())) continue;
                 if (gameQueryService.hasLostAllAbilities(gameData, p)) continue;
                 var lockEffect = p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(e -> e instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect)

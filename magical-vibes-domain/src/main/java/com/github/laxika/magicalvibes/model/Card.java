@@ -2074,10 +2074,21 @@ public class Card {
         return getEffects(EffectSlot.STATIC).stream().anyMatch(AllCardNamesEffect.class::isInstance);
     }
 
-    /** Whether this card has the chosen name, including either half of a split card. */
+    /**
+     * The names this card can be chosen by: each half's name for a split card, otherwise its one name
+     * (CR 709.4a). The combined "A // B" name is never a name a player can choose.
+     */
+    public List<String> getNames() {
+        if (name == null) {
+            return List.of();
+        }
+        return name.contains(" // ") ? List.of(name.split(" // ")) : List.of(name);
+    }
+
+    /** Whether this card has the chosen name, including either half of a split card (CR 709.4a). */
     public boolean hasName(String chosenName) {
-        return hasAllCardNames() || name != null && (name.equals(chosenName)
-                || java.util.Arrays.asList(name.split(" // ")).contains(chosenName));
+        return chosenName != null && (hasAllCardNames() || getNames().contains(chosenName)
+                || chosenName.equals(name));
     }
 
     public boolean isAura() {

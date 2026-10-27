@@ -9,41 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 59. Split-card names in "choose a card name" prompts and chosen-name checks
-
-**Status:** open · **Found:** 2026-10-25, while finishing entry 42 (aftermath cards as split cards)
-
-**Failing tests:** none yet.
-
-**What the rules require.** "Each split card has two names. If an effect instructs a player to choose a
-card name and the player wants to choose a split card's name, the player must choose one of those names
-and not both. An object has the chosen name if one of its names is the chosen name" (CR 709.4a).
-`PlayerInputService.collectCardNamesInGameExcluding` offers each split card's whole name ("Commit //
-Memory") as well as its halves, so a player can choose both names at once. Several chosen-name checks
-still compare `getName()` to the chosen name instead of using `Card.hasName`, so they miss a split card
-(or a Room) named by one half: `GameQueryService` (player protection from the chosen name, damage from
-a source with the chosen name, activated abilities of the chosen name),
-`AbilityActivationService.validateNotBlockedByNameLock`, `CastingPermissionService.isLandPlayForbiddenByChosenName`,
-`IncreaseCastCostForChosenNameSpellsEffectHandler` and `TargetLegalityService`'s
-`StackEntrySharesChosenNameWithSourcePredicate`. Entry 42 switched the card-in-zone checks (Conundrum
-Sphinx, Mindblaze, Liar's Pendulum, Booby Trap, `CardHasSourceChosenNamePredicate`) to `hasName`.
-
-**Why it's large.** Small to medium. The string-based checks take a name, not a card, so their callers
-need to pass the object; and dropping the whole name from the prompt may break tests that choose it.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 59 (CR 709.4a): stop offering a split card's whole name in
-"choose a card name" prompts (PlayerInputService.collectCardNamesInGameExcluding and the catalog name
-list), and make the remaining chosen-name checks listed in the entry match either half's name through
-Card.hasName. Add card tests with an aftermath or split card (e.g. Commit // Memory, Fire // Ice) for
-each touched effect. Verify every CR number with the rules MCP. Don't run the full test suite; ask me.
-Don't commit until I say so.
-```
-
----
-
 ## 60. Stack-static abilities of a copied instant or sorcery (Torrent of Lava copies)
 
 **Status:** open · **Found:** 2026-10-25, while finishing entry 43 (stack-static abilities)

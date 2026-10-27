@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.FireIce;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,11 +13,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CurseOfSilence.class, GrizzlyBears.class, Shock.class})
+@CardUsed({CurseOfSilence.class, GrizzlyBears.class, Shock.class, FireIce.class})
 class CurseOfSilenceTest extends BaseCardTest {
 
     @Test
@@ -174,6 +176,31 @@ class CurseOfSilenceTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("Naming one half of a split card taxes and triggers on that half cast as a spell")
+    void namingSplitHalfTaxesAndTriggersOnThatHalf() {
+        harness.setHand(player2, List.of(new FireIce()));
+        castCurseOfSilence();
+        harness.handleListChoice(player1, "Fire");
+
+        preparePlayer2MainPhase();
+        harness.addMana(player2, ManaColor.RED, 2);
+        assertThatThrownBy(() -> castFireAtPlayer1())
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        castFireAtPlayer1();
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    private void castFireAtPlayer1() {
+        gs.playCard(gd, player2, 0, 0, null,
+                Map.of(player1.getId(), 2), List.of(player1.getId()), List.of());
     }
 
     private void castCurseOfSilence() {

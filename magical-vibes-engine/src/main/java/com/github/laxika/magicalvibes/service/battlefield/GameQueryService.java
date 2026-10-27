@@ -338,6 +338,7 @@ import com.github.laxika.magicalvibes.service.effect.CreatureCountSupport;
 import com.github.laxika.magicalvibes.service.effect.GrantedEffectAttribution;
 import com.github.laxika.magicalvibes.service.effect.LandPlayPermissionService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
+import com.github.laxika.magicalvibes.service.room.RoomNameSupport;
 import com.github.laxika.magicalvibes.service.effect.LoyaltyDamageReplacementHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -4153,6 +4154,47 @@ public class GameQueryService {
         }
         String name = computeStaticBonus(gameData, permanent).name();
         return name != null ? name : permanent.getCard().getName();
+    }
+
+    /**
+     * Whether {@code permanent} has {@code chosenName} (CR 709.4a). A face-down permanent has no name
+     * (CR 708.2), a Room has only its unlocked doors' names (CR 709.5), and a name set by a continuous
+     * effect replaces the printed one; otherwise either half of a split card matches.
+     */
+    public boolean permanentHasName(GameData gameData, Permanent permanent, String chosenName) {
+        if (chosenName == null || permanent.isFaceDown()) {
+            return false;
+        }
+        Card card = permanent.getCard();
+        if (card.hasAllCardNames()) {
+            return true;
+        }
+        String layeredName = isStaticEvaluationActive() ? null : computeStaticBonus(gameData, permanent).name();
+        if (layeredName != null) {
+            return chosenName.equals(layeredName);
+        }
+        if (card.getSubtypes().contains(CardSubtype.ROOM)) {
+            return RoomNameSupport.unlockedDoorNames(permanent).contains(chosenName);
+        }
+        return card.hasName(chosenName);
+    }
+
+    /**
+     * Whether {@code card} has {@code chosenName} (CR 709.4a), using its battlefield permanent's
+     * names ({@link #permanentHasName}) when the card is on the battlefield.
+     */
+    public boolean cardHasChosenName(GameData gameData, Card card, String chosenName) {
+        if (card == null || chosenName == null) {
+            return false;
+        }
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().getId().equals(card.getId())) {
+                    return permanentHasName(gameData, permanent, chosenName);
+                }
+            }
+        }
+        return card.hasName(chosenName);
     }
 
     /**
@@ -9425,12 +9467,12 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the player controls a permanent with a
-     * {@link PlayerHasProtectionFromChosenNameEffect} static effect whose chosen card name equals
-     * the given name (Runed Halo). Such a player can't be targeted, dealt damage, or enchanted by
-     * anything with that name.
+     * {@link PlayerHasProtectionFromChosenNameEffect} static effect whose chosen card name is one of
+     * {@code source}'s names, either half of a split card included (CR 709.4a) (Runed Halo). Such a
+     * player can't be targeted, dealt damage, or enchanted by anything with that name.
      */
-    public boolean playerHasProtectionFromChosenName(GameData gameData, UUID playerId, String cardName) {
-        if (cardName == null) {
+    public boolean playerHasProtectionFromChosenName(GameData gameData, UUID playerId, Card source) {
+        if (source == null) {
             return false;
         }
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
@@ -9438,7 +9480,7 @@ public class GameQueryService {
             return false;
         }
         for (Permanent perm : bf) {
-            if (cardName.equals(perm.getChosenName())
+            if (cardHasChosenName(gameData, source, perm.getChosenName())
                     && !hasLostAllAbilities(gameData, perm)
                     && perm.getCard().getEffects(EffectSlot.STATIC).stream()
                             .anyMatch(PlayerHasProtectionFromChosenNameEffect.class::isInstance)) {
@@ -9519,12 +9561,12 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if {@code controllerId} controls a permanent with a
-     * {@link PreventDamageFromChosenNameEffect} static effect whose chosen card name equals
-     * {@code sourceName} (Gideon's Intervention). Damage from such a source to that player or to the
+     * {@link PreventDamageFromChosenNameEffect} static effect whose chosen card name is one of
+     * {@code source}'s names, either half of a split card included (CR 709.4a) (Gideon's Intervention). Damage from such a source to that player or to the
      * permanents they control is prevented (damage only â€” targeting and enchanting are unaffected).
      */
-    public boolean isDamageFromChosenNamePreventedForController(GameData gameData, UUID controllerId, String sourceName) {
-        if (sourceName == null || controllerId == null) {
+    public boolean isDamageFromChosenNamePreventedForController(GameData gameData, UUID controllerId, Card source) {
+        if (source == null || controllerId == null) {
             return false;
         }
         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -9532,7 +9574,7 @@ public class GameQueryService {
             return false;
         }
         for (Permanent perm : bf) {
-            if (sourceName.equals(perm.getChosenName())
+            if (cardHasChosenName(gameData, source, perm.getChosenName())
                     && !hasLostAllAbilities(gameData, perm)
                     && perm.getCard().getEffects(EffectSlot.STATIC).stream()
                             .anyMatch(PreventDamageFromChosenNameEffect.class::isInstance)) {
@@ -13526,8 +13568,6 @@ public class GameQueryService {
      * are not properties of the permanent.
      */
     public boolean canActivateManaAbility(GameData gameData, Permanent permanent) {
-        String cardName = permanent.getCard().getName();
-
         // City of Solitude: mana abilities can only be activated on the controller's turn.
         UUID controllerId = findPermanentController(gameData, permanent.getId());
         if (controllerId != null && isLockedOutByOwnTurnOnlyRestriction(gameData, controllerId)) {
@@ -13597,7 +13637,7 @@ public class GameQueryService {
                         }
                     }
                     if (effect instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect lock) {
-                        if (lock.blocksManaAbilities() && cardName.equals(p.getChosenName())) {
+                        if (lock.blocksManaAbilities() && permanentHasName(gameData, permanent, p.getChosenName())) {
                             return false;
                         }
                     }

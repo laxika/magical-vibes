@@ -22,8 +22,7 @@ public class IncreaseCastCostForChosenNameSpellsEffectHandler implements CostMod
                 || !context.castingPlayerId().equals(source.sourcePermanent().getAttachedTo())) {
             return 0;
         }
-        String chosenName = source.sourcePermanent().getChosenName();
-        if (chosenName == null || !chosenName.equals(context.spell().getName())) {
+        if (!context.spell().hasName(source.sourcePermanent().getChosenName())) {
             return 0;
         }
         return ((IncreaseCastCostForChosenNameSpellsEffect) effect).amount();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -124,9 +125,9 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                 preventAll("ProtectionFromName", "Protection from the chosen name",
                         ctx -> preventable(ctx)
                                 && (gameQueryService.playerHasProtectionFromChosenName(
-                                ctx.gameData(), ctx.playerId(), nameForChosenNameCheck(ctx))
+                                ctx.gameData(), ctx.playerId(), chosenNameCheckSource(ctx))
                                 || gameQueryService.isDamageFromChosenNamePreventedForController(
-                                ctx.gameData(), ctx.playerId(), nameForChosenNameCheck(ctx)))),
+                                ctx.gameData(), ctx.playerId(), chosenNameCheckSource(ctx)))),
                 preventAll("ProtectionFromCardType", "Protection from the chosen card type",
                         ctx -> preventable(ctx) && gameQueryService.playerHasProtectionFromChosenCardType(
                                 ctx.gameData(), ctx.playerId(), ctx.source(), ctx.sourcePermanent())),
@@ -265,11 +266,11 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
     }
 
     /** A face-down source has no name (CR 708.2), so it matches no chosen name. */
-    private static String nameForChosenNameCheck(PlayerDamageContext ctx) {
+    private static Card chosenNameCheckSource(PlayerDamageContext ctx) {
         if (ctx.sourcePermanent() != null && ctx.sourcePermanent().isFaceDown()) {
             return null;
         }
-        return ctx.source().getName();
+        return ctx.source();
     }
 
     private boolean preventable(PlayerDamageContext ctx) {

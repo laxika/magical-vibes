@@ -1537,7 +1537,7 @@ public class TargetLegalityService {
                         + " has protection from " + effectiveColor.name().toLowerCase());
             }
             if (card != null
-                    && gameQueryService.playerHasProtectionFromChosenName(gameData, targetId, card.getName())) {
+                    && gameQueryService.playerHasProtectionFromChosenName(gameData, targetId, card)) {
                 return Optional.of(gameData.playerIdToName.get(targetId)
                         + " has protection from " + card.getName());
             }
@@ -1690,7 +1690,7 @@ public class TargetLegalityService {
                 && gameQueryService.playerHasProtectionFromColor(gameData, candidate, effectiveColor)) {
             return false;
         }
-        if (gameQueryService.playerHasProtectionFromChosenName(gameData, candidate, card.getName())) {
+        if (gameQueryService.playerHasProtectionFromChosenName(gameData, candidate, card)) {
             return false;
         }
         if (gameQueryService.playerHasProtectionFromChosenCardType(gameData, candidate, card)) {
@@ -3837,7 +3837,7 @@ public class TargetLegalityService {
                         targetFizzled = true;
                     } else if (entry.getCard() != null
                             && gameQueryService.playerHasProtectionFromChosenName(gameData, entry.getTargetId(),
-                                    entry.getCard().getName())) {
+                                    entry.getCard())) {
                         targetFizzled = true;
                     } else if (gameQueryService.playerHasProtectionFromChosenCardType(
                             gameData, entry.getTargetId(), entry.getCard(),
@@ -4317,7 +4317,7 @@ public class TargetLegalityService {
                 return false;
             }
             if (sourceCard != null
-                    && gameQueryService.playerHasProtectionFromChosenName(gameData, targetId, sourceCard.getName())) {
+                    && gameQueryService.playerHasProtectionFromChosenName(gameData, targetId, sourceCard)) {
                 return false;
             }
             if (gameQueryService.playerHasProtectionFromChosenCardType(
@@ -4850,7 +4850,7 @@ public class TargetLegalityService {
                     + " has protection from the source's card type and can't be targeted";
         }
         if (sourceCard != null
-                && gameQueryService.playerHasProtectionFromChosenName(gameData, targetPlayerId, sourceCard.getName())) {
+                && gameQueryService.playerHasProtectionFromChosenName(gameData, targetPlayerId, sourceCard)) {
             return gameData.playerIdToName.get(targetPlayerId)
                     + " has protection from " + sourceCard.getName() + " and can't be targeted";
         }
@@ -5411,8 +5411,8 @@ public class TargetLegalityService {
             return true;
         }
         if (predicate instanceof StackEntrySharesChosenNameWithSourcePredicate) {
-            return source != null && source.getChosenName() != null
-                    && source.getChosenName().equals(stackEntry.getCard().getName());
+            return source != null && stackEntry.getCard() != null
+                    && stackEntry.getCard().hasName(source.getChosenName());
         }
         if (predicate instanceof StackEntryControlledByEnchantedPlayerPredicate) {
             return source != null && source.getAttachedTo() != null

@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.b.BriarberryCohort;
 import com.github.laxika.magicalvibes.cards.b.BurnTrail;
 import com.github.laxika.magicalvibes.cards.d.DrownerInitiate;
 import com.github.laxika.magicalvibes.cards.w.WheelOfSunAndMoon;
+import com.github.laxika.magicalvibes.cards.f.FireIce;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RunedHalo.class, BurnTrail.class, BriarberryCohort.class,
-        WheelOfSunAndMoon.class, DrownerInitiate.class})
+        WheelOfSunAndMoon.class, DrownerInitiate.class, FireIce.class})
 class RunedHaloTest extends BaseCardTest {
 
     @Test
@@ -249,6 +252,39 @@ class RunedHaloTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("The name prompt offers each half of a split card, never both names at once")
+    void namePromptOffersSplitHalvesOnly() {
+        harness.setHand(player1, List.of(new RunedHalo(), new FireIce()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .contains("Fire", "Ice")
+                .doesNotContain("Fire // Ice");
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Fire // Ice"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Naming one half of a split card protects from that half cast as a spell")
+    void namingSplitHalfProtectsFromThatHalf() {
+        addReadyRunedHalo(player1, "Fire");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new FireIce()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player2, 0, 0, null,
+                Map.of(player1.getId(), 2), List.of(player1.getId()), List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
     }

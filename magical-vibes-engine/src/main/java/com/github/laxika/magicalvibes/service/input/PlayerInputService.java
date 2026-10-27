@@ -2590,7 +2590,7 @@ public class PlayerInputService {
             }
             gameData.playerHands.getOrDefault(pid, List.of()).stream()
                     .filter(c -> isNameCandidate(c, excludedTypes, requiredType))
-                    .forEach(c -> names.add(c.getName()));
+                    .forEach(c -> names.addAll(c.getNames()));
         }
         return List.copyOf(names);
     }
@@ -2871,7 +2871,7 @@ public class PlayerInputService {
 
     public boolean isNameExcludedByType(GameData gameData, String cardName, List<CardType> excludedTypes) {
         return !collectCardNamesInGame(gameData,
-                card -> card.getName().equals(cardName) && hasExcludedType(card, excludedTypes)).isEmpty();
+                card -> card.getNames().contains(cardName) && hasExcludedType(card, excludedTypes)).isEmpty();
     }
 
     private List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes, CardType requiredType) {
@@ -2886,14 +2886,13 @@ public class PlayerInputService {
                                 Card card = printing.createCard();
                                 if (card.getName() != null && card.getType() != null
                                         && isNameCandidate(card, filter.excludedTypes(), filter.requiredType())) {
-                                    catalogNames.add(card.getName());
+                                    catalogNames.addAll(card.getNames());
                                 }
                             }
                         }
                         return List.copyOf(catalogNames);
                     }));
         }
-        names.addAll(names.stream().flatMap(name -> java.util.Arrays.stream(name.split(" // "))).toList());
         return new ArrayList<>(names);
     }
 
@@ -2920,7 +2919,7 @@ public class PlayerInputService {
                 if (card.getName() != null
                         && !(card.hasType(CardType.LAND)
                         && card.getSupertypes().contains(CardSupertype.BASIC))) {
-                    names.add(card.getName());
+                    names.addAll(card.getNames());
                 }
             }
         }
@@ -2951,7 +2950,7 @@ public class PlayerInputService {
                 Card card = printing.createCard();
                 if (card.hasType(CardType.LAND)
                         && !card.getSupertypes().contains(CardSupertype.BASIC)) {
-                    names.add(card.getName());
+                    names.addAll(card.getNames());
                 }
             }
         }
@@ -2967,23 +2966,23 @@ public class PlayerInputService {
         for (UUID pid : gameData.playerIds) {
             gameData.playerBattlefields.getOrDefault(pid, List.of()).stream()
                     .filter(p -> candidate.test(p.getCard()))
-                    .forEach(p -> names.add(p.getCard().getName()));
+                    .forEach(p -> names.addAll(p.getCard().getNames()));
             gameData.playerHands.getOrDefault(pid, List.of()).stream()
                     .filter(candidate)
-                    .forEach(c -> names.add(c.getName()));
+                    .forEach(c -> names.addAll(c.getNames()));
             gameData.playerGraveyards.getOrDefault(pid, List.of()).stream()
                     .filter(candidate)
-                    .forEach(c -> names.add(c.getName()));
+                    .forEach(c -> names.addAll(c.getNames()));
             gameData.playerDecks.getOrDefault(pid, List.of()).stream()
                     .filter(candidate)
-                    .forEach(c -> names.add(c.getName()));
+                    .forEach(c -> names.addAll(c.getNames()));
             gameData.getPlayerExiledCards(pid).stream()
                     .filter(candidate)
-                    .forEach(c -> names.add(c.getName()));
+                    .forEach(c -> names.addAll(c.getNames()));
         }
         gameData.stack.stream()
                 .filter(se -> candidate.test(se.getCard()))
-                .forEach(se -> names.add(se.getCard().getName()));
+                .forEach(se -> names.addAll(se.getCard().getNames()));
         return new ArrayList<>(names);
     }
 

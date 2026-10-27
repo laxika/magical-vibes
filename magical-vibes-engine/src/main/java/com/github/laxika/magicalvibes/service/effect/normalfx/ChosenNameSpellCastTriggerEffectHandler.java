@@ -39,7 +39,7 @@ public class ChosenNameSpellCastTriggerEffectHandler implements NormalEffectHand
 
         String chosenName = source.getChosenName();
         boolean alreadyCastThisTurn = gameData.getSpellsCastThisTurn(entry.getControllerId()).stream()
-                .anyMatch(spell -> chosenName.equalsIgnoreCase(spell.getName()));
+                .anyMatch(spell -> spell.getNames().stream().anyMatch(chosenName::equalsIgnoreCase));
         if (alreadyCastThisTurn) {
             return;
         }

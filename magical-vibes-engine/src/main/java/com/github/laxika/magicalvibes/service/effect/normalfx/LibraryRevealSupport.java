@@ -34,6 +34,7 @@ public class LibraryRevealSupport {
     private volatile List<String> catalogCreatureNames;
     private volatile List<String> catalogNonBasicLandNames;
     private volatile List<String> catalogAllNames;
+    private volatile java.util.Map<String, List<Card>> catalogSplitCardsByHalfName;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
@@ -95,7 +96,7 @@ public class LibraryRevealSupport {
                     for (var printing : cardCatalog.getPrintings(set)) {
                         Card card = printing.createCard();
                         if (card.getName() != null && card.hasType(CardType.CREATURE) && !card.isToken()) {
-                            catalogNames.add(card.getName());
+                            catalogNames.addAll(card.getNames());
                         }
                     }
                 }
@@ -122,15 +123,15 @@ public class LibraryRevealSupport {
         for (UUID playerId : gameData.playerIds) {
             gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                     .filter(permanent -> !permanent.isFaceDown())
-                    .forEach(permanent -> names.add(permanent.getCard().getName()));
+                    .forEach(permanent -> names.addAll(permanent.getCard().getNames()));
             gameData.playerGraveyards.getOrDefault(playerId, List.of())
-                    .forEach(card -> names.add(card.getName()));
+                    .forEach(card -> names.addAll(card.getNames()));
             gameData.getPlayerExiledCards(playerId).stream()
                     .filter(card -> gameData.findExiledCard(card.getId()) != null
                             && !gameData.findExiledCard(card.getId()).faceDown())
-                    .forEach(card -> names.add(card.getName()));
+                    .forEach(card -> names.addAll(card.getNames()));
         }
-        gameData.stack.forEach(entry -> names.add(entry.getCard().getName()));
+        gameData.stack.forEach(entry -> names.addAll(entry.getCard().getNames()));
         return new ArrayList<>(names);
     }
 
@@ -160,10 +161,16 @@ public class LibraryRevealSupport {
                     continue;
                 }
                 Card candidate = printing.createCard();
-                if (name.equalsIgnoreCase(candidate.getName())
+                if (candidate.getNames().stream().anyMatch(name::equalsIgnoreCase)
                         && excludedTypes.stream().noneMatch(candidate::hasType)) {
                     return true;
                 }
+            }
+        }
+        // A split card's name is one of its halves' names, never both at once (CR 709.4a).
+        for (Card splitCard : catalogSplitCardsByHalfName().getOrDefault(name.toLowerCase(java.util.Locale.ROOT), List.of())) {
+            if (excludedTypes.stream().noneMatch(splitCard::hasType)) {
+                return true;
             }
         }
         // A double-faced card has two names, and either face's name may be chosen.
@@ -183,6 +190,34 @@ public class LibraryRevealSupport {
         return false;
     }
 
+    /** One catalog card per split card, keyed by each half's lower-cased name. */
+    private java.util.Map<String, List<Card>> catalogSplitCardsByHalfName() {
+        java.util.Map<String, List<Card>> cached = catalogSplitCardsByHalfName;
+        if (cached != null) {
+            return cached;
+        }
+        java.util.Map<String, List<Card>> byHalfName = new java.util.HashMap<>();
+        Set<String> checkedClasses = new java.util.HashSet<>();
+        for (CardSet set : CardSet.values()) {
+            for (var printing : cardCatalog.getPrintings(set)) {
+                if (!checkedClasses.add(printing.cardClassName())) {
+                    continue;
+                }
+                Card card = printing.createCard();
+                if (card.getNames().size() < 2) {
+                    continue;
+                }
+                for (String half : card.getNames()) {
+                    byHalfName.computeIfAbsent(half.toLowerCase(java.util.Locale.ROOT), key -> new ArrayList<>()).add(card);
+                }
+            }
+        }
+        byHalfName.replaceAll((key, cards) -> List.copyOf(cards));
+        cached = java.util.Map.copyOf(byHalfName);
+        catalogSplitCardsByHalfName = cached;
+        return cached;
+    }
+
     /** Every distinct card name in the game with the required card type. */
     public List<String> collectCardNamesInGameOfType(GameData gameData, CardType requiredType) {
         if (requiredType == CardType.CREATURE) {
@@ -195,7 +230,7 @@ public class LibraryRevealSupport {
                 for (var printing : cardCatalog.getPrintings(set)) {
                     Card card = printing.createCard();
                     if (card.getName() != null && card.hasType(requiredType)) {
-                        names.add(card.getName());
+                        names.addAll(card.getNames());
                     }
                 }
             }
@@ -214,7 +249,7 @@ public class LibraryRevealSupport {
                     for (var printing : cardCatalog.getPrintings(set)) {
                         Card card = printing.createCard();
                         if (card.getName() != null) {
-                            catalogNames.add(card.getName());
+                            catalogNames.addAll(card.getNames());
                         }
                     }
                 }
@@ -240,7 +275,7 @@ public class LibraryRevealSupport {
                         if (card.getName() != null
                                 && !(card.hasType(CardType.LAND)
                                 && card.getSupertypes().contains(CardSupertype.BASIC))) {
-                            catalogNames.add(card.getName());
+                            catalogNames.addAll(card.getNames());
                         }
                     }
                 }
@@ -257,23 +292,23 @@ public class LibraryRevealSupport {
         for (UUID pid : gameData.playerIds) {
             gameData.playerBattlefields.getOrDefault(pid, List.of()).stream()
                     .filter(p -> candidate.test(p.getCard()))
-                    .forEach(p -> names.add(p.getCard().getName()));
+                    .forEach(p -> names.addAll(p.getCard().getNames()));
             gameData.playerHands.getOrDefault(pid, List.of()).stream()
                     .filter(candidate)
-                    .forEach(c -> names.add(c.getName()));
+                    .forEach(c -> names.addAll(c.getNames()));
             gameData.playerGraveyards.getOrDefault(pid, List.of()).stream()
                     .filter(candidate)
-                    .forEach(c -> names.add(c.getName()));
+                    .forEach(c -> names.addAll(c.getNames()));
             gameData.playerDecks.getOrDefault(pid, List.of()).stream()
                     .filter(candidate)
-                    .forEach(c -> names.add(c.getName()));
+                    .forEach(c -> names.addAll(c.getNames()));
             gameData.getPlayerExiledCards(pid).stream()
                     .filter(candidate)
-                    .forEach(c -> names.add(c.getName()));
+                    .forEach(c -> names.addAll(c.getNames()));
         }
         gameData.stack.stream()
                 .filter(se -> candidate.test(se.getCard()))
-                .forEach(se -> names.add(se.getCard().getName()));
+                .forEach(se -> names.addAll(se.getCard().getNames()));
         return new ArrayList<>(names);
     }
 

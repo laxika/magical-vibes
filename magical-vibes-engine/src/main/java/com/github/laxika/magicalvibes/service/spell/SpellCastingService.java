@@ -12427,7 +12427,7 @@ public class SpellCastingService {
         }
         if (card.hasType(CardType.LAND)
                 ? castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)
-                : castingPermissionService.getForbiddenCardNames(gameData, playerId).contains(card.getName())) {
+                : castingPermissionService.getForbiddenCardNames(gameData, playerId).stream().anyMatch(card::hasName)) {
             throw new IllegalStateException("Card is not playable");
         }
         boolean directExilePlayPermission = castingPermissionService.hasExilePlayPermission(
@@ -13662,7 +13662,7 @@ public class SpellCastingService {
             return;
         }
 
-        if (castingPermissionService.getForbiddenCardNames(gameData, playerId).contains(card.getName())) {
+        if (castingPermissionService.getForbiddenCardNames(gameData, playerId).stream().anyMatch(card::hasName)) {
             throw new IllegalStateException("Card is not playable");
         }
 

@@ -918,11 +918,11 @@ public class CastingPermissionService {
                         // The restriction names the exiled card, so it ends once that card leaves exile.
                         Card imprinted = gameData.getImprintedCard(perm.getCard());
                         if (imprinted != null && gameData.findExiledCard(imprinted.getId()) != null) {
-                            forbidden.add(imprinted.getName());
+                            forbidden.addAll(imprinted.getNames());
                         }
                         gameData.getCardsExiledByPermanent(perm.getId()).stream()
-                                .map(Card::getName)
-                                .forEach(forbidden::add);
+                                .map(Card::getNames)
+                                .forEach(forbidden::addAll);
                     }
                     if (effect instanceof SpellsWithChosenNameCantBeCastEffect chosenNameCast) {
                         // Gideon's Intervention restricts only opponents; the controller may still cast.
@@ -982,8 +982,8 @@ public class CastingPermissionService {
             for (Permanent perm : bf) {
                 for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     if (effect instanceof SpellsAndLandsWithChosenNamesCantBePlayedEffect
-                            && (card.getName().equals(perm.getChosenName())
-                                || card.getName().equals(perm.getSecondChosenName()))) {
+                            && (card.hasName(perm.getChosenName())
+                                || card.hasName(perm.getSecondChosenName()))) {
                         return true;
                     }
                     if (effect instanceof CardNameRestrictionEffect restriction) {

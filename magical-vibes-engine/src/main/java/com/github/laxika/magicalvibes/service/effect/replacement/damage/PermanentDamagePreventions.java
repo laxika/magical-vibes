@@ -235,7 +235,7 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
         all.add(preventAll("ChosenNamePrevented", "Prevent damage from sources with the chosen name",
                 ctx -> gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat())
                         && gameQueryService.isDamageFromChosenNamePreventedForController(
-                        ctx.gameData(), ctx.targetControllerId(), ctx.sourceCard().getName())));
+                        ctx.gameData(), ctx.targetControllerId(), ctx.sourceCard())));
         all.add(preventAll("NamedPlanePrevented", "Prevent damage from the named plane",
                 ctx -> !ctx.combat() && gameQueryService.isDamageFromNamedPlanePreventedForControlledPermanent(
                         ctx.gameData(), ctx.entry(), ctx.targetControllerId())));

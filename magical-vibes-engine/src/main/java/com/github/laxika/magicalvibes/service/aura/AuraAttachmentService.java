@@ -403,7 +403,7 @@ public class AuraAttachmentService {
                 && gameQueryService.getEffectiveCardColors(gameData, auraCard).stream()
                 .noneMatch(color -> gameQueryService.playerHasProtectionFromColor(gameData, playerId, color))
                 && !gameQueryService.playerHasProtectionFromChosenName(
-                gameData, playerId, auraCard.getName())
+                gameData, playerId, auraCard)
                 && !gameQueryService.playerHasProtectionFromChosenCardType(gameData, playerId, auraCard);
     }
 
@@ -444,7 +444,7 @@ public class AuraAttachmentService {
                     return "enchanted player has protection from the Aura's card type";
                 }
                 if (gameQueryService.playerHasProtectionFromChosenName(
-                        gameData, attachedTo, attachment.getCard().getName())) {
+                        gameData, attachedTo, attachment.getCard())) {
                     return "enchanted player has protection from the Aura's name";
                 }
             }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.f.FireIce;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,11 +15,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GideonsIntervention.class, GrizzlyBears.class, HillGiant.class, Shock.class, Humility.class, Opalescence.class})
+@CardUsed({GideonsIntervention.class, GrizzlyBears.class, HillGiant.class, Shock.class, Humility.class, Opalescence.class, FireIce.class})
 class GideonsInterventionTest extends BaseCardTest {
 
     @Test
@@ -237,6 +239,34 @@ class GideonsInterventionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleListChoice(player1, "Zombie Token"))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Naming one half of a split card stops opponents casting that half and prevents its damage")
+    void namingSplitHalfMatchesThatHalf() {
+        addReadyIntervention(player1, "Fire");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new FireIce()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        assertThatThrownBy(() -> gs.playCard(gd, player2, 0, 0, null,
+                Map.of(bears.getId(), 2), List.of(bears.getId()), List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.forceActivePlayer(player1);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new FireIce()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        gs.playCard(gd, player1, 0, 0, null,
+                Map.of(bears.getId(), 2), List.of(bears.getId()), List.of());
+        harness.passBothPriorities();
+
+        assertThat(bears.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     private Permanent addReadyIntervention(Player player, String chosenName) {

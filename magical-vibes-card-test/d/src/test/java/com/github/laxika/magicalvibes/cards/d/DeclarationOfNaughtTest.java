@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.f.FireIce;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,11 +12,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DeclarationOfNaught.class, GrizzlyBears.class, HillGiant.class, Disperse.class})
+@CardUsed({DeclarationOfNaught.class, GrizzlyBears.class, HillGiant.class, Disperse.class, FireIce.class})
 class DeclarationOfNaughtTest extends BaseCardTest {
 
     @Test
@@ -151,6 +153,30 @@ class DeclarationOfNaughtTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).hasSize(1);
         harness.assertNotInGraveyard(player2, "Declaration of Naught");
+    }
+
+    @Test
+    @DisplayName("Naming one half of a split card lets it counter that half cast as a spell")
+    void countersSplitHalfWithChosenName() {
+        addReadyDeclaration(player1, "Fire");
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        FireIce fireIce = new FireIce();
+        harness.setHand(player2, List.of(fireIce));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.forceActivePlayer(player2);
+        gs.playCard(gd, player2, 0, 0, null,
+                Map.of(player1.getId(), 2), List.of(player1.getId()), List.of());
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 0, null, fireIce.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Fire // Ice");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent declaration(Player player) {

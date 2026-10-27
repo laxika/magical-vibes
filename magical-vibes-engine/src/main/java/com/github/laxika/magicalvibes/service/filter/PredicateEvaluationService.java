@@ -1205,7 +1205,7 @@ public class PredicateEvaluationService {
             }
             case CardHasAllCardNamesPredicate ignored -> card.hasAllCardNames();
             case CardNamedPredicate p ->
-                    card.hasAllCardNames() || p.cardName().equals(card.getName());
+                    card.hasName(p.cardName());
             case CardNameStartsWithPredicate p ->
                     card.getName() != null && card.getName().startsWith(p.prefix());
             case CardSurveilledThisTurnPredicate ignored ->
@@ -3028,10 +3028,10 @@ public class PredicateEvaluationService {
                     sourcePermanent = findPermanentByCurrentCardId(gameData, sourceCardId);
                 }
                 String chosenName = sourcePermanent == null ? null : sourcePermanent.getChosenName();
-                String name = effectiveName(permanent, filterContext);
-                yield chosenName != null && chosenName.equals(name)
+                yield permanentHasChosenName(permanent, chosenName, filterContext)
                         || chosenNames.includePreviouslyChosenNames() && sourcePermanent != null
-                        && sourcePermanent.getChosenNamesAtResolution().contains(name);
+                        && sourcePermanent.getChosenNamesAtResolution().stream()
+                        .anyMatch(previous -> permanentHasChosenName(permanent, previous, filterContext));
             }
             case PermanentHasSourceChosenColorPredicate ignored -> {
                 Permanent sourcePermanent = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
@@ -3589,10 +3589,10 @@ public class PredicateEvaluationService {
                     source = gameQueryService.findPermanentById(context.gameData(), context.sourcePermanentId());
                 }
                 String chosenName = source == null ? null : source.getChosenName();
-                String name = effectiveName(permanent, context);
-                yield chosenName != null && chosenName.equals(name)
+                yield permanentHasChosenName(permanent, chosenName, context)
                         || chosenNames.includePreviouslyChosenNames() && source != null
-                        && source.getChosenNamesAtResolution().contains(name);
+                        && source.getChosenNamesAtResolution().stream()
+                        .anyMatch(previous -> permanentHasChosenName(permanent, previous, context));
             }
             case PermanentHasSourceChosenColorPredicate ignored -> {
                 CardColor chosen = sourceChosenColor(context);
@@ -4195,6 +4195,29 @@ public class PredicateEvaluationService {
      * entering permanent has no layered state yet, so its intrinsic name is used while its
      * game's pass is being built instead of recursively starting another static-bonus assembly.
      */
+    /**
+     * Whether {@code permanent} has {@code chosenName} (CR 709.4a): a name set by a continuous effect
+     * replaces the printed one, a Room has only its unlocked doors' names (CR 709.5), and otherwise
+     * either half of a split card matches.
+     */
+    private boolean permanentHasChosenName(Permanent permanent, String chosenName, FilterContext context) {
+        if (chosenName == null) {
+            return false;
+        }
+        String name = effectiveName(permanent, context);
+        if (name == null) {
+            return false;
+        }
+        Card card = permanent.getCard();
+        if (!name.equals(card.getName())) {
+            return chosenName.equals(name);
+        }
+        if (card.getSubtypes().contains(CardSubtype.ROOM)) {
+            return RoomNameSupport.unlockedDoorNames(permanent).contains(chosenName);
+        }
+        return card.hasName(chosenName);
+    }
+
     private String effectiveName(Permanent permanent, FilterContext context) {
         CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
         if (layered != null) {
