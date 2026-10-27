@@ -4796,9 +4796,9 @@ public class GameData {
     /**
      * Captures the game-wide "until end of turn" / "this turn" stores named by the {@code GAME_}
      * {@link EndOfTurnStateField}s (damage prevention flags, shields and sets, the turn-long life, search
-     * and attack restrictions, player protections, casting / activation restrictions and permissions, and
-     * "this turn" zone-change replacements), which the cleanup step clears (CR 514.2). Used to split
-     * that state between the players active when it was created under Runed Terror's sequential phases.
+     * and attack restrictions, player protections, casting / activation restrictions and permissions,
+     * "this turn" zone-change replacements and graveyard card animations), which the cleanup step clears
+     * (CR 514.2). Used to split that state between the players active when it was created under Runed Terror's sequential phases.
      */
     public EndOfTurnStateShare captureGameEndOfTurnState() {
         Map<EndOfTurnStateField, Object> raw = new EnumMap<>(EndOfTurnStateField.class);
@@ -4911,6 +4911,9 @@ public class GameData {
             case GAME_PLAYERS_MAY_PLAY_FACE_UP_CARDS_FROM_EXILE -> playersMayPlayFaceUpCardsFromExileThisTurn;
             case GAME_CARD_TYPE_FLASH_GRANTS -> mapEntries(cardTypeFlashGrantsThisTurn);
             case GAME_PLAYERS_ALLOWED_TWICE_LOYALTY_ACTIVATIONS -> playersAllowedTwiceLoyaltyActivationsThisTurn;
+            case GAME_GRAVEYARD_CARD_ANIMATIONS -> Set.copyOf(temporaryGraveyardCardAnimationsUntilEndOfTurn.entrySet().stream()
+                    .map(entry -> Map.entry(entry.getKey(), entry.getValue()))
+                    .toList());
             default -> null;
         };
     }
@@ -5040,6 +5043,8 @@ public class GameData {
                     addMapEntries(cardTypeFlashGrantsThisTurn, (Set<Map.Entry<UUID, CardPredicate>>) value);
             case GAME_PLAYERS_ALLOWED_TWICE_LOYALTY_ACTIVATIONS ->
                     playersAllowedTwiceLoyaltyActivationsThisTurn.addAll((Set<UUID>) value);
+            case GAME_GRAVEYARD_CARD_ANIMATIONS -> ((Set<Map.Entry<UUID, GraveyardCardAnimation>>) value)
+                    .forEach(entry -> temporaryGraveyardCardAnimationsUntilEndOfTurn.put(entry.getKey(), entry.getValue()));
             default -> {
             }
         }

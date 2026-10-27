@@ -7,8 +7,10 @@ package com.github.laxika.magicalvibes.model;
  * {@link Permanent} ({@link Permanent#captureEndOfTurnState()}); the {@code PLAYER_} fields live in
  * {@link GameData}'s per-player prevention shield maps; the {@code GAME_} fields are game-wide
  * {@link GameData} stores ({@link GameData#captureGameEndOfTurnState()}). A {@code GAME_} field backed by a
- * map of sets is a {@link Kind#SET} of its {@code Map.entry(key, element)} pairs, and one backed by a map of
- * lists is a {@link Kind#LIST} of them.
+ * map of sets is a {@link Kind#SET} of its {@code Map.entry(key, element)} pairs, one backed by a map of
+ * lists is a {@link Kind#LIST} of them, and one backed by a plain map is a {@link Kind#SET} of its entries.
+ * Two aligned per-permanent lists (Soldevi Sentry's shield recipients and their controllers) are one
+ * {@link Kind#LIST} of {@code (recipient, controller)} entries, so a share keeps them paired.
  */
 public enum EndOfTurnStateField {
 
@@ -83,6 +85,11 @@ public enum EndOfTurnStateField {
     LAND_DESTRUCTION_SHIELD(Kind.SHIELD),
     REGENERATION_SHIELD(Kind.SHIELD),
     MINUS_ONE_COUNTER_REGENERATION_SHIELD(Kind.SHIELD),
+    OPPONENT_DRAW_REGENERATION_SHIELD(Kind.SHIELD),
+    OPPONENT_DRAW_REGENERATION_SHIELD_GRANTS(Kind.LIST),
+    PLUS_ONE_PLUS_ONE_COUNTER_REGENERATION_SHIELD(Kind.SHIELD),
+    PLUS_ONE_PLUS_ONE_COUNTER_REGENERATION_SHIELD_CONTROLLERS(Kind.LIST),
+    GAIN_CONTROL_REGENERATION_SHIELDS(Kind.LIST),
     PLAYER_DAMAGE_PREVENTION_SHIELD(Kind.SHIELD),
     PLAYER_COMBAT_DAMAGE_PREVENTION_SHIELD(Kind.SHIELD),
     GAME_DAMAGE_PREVENTION_SHIELD(Kind.SHIELD),
@@ -161,7 +168,8 @@ public enum EndOfTurnStateField {
     GAME_PLAYERS_WHO_MAY_LOOK_AT_FACE_DOWN_CREATURES(Kind.SET),
     GAME_PLAYERS_MAY_PLAY_FACE_UP_CARDS_FROM_EXILE(Kind.SET),
     GAME_CARD_TYPE_FLASH_GRANTS(Kind.SET),
-    GAME_PLAYERS_ALLOWED_TWICE_LOYALTY_ACTIVATIONS(Kind.SET);
+    GAME_PLAYERS_ALLOWED_TWICE_LOYALTY_ACTIVATIONS(Kind.SET),
+    GAME_GRAVEYARD_CARD_ANIMATIONS(Kind.SET);
 
     /** How a field's value is split between players and recombined. */
     public enum Kind {

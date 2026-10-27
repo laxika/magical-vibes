@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -17,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -2316,6 +2318,13 @@ public class Permanent {
             case LAND_DESTRUCTION_SHIELD -> landDestructionShield;
             case REGENERATION_SHIELD -> regenerationShield;
             case MINUS_ONE_COUNTER_REGENERATION_SHIELD -> minusOneCounterRegenerationShield;
+            case OPPONENT_DRAW_REGENERATION_SHIELD -> opponentDrawRegenerationShield;
+            case OPPONENT_DRAW_REGENERATION_SHIELD_GRANTS -> opponentDrawRegenerationShieldGrants();
+            case PLUS_ONE_PLUS_ONE_COUNTER_REGENERATION_SHIELD -> plusOnePlusOneCounterRegenerationShield;
+            case PLUS_ONE_PLUS_ONE_COUNTER_REGENERATION_SHIELD_CONTROLLERS ->
+                    plusOnePlusOneCounterRegenerationShieldControllers.stream().filter(Objects::nonNull).toList();
+            case GAIN_CONTROL_REGENERATION_SHIELDS ->
+                    gainControlRegenerationShields.stream().filter(Objects::nonNull).toList();
             default -> null;
         };
     }
@@ -2399,9 +2408,30 @@ public class Permanent {
             case LAND_DESTRUCTION_SHIELD -> landDestructionShield += (Integer) value;
             case REGENERATION_SHIELD -> regenerationShield += (Integer) value;
             case MINUS_ONE_COUNTER_REGENERATION_SHIELD -> minusOneCounterRegenerationShield += (Integer) value;
+            case OPPONENT_DRAW_REGENERATION_SHIELD -> opponentDrawRegenerationShield += (Integer) value;
+            case OPPONENT_DRAW_REGENERATION_SHIELD_GRANTS -> ((List<Map.Entry<UUID, UUID>>) value).forEach(grant -> {
+                opponentDrawRegenerationShieldRecipients.add(grant.getKey());
+                opponentDrawRegenerationShieldControllers.add(grant.getValue());
+            });
+            case PLUS_ONE_PLUS_ONE_COUNTER_REGENERATION_SHIELD -> plusOnePlusOneCounterRegenerationShield += (Integer) value;
+            case PLUS_ONE_PLUS_ONE_COUNTER_REGENERATION_SHIELD_CONTROLLERS ->
+                    plusOnePlusOneCounterRegenerationShieldControllers.addAll((List<UUID>) value);
+            case GAIN_CONTROL_REGENERATION_SHIELDS -> gainControlRegenerationShields.addAll((List<UUID>) value);
             default -> {
             }
         }
+    }
+
+    /** Soldevi Sentry's shield recipients paired with the controllers of their draw triggers, in grant order. */
+    private List<Map.Entry<UUID, UUID>> opponentDrawRegenerationShieldGrants() {
+        List<Map.Entry<UUID, UUID>> grants = new ArrayList<>();
+        int pairs = Math.min(opponentDrawRegenerationShieldRecipients.size(),
+                opponentDrawRegenerationShieldControllers.size());
+        for (int i = 0; i < pairs; i++) {
+            grants.add(new AbstractMap.SimpleImmutableEntry<>(opponentDrawRegenerationShieldRecipients.get(i),
+                    opponentDrawRegenerationShieldControllers.get(i)));
+        }
+        return grants;
     }
 
     /** Drops the "until end of turn" word substitutions (CR 612). */

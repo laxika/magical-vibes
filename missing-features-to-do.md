@@ -34,13 +34,18 @@ the player-scoped "this turn" protections, restrictions, permissions and replace
 can't-activate sets, `playerCreaturesCantAttackThisTurn` (a map of lists, a `LIST` of `Map.entry` pairs), Gather
 Specimens / Crafty Cutpurse lists, the uncast-entering / shuffle-from-exile / exile-instead-of-dying /
 exile-instead-of-graveyard / bottom-of-library sets, `playersWithFlash` / `FreeHandCast`, look-at-face-down,
-play-face-up-from-exile, `cardTypeFlashGrantsThisTurn` and `playersAllowedTwiceLoyaltyActivations`. A shield used up
+play-face-up-from-exile, `cardTypeFlashGrantsThisTurn` and `playersAllowedTwiceLoyaltyActivations`. A fourth pass
+added the regeneration-shield riders (`opponentDrawRegenerationShield` with its recipient/controller lists kept paired
+as one `LIST` of entries, `plusOnePlusOneCounterRegenerationShield` with its controllers,
+`gainControlRegenerationShields`), so a rider shield from another player's phase no longer degrades to a plain shield,
+and `temporaryGraveyardCardAnimationsUntilEndOfTurn` (`GAME_GRAVEYARD_CARD_ANIMATIONS`, a `SET` of map entries). A shield used up
 in between is not restored (capped by what remains). RunedTerrorTest covers can't-block, creature and player
-prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference, Skullcrack, Silence, Gilded Light and
-Borne Upon a Wind. **Still open:** the
-paired-list regeneration shields (`opponentDrawRegenerationShield*`, `plusOnePlusOneCounterRegenerationShield*`,
-`gainControlRegenerationShields`), `tappedPermanentsForAbilityThisTurn`,
-`temporaryGraveyardCardAnimationsUntilEndOfTurn`, and the remaining `GameData` stores cleared in
+prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference, Skullcrack, Silence, Gilded Light,
+Borne Upon a Wind, Debt of Loyalty, Skeleton Scavengers, Soldevi Sentry and Microscope. **Still open:**
+`Permanent.tappedPermanentsForAbilityThisTurn` (Vodalian War Machine's "Merfolk tapped this turn" record; it is a
+turn-history record, not an effect, so the Runed Terror ruling about effects ending doesn't settle it — it arguably
+should last the whole turn rather than be split per active player; look for a ruling first), and the remaining
+`GameData` stores cleared in
 `resetEndOfTurnModifiers`: one-shot redirect/prevention shield lists and maps (`damageRedirectShields`,
 `sourceDamageRedirectShields`, `playerSourceNextDamageShields`, `targetSourceDamagePreventionShields`, Eye for an
 Eye, `playerColorDamagePreventionCount`, `playerSourceDamagePreventionIds` with its paired colour/life-gain maps,

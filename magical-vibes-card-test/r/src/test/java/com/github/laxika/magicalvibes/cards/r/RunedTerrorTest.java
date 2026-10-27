@@ -3,19 +3,28 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.a.AbandonThePost;
 import com.github.laxika.magicalvibes.cards.a.AerialManeuver;
 import com.github.laxika.magicalvibes.cards.b.BorneUponAWind;
+import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
+import com.github.laxika.magicalvibes.cards.d.DebtOfLoyalty;
 import com.github.laxika.magicalvibes.cards.e.EerieInterference;
 import com.github.laxika.magicalvibes.cards.f.Fog;
 import com.github.laxika.magicalvibes.cards.g.GildedLight;
+import com.github.laxika.magicalvibes.cards.m.Microscope;
 import com.github.laxika.magicalvibes.cards.s.SafePassage;
 import com.github.laxika.magicalvibes.cards.s.Silence;
 import com.github.laxika.magicalvibes.cards.s.Skullcrack;
+import com.github.laxika.magicalvibes.cards.s.SkeletonScavengers;
+import com.github.laxika.magicalvibes.cards.s.SoldeviSentry;
 import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.cards.t.TitanicGrowth;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -26,7 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RunedTerror.class, TitanicGrowth.class, TurnToFrog.class, AerialManeuver.class, AbandonThePost.class,
         SamiteHealer.class, Fog.class, SafePassage.class, EerieInterference.class, Skullcrack.class, Silence.class,
-        GildedLight.class, BorneUponAWind.class})
+        GildedLight.class, BorneUponAWind.class, DebtOfLoyalty.class, SkeletonScavengers.class, SoldeviSentry.class,
+        Microscope.class, DarksteelCitadel.class})
 class RunedTerrorTest extends BaseCardTest {
 
     @Test
@@ -389,5 +399,111 @@ class RunedTerrorTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gd.playersWithFlashUntilEndOfTurn).isEmpty();
+    }
+
+    @Test
+    void gainControlRegenerationShieldFromOtherPlayersPhaseKeepsItsRiderAfterActivePlayersCleanup() {
+        Permanent terror = harness.addToBattlefieldAndReturn(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new DebtOfLoyalty()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.castAndResolveInstant(player2, 0, terror.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(terror.getRegenerationShield()).isEqualTo(1);
+        assertThat(terror.getGainControlRegenerationShields()).containsExactly(player2.getId());
+
+        terror.setMarkedDamage(100);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(terror);
+    }
+
+    @Test
+    void gainControlRegenerationShieldFromOtherPlayersPhaseEndsAtTheirCleanup() {
+        Permanent terror = harness.addToBattlefieldAndReturn(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new DebtOfLoyalty()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.castAndResolveInstant(player2, 0, terror.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        harness.passUntil(player2, TurnStep.CLEANUP);
+
+        assertThat(terror.getRegenerationShield()).isZero();
+        assertThat(terror.getGainControlRegenerationShields()).isEmpty();
+    }
+
+    @Test
+    void plusOneCounterRegenerationShieldFromOtherPlayersPhaseKeepsItsRiderAfterActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        Permanent scavengers = addCreatureReady(player2, new SkeletonScavengers());
+        scavengers.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(scavengers.getPlusOnePlusOneCounterRegenerationShield()).isEqualTo(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(scavengers.getRegenerationShield()).isEqualTo(1);
+        assertThat(scavengers.getPlusOnePlusOneCounterRegenerationShield()).isEqualTo(1);
+        assertThat(scavengers.getPlusOnePlusOneCounterRegenerationShieldControllers())
+                .containsExactly(player2.getId());
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(scavengers.getRegenerationShield()).isZero();
+        assertThat(scavengers.getPlusOnePlusOneCounterRegenerationShield()).isZero();
+        assertThat(scavengers.getPlusOnePlusOneCounterRegenerationShieldControllers()).isEmpty();
+    }
+
+    @Test
+    void opponentDrawRegenerationShieldFromOtherPlayersPhaseKeepsItsRiderAfterActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        Permanent sentry = addCreatureReady(player2, new SoldeviSentry());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        assertThat(sentry.getOpponentDrawRegenerationShield()).isEqualTo(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(sentry.getRegenerationShield()).isEqualTo(1);
+        assertThat(sentry.getOpponentDrawRegenerationShield()).isEqualTo(1);
+        assertThat(sentry.getOpponentDrawRegenerationShieldRecipients()).containsExactly(player1.getId());
+        assertThat(sentry.getOpponentDrawRegenerationShieldControllers()).containsExactly(player2.getId());
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(sentry.getOpponentDrawRegenerationShield()).isZero();
+        assertThat(sentry.getOpponentDrawRegenerationShieldRecipients()).isEmpty();
+        assertThat(sentry.getOpponentDrawRegenerationShieldControllers()).isEmpty();
+    }
+
+    @Test
+    void graveyardCardAnimationFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        Permanent microscope = harness.addToBattlefieldAndReturn(player2, new Microscope());
+        microscope.setSummoningSick(false);
+        Card target = new DarksteelCitadel();
+        harness.setGraveyard(player1, List.of(target));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.activateAbility(player2, 0, 1, null, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        assertThat(gqs.cardHasType(target, CardType.CREATURE, gd, player1.getId())).isTrue();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gqs.cardHasType(target, CardType.CREATURE, gd, player1.getId())).isTrue();
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gqs.cardHasType(target, CardType.CREATURE, gd, player1.getId())).isFalse();
     }
 }
