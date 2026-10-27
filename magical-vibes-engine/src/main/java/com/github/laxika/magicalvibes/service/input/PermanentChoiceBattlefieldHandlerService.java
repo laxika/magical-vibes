@@ -2577,15 +2577,22 @@ public class PermanentChoiceBattlefieldHandlerService {
     /**
      * Desperate Gambit: the source has been chosen, so flip the coin now. A won flip installs the
      * doubling variant of the same one-shot any-target shield; a lost flip installs the plain
-     * prevention variant.
+     * prevention variant. The flip is the first thing the answer changes, so a Krark's Thumb choice on it completes
+     * the answer again through {@code replay} once the kept result is chosen.
      */
     public void handleDoubleOrPreventNextDamageFromSourceChoice(GameData gameData, UUID permanentId,
-                                                                PermanentChoiceContext.DoubleOrPreventNextDamageFromSourceChoice ctx) {
+                                                                PermanentChoiceContext.DoubleOrPreventNextDamageFromSourceChoice ctx,
+                                                                GameData.CoinFlipChoiceReplay replay) {
         Card chosenSource = findDamageSourceCard(gameData, permanentId);
         if (chosenSource == null) {
             throw new IllegalStateException("Chosen source no longer exists");
         }
+        coinFlipService.answerChoosingResultsFirst(gameData,
+                () -> flipForDoubleOrPreventNextDamage(gameData, permanentId, chosenSource, ctx), replay);
+    }
 
+    private void flipForDoubleOrPreventNextDamage(GameData gameData, UUID permanentId, Card chosenSource,
+                                                  PermanentChoiceContext.DoubleOrPreventNextDamageFromSourceChoice ctx) {
         CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, ctx.controllerId());
         boolean wonFlip = result.heads();
         String playerName = gameData.playerIdToName.get(ctx.controllerId());

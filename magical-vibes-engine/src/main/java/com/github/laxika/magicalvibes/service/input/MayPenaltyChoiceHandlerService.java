@@ -142,6 +142,7 @@ public class MayPenaltyChoiceHandlerService {
     private final LifeSupport lifeSupport;
     private final TriggerCollectionService triggerCollectionService;
     private final ObjectProvider<PermanentChoiceHandlerService> permanentChoiceHandlerServiceProvider;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService coinFlipService;
 
     /**
      * Runs {@code payment}, the completion of {@code player} accepting {@code ability}, whose life payments
@@ -2069,10 +2070,14 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.FlipCoinsCost flipCost) {
-            forcedCostOrElseEffectHandler.payFlipCoins(
-                    gameData, decidingPlayerId, ability.sourceCard(), flipCost.count());
-            clearAnyPlayerPayState(gameData);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            // Flipping is the first thing the payment changes, so a Krark's Thumb choice on any of its flips can
+            // stop it and complete this answer again once the kept results are chosen.
+            coinFlipService.answerChoosingResultsFirst(gameData, () -> {
+                forcedCostOrElseEffectHandler.payFlipCoins(
+                        gameData, decidingPlayerId, ability.sourceCard(), flipCost.count());
+                clearAnyPlayerPayState(gameData);
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            }, new GameData.MayAnswerReplay(player, ability, true));
             return;
         }
 

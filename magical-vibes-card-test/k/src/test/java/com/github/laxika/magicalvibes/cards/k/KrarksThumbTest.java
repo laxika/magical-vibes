@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.a.AmuletOfQuoz;
 import com.github.laxika.magicalvibes.cards.c.CrazedFirecat;
 import com.github.laxika.magicalvibes.cards.c.CrookedScales;
+import com.github.laxika.magicalvibes.cards.d.DesperateGambit;
+import com.github.laxika.magicalvibes.cards.d.DwarvenBerserker;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.f.FieryGambit;
 import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
@@ -36,7 +38,8 @@ import static org.mockito.Mockito.when;
 
 @CardUsed({KrarksThumb.class, FieryGambit.class, AlphaMyr.class, ManaCrypt.class, CrazedFirecat.class,
         ManaClash.class, GoblinAssassin.class, FugitiveWizard.class, GameOfChaos.class, RiskyMove.class,
-        ElvishWarrior.class, AmuletOfQuoz.class, CrookedScales.class, FreshVolunteers.class})
+        ElvishWarrior.class, AmuletOfQuoz.class, CrookedScales.class, FreshVolunteers.class, DesperateGambit.class,
+        DwarvenBerserker.class, KarplusanMinotaur.class})
 class KrarksThumbTest extends BaseCardTest {
 
     @Test
@@ -429,6 +432,69 @@ class KrarksThumbTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposingCreature);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
                 .filter(log -> log.contains("coin flip for Crooked Scales"))).hasSize(2);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"Heads, 2", "Tails, 0"})
+    @DisplayName("Desperate Gambit's flip after its source choice waits for the kept result")
+    void desperateGambitFlipAfterSourceChoiceAsksForKeptResult(String kept, int damageMultiplier) {
+        Permanent source = addCreatureReady(player1, new DwarvenBerserker());
+        harness.addToBattlefield(player1, new KrarksThumb());
+        harness.setHand(player1, List.of(new DesperateGambit()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        try (var coins = mockFlips(true, false)) {
+            harness.handlePermanentChosen(player1, source.getId());
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+            assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+            harness.handleListChoice(player1, kept);
+        }
+
+        assertThat(gd.sourceNextDamageToAnyTargetShields).singleElement()
+                .satisfies(shield -> assertThat(shield.damageMultiplier()).isEqualTo(damageMultiplier));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
+                .filter(log -> log.contains("coin flip for Desperate Gambit"))).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each flip of a flip-a-coin cumulative upkeep waits for its kept result before any trigger")
+    void cumulativeUpkeepFlipsAskForKeptResults() {
+        Permanent minotaur = harness.addToBattlefieldAndReturn(player1, new KarplusanMinotaur());
+        minotaur.setCounterCount(CounterType.AGE, 1);
+        harness.addToBattlefield(player1, new KrarksThumb());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        try (var coins = mockFlips(true, false, false, true)) {
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+            assertThat(minotaurFlipLogs()).isEmpty();
+            harness.handleListChoice(player1, "Heads");
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+            assertThat(minotaurFlipLogs()).isEmpty();
+            harness.handleListChoice(player1, "Tails");
+        }
+
+        assertThat(minotaurFlipLogs()).hasSize(2);
+        assertThat(minotaurFlipLogs().getFirst()).contains("wins the coin flip");
+        assertThat(minotaurFlipLogs().getLast()).contains("loses the coin flip");
+        harness.assertOnBattlefield(player1, "Karplusan Minotaur");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+    }
+
+    private List<String> minotaurFlipLogs() {
+        return gd.gameLog.stream()
+                .map(GameLogEntry::plainText)
+                .filter(log -> log.contains("coin flip for Karplusan Minotaur"))
+                .toList();
     }
 
     private List<String> gameOfChaosFlipLogs() {
