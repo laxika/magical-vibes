@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AbandonThePost;
 import com.github.laxika.magicalvibes.cards.a.AerialManeuver;
+import com.github.laxika.magicalvibes.cards.b.BorneUponAWind;
 import com.github.laxika.magicalvibes.cards.e.EerieInterference;
 import com.github.laxika.magicalvibes.cards.f.Fog;
+import com.github.laxika.magicalvibes.cards.g.GildedLight;
 import com.github.laxika.magicalvibes.cards.s.SafePassage;
+import com.github.laxika.magicalvibes.cards.s.Silence;
 import com.github.laxika.magicalvibes.cards.s.Skullcrack;
 import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.cards.t.TitanicGrowth;
@@ -22,7 +25,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RunedTerror.class, TitanicGrowth.class, TurnToFrog.class, AerialManeuver.class, AbandonThePost.class,
-        SamiteHealer.class, Fog.class, SafePassage.class, EerieInterference.class, Skullcrack.class})
+        SamiteHealer.class, Fog.class, SafePassage.class, EerieInterference.class, Skullcrack.class, Silence.class,
+        GildedLight.class, BorneUponAWind.class})
 class RunedTerrorTest extends BaseCardTest {
 
     @Test
@@ -314,5 +318,76 @@ class RunedTerrorTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gd.playersCantGainLifeThisTurn).isFalse();
+    }
+
+    @Test
+    void silenceFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new Silence()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0);
+        assertThat(gd.playersSilencedThisTurn).containsExactly(player1.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.playersSilencedThisTurn).containsExactly(player1.getId());
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.playersSilencedThisTurn).isEmpty();
+    }
+
+    @Test
+    void activePlayersOwnSilenceEndsAtTheirCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Silence()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0);
+        assertThat(gd.playersSilencedThisTurn).containsExactly(player2.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(gd.playersSilencedThisTurn).isEmpty();
+    }
+
+    @Test
+    void playerKeywordFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new GildedLight()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0);
+        assertThat(gd.playerKeywordsUntilEndOfTurn.get(player2.getId())).containsExactly(Keyword.SHROUD);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.playerKeywordsUntilEndOfTurn.get(player2.getId())).containsExactly(Keyword.SHROUD);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.playerKeywordsUntilEndOfTurn).isEmpty();
+    }
+
+    @Test
+    void flashPermissionFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new BorneUponAWind()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0);
+        assertThat(gd.playersWithFlashUntilEndOfTurn).containsExactly(player2.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.playersWithFlashUntilEndOfTurn).containsExactly(player2.getId());
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.playersWithFlashUntilEndOfTurn).isEmpty();
     }
 }

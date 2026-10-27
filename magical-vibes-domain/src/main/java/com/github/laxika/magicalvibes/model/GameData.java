@@ -4795,8 +4795,9 @@ public class GameData {
 
     /**
      * Captures the game-wide "until end of turn" / "this turn" stores named by the {@code GAME_}
-     * {@link EndOfTurnStateField}s (damage prevention flags, shields and sets, and the turn-long
-     * life, search and attack restrictions), which the cleanup step clears (CR 514.2). Used to split
+     * {@link EndOfTurnStateField}s (damage prevention flags, shields and sets, the turn-long life, search
+     * and attack restrictions, player protections, casting / activation restrictions and permissions, and
+     * "this turn" zone-change replacements), which the cleanup step clears (CR 514.2). Used to split
      * that state between the players active when it was created under Runed Terror's sequential phases.
      */
     public EndOfTurnStateShare captureGameEndOfTurnState() {
@@ -4870,6 +4871,46 @@ public class GameData {
             case GAME_PLAYERS_WHO_CANT_GAIN_LIFE -> playersWhoCantGainLifeThisTurn;
             case GAME_PLAYERS_WHO_GAIN_NO_LIFE -> playersWhoGainNoLifeThisTurn;
             case GAME_PLAYERS_WHO_CANT_LOSE_LIFE -> playersWhoCantLoseLifeThisTurn;
+            case GAME_PLAYERS_WITH_HEXPROOF -> playersWithHexproofThisTurn;
+            case GAME_PLAYERS_WITH_SHROUD -> playersWithShroudThisTurn;
+            case GAME_PLAYER_HEXPROOF_FROM_COLORS -> mapEntries(playerHexproofFromColorsThisTurn);
+            case GAME_PERMANENT_HEXPROOF_FROM_COLORS -> mapEntries(permanentHexproofFromColorsThisTurn);
+            case GAME_PLAYER_PROTECTION_FROM_COLORS -> mapEntries(playerProtectionFromColorsUntilEndOfTurn);
+            case GAME_PLAYER_PROTECTION_FROM_PLAYERS -> mapEntries(playerProtectionFromPlayerIdsUntilEndOfTurn);
+            case GAME_PLAYER_KEYWORDS -> mapEntries(playerKeywordsUntilEndOfTurn);
+            case GAME_PLAYER_CREATURES_CANT_BE_TARGETED_BY_COLORS -> mapEntries(playerCreaturesCantBeTargetedByColorsThisTurn);
+            case GAME_PLAYER_SPELLS_CANT_BE_COUNTERED_BY_COLORS -> mapEntries(playerSpellsCantBeCounteredByColorsThisTurn);
+            case GAME_PLAYERS_SPELLS_CANT_BE_COUNTERED -> playersSpellsCantBeCounteredThisTurn;
+            case GAME_PLAYERS_CREATURE_SPELLS_CANT_BE_COUNTERED -> playersCreatureSpellsCantBeCounteredThisTurn;
+            case GAME_PLAYERS_SILENCED -> playersSilencedThisTurn;
+            case GAME_PLAYERS_CANT_PLAY_LANDS -> playersCantPlayLandsThisTurn;
+            case GAME_PLAYERS_CANT_PLAY_FROM_GRAVEYARDS -> playersCantPlayFromGraveyardsThisTurn;
+            case GAME_PLAYERS_CANT_CAST_SPELL_TYPES -> mapEntries(playersCantCastSpellTypesThisTurn);
+            case GAME_PLAYERS_CANT_CAST_NONCREATURE_SPELLS -> playersCantCastNoncreatureSpellsThisTurn;
+            case GAME_PLAYERS_CANT_ACTIVATE_ABILITIES -> playersCantActivateAbilitiesThisTurn;
+            case GAME_PLAYERS_CANT_ACTIVATE_NON_MANA_ABILITIES -> playersCantActivateNonManaAbilitiesThisTurn;
+            case GAME_PLAYERS_CANT_ACTIVATE_LOYALTY_ABILITIES -> playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn;
+            case GAME_PLAYER_CREATURES_CANT_ATTACK -> listMapEntries(playerCreaturesCantAttackThisTurn);
+            case GAME_PLAYERS_GATHERING_SPECIMENS -> new ArrayList<>(playersGatheringSpecimensThisTurn);
+            case GAME_PLAYERS_GATHERING_TOKENS -> new ArrayList<>(playersGatheringTokensThisTurn);
+            case GAME_PLAYERS_EXILING_UNCAST_ENTERING_CREATURES -> playersExilingUncastEnteringCreaturesThisTurn;
+            case GAME_PLAYERS_EXILING_UNCAST_ENTERING_NONTOKEN_CREATURES ->
+                    playersExilingUncastEnteringNontokenCreaturesThisTurn;
+            case GAME_PLAYERS_SHUFFLING_CREATURES_ENTERING_FROM_EXILE -> playersShufflingCreaturesEnteringFromExileThisTurn;
+            case GAME_PLAYERS_EXILING_CREATURES_INSTEAD_OF_DYING -> playersExilingCreaturesInsteadOfDyingThisTurn;
+            case GAME_PLAYERS_EXILING_OPPONENT_CREATURES_INSTEAD_OF_DYING ->
+                    playersExilingOpponentCreaturesInsteadOfDyingThisTurn;
+            case GAME_PLAYERS_EXILING_CONTROLLED_PERMANENTS_INSTEAD_OF_DYING ->
+                    playersExilingControlledPermanentsInsteadOfDyingThisTurn;
+            case GAME_PLAYERS_EXILING_CARDS_INSTEAD_OF_GRAVEYARD -> playersExilingCardsInsteadOfGraveyardThisTurn;
+            case GAME_PLAYERS_PUTTING_CARDS_ON_BOTTOM_OF_LIBRARY ->
+                    playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn;
+            case GAME_PLAYERS_WITH_FLASH -> playersWithFlashUntilEndOfTurn;
+            case GAME_PLAYERS_WITH_FREE_HAND_CAST -> playersWithFreeHandCastUntilEndOfTurn;
+            case GAME_PLAYERS_WHO_MAY_LOOK_AT_FACE_DOWN_CREATURES -> playersWhoMayLookAtFaceDownCreaturesThisTurn;
+            case GAME_PLAYERS_MAY_PLAY_FACE_UP_CARDS_FROM_EXILE -> playersMayPlayFaceUpCardsFromExileThisTurn;
+            case GAME_CARD_TYPE_FLASH_GRANTS -> mapEntries(cardTypeFlashGrantsThisTurn);
+            case GAME_PLAYERS_ALLOWED_TWICE_LOYALTY_ACTIVATIONS -> playersAllowedTwiceLoyaltyActivationsThisTurn;
             default -> null;
         };
     }
@@ -4939,6 +4980,66 @@ public class GameData {
             case GAME_PLAYERS_WHO_CANT_GAIN_LIFE -> playersWhoCantGainLifeThisTurn.addAll((Set<UUID>) value);
             case GAME_PLAYERS_WHO_GAIN_NO_LIFE -> playersWhoGainNoLifeThisTurn.addAll((Set<UUID>) value);
             case GAME_PLAYERS_WHO_CANT_LOSE_LIFE -> playersWhoCantLoseLifeThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WITH_HEXPROOF -> playersWithHexproofThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WITH_SHROUD -> playersWithShroudThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYER_HEXPROOF_FROM_COLORS ->
+                    addMapEntries(playerHexproofFromColorsThisTurn, (Set<Map.Entry<UUID, CardColor>>) value);
+            case GAME_PERMANENT_HEXPROOF_FROM_COLORS ->
+                    addMapEntries(permanentHexproofFromColorsThisTurn, (Set<Map.Entry<UUID, CardColor>>) value);
+            case GAME_PLAYER_PROTECTION_FROM_COLORS ->
+                    addMapEntries(playerProtectionFromColorsUntilEndOfTurn, (Set<Map.Entry<UUID, CardColor>>) value);
+            case GAME_PLAYER_PROTECTION_FROM_PLAYERS ->
+                    addMapEntries(playerProtectionFromPlayerIdsUntilEndOfTurn, (Set<Map.Entry<UUID, UUID>>) value);
+            case GAME_PLAYER_KEYWORDS -> addMapEntries(playerKeywordsUntilEndOfTurn, (Set<Map.Entry<UUID, Keyword>>) value);
+            case GAME_PLAYER_CREATURES_CANT_BE_TARGETED_BY_COLORS ->
+                    addMapEntries(playerCreaturesCantBeTargetedByColorsThisTurn, (Set<Map.Entry<UUID, CardColor>>) value);
+            case GAME_PLAYER_SPELLS_CANT_BE_COUNTERED_BY_COLORS ->
+                    addMapEntries(playerSpellsCantBeCounteredByColorsThisTurn, (Set<Map.Entry<UUID, CardColor>>) value);
+            case GAME_PLAYERS_SPELLS_CANT_BE_COUNTERED -> playersSpellsCantBeCounteredThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_CREATURE_SPELLS_CANT_BE_COUNTERED ->
+                    playersCreatureSpellsCantBeCounteredThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_SILENCED -> playersSilencedThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_CANT_PLAY_LANDS -> playersCantPlayLandsThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_CANT_PLAY_FROM_GRAVEYARDS -> playersCantPlayFromGraveyardsThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_CANT_CAST_SPELL_TYPES ->
+                    addMapEntries(playersCantCastSpellTypesThisTurn, (Set<Map.Entry<UUID, CardType>>) value);
+            case GAME_PLAYERS_CANT_CAST_NONCREATURE_SPELLS ->
+                    playersCantCastNoncreatureSpellsThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_CANT_ACTIVATE_ABILITIES -> playersCantActivateAbilitiesThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_CANT_ACTIVATE_NON_MANA_ABILITIES ->
+                    playersCantActivateNonManaAbilitiesThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_CANT_ACTIVATE_LOYALTY_ABILITIES ->
+                    playersCantActivatePlaneswalkerLoyaltyAbilitiesThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYER_CREATURES_CANT_ATTACK ->
+                    addListMapEntries(playerCreaturesCantAttackThisTurn, (List<Map.Entry<UUID, PermanentPredicate>>) value);
+            case GAME_PLAYERS_GATHERING_SPECIMENS -> playersGatheringSpecimensThisTurn.addAll((List<UUID>) value);
+            case GAME_PLAYERS_GATHERING_TOKENS -> playersGatheringTokensThisTurn.addAll((List<UUID>) value);
+            case GAME_PLAYERS_EXILING_UNCAST_ENTERING_CREATURES ->
+                    playersExilingUncastEnteringCreaturesThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_EXILING_UNCAST_ENTERING_NONTOKEN_CREATURES ->
+                    playersExilingUncastEnteringNontokenCreaturesThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_SHUFFLING_CREATURES_ENTERING_FROM_EXILE ->
+                    playersShufflingCreaturesEnteringFromExileThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_EXILING_CREATURES_INSTEAD_OF_DYING ->
+                    playersExilingCreaturesInsteadOfDyingThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_EXILING_OPPONENT_CREATURES_INSTEAD_OF_DYING ->
+                    playersExilingOpponentCreaturesInsteadOfDyingThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_EXILING_CONTROLLED_PERMANENTS_INSTEAD_OF_DYING ->
+                    playersExilingControlledPermanentsInsteadOfDyingThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_EXILING_CARDS_INSTEAD_OF_GRAVEYARD ->
+                    playersExilingCardsInsteadOfGraveyardThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_PUTTING_CARDS_ON_BOTTOM_OF_LIBRARY ->
+                    playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WITH_FLASH -> playersWithFlashUntilEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WITH_FREE_HAND_CAST -> playersWithFreeHandCastUntilEndOfTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WHO_MAY_LOOK_AT_FACE_DOWN_CREATURES ->
+                    playersWhoMayLookAtFaceDownCreaturesThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_MAY_PLAY_FACE_UP_CARDS_FROM_EXILE ->
+                    playersMayPlayFaceUpCardsFromExileThisTurn.addAll((Set<UUID>) value);
+            case GAME_CARD_TYPE_FLASH_GRANTS ->
+                    addMapEntries(cardTypeFlashGrantsThisTurn, (Set<Map.Entry<UUID, CardPredicate>>) value);
+            case GAME_PLAYERS_ALLOWED_TWICE_LOYALTY_ACTIVATIONS ->
+                    playersAllowedTwiceLoyaltyActivationsThisTurn.addAll((Set<UUID>) value);
             default -> {
             }
         }
@@ -4953,6 +5054,17 @@ public class GameData {
     private static <K, V> void addMapEntries(Map<K, Set<V>> map, Set<Map.Entry<K, V>> entries) {
         entries.forEach(entry ->
                 map.computeIfAbsent(entry.getKey(), key -> ConcurrentHashMap.newKeySet()).add(entry.getValue()));
+    }
+
+    private static <K, V> List<Map.Entry<K, V>> listMapEntries(Map<K, List<V>> map) {
+        List<Map.Entry<K, V>> entries = new ArrayList<>();
+        map.forEach((key, values) -> values.forEach(value -> entries.add(Map.entry(key, value))));
+        return entries;
+    }
+
+    private static <K, V> void addListMapEntries(Map<K, List<V>> map, List<Map.Entry<K, V>> entries) {
+        entries.forEach(entry ->
+                map.computeIfAbsent(entry.getKey(), key -> new CopyOnWriteArrayList<>()).add(entry.getValue()));
     }
 
     /** Removes and returns all floating effects that expire at the beginning of the next end step. */

@@ -26,9 +26,18 @@ the `playersWith*Prevented` / `creatures*Prevented` / `creaturesAssigningNoComba
 predicate maps, `playersRedirectingAllCreatureDamage`, `damageCantBePreventedThisTurn`, the global
 `playersCantGainLife` / `playersCantLoseLife` / `playersCantSearchLibraries` / `creaturesCantAttack` "this turn"
 flags and the `playersWhoCantGainLife` / `GainNoLife` / `CantLoseLife` sets (`GameData.captureGameEndOfTurnState`,
-tracked under `GameData.GAME_END_OF_TURN_STATE_ID`; a map of sets is a `SET` of `Map.entry` pairs). A shield used up
+tracked under `GameData.GAME_END_OF_TURN_STATE_ID`; a map of sets is a `SET` of `Map.entry` pairs). A third pass added
+the player-scoped "this turn" protections, restrictions, permissions and replacements: `playersWithHexproof` /
+`Shroud`, `playerHexproofFromColors`, `permanentHexproofFromColors`, `playerProtectionFromColors` / `FromPlayerIds`,
+`playerKeywordsUntilEndOfTurn`, the can't-be-countered and creatures-can't-be-targeted-by-colour stores,
+`playersSilenced`, can't-play-lands / from-graveyards, `playersCantCastSpellTypes` / `Noncreature`, the three
+can't-activate sets, `playerCreaturesCantAttackThisTurn` (a map of lists, a `LIST` of `Map.entry` pairs), Gather
+Specimens / Crafty Cutpurse lists, the uncast-entering / shuffle-from-exile / exile-instead-of-dying /
+exile-instead-of-graveyard / bottom-of-library sets, `playersWithFlash` / `FreeHandCast`, look-at-face-down,
+play-face-up-from-exile, `cardTypeFlashGrantsThisTurn` and `playersAllowedTwiceLoyaltyActivations`. A shield used up
 in between is not restored (capped by what remains). RunedTerrorTest covers can't-block, creature and player
-prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference and Skullcrack. **Still open:** the
+prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference, Skullcrack, Silence, Gilded Light and
+Borne Upon a Wind. **Still open:** the
 paired-list regeneration shields (`opponentDrawRegenerationShield*`, `plusOnePlusOneCounterRegenerationShield*`,
 `gainControlRegenerationShields`), `tappedPermanentsForAbilityThisTurn`,
 `temporaryGraveyardCardAnimationsUntilEndOfTurn`, and the remaining `GameData` stores cleared in
@@ -37,9 +46,10 @@ paired-list regeneration shields (`opponentDrawRegenerationShield*`, `plusOnePlu
 Eye, `playerColorDamagePreventionCount`, `playerSourceDamagePreventionIds` with its paired colour/life-gain maps,
 `playerNextDamageFromMatchingSourcesPrevented`, `combatDamagePreventionTokenShields`, `channelHarmShields`, ...),
 `playerStaticEffectsUntilEndOfTurn`, enter-tapped / extra-counter "this turn" stores, block requirements, damage
-bonuses / doublings / life floors / replacements, "this turn" replacement and rule sets (exile-instead,
-hexproof/shroud/protection for players, can't-cast / can't-activate, flash and cost grants, next-spell copy
-counters, mana-fixing), and graveyard / exile / library-top cast permissions. Count-valued maps
+bonuses / doublings / life floors / replacements, the remaining "this turn" rule stores (`playersMaxSpellsThisTurn`,
+`playerExtraLoyaltyActivationsThisTurn`, `spellColorOverridesUntilEndOfTurn`, Sen Triplets' controller ids,
+next-spell flash / convoke / cost / free-cast grants, next-spell copy counters, mana-fixing and mana replacement
+stores), and graveyard / exile / library-top cast permissions. Count-valued maps
 (`Map<UUID, Integer>`) and one-shot shield lists need a per-key `SHIELD`-style split rather than the entry-set
 `SET` used so far. Known limitation: a flag or set element (including a keyword) that another player's
 effect sets again while it is already set stays credited to the first player only, and with three or more players a
