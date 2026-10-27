@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyGrantingPermanentIfNoCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventNextDamageToSourceFromCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -1349,6 +1350,11 @@ public class ActivatedAbilityExecutionService {
                 snapshotEffects.add(new TargetPermanentControllerGainsControlOfGrantingEquipmentEffect(
                         gainControl.duration(), gainControl.excludedSourceSubtype(),
                         ability.getGrantSourcePermanentId(), sourceHadExcludedSubtype));
+            } else if (effect instanceof PreventNextDamageToSourceFromCardEffect prevent
+                    && prevent.damageSourceCardId() == null) {
+                // Bind the granting object now (Torrent of Lava): a spell or its copy shields only
+                // against itself as the damage source.
+                snapshotEffects.add(new PreventNextDamageToSourceFromCardEffect(ability.getGrantSourcePermanentId()));
             } else if (effect instanceof DestroyGrantingPermanentIfNoCountersEffect destroy) {
                 snapshotEffects.add(new DestroyGrantingPermanentIfNoCountersEffect(
                         destroy.counterType(), ability.getGrantSourcePermanentId()));

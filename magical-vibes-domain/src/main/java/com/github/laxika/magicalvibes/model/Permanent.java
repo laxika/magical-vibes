@@ -918,7 +918,11 @@ public class Permanent {
     }
 
     public Permanent(Card card) {
-        this.id = UUID.randomUUID();
+        this(card, UUID.randomUUID());
+    }
+
+    private Permanent(Card card, UUID id) {
+        this.id = id;
         // A card wrapped in a Permanent is live game state shared with AI simulation copies —
         // freeze it so any later mutation of the Card object fails fast instead of leaking.
         card.freeze();
@@ -932,6 +936,15 @@ public class Permanent {
         this.attacksThisGame = 0;
         this.attackedThisCombat = false;
         this.summoningSick = true;
+    }
+
+    /**
+     * A stand-in for an instant or sorcery spell whose abilities function on the stack (CR 113.6),
+     * identified as that stack object, so an ability it grants names the spell itself (a copy
+     * names the copy, not the original) as its granting source.
+     */
+    public static Permanent forSpellOnStack(StackEntry spell) {
+        return new Permanent(spell.getCard(), spell.getTargetableId());
     }
 
     public Permanent(Card card, Zone enteredFromZone) {

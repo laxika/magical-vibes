@@ -1056,8 +1056,9 @@ public class LayerSystemService {
 
     /**
      * The instant and sorcery spells on the stack whose abilities function there (CR 113.6): those
-     * carrying a {@link WrappedStackStaticEffect}, in stack order. Copies are left out because
-     * their abilities still name the original card as the source.
+     * carrying a {@link WrappedStackStaticEffect}, in stack order. A copy of such a spell is
+     * included: it copies the original's abilities (CR 707.2), and its grants name the copy itself
+     * as their source ({@link Permanent#forSpellOnStack}).
      */
     public static List<StackEntry> stackStaticSources(GameData gameData) {
         List<StackEntry> sources = new ArrayList<>();
@@ -1065,7 +1066,7 @@ public class LayerSystemService {
             for (StackEntry entry : gameData.stack) {
                 if ((entry.getEntryType() == StackEntryType.INSTANT_SPELL
                         || entry.getEntryType() == StackEntryType.SORCERY_SPELL)
-                        && !entry.isCopy() && entry.getCard() != null
+                        && entry.getCard() != null
                         && entry.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(WrappedStackStaticEffect.class::isInstance)) {
                     sources.add(entry);
@@ -1375,7 +1376,7 @@ public class LayerSystemService {
         int stackPosition = graveyardPosition;
         for (StackEntry spell : stackStaticSources(gameData)) {
             // CR 113.6: an instant or sorcery's abilities function while it is on the stack.
-            PermanentSlot source = new PermanentSlot(spell.getControllerId(), new Permanent(spell.getCard()),
+            PermanentSlot source = new PermanentSlot(spell.getControllerId(), Permanent.forSpellOnStack(spell),
                     stackPosition++);
             for (CardEffect effect : spell.getCard().getEffects(EffectSlot.STATIC)) {
                 if (!(effect instanceof WrappedStackStaticEffect)) {

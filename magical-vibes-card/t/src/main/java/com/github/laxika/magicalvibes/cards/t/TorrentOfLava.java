@@ -21,7 +21,7 @@ public class TorrentOfLava extends Card {
     public TorrentOfLava() {
         addEffect(EffectSlot.STATIC, new WrappedStackStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null,
-                        List.of(new PreventNextDamageToSourceFromCardEffect(getId())),
+                        List.of(new PreventNextDamageToSourceFromCardEffect()),
                         "Tap: Prevent the next 1 damage that would be dealt to this creature by Torrent of Lava this turn."),
                 GrantScope.ALL_CREATURES)));
         addEffect(EffectSlot.SPELL, new MassDamageEffect(0, true, false, new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));

@@ -646,12 +646,14 @@ and conditions while the graveyard card remains outside the battlefield.
 
 Instant and sorcery spells on the stack are static sources too (CR 113.6): an effect wrapped in
 `WrappedStackStaticEffect` functions only while its spell is on the stack.
-`LayerSystemService.stackStaticSources` lists those spells (copies excluded, since their abilities
-still name the original card); the layered pass and the static-bonus assembly wrap each one in a
-synthetic source controlled by the spell's controller, with the CR 613.7d timestamp the spell got
+`LayerSystemService.stackStaticSources` lists those spells, copies included (a copy copies the
+original's abilities, CR 707.2); the layered pass and the static-bonus assembly wrap each one in a
+synthetic source (`Permanent.forSpellOnStack`, whose id is the spell's stack-object id, so a granted
+ability's grant source names that spell or copy) controlled by the spell's controller, with the CR 613.7d timestamp the spell got
 when it was put on the stack (`StackEntry.stackTimestamp`, stamped by `GameData`'s stack list). The
 board fingerprint hashes those spells, so the cached board drops their effects when they leave the
-stack. Torrent of Lava's granted "{T}: Prevent the next 1 damage ..." uses it.
+stack. Torrent of Lava's granted "{T}: Prevent the next 1 damage ..." uses it, binding "this spell" to the
+grant source when the ability is activated.
 
 Face-up schemes in the command zone (`GameData.faceUpSchemes`) are static sources the same way
 (CR 314.4): the layered pass and the static-bonus assembly in `GameQueryService` wrap each one in

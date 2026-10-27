@@ -9,37 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 60. Stack-static abilities of a copied instant or sorcery (Torrent of Lava copies)
-
-**Status:** open · **Found:** 2026-10-25, while finishing entry 43 (stack-static abilities)
-
-**Failing tests:**
-- none yet (a copy of Torrent of Lava grants no ability; untested)
-
-**What the rules require.** CR 113.6: abilities of an instant or sorcery spell function while it is
-on the stack, and a copy of a spell copies its abilities (CR 707.2). A copy of Torrent of Lava
-should make each creature have "{T}: Prevent the next 1 damage that [the copy] would deal to this
-creature this turn" as long as the copy is on the stack. `LayerSystemService.stackStaticSources`
-leaves copies out, because the card bakes the original card's id into
-`PreventNextDamageToSourceFromCardEffect` and `CopySupport.createCopyCard` shares the effect list,
-so a copy's grant would shield against the original spell instead of the copy.
-
-**Why it's large.** The prevention effect needs to refer to "this spell" by the stack object that
-grants it (e.g. resolve the source from the granting stack entry at activation) instead of a card
-id fixed at construction, and the copy path needs a test with a spell-copy effect.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 60: let a copy of an instant or sorcery on the stack grant
-its WrappedStackStaticEffect abilities (CR 113.6, CR 707.2), with Torrent of Lava's granted
-prevention keyed to the copy as the damage source. Stop excluding copies in
-LayerSystemService.stackStaticSources once the source reference is per stack object. Verify every
-CR number with the rules MCP. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 61. Four vote handlers never report their votes as finished
 
 **Status:** open · **Found:** 2026-10-25, while finishing entry 45 (optional additional votes)

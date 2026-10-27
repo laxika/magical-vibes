@@ -6811,7 +6811,7 @@ public class GameQueryService {
         }
         // CR 113.6: an instant or sorcery's abilities function while it is on the stack.
         for (StackEntry spell : LayerSystemService.stackStaticSources(gameData)) {
-            sources.add(new StaticSource(new Permanent(spell.getCard()), spell.getControllerId(),
+            sources.add(new StaticSource(Permanent.forSpellOnStack(spell), spell.getControllerId(),
                     spell.getControllerId().equals(resolvedTargetControllerId),
                     spell.getStackTimestamp(), position++, false, true));
         }

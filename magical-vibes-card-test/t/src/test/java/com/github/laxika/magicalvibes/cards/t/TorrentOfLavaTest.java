@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.b.BayFalcon;
 import com.github.laxika.magicalvibes.cards.g.GoblinEliteInfantry;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -10,9 +12,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TorrentOfLava.class, BayFalcon.class, GoblinEliteInfantry.class})
+@CardUsed({TorrentOfLava.class, BayFalcon.class, GoblinEliteInfantry.class, Twincast.class})
 class TorrentOfLavaTest extends BaseCardTest {
 
     @Test
@@ -137,5 +140,83 @@ class TorrentOfLavaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Goblin Elite Infantry");
+    }
+
+    @Test
+    @DisplayName("A copy of Torrent of Lava grants its own prevention ability, which shields against the copy")
+    void copyGrantsPreventionAgainstTheCopy() {
+        Permanent goblin = addCreatureReady(player2, new GoblinEliteInfantry());
+        StackEntry copy = castTorrentAndCopyIt(1);
+
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.targetSourceDamagePreventionShields)
+                .singleElement()
+                .satisfies(shield -> {
+                    assertThat(shield.targetId()).isEqualTo(goblin.getId());
+                    assertThat(shield.sourceId()).isEqualTo(copy.getCard().getId());
+                });
+
+        harness.passBothPriorities();
+        assertThat(goblin.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+        assertThat(goblin.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Goblin Elite Infantry");
+    }
+
+    @Test
+    @DisplayName("The original's ability still shields only against the original while a copy is on the stack")
+    void originalAbilityDoesNotShieldAgainstTheCopy() {
+        Permanent goblin = addCreatureReady(player2, new GoblinEliteInfantry());
+        castTorrentAndCopyIt(1);
+
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.passBothPriorities();
+        assertThat(goblin.getMarkedDamage()).isEqualTo(1);
+
+        harness.passBothPriorities();
+        assertThat(goblin.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Goblin Elite Infantry");
+    }
+
+    @Test
+    @DisplayName("The copy's granted ability ends once the copy has left the stack")
+    void copyAbilityEndsWhenCopyLeavesStack() {
+        addCreatureReady(player2, new GoblinEliteInfantry());
+        castTorrentAndCopyIt(0);
+
+        harness.passBothPriorities();
+        assertThat(gd.stack).singleElement().satisfies(entry -> assertThat(entry.isCopy()).isFalse());
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageNotContaining("priority");
+        harness.activateAbility(player2, 0, 0, null, null);
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    private StackEntry castTorrentAndCopyIt(int x) {
+        TorrentOfLava torrent = new TorrentOfLava();
+        harness.setHand(player1, List.of(torrent));
+        harness.addMana(player1, ManaColor.RED, 2 + x);
+        harness.setHand(player2, List.of(new Twincast()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castSorcery(player1, 0, x);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, torrent.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+        StackEntry copy = gd.stack.getLast();
+        assertThat(copy.isCopy()).isTrue();
+        return copy;
     }
 }
