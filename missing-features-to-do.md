@@ -87,7 +87,17 @@ chosen-source prevention `playerSourceDamagePreventionIds` (a `SET` of `(player,
 `playerSourceDamagePreventionRequiredColors` (a `SET` of `((player, source), colours)` entries) and
 `playerSourceDamagePreventionLifeGainIds`, Circle of Solace's one-shot `playerNextDamageFromMatchingSourcesPrevented`
 (a `LIST` of `(player, predicate)` entries; a used shield is not restored) and Storyweave's
-`pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn` (`COUNTS` by player). RunedTerrorTest covers can't-block, creature and player
+`pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn` (`COUNTS` by player). An eleventh pass moved the
+copy counters paired with source maps: `pendingNextInstantSorceryCopyThisTurnCount` / `SingleTriggerCount` (`COUNTS`),
+its `CountSource` (a `SET` of map entries, restored with `putIfAbsent`), `MaxManaValues` (a `LIST` of
+`(player, max mana value)` entries), `DynamicCounts` with `DynamicSources` (one `LIST` of
+`(player, GameData.PendingDynamicCopy)` entries, so each count stays paired with its source; the mana-ability path
+now records its source too instead of falling through and adding a `null` max mana value),
+`pendingNextLoyaltyAbilityCopyThisTurnCount` / `pendingNextExhaustAbilityCopyThisTurnCount` (`COUNTS`) with their
+`PendingCopySource` lists (`LIST` of `(player, source)` entries), `pendingNextSpellOrLoyaltyCopyLinkedThisTurn` (`SET`),
+and Sen Triplets' `senControllerPlayerId` / `senControlledPlayerId` (`GAME_SEN_TRIPLETS_HAND_PERMISSION`, a `VALUE`
+`(controller, controlled)` entry). The next matching spell or ability consumes all of a player's pending copies at
+once, so a used trigger is not restored. RunedTerrorTest covers can't-block, creature and player
 prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference, Skullcrack, Silence, Gilded Light,
 Borne Upon a Wind, Debt of Loyalty, Skeleton Scavengers, Soldevi Sentry, Microscope, Blind Fury, Overblaze (two
 doublings split between phases), Zameck Guildmage, Due Respect, Angel's Grace, Irencrag Feat, a tighter spell limit
@@ -97,7 +107,10 @@ and used during the active player's phase so not restored), convoke / cascade gr
 Flames from either player's phase, Overmaster from either player's phase, copy grants split between phases, and
 exile / foretold cast grants (one used before the active player's cleanup), Auriok Replica's chosen source (with
 the colour and life-gain riders) from either player's phase, Circle of Solace shields (one used before the active
-player's cleanup) and Storyweave counters split between phases. **Still open:**
+player's cleanup), Storyweave counters split between phases, Repeated Reverberation from either player's phase,
+instant/sorcery copy triggers (plain, single-trigger, source, mana-value-limited, dynamic) and exhaust copies split
+between phases (one used before the active player's cleanup), and Sen Triplets' upkeep trigger during another
+player's phase. **Still open:**
 `Permanent.tappedPermanentsForAbilityThisTurn` (Vodalian War Machine's "Merfolk tapped this turn" record; it is a
 turn-history record, not an effect, so the Runed Terror ruling about effects ending doesn't settle it — it arguably
 should last the whole turn rather than be split per active player; look for a ruling first), and the remaining
@@ -110,13 +123,10 @@ without merging two equal shields into one, since each shield redirects as its o
 lists modified in place by `replaceAll` (`playerSourceNextDamageShields`, `targetSpellDamagePreventionShields`)
 or whose order matters and is restored with `addFirst` (`sourceNextDamageToAnyTargetShields`,
 `sourcePermanentAndControllerNextDamageRedirectShields`), the
-remaining "this turn" rule stores (Sen Triplets' controller ids, the copy counters paired with source maps —
-`pendingNextInstantSorceryCopyThisTurnCount` with its `Source` / `SingleTriggerCount` / `MaxManaValues` /
-`DynamicCounts` / `DynamicSources`, `pendingNextLoyaltyAbilityCopyThisTurnCount` with its sources and
-`pendingNextSpellOrLoyaltyCopyLinkedThisTurn`, `pendingNextExhaustAbilityCopyThisTurnCount` with its sources — which
-need each count and its source entries split together, the per-spell
-entry riders `spellAdditionalEnterCounters` / `spellEntryCounters` / `spellGrantedSubtypesOnEntry` /
-`spellsGranted*OnEntry`), the `graveyardPlayPermissionsExpireEndOfTurn` / `exilePlayPermissionsExpireEndOfTurn`
+per-spell entry riders `spellAdditionalEnterCounters` / `spellEntryCounters` / `spellGrantedSubtypesOnEntry` /
+`spellsGranted*OnEntry` (keyed by a spell's card id and consumed when it enters; they likely never outlive the spell,
+since a step ends only once the stack is empty, so check whether any can be left pending across a cleanup before
+splitting them), the `graveyardPlayPermissionsExpireEndOfTurn` / `exilePlayPermissionsExpireEndOfTurn`
 indirections (they remove entries from the permanent permission maps, so they need the expiring card ids split rather
 than a plain store), `exilePlayUntilEndOfTurnGrantsBySource`, the current-turn `exilePlayAnyManaType` riders,
 `outsideGamePlayPermissions` and

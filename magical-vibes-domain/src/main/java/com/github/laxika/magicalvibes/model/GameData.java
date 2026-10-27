@@ -2606,6 +2606,13 @@ public class GameData {
     /** The card and permanent (null for a non-permanent source) that granted a pending copy. */
     public record PendingCopySource(Card card, UUID sourcePermanentId) {}
 
+    /**
+     * One pending dynamic-count instant/sorcery copy trigger: an element of
+     * {@link #pendingNextInstantSorceryCopyThisTurnDynamicCounts} paired with the source card at the same index of
+     * {@link #pendingNextInstantSorceryCopyThisTurnDynamicSources} ({@code null} when none was recorded).
+     */
+    public record PendingDynamicCopy(DynamicAmount count, Card source) {}
+
     /** Permanents whose source subtype choice is temporary and expires during cleanup. */
     public final Set<UUID> temporaryChosenSubtypePermanentIds = ConcurrentHashMap.newKeySet();
 
@@ -4817,8 +4824,9 @@ public class GameData {
      * "this turn" casting permissions and granted alternative costs, the unpaired pending "next spell / ability this
      * turn" copy, Storm, uncounterable and any-mana-type grants, the "this turn" delayed copy / draw / untap
      * triggers, the source-linked exile and foretold cast grants, the whole-turn chosen-source prevention with its
-     * colour and life-gain riders, the one-shot "next damage from a matching source" shields and the pending extra
-     * counters for the next enchantment creature entry), which the cleanup step clears
+     * colour and life-gain riders, the one-shot "next damage from a matching source" shields, the pending extra
+     * counters for the next enchantment creature entry, the pending "next instant or sorcery / loyalty / exhaust
+     * ability this turn" copy triggers with their sources, and Sen Triplets' hand permission), which the cleanup step clears
      * (CR 514.2). Used to split that state between the players active when it was created under Runed Terror's sequential phases.
      */
     public EndOfTurnStateShare captureGameEndOfTurnState() {
@@ -5048,6 +5056,32 @@ public class GameData {
                     listMapEntries(playerNextDamageFromMatchingSourcesPrevented);
             case GAME_NEXT_ENCHANTMENT_CREATURE_ENTRY_ADDITIONAL_COUNTERS ->
                     new HashMap<>(pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn);
+            case GAME_NEXT_INSTANT_SORCERY_COPIES -> new HashMap<>(pendingNextInstantSorceryCopyThisTurnCount);
+            case GAME_NEXT_INSTANT_SORCERY_COPY_SINGLE_TRIGGERS ->
+                    new HashMap<>(pendingNextInstantSorceryCopyThisTurnSingleTriggerCount);
+            case GAME_NEXT_INSTANT_SORCERY_COPY_SOURCES ->
+                    Set.copyOf(plainMapEntries(pendingNextInstantSorceryCopyThisTurnCountSource));
+            case GAME_NEXT_INSTANT_SORCERY_COPY_MAX_MANA_VALUES ->
+                    listMapEntries(pendingNextInstantSorceryCopyThisTurnMaxManaValues);
+            case GAME_NEXT_INSTANT_SORCERY_DYNAMIC_COPIES -> {
+                List<Map.Entry<UUID, PendingDynamicCopy>> entries = new ArrayList<>();
+                pendingNextInstantSorceryCopyThisTurnDynamicCounts.forEach((playerId, counts) -> {
+                    List<Card> sources = pendingNextInstantSorceryCopyThisTurnDynamicSources
+                            .getOrDefault(playerId, List.of());
+                    for (int i = 0; i < counts.size(); i++) {
+                        entries.add(Map.entry(playerId,
+                                new PendingDynamicCopy(counts.get(i), i < sources.size() ? sources.get(i) : null)));
+                    }
+                });
+                yield entries;
+            }
+            case GAME_NEXT_LOYALTY_ABILITY_COPIES -> new HashMap<>(pendingNextLoyaltyAbilityCopyThisTurnCount);
+            case GAME_NEXT_LOYALTY_ABILITY_COPY_SOURCES -> listMapEntries(pendingNextLoyaltyAbilityCopySourcesThisTurn);
+            case GAME_NEXT_SPELL_OR_LOYALTY_COPY_LINKED -> pendingNextSpellOrLoyaltyCopyLinkedThisTurn;
+            case GAME_NEXT_EXHAUST_ABILITY_COPIES -> new HashMap<>(pendingNextExhaustAbilityCopyThisTurnCount);
+            case GAME_NEXT_EXHAUST_ABILITY_COPY_SOURCES -> listMapEntries(pendingNextExhaustAbilityCopySourcesThisTurn);
+            case GAME_SEN_TRIPLETS_HAND_PERMISSION -> senControllerPlayerId == null || senControlledPlayerId == null
+                    ? null : Map.entry(senControllerPlayerId, senControlledPlayerId);
             default -> null;
         };
     }
@@ -5343,6 +5377,39 @@ public class GameData {
                     playerNextDamageFromMatchingSourcesPrevented, (List<Map.Entry<UUID, PermanentPredicate>>) value);
             case GAME_NEXT_ENCHANTMENT_CREATURE_ENTRY_ADDITIONAL_COUNTERS ->
                     addCounts(pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn, (Map<UUID, Integer>) value);
+            case GAME_NEXT_INSTANT_SORCERY_COPIES ->
+                    addCounts(pendingNextInstantSorceryCopyThisTurnCount, (Map<UUID, Integer>) value);
+            case GAME_NEXT_INSTANT_SORCERY_COPY_SINGLE_TRIGGERS ->
+                    addCounts(pendingNextInstantSorceryCopyThisTurnSingleTriggerCount, (Map<UUID, Integer>) value);
+            case GAME_NEXT_INSTANT_SORCERY_COPY_SOURCES -> ((Set<Map.Entry<UUID, Card>>) value).forEach(entry ->
+                    pendingNextInstantSorceryCopyThisTurnCountSource.putIfAbsent(entry.getKey(), entry.getValue()));
+            case GAME_NEXT_INSTANT_SORCERY_COPY_MAX_MANA_VALUES -> ((List<Map.Entry<UUID, Integer>>) value)
+                    .forEach(entry -> pendingNextInstantSorceryCopyThisTurnMaxManaValues
+                            .computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(entry.getValue()));
+            case GAME_NEXT_INSTANT_SORCERY_DYNAMIC_COPIES -> ((List<Map.Entry<UUID, PendingDynamicCopy>>) value)
+                    .forEach(entry -> {
+                        pendingNextInstantSorceryCopyThisTurnDynamicCounts
+                                .computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(entry.getValue().count());
+                        pendingNextInstantSorceryCopyThisTurnDynamicSources
+                                .computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(entry.getValue().source());
+                    });
+            case GAME_NEXT_LOYALTY_ABILITY_COPIES ->
+                    addCounts(pendingNextLoyaltyAbilityCopyThisTurnCount, (Map<UUID, Integer>) value);
+            case GAME_NEXT_LOYALTY_ABILITY_COPY_SOURCES -> ((List<Map.Entry<UUID, PendingCopySource>>) value)
+                    .forEach(entry -> pendingNextLoyaltyAbilityCopySourcesThisTurn
+                            .computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(entry.getValue()));
+            case GAME_NEXT_SPELL_OR_LOYALTY_COPY_LINKED ->
+                    pendingNextSpellOrLoyaltyCopyLinkedThisTurn.addAll((Set<UUID>) value);
+            case GAME_NEXT_EXHAUST_ABILITY_COPIES ->
+                    addCounts(pendingNextExhaustAbilityCopyThisTurnCount, (Map<UUID, Integer>) value);
+            case GAME_NEXT_EXHAUST_ABILITY_COPY_SOURCES -> ((List<Map.Entry<UUID, PendingCopySource>>) value)
+                    .forEach(entry -> pendingNextExhaustAbilityCopySourcesThisTurn
+                            .computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(entry.getValue()));
+            case GAME_SEN_TRIPLETS_HAND_PERMISSION -> {
+                Map.Entry<UUID, UUID> permission = (Map.Entry<UUID, UUID>) value;
+                senControllerPlayerId = permission.getKey();
+                senControlledPlayerId = permission.getValue();
+            }
             default -> {
             }
         }

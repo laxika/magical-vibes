@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.cards.s.Skullcrack;
 import com.github.laxika.magicalvibes.cards.s.SkeletonScavengers;
 import com.github.laxika.magicalvibes.cards.s.SoldeviSentry;
 import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
+import com.github.laxika.magicalvibes.cards.s.SenTriplets;
 import com.github.laxika.magicalvibes.cards.t.TitanicGrowth;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.cards.z.ZameckGuildmage;
@@ -45,6 +46,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -63,7 +65,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         Microscope.class, DarksteelCitadel.class, BlindFury.class, Overblaze.class, GrizzlyBears.class,
         ZameckGuildmage.class, DueRespect.class, AngelsGrace.class, AngelOfGrace.class, IrencragFeat.class,
         Comeuppance.class, Inkshield.class, AegisOfHonor.class, Shock.class, Quicken.class, Divination.class,
-        PastInFlames.class, Overmaster.class, AuriokReplica.class})
+        PastInFlames.class, Overmaster.class, AuriokReplica.class, RepeatedReverberation.class,
+        SenTriplets.class})
 class RunedTerrorTest extends BaseCardTest {
 
     @Test
@@ -1048,6 +1051,158 @@ class RunedTerrorTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gd.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn).isEmpty();
+    }
+
+    @Test
+    void repeatedReverberationFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        harness.setHand(player2, List.of(new RepeatedReverberation()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0);
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).containsEntry(player2.getId(), 2);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).containsEntry(player2.getId(), 2);
+        assertThat(gd.pendingNextLoyaltyAbilityCopyThisTurnCount).containsEntry(player2.getId(), 2);
+        assertThat(gd.pendingNextLoyaltyAbilityCopySourcesThisTurn.get(player2.getId())).hasSize(2)
+                .allMatch(source -> source.card() instanceof RepeatedReverberation);
+        assertThat(gd.pendingNextSpellOrLoyaltyCopyLinkedThisTurn).containsExactly(player2.getId());
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).isEmpty();
+        assertThat(gd.pendingNextLoyaltyAbilityCopyThisTurnCount).isEmpty();
+        assertThat(gd.pendingNextLoyaltyAbilityCopySourcesThisTurn).isEmpty();
+        assertThat(gd.pendingNextSpellOrLoyaltyCopyLinkedThisTurn).isEmpty();
+    }
+
+    @Test
+    void activePlayersOwnRepeatedReverberationEndsAtTheirCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new RepeatedReverberation()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0);
+        assertThat(gd.pendingNextLoyaltyAbilityCopyThisTurnCount).containsEntry(player1.getId(), 2);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).isEmpty();
+        assertThat(gd.pendingNextLoyaltyAbilityCopyThisTurnCount).isEmpty();
+        assertThat(gd.pendingNextLoyaltyAbilityCopySourcesThisTurn).isEmpty();
+        assertThat(gd.pendingNextSpellOrLoyaltyCopyLinkedThisTurn).isEmpty();
+    }
+
+    @Test
+    void pendingInstantSorceryCopyTriggersAreSplitBetweenTheActivePlayersTheyWereCreatedUnder() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card firstSource = new GrizzlyBears();
+        Card secondSource = new Shock();
+        Fixed firstDynamic = new Fixed(2);
+        Fixed secondDynamic = new Fixed(3);
+        gd.pendingNextInstantSorceryCopyThisTurnCount.merge(player1.getId(), 1, Integer::sum);
+        gd.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.merge(player1.getId(), 1, Integer::sum);
+        gd.pendingNextInstantSorceryCopyThisTurnCountSource.put(player1.getId(), firstSource);
+        gd.pendingNextInstantSorceryCopyThisTurnMaxManaValues
+                .computeIfAbsent(player1.getId(), id -> new java.util.ArrayList<>()).add(3);
+        gd.pendingNextInstantSorceryCopyThisTurnDynamicCounts
+                .computeIfAbsent(player1.getId(), id -> new java.util.ArrayList<>()).add(firstDynamic);
+        gd.pendingNextInstantSorceryCopyThisTurnDynamicSources
+                .computeIfAbsent(player1.getId(), id -> new java.util.ArrayList<>()).add(firstSource);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        gd.pendingNextInstantSorceryCopyThisTurnCount.merge(player1.getId(), 1, Integer::sum);
+        gd.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.merge(player1.getId(), 1, Integer::sum);
+        gd.pendingNextInstantSorceryCopyThisTurnCountSource.put(player1.getId(), secondSource);
+        gd.pendingNextInstantSorceryCopyThisTurnMaxManaValues.get(player1.getId()).add(2);
+        gd.pendingNextInstantSorceryCopyThisTurnDynamicCounts.get(player1.getId()).add(secondDynamic);
+        gd.pendingNextInstantSorceryCopyThisTurnDynamicSources.get(player1.getId()).add(secondSource);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).containsExactly(Map.entry(player1.getId(), 1));
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount)
+                .containsExactly(Map.entry(player1.getId(), 1));
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCountSource)
+                .containsExactly(Map.entry(player1.getId(), secondSource));
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnMaxManaValues.get(player1.getId())).containsExactly(2);
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnDynamicCounts.get(player1.getId()))
+                .containsExactly(secondDynamic);
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnDynamicSources.get(player1.getId()))
+                .containsExactly(secondSource);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).isEmpty();
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount).isEmpty();
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCountSource).isEmpty();
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnMaxManaValues).isEmpty();
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnDynamicCounts).isEmpty();
+        assertThat(gd.pendingNextInstantSorceryCopyThisTurnDynamicSources).isEmpty();
+    }
+
+    @Test
+    void pendingExhaustCopyFromOtherPlayersPhaseOutlivesActivePlayersCleanupUnlessUsed() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        var ownSource = new GameData.PendingCopySource(new GrizzlyBears(), null);
+        gd.pendingNextExhaustAbilityCopyThisTurnCount.merge(player1.getId(), 1, Integer::sum);
+        gd.pendingNextExhaustAbilityCopySourcesThisTurn
+                .computeIfAbsent(player1.getId(), id -> new java.util.ArrayList<>()).add(ownSource);
+        gs.advanceStep(gd);
+        var otherSource = new GameData.PendingCopySource(new Shock(), null);
+        gd.pendingNextExhaustAbilityCopyThisTurnCount.merge(player1.getId(), 1, Integer::sum);
+        gd.pendingNextExhaustAbilityCopySourcesThisTurn.get(player1.getId()).add(otherSource);
+        gd.pendingNextExhaustAbilityCopyThisTurnCount.merge(player2.getId(), 1, Integer::sum);
+        gd.pendingNextExhaustAbilityCopySourcesThisTurn
+                .computeIfAbsent(player2.getId(), id -> new java.util.ArrayList<>()).add(otherSource);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        gd.pendingNextExhaustAbilityCopyThisTurnCount.remove(player2.getId());
+        gd.pendingNextExhaustAbilityCopySourcesThisTurn.remove(player2.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.pendingNextExhaustAbilityCopyThisTurnCount).containsExactly(Map.entry(player1.getId(), 1));
+        assertThat(gd.pendingNextExhaustAbilityCopySourcesThisTurn)
+                .containsExactly(Map.entry(player1.getId(), List.of(otherSource)));
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.pendingNextExhaustAbilityCopyThisTurnCount).isEmpty();
+        assertThat(gd.pendingNextExhaustAbilityCopySourcesThisTurn).isEmpty();
+    }
+
+    @Test
+    void senTripletsHandPermissionFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.addToBattlefield(player2, new SenTriplets());
+        harness.setHand(player2, List.of());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.currentStep).isEqualTo(TurnStep.UNTAP);
+        gs.advanceStep(gd);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.UPKEEP);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+        assertThat(gd.canPlayFromHandOf(player2.getId(), player1.getId())).isTrue();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.canPlayFromHandOf(player2.getId(), player1.getId())).isTrue();
+        assertThat(gd.playersSilencedThisTurn).containsExactly(player1.getId());
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.senControllerPlayerId).isNull();
+        assertThat(gd.senControlledPlayerId).isNull();
+        assertThat(gd.playersSilencedThisTurn).isEmpty();
     }
 
     private void castQuicken(Player caster) {

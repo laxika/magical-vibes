@@ -37,6 +37,12 @@ public class CopyNextInstantOrSorceryCastThisTurnManaAbilityEffectHandler implem
             gameData.pendingNextInstantSorceryCopyThisTurnDynamicCounts
                     .computeIfAbsent(playerId, ignored -> new ArrayList<>())
                     .add(copyEffect.dynamicCopyCount());
+            gameData.pendingNextInstantSorceryCopyThisTurnDynamicSources
+                    .computeIfAbsent(playerId, ignored -> new ArrayList<>())
+                    .add(permanent != null ? permanent.getCard() : null);
+            log.info("Game {} - {} will copy their next instant or sorcery spell this turn",
+                    gameData.id, playerId);
+            return;
         } else if (copyEffect.maxManaValue() == null) {
             resolve(gameData, playerId, player, permanent, manaMultiplier, creatureSource);
             return;

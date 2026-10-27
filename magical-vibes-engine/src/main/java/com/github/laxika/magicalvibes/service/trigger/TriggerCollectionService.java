@@ -1666,6 +1666,7 @@ public class TriggerCollectionService {
                     for (int dynamicIndex = 0; dynamicIndex < pendingDynamicCounts.size(); dynamicIndex++) {
                         DynamicAmount dynamicCount = pendingDynamicCounts.get(dynamicIndex);
                         Card triggerSource = dynamicIndex < dynamicSources.size()
+                                && dynamicSources.get(dynamicIndex) != null
                                 ? dynamicSources.get(dynamicIndex) : spellCard;
                         // The delayed trigger always triggers; how many copies it makes is counted as it resolves.
                         gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
