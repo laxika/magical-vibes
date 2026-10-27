@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AmuletOfQuozAnteEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -25,12 +26,13 @@ import org.springframework.stereotype.Component;
  *
  * <p>The targeted opponent is the decision maker and is prompted via the may-ability system (the
  * accept/decline branch lives in {@code AmuletOfQuozAnteHandler}). An opponent with an empty library
- * has no top card to ante, so they can't ante and the coin flip happens immediately without a prompt.
+ * has no top card to ante, so they can't ante and the coin flip happens immediately without a prompt; that flip
+ * is the first thing the effect does, so a Krark's Thumb flip whose results disagree can stop it.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class AmuletOfQuozAnteEffectHandler implements NormalEffectHandlerBean {
+public class AmuletOfQuozAnteEffectHandler implements NormalEffectHandlerBean, ChoosesCoinFlipResultsFirst {
 
     private final GameOutcomeService gameOutcomeService;
     private final GameLogService gameLogService;

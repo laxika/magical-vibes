@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GameOfChaosEffect;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,11 +17,14 @@ import org.springframework.stereotype.Component;
  *
  * <p>Marked {@link AsksDeathReplacementsFirst}: its only change before the life swap is the coin flip, whose result
  * {@link GameOfChaosSupport#flipRound} keeps until the swap, so the loser's Lich's Duel Mastery sacrifice can be
- * asked about (CR 616.1) and the effect resolved again without flipping again.
+ * asked about (CR 616.1) and the effect resolved again without flipping again. Marked
+ * {@link ChoosesCoinFlipResultsFirst} too: the flip is the first thing it does, so a Krark's Thumb flip whose results
+ * disagree stops it until the controller chooses the kept result.
  */
 @Component
 @RequiredArgsConstructor
-public class GameOfChaosEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
+public class GameOfChaosEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst,
+        ChoosesCoinFlipResultsFirst {
 
     private final GameOfChaosSupport gameOfChaosSupport;
 

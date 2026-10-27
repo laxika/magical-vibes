@@ -26,7 +26,9 @@ import java.util.UUID;
 
 /**
  * Resolves {@link RiskyMoveEffect}. When the creature and opponent need no choice, the coin flip is the
- * first thing the effect does, so a Krark's Thumb choice on it can stop the effect.
+ * first thing the effect does, so a Krark's Thumb choice on it can stop the effect. Otherwise the flip is the first
+ * thing the completion of the last of those choices does, so a Krark's Thumb choice stops that completion instead and
+ * the same answer is completed again with the kept result.
  */
 @Component
 @RequiredArgsConstructor
@@ -75,7 +77,14 @@ public class RiskyMoveEffectHandler implements NormalEffectHandlerBean, ChoosesC
     }
 
     public void completeCreatureChoice(GameData gameData, UUID creatureId,
-                                       PermanentChoiceContext.RiskyMoveCreatureChoice context) {
+                                       PermanentChoiceContext.RiskyMoveCreatureChoice context,
+                                       GameData.CoinFlipChoiceReplay replay) {
+        coinFlipService.answerChoosingResultsFirst(gameData,
+                () -> continueWithChosenCreature(gameData, creatureId, context), replay);
+    }
+
+    private void continueWithChosenCreature(GameData gameData, UUID creatureId,
+                                            PermanentChoiceContext.RiskyMoveCreatureChoice context) {
         Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
         if (creature == null
                 || !context.controllerId().equals(gameQueryService.findPermanentController(gameData, creatureId))
@@ -96,14 +105,17 @@ public class RiskyMoveEffectHandler implements NormalEffectHandlerBean, ChoosesC
     }
 
     public void completeOpponentChoice(GameData gameData, UUID opponentId,
-                                       PermanentChoiceContext.RiskyMoveOpponentChoice context) {
+                                       PermanentChoiceContext.RiskyMoveOpponentChoice context,
+                                       GameData.CoinFlipChoiceReplay replay) {
         if (!isPlayer(gameData, opponentId) || opponentId.equals(context.controllerId())) {
             throw new IllegalStateException("Chosen player is not an opponent");
         }
 
-        flipAndApply(gameData, context.sourceCard().getName(), context.controllerId(),
-                context.creatureId(), opponentId);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        coinFlipService.answerChoosingResultsFirst(gameData, () -> {
+            flipAndApply(gameData, context.sourceCard().getName(), context.controllerId(),
+                    context.creatureId(), opponentId);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }, replay);
     }
 
     private void continueAfterCreatureChoice(GameData gameData, Card sourceCard,

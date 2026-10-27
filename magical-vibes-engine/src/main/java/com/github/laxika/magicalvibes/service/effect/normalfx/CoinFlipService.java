@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.EdgarKingOfFigaroEffect;
 import com.github.laxika.magicalvibes.model.effect.KrarksThumbEffect;
 import com.github.laxika.magicalvibes.model.effect.PokeyTheScallywaggEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
@@ -32,7 +35,12 @@ import org.springframework.stereotype.Component;
  * asked which result to keep, and the handler is stopped with {@link CoinFlipChoicePending} and later
  * resolved again: it reads the recorded flips back with the kept results instead of flipping anew.
  * Each coin-flip call ({@link #flip}, {@link #flipCoins}, {@link #flipEach}) closes that window, and
- * only a checkpoint of the handler's own effect reopens it. Anywhere else the heads result is kept.</p>
+ * only a checkpoint of the handler's own effect reopens it.</p>
+ *
+ * <p>A player's answer whose completion flips a coin before changing anything else (a "flip again?" answer, a
+ * choice made before a flip) opens the same window with {@link #answerChoosingResultsFirst}; when a flip stops it, the
+ * answer is completed again by {@link #completeAgainAfterResultChoices} once every kept result is chosen. Anywhere
+ * else the heads result is kept.</p>
  */
 @Component
 @RequiredArgsConstructor
@@ -47,6 +55,14 @@ public class CoinFlipService {
     @Autowired
     @Lazy
     private InteractionHandlerRegistry interactionHandlerRegistry;
+
+    @Autowired
+    @Lazy
+    private MayEffectHandlerRegistry mayEffectHandlerRegistry;
+
+    @Autowired
+    @Lazy
+    private InputCompletionService inputCompletionService;
 
     public CoinFlipResult flip(GameData gameData, UUID playerId) {
         return flipCoins(gameData, playerId, 1).getFirst();
@@ -94,6 +110,73 @@ public class CoinFlipService {
     /** Where the handler resolving {@code effect} resumes: its last checkpoint's point, or 0. */
     public int resumePoint(GameData gameData, CardEffect effect) {
         return effect != null && gameData.coinFlipCheckpointEffect == effect ? gameData.coinFlipResumePoint : 0;
+    }
+
+    /**
+     * Runs {@code completion}, the completion of a player's answer whose first coin-flip call comes before anything
+     * else it changes, with the Krark's Thumb choice window open. When a flip of that call stops it, {@code replay} is
+     * stored and the answer is completed again through {@link #completeAgainAfterResultChoices} once every kept result
+     * is chosen; that run reads the recorded flips back. The window is closed when this returns.
+     *
+     * @return {@code true} when the completion stopped to ask
+     */
+    public boolean answerChoosingResultsFirst(GameData gameData, Runnable completion,
+                                              GameData.CoinFlipChoiceReplay replay) {
+        boolean rerunCurrentEffect = gameData.rerunCurrentEffectAfterInteraction;
+        gameData.coinFlipChoicesCanRerunEffect = true;
+        gameData.coinFlipCheckpointEffect = null;
+        gameData.replayedCoinFlips = 0;
+        boolean stopped = false;
+        try {
+            completion.run();
+        } catch (CoinFlipChoicePending pending) {
+            stopped = true;
+            // A parked stack resolution stays as it is; only this answer is completed again.
+            gameData.rerunCurrentEffectAfterInteraction = rerunCurrentEffect;
+            gameData.pendingCoinFlipChoiceReplay = replay;
+            inputCompletionService.publishStateAfterInput(gameData);
+        } finally {
+            gameData.coinFlipChoicesCanRerunEffect = false;
+            if (!stopped) {
+                gameData.recordedCoinFlips.clear();
+                gameData.replayedCoinFlips = 0;
+            }
+        }
+        return stopped;
+    }
+
+    /**
+     * Completes the answer stopped by {@link #answerChoosingResultsFirst} again, once every Krark's Thumb result it
+     * asked about is chosen.
+     *
+     * @return {@code false} when no answer is waiting
+     */
+    public boolean completeAgainAfterResultChoices(GameData gameData) {
+        GameData.CoinFlipChoiceReplay replay = gameData.pendingCoinFlipChoiceReplay;
+        if (replay == null) {
+            return false;
+        }
+        gameData.pendingCoinFlipChoiceReplay = null;
+        switch (replay) {
+            case GameData.MayAnswerReplay answerReplay ->
+                    mayEffectHandlerRegistry.getHandler(answerReplay.ability().effects().getFirst())
+                            .handle(gameData, answerReplay.player(), answerReplay.accepted(), answerReplay.ability());
+            case GameData.InteractionAnswerReplay answerReplay -> {
+                gameData.interaction.beginInteraction(answerReplay.interaction());
+                interactionHandlerRegistry.dispatchAnswer(gameData, answerReplay.player(),
+                        (InteractionAnswer) answerReplay.answer());
+            }
+        }
+        return true;
+    }
+
+    /**
+     * {@code true} while the completion of an answer is completed again after its Krark's Thumb choices and has not
+     * yet read back all its recorded flips, so a change it made before its first flip (a log line) is not repeated.
+     */
+    public boolean replaysRecordedFlips(GameData gameData) {
+        return gameData.coinFlipChoicesCanRerunEffect
+                && gameData.replayedCoinFlips < gameData.recordedCoinFlips.size();
     }
 
     private static boolean consumeChoiceWindow(GameData gameData) {

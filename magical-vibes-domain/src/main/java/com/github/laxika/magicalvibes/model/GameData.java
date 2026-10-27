@@ -2984,6 +2984,17 @@ public class GameData {
     /** Where {@link #coinFlipCheckpointEffect} resumes when resolved again after a Krark's Thumb choice. */
     public int coinFlipResumePoint;
     /**
+     * A player's answer whose completion flips a coin before changing anything else and was stopped by a Krark's Thumb
+     * flip whose results disagree (a "flip again?" answer, a choice made before a flip). Once every kept result is
+     * chosen, the same answer is completed again and its flips read {@link #recordedCoinFlips} back. {@code null} when
+     * no completion is waiting.
+     */
+    public CoinFlipChoiceReplay pendingCoinFlipChoiceReplay;
+
+    /** A player's answer to complete again once the Krark's Thumb results its coin flips asked about are chosen. */
+    public sealed interface CoinFlipChoiceReplay permits MayAnswerReplay, InteractionAnswerReplay {
+    }
+    /**
      * The step (the effect of the resolving stack entry's effect list) whose handler is running and may end on a
      * pending departure batch, or {@code null}. Only that step's own departure may pause: a handler it dispatches
      * for a nested effect, or a second departure of the same step, sees a different value (CR 608.2c).
@@ -3324,7 +3335,7 @@ public class GameData {
      * it was accepted.
      */
     public record MayAnswerReplay(Player player, PendingMayAbility ability, boolean accepted)
-            implements DeathReplacementChoiceReplay {
+            implements DeathReplacementChoiceReplay, CoinFlipChoiceReplay {
     }
 
     /**
@@ -3342,7 +3353,7 @@ public class GameData {
      * is the engine's interaction answer record, which this module can't name.
      */
     public record InteractionAnswerReplay(Player player, PendingInteraction interaction, Object answer)
-            implements DeathReplacementChoiceReplay {
+            implements DeathReplacementChoiceReplay, CoinFlipChoiceReplay {
     }
     /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
      *  gain permission to play that card for as long as it remains exiled (e.g. Fiend of the Shadows). Null when
@@ -4498,7 +4509,7 @@ public class GameData {
                     "resolvedMayAccepted", "resolvedMayTargetingEntry",
                     "rerunCurrentEffectAfterInteraction", "deathReplacementsCanRerunEffect", "stepDepartureEffect",
                     "coinFlipChoicesCanRerunEffect", "recordedCoinFlips", "replayedCoinFlips",
-                    "coinFlipCheckpointEffect", "coinFlipResumePoint",
+                    "coinFlipCheckpointEffect", "coinFlipResumePoint", "pendingCoinFlipChoiceReplay",
                     "chosenDeathReplacementsForRerun", "rerunMayLibraryChoices", "pendingDeathReplacementChoiceReplay",
                     "deferPlayerLossCheck",
                     "effectResolutionDepth", "restartTurnRequested", "simulation",
@@ -11022,6 +11033,7 @@ public class GameData {
         copy.replayedCoinFlips = this.replayedCoinFlips;
         copy.coinFlipCheckpointEffect = this.coinFlipCheckpointEffect;
         copy.coinFlipResumePoint = this.coinFlipResumePoint;
+        copy.pendingCoinFlipChoiceReplay = this.pendingCoinFlipChoiceReplay;
         copy.stepDepartureEffect = this.stepDepartureEffect;
         copy.chosenDeathReplacementsForRerun.putAll(this.chosenDeathReplacementsForRerun);
         copy.rerunMayLibraryChoices.addAll(this.rerunMayLibraryChoices);

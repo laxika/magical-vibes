@@ -1,14 +1,21 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
+import com.github.laxika.magicalvibes.cards.a.AmuletOfQuoz;
 import com.github.laxika.magicalvibes.cards.c.CrazedFirecat;
+import com.github.laxika.magicalvibes.cards.c.CrookedScales;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.f.FieryGambit;
+import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.g.GameOfChaos;
 import com.github.laxika.magicalvibes.cards.g.GoblinAssassin;
 import com.github.laxika.magicalvibes.cards.m.ManaClash;
 import com.github.laxika.magicalvibes.cards.m.ManaCrypt;
+import com.github.laxika.magicalvibes.cards.r.RiskyMove;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,7 +35,8 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 @CardUsed({KrarksThumb.class, FieryGambit.class, AlphaMyr.class, ManaCrypt.class, CrazedFirecat.class,
-        ManaClash.class, GoblinAssassin.class, FugitiveWizard.class})
+        ManaClash.class, GoblinAssassin.class, FugitiveWizard.class, GameOfChaos.class, RiskyMove.class,
+        ElvishWarrior.class, AmuletOfQuoz.class, CrookedScales.class, FreshVolunteers.class})
 class KrarksThumbTest extends BaseCardTest {
 
     @Test
@@ -238,6 +246,196 @@ class KrarksThumbTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Goblin Assassin");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
                 .filter(log -> log.contains("coin flip for Goblin Assassin"))).hasSize(2);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"Heads, true", "Tails, false"})
+    @DisplayName("Fiery Gambit's flip after \"flip again\" waits for the kept result before it is logged")
+    void fieryGambitFlipAgainAsksForKeptResult(String kept, boolean offeredToFlipAgain) {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        harness.addToBattlefield(player1, new KrarksThumb());
+        harness.setHand(player1, List.of(new FieryGambit()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        try (var coins = mockFlips(true, true, true, false)) {
+            harness.castAndResolveSorcery(player1, 0, target.getId());
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+            assertThat(coinFlipLogs()).hasSize(1);
+            harness.handleListChoice(player1, kept);
+        }
+
+        assertThat(coinFlipLogs()).hasSize(2);
+        assertThat(coinFlipLogs().getLast())
+                .contains(kept.equals("Heads") ? "wins the coin flip" : "loses the coin flip");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null)
+                .isEqualTo(offeredToFlipAgain);
+    }
+
+    @Test
+    @DisplayName("Game of Chaos's first flip waits for the kept result before any life changes")
+    void gameOfChaosFirstFlipAsksForKeptResult() {
+        harness.addToBattlefield(player1, new KrarksThumb());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new GameOfChaos()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        try (var coins = mockFlips(true, false)) {
+            harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+            harness.assertLife(player1, 20);
+            harness.assertLife(player2, 20);
+            harness.handleListChoice(player1, "Tails");
+        }
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 21);
+        assertThat(gameOfChaosFlipLogs()).singleElement().asString().contains("loses the flip (stakes 1)");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Game of Chaos's \"flip again\" waits for the kept result and swaps the doubled stake once")
+    void gameOfChaosFlipAgainAsksForKeptResult() {
+        harness.addToBattlefield(player1, new KrarksThumb());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new GameOfChaos()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        // First flip: both heads (controller wins). Second flip: split, kept as tails.
+        try (var coins = mockFlips(true, true, false, true)) {
+            harness.castAndResolveSorcery(player1, 0, player2.getId());
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+            harness.assertLife(player1, 21);
+            harness.assertLife(player2, 19);
+            assertThat(gameOfChaosFlipLogs()).hasSize(1);
+            harness.handleListChoice(player1, "Tails");
+        }
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 21);
+        assertThat(gameOfChaosFlipLogs()).hasSize(2);
+        assertThat(gameOfChaosFlipLogs().getLast()).contains("loses the flip (stakes 2)");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"Heads, true", "Tails, false"})
+    @DisplayName("Risky Move's flip after its creature choice waits for the kept result")
+    void riskyMoveFlipAfterCreatureChoiceAsksForKeptResult(String kept, boolean keepsCreature) {
+        harness.addToBattlefield(player1, new RiskyMove());
+        harness.addToBattlefield(player2, new KrarksThumb());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
+        harness.addToBattlefield(player2, new ElvishWarrior());
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        try (var coins = mockFlips(true, false)) {
+            harness.handlePermanentChosen(player2, chosen.getId());
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player2.getId());
+            assertThat(gameLogContains("coin flip for Risky Move")).isFalse();
+            harness.handleListChoice(player2, kept);
+        }
+
+        assertThat(gd.playerBattlefields.get(player2.getId()).contains(chosen)).isEqualTo(keepsCreature);
+        assertThat(gd.playerBattlefields.get(player1.getId()).contains(chosen)).isEqualTo(!keepsCreature);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
+                .filter(log -> log.contains("coin flip for Risky Move"))).hasSize(1);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"Heads, true", "Tails, false"})
+    @DisplayName("Amulet of Quoz's flip after a declined ante waits for the kept result")
+    void amuletOfQuozDeclinedAnteAsksForKeptResult(String kept, boolean controllerWins) {
+        harness.addToBattlefield(player1, new AmuletOfQuoz());
+        harness.addToBattlefield(player1, new KrarksThumb());
+        advanceToUpkeep(player1);
+        harness.setLibrary(player2, List.of(new AlphaMyr()));
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        try (var coins = mockFlips(true, false)) {
+            harness.handleMayAbilityChosen(player2, false);
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+            assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+            harness.handleListChoice(player1, kept);
+        }
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(controllerWins ? player1.getId() : player2.getId());
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
+                .filter(log -> log.contains("doesn't ante"))).hasSize(1);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
+                .filter(log -> log.contains("coin flip for Amulet of Quoz"))).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Amulet of Quoz's immediate flip against an empty library waits for the kept result")
+    void amuletOfQuozEmptyLibraryAsksForKeptResult() {
+        harness.addToBattlefield(player1, new AmuletOfQuoz());
+        harness.addToBattlefield(player1, new KrarksThumb());
+        advanceToUpkeep(player1);
+        harness.setLibrary(player2, List.of());
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        try (var coins = mockFlips(true, false)) {
+            harness.passBothPriorities();
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+            assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+            harness.handleListChoice(player1, "Tails");
+        }
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Crooked Scales's repeated flip after paying {3} waits for the kept result")
+    void crookedScalesRepeatAsksForKeptResult() {
+        Permanent scales = addCreatureReady(player1, new CrookedScales());
+        harness.addToBattlefield(player1, new KrarksThumb());
+        Permanent ownCreature = addCreatureReady(player1, new FreshVolunteers());
+        Permanent opposingCreature = addCreatureReady(player2, new FreshVolunteers());
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.activateAbilityWithMultiTargets(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(scales), 0,
+                List.of(ownCreature.getId(), opposingCreature.getId()));
+
+        // First flip: both tails (lost). Repeated flip: split, kept as heads.
+        try (var coins = mockFlips(false, false, true, false)) {
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                    .isEqualTo(player1.getId());
+            harness.handleListChoice(player1, "Heads");
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownCreature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opposingCreature);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
+                .filter(log -> log.contains("coin flip for Crooked Scales"))).hasSize(2);
+    }
+
+    private List<String> gameOfChaosFlipLogs() {
+        return gd.gameLog.stream()
+                .map(GameLogEntry::plainText)
+                .filter(log -> log.startsWith("Game of Chaos:"))
+                .toList();
     }
 
     private MockedStatic<ThreadLocalRandom> mockFlips(Boolean first, Boolean... rest) {

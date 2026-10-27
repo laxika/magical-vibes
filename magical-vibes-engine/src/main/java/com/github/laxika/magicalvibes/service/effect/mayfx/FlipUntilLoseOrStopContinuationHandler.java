@@ -7,12 +7,16 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseOrStopContinuationEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.FlipUntilLoseOrStopSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Handles the controller's choice to stop or flip again after a won flip. */
+/**
+ * Handles the controller's choice to stop or flip again after a won flip. Flipping again is the first thing an accepted
+ * answer does, so a Krark's Thumb flip whose results disagree stops it until the controller chooses the kept result.
+ */
 @Component
 @RequiredArgsConstructor
 public class FlipUntilLoseOrStopContinuationHandler implements MayEffectHandlerBean {
@@ -20,6 +24,7 @@ public class FlipUntilLoseOrStopContinuationHandler implements MayEffectHandlerB
     private final FlipUntilLoseOrStopSupport support;
     private final InputCompletionService inputCompletionService;
     private final GameLogService gameLogService;
+    private final CoinFlipService coinFlipService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,6 +45,13 @@ public class FlipUntilLoseOrStopContinuationHandler implements MayEffectHandlerB
             return;
         }
 
+        coinFlipService.answerChoosingResultsFirst(gameData,
+                () -> flipAgain(gameData, ability, continuation),
+                new GameData.MayAnswerReplay(player, ability, true));
+    }
+
+    private void flipAgain(GameData gameData, PendingMayAbility ability,
+                           FlipUntilLoseOrStopContinuationEffect continuation) {
         if (support.flip(gameData, ability.controllerId(), ability.sourceCard().getName())) {
             support.queueContinue(gameData, ability.sourceCard(), ability.controllerId(), ability.targetCardId(),
                     continuation.wins() + 1, continuation.rewards());

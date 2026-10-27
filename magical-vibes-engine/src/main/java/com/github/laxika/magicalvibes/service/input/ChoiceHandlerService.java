@@ -597,7 +597,11 @@ public class ChoiceHandlerService {
             if (coinFlipService.beginNextResultChoice(gameData)) {
                 return;
             }
-            // Every kept result is chosen: the stopped effect resolves again with them.
+            // Every kept result is chosen: the stopped answer is completed again, or the stopped effect resolves
+            // again, with them.
+            if (coinFlipService.completeAgainAfterResultChoices(gameData)) {
+                return;
+            }
             gameData.rerunCurrentEffectAfterInteraction = false;
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;

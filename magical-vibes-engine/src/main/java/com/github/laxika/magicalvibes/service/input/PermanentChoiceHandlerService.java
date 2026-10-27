@@ -824,9 +824,13 @@ public class PermanentChoiceHandlerService {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }
         } else if (context instanceof PermanentChoiceContext.RiskyMoveCreatureChoice riskyMove) {
-            riskyMoveEffectHandler.completeCreatureChoice(gameData, permanentId, riskyMove);
+            riskyMoveEffectHandler.completeCreatureChoice(gameData, permanentId, riskyMove,
+                    new GameData.InteractionAnswerReplay(player, permanentChoice,
+                            new InteractionAnswer.PermanentChosen(permanentId)));
         } else if (context instanceof PermanentChoiceContext.RiskyMoveOpponentChoice riskyMove) {
-            riskyMoveEffectHandler.completeOpponentChoice(gameData, permanentId, riskyMove);
+            riskyMoveEffectHandler.completeOpponentChoice(gameData, permanentId, riskyMove,
+                    new GameData.InteractionAnswerReplay(player, permanentChoice,
+                            new InteractionAnswer.PermanentChosen(permanentId)));
         } else if (context instanceof PermanentChoiceContext.ChooseAnotherPlayerGainsControlOfTargetPermanent chooseAnotherPlayer) {
             battlefieldHandler.handleChooseAnotherPlayerGainsControlOfTargetPermanent(
                     gameData, permanentId, chooseAnotherPlayer);

@@ -37,32 +37,36 @@ flip) and `RiskyMoveEffectHandler` (when no creature/opponent choice is needed) 
 `ChoosesCoinFlipResultsFirst`. Tests in `KrarksThumbTest` (Crazed Firecat, Mana Clash incl. opponent's
 Thumb, Goblin Assassin, Fiery Gambit).
 
+**Progress (2026-10-27, second pass).** Answer completions that flip before changing anything else now
+stop for the choice too: `CoinFlipService.answerChoosingResultsFirst(gameData, completion, replay)` opens the
+window, stores a `GameData.CoinFlipChoiceReplay` (`MayAnswerReplay` / `InteractionAnswerReplay`, now also
+implementing it) in `pendingCoinFlipChoiceReplay` on a stop, and `completeAgainAfterResultChoices` (called by
+`ChoiceHandlerService` after the last kept result) completes the same answer again; `replaysRecordedFlips` lets a
+pre-flip log line skip the rerun. `InputCompletionService` epilogues close the window. Converted: Fiery Gambit's
+"flip again" (`FlipUntilLoseOrStopContinuationHandler`), Game of Chaos (spell handler marked
+`ChoosesCoinFlipResultsFirst`; `GameOfChaosFlipAgainHandler` wraps its Lich's Duel Mastery rerun), Risky Move
+after its creature/opponent choice (replayed as a `PermanentChosen` answer), Amulet of Quoz (empty-library flip
+marked; declined-ante flip wrapped). Crooked Scales's paid repeat already resolves through the stack window and
+asks. Tests in `KrarksThumbTest` for each.
+
 **What remains** (these still keep heads when the physical flips disagree):
-- flips made after a player prompt, outside the stack resolution window: Fiery Gambit's "flip again"
-  continuation (`FlipUntilLoseOrStopContinuationHandler`), Game of Chaos (`GameOfChaosSupport`, both
-  the spell and the flip-again may ability; mind its `gameOfChaosFlipControllerWins` Lich's Duel
-  Mastery rerun), Risky Move after its creature/opponent choice (`completeOpponentChoice`, called from
-  `PermanentChoiceBattlefieldHandlerService`), `AmuletOfQuozAnteEffectHandler`;
-- later flips of handlers marked only `ChoosesCoinFlipResultsFirst` (e.g.
-  `FlipCoinDestroyTargetOrRepeatEffectHandler`'s repeat) — convert them to checkpoints where the state
-  to resume fits in an int;
+- later flips of other handlers marked only `ChoosesCoinFlipResultsFirst` that flip several times with changes in
+  between, if any — audit them and convert to checkpoints where the state to resume fits in an int;
 - nested flips: flips of effects a handler dispatches (payloads of flip-until-lose, per-opponent
   branches, etc.) see a closed window;
-- flips outside stack resolution: `CoinFlipCostSupport` (costs), `FlipCoinOnEnterEffectHandler`
-  (replacement-style entry flips) and `D20RollService`'s coin flips. These need their own pause points
-  outside the parked-resolution mechanism.
+- flips outside stack resolution and answers: `CoinFlipCostSupport` (costs), `FlipCoinOnEnterEffectHandler`
+  (replacement-style entry flips) and `D20RollService`'s coin flips. These need their own pause points.
 
 **Prompt to continue it:**
 
 ```
 Continue missing-features-to-do.md entry 62: extend the Krark's Thumb result choice (journaled
 CoinFlipService flips, ChoosesCoinFlipResultsAtCheckpoints + CoinFlipService.checkpoint/resumePoint,
-CoinFlipChoicePending) to the remaining paths listed in the entry: may-ability continuation flips
-(Fiery Gambit, Game of Chaos), Risky Move after its choices, Amulet of Quoz, later flips of
-first-flip-only handlers, nested flips, coin-flip costs, entry flips and D20RollService. Keep replayed
-flips from repeating logs or triggers. Add Krark's Thumb tests with mocked mixed flips for each.
-Verify every CR number with the rules MCP. Don't run the full test suite; ask me. Don't commit until
-I say so.
+answerChoosingResultsFirst + CoinFlipChoiceReplay for answer completions, CoinFlipChoicePending) to the
+remaining paths listed in the entry: later flips of first-flip-only handlers, nested flips, coin-flip costs,
+entry flips and D20RollService. Keep replayed flips from repeating logs or triggers. Add Krark's Thumb tests
+with mocked mixed flips for each. Verify every CR number with the rules MCP. Don't run the full test suite;
+ask me. Don't commit until I say so.
 ```
 
 ---

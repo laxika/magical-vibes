@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AmuletOfQuozAnteEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AmuletOfQuozAnteEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +22,8 @@ import org.springframework.stereotype.Component;
  * don't, you flip a coin. If you win the flip, that player loses the game. If you lose the flip, you
  * lose the game." The targeted opponent is the decision maker; on accept the top card of their library
  * is anted (removed from the game, modelled as a move to exile) and nothing else happens, on decline
- * the ability's controller flips the coin.
+ * the ability's controller flips the coin. That flip is the first change of a decline, so a Krark's Thumb flip whose
+ * results disagree stops the decline until its controller chooses the kept result.
  */
 @Slf4j
 @Component
@@ -31,6 +33,7 @@ public class AmuletOfQuozAnteHandler implements MayEffectHandlerBean {
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
     private final AmuletOfQuozAnteEffectHandler anteEffectHandler;
+    private final CoinFlipService coinFlipService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,12 +52,18 @@ public class AmuletOfQuozAnteHandler implements MayEffectHandlerBean {
             gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " antes ").card(anted).text(". (").card(ability.sourceCard()).text(")").build());
             log.info("Game {} - {} antes {} to {}", gameData.id, player.getUsername(), anted.getName(),
                     ability.sourceCard().getName());
-        } else {
-            // Declined (or no longer able to ante) — the controller flips the coin.
-            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " doesn't ante. (", ability.sourceCard(), ")"));
-            anteEffectHandler.performFlip(gameData, ability.sourceCard(), controllerId, opponentId);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
         }
 
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        // Declined (or no longer able to ante) — the controller flips the coin.
+        coinFlipService.answerChoosingResultsFirst(gameData, () -> {
+            if (!coinFlipService.replaysRecordedFlips(gameData)) {
+                gameLogService.append(gameData, GameLog.textCardText(
+                        player.getUsername() + " doesn't ante. (", ability.sourceCard(), ")"));
+            }
+            anteEffectHandler.performFlip(gameData, ability.sourceCard(), controllerId, opponentId);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        }, new GameData.MayAnswerReplay(player, ability, accepted));
     }
 }
