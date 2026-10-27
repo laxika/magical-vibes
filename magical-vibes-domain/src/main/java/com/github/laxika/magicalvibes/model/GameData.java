@@ -4816,7 +4816,9 @@ public class GameData {
      * removed whole, the pending "next spell you cast this turn" grants, spell colour overrides, the per-card
      * "this turn" casting permissions and granted alternative costs, the unpaired pending "next spell / ability this
      * turn" copy, Storm, uncounterable and any-mana-type grants, the "this turn" delayed copy / draw / untap
-     * triggers, and the source-linked exile and foretold cast grants), which the cleanup step clears
+     * triggers, the source-linked exile and foretold cast grants, the whole-turn chosen-source prevention with its
+     * colour and life-gain riders, the one-shot "next damage from a matching source" shields and the pending extra
+     * counters for the next enchantment creature entry), which the cleanup step clears
      * (CR 514.2). Used to split that state between the players active when it was created under Runed Terror's sequential phases.
      */
     public EndOfTurnStateShare captureGameEndOfTurnState() {
@@ -5034,6 +5036,18 @@ public class GameData {
             case GAME_EXILE_CAST_PERMISSIONS -> new ArrayList<>(exileCastPermissionsUntilEndOfTurn);
             case GAME_EXILE_CAST_WILDCARD_PERMISSIONS -> new ArrayList<>(exileCastWildcardPermissionsUntilEndOfTurn);
             case GAME_FORETOLD_CARD_CAST_PERMISSIONS -> new ArrayList<>(foretoldCardCastPermissionsThisTurn);
+            case GAME_PLAYER_SOURCE_DAMAGE_PREVENTION_IDS -> mapEntries(playerSourceDamagePreventionIds);
+            case GAME_PLAYER_SOURCE_DAMAGE_PREVENTION_REQUIRED_COLORS -> {
+                Set<Map.Entry<Map.Entry<UUID, UUID>, Set<CardColor>>> entries = new HashSet<>();
+                playerSourceDamagePreventionRequiredColors.forEach((playerId, bySource) -> bySource.forEach(
+                        (sourceId, colors) -> entries.add(Map.entry(Map.entry(playerId, sourceId), Set.copyOf(colors)))));
+                yield entries;
+            }
+            case GAME_PLAYER_SOURCE_DAMAGE_PREVENTION_LIFE_GAIN_IDS -> mapEntries(playerSourceDamagePreventionLifeGainIds);
+            case GAME_PLAYER_NEXT_DAMAGE_FROM_MATCHING_SOURCES_PREVENTED ->
+                    listMapEntries(playerNextDamageFromMatchingSourcesPrevented);
+            case GAME_NEXT_ENCHANTMENT_CREATURE_ENTRY_ADDITIONAL_COUNTERS ->
+                    new HashMap<>(pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn);
             default -> null;
         };
     }
@@ -5316,6 +5330,19 @@ public class GameData {
                     exileCastWildcardPermissionsUntilEndOfTurn.addAll((List<ExileCastWildcardPermission>) value);
             case GAME_FORETOLD_CARD_CAST_PERMISSIONS ->
                     foretoldCardCastPermissionsThisTurn.addAll((List<ForetoldCardCastPermission>) value);
+            case GAME_PLAYER_SOURCE_DAMAGE_PREVENTION_IDS ->
+                    addMapEntries(playerSourceDamagePreventionIds, (Set<Map.Entry<UUID, UUID>>) value);
+            case GAME_PLAYER_SOURCE_DAMAGE_PREVENTION_REQUIRED_COLORS ->
+                    ((Set<Map.Entry<Map.Entry<UUID, UUID>, Set<CardColor>>>) value).forEach(entry ->
+                            playerSourceDamagePreventionRequiredColors
+                                    .computeIfAbsent(entry.getKey().getKey(), key -> new ConcurrentHashMap<>())
+                                    .putIfAbsent(entry.getKey().getValue(), entry.getValue()));
+            case GAME_PLAYER_SOURCE_DAMAGE_PREVENTION_LIFE_GAIN_IDS ->
+                    addMapEntries(playerSourceDamagePreventionLifeGainIds, (Set<Map.Entry<UUID, UUID>>) value);
+            case GAME_PLAYER_NEXT_DAMAGE_FROM_MATCHING_SOURCES_PREVENTED -> addListMapEntries(
+                    playerNextDamageFromMatchingSourcesPrevented, (List<Map.Entry<UUID, PermanentPredicate>>) value);
+            case GAME_NEXT_ENCHANTMENT_CREATURE_ENTRY_ADDITIONAL_COUNTERS ->
+                    addCounts(pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn, (Map<UUID, Integer>) value);
             default -> {
             }
         }

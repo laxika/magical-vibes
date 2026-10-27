@@ -82,7 +82,12 @@ the pending one-shot grants that have no paired source map (`COUNTS` by player: 
 the "this turn" delayed triggers `chosenSubtypeActivationCopiesThisTurn`, `creatureEntersDrawSourcesThisTurn`,
 `untapAttackedCreaturesEachCombatThisTurnSources`, and the source-linked `exileCastPermissionsUntilEndOfTurn` /
 `exileCastWildcardPermissionsUntilEndOfTurn` / `foretoldCardCastPermissionsThisTurn` lists (a used grant is not
-restored; a wildcard re-materializes its per-card permissions on demand). RunedTerrorTest covers can't-block, creature and player
+restored; a wildcard re-materializes its per-card permissions on demand). A tenth pass moved the whole-turn
+chosen-source prevention `playerSourceDamagePreventionIds` (a `SET` of `(player, source)` entries) with its riders
+`playerSourceDamagePreventionRequiredColors` (a `SET` of `((player, source), colours)` entries) and
+`playerSourceDamagePreventionLifeGainIds`, Circle of Solace's one-shot `playerNextDamageFromMatchingSourcesPrevented`
+(a `LIST` of `(player, predicate)` entries; a used shield is not restored) and Storyweave's
+`pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn` (`COUNTS` by player). RunedTerrorTest covers can't-block, creature and player
 prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference, Skullcrack, Silence, Gilded Light,
 Borne Upon a Wind, Debt of Loyalty, Skeleton Scavengers, Soldevi Sentry, Microscope, Blind Fury, Overblaze (two
 doublings split between phases), Zameck Guildmage, Due Respect, Angel's Grace, Irencrag Feat, a tighter spell limit
@@ -90,7 +95,9 @@ hiding a looser one, Angel of Grace cast again during another player's phase, Co
 Honor shields from another player's phase of which one is used before the active player's cleanup, Quicken (kept,
 and used during the active player's phase so not restored), convoke / cascade grants split between phases, and Past in
 Flames from either player's phase, Overmaster from either player's phase, copy grants split between phases, and
-exile / foretold cast grants (one used before the active player's cleanup). **Still open:**
+exile / foretold cast grants (one used before the active player's cleanup), Auriok Replica's chosen source (with
+the colour and life-gain riders) from either player's phase, Circle of Solace shields (one used before the active
+player's cleanup) and Storyweave counters split between phases. **Still open:**
 `Permanent.tappedPermanentsForAbilityThisTurn` (Vodalian War Machine's "Merfolk tapped this turn" record; it is a
 turn-history record, not an effect, so the Runed Terror ruling about effects ending doesn't settle it — it arguably
 should last the whole turn rather than be split per active player; look for a ruling first), and the remaining
@@ -102,9 +109,7 @@ should last the whole turn rather than be split per active player; look for a ru
 without merging two equal shields into one, since each shield redirects as its own damage event), the shield
 lists modified in place by `replaceAll` (`playerSourceNextDamageShields`, `targetSpellDamagePreventionShields`)
 or whose order matters and is restored with `addFirst` (`sourceNextDamageToAnyTargetShields`,
-`sourcePermanentAndControllerNextDamageRedirectShields`), `playerSourceDamagePreventionIds` with its paired
-colour/life-gain maps, `playerNextDamageFromMatchingSourcesPrevented`,
-`pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn`, the
+`sourcePermanentAndControllerNextDamageRedirectShields`), the
 remaining "this turn" rule stores (Sen Triplets' controller ids, the copy counters paired with source maps —
 `pendingNextInstantSorceryCopyThisTurnCount` with its `Source` / `SingleTriggerCount` / `MaxManaValues` /
 `DynamicCounts` / `DynamicSources`, `pendingNextLoyaltyAbilityCopyThisTurnCount` with its sources and

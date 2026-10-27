@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.a.AegisOfHonor;
 import com.github.laxika.magicalvibes.cards.a.AerialManeuver;
 import com.github.laxika.magicalvibes.cards.a.AngelOfGrace;
 import com.github.laxika.magicalvibes.cards.a.AngelsGrace;
+import com.github.laxika.magicalvibes.cards.a.AuriokReplica;
 import com.github.laxika.magicalvibes.cards.b.BlindFury;
 import com.github.laxika.magicalvibes.cards.b.BorneUponAWind;
 import com.github.laxika.magicalvibes.cards.c.Comeuppance;
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.cards.t.TitanicGrowth;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.cards.z.ZameckGuildmage;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -43,11 +45,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,7 +63,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         Microscope.class, DarksteelCitadel.class, BlindFury.class, Overblaze.class, GrizzlyBears.class,
         ZameckGuildmage.class, DueRespect.class, AngelsGrace.class, AngelOfGrace.class, IrencragFeat.class,
         Comeuppance.class, Inkshield.class, AegisOfHonor.class, Shock.class, Quicken.class, Divination.class,
-        PastInFlames.class, Overmaster.class})
+        PastInFlames.class, Overmaster.class, AuriokReplica.class})
 class RunedTerrorTest extends BaseCardTest {
 
     @Test
@@ -948,6 +953,101 @@ class RunedTerrorTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.CLEANUP);
         assertThat(gd.exileCastPermissionsUntilEndOfTurn).isEmpty();
         assertThat(gd.foretoldCardCastPermissionsThisTurn).isEmpty();
+    }
+
+    @Test
+    void chosenSourcePreventionFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        Permanent terror = harness.addToBattlefieldAndReturn(player1, new RunedTerror());
+        harness.addToBattlefield(player2, new AuriokReplica());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, terror.getId());
+        gd.playerSourceDamagePreventionRequiredColors
+                .computeIfAbsent(player2.getId(), id -> new java.util.concurrent.ConcurrentHashMap<>())
+                .put(terror.getId(), Set.of(CardColor.BLACK));
+        gd.playerSourceDamagePreventionLifeGainIds
+                .computeIfAbsent(player2.getId(), id -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                .add(terror.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.playerSourceDamagePreventionIds.get(player2.getId())).containsExactly(terror.getId());
+        assertThat(gd.playerSourceDamagePreventionRequiredColors.get(player2.getId()))
+                .containsExactly(Map.entry(terror.getId(), Set.of(CardColor.BLACK)));
+        assertThat(gd.playerSourceDamagePreventionLifeGainIds.get(player2.getId())).containsExactly(terror.getId());
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.playerSourceDamagePreventionIds).isEmpty();
+        assertThat(gd.playerSourceDamagePreventionRequiredColors).isEmpty();
+        assertThat(gd.playerSourceDamagePreventionLifeGainIds).isEmpty();
+    }
+
+    @Test
+    void activePlayersOwnChosenSourcePreventionEndsAtTheirCleanup() {
+        Permanent terror = harness.addToBattlefieldAndReturn(player1, new RunedTerror());
+        harness.addToBattlefield(player1, new AuriokReplica());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, terror.getId());
+        assertThat(gd.playerSourceDamagePreventionIds.get(player1.getId())).containsExactly(terror.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(gd.playerSourceDamagePreventionIds).isEmpty();
+    }
+
+    @Test
+    void nextMatchingSourceShieldsFromOtherPlayersPhaseOutliveActivePlayersCleanupUnlessUsed() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gd.playerNextDamageFromMatchingSourcesPrevented
+                .computeIfAbsent(player1.getId(), id -> new java.util.concurrent.CopyOnWriteArrayList<>())
+                .add(new PermanentIsCreaturePredicate());
+        gs.advanceStep(gd);
+        var kept = new PermanentIsCreaturePredicate();
+        gd.playerNextDamageFromMatchingSourcesPrevented
+                .computeIfAbsent(player2.getId(), id -> new java.util.concurrent.CopyOnWriteArrayList<>())
+                .add(kept);
+        gd.playerNextDamageFromMatchingSourcesPrevented.get(player2.getId()).add(new PermanentIsCreaturePredicate());
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        gd.playerNextDamageFromMatchingSourcesPrevented.get(player2.getId()).remove(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.playerNextDamageFromMatchingSourcesPrevented).doesNotContainKey(player1.getId());
+        assertThat(gd.playerNextDamageFromMatchingSourcesPrevented.get(player2.getId())).containsExactly(kept);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.playerNextDamageFromMatchingSourcesPrevented).isEmpty();
+    }
+
+    @Test
+    void pendingEnchantmentCreatureEntryCountersAreSplitBetweenTheActivePlayersTheyWereCreatedUnder() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gd.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn.merge(player1.getId(), 2, Integer::sum);
+        gs.advanceStep(gd);
+        gd.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn.merge(player1.getId(), 2, Integer::sum);
+        gd.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn.merge(player2.getId(), 2, Integer::sum);
+        assertThat(gd.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn)
+                .containsEntry(player1.getId(), 4);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn)
+                .containsEntry(player1.getId(), 2)
+                .containsEntry(player2.getId(), 2);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn).isEmpty();
     }
 
     private void castQuicken(Player caster) {

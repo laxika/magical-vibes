@@ -28,6 +28,12 @@ package com.github.laxika.magicalvibes.model;
  * {@link Kind#LIST} of {@code (player, grant)} entries; the "this turn" delayed triggers (The Mirari Conjecture's copy
  * grants, Beck, Leori) and the source-linked exile / foretold cast grants are counts or {@link Kind#LIST}s of their
  * records. A grant used up in between is not restored.
+ * The whole-turn chosen-source prevention (Auriok Replica, Samite Ministration) is a {@link Kind#SET} of
+ * {@code (player, source)} entries, with its colour rider a {@link Kind#SET} of {@code ((player, source), colours)}
+ * entries and its life-gain rider another {@code (player, source)} {@link Kind#SET}; Circle of Solace's one-shot
+ * "next damage from a matching source" shields are a {@link Kind#LIST} of {@code (player, predicate)} entries, and
+ * Storyweave's pending extra counters for the next enchantment creature entry are {@link Kind#COUNTS} by player
+ * (a used shield or entry grant is not restored).
  */
 public enum EndOfTurnStateField {
 
@@ -270,7 +276,12 @@ public enum EndOfTurnStateField {
     GAME_UNTAP_ATTACKED_CREATURES_EACH_COMBAT_SOURCES(Kind.LIST),
     GAME_EXILE_CAST_PERMISSIONS(Kind.LIST),
     GAME_EXILE_CAST_WILDCARD_PERMISSIONS(Kind.LIST),
-    GAME_FORETOLD_CARD_CAST_PERMISSIONS(Kind.LIST);
+    GAME_FORETOLD_CARD_CAST_PERMISSIONS(Kind.LIST),
+    GAME_PLAYER_SOURCE_DAMAGE_PREVENTION_IDS(Kind.SET),
+    GAME_PLAYER_SOURCE_DAMAGE_PREVENTION_REQUIRED_COLORS(Kind.SET),
+    GAME_PLAYER_SOURCE_DAMAGE_PREVENTION_LIFE_GAIN_IDS(Kind.SET),
+    GAME_PLAYER_NEXT_DAMAGE_FROM_MATCHING_SOURCES_PREVENTED(Kind.LIST),
+    GAME_NEXT_ENCHANTMENT_CREATURE_ENTRY_ADDITIONAL_COUNTERS(Kind.COUNTS);
 
     /** How a field's value is split between players and recombined. */
     public enum Kind {
