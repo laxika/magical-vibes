@@ -164,10 +164,12 @@ class AlchemistsRefugeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.castCreature(player1, 0);
+
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Wandering Wolf");
-        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
     }
 
     @Test

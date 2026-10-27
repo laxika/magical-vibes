@@ -2905,6 +2905,11 @@ public class PredicateEvaluationService {
                 if (sourcePermanent == null) {
                     yield false;
                 }
+                // A source removed from combat (e.g. regenerated, CR 506.4) is no longer attacking or
+                // blocking, so stale block references left on other creatures no longer count.
+                if (!sourcePermanent.isAttacking() && !sourcePermanent.isBlocking()) {
+                    yield false;
+                }
                 // Target is blocking source
                 if (permanent.isBlocking() && permanent.getBlockingTargetIds().contains(sourcePermanent.getId())) {
                     yield true;

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,7 +31,7 @@ public class AangsIceberg extends Card {
                         new ExileTargetPermanentUntilSourceLeavesEffect(false, anotherNonland));
 
         addActivatedAbility(new ActivatedAbility(false, null,
-                List.of(new WaterbendCost(3), new SacrificeSelfCost(), new ScryEffect(2)),
-                "Waterbend {3}, Sacrifice this enchantment: Scry 2."));
+                List.of(new WaterbendCost(3), new SacrificeSelfThenEffect(new ScryEffect(2))),
+                "Waterbend {3}: Sacrifice this enchantment. If you do, scry 2."));
     }
 }

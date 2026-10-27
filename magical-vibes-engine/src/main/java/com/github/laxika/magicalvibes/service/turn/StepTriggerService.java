@@ -4948,9 +4948,13 @@ public class StepTriggerService {
             }
         }
 
-        if (gameData.hasDelayedAction(SacrificePermanentAtControllerEndStepUnlessPays.class)) {
+        Predicate<SacrificePermanentAtControllerEndStepUnlessPays> sacrificeFiresAtThisEndStep =
+                action -> !action.controllerEndStepOnly() || action.controllerId().equals(gameData.activePlayerId);
+        if (gameData.hasDelayedAction(SacrificePermanentAtControllerEndStepUnlessPays.class,
+                sacrificeFiresAtThisEndStep)) {
             List<SacrificePermanentAtControllerEndStepUnlessPays> pendingSacrifices =
-                    gameData.drainDelayedActions(SacrificePermanentAtControllerEndStepUnlessPays.class);
+                    gameData.drainDelayedActions(SacrificePermanentAtControllerEndStepUnlessPays.class,
+                            sacrificeFiresAtThisEndStep);
             for (SacrificePermanentAtControllerEndStepUnlessPays action : pendingSacrifices) {
                 if (gameQueryService.findPermanentById(gameData, action.permanentId()) == null) {
                     continue;

@@ -84,6 +84,7 @@ class AbstractPaintmageTest extends BaseCardTest {
     void triggersOnLaterTurn() {
         harness.setLibrary(player1, List.of(new AbstractPaintmage()));
         harness.setLibrary(player2, List.of(new AbstractPaintmage()));
+        harness.setHand(player2, List.of());
         addReadyPaintmage(player1);
         advanceToPrecombatMain(player1);
         harness.passBothPriorities();

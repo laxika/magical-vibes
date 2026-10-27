@@ -104,7 +104,7 @@ class AlphinaudLeveilleurTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(alisaie, other);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gameLogContains("library is shuffled")).isTrue();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
     @Test

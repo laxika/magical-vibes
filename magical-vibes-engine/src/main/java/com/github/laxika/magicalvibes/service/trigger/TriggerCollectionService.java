@@ -6663,6 +6663,9 @@ public class TriggerCollectionService {
                         source.getId()
                 );
                 entry.setSourcePermanentSnapshot(new Permanent(source));
+                // This triggered while the targeting ability was being put on the stack, so it goes on the
+                // stack after that batch rather than being APNAP-ordered with it (CR 603.3b).
+                entry.setTriggerOrderChosen(true);
                 gameData.stack.add(entry);
 
                 gameLogService.append(gameData, GameLog.cardThen(source.getCard(),

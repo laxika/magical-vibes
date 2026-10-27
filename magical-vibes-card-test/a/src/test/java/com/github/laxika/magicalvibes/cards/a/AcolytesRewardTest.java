@@ -267,11 +267,12 @@ class AcolytesRewardTest extends BaseCardTest {
         runCombatDamage();
         harness.passBothPriorities();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).contains(recipient.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(recipient.getId()));
+        assertThat(choice.validPermanentIds()).contains(recipient.getId());
+        harness.handlePermanentChosen(player1, recipient.getId());
+        harness.passBothPriorities();
         assertThat(recipient.getMarkedDamage()).isEqualTo(2);
         harness.assertLife(player2, 18);
     }

@@ -160,6 +160,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -1264,10 +1265,12 @@ public class TargetLegalityService {
                             + " can't be the target of abilities opponents control");
                 }
             }
-            if (target != null && gameQueryService.cantBeTargetedByAbilityFromCardType(
-                    gameData, target, sourceCard, null, playerId)) {
+            Optional<CardType> restrictedSourceType = target == null ? Optional.empty()
+                    : gameQueryService.abilityCardTypeRestriction(gameData, target, sourceCard, null, playerId);
+            if (restrictedSourceType.isPresent()) {
                 throw new IllegalStateException(target.getCard().getName()
-                        + " can't be the target of abilities from restricted sources");
+                        + " can't be the target of abilities from "
+                        + restrictedSourceType.get().name().toLowerCase(Locale.ROOT) + " sources");
             }
         }
 

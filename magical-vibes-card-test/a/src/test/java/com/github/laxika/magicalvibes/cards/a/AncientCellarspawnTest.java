@@ -136,6 +136,7 @@ class AncientCellarspawnTest extends BaseCardTest {
     @Test
     @DisplayName("Each Cellarspawn triggers for the combined discount")
     void multipleSourcesStackDiscountsAndTriggers() {
+        harness.setAutoOrderTriggers(player1, false);
         harness.addToBattlefield(player1, new AncientCellarspawn());
         harness.addToBattlefield(player1, new AncientCellarspawn());
         harness.setHand(player1, List.of(new FormlessGenesis()));

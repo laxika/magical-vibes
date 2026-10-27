@@ -2054,6 +2054,9 @@ public class AmountEvaluationService {
 
     private int countColorManaSymbolsAmongControlledPermanents(
             GameData gameData, ColorManaSymbolsAmongControlledPermanents amount, AmountContext ctx) {
+        if (amount.devotion()) {
+            return gameQueryService.getDevotionToColor(gameData, ctx.controllerId(), amount.color());
+        }
         return gameQueryService.countColorManaSymbolsAmongPermanents(gameData, ctx.controllerId(), amount.color());
     }
 

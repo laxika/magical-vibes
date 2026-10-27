@@ -197,8 +197,8 @@ class ApproachOfTheSecondSunTest extends BaseCardTest {
         ApproachOfTheSecondSun approach = new ApproachOfTheSecondSun();
 
         harness.castFromHand(player1, approach, "{6}{W}");
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
@@ -221,6 +221,7 @@ class ApproachOfTheSecondSunTest extends BaseCardTest {
         harness.setLife(player1, 20);
         ApproachOfTheSecondSun approach = new ApproachOfTheSecondSun();
         harness.castFromHand(player1, approach, "{6}{W}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

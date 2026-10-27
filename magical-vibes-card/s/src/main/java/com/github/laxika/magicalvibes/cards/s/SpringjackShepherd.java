@@ -20,7 +20,7 @@ public class SpringjackShepherd extends Card {
         // Chroma — When this creature enters, create a 0/1 white Goat creature token for each
         // white mana symbol in the mana costs of permanents you control.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
-                new ColorManaSymbolsAmongControlledPermanents(ManaColor.WHITE),
+                new ColorManaSymbolsAmongControlledPermanents(ManaColor.WHITE, false),
                 "Goat", 0, 1, CardColor.WHITE, List.of(CardSubtype.GOAT), Set.of(), Set.of()));
     }
 }

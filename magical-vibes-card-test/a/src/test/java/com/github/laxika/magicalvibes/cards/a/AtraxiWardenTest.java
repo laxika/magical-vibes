@@ -185,6 +185,7 @@ class AtraxiWardenTest extends BaseCardTest {
         }
 
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 

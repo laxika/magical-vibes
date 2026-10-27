@@ -72,12 +72,19 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
     private boolean destroyEveryBoundGroupSimultaneously(GameData gameData, StackEntry entry,
                                                           DestroyTargetPermanentEffect destroy) {
         Card targeting = entry.getTargetingCard();
-        if (targeting == null || targeting.getEffectTargetIndex(destroy, 1) < 0) {
+        if (targeting == null) {
+            return false;
+        }
+        Set<Integer> groups = new LinkedHashSet<>();
+        for (int occurrence = 0; targeting.getEffectTargetIndex(destroy, occurrence) >= 0; occurrence++) {
+            groups.add(targeting.getEffectTargetIndex(destroy, occurrence));
+        }
+        if (groups.size() < 2) {
             return false;
         }
         Set<UUID> targetIds = new LinkedHashSet<>();
-        for (int occurrence = 0; targeting.getEffectTargetIndex(destroy, occurrence) >= 0; occurrence++) {
-            targetIds.addAll(entry.targetsForGroup(targeting.getEffectTargetIndex(destroy, occurrence)));
+        for (int group : groups) {
+            targetIds.addAll(entry.targetsForGroup(group));
         }
         List<Permanent> toDestroy = new ArrayList<>();
         for (UUID targetId : targetIds) {

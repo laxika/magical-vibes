@@ -23,7 +23,7 @@ public class ArchfiendsVessel extends Card {
         CreateTokenEffect demon = new CreateTokenEffect("Demon", 5, 5, CardColor.BLACK,
                 List.of(CardSubtype.DEMON), Set.of(Keyword.FLYING), Set.of());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConditionalEffect(new CastFromZone(Zone.GRAVEYARD),
+                new ConditionalEffect(new CastFromZone(Zone.GRAVEYARD, true),
                         new ExileSelfAndCreateTokenEffect(demon)));
         addEffect(EffectSlot.ON_SELF_ENTERS_FROM_GRAVEYARD,
                 new ConditionalEffect(new EnteredFromZone(Zone.GRAVEYARD, true),

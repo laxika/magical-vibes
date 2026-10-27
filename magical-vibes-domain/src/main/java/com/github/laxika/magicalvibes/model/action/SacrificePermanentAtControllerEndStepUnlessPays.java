@@ -9,14 +9,22 @@ import java.util.UUID;
 
 /**
  * Delayed action for "at the beginning of the next end step" sacrifices: the next end step of any player
- * fires it, and its controller is asked to pay before the permanent is sacrificed.
+ * fires it, and its controller is asked to pay before the permanent is sacrificed. When
+ * {@code controllerEndStepOnly} is set, it waits for the next end step of its controller instead ("at the
+ * beginning of your next end step") and is left queued through every other player's end step.
  */
 public record SacrificePermanentAtControllerEndStepUnlessPays(
         UUID permanentId,
         UUID controllerId,
         Card sourceCard,
-        CostEffect cost
+        CostEffect cost,
+        boolean controllerEndStepOnly
 ) implements DelayedAction {
+
+    public SacrificePermanentAtControllerEndStepUnlessPays(UUID permanentId, UUID controllerId,
+                                                            Card sourceCard, CostEffect cost) {
+        this(permanentId, controllerId, sourceCard, cost, false);
+    }
 
     public SacrificePermanentAtControllerEndStepUnlessPays(UUID permanentId, UUID controllerId,
                                                             Card sourceCard, String manaCost) {

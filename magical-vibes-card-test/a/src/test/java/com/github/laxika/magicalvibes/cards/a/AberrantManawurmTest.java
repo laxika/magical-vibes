@@ -151,7 +151,7 @@ class AberrantManawurmTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(manawurm.getPowerModifier()).isEqualTo(1);
 
-        harness.passUntil(TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(manawurm.getPowerModifier()).isZero();
         assertThat(manawurm.getToughnessModifier()).isZero();

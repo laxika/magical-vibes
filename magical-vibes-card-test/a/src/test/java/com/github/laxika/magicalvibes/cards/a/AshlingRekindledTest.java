@@ -150,7 +150,8 @@ class AshlingRekindledTest extends BaseCardTest {
         harness.castFromHand(player1, new AshlingRekindled(), "{1}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        // With no card to discard there is no "if you do" choice to offer.
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);

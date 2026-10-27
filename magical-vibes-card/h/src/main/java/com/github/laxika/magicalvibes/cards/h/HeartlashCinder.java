@@ -15,6 +15,6 @@ public class HeartlashCinder extends Card {
         // Chroma — When this creature enters, it gets +X/+0 until end of turn, where X is the
         // number of red mana symbols in the mana costs of permanents you control.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostSelfEffect(
-                new ColorManaSymbolsAmongControlledPermanents(ManaColor.RED), new Fixed(0)));
+                new ColorManaSymbolsAmongControlledPermanents(ManaColor.RED, false), new Fixed(0)));
     }
 }

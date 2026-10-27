@@ -23,6 +23,9 @@ class AshioksForerunnerTest extends BaseCardTest {
         resolveEnterTheBattlefieldTrigger();
         harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class)).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(ashiok.getId()));
+
         harness.assertInHand(player1, "Ashiok, Sculptor of Fears");
         harness.assertNotInGraveyard(player1, "Ashiok, Sculptor of Fears");
     }
@@ -36,11 +39,8 @@ class AshioksForerunnerTest extends BaseCardTest {
         resolveEnterTheBattlefieldTrigger();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.LibrarySearch search =
-                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-        assertThat(search).isNotNull();
-        assertThat(search.params().reveals()).isTrue();
-        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class)).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(ashiok.getId()));
 
         harness.assertInHand(player1, "Ashiok, Sculptor of Fears");
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

@@ -146,7 +146,7 @@ public class ElrondOfTheWhiteCouncilEffectHandler implements NormalEffectHandler
 
         GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
         GrantStaticEffectToTargetEffect grantRestriction =
-                new GrantStaticEffectToTargetEffect(new CantAttackCardOwnerEffect());
+                new GrantStaticEffectToTargetEffect(new CantAttackCardOwnerEffect(false));
         Set<UUID> uniqueChosenIds = new LinkedHashSet<>(chosenCreatureIds);
         for (UUID chosenCreatureId : uniqueChosenIds) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, chosenCreatureId);

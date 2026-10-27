@@ -105,7 +105,7 @@ class AlisaieLeveilleurTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstPartner);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(other, secondPartner);
         assertThat(gameLogContains("reveals")).isTrue();
-        assertThat(gameLogContains("library is shuffled")).isTrue();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -125,7 +125,7 @@ class AlisaieLeveilleurTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(alphinaud);
-        assertThat(gameLogContains("library is shuffled")).isTrue();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 

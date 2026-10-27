@@ -269,11 +269,11 @@ class AlrundGodOfTheCosmosTest extends BaseCardTest {
         Card second = new Island();
         harness.setLibrary(player1, List.of(top, second));
         harness.setHand(player1, List.of(new DepartTheRealm()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
         assertThat(gd.stack).hasSize(1);
         harness.castAndResolveInstant(player1, 0, alrund.getId());

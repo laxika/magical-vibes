@@ -23,7 +23,7 @@ public class AlexiosDeimosOfKosmos extends Card {
     public AlexiosDeimosOfKosmos() {
         addEffect(EffectSlot.STATIC, new MustAttackEffect());
         addEffect(EffectSlot.STATIC, new CantBeSacrificedEffect());
-        addEffect(EffectSlot.STATIC, new CantAttackCardOwnerEffect());
+        addEffect(EffectSlot.STATIC, new CantAttackCardOwnerEffect(false));
 
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, SequenceEffect.of(
                 TargetPlayerGainsControlOfSourceCreatureEffect.triggeringPlayer(),

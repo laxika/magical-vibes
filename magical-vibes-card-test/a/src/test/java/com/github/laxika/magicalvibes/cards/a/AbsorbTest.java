@@ -71,13 +71,13 @@ class AbsorbTest extends BaseCardTest {
         AncientKavu kavu = new AncientKavu();
         harness.setHand(player1, List.of(kavu, new Absorb()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.setHand(player2, List.of(new Absorb()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, kavu.getId());
         harness.passPriority(player2);

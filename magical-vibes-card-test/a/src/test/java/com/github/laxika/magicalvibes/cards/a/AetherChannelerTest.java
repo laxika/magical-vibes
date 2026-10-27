@@ -132,7 +132,6 @@ class AetherChannelerTest extends BaseCardTest {
     void choosesDrawWhenNotCast() {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.enterBattlefieldAndReturn(player1, new AetherChanneler());
-        harness.passPriority(player1);
         harness.handleListChoice(player1, "Draw a card");
         harness.passBothPriorities();
 

@@ -12,6 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class AqueousForm extends Card {
 
     public AqueousForm() {
+        // The attack trigger is the Aura's own ability, so its controller is the Aura's controller even
+        // when the enchanted creature is an opponent's.
+        setAttackTriggerOwnedByAura(true);
+
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.STATIC, new CantBeBlockedEffect())
                 .addEffect(EffectSlot.ON_ATTACK, new ScryEffect(1));

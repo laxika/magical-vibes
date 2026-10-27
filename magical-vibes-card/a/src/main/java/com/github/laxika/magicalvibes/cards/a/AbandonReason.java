@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -13,6 +14,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class AbandonReason extends Card {
 
     public AbandonReason() {
+        // Madness {1}{R}
+        addCastingOption(new MadnessCast("{1}{R}"));
+
         // Up to two target creatures each get +1/+0 and gain first strike until end of turn.
         target(TargetFilters.creature(), 0, 2)
                 .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 0))

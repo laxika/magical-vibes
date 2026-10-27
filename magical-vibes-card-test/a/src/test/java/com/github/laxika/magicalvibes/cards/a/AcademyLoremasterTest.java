@@ -123,6 +123,7 @@ class AcademyLoremasterTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player2.getId()).size();
         advanceToDraw(player2);
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);

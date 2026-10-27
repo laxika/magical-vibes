@@ -601,20 +601,33 @@ public class AttackLegalityService {
 
     private boolean cantAttackCardOwner(GameData gameData, Permanent attacker, Permanent targetPermanent,
                                         boolean targetIsPlayer, UUID targetId, UUID protectedPlayerId) {
-        boolean restrictionPresent = !attacker.isFaceDown()
-                && !gameQueryService.computeStaticBonus(gameData, attacker).losesAllAbilities()
-                && attacker.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(CantAttackCardOwnerEffect.class::isInstance)
-                || gameQueryService.getGrantedEffects(gameData, attacker).stream()
-                .anyMatch(CantAttackCardOwnerEffect.class::isInstance);
-        if (!restrictionPresent || attacker.getOriginalCard().getOwnerId() == null) {
+        CantAttackCardOwnerEffect restriction = findCantAttackCardOwnerEffect(gameData, attacker);
+        if (restriction == null || attacker.getOriginalCard().getOwnerId() == null) {
             return false;
         }
         if (targetIsPlayer) {
             return attacker.getOriginalCard().getOwnerId().equals(targetId);
         }
-        return targetPermanent != null && gameQueryService.isPlaneswalker(gameData, targetPermanent)
+        return restriction.includePlaneswalkers() && targetPermanent != null
+                && gameQueryService.isPlaneswalker(gameData, targetPermanent)
                 && attacker.getOriginalCard().getOwnerId().equals(protectedPlayerId);
+    }
+
+    private CantAttackCardOwnerEffect findCantAttackCardOwnerEffect(GameData gameData, Permanent attacker) {
+        if (!attacker.isFaceDown()
+                && !gameQueryService.computeStaticBonus(gameData, attacker).losesAllAbilities()) {
+            for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CantAttackCardOwnerEffect restriction) {
+                    return restriction;
+                }
+            }
+        }
+        for (CardEffect effect : gameQueryService.getGrantedEffects(gameData, attacker)) {
+            if (effect instanceof CantAttackCardOwnerEffect restriction) {
+                return restriction;
+            }
+        }
+        return null;
     }
 
     private boolean isAttackTargetRestricted(GameData gameData, Permanent target) {

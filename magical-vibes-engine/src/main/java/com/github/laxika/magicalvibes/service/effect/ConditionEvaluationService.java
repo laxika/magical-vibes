@@ -1165,7 +1165,8 @@ public class ConditionEvaluationService {
                     ctx.targetId() != null
                             && gameData.playerRadCounters.getOrDefault(ctx.targetId(), 0) > 0;
             case CastFromZone c ->
-                    !ctx.copiedSpell() && c.sourceZone() == ctx.sourceZone();
+                    !ctx.copiedSpell() && c.sourceZone() == ctx.sourceZone()
+                            && (!c.fromControllersZone() || isCastFromControllersZone(gameData, ctx));
             case EnteredFromZone c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && c.sourceZone() == source.getEnteredFromZone()
@@ -2677,6 +2678,12 @@ public class ConditionEvaluationService {
      * Resolves the source permanent from the context, preferring the permanent handed in by
      * the call site and falling back to a battlefield lookup by id.
      */
+    private boolean isCastFromControllersZone(GameData gameData, ConditionContext ctx) {
+        Permanent source = sourcePermanent(gameData, ctx);
+        return source != null && ctx.controllerId() != null
+                && ctx.controllerId().equals(source.getCastFromGraveyardOwnerId());
+    }
+
     private boolean isOwnedBy(GameData gameData, Card card, UUID playerId) {
         if (playerId == null) return false;
         if (card.getOwnerId() != null) return playerId.equals(card.getOwnerId());

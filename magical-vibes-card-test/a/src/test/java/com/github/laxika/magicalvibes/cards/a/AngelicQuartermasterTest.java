@@ -53,7 +53,7 @@ class AngelicQuartermasterTest extends BaseCardTest {
     @Test
     void cannotTargetItself() {
         Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new PersistentSpecimen());
-        castWithTargets(List.of());
+        castWithoutDeclaringTargets();
         harness.passBothPriorities();
 
         UUID quartermasterId = harness.getPermanentId(player1, "Angelic Quartermaster");
@@ -80,7 +80,7 @@ class AngelicQuartermasterTest extends BaseCardTest {
     void canDeclineTargetsEvenWhenOtherCreaturesAreAvailable() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new PersistentSpecimen());
 
-        castWithTargets(List.of());
+        castWithoutDeclaringTargets();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
@@ -148,5 +148,12 @@ class AngelicQuartermasterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0, targetIds);
+    }
+
+    private void castWithoutDeclaringTargets() {
+        harness.setHand(player1, List.of(new AngelicQuartermaster()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
     }
 }

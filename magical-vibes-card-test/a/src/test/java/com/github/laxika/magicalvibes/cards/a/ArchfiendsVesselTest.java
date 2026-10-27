@@ -133,14 +133,14 @@ class ArchfiendsVesselTest extends BaseCardTest {
     @Test
     @DisplayName("Returning an opponent's Vessel under your control does not trigger it")
     void returningFromOpponentGraveyardDoesNotCreateDemon() {
-        harness.setGraveyard(player2, List.of(new ArchfiendsVessel()));
+        var vessel = new ArchfiendsVessel();
+        harness.setGraveyard(player2, List.of(vessel));
         harness.setHand(player1, List.of(new RiseFromTheGrave()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, vessel.getId());
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Archfiend's Vessel");

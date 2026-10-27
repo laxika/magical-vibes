@@ -41,18 +41,13 @@ class AvatarAangTest extends BaseCardTest {
         Permanent aang = harness.addToBattlefieldAndReturn(player1, new AvatarAang());
         Permanent firstSource = addCreatureReady(player1, new GrizzlyBears());
         Permanent secondSource = addCreatureReady(player1, new GrizzlyBears());
-        WaterbendingLesson lesson = new WaterbendingLesson();
-        harness.setHand(player1, List.of(lesson));
         harness.setLibrary(player1, List.of(
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
-        addMana(player1, ManaColor.BLUE, 1);
-        addMana(player1, ManaColor.COLORLESS, 3);
 
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, null, null, null, false,
-                null, null, null,
-                List.of(firstSource.getId(), secondSource.getId()), List.of(), false,
-                null, null, List.of(), List.of(), null, null, true);
+        harness.castFromHand(player1, new WaterbendingLesson(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstSource.getId(), secondSource.getId()));
         resolveAllTriggers();
 
         assertThat(firstSource.isTapped()).isTrue();
@@ -74,14 +69,10 @@ class AvatarAangTest extends BaseCardTest {
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
 
-        harness.setHand(player1, List.of(new WaterbendingLesson()));
-        addMana(player1, ManaColor.BLUE, 1);
-        addMana(player1, ManaColor.COLORLESS, 3);
-        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
-                null, null, null, null, null, false,
-                null, null, null,
-                List.of(firstSource.getId(), secondSource.getId()), List.of(), false,
-                null, null, List.of(), List.of(), null, null, true);
+        harness.castFromHand(player1, new WaterbendingLesson(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstSource.getId(), secondSource.getId()));
         resolveAllTriggers();
 
         harness.setHand(player1, List.of(new EarthbendingLesson()));

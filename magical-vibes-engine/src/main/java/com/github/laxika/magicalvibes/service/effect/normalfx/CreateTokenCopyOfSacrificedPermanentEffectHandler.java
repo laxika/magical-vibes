@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.action.SacrificePermanentAtControlle
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSacrificedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.Collections;
 import java.util.UUID;
@@ -57,6 +58,6 @@ public class CreateTokenCopyOfSacrificedPermanentEffectHandler implements Normal
                 Collections.nCopies(copyEffect.amount(), copyEffect.copiedCard()), controllerId,
                 new CreateTokenCopyOfTargetPermanentEffect(true, false).withHasteUntilEndOfTurn(),
                 token -> gameData.queueDelayedAction(new SacrificePermanentAtControllerEndStepUnlessPays(
-                        token.getId(), controllerId, entry.getCard(), TOKEN_SACRIFICE_COST)));
+                        token.getId(), controllerId, entry.getCard(), new PayManaCost(TOKEN_SACRIFICE_COST), true)));
     }
 }

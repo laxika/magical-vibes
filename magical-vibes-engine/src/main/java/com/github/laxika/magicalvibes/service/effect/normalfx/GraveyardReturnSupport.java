@@ -240,7 +240,14 @@ public class GraveyardReturnSupport {
                 permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
                 Permanent equipment = putCardOntoBattlefield(gameData, controllerId, targetCard,
                         null, null, effect.enterTapped(), false, null, false);
-                if (sourcePermanent != null) {
+                if (sourcePermanent != null && effect.attachToSourceOptional()) {
+                    gameData.interaction.setPendingEquipmentAttach(equipment.getId(), sourcePermanent.getId());
+                    gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                            sourcePermanent.getCard(), controllerId, List.of(),
+                            sourcePermanent.getCard().getName() + " — Attach " + targetCard.getName()
+                                    + " to " + sourcePermanent.getCard().getName() + "?"));
+                    playerInputService.processNextMayAbility(gameData);
+                } else if (sourcePermanent != null) {
                     equipSupport.attachEquipment(gameData, equipment, sourcePermanent);
                 }
                 return;

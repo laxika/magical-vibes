@@ -24,8 +24,10 @@ public class AangsJourney extends Card {
                 new Kicked(),
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND),
                 SequenceEffect.of(
-                        new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND),
+                        new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND)
+                                .withoutShuffle(),
                         new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.SHRINE), LibrarySearchDestination.HAND)
+                                .asContinuationOfPreviousSearch()
                 )
         ));
         addEffect(EffectSlot.SPELL, new GainLifeEffect(2));

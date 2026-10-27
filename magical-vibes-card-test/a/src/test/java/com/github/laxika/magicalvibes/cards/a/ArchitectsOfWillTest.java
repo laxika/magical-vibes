@@ -160,8 +160,8 @@ class ArchitectsOfWillTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The controller can look at the sole card of the target's library")
-    void showsSoleLibraryCardToController() {
+    @DisplayName("A sole card of the target's library is looked at without a reorder prompt")
+    void soleLibraryCardIsNotReordered() {
         Card onlyCard = new ArchitectsOfWill();
         harness.setLibrary(player2, List.of(onlyCard));
         harness.setHand(player1, List.of(new ArchitectsOfWill()));
@@ -172,13 +172,9 @@ class ArchitectsOfWillTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        PendingInteraction.LibraryReorder reorder =
-                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
-        assertThat(reorder).isNotNull();
-        assertThat(reorder.playerId()).isEqualTo(player1.getId());
-        assertThat(reorder.cards()).containsExactly(onlyCard);
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
-
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(onlyCard);
+        assertThat(gd.stack).isEmpty();
     }
 }

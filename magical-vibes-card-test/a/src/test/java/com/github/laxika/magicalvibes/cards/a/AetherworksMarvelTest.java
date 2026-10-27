@@ -60,7 +60,7 @@ class AetherworksMarvelTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).extracting(Card::getName)
                 .containsExactlyInAnyOrder("Dukhara Peafowl", "Consulate Skygate", "Dukhara Peafowl");
-        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(7);
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
         assertThat(marvel.isTapped()).isTrue();
 

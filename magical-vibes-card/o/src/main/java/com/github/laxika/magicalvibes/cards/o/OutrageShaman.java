@@ -15,6 +15,6 @@ public class OutrageShaman extends Card {
         // Chroma — When this creature enters, it deals damage to target creature equal to the number
         // of red mana symbols in the mana costs of permanents you control.
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetCreatureEffect(
-                new ColorManaSymbolsAmongControlledPermanents(ManaColor.RED)));
+                new ColorManaSymbolsAmongControlledPermanents(ManaColor.RED, false)));
     }
 }

@@ -113,11 +113,11 @@ class ArcRunnerTest extends BaseCardTest {
     void sourceLeavingDoesNotSacrificeAnotherCopy() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new ArcRunner());
         harness.setHand(player1, List.of(new Unsummon()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         Permanent other = harness.enterBattlefieldAndReturn(player1, new ArcRunner());
         assertThat(gd.stack).hasSize(1);

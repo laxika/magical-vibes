@@ -218,7 +218,8 @@ class AngelicRenewalTest extends BaseCardTest {
 
         harness.addToBattlefieldAndReturn(player2, new StealEnchantment()).setAttachedTo(renewal.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         harness.assertOnBattlefield(player2, "Angelic Renewal");
         harness.assertInGraveyard(player1, "Grizzly Bears");

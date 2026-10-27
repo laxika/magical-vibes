@@ -154,7 +154,9 @@ class AncientGreenwardenTest extends BaseCardTest {
         harness.castFromHand(player1, new KazanduMammoth(), "{1}{G}{G}");
         harness.passBothPriorities();
 
-        assertThat(gd.stack).hasSize(2);
+        // Kazandu Mammoth is a land as it enters, so its own landfall sees that entry (CR 603.6a) and is
+        // doubled too: two Scute Swarm triggers plus two Mammoth triggers.
+        assertThat(gd.stack).hasSize(4);
         resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())).hasSize(2);

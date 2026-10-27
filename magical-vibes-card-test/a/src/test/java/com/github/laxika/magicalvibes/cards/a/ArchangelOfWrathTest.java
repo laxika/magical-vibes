@@ -62,8 +62,9 @@ class ArchangelOfWrathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArchangelOfWrath()));
         addMana(ManaColor.BLACK, ManaColor.RED);
 
-        castWithAdditionalCosts(List.of("{R}"), player2.getId(), true);
+        castWithAdditionalCosts(List.of("{R}"));
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.handlePermanentChosen(player1, creature.getId());
         resolveAllTriggers();
 
@@ -104,9 +105,10 @@ class ArchangelOfWrathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArchangelOfWrath()));
         addMana(ManaColor.BLACK, ManaColor.RED);
 
-        castWithAdditionalCosts(List.of("{R}"), player2.getId(), true);
+        castWithAdditionalCosts(List.of("{R}"));
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, creature.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
@@ -124,8 +126,9 @@ class ArchangelOfWrathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArchangelOfWrath()));
         addMana(ManaColor.BLACK, ManaColor.RED);
 
-        castWithAdditionalCosts(List.of("{R}"), player2.getId(), true);
+        castWithAdditionalCosts(List.of("{R}"));
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
 
@@ -139,8 +142,9 @@ class ArchangelOfWrathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ArchangelOfWrath()));
         addMana(ManaColor.BLACK, ManaColor.RED);
 
-        castWithAdditionalCosts(List.of("{R}"), creature.getId(), true);
+        castWithAdditionalCosts(List.of("{R}"));
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
         harness.handlePermanentChosen(player1, creature.getId());
         resolveAllTriggers();
 
@@ -181,9 +185,7 @@ class ArchangelOfWrathTest extends BaseCardTest {
         }
     }
 
-    private void castWithAdditionalCosts(List<String> payments, UUID targetId, boolean kicked) {
-        gs.playCard(gd, player1, 0, 0, targetId, null, List.of(), List.of(), false,
-                null, null, null, null, null, kicked, null, null, null, null,
-                payments, false);
+    private void castWithAdditionalCosts(List<String> payments) {
+        harness.castKickedCreatureWithRepeatedCosts(player1, 0, null, payments);
     }
 }

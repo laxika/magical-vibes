@@ -4772,6 +4772,17 @@ public class GameQueryService {
     public boolean cantBeTargetedByAbilityFromCardType(GameData gameData, Permanent target,
                                                         Card sourceCard, UUID sourcePermanentId,
                                                         UUID sourceControllerId) {
+        return abilityCardTypeRestriction(gameData, target, sourceCard, sourcePermanentId, sourceControllerId)
+                .isPresent();
+    }
+
+    /**
+     * The first card type named by an abilities-restriction on the target that the ability's source has,
+     * or empty when no such restriction applies. Lets callers name the restricted source type in messages.
+     */
+    public Optional<CardType> abilityCardTypeRestriction(GameData gameData, Permanent target,
+                                                         Card sourceCard, UUID sourcePermanentId,
+                                                         UUID sourceControllerId) {
         UUID targetControllerId = findPermanentController(gameData, target.getId());
         List<CardEffect> restrictions = new ArrayList<>();
         if (!target.isLosesAllAbilitiesUntilEndOfTurn()
@@ -4784,10 +4795,11 @@ public class GameQueryService {
                 .filter(TargetingRestrictionEffect.class::isInstance)
                 .flatMap(effect -> ((TargetingRestrictionEffect) effect).sourceCardTypes().stream())
                 .distinct()
-                .anyMatch(sourceCardType -> sourceHasCardType(
+                .filter(sourceCardType -> sourceHasCardType(
                         gameData, sourceCard, sourcePermanentId, sourceControllerId, sourceCardType)
                         && restrictions.stream().anyMatch(effect -> isAbilityCardTypeRestriction(
-                        effect, sourceCardType, targetControllerId, sourceControllerId)));
+                        effect, sourceCardType, targetControllerId, sourceControllerId)))
+                .findFirst();
     }
 
     private boolean sourceHasCardType(GameData gameData, Card sourceCard, UUID sourcePermanentId,

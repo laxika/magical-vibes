@@ -435,6 +435,9 @@ public class StackResolutionService {
             }
         }
         perm.setCastFromZone(entry.getSourceZone());
+        if (entry.getSourceZone() == Zone.GRAVEYARD) {
+            perm.setCastFromGraveyardOwnerId(entry.getOwnerId());
+        }
         perm.setExileIfLeavesBattlefield(entry.isExilePermanentIfLeavesBattlefield());
         entry.getEnteringCounters().forEach((counterType, count) ->
                 perm.setCounterCount(counterType, perm.getCounterCount(counterType) + count));

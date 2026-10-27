@@ -43,12 +43,12 @@ class ArachnePsionicWeaverTest extends BaseCardTest {
         simulatedContext.preparedPermanent().setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         assertThat(liveContext.preparedPermanent().getChosenCardType()).isNull();
-        assertThat(liveContext.preparedPermanent().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(liveContext.preparedPermanent().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Arachne, Psionic Weaver");
         harness.handleListChoice(player1, CardType.INSTANT.name());
         Permanent entered = findPermanent(player1, "Arachne, Psionic Weaver");
         assertThat(entered.getChosenCardType()).isEqualTo(CardType.INSTANT);
-        assertThat(entered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(entered.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test

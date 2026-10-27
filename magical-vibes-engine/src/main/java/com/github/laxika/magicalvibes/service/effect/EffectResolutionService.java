@@ -247,6 +247,8 @@ public class EffectResolutionService {
                 continue;
             }
 
+            // A "you may" whose target group allows zero targets ("up to one target") still offers its
+            // choice when no target was chosen; only the target-dependent part is then skipped.
             if (effectToResolve instanceof MayEffect may
                     && may.elseEffect() == null
                     && !entry.isNonTargeting()
@@ -255,6 +257,8 @@ public class EffectResolutionService {
                     && resolvingTargetGroup >= 0
                     && entry.targetsForEffect(effect).isEmpty()
                     && entry.getTargetCardIds().isEmpty()
+                    && !(resolvingTargetGroup < entry.getCard().getSpellTargets().size()
+                    && entry.getCard().getSpellTargets().get(resolvingTargetGroup).getMinTargets() == 0)
                     && !(entry.getTargetId() != null && entry.getTargetIds().isEmpty()
                     && entry.getCard().getSpellTargets().size() == 1)) {
                 continue;

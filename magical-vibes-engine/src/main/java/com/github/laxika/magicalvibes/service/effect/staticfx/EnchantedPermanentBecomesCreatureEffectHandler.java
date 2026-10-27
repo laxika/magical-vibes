@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,7 +17,10 @@ import org.springframework.stereotype.Component;
  * handler fills the layer-5 colour and layer-7 base P/T for the accumulator/view.
  */
 @Component
+@RequiredArgsConstructor
 public class EnchantedPermanentBecomesCreatureEffectHandler implements StaticEffectHandlerBean {
+
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,9 +37,11 @@ public class EnchantedPermanentBecomesCreatureEffectHandler implements StaticEff
         int power = becomes.power();
         int toughness = becomes.toughness();
         if (becomes.powerToughnessEqualsManaValue()) {
-            // Animate Artifact: only while the enchanted artifact isn't already a creature, and
-            // base P/T each equal to its mana value.
-            if (context.target().getCard().hasType(CardType.CREATURE)) {
+            // Animate Artifact: only while the enchanted artifact isn't already a creature (printed,
+            // or made one by its own conditional animation such as Warden of the Wall's "not your
+            // turn"), and base P/T each equal to its mana value.
+            if (context.target().getCard().hasType(CardType.CREATURE)
+                    || gameQueryService.hasSelfBecomeCreatureEffect(context.gameData(), context.target())) {
                 return;
             }
             power = context.target().getCard().getManaValue();

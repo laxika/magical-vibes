@@ -144,8 +144,8 @@ class AjanisLastStandTest extends BaseCardTest {
         castNova();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player1, "Ajani's Last Stand");
         assertThat(countPermanents(player1, "Avatar")).isEqualTo(1);
     }

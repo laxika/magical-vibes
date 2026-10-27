@@ -58,8 +58,8 @@ class AvacynsJudgmentTest extends BaseCardTest {
                 .isInstanceOf(PendingInteraction.AlternateCastXValueChoice.class);
         harness.handleXValueChosen(player1, 3);
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, creature.getId());
+                .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Quilled Wolf");
@@ -114,11 +114,11 @@ class AvacynsJudgmentTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 3);
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.PermanentChoice.class);
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validPermanentIds()).contains(planeswalker.getId());
-        harness.handlePermanentChosen(player1, planeswalker.getId());
+                .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                (PendingInteraction.MultiPermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIds()).contains(planeswalker.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(planeswalker.getId()));
         harness.passBothPriorities();
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
@@ -129,7 +129,7 @@ class AvacynsJudgmentTest extends BaseCardTest {
         prepareMadnessChoice(3);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 3);
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         harness.passBothPriorities();
 
         harness.assertLife(player2, 17);

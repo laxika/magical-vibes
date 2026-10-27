@@ -78,7 +78,7 @@ class AbundantCountrysideTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castArtifact(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Not enough mana");
+                .hasMessageContaining("not playable");
 
         assertThat(gd.playerManaPools.get(player1.getId()).getCreatureSpellOnlyManaTotal()).isEqualTo(1);
         assertThat(gd.stack).isEmpty();

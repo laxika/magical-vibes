@@ -37,6 +37,8 @@ class AleshaWhoSmilesAtDeathTest extends BaseCardTest {
 
     @Test
     void payingTwoHybridManaReturnsTheChosenCreatureTappedAndAttacking() {
+        gd.orderedPlayerIds.forEach(id -> gd.playerAutoStopSteps.put(id,
+                java.util.EnumSet.allOf(com.github.laxika.magicalvibes.model.TurnStep.class)));
         addCreatureReady(player1, new AleshaWhoSmilesAtDeath());
         Card returnedCard = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(returnedCard));
@@ -51,7 +53,8 @@ class AleshaWhoSmilesAtDeathTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.isTapped()).isTrue();
-        assertThat(returned.isAttackedThisTurn()).isTrue();
+        assertThat(returned.isAttacking()).isTrue();
+        assertThat(returned.isAttackedThisTurn()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }

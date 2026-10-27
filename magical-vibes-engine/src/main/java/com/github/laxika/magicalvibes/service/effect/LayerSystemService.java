@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypesToSelfEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -1559,7 +1560,19 @@ public class LayerSystemService {
      */
     private static CardEffect sameAbilityLayer4Part(CardEffect effect) {
         CardEffect inner = effect instanceof ConditionalEffect conditional ? conditional.wrapped() : effect;
+        if (effect instanceof ConditionalEffect && isFixedSelfAnimation(inner)) {
+            // "As long as it's your turn, Gideon is a 4/4 creature": one ability whose layer 4 part
+            // (the type change) and layer 7b part (the base P/T) are the same wrapper.
+            return effect;
+        }
         return inner instanceof SetBasePowerToughnessEffect setPt ? setPt.sameAbilityLayer4Part() : null;
+    }
+
+    private static boolean isFixedSelfAnimation(CardEffect effect) {
+        return effect instanceof AnimatePermanentsEffect animate
+                && animate.scope() == GrantScope.SELF
+                && animate.power() instanceof Fixed
+                && animate.toughness() instanceof Fixed;
     }
 
     /** Equal-timestamp tie-break within one source: lose-all, then keyword removals, then grants. */
@@ -2488,6 +2501,9 @@ public class LayerSystemService {
                     }
                     for (CardSubtype subtype : animate.grantedSubtypes()) {
                         state.addSubtype(subtype);
+                    }
+                    if (isFixedSelfAnimation(animate)) {
+                        record(board, instance, target, new L4Contribution(List.of(), false, false));
                     }
                 }
             }

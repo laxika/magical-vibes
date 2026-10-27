@@ -41,7 +41,7 @@ class AmuletOfQuozTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
-        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(topCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.antedCardIds).contains(topCard.getId());
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
         assertThat(gameLogContains("coin flip")).isFalse();

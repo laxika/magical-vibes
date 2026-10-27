@@ -27,7 +27,7 @@ public class AbunaAcolyte extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(PreventDamageEffect.nextToTarget(2)),
+                List.of(PreventDamageEffect.nextToTargetCreature(2, new PermanentIsArtifactPredicate())),
                 "{T}: Prevent the next 2 damage that would be dealt to target artifact creature this turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

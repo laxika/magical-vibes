@@ -14,7 +14,7 @@ public class Primalcrux extends Card {
         // Chroma — Power and toughness are each equal to the number of green mana symbols in the
         // mana costs of permanents you control (Primalcrux itself included). Trample is auto-loaded.
         ColorManaSymbolsAmongControlledPermanents greenSymbols =
-                new ColorManaSymbolsAmongControlledPermanents(ManaColor.GREEN);
+                new ColorManaSymbolsAmongControlledPermanents(ManaColor.GREEN, false);
         addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(greenSymbols, greenSymbols));
     }
 }

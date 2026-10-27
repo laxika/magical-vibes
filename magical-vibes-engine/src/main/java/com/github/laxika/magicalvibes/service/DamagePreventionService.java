@@ -705,6 +705,14 @@ public class DamagePreventionService {
                     putPlusOneCountersFor(gd, c.permanent(), damage);
                     return 0;
                 }));
+        steps.add(step("OtherCreatureToCountersUnpreventable", "Put +1/+1 counters on it (damage can't be prevented)",
+                replacement, false,
+                (gd, c, damage) -> damage > 0 && !preventable(gd, c)
+                        && hasOtherCreatureDamagePreventionSource(gd, c.permanent(), c.combatDamage(), true),
+                (gd, c, damage) -> {
+                    putPlusOneCountersFor(gd, c.permanent(), damage);
+                    return damage;
+                }));
         steps.add(step("PlusOneCounterShield", "Prevent the damage and put +1/+1 counters on it", prevention, false,
                 (gd, c, damage) -> preventable(gd, c) && c.permanent().isAllDamageToPlusOnePlusOneCounterPreventionShield(),
                 (gd, c, damage) -> {
@@ -1236,6 +1244,15 @@ public class DamagePreventionService {
      */
     private boolean hasOtherCreatureDamagePreventionSource(GameData gameData, Permanent creature,
                                                             boolean isCombatDamage) {
+        return hasOtherCreatureDamagePreventionSource(gameData, creature, isCombatDamage, false);
+    }
+
+    /**
+     * Whether a +1/+1-counter prevention source applies to {@code creature}; with
+     * {@code unpreventableOnly} only sources that still add counters for unpreventable damage count.
+     */
+    private boolean hasOtherCreatureDamagePreventionSource(GameData gameData, Permanent creature,
+                                                            boolean isCombatDamage, boolean unpreventableOnly) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
         if (controllerId == null) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
@@ -1245,6 +1262,7 @@ public class DamagePreventionService {
                         .filter(PreventDamageToOtherCreaturesAndAddPlusCountersEffect.class::isInstance)
                         .map(PreventDamageToOtherCreaturesAndAddPlusCountersEffect.class::cast)
                         .anyMatch(effect -> (!isCombatDamage || !effect.noncombatOnly())
+                                && (!unpreventableOnly || effect.countersForUnpreventableDamage())
                                 && (effect.sourceOnly()
                                 ? source.getId().equals(creature.getId())
                                 : effect.includeSource() || !source.getId().equals(creature.getId()))));

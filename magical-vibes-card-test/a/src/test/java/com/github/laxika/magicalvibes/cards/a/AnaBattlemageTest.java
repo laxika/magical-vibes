@@ -77,7 +77,7 @@ class AnaBattlemageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AnaBattlemage()));
         addMana(5, ManaColor.BLUE, ManaColor.BLACK);
 
-        castWithAdditionalCosts(List.of("{1}{B}"), player2.getId(), true);
+        castWithAdditionalCosts(List.of("{1}{B}"), player2.getId());
         harness.passBothPriorities();
 
         harness.handlePermanentChosen(player1, creature.getId());
@@ -119,7 +119,7 @@ class AnaBattlemageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AnaBattlemage()));
         addMana(5, ManaColor.BLUE, ManaColor.BLACK);
 
-        castWithAdditionalCosts(List.of("{1}{B}"), player2.getId(), true);
+        castWithAdditionalCosts(List.of("{1}{B}"), player2.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, creature.getId());
 
@@ -202,9 +202,7 @@ class AnaBattlemageTest extends BaseCardTest {
         harness.castCreatureWithRepeatedCosts(player1, 0, payments);
     }
 
-    private void castWithAdditionalCosts(List<String> payments, UUID targetId, boolean kicked) {
-        gs.playCard(gd, player1, 0, 0, targetId, null, List.of(), List.of(), false,
-                null, null, null, null, null, kicked, null, null, null, null,
-                payments, false);
+    private void castWithAdditionalCosts(List<String> payments, UUID targetId) {
+        harness.castKickedCreatureWithRepeatedCosts(player1, 0, targetId, payments);
     }
 }

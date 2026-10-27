@@ -202,6 +202,7 @@ class AbeyanceTest extends BaseCardTest {
         Permanent mindStone = harness.addToBattlefieldAndReturn(player2, new MindStone());
         BenalishInfantry drawnCard = new BenalishInfantry();
         harness.setLibrary(player2, List.of(drawnCard));
+        harness.setHand(player2, List.of());
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.setHand(player1, List.of(new Abeyance()));
         harness.addMana(player1, ManaColor.WHITE, 2);

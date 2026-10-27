@@ -25,7 +25,7 @@ class AuntieOolCursewretchTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Skinrender()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, target.getId(), null);
+        harness.castCreature(player1, 0, target.getId());
         resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
@@ -39,7 +39,7 @@ class AuntieOolCursewretchTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Skinrender()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, target.getId(), null);
+        harness.castCreature(player1, 0, target.getId());
         resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);

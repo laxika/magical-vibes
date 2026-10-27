@@ -97,6 +97,7 @@ class AragornTheUniterTest extends BaseCardTest {
     @DisplayName("A green-white spell triggers both abilities before entering the battlefield")
     void multicoloredSpellTriggersBothMatchingAbilities() {
         addReadyAragorn();
+        harness.setAutoOrderTriggers(player1, false);
         Permanent aragorn = gd.playerBattlefields.get(player1.getId()).getFirst();
         harness.setHand(player1, List.of(new ArwenMortalQueen()));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -176,6 +177,7 @@ class AragornTheUniterTest extends BaseCardTest {
     @DisplayName("The controller chooses the order of simultaneous matching color triggers")
     void controllerChoosesOrderOfMatchingTriggers() {
         addReadyAragorn();
+        harness.setAutoOrderTriggers(player1, false);
         Permanent aragorn = gd.playerBattlefields.get(player1.getId()).getFirst();
         harness.setHand(player1, List.of(new ArwenMortalQueen()));
         harness.addMana(player1, ManaColor.GREEN, 2);

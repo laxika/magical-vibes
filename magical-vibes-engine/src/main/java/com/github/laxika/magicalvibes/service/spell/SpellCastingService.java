@@ -5415,6 +5415,13 @@ public class SpellCastingService {
                 card, targetingSpellEffects, effectiveXValue, kicked, giftPromised) > 1) {
             throw new IllegalStateException("Spell requires additional targets");
         }
+        // The graveyard card is carried in targetId here, so a required permanent group (no graveyard
+        // group in the spell target list) must still be supplied in targetIds (CR 601.2c).
+        if (targetIsGraveyardCard && needsSingleGraveyardTargeting && !hasGraveyardTargetGroup
+                && targetIds.isEmpty() && effectiveMinTargetsForEffects(
+                card, targetingSpellEffects, effectiveXValue, kicked, giftPromised) > 0) {
+            throw new IllegalStateException("Spell requires additional targets");
+        }
 
         // Validate multi-target permanent targeting (skip when the targets are spells on the stack)
         if (kicked && targetId != null && !card.isAllowSharedTargets() && targetIds.contains(targetId)) {
@@ -16611,7 +16618,8 @@ public class SpellCastingService {
                         && ((card.effectiveFlashbackCast().isPresent()
                                 && castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId))
                         || castingPermissionService.findGraveyardCastFilterPermission(gameData, card, playerId)
-                                .isPresent())) {
+                                .isPresent()
+                        || castingPermissionService.hasGrantedGraveyardCardCastPermission(gameData, card, playerId))) {
                     return new GraveyardCardLocation(graveyard, i);
                 }
             }

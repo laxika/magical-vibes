@@ -780,6 +780,8 @@ public class Permanent {
     /** Zone the spell that produced this permanent was cast from, when known (gates "if cast from a
      *  graveyard, it enters with … counters" as-enters replacements — e.g. Worldheart Phoenix). */
     @Setter private Zone castFromZone;
+    /** Owner of the graveyard the spell that produced this permanent was cast from, when cast from a graveyard. */
+    @Setter private UUID castFromGraveyardOwnerId;
     /** Zone this permanent entered the battlefield from, when known. */
     @Setter private Zone enteredFromZone;
     /** Source permanent whose ability put this permanent onto the battlefield, when applicable. */
@@ -1259,6 +1261,7 @@ public class Permanent {
         this.renowned = source.renowned;
         this.mannequinGrantActive = source.mannequinGrantActive;
         this.castFromZone = source.castFromZone;
+        this.castFromGraveyardOwnerId = source.castFromGraveyardOwnerId;
         this.enteredFromZone = source.enteredFromZone;
         this.putOntoBattlefieldWithAbilitySourcePermanentId = source.putOntoBattlefieldWithAbilitySourcePermanentId;
         this.cast = source.cast;
