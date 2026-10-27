@@ -686,8 +686,8 @@ public class MCTSEngine {
      */
     double scoreRolloutAction(GameData simState, SimulationAction action, UUID aiPlayerId) {
         if (action instanceof SimulationAction.PlayCard pc) {
-            List<Card> hand = pc.commandCardId() == null ? simState.playerHands.get(aiPlayerId)
-                    : simState.playerCommandZones.get(aiPlayerId);
+            List<Card> hand = pc.commandCardId() != null ? simState.playerCommandZones.get(aiPlayerId)
+                    : simState.playerHands.get(pc.handOwnerId() != null ? pc.handOwnerId() : aiPlayerId);
             if (hand != null && pc.handIndex() < hand.size()) {
                 Card card = hand.get(pc.handIndex());
                 double value = simulator.getSpellEvaluator().estimateSpellValue(simState, card, aiPlayerId);
@@ -778,7 +778,8 @@ public class MCTSEngine {
             return "AA:" + aa.permanentId() + ":" + aa.abilityIndex();
         }
         if (action instanceof SimulationAction.PlayCard pc) {
-            return pc.commandCardId() == null ? "PC:" + pc.handIndex() : "COMMAND:" + pc.commandCardId();
+            if (pc.commandCardId() != null) return "COMMAND:" + pc.commandCardId();
+            return pc.handOwnerId() == null ? "PC:" + pc.handIndex() : "HAND:" + pc.handOwnerId() + ":" + pc.handIndex();
         }
         return "#" + index;
     }

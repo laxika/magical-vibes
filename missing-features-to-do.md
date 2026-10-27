@@ -9,39 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 58. Hard AI's MCTS search doesn't list plays from another player's hand (Sen Triplets)
-
-**Status:** partial · **Found:** 2026-10-25, while finishing entry 41 (casting from another player's hand)
-
-**Failing tests:** none.
-
-**Progress (2026-10-27).** Rules side done: spells whose targets an opponent chooses (Evangelize's
-`GainControlOfTargetEffect.opponentChosenTarget`, Volcanic Offering's `Card.getOpponentChosenSpellTargetIndices`)
-can now be cast from another player's hand. `PermanentChoiceContext.OpponentChosenSpellTarget(s)` carry
-`handOwnerId`, `SpellCastingService.playCardAfterOpponentChosenTarget(s)` resume through `playFromHandOf`, and
-`rejectOpponentChosenTargetsFromAnotherHand` is gone. Covered by `SenTripletsTest`
-(`opponentChosenTargetSpellFromOpponentsHand`, `opponentChosenTargetSpellWithBuybackReturnsToOwner`,
-`opponentChosenTargetsSpellFromOpponentsHand`).
-
-**What remains.** AI only: the hard AI's MCTS search (`GameSimulator.enumerateCastableSpells`) doesn't list
-plays from another player's hand; only the base `AiDecisionEngine.tryPlayFromOpponentHand` heuristic plays
-them. Adding them needs a hand-owner field on `SimulationAction.PlayCard`, a `playFromHandOf` wrapper in
-`GameSimulator.executePlayCard`, MCTS action keys/hand lookup (`MCTSEngine`) that tell the two hands apart,
-and `HardAiDecisionEngine` turning the chosen action into a `PlayCardRequest.withHandOwner` request.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 58: let the hard AI's MCTS search (GameSimulator) list and play
-cards from another player's hand under Sen Triplets. Add the hand owner to SimulationAction.PlayCard,
-enumerate the castable cards of gd.senControlledPlayerId's hand when GameData.canPlayFromHandOf allows it,
-execute them inside GameService.playFromHandOf, keep MCTSEngine's action keys distinct, and have
-HardAiDecisionEngine send PlayCardRequest.withHandOwner. Add focused AI tests. Don't run the full test
-suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 59. Split-card names in "choose a card name" prompts and chosen-name checks
 
 **Status:** open · **Found:** 2026-10-25, while finishing entry 42 (aftermath cards as split cards)

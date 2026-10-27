@@ -252,6 +252,36 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    @DisplayName("Hard AI casts MCTS's pick from the hand Sen Triplets lets it cast from")
+    void castsMctsPickFromSenControlledHand() {
+        pinLibrariesAndHands();
+        giveAiPriority(player1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player2, List.of(bears));
+        gd.senControllerPlayerId = player1.getId();
+        gd.senControlledPlayerId = player2.getId();
+        SimulationAction.PlayCard pick = new SimulationAction.PlayCard(0, null, 0, null, player2.getId());
+        HardAiDecisionEngine ai = Mockito.spy(createHardAi(player1));
+        Mockito.doReturn(false).when(ai).tryPlayFromOpponentHand(any());
+        MCTSEngine mcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(mcts.search(any(), any(), Mockito.anyInt(), Mockito.anyList())).thenReturn(pick);
+        ai.setMctsEngine(mcts);
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        ArgumentCaptor<List<SimulationAction>> rootActions = ArgumentCaptor.forClass(List.class);
+        verify(mcts).search(any(), eq(player1.getId()), Mockito.anyInt(), rootActions.capture());
+        assertThat(rootActions.getValue()).contains(pick);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(bears);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.stack.getFirst().getOwnerId()).isEqualTo(player2.getId());
+    }
+
+    @Test
     @DisplayName("Hard AI starts Evangelize by choosing the opponent")
     void startsEvangelizeWithOpponentChoice() {
         pinLibrariesAndHands();

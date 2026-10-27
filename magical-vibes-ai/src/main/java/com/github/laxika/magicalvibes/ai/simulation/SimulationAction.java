@@ -9,8 +9,17 @@ import java.util.UUID;
  */
 public sealed interface SimulationAction {
 
-    record PlayCard(int handIndex, UUID targetId, int xValue, UUID commandCardId) implements SimulationAction {
-        public PlayCard(int handIndex, UUID targetId, int xValue) { this(handIndex, targetId, xValue, null); }
+    /**
+     * Casts a spell. {@code handIndex} indexes the acting player's own hand, unless {@code commandCardId} names a
+     * commander cast from the command zone or {@code handOwnerId} names the other player whose hand the card is
+     * cast from (Sen Triplets).
+     */
+    record PlayCard(int handIndex, UUID targetId, int xValue, UUID commandCardId, UUID handOwnerId)
+            implements SimulationAction {
+        public PlayCard(int handIndex, UUID targetId, int xValue) { this(handIndex, targetId, xValue, null, null); }
+        public PlayCard(int handIndex, UUID targetId, int xValue, UUID commandCardId) {
+            this(handIndex, targetId, xValue, commandCardId, null);
+        }
     }
 
     record PassPriority() implements SimulationAction {}

@@ -94,6 +94,81 @@ class GameSimulatorTest {
     }
 
     @Test
+    @DisplayName("Legal actions include spells castable from the hand Sen Triplets lets the player cast from")
+    void legalActionsIncludeSpellsFromSenControlledHand() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+        gd.senControllerPlayerId = player1.getId();
+        gd.senControlledPlayerId = player2.getId();
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        assertThat(actions).contains(new SimulationAction.PlayCard(0, null, 0, null, player2.getId()));
+    }
+
+    @Test
+    @DisplayName("Legal actions list no spells from another player's hand without Sen Triplets' permission")
+    void legalActionsExcludeOpponentHandWithoutPermission() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        assertThat(actions).noneMatch(SimulationAction.PlayCard.class::isInstance);
+    }
+
+    @Test
+    @DisplayName("Own-hand and other-hand spells at the same index are distinct actions")
+    void ownAndOtherHandSpellsAreDistinctActions() {
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+        gd.senControllerPlayerId = player1.getId();
+        gd.senControlledPlayerId = player2.getId();
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        assertThat(actions).contains(new SimulationAction.PlayCard(0, null, 0, null, null),
+                new SimulationAction.PlayCard(0, null, 0, null, player2.getId()));
+    }
+
+    @Test
+    @DisplayName("Applying a spell from another player's hand casts it from there under the caster's control")
+    void applyingOtherHandSpellCastsItFromThatHand() {
+        Card bears = new GrizzlyBears();
+        Card ownCard = new SerraAngel();
+        harness.setHand(player1, List.of(ownCard));
+        harness.setHand(player2, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+        gd.senControllerPlayerId = player1.getId();
+        gd.senControlledPlayerId = player2.getId();
+
+        simulator.applyAction(gd, player1.getId(), new SimulationAction.PlayCard(0, null, 0, null, player2.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(bears);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.stack).anySatisfy(entry -> {
+            assertThat(entry.getCard().getId()).isEqualTo(bears.getId());
+            assertThat(entry.getControllerId()).isEqualTo(player1.getId());
+            assertThat(entry.getOwnerId()).isEqualTo(player2.getId());
+        });
+    }
+
+    @Test
     @DisplayName("Auto-resolving a library reveal honors a zero maximum")
     void autoResolvesLibraryRevealWithZeroMaximum() {
         Card eligible = new GrizzlyBears();

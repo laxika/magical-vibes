@@ -509,13 +509,35 @@ public class GameSimulator {
                 result.addAll(enumerateCastableSpellsFromSource(gd, playerId));
             }
         } finally { gd.commandCastPlayerId = previousPlayer; gd.commandCastCardId = previousCard; }
+        result.addAll(enumerateCastableSpellsFromHandOf(gd, playerId, gd.senControlledPlayerId));
         return result;
+    }
+
+    /**
+     * The spells {@code playerId} could cast from {@code handOwnerId}'s hand while Sen Triplets lets them, each
+     * tagged with that hand's owner; empty without that permission or while another foreign-zone cast is open.
+     */
+    private List<SimulationAction.PlayCard> enumerateCastableSpellsFromHandOf(GameData gd, UUID playerId,
+                                                                             UUID handOwnerId) {
+        if (!gd.canPlayFromHandOf(playerId, handOwnerId) || gd.foreignHandPlayPlayerId != null
+                || playerId.equals(gd.commandCastPlayerId)) {
+            return List.of();
+        }
+        gd.foreignHandPlayPlayerId = playerId;
+        gd.foreignHandOwnerId = handOwnerId;
+        try {
+            return enumerateCastableSpellsFromSource(gd, playerId);
+        } finally {
+            gd.foreignHandPlayPlayerId = null;
+            gd.foreignHandOwnerId = null;
+        }
     }
 
     private List<SimulationAction.PlayCard> enumerateCastableSpellsFromSource(GameData gd, UUID playerId) {
         List<SimulationAction.PlayCard> castable = new ArrayList<>();
         List<Card> hand = gd.castingSourceCards(playerId);
         if (hand == null) return castable;
+        UUID handOwnerId = gd.isForeignHandPlay(playerId) ? gd.foreignHandOwnerId : null;
 
         ManaPool virtualPool = manaManager.buildVirtualManaPool(gd, playerId);
         for (int i = 0; i < hand.size(); i++) {
@@ -571,7 +593,7 @@ public class GameSimulator {
                         xValue = Math.min(xValue, getMaxXForDiscardCost(gd, playerId, card));
                         if (xValue <= 0) continue;
                     }
-                    castable.add(new SimulationAction.PlayCard(i, targetId, xValue, gd.commandCastCardId));
+                    castable.add(new SimulationAction.PlayCard(i, targetId, xValue, gd.commandCastCardId, handOwnerId));
                 }
                 continue;
             }
@@ -581,7 +603,7 @@ public class GameSimulator {
                 xValue = Math.min(xValue, getMaxXForDiscardCost(gd, playerId, card));
                 if (xValue <= 0) continue;
             }
-            castable.add(new SimulationAction.PlayCard(i, null, xValue, gd.commandCastCardId));
+            castable.add(new SimulationAction.PlayCard(i, null, xValue, gd.commandCastCardId, handOwnerId));
         }
         return castable;
     }
@@ -763,6 +785,11 @@ public class GameSimulator {
                     new SimulationAction.PlayCard(0, pc.targetId(), pc.xValue())));
             return;
         }
+        if (pc.handOwnerId() != null) {
+            gameService.playFromHandOf(gd, player, pc.handOwnerId(), () -> executePlayCard(gd, player,
+                    new SimulationAction.PlayCard(pc.handIndex(), pc.targetId(), pc.xValue())));
+            return;
+        }
         UUID playerId = player.getId();
         Card card = gd.castingSourceCards(playerId).get(pc.handIndex());
         BeholdSelection beholdSelection = computeBeholdSelection(gd, playerId, card);
@@ -779,7 +806,11 @@ public class GameSimulator {
             return;
         }
         Integer discardIndex = computeDiscardCostIndex(gd, playerId, card);
-        List<Integer> discardIndices = computeDiscardCostIndices(gd, playerId, card, pc.handIndex(), pc.xValue());
+        // A spell cast from the command zone or another player's hand isn't in the caster's own hand, so no index of
+        // that hand is excluded from its discard costs.
+        int handCostIndex = gd.isForeignHandPlay(playerId) || playerId.equals(gd.commandCastPlayerId)
+                ? -1 : pc.handIndex();
+        List<Integer> discardIndices = computeDiscardCostIndices(gd, playerId, card, handCostIndex, pc.xValue());
         UUID chosenAdditionalCostObjectId = computeOpponentOwnedExiledCard(gd, playerId, card);
         if (exileIndices != null || sacrificeId != null || discardIndex != null || discardIndices != null
                 || !multiSacrificeIds.isEmpty()

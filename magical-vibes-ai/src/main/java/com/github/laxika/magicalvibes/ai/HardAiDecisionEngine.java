@@ -998,6 +998,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      */
     private record SpellCastingPlan(
             int handIndex,
+            UUID handOwnerId,
             Card card,
             UUID targetId,
             List<UUID> multiTargetIds,
@@ -1021,7 +1022,18 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      */
     private SpellCastingPlan buildSpellCastingPlan(GameData gameData, int handIndex,
                                                     UUID initialTargetId, boolean checkSpellTarget) {
-        List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
+        return buildSpellCastingPlan(gameData, null, handIndex, initialTargetId, checkSpellTarget);
+    }
+
+    /**
+     * Like {@link #buildSpellCastingPlan(GameData, int, UUID, boolean)}, for the card at {@code handIndex} of
+     * {@code handOwnerId}'s hand — another player's hand the AI may cast from (Sen Triplets) — or of the AI's own
+     * hand when {@code handOwnerId} is null.
+     */
+    private SpellCastingPlan buildSpellCastingPlan(GameData gameData, UUID handOwnerId, int handIndex,
+                                                    UUID initialTargetId, boolean checkSpellTarget) {
+        List<Card> hand = gameData.playerHands.get(handOwnerId != null ? handOwnerId : aiPlayer.getId());
+        if (hand == null || handIndex < 0 || handIndex >= hand.size()) return null;
         Card card = hand.get(handIndex);
         ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
 
@@ -1170,7 +1182,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             return null;
         }
 
-        return new SpellCastingPlan(handIndex, card, targetId, multiTargetIds, xValue,
+        return new SpellCastingPlan(handIndex, handOwnerId, card, targetId, multiTargetIds, xValue,
                 damageAssignments, sacrificePermanentId, exileGraveyardCardIndices,
                 beholdSelection, targetingTax);
     }
@@ -1182,7 +1194,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * @return true if the spell was cast or a mana ability triggered a pending choice
      */
     private boolean executeSpellCast(GameData gameData, SpellCastingPlan plan, String logLabel) {
-        List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
+        List<Card> hand = gameData.playerHands.get(
+                plan.handOwnerId != null ? plan.handOwnerId : aiPlayer.getId());
         int delveReduction = hasDelveCost(plan.card) && plan.exileGraveyardCardIndices != null
                 ? plan.exileGraveyardCardIndices.size() : 0;
         CostReductionPlan costReductionPlan = selectCostReductionPlan(
@@ -1214,22 +1227,26 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final UUID fSacrifice = plan.sacrificePermanentId;
         final List<Integer> fExileIndices = plan.exileGraveyardCardIndices;
         final List<UUID> fMultiTargets = plan.multiTargetIds;
+        // A spell cast from another player's hand isn't in the AI's own hand, so no own-hand index is excluded
+        // from its discard costs.
+        final int handCostIndex = plan.handOwnerId != null ? -1 : idx;
         final Integer fDiscardHandCardIndex = chooseDiscardCostIndex(
-                gameData, plan.card, idx, fXValue, plan.targetingTax);
+                gameData, plan.card, handCostIndex, fXValue, plan.targetingTax);
         final List<Integer> fDiscardHandCardIndices =
-                chooseDiscardCostIndices(gameData, plan.card, idx, fXValue != null ? fXValue : 0);
+                chooseDiscardCostIndices(gameData, plan.card, handCostIndex, fXValue != null ? fXValue : 0);
         final List<UUID> fMultiSacrificeIds = selectMultiPermanentCostIds(gameData, plan.card);
         final List<UUID> fImposedSacrificeIds = selectImposedSacrificePermanentIds(
                 gameData, plan.card, fSacrifice, fMultiSacrificeIds);
         if (fImposedSacrificeIds == null) {
             return false;
         }
-        send(() -> gameActions.handlePlayCard(
-                buildSpellPlayCardRequest(gameData, plan.card, idx, fXValue, fTargetId, fDamage,
-                        fMultiTargets, convokeCreatureIds, costReductionPlan.permanentIds(),
-                        fSacrifice, null, fExileIndices,
-                        fDiscardHandCardIndex, fDiscardHandCardIndices, fImposedSacrificeIds,
-                        fMultiSacrificeIds, plan.beholdSelection)));
+        PlayCardRequest request = buildSpellPlayCardRequest(gameData, plan.card, idx, fXValue, fTargetId, fDamage,
+                fMultiTargets, convokeCreatureIds, costReductionPlan.permanentIds(),
+                fSacrifice, null, fExileIndices,
+                fDiscardHandCardIndex, fDiscardHandCardIndices, fImposedSacrificeIds,
+                fMultiSacrificeIds, plan.beholdSelection);
+        PlayCardRequest finalRequest = plan.handOwnerId != null ? request.withHandOwner(plan.handOwnerId) : request;
+        send(() -> gameActions.handlePlayCard(finalRequest));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
         if (!spellCastStarted(gameData, hand, plan.card)) {
@@ -1465,6 +1482,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
             castableCount++;
         }
+        castableCount += castableSpellCountFromOpponentHand(gameData);
 
         if (castableCount == 0) {
             return false;
@@ -1491,7 +1509,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
             if (bestAction instanceof SimulationAction.PlayCard pc) {
                 if (pc.commandCardId() != null) return tryCastCommander(gameData);
-                SpellCastingPlan plan = buildSpellCastingPlan(gameData, pc.handIndex(), pc.targetId(), false);
+                SpellCastingPlan plan = buildSpellCastingPlan(
+                        gameData, pc.handOwnerId(), pc.handIndex(), pc.targetId(), false);
                 if (plan == null) return false;
                 log.info("AI (Hard/MCTS): Casting {}{} in game {}", plan.card().getName(),
                         plan.xValue() != null ? " (X=" + plan.xValue() + ")" : "", gameId);
@@ -1508,6 +1527,25 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         return false;
+    }
+
+    /**
+     * How many sorcery-speed spells the AI could cast from another player's hand while Sen Triplets lets it, so
+     * MCTS still runs when only those spells are castable.
+     */
+    private int castableSpellCountFromOpponentHand(GameData gameData) {
+        UUID ownerId = gameData.senControlledPlayerId;
+        if (!gameData.canPlayFromHandOf(aiPlayer.getId(), ownerId)) return 0;
+        List<Card> ownerHand = gameData.playerHands.getOrDefault(ownerId, List.of());
+        int count = 0;
+        for (int index : actionAvailabilityService.getPotentialPlayableIndicesFromHandOf(
+                gameData, aiPlayer.getId(), ownerId)) {
+            if (index >= ownerHand.size()) continue;
+            Card card = ownerHand.get(index);
+            if (card.hasType(CardType.LAND) || isInstantSpeedCard(card) || card.getManaCost() == null) continue;
+            count++;
+        }
+        return count;
     }
 
     // ===== Spell Casting (evaluator-based fallback) =====

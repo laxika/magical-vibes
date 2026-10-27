@@ -81,6 +81,23 @@ class MCTSEngineTest {
     }
 
     @Test
+    @DisplayName("MCTS casts a spell from the hand Sen Triplets lets it cast from rather than passing")
+    void mctsChoosesSpellFromSenControlledHand() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new SerraAngel()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+        gd.senControllerPlayerId = player1.getId();
+        gd.senControlledPlayerId = player2.getId();
+
+        SimulationAction action = engine.search(gd, player1.getId(), 100);
+
+        assertThat(action).isEqualTo(new SimulationAction.PlayCard(0, null, 0, null, player2.getId()));
+    }
+
+    @Test
     @DisplayName("MCTS chooses to play a spell when mana is available")
     void mctsChoosesToPlaySpell() {
         // Offer choice between Grizzly Bears (2/2) and Serra Angel (4/4 flying vigilance)
