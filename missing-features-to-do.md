@@ -11,41 +11,58 @@ Remove an entry once the feature has landed and its tests pass.
 
 ## 62. Krark's Thumb result choice for interleaved, nested and non-resolution coin flips
 
-**Status:** open · **Found:** 2026-10-25, while finishing entry 46 (Krark's Thumb result choice)
+**Status:** partial · **Found:** 2026-10-25, while finishing entry 46 (Krark's Thumb result choice)
 
-**Failing tests:** none yet; a Krark's Thumb test with mixed mocked flips on any path below would
-show the heads result kept without a prompt.
+**Failing tests:** none yet; a Krark's Thumb test with mixed mocked flips on any remaining path below
+would show the heads result kept without a prompt.
 
 **What the rules require.** Krark's Thumb: "If you would flip a coin, instead flip two coins and
 ignore one." Its controller sees the results and chooses which to ignore (a replacement effect,
-CR 614.1a; CR 705.3 covers effects that fix a flip's result). Only the first coin-flip event of a
-handler marked `ChoosesCoinFlipResultsFirst` asks: `CoinFlipService` stops the handler with
-`CoinFlipChoicePending` and `EffectResolutionService` resolves it again. Everywhere else the engine
-still keeps heads when the physical flips disagree:
-- handlers that change the game between flips: `FlipUntilLoseEffectHandler`,
-  `FlipUntilLosePutCountersOnSourceEffectHandler`, `FlipCoinsUntilLoseEffectHandler`,
-  `FlipUntilLoseOrStopSupport` (Fiery Gambit), `ManaClashEffectHandler`,
-  `EachPlayerFlipsCoinAndTailsSacrificesCreatureEffectHandler`, `FlipCoinForEachOpponentEffectHandler`,
-  `FlipCoinForEachBlockingCreatureEffectHandler`, `RiskyMoveEffectHandler`, `GameOfChaosSupport`,
-  `AmuletOfQuozAnteEffectHandler`;
-- a marked handler's later flips, and flips of effects it dispatches (a branch that flips again);
-- flips outside stack resolution: `CoinFlipCostSupport` (costs), `FlipCoinOnEnterEffectHandler`,
-  `PermanentChoiceBattlefieldHandlerService`, and `D20RollService`'s coin flips.
+CR 614.1a; CR 705.3 covers effects that fix a flip's result).
 
-**Why it's large.** Loop handlers need their flips journaled across reruns (log and trigger side
-effects between flips must not repeat), or a resumable state machine per handler. Cost and entry
-paths need their own pause points outside the parked-resolution mechanism.
+**Progress (2026-10-27).** `CoinFlipService` now journals every flip made while the choice window is
+open (`GameData.recordedCoinFlips` with a `replayedCoinFlips` cursor; `RecordedCoinFlip` carries the
+flipping player and any Pokey d20 roll), so a resolved-again handler replays several flip events and
+the flipping player (not always the controller) is asked. New marker
+`ChoosesCoinFlipResultsAtCheckpoints`: such a handler calls `CoinFlipService.checkpoint(gameData,
+effect, resumePoint)` after each change, which clears the journal, stores a resume point
+(`resumePoint`) and reopens the window only for the resolving effect itself
+(`GameData.coinFlipCheckpointEffect`). `flipEach` flips several players' coins under one window. A
+flip never stops the effect while another prompt is pending. Converted: `FlipUntilLoseEffectHandler`,
+`FlipUntilLosePutCountersOnSourceEffectHandler`, `FlipCoinsUntilLoseEffectHandler`,
+`ManaClashEffectHandler`, `FlipCoinForEachOpponentEffectHandler`,
+`FlipCoinForEachBlockingCreatureEffectHandler` (checkpoints); `EachPlayerFlipsCoinAndTailsSacrificesCreatureEffectHandler`
+(flips every player first via `flipEach`), `FlipUntilLoseOrStopEffectHandler` (Fiery Gambit's first
+flip) and `RiskyMoveEffectHandler` (when no creature/opponent choice is needed) marked
+`ChoosesCoinFlipResultsFirst`. Tests in `KrarksThumbTest` (Crazed Firecat, Mana Clash incl. opponent's
+Thumb, Goblin Assassin, Fiery Gambit).
 
-**Prompt to start it:**
+**What remains** (these still keep heads when the physical flips disagree):
+- flips made after a player prompt, outside the stack resolution window: Fiery Gambit's "flip again"
+  continuation (`FlipUntilLoseOrStopContinuationHandler`), Game of Chaos (`GameOfChaosSupport`, both
+  the spell and the flip-again may ability; mind its `gameOfChaosFlipControllerWins` Lich's Duel
+  Mastery rerun), Risky Move after its creature/opponent choice (`completeOpponentChoice`, called from
+  `PermanentChoiceBattlefieldHandlerService`), `AmuletOfQuozAnteEffectHandler`;
+- later flips of handlers marked only `ChoosesCoinFlipResultsFirst` (e.g.
+  `FlipCoinDestroyTargetOrRepeatEffectHandler`'s repeat) — convert them to checkpoints where the state
+  to resume fits in an int;
+- nested flips: flips of effects a handler dispatches (payloads of flip-until-lose, per-opponent
+  branches, etc.) see a closed window;
+- flips outside stack resolution: `CoinFlipCostSupport` (costs), `FlipCoinOnEnterEffectHandler`
+  (replacement-style entry flips) and `D20RollService`'s coin flips. These need their own pause points
+  outside the parked-resolution mechanism.
+
+**Prompt to continue it:**
 
 ```
-Implement missing-features-to-do.md entry 62: extend the Krark's Thumb result choice
-(ChoiceContext.CoinFlipResultChoice, CoinFlipService.recordedCoinFlips, CoinFlipChoicePending) to
-the coin-flip paths listed in the entry: flip-until-lose loops, Mana Clash, per-player and per-blocker
-flips, Risky Move, Game of Chaos, Amulet of Quoz, nested flips, coin-flip costs, entry flips and
-D20RollService. Keep replayed flips from repeating logs or triggers. Add Krark's Thumb tests with
-mocked mixed flips for each. Verify every CR number with the rules MCP. Don't run the full test
-suite; ask me. Don't commit until I say so.
+Continue missing-features-to-do.md entry 62: extend the Krark's Thumb result choice (journaled
+CoinFlipService flips, ChoosesCoinFlipResultsAtCheckpoints + CoinFlipService.checkpoint/resumePoint,
+CoinFlipChoicePending) to the remaining paths listed in the entry: may-ability continuation flips
+(Fiery Gambit, Game of Chaos), Risky Move after its choices, Amulet of Quoz, later flips of
+first-flip-only handlers, nested flips, coin-flip costs, entry flips and D20RollService. Keep replayed
+flips from repeating logs or triggers. Add Krark's Thumb tests with mocked mixed flips for each.
+Verify every CR number with the rules MCP. Don't run the full test suite; ask me. Don't commit until
+I say so.
 ```
 
 ---

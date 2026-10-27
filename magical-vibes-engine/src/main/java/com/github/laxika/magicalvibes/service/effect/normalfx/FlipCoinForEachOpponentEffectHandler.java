@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinForEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsAtCheckpoints;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -14,13 +15,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
-/** Resolves one coin flip and result branch for each opponent. */
+/**
+ * Resolves one coin flip and result branch for each opponent. Each opponent's branch ends on a
+ * coin-flip checkpoint, so a Krark's Thumb choice on a later flip resumes with the next opponent.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class FlipCoinForEachOpponentEffectHandler implements NormalEffectHandlerBean {
+public class FlipCoinForEachOpponentEffectHandler implements NormalEffectHandlerBean, ChoosesCoinFlipResultsAtCheckpoints {
 
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameLogService gameLogService;
@@ -37,10 +42,11 @@ public class FlipCoinForEachOpponentEffectHandler implements NormalEffectHandler
         FlipCoinForEachOpponentEffect flipEffect = (FlipCoinForEachOpponentEffect) effect;
         UUID controllerId = entry.getControllerId();
 
-        for (UUID opponentId : gameData.orderedPlayerIds) {
-            if (opponentId.equals(controllerId)) {
-                continue;
-            }
+        List<UUID> opponentIds = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(controllerId))
+                .toList();
+        for (int index = coinFlipService.resumePoint(gameData, effect); index < opponentIds.size(); index++) {
+            UUID opponentId = opponentIds.get(index);
 
             CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, controllerId);
             boolean won = result.heads();
@@ -62,6 +68,7 @@ public class FlipCoinForEachOpponentEffectHandler implements NormalEffectHandler
                     entry.restoreTargetIdAfterEffectResolution(previousTargetId);
                 }
             }
+            coinFlipService.checkpoint(gameData, effect, index + 1);
         }
     }
 

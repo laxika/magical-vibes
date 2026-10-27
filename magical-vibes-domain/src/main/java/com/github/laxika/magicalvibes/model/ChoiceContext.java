@@ -1319,7 +1319,7 @@ public sealed interface ChoiceContext {
     /**
      * Krark's Thumb: the flipping player chooses which result of a replaced coin flip to keep when the
      * physical flips disagree. {@code coinIndex} is the logical flip's position in
-     * {@link GameData#recordedCoinFlips}.
+     * {@link GameData#recordedCoinFlips}, and {@code playerId} is the player who flipped it.
      */
     record CoinFlipResultChoice(UUID playerId, int coinIndex) implements ChoiceContext {
         public static final String HEADS = "Heads";

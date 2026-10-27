@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerFlipsCoinAndTailsSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,11 +17,14 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves per-player coin flips and the resulting simultaneous sacrifice choices. */
+/**
+ * Resolves per-player coin flips and the resulting simultaneous sacrifice choices. Every player flips
+ * before any result is applied, so a Krark's Thumb choice on any of the flips can stop the effect.
+ */
 @Component
 @RequiredArgsConstructor
 public class EachPlayerFlipsCoinAndTailsSacrificesCreatureEffectHandler
-        implements NormalEffectHandlerBean {
+        implements NormalEffectHandlerBean, ChoosesCoinFlipResultsFirst {
 
     private final CoinFlipService coinFlipService;
     private final DestructionSupport destructionSupport;
@@ -40,8 +44,11 @@ public class EachPlayerFlipsCoinAndTailsSacrificesCreatureEffectHandler
         List<PendingForcedSacrifice> choosers = new ArrayList<>();
         String sourceName = entry.getCard().getName();
 
-        for (UUID playerId : apnapPlayers(gameData)) {
-            CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, playerId);
+        List<UUID> players = apnapPlayers(gameData);
+        List<CoinFlipService.CoinFlipResult> results = coinFlipService.flipEach(gameData, players);
+        for (int index = 0; index < players.size(); index++) {
+            UUID playerId = players.get(index);
+            CoinFlipService.CoinFlipResult result = results.get(index);
             String playerName = gameData.playerIdToName.get(playerId);
             String outcome = result.heads() ? "wins" : "loses";
             gameLogService.append(gameData, GameLog.text(playerName + " " + outcome

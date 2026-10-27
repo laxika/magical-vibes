@@ -594,7 +594,7 @@ public class ChoiceHandlerService {
             gameData.interaction.clearAwaitingInput();
             coinFlipService.chooseResult(gameData, choice.coinIndex(),
                     ChoiceContext.CoinFlipResultChoice.HEADS.equals(colorName));
-            if (coinFlipService.beginNextResultChoice(gameData, choice.playerId())) {
+            if (coinFlipService.beginNextResultChoice(gameData)) {
                 return;
             }
             // Every kept result is chosen: the stopped effect resolves again with them.

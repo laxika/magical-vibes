@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsAtCheckpoints;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -16,11 +17,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/** Resolves a fixed-count coin-flip sequence with an all-or-nothing reward. */
+/**
+ * Resolves a fixed-count coin-flip sequence with an all-or-nothing reward. Each won flip ends on a
+ * coin-flip checkpoint, so a Krark's Thumb choice on a later flip resumes with the next coin.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class FlipCoinsUntilLoseEffectHandler implements NormalEffectHandlerBean {
+public class FlipCoinsUntilLoseEffectHandler implements NormalEffectHandlerBean, ChoosesCoinFlipResultsAtCheckpoints {
 
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameLogService gameLogService;
@@ -38,7 +42,7 @@ public class FlipCoinsUntilLoseEffectHandler implements NormalEffectHandlerBean 
         FlipCoinsUntilLoseEffect flipEffect = (FlipCoinsUntilLoseEffect) effect;
         int coins = Math.max(0, amountEvaluationService.evaluate(gameData, flipEffect.coins(),
                 AmountContext.forStackEntry(entry, null)));
-        for (int i = 0; i < coins; i++) {
+        for (int i = coinFlipService.resumePoint(gameData, effect); i < coins; i++) {
             CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, entry.getControllerId());
             boolean won = result.heads();
             String playerName = gameData.playerIdToName.get(entry.getControllerId());
@@ -51,6 +55,7 @@ public class FlipCoinsUntilLoseEffectHandler implements NormalEffectHandlerBean 
             if (result.isActualCoinFlip()) {
                 triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, entry.getControllerId());
             }
+            coinFlipService.checkpoint(gameData, effect, i + 1);
         }
 
         dispatch(gameData, entry, flipEffect.allWinsEffect());

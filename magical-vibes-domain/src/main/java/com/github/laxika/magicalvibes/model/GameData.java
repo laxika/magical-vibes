@@ -2964,16 +2964,25 @@ public class GameData {
      */
     public boolean deathReplacementsCanRerunEffect;
     /**
-     * {@code true} while the resolving effect's handler has not flipped a coin yet and has changed nothing, so a
-     * coin flip Krark's Thumb replaces can stop it while the flipping player chooses which results to ignore. The
-     * handler's first flip consumes it.
+     * {@code true} while the resolving effect's handler has changed nothing since it began or since its last
+     * coin-flip checkpoint, so a coin flip Krark's Thumb replaces can stop it while the flipping player chooses which
+     * results to ignore. Each coin-flip call of the handler consumes it; a checkpoint reopens it.
      */
     public boolean coinFlipChoicesCanRerunEffect;
     /**
-     * The flips of the coin-flip event that stopped the resolving effect, in order, while their player chooses
-     * which Krark's Thumb results to keep; the effect resolved again reads them back instead of flipping.
+     * The coin flips the resolving effect made since it began or since its last coin-flip checkpoint, in order,
+     * while a Krark's Thumb result may still stop it; the effect resolved again reads them back instead of flipping.
      */
     public final List<RecordedCoinFlip> recordedCoinFlips = new ArrayList<>();
+    /** How many of {@link #recordedCoinFlips} the current run of the resolving effect has read back so far. */
+    public int replayedCoinFlips;
+    /**
+     * The resolving effect whose handler resumes at coin-flip checkpoints, or {@code null}. Only that effect's own
+     * checkpoints reopen the Krark's Thumb choice window; an effect it dispatches sees a different value.
+     */
+    public CardEffect coinFlipCheckpointEffect;
+    /** Where {@link #coinFlipCheckpointEffect} resumes when resolved again after a Krark's Thumb choice. */
+    public int coinFlipResumePoint;
     /**
      * The step (the effect of the resolving stack entry's effect list) whose handler is running and may end on a
      * pending departure batch, or {@code null}. Only that step's own departure may pause: a handler it dispatches
@@ -4488,7 +4497,8 @@ public class GameData {
                     "pendingEffectResolutionIndex", "resolvingMayEffectFromStack",
                     "resolvedMayAccepted", "resolvedMayTargetingEntry",
                     "rerunCurrentEffectAfterInteraction", "deathReplacementsCanRerunEffect", "stepDepartureEffect",
-                    "coinFlipChoicesCanRerunEffect", "recordedCoinFlips",
+                    "coinFlipChoicesCanRerunEffect", "recordedCoinFlips", "replayedCoinFlips",
+                    "coinFlipCheckpointEffect", "coinFlipResumePoint",
                     "chosenDeathReplacementsForRerun", "rerunMayLibraryChoices", "pendingDeathReplacementChoiceReplay",
                     "deferPlayerLossCheck",
                     "effectResolutionDepth", "restartTurnRequested", "simulation",
@@ -11009,6 +11019,9 @@ public class GameData {
         copy.deathReplacementsCanRerunEffect = this.deathReplacementsCanRerunEffect;
         copy.coinFlipChoicesCanRerunEffect = this.coinFlipChoicesCanRerunEffect;
         copy.recordedCoinFlips.addAll(this.recordedCoinFlips);
+        copy.replayedCoinFlips = this.replayedCoinFlips;
+        copy.coinFlipCheckpointEffect = this.coinFlipCheckpointEffect;
+        copy.coinFlipResumePoint = this.coinFlipResumePoint;
         copy.stepDepartureEffect = this.stepDepartureEffect;
         copy.chosenDeathReplacementsForRerun.putAll(this.chosenDeathReplacementsForRerun);
         copy.rerunMayLibraryChoices.addAll(this.rerunMayLibraryChoices);

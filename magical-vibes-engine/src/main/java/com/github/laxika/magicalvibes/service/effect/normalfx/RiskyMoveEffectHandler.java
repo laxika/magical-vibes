@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RiskyMoveEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -23,9 +24,13 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Resolves {@link RiskyMoveEffect}. When the creature and opponent need no choice, the coin flip is the
+ * first thing the effect does, so a Krark's Thumb choice on it can stop the effect.
+ */
 @Component
 @RequiredArgsConstructor
-public class RiskyMoveEffectHandler implements NormalEffectHandlerBean {
+public class RiskyMoveEffectHandler implements NormalEffectHandlerBean, ChoosesCoinFlipResultsFirst {
 
     private final CreatureControlService creatureControlService;
     private final GameQueryService gameQueryService;

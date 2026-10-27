@@ -4,13 +4,14 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseOrStopEffect;
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /** Resolves {@link FlipUntilLoseOrStopEffect}'s first coin flip. */
 @Component
 @RequiredArgsConstructor
-public class FlipUntilLoseOrStopEffectHandler implements NormalEffectHandlerBean {
+public class FlipUntilLoseOrStopEffectHandler implements NormalEffectHandlerBean, ChoosesCoinFlipResultsFirst {
 
     private final FlipUntilLoseOrStopSupport support;
 

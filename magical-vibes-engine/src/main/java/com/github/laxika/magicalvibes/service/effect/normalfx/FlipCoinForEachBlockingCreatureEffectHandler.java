@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinForEachBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsAtCheckpoints;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,11 +16,13 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves {@link FlipCoinForEachBlockingCreatureEffect}, making one independent flip for each
- * blocking creature currently on the battlefield.
+ * blocking creature currently on the battlefield. Each blocker's flip ends on a coin-flip
+ * checkpoint, so a Krark's Thumb choice on a later flip resumes with the next blocker.
  */
 @Component
 @RequiredArgsConstructor
-public class FlipCoinForEachBlockingCreatureEffectHandler implements NormalEffectHandlerBean {
+public class FlipCoinForEachBlockingCreatureEffectHandler
+        implements NormalEffectHandlerBean, ChoosesCoinFlipResultsAtCheckpoints {
 
     private final GameLogService gameLogService;
     private final CoinFlipService coinFlipService;
@@ -39,7 +42,8 @@ public class FlipCoinForEachBlockingCreatureEffectHandler implements NormalEffec
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         String cardName = entry.getCard().getName();
-        for (Permanent blocker : blockers) {
+        for (int index = coinFlipService.resumePoint(gameData, effect); index < blockers.size(); index++) {
+            Permanent blocker = blockers.get(index);
             CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, entry.getControllerId());
             boolean wonFlip = result.heads();
             String outcome = wonFlip ? " wins" : " loses";
@@ -59,6 +63,7 @@ public class FlipCoinForEachBlockingCreatureEffectHandler implements NormalEffec
                     triggerCollectionService.checkControllerLosesCoinFlipTriggers(gameData, entry.getControllerId());
                 }
             }
+            coinFlipService.checkpoint(gameData, effect, index + 1);
         }
     }
 }

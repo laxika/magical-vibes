@@ -486,13 +486,20 @@ public class EffectResolutionService {
                             && (gameData.pendingEffectResolutionEntry == null
                             || gameData.pendingEffectResolutionEntry == entry);
                     gameData.deathReplacementsCanRerunEffect = deathReplacementRerunWindow;
-                    // Krark's Thumb: the handler's first coin flip may stop it while its player chooses which
-                    // results to ignore; it is then resolved again and reads those flips back.
+                    // Krark's Thumb: the handler's first coin flip (or one after its last checkpoint) may stop
+                    // it while its player chooses which results to ignore; it is then resolved again and reads
+                    // those flips back.
                     boolean coinFlipRerunWindow = gameData.effectResolutionDepth == 1
-                            && handler instanceof ChoosesCoinFlipResultsFirst
+                            && (handler instanceof ChoosesCoinFlipResultsFirst
+                            || handler instanceof ChoosesCoinFlipResultsAtCheckpoints)
                             && (gameData.pendingEffectResolutionEntry == null
                             || gameData.pendingEffectResolutionEntry == entry);
                     gameData.coinFlipChoicesCanRerunEffect = coinFlipRerunWindow;
+                    if (coinFlipRerunWindow) {
+                        gameData.replayedCoinFlips = 0;
+                    }
+                    gameData.coinFlipCheckpointEffect = coinFlipRerunWindow
+                            && handler instanceof ChoosesCoinFlipResultsAtCheckpoints ? effectToResolve : null;
                     // Only this step's own departure may end it on a pending question (CR 616.1): not one in a
                     // nested resolution, nor one a handler dispatches for another effect.
                     gameData.stepDepartureEffect = gameData.effectResolutionDepth == 1
@@ -515,8 +522,11 @@ public class EffectResolutionService {
                     } finally {
                         gameData.deathReplacementsCanRerunEffect = false;
                         gameData.coinFlipChoicesCanRerunEffect = false;
+                        gameData.coinFlipCheckpointEffect = null;
                         if (coinFlipRerunWindow && !stoppedForCoinFlipChoice) {
                             gameData.recordedCoinFlips.clear();
+                            gameData.replayedCoinFlips = 0;
+                            gameData.coinFlipResumePoint = 0;
                         }
                         gameData.stepDepartureEffect = null;
                         if (deathReplacementRerunWindow && !stoppedForDeathReplacement) {

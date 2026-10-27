@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsAtCheckpoints;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -15,11 +16,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/** Resolves a payload once for every won coin flip until the controller loses. */
+/**
+ * Resolves a payload once for every won coin flip until the controller loses. Each round ends on a
+ * coin-flip checkpoint, so a Krark's Thumb choice on a later flip resumes with the next round.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class FlipUntilLoseEffectHandler implements NormalEffectHandlerBean {
+public class FlipUntilLoseEffectHandler implements NormalEffectHandlerBean, ChoosesCoinFlipResultsAtCheckpoints {
 
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameLogService gameLogService;
@@ -52,6 +56,7 @@ public class FlipUntilLoseEffectHandler implements NormalEffectHandlerBean {
             if (flipEffect.perWin() != null) {
                 dispatch(gameData, entry, flipEffect.perWin());
             }
+            coinFlipService.checkpoint(gameData, effect, 0);
         }
     }
 

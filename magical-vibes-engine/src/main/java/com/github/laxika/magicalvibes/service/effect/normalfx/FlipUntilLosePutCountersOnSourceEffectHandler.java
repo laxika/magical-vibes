@@ -7,14 +7,20 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLosePutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsAtCheckpoints;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves a coin-flip sequence that rewards each win with a +1/+1 counter on the source. */
+/**
+ * Resolves a coin-flip sequence that rewards each win with a +1/+1 counter on the source. Each won
+ * flip ends on a coin-flip checkpoint holding the wins so far, so a Krark's Thumb choice on a later
+ * flip resumes the count.
+ */
 @Component
 @RequiredArgsConstructor
-public class FlipUntilLosePutCountersOnSourceEffectHandler implements NormalEffectHandlerBean {
+public class FlipUntilLosePutCountersOnSourceEffectHandler
+        implements NormalEffectHandlerBean, ChoosesCoinFlipResultsAtCheckpoints {
 
     private final CoinFlipService coinFlipService;
     private final GameLogService gameLogService;
@@ -28,7 +34,7 @@ public class FlipUntilLosePutCountersOnSourceEffectHandler implements NormalEffe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        int wins = 0;
+        int wins = coinFlipService.resumePoint(gameData, effect);
         while (true) {
             CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, entry.getControllerId());
             boolean won = result.heads();
@@ -50,6 +56,7 @@ public class FlipUntilLosePutCountersOnSourceEffectHandler implements NormalEffe
                 triggerCollectionService.checkControllerWinsCoinFlipTriggers(
                         gameData, entry.getControllerId());
             }
+            coinFlipService.checkpoint(gameData, effect, wins);
         }
 
         if (wins > 0) {

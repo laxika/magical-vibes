@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaClashEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsAtCheckpoints;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -15,11 +17,13 @@ import org.springframework.stereotype.Component;
  * Resolves {@link ManaClashEffect}: the controller and the targeted opponent repeatedly flip coins,
  * each player whose coin is tails takes 1 damage, and the loop stops once both coins come up heads
  * on the same flip. Damage runs through {@link DamageSupport#dealDamageToPlayer} so prevention and
- * damage-multiplier effects (e.g. Furnace of Rath) still apply.
+ * damage-multiplier effects (e.g. Furnace of Rath) still apply. Each round flips both coins before
+ * anything else happens and ends on a coin-flip checkpoint, so a Krark's Thumb choice on either coin
+ * of a round resumes with that round.
  */
 @Component
 @RequiredArgsConstructor
-public class ManaClashEffectHandler implements NormalEffectHandlerBean {
+public class ManaClashEffectHandler implements NormalEffectHandlerBean, ChoosesCoinFlipResultsAtCheckpoints {
 
     private final DamageSupport damageSupport;
     private final GameLogService gameLogService;
@@ -44,8 +48,10 @@ public class ManaClashEffectHandler implements NormalEffectHandlerBean {
         String opponentName = gameData.playerIdToName.get(opponentId);
 
         while (true) {
-            CoinFlipService.CoinFlipResult controllerResult = coinFlipService.flip(gameData, controllerId);
-            CoinFlipService.CoinFlipResult opponentResult = coinFlipService.flip(gameData, opponentId);
+            List<CoinFlipService.CoinFlipResult> results =
+                    coinFlipService.flipEach(gameData, List.of(controllerId, opponentId));
+            CoinFlipService.CoinFlipResult controllerResult = results.get(0);
+            CoinFlipService.CoinFlipResult opponentResult = results.get(1);
             boolean controllerHeads = controllerResult.heads();
             boolean opponentHeads = opponentResult.heads();
 
@@ -67,6 +73,7 @@ public class ManaClashEffectHandler implements NormalEffectHandlerBean {
             if (controllerHeads && opponentHeads) {
                 break;
             }
+            coinFlipService.checkpoint(gameData, effect, 0);
         }
     }
 
