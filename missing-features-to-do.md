@@ -54,24 +54,38 @@ of `Map.entry(player, effect)`) and the keep-the-strongest maps `damageLifeFloor
 (`damageLifeFloorContributionsUntilEndOfTurn`, `playersMaxSpellsContributionsThisTurn`, written through
 `GameData.addDamageLifeFloorUntilEndOfTurn` / `limitSpellsThisTurn`, cleared by `clearDamageLifeFloorsUntilEndOfTurn` /
 `clearSpellLimitsThisTurn`) captured as a `LIST` and re-merged on restore, so a superseded value (or a repeated equal
-one) from another player's phase is no longer lost when the stronger one ends. RunedTerrorTest covers can't-block, creature and player
+one) from another player's phase is no longer lost when the stronger one ends. A seventh pass moved the
+one-shot / turn-long redirection and prevention shield lists whose records are only ever added and removed whole
+(each a `LIST` of its records, so a shield used up in between is not restored): `channelHarmShields`,
+`comeuppanceDamagePreventionShields`, `judgmentOfAlexanderDamagePreventionShields`, `eyeForAnEyeShields`,
+`reflectDamageToSourceControllerShields`, `sourceNextCombatDamageToControllerShields`,
+`sourceNextCombatDamageToOpponentRedirectShields`, `sourceNextDamageRedirectToPermanentShields`,
+`playerNextInstantOrSorceryDamageRedirectShields`, `playerSourceNextDamageRedirectShields`,
+`turnSourceDamageRedirectToControllerShields`, `turnDamageRedirectToCreatureShields`,
+`targetSorceryDamageRedirectShields`, and the `combatDamagePreventionTokenShields` map (a `SET` of its entries,
+restored with `putIfAbsent`). RunedTerrorTest covers can't-block, creature and player
 prevention shields, a used-up shield, Fog, Safe Passage, Eerie Interference, Skullcrack, Silence, Gilded Light,
 Borne Upon a Wind, Debt of Loyalty, Skeleton Scavengers, Soldevi Sentry, Microscope, Blind Fury, Overblaze (two
 doublings split between phases), Zameck Guildmage, Due Respect, Angel's Grace, Irencrag Feat, a tighter spell limit
-hiding a looser one, and Angel of Grace cast again during another player's phase. **Still open:**
+hiding a looser one, Angel of Grace cast again during another player's phase, Comeuppance, Inkshield, and two Aegis of
+Honor shields from another player's phase of which one is used before the active player's cleanup. **Still open:**
 `Permanent.tappedPermanentsForAbilityThisTurn` (Vodalian War Machine's "Merfolk tapped this turn" record; it is a
 turn-history record, not an effect, so the Runed Terror ruling about effects ending doesn't settle it — it arguably
 should last the whole turn rather than be split per active player; look for a ruling first), and the remaining
 `GameData` stores cleared in
-`resetEndOfTurnModifiers`: one-shot redirect/prevention shield lists and maps (`damageRedirectShields`,
-`sourceDamageRedirectShields`, `playerSourceNextDamageShields`, `targetSourceDamagePreventionShields`, Eye for an
-Eye, `playerSourceDamagePreventionIds` with its paired colour/life-gain maps,
-`playerNextDamageFromMatchingSourcesPrevented`, `combatDamagePreventionTokenShields`, `channelHarmShields`, ...),
+`resetEndOfTurnModifiers`: the amount shields whose record is replaced by a reduced copy when partly used
+(`damageRedirectShields`, `sourceDamageRedirectShields`, `targetSourceDamagePreventionShields`,
+`damagePreventionLifeGainShields`, `playerNextDamageRedirectShields`, `creatureDamageRedirectShields` with its
+`UNLIMITED` / `NEXT_EVENT` sentinels — they need a per-shield amount split keyed by the record minus its amount,
+without merging two equal shields into one, since each shield redirects as its own damage event), the shield
+lists modified in place by `replaceAll` (`playerSourceNextDamageShields`, `targetSpellDamagePreventionShields`)
+or whose order matters and is restored with `addFirst` (`sourceNextDamageToAnyTargetShields`,
+`sourcePermanentAndControllerNextDamageRedirectShields`), `playerSourceDamagePreventionIds` with its paired
+colour/life-gain maps, `playerNextDamageFromMatchingSourcesPrevented`,
 `pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn`, the
 remaining "this turn" rule stores (`spellColorOverridesUntilEndOfTurn`, Sen Triplets' controller ids, next-spell
 flash / convoke / cost / free-cast grants, next-spell copy counters), and graveyard / exile / library-top cast
-permissions. One-shot shield lists still need a per-element split (`LIST` works when the shield record is removed
-whole when used). Known limitation: a flag or set element (including a keyword) that another player's
+permissions. Known limitation: a flag or set element (including a keyword) that another player's
 effect sets again while it is already set stays credited to the first player only, and with three or more players a
 single-value field kept for several other players takes the value of the most recently credited player.
 

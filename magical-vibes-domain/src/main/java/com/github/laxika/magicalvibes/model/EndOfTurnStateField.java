@@ -15,6 +15,10 @@ package com.github.laxika.magicalvibes.model;
  * on restore, so a weaker value outlives the cleanup step that ends the stronger one.
  * Two aligned per-permanent lists (Soldevi Sentry's shield recipients and their controllers) are one
  * {@link Kind#LIST} of {@code (recipient, controller)} entries, so a share keeps them paired.
+ * A one-shot or turn-long redirection / prevention shield list whose records are only ever added and removed
+ * whole (Eye for an Eye, Comeuppance, Mirror Strike, Saving Grace, ...) is a {@link Kind#LIST} of its records, so
+ * a shield used up in between is not restored. Shields whose remaining amount is reduced in place (a reduced
+ * copy replaces the record) are not tracked yet.
  */
 public enum EndOfTurnStateField {
 
@@ -197,7 +201,21 @@ public enum EndOfTurnStateField {
     GAME_LAND_MANA_FIXED_COLOR(Kind.SET),
     GAME_PLAYER_STATIC_EFFECTS(Kind.LIST),
     GAME_DAMAGE_LIFE_FLOORS(Kind.LIST),
-    GAME_SPELL_LIMITS(Kind.LIST);
+    GAME_SPELL_LIMITS(Kind.LIST),
+    GAME_CHANNEL_HARM_SHIELDS(Kind.LIST),
+    GAME_COMEUPPANCE_SHIELDS(Kind.LIST),
+    GAME_JUDGMENT_OF_ALEXANDER_SHIELDS(Kind.LIST),
+    GAME_EYE_FOR_AN_EYE_SHIELDS(Kind.LIST),
+    GAME_REFLECT_DAMAGE_TO_SOURCE_CONTROLLER_SHIELDS(Kind.LIST),
+    GAME_SOURCE_NEXT_COMBAT_DAMAGE_TO_CONTROLLER_SHIELDS(Kind.LIST),
+    GAME_SOURCE_NEXT_COMBAT_DAMAGE_TO_OPPONENT_REDIRECT_SHIELDS(Kind.LIST),
+    GAME_SOURCE_NEXT_DAMAGE_REDIRECT_TO_PERMANENT_SHIELDS(Kind.LIST),
+    GAME_PLAYER_NEXT_INSTANT_OR_SORCERY_DAMAGE_REDIRECT_SHIELDS(Kind.LIST),
+    GAME_PLAYER_SOURCE_NEXT_DAMAGE_REDIRECT_SHIELDS(Kind.LIST),
+    GAME_TURN_SOURCE_DAMAGE_REDIRECT_TO_CONTROLLER_SHIELDS(Kind.LIST),
+    GAME_TURN_DAMAGE_REDIRECT_TO_CREATURE_SHIELDS(Kind.LIST),
+    GAME_TARGET_SORCERY_DAMAGE_REDIRECT_SHIELDS(Kind.LIST),
+    GAME_COMBAT_DAMAGE_PREVENTION_TOKEN_SHIELDS(Kind.SET);
 
     /** How a field's value is split between players and recombined. */
     public enum Kind {

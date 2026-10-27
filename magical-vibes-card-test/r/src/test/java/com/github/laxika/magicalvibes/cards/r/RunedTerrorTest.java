@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.AbandonThePost;
+import com.github.laxika.magicalvibes.cards.a.AegisOfHonor;
 import com.github.laxika.magicalvibes.cards.a.AerialManeuver;
 import com.github.laxika.magicalvibes.cards.a.AngelOfGrace;
 import com.github.laxika.magicalvibes.cards.a.AngelsGrace;
 import com.github.laxika.magicalvibes.cards.b.BlindFury;
 import com.github.laxika.magicalvibes.cards.b.BorneUponAWind;
+import com.github.laxika.magicalvibes.cards.c.Comeuppance;
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.cards.d.DebtOfLoyalty;
 import com.github.laxika.magicalvibes.cards.d.DueRespect;
@@ -13,10 +15,12 @@ import com.github.laxika.magicalvibes.cards.e.EerieInterference;
 import com.github.laxika.magicalvibes.cards.f.Fog;
 import com.github.laxika.magicalvibes.cards.g.GildedLight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Inkshield;
 import com.github.laxika.magicalvibes.cards.i.IrencragFeat;
 import com.github.laxika.magicalvibes.cards.m.Microscope;
 import com.github.laxika.magicalvibes.cards.o.Overblaze;
 import com.github.laxika.magicalvibes.cards.s.SafePassage;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Silence;
 import com.github.laxika.magicalvibes.cards.s.Skullcrack;
 import com.github.laxika.magicalvibes.cards.s.SkeletonScavengers;
@@ -31,6 +35,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -45,7 +50,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         SamiteHealer.class, Fog.class, SafePassage.class, EerieInterference.class, Skullcrack.class, Silence.class,
         GildedLight.class, BorneUponAWind.class, DebtOfLoyalty.class, SkeletonScavengers.class, SoldeviSentry.class,
         Microscope.class, DarksteelCitadel.class, BlindFury.class, Overblaze.class, GrizzlyBears.class,
-        ZameckGuildmage.class, DueRespect.class, AngelsGrace.class, AngelOfGrace.class, IrencragFeat.class})
+        ZameckGuildmage.class, DueRespect.class, AngelsGrace.class, AngelOfGrace.class, IrencragFeat.class,
+        Comeuppance.class, Inkshield.class, AegisOfHonor.class, Shock.class})
 class RunedTerrorTest extends BaseCardTest {
 
     @Test
@@ -682,6 +688,91 @@ class RunedTerrorTest extends BaseCardTest {
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
         assertThat(gd.damageLifeFloorsUntilEndOfTurn).isEmpty();
+    }
+
+    @Test
+    void comeuppanceFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new Comeuppance()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player2, 0);
+        assertThat(gd.comeuppanceDamagePreventionShields).hasSize(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.comeuppanceDamagePreventionShields).hasSize(1);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.comeuppanceDamagePreventionShields).isEmpty();
+    }
+
+    @Test
+    void inkshieldFromOtherPlayersPhaseSurvivesActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.setHand(player2, List.of(new Inkshield()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player2, 0);
+        assertThat(gd.combatDamagePreventionTokenShields).containsOnlyKeys(player2.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.combatDamagePreventionTokenShields).containsOnlyKeys(player2.getId());
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.combatDamagePreventionTokenShields).isEmpty();
+    }
+
+    @Test
+    void oneShotRedirectShieldFromOtherPlayersPhaseOutlivesActivePlayersCleanupUnlessUsed() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        Permanent aegis = harness.addToBattlefieldAndReturn(player2, new AegisOfHonor());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        gs.advanceStep(gd);
+        activateAegis(player2, aegis);
+        activateAegis(player2, aegis);
+        assertThat(gd.playerNextInstantOrSorceryDamageRedirectShields)
+                .containsExactly(player2.getId(), player2.getId());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.playerNextInstantOrSorceryDamageRedirectShields).containsExactly(player2.getId());
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.playerNextInstantOrSorceryDamageRedirectShields).isEmpty();
+    }
+
+    @Test
+    void activePlayersOwnOneShotRedirectShieldEndsAtTheirCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        Permanent aegis = harness.addToBattlefieldAndReturn(player1, new AegisOfHonor());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        activateAegis(player1, aegis);
+        assertThat(gd.playerNextInstantOrSorceryDamageRedirectShields).containsExactly(player1.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(gd.playerNextInstantOrSorceryDamageRedirectShields).isEmpty();
+    }
+
+    private void activateAegis(Player controller, Permanent aegis) {
+        harness.addMana(controller, ManaColor.COLORLESS, 1);
+        harness.activateAbility(controller, gd.playerBattlefields.get(controller.getId()).indexOf(aegis), null, null);
+        harness.passBothPriorities();
     }
 
     private void castAngelOfGrace() {

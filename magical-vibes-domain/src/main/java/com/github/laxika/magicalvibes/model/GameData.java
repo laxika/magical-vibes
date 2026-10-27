@@ -4812,7 +4812,8 @@ public class GameData {
      * "this turn" zone-change replacements, graveyard card animations, Circle of Protection colour shields, damage
      * doublings, bonuses and replacements, enter-tapped and extra-counter replacements, block requirements, extra
      * loyalty activations, the mana-fixing / mana-replacement stores, player-granted static effects, damage life
-     * floors and spell limits), which the cleanup step clears
+     * floors and spell limits, and the one-shot or turn-long redirection / prevention shields that are added and
+     * removed whole), which the cleanup step clears
      * (CR 514.2). Used to split that state between the players active when it was created under Runed Terror's sequential phases.
      */
     public EndOfTurnStateShare captureGameEndOfTurnState() {
@@ -4957,6 +4958,25 @@ public class GameData {
             case GAME_PLAYER_STATIC_EFFECTS -> listMapEntries(playerStaticEffectsUntilEndOfTurn);
             case GAME_DAMAGE_LIFE_FLOORS -> List.copyOf(damageLifeFloorContributionsUntilEndOfTurn);
             case GAME_SPELL_LIMITS -> List.copyOf(playersMaxSpellsContributionsThisTurn);
+            case GAME_CHANNEL_HARM_SHIELDS -> synchronizedCopy(channelHarmShields);
+            case GAME_COMEUPPANCE_SHIELDS -> synchronizedCopy(comeuppanceDamagePreventionShields);
+            case GAME_JUDGMENT_OF_ALEXANDER_SHIELDS -> synchronizedCopy(judgmentOfAlexanderDamagePreventionShields);
+            case GAME_EYE_FOR_AN_EYE_SHIELDS -> synchronizedCopy(eyeForAnEyeShields);
+            case GAME_REFLECT_DAMAGE_TO_SOURCE_CONTROLLER_SHIELDS -> synchronizedCopy(reflectDamageToSourceControllerShields);
+            case GAME_SOURCE_NEXT_COMBAT_DAMAGE_TO_CONTROLLER_SHIELDS ->
+                    synchronizedCopy(sourceNextCombatDamageToControllerShields);
+            case GAME_SOURCE_NEXT_COMBAT_DAMAGE_TO_OPPONENT_REDIRECT_SHIELDS ->
+                    synchronizedCopy(sourceNextCombatDamageToOpponentRedirectShields);
+            case GAME_SOURCE_NEXT_DAMAGE_REDIRECT_TO_PERMANENT_SHIELDS ->
+                    synchronizedCopy(sourceNextDamageRedirectToPermanentShields);
+            case GAME_PLAYER_NEXT_INSTANT_OR_SORCERY_DAMAGE_REDIRECT_SHIELDS ->
+                    synchronizedCopy(playerNextInstantOrSorceryDamageRedirectShields);
+            case GAME_PLAYER_SOURCE_NEXT_DAMAGE_REDIRECT_SHIELDS -> synchronizedCopy(playerSourceNextDamageRedirectShields);
+            case GAME_TURN_SOURCE_DAMAGE_REDIRECT_TO_CONTROLLER_SHIELDS ->
+                    synchronizedCopy(turnSourceDamageRedirectToControllerShields);
+            case GAME_TURN_DAMAGE_REDIRECT_TO_CREATURE_SHIELDS -> synchronizedCopy(turnDamageRedirectToCreatureShields);
+            case GAME_TARGET_SORCERY_DAMAGE_REDIRECT_SHIELDS -> synchronizedCopy(targetSorceryDamageRedirectShields);
+            case GAME_COMBAT_DAMAGE_PREVENTION_TOKEN_SHIELDS -> Set.copyOf(plainMapEntries(combatDamagePreventionTokenShields));
             default -> null;
         };
     }
@@ -5132,8 +5152,40 @@ public class GameData {
                     .forEach(entry -> addDamageLifeFloorUntilEndOfTurn(entry.getKey(), entry.getValue()));
             case GAME_SPELL_LIMITS -> ((List<Map.Entry<UUID, Integer>>) value)
                     .forEach(entry -> limitSpellsThisTurn(entry.getKey(), entry.getValue()));
+            case GAME_CHANNEL_HARM_SHIELDS -> channelHarmShields.addAll((List<ChannelHarmShield>) value);
+            case GAME_COMEUPPANCE_SHIELDS ->
+                    comeuppanceDamagePreventionShields.addAll((List<ComeuppanceDamagePreventionShield>) value);
+            case GAME_JUDGMENT_OF_ALEXANDER_SHIELDS -> judgmentOfAlexanderDamagePreventionShields
+                    .addAll((List<JudgmentOfAlexanderDamagePreventionShield>) value);
+            case GAME_EYE_FOR_AN_EYE_SHIELDS -> eyeForAnEyeShields.addAll((List<EyeForAnEyeShield>) value);
+            case GAME_REFLECT_DAMAGE_TO_SOURCE_CONTROLLER_SHIELDS ->
+                    reflectDamageToSourceControllerShields.addAll((List<UUID>) value);
+            case GAME_SOURCE_NEXT_COMBAT_DAMAGE_TO_CONTROLLER_SHIELDS -> sourceNextCombatDamageToControllerShields
+                    .addAll((List<SourceNextCombatDamageToControllerShield>) value);
+            case GAME_SOURCE_NEXT_COMBAT_DAMAGE_TO_OPPONENT_REDIRECT_SHIELDS -> sourceNextCombatDamageToOpponentRedirectShields
+                    .addAll((List<SourceNextCombatDamageToOpponentRedirectShield>) value);
+            case GAME_SOURCE_NEXT_DAMAGE_REDIRECT_TO_PERMANENT_SHIELDS -> sourceNextDamageRedirectToPermanentShields
+                    .addAll((List<SourceNextDamageRedirectToPermanentShield>) value);
+            case GAME_PLAYER_NEXT_INSTANT_OR_SORCERY_DAMAGE_REDIRECT_SHIELDS ->
+                    playerNextInstantOrSorceryDamageRedirectShields.addAll((List<UUID>) value);
+            case GAME_PLAYER_SOURCE_NEXT_DAMAGE_REDIRECT_SHIELDS ->
+                    playerSourceNextDamageRedirectShields.addAll((List<PlayerSourceNextDamageRedirectShield>) value);
+            case GAME_TURN_SOURCE_DAMAGE_REDIRECT_TO_CONTROLLER_SHIELDS -> turnSourceDamageRedirectToControllerShields
+                    .addAll((List<TurnSourceDamageRedirectToControllerShield>) value);
+            case GAME_TURN_DAMAGE_REDIRECT_TO_CREATURE_SHIELDS ->
+                    turnDamageRedirectToCreatureShields.addAll((List<TurnDamageRedirectToCreatureShield>) value);
+            case GAME_TARGET_SORCERY_DAMAGE_REDIRECT_SHIELDS ->
+                    targetSorceryDamageRedirectShields.addAll((List<TargetSorceryDamageRedirectShield>) value);
+            case GAME_COMBAT_DAMAGE_PREVENTION_TOKEN_SHIELDS -> ((Set<Map.Entry<UUID, CombatDamagePreventionTokenShield>>) value)
+                    .forEach(entry -> combatDamagePreventionTokenShields.putIfAbsent(entry.getKey(), entry.getValue()));
             default -> {
             }
+        }
+    }
+
+    private static <T> List<T> synchronizedCopy(List<T> list) {
+        synchronized (list) {
+            return new ArrayList<>(list);
         }
     }
 
