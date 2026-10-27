@@ -72,6 +72,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureDealsDa
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -1617,6 +1618,118 @@ class RunedTerrorTest extends BaseCardTest {
         assertThat(otherChoice.getChosenSubtype()).isNull();
         assertThat(lastingChoice.getChosenSubtype()).isEqualTo(CardSubtype.ELF);
         assertThat(gd.temporaryChosenSubtypePermanentIds).isEmpty();
+    }
+
+    @Test
+    void turnHistoryRecordsEndAtTheCleanupOfThePlayerActiveWhenTheyWereMade() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent regenerated = addCreatureReady(player1, new GrizzlyBears());
+        regenerated.setTimesRegeneratedThisTurn(1);
+        gd.playersWhoForetoldThisTurn.add(player1.getId());
+        gd.cardsExiledThisTurn = 2;
+        gd.creatureExileCountThisTurn.merge(player1.getId(), 1, Integer::sum);
+        gd.skippedStepOrPhasesThisTurn.computeIfAbsent(player1.getId(), id -> new java.util.HashSet<>())
+                .add(SkipStepOrPhaseKind.DRAW_STEP);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        regenerated.setTimesRegeneratedThisTurn(regenerated.getTimesRegeneratedThisTurn() + 1);
+        gd.playersWhoForetoldThisTurn.add(player2.getId());
+        gd.playersWhoseSpeedIncreasedThisTurn.add(player2.getId());
+        gd.playersWhoPlayedCardFromExileThisTurn.add(player2.getId());
+        gd.playersWhoPlayedOrCastFromOutsideHandThisTurn.add(player2.getId());
+        gd.playersWhoseCardsLeftGraveyardThisTurn.add(player2.getId());
+        gd.playersWhoseCreatureCardsLeftGraveyardThisTurn.add(player2.getId());
+        gd.cardsLeftGraveyardCountThisTurn.merge(player2.getId(), 3, Integer::sum);
+        gd.cardsExiledThisTurn++;
+        gd.creatureExileCountThisTurn.merge(player1.getId(), 1, Integer::sum);
+        gd.skippedStepOrPhasesThisTurn.computeIfAbsent(player2.getId(), id -> new java.util.HashSet<>())
+                .add(SkipStepOrPhaseKind.COMBAT_PHASE);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(regenerated);
+        assertThat(regenerated.getTimesRegeneratedThisTurn()).isEqualTo(1);
+        assertThat(gd.playersWhoForetoldThisTurn).containsExactly(player2.getId());
+        assertThat(gd.playersWhoseSpeedIncreasedThisTurn).containsExactly(player2.getId());
+        assertThat(gd.playersWhoPlayedCardFromExileThisTurn).containsExactly(player2.getId());
+        assertThat(gd.playersWhoPlayedOrCastFromOutsideHandThisTurn).containsExactly(player2.getId());
+        assertThat(gd.playersWhoseCardsLeftGraveyardThisTurn).containsExactly(player2.getId());
+        assertThat(gd.playersWhoseCreatureCardsLeftGraveyardThisTurn).containsExactly(player2.getId());
+        assertThat(gd.cardsLeftGraveyardCountThisTurn).containsExactly(Map.entry(player2.getId(), 3));
+        assertThat(gd.cardsExiledThisTurn).isEqualTo(1);
+        assertThat(gd.creatureExileCountThisTurn).containsExactly(Map.entry(player1.getId(), 1));
+        assertThat(gd.skippedStepOrPhasesThisTurn.get(player1.getId())).isNullOrEmpty();
+        assertThat(gd.skippedStepOrPhasesThisTurn.get(player2.getId()))
+                .containsExactly(SkipStepOrPhaseKind.COMBAT_PHASE);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(regenerated.getTimesRegeneratedThisTurn()).isZero();
+        assertThat(gd.playersWhoForetoldThisTurn).isEmpty();
+        assertThat(gd.playersWhoseSpeedIncreasedThisTurn).isEmpty();
+        assertThat(gd.playersWhoPlayedCardFromExileThisTurn).isEmpty();
+        assertThat(gd.playersWhoPlayedOrCastFromOutsideHandThisTurn).isEmpty();
+        assertThat(gd.playersWhoseCardsLeftGraveyardThisTurn).isEmpty();
+        assertThat(gd.playersWhoseCreatureCardsLeftGraveyardThisTurn).isEmpty();
+        assertThat(gd.cardsLeftGraveyardCountThisTurn).isEmpty();
+        assertThat(gd.cardsExiledThisTurn).isZero();
+        assertThat(gd.creatureExileCountThisTurn).isEmpty();
+        assertThat(gd.skippedStepOrPhasesThisTurn.values()).allMatch(Set::isEmpty);
+    }
+
+    @Test
+    void tappedForAbilityAndCrewRecordsFromOtherPlayersPhaseSurviveActivePlayersCleanup() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent warMachine = addCreatureReady(player1, new GrizzlyBears());
+        UUID ownMerfolk = UUID.randomUUID();
+        UUID otherMerfolk = UUID.randomUUID();
+        warMachine.recordTappedPermanentForAbility(ownMerfolk);
+        warMachine.recordCreatureThatCrewedThisTurn(ownMerfolk);
+        gs.advanceStep(gd);
+        warMachine.recordTappedPermanentForAbility(otherMerfolk);
+        warMachine.recordCreatureThatCrewedThisTurn(otherMerfolk);
+        gs.advanceStep(gd);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(warMachine.getTappedPermanentsForAbilityThisTurn()).containsExactly(otherMerfolk);
+        assertThat(warMachine.getCreaturesThatCrewedThisTurn()).containsExactly(otherMerfolk);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(warMachine.getTappedPermanentsForAbilityThisTurn()).isEmpty();
+        assertThat(warMachine.getCreaturesThatCrewedThisTurn()).isEmpty();
+    }
+
+    @Test
+    void sacrificeRestrictionsAndControlLossTriggersEndAtTheCleanupOfThePlayerActiveWhenTheyBegan() {
+        harness.addToBattlefield(player1, new RunedTerror());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card source = new GrizzlyBears();
+        UUID ownCreature = UUID.randomUUID();
+        UUID otherCreature = UUID.randomUUID();
+        UUID ownEquipment = UUID.randomUUID();
+        UUID otherEquipment = UUID.randomUUID();
+        gd.sacrificeForbiddenThisTurn.put(ownCreature, player1.getId());
+        gd.registerControlLossUnattachTrigger(ownEquipment, player1.getId(), source);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+        gd.sacrificeForbiddenThisTurn.put(otherCreature, player2.getId());
+        gd.registerControlLossUnattachTrigger(otherEquipment, player2.getId(), source);
+        gs.advanceStep(gd);
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+        assertThat(gd.sacrificeForbiddenThisTurn).containsExactly(Map.entry(otherCreature, player2.getId()));
+        assertThat(gd.controlLossUnattachTriggersFor(ownEquipment)).isEmpty();
+        assertThat(gd.controlLossUnattachTriggersFor(otherEquipment)).hasSize(1);
+
+        harness.passUntil(player2, TurnStep.CLEANUP);
+        assertThat(gd.sacrificeForbiddenThisTurn).isEmpty();
+        assertThat(gd.controlLossUnattachTriggersFor(otherEquipment)).isEmpty();
     }
 
     private void castQuicken(Player caster) {

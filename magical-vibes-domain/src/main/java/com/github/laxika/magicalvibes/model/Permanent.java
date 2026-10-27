@@ -2223,7 +2223,8 @@ public class Permanent {
 
     /**
      * Captures every "until end of turn" / "this turn" store that {@link #resetModifiers()} or the
-     * cleanup step's shield reset clears (CR 514.2), except the combat-only and turn-tracking ones.
+     * cleanup step's shield reset clears (CR 514.2), except the combat-only ones, including the turn-history
+     * records (times regenerated, permanents tapped for its abilities, creatures that crewed it).
      * Used to split that state between the players active when it was created under Runed Terror's
      * sequential phases.
      */
@@ -2325,6 +2326,9 @@ public class Permanent {
                     plusOnePlusOneCounterRegenerationShieldControllers.stream().filter(Objects::nonNull).toList();
             case GAIN_CONTROL_REGENERATION_SHIELDS ->
                     gainControlRegenerationShields.stream().filter(Objects::nonNull).toList();
+            case TIMES_REGENERATED -> timesRegeneratedThisTurn;
+            case TAPPED_PERMANENTS_FOR_ABILITY -> List.copyOf(tappedPermanentsForAbilityThisTurn);
+            case CREATURES_THAT_CREWED -> Set.copyOf(creaturesThatCrewedThisTurn);
             default -> null;
         };
     }
@@ -2417,6 +2421,9 @@ public class Permanent {
             case PLUS_ONE_PLUS_ONE_COUNTER_REGENERATION_SHIELD_CONTROLLERS ->
                     plusOnePlusOneCounterRegenerationShieldControllers.addAll((List<UUID>) value);
             case GAIN_CONTROL_REGENERATION_SHIELDS -> gainControlRegenerationShields.addAll((List<UUID>) value);
+            case TIMES_REGENERATED -> timesRegeneratedThisTurn += (Integer) value;
+            case TAPPED_PERMANENTS_FOR_ABILITY -> ((List<UUID>) value).forEach(this::recordTappedPermanentForAbility);
+            case CREATURES_THAT_CREWED -> creaturesThatCrewedThisTurn.addAll((Set<UUID>) value);
             default -> {
             }
         }

@@ -130,8 +130,7 @@ public class TurnCleanupService {
                 com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat.class);
         gameData.drainDelayedActions(
                 com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat.class);
-        gameData.controlLossUnattachTriggers.clear();
-        gameData.sacrificeForbiddenThisTurn.clear();
+        gameData.retainControlLossUnattachTriggers();
     }
 
     /** Expires control effects whose controller has just finished their next turn. */
@@ -724,6 +723,7 @@ public class TurnCleanupService {
         }
         gameData.graveyardAdventureCastPermissions.entrySet()
                 .removeIf(entry -> entry.getValue().expireTurn() <= currentTurn);
+        gameData.sacrificeForbiddenThisTurn.clear();
         gameData.addGameEndOfTurnState(retainedGameState);
 
         // Clear persistent mana tracking so the next drain empties pools fully

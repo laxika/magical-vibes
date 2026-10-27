@@ -4766,6 +4766,21 @@ public class GameData {
         return permanentsProtectedFromDamageUntilNextTurn.containsKey(permanentId);
     }
 
+    /**
+     * Drops the "when you lose control of that Equipment this turn" triggers (Stolen Uniform) that end at this
+     * cleanup step, keeping only those still credited to another player under Runed Terror's sequential phases
+     * (Runed Terror ruling, CR 514.2). The cleanup step calls this after recomputing control, so a trigger can
+     * still fire as its control effect ends.
+     */
+    public void retainControlLossUnattachTriggers() {
+        List<Map.Entry<UUID, ControlLossUnattachTrigger>> retained = runedTerrorPhaseSequenceActive
+                ? phaseSequenceAttributedEndOfTurnState.getOrDefault(GAME_END_OF_TURN_STATE_ID,
+                        EndOfTurnStateShare.EMPTY).elements(EndOfTurnStateField.GAME_CONTROL_LOSS_UNATTACH_TRIGGERS)
+                : List.of();
+        controlLossUnattachTriggers.clear();
+        addSynchronizedListMapEntries(controlLossUnattachTriggers, retained);
+    }
+
     public void registerControlLossUnattachTrigger(UUID equipmentId, UUID controllerId, Card sourceCard) {
         controlLossUnattachTriggers
                 .computeIfAbsent(equipmentId, ignored -> Collections.synchronizedList(new ArrayList<>()))
@@ -4846,8 +4861,11 @@ public class GameData {
      * replaced by a reduced copy when partly used, the "this turn" delayed-trigger watchers and "until end of turn"
      * global triggered abilities, the pending "the next time you would draw a card this turn" replacements and
      * Mystic Reflection's pending entry copies, the "this turn" delayed triggers and effects in the delayed-action
-     * queue selected by {@link #isThisTurnDelayedAction}, Plagiarize's draw redirections and the permanents whose
-     * source subtype choice lasts until end of turn), which the cleanup step clears
+     * queue selected by {@link #isThisTurnDelayedAction}, Plagiarize's draw redirections, the permanents whose
+     * source subtype choice lasts until end of turn, Call for Aid's sacrifice restriction, Stolen Uniform's
+     * control-loss unattach triggers, the chosen skipped steps or phases, and the turn-history records of speed
+     * increases, plays from exile or outside the hand, foretelling, first-non-draw-step draw replacements, exiled
+     * cards, cards leaving graveyards and creature exiles), which the cleanup step clears
      * (CR 514.2). Used to split that state between the players active when it was created under Runed Terror's sequential phases.
      */
     public EndOfTurnStateShare captureGameEndOfTurnState() {
@@ -5148,6 +5166,19 @@ public class GameData {
             case GAME_DRAW_REPLACEMENT_TARGET_TO_CONTROLLER ->
                     Set.copyOf(plainMapEntries(drawReplacementTargetToController));
             case GAME_TEMPORARY_CHOSEN_SUBTYPE_PERMANENTS -> temporaryChosenSubtypePermanentIds;
+            case GAME_SACRIFICE_FORBIDDEN -> Set.copyOf(plainMapEntries(sacrificeForbiddenThisTurn));
+            case GAME_CONTROL_LOSS_UNATTACH_TRIGGERS -> synchronizedListMapEntries(controlLossUnattachTriggers);
+            case GAME_SKIPPED_STEPS_OR_PHASES -> mapEntries(skippedStepOrPhasesThisTurn);
+            case GAME_PLAYERS_WHOSE_SPEED_INCREASED -> playersWhoseSpeedIncreasedThisTurn;
+            case GAME_PLAYERS_WHO_PLAYED_CARD_FROM_EXILE -> playersWhoPlayedCardFromExileThisTurn;
+            case GAME_PLAYERS_WHO_PLAYED_OR_CAST_FROM_OUTSIDE_HAND -> playersWhoPlayedOrCastFromOutsideHandThisTurn;
+            case GAME_PLAYERS_WHO_FORETOLD -> playersWhoForetoldThisTurn;
+            case GAME_CARDS_EXILED -> cardsExiledThisTurn;
+            case GAME_FIRST_NON_DRAW_STEP_DRAW_REPLACEMENTS_USED -> firstNonDrawStepDrawReplacementsUsedThisTurn;
+            case GAME_PLAYERS_WHOSE_CARDS_LEFT_GRAVEYARD -> playersWhoseCardsLeftGraveyardThisTurn;
+            case GAME_PLAYERS_WHOSE_CREATURE_CARDS_LEFT_GRAVEYARD -> playersWhoseCreatureCardsLeftGraveyardThisTurn;
+            case GAME_CARDS_LEFT_GRAVEYARD_COUNTS -> new HashMap<>(cardsLeftGraveyardCountThisTurn);
+            case GAME_CREATURE_EXILE_COUNTS -> new HashMap<>(creatureExileCountThisTurn);
             default -> null;
         };
     }
@@ -5522,6 +5553,30 @@ public class GameData {
                     drawReplacementTargetToController.putIfAbsent(entry.getKey(), entry.getValue()));
             case GAME_TEMPORARY_CHOSEN_SUBTYPE_PERMANENTS ->
                     temporaryChosenSubtypePermanentIds.addAll((Set<UUID>) value);
+            case GAME_SACRIFICE_FORBIDDEN -> ((Set<Map.Entry<UUID, UUID>>) value).forEach(entry ->
+                    sacrificeForbiddenThisTurn.putIfAbsent(entry.getKey(), entry.getValue()));
+            // Not cleared before the retained state is re-applied: the cleanup step drops only the ending triggers,
+            // after control is recomputed (see retainControlLossUnattachTriggers).
+            case GAME_CONTROL_LOSS_UNATTACH_TRIGGERS -> {
+            }
+            case GAME_SKIPPED_STEPS_OR_PHASES ->
+                    addMapEntries(skippedStepOrPhasesThisTurn, (Set<Map.Entry<UUID, SkipStepOrPhaseKind>>) value);
+            case GAME_PLAYERS_WHOSE_SPEED_INCREASED -> playersWhoseSpeedIncreasedThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WHO_PLAYED_CARD_FROM_EXILE ->
+                    playersWhoPlayedCardFromExileThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WHO_PLAYED_OR_CAST_FROM_OUTSIDE_HAND ->
+                    playersWhoPlayedOrCastFromOutsideHandThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WHO_FORETOLD -> playersWhoForetoldThisTurn.addAll((Set<UUID>) value);
+            case GAME_CARDS_EXILED -> cardsExiledThisTurn += (Integer) value;
+            case GAME_FIRST_NON_DRAW_STEP_DRAW_REPLACEMENTS_USED ->
+                    firstNonDrawStepDrawReplacementsUsedThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WHOSE_CARDS_LEFT_GRAVEYARD ->
+                    playersWhoseCardsLeftGraveyardThisTurn.addAll((Set<UUID>) value);
+            case GAME_PLAYERS_WHOSE_CREATURE_CARDS_LEFT_GRAVEYARD ->
+                    playersWhoseCreatureCardsLeftGraveyardThisTurn.addAll((Set<UUID>) value);
+            case GAME_CARDS_LEFT_GRAVEYARD_COUNTS ->
+                    addCounts(cardsLeftGraveyardCountThisTurn, (Map<UUID, Integer>) value);
+            case GAME_CREATURE_EXILE_COUNTS -> addCounts(creatureExileCountThisTurn, (Map<UUID, Integer>) value);
             case GAME_PLAYER_SOURCE_NEXT_DAMAGE_SHIELDS ->
                     playerSourceNextDamageShields.addAll((List<PlayerSourceNextDamageShield>) value);
             case GAME_SOURCE_NEXT_DAMAGE_TO_ANY_TARGET_SHIELDS ->

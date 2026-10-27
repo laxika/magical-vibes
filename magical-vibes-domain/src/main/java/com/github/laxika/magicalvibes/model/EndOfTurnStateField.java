@@ -66,6 +66,17 @@ package com.github.laxika.magicalvibes.model;
  * multipliers, the "when it leaves the battlefield this turn, sacrifice / destroy" pairs) are a {@link Kind#LIST} of
  * their records, so one that fired and left the queue in between is not restored. Plagiarize's "until end of turn,
  * that player's draws are yours instead" is a {@link Kind#SET} of {@code (target player, controller)} entries.
+ * Call for Aid's "you can't sacrifice that creature this turn" is a {@link Kind#SET} of {@code (permanent, player)}
+ * entries, and Stolen Uniform's "when you lose control of that Equipment this turn" triggers a {@link Kind#LIST} of
+ * {@code (equipment, trigger)} entries (the cleanup step drops the ending ones only after control is recomputed, so
+ * they can still fire as the control effect ends). The "skip your next X step this turn" choices are a
+ * {@link Kind#SET} of {@code (player, step or phase)} entries.
+ * The turn-history records the cleanup step clears are split the same way, following the Runed Terror ruling that a
+ * player's "each of your turns" permission resets after that player's ending phase: a regeneration count, the
+ * Merfolk tapped for Vodalian War Machine and the creatures that crewed a Vehicle (per permanent), the speed,
+ * play-from-exile, cast-from-outside-hand, foretell and first-non-draw-step-draw records, the game's exiled-card
+ * count, and the left-the-graveyard and creature-exile records ({@link Kind#COUNTS} by player for the counts). Each
+ * record made while a player was active lasts until that player's cleanup step.
  */
 public enum EndOfTurnStateField {
 
@@ -145,6 +156,9 @@ public enum EndOfTurnStateField {
     PLUS_ONE_PLUS_ONE_COUNTER_REGENERATION_SHIELD(Kind.SHIELD),
     PLUS_ONE_PLUS_ONE_COUNTER_REGENERATION_SHIELD_CONTROLLERS(Kind.LIST),
     GAIN_CONTROL_REGENERATION_SHIELDS(Kind.LIST),
+    TIMES_REGENERATED(Kind.ADDITIVE),
+    TAPPED_PERMANENTS_FOR_ABILITY(Kind.LIST),
+    CREATURES_THAT_CREWED(Kind.SET),
     PLAYER_DAMAGE_PREVENTION_SHIELD(Kind.SHIELD),
     PLAYER_COMBAT_DAMAGE_PREVENTION_SHIELD(Kind.SHIELD),
     GAME_DAMAGE_PREVENTION_SHIELD(Kind.SHIELD),
@@ -360,7 +374,20 @@ public enum EndOfTurnStateField {
     GAME_PENDING_MYSTIC_REFLECTIONS(Kind.LIST),
     GAME_THIS_TURN_DELAYED_ACTIONS(Kind.LIST),
     GAME_DRAW_REPLACEMENT_TARGET_TO_CONTROLLER(Kind.SET),
-    GAME_TEMPORARY_CHOSEN_SUBTYPE_PERMANENTS(Kind.SET);
+    GAME_TEMPORARY_CHOSEN_SUBTYPE_PERMANENTS(Kind.SET),
+    GAME_SACRIFICE_FORBIDDEN(Kind.SET),
+    GAME_CONTROL_LOSS_UNATTACH_TRIGGERS(Kind.LIST),
+    GAME_SKIPPED_STEPS_OR_PHASES(Kind.SET),
+    GAME_PLAYERS_WHOSE_SPEED_INCREASED(Kind.SET),
+    GAME_PLAYERS_WHO_PLAYED_CARD_FROM_EXILE(Kind.SET),
+    GAME_PLAYERS_WHO_PLAYED_OR_CAST_FROM_OUTSIDE_HAND(Kind.SET),
+    GAME_PLAYERS_WHO_FORETOLD(Kind.SET),
+    GAME_CARDS_EXILED(Kind.ADDITIVE),
+    GAME_FIRST_NON_DRAW_STEP_DRAW_REPLACEMENTS_USED(Kind.SET),
+    GAME_PLAYERS_WHOSE_CARDS_LEFT_GRAVEYARD(Kind.SET),
+    GAME_PLAYERS_WHOSE_CREATURE_CARDS_LEFT_GRAVEYARD(Kind.SET),
+    GAME_CARDS_LEFT_GRAVEYARD_COUNTS(Kind.COUNTS),
+    GAME_CREATURE_EXILE_COUNTS(Kind.COUNTS);
 
     /** How a field's value is split between players and recombined. */
     public enum Kind {
