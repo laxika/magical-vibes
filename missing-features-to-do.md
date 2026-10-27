@@ -9,34 +9,6 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 61. Four vote handlers never report their votes as finished
-
-**Status:** open · **Found:** 2026-10-25, while finishing entry 45 (optional additional votes)
-
-**Failing tests:** none yet; a Model of Unity or Erestor of the Council test with one of these votes would fail.
-
-**What the rules require.** "Whenever players finish voting" abilities (Model of Unity, Erestor of the
-Council) trigger after every vote (CR 701.38a defines voting). `FatefulTempestEffectHandler`,
-`SelvalasStampedeEffectHandler`, `WillOfThePlaneswalkersEffectHandler` and
-`VoteForInnocentOrGuiltyEffectHandler` never call `VotingFinishedSupport.finishVoting`, and
-`ChoiceHandlerService.recordVotingChoiceIfApplicable` doesn't record their votes, so those triggers
-never see these votes.
-
-**Why it's large.** Small: record the votes (all four contexts already implement `VoteChoiceContext`)
-and call `finishVoting` where each vote ends, then add a Model of Unity test per card.
-
-**Prompt to start it:**
-
-```
-Implement missing-features-to-do.md entry 61: make Fateful Tempest, Selvala's Stampede, Will of the
-Planeswalkers (Path of the Ghosthunter / Path of the Animist) and the innocent-or-guilty vote record
-their votes and call VotingFinishedSupport.finishVoting, so "whenever players finish voting" triggers
-(Model of Unity, Erestor of the Council) fire for them. Add tests. Verify every CR number with the
-rules MCP. Don't run the full test suite; ask me. Don't commit until I say so.
-```
-
----
-
 ## 62. Krark's Thumb result choice for interleaved, nested and non-resolution coin flips
 
 **Status:** open · **Found:** 2026-10-25, while finishing entry 46 (Krark's Thumb result choice)

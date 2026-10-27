@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.VoteForInnocentOrGuiltyEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +29,7 @@ public class VoteForInnocentOrGuiltyEffectHandler implements NormalEffectHandler
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final VotingSupport votingSupport;
+    private final VotingFinishedSupport votingFinishedSupport;
     private final GameLogService gameLogService;
 
     @Override
@@ -57,6 +59,7 @@ public class VoteForInnocentOrGuiltyEffectHandler implements NormalEffectHandler
                                UUID effectControllerId, Map<String, Integer> votes, String sourceName) {
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         if (remaining.isEmpty()) {
+            votingFinishedSupport.finishVoting(gameData, effectControllerId);
             if (votes.getOrDefault(ChoiceContext.VoteForInnocentOrGuiltyChoice.GUILTY, 0)
                     > votes.getOrDefault(ChoiceContext.VoteForInnocentOrGuiltyChoice.INNOCENT, 0)) {
                 putCardsExiledWithSourceOnOwnersLibraries(gameData, sourceName);

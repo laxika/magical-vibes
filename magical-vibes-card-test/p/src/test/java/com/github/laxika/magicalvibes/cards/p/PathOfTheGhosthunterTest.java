@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.m.ModelOfUnity;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PathOfTheGhosthunter.class, Panopticon.class})
+@CardUsed({PathOfTheGhosthunter.class, ModelOfUnity.class, Panopticon.class})
 class PathOfTheGhosthunterTest extends BaseCardTest {
 
     private PlanarObject startingPlane;
@@ -103,6 +104,26 @@ class PathOfTheGhosthunterTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Spirit")).hasSize(3);
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Path of the Ghosthunter");
+    }
+
+    @Test
+    void finishingTheVoteTriggersModelOfUnityForMatchingVoters() {
+        harness.enterBattlefieldAndReturn(player1, new ModelOfUnity());
+        cast(0);
+
+        harness.handleListChoice(player1, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        harness.handleListChoice(player2, ChoiceContext.WillOfThePlaneswalkersChoice.CHAOS);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     private void cast(int xValue) {

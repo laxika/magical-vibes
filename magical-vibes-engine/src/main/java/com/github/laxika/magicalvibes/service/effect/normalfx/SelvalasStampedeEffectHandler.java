@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealCreatureCardsToBattlefi
 import com.github.laxika.magicalvibes.model.effect.SelvalasStampedeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +27,7 @@ public class SelvalasStampedeEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final VotingSupport votingSupport;
+    private final VotingFinishedSupport votingFinishedSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -55,6 +57,7 @@ public class SelvalasStampedeEffectHandler implements NormalEffectHandlerBean {
                                String sourceName) {
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         if (remaining.isEmpty()) {
+            votingFinishedSupport.finishVoting(gameData, effectControllerId);
             StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
             if (pendingEntry == null) {
                 throw new IllegalStateException("Selvala's Stampede resolution is not resumable");

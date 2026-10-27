@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AdiposeOffspring;
 import com.github.laxika.magicalvibes.cards.c.ClockworkDroid;
+import com.github.laxika.magicalvibes.cards.m.ModelOfUnity;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -22,7 +23,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TrialOfATimeLord.class, ClockworkDroid.class, AdiposeOffspring.class})
+@CardUsed({TrialOfATimeLord.class, ModelOfUnity.class, ClockworkDroid.class, AdiposeOffspring.class})
 class TrialOfATimeLordTest extends BaseCardTest {
 
     @Test
@@ -224,6 +225,28 @@ class TrialOfATimeLordTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getCard() == target.getCard());
+    }
+
+    @Test
+    void finishingTheVoteTriggersModelOfUnityForMatchingVoters() {
+        harness.enterBattlefieldAndReturn(player1, new ModelOfUnity());
+        addSagaWithLore(3);
+        advanceToNextChapter();
+        harness.passBothPriorities();
+
+        harness.handleListChoice(player1, ChoiceContext.VoteForInnocentOrGuiltyChoice.INNOCENT);
+        harness.handleListChoice(player2, ChoiceContext.VoteForInnocentOrGuiltyChoice.INNOCENT);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     private Permanent addSagaWithLore(int lore) {

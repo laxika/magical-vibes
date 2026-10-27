@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.ModelOfUnity;
 import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FatefulTempest.class, GrizzlyBears.class, RestInPeace.class})
+@CardUsed({FatefulTempest.class, ModelOfUnity.class, GrizzlyBears.class, RestInPeace.class})
 class FatefulTempestTest extends BaseCardTest {
 
     @Test
@@ -150,6 +152,25 @@ class FatefulTempestTest extends BaseCardTest {
 
         assertThat(gd.exilePlayPermissions).doesNotContainKeys(first.getId(), second.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    void finishingTheVoteTriggersModelOfUnityForMatchingVoters() {
+        harness.enterBattlefieldAndReturn(player1, new ModelOfUnity());
+        cast();
+
+        vote(ChoiceContext.FatefulTempestChoice.PRESENT, ChoiceContext.FatefulTempestChoice.PRESENT);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     private void cast() {

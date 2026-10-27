@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.ModelOfUnity;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SelvalasStampede.class, Forest.class, GrizzlyBears.class,
+@CardUsed({SelvalasStampede.class, ModelOfUnity.class, Forest.class, GrizzlyBears.class,
         SolemnSimulacrum.class, ShinyImpetus.class})
 class SelvalasStampedeTest extends BaseCardTest {
 
@@ -217,6 +218,25 @@ class SelvalasStampedeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(aura);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(aura);
+    }
+
+    @Test
+    void finishingTheVoteTriggersModelOfUnityForMatchingVoters() {
+        harness.enterBattlefieldAndReturn(player1, new ModelOfUnity());
+        cast();
+
+        vote(ChoiceContext.SelvalasStampedeChoice.WILD, ChoiceContext.SelvalasStampedeChoice.WILD);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     private void cast() {

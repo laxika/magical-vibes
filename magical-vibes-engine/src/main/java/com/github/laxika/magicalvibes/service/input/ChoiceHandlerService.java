@@ -1880,6 +1880,18 @@ public class ChoiceHandlerService {
         } else if (context instanceof ChoiceContext.ElrondOfTheWhiteCouncilChoice vote
                 && vote.OPTIONS.contains(choice)) {
             votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.FatefulTempestChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.SelvalasStampedeChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.WillOfThePlaneswalkersChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
+        } else if (context instanceof ChoiceContext.VoteForInnocentOrGuiltyChoice vote
+                && vote.OPTIONS.contains(choice)) {
+            votingFinishedSupport.recordVote(gameData, vote.effectControllerId(), voterId, choice);
         }
     }
 

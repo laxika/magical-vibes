@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNext
 import com.github.laxika.magicalvibes.model.effect.FatefulTempestEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndDamageOpponentsByManaValueEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ public class FatefulTempestEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final VotingSupport votingSupport;
+    private final VotingFinishedSupport votingFinishedSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,6 +56,7 @@ public class FatefulTempestEffectHandler implements NormalEffectHandlerBean {
                                String sourceName) {
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         if (remaining.isEmpty()) {
+            votingFinishedSupport.finishVoting(gameData, effectControllerId);
             StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
             if (pendingEntry == null) {
                 throw new IllegalStateException("Fateful Tempest resolution is not resumable");

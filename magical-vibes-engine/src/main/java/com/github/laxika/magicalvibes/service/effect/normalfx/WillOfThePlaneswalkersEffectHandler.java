@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChaosEnsuesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkEffect;
 import com.github.laxika.magicalvibes.model.effect.WillOfThePlaneswalkersEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ public class WillOfThePlaneswalkersEffectHandler implements NormalEffectHandlerB
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final VotingSupport votingSupport;
+    private final VotingFinishedSupport votingFinishedSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,6 +56,7 @@ public class WillOfThePlaneswalkersEffectHandler implements NormalEffectHandlerB
                                String sourceName) {
         List<UUID> remaining = new ArrayList<>(remainingPlayerIds);
         if (remaining.isEmpty()) {
+            votingFinishedSupport.finishVoting(gameData, effectControllerId);
             StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
             if (pendingEntry == null) {
                 throw new IllegalStateException("Will of the Planeswalkers resolution is not resumable");
