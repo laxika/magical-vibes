@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -164,7 +165,7 @@ class SunkenPalaceTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 1, null, null);
         ManaPool pool = gd.playerManaPools.get(player1.getId());
         assertThat(pool.get(ManaColor.BLUE)).isEqualTo(2);
-        assertThat(pool.getCopyGrantingMana(ManaColor.BLUE)).isEqualTo(2);
+        assertThat(pool.getCopyGrantingMana(ManaCopyRider.SPELL_OR_ABILITY, ManaColor.BLUE)).isEqualTo(2);
 
         harness.activateAbility(player1, 2, 0, null, null);
         resolveAllTriggers();

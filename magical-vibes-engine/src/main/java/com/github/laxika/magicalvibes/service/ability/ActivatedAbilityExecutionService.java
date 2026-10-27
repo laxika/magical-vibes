@@ -38,7 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.AddNotedManaForLastExiledCard
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterNextSpellOrAbilityCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaCopyRiderEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardHasteGrantingManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
@@ -93,7 +93,6 @@ import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibrar
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterNextRedInstantSorceryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromGrantingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
@@ -1293,17 +1292,19 @@ public class ActivatedAbilityExecutionService {
     }
 
     /**
-     * Sunken Palace: every unit of mana the ability produced carries the "when you spend this mana
-     * ... copy that spell or ability" rider, including mana a replacement effect added or changed
-     * (CR 106.6a).
+     * Sunken Palace, Pyromancer's Goggles: every unit of mana the ability produced carries its
+     * "when this mana is spent ... copy that spell" rider, including mana a replacement effect added
+     * or changed (CR 106.6a).
      */
     private static void tagCopyGrantingMana(List<CardEffect> effects, ManaPool pool,
                                             Map<ManaColor, Integer> before) {
-        if (effects.stream().noneMatch(RegisterNextSpellOrAbilityCopyEffect.class::isInstance)) {
-            return;
-        }
-        for (ManaColor color : ManaColor.values()) {
-            pool.addCopyGrantingMana(color, Math.max(0, pool.get(color) - before.getOrDefault(color, 0)));
+        for (CardEffect effect : effects) {
+            if (effect instanceof ManaCopyRiderEffect copyRider) {
+                for (ManaColor color : ManaColor.values()) {
+                    pool.addCopyGrantingMana(copyRider.rider(), color,
+                            Math.max(0, pool.get(color) - before.getOrDefault(color, 0)));
+                }
+            }
         }
     }
 
@@ -1630,11 +1631,6 @@ public class ActivatedAbilityExecutionService {
                         pool.add(color, current * manaMultiplier);
                     }
                 }
-            } else if (effect instanceof RegisterNextRedInstantSorceryCopyEffect) {
-                // Mana-linked rider (Pyromancer's Goggles): the next red instant/sorcery cast
-                // before this mana drains is copied.
-                gameData.pendingNextRedInstantSorceryCopyCount.merge(playerId, 1, Integer::sum);
-                log.info("Game {} - {} registered a red instant/sorcery copy trigger", gameData.id, player.getUsername());
             } else if (effect instanceof AwardAnyColorManaEffect anyColor) {
                 int picks = amountEvaluationService.evaluate(gameData, anyColor.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;

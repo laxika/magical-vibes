@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.RegisterNextSpellOrAbilityCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaCopyRiderEffect;
 
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class SunkenPalace extends Card {
                 List.of(
                         new ExileNCardsFromGraveyardCost(7, null),
                         new AwardManaEffect(ManaColor.BLUE),
-                        new RegisterNextSpellOrAbilityCopyEffect()
+                        new ManaCopyRiderEffect(ManaCopyRider.SPELL_OR_ABILITY)
                 ),
                 "{1}{U}, {T}, Exile seven cards from your graveyard: Add {U}. When you spend this mana to cast a spell or activate an ability, copy that spell or ability. You may choose new targets for the copy. (Mana abilities can't be copied.)"
         ));

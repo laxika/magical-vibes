@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaActivation;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -4124,7 +4125,7 @@ public class AbilityActivationService {
             if (pool != null) {
                 pool.setBlueSpendableAsAnyColorForActivatedAbilities(previousBlueSpendPermission);
                 pool.setAllManaSpendableAsAnyColorForActivatedAbilities(previousAllManaSpendPermission);
-                pool.setCopyGrantingManaHeldBack(false);
+                pool.setCopyGrantingManaHeldBack(Set.of());
             }
             if (pool != null && !withheldSpellOnlyMana.isEmpty()) {
                 pool.restoreSpellOnlyMana(withheldSpellOnlyMana);
@@ -4268,7 +4269,10 @@ public class AbilityActivationService {
         if (activationPool != null) {
             activationPool.setAllManaSpendableAsAnyColorForActivatedAbilities(
                     gameQueryService.canSpendManaAsAnyColorForActivatedAbilities(gameData, permanent, ability));
-            activationPool.setCopyGrantingManaHeldBack(isManaAbility(ability, ability.getEffects()));
+            // Copy-rider mana that can't fire for this ability is the last mana its controller spends.
+            activationPool.setCopyGrantingManaHeldBack(isManaAbility(ability, ability.getEffects())
+                    ? EnumSet.allOf(ManaCopyRider.class)
+                    : EnumSet.of(ManaCopyRider.INSTANT_OR_SORCERY_SPELL, ManaCopyRider.RED_INSTANT_OR_SORCERY_SPELL));
         }
         if (ability.getRequiredXSourceCounterType() != null
                 && effectiveXValue != permanent.getCounterCount(ability.getRequiredXSourceCounterType())) {

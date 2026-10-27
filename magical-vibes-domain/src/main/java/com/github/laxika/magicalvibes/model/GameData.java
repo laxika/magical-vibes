@@ -2536,25 +2536,17 @@ public class GameData {
     /** Number of casualty copies still to queue for each just-cast spell. */
     public final Map<UUID, Integer> casualtySpellCopyCounts = new ConcurrentHashMap<>();
 
-    /** Pending one-shot spell copy triggers from mana abilities (e.g. Primal Wellspring).
-     *  Each value tracks how many copies are pending for that player.
-     *  Decremented when an instant/sorcery is cast; cleared when mana pools drain. */
-    public final Map<UUID, Integer> pendingNextInstantSorceryCopyCount = new ConcurrentHashMap<>();
-
     /** Path of Ancestry mana choices awaiting completion, keyed by source permanent id. */
     public final Map<UUID, Integer> pendingPathOfAncestryManaChoices = new ConcurrentHashMap<>();
 
-    /** Pending one-shot spell copy triggers from mana abilities that only copy <em>red</em>
-     *  instants and sorceries (Pyromancer's Goggles). Same lifecycle as
-     *  {@link #pendingNextInstantSorceryCopyCount}: decremented when a matching spell is cast,
-     *  cleared when mana pools drain. */
-    public final Map<UUID, Integer> pendingNextRedInstantSorceryCopyCount = new ConcurrentHashMap<>();
+    /** Primal Wellspring mana choices awaiting completion, keyed by source permanent id: the chosen
+     *  mana is tagged with the {@link ManaCopyRider#INSTANT_OR_SORCERY_SPELL} copy rider. */
+    public final Map<UUID, Integer> pendingInstantSorceryCopyManaChoices = new ConcurrentHashMap<>();
 
     /** Pending one-shot "when you next cast an instant or sorcery spell this turn, copy that spell"
      *  delayed triggers (e.g. Chandra, the Firebrand's −2). Each value tracks how many copies are
-     *  pending for that player. Decremented when an instant/sorcery is cast; unlike
-     *  {@link #pendingNextInstantSorceryCopyCount} these survive mana drain and are cleared at end
-     *  of turn. */
+     *  pending for that player. Decremented when an instant/sorcery is cast; unlike Primal
+     *  Wellspring's mana-linked copy rider these survive mana drain and are cleared at end of turn. */
     public final Map<UUID, Integer> pendingNextInstantSorceryCopyThisTurnCount = new ConcurrentHashMap<>();
     /** How many of the copies in {@link #pendingNextInstantSorceryCopyThisTurnCount} come from separate
      *  one-copy delayed triggers (Teach by Example). Each one triggers on its own (CR 603.7), so when the next
@@ -7244,11 +7236,28 @@ public class GameData {
     }
 
     public int consumePendingPathOfAncestryManaChoice(UUID sourcePermanentId, int amount) {
+        return consumePendingManaChoice(pendingPathOfAncestryManaChoices, sourcePermanentId, amount);
+    }
+
+    /** Records that {@code amount} mana Primal Wellspring is about to add once its color is chosen carries the copy rider. */
+    public void markPendingInstantSorceryCopyManaChoice(UUID sourcePermanentId, int amount) {
+        if (sourcePermanentId != null && amount > 0) {
+            pendingInstantSorceryCopyManaChoices.merge(sourcePermanentId, amount, Integer::sum);
+        }
+    }
+
+    /** How much of the {@code amount} mana just chosen for {@code sourcePermanentId} carries Primal Wellspring's copy rider. */
+    public int consumePendingInstantSorceryCopyManaChoice(UUID sourcePermanentId, int amount) {
+        return consumePendingManaChoice(pendingInstantSorceryCopyManaChoices, sourcePermanentId, amount);
+    }
+
+    private static int consumePendingManaChoice(Map<UUID, Integer> pendingChoices, UUID sourcePermanentId,
+                                                int amount) {
         if (sourcePermanentId == null || amount <= 0) {
             return 0;
         }
         int[] consumed = {0};
-        pendingPathOfAncestryManaChoices.computeIfPresent(sourcePermanentId, (ignored, pending) -> {
+        pendingChoices.computeIfPresent(sourcePermanentId, (ignored, pending) -> {
             consumed[0] = Math.min(pending, amount);
             int remaining = pending - consumed[0];
             return remaining > 0 ? remaining : null;
@@ -7871,12 +7880,12 @@ public class GameData {
     }
 
     /**
-     * Discards copy-rider mana (Sunken Palace) spent during an action without a spell cast or an
+     * Discards copy-rider mana (Sunken Palace, Primal Wellspring, Pyromancer's Goggles) spent during an action without a spell cast or an
      * ability activated to claim it: mana spent on anything else, such as a tax or a special action,
      * never triggers the rider (CR 106.6).
      */
     public void discardUnclaimedSpentManaRiders() {
-        playerManaPools.values().forEach(ManaPool::takeSpentCopyGrantingMana);
+        playerManaPools.values().forEach(ManaPool::discardSpentCopyGrantingMana);
     }
 
     /** Records the current board snapshot for turn-history conditions such as "way behind". */
@@ -10865,9 +10874,8 @@ public class GameData {
         copy.casualtySpellCopyCounts.putAll(this.casualtySpellCopyCounts);
 
         // --- Pending one-shot spell copy triggers (Primal Wellspring) ---
-        copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);
         copy.pendingPathOfAncestryManaChoices.putAll(this.pendingPathOfAncestryManaChoices);
-        copy.pendingNextRedInstantSorceryCopyCount.putAll(this.pendingNextRedInstantSorceryCopyCount);
+        copy.pendingInstantSorceryCopyManaChoices.putAll(this.pendingInstantSorceryCopyManaChoices);
         copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
         copy.pendingNextInstantSorceryCopyThisTurnCountSource.putAll(this.pendingNextInstantSorceryCopyThisTurnCountSource);
         copy.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.putAll(this.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount);

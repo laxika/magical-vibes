@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
@@ -3577,6 +3578,18 @@ public class SpellCastingService {
                 }
                 instantOrSorcery = candidate.hasType(CardType.INSTANT)
                         || candidate.hasType(CardType.SORCERY);
+                if (casterPool != null) {
+                    // Copy-rider mana that can't fire for this spell is the last mana its caster spends.
+                    EnumSet<ManaCopyRider> heldBackRiders = EnumSet.noneOf(ManaCopyRider.class);
+                    if (!instantOrSorcery) {
+                        heldBackRiders.add(ManaCopyRider.INSTANT_OR_SORCERY_SPELL);
+                    }
+                    if (!instantOrSorcery || candidate.getColors() == null
+                            || !candidate.getColors().contains(CardColor.RED)) {
+                        heldBackRiders.add(ManaCopyRider.RED_INSTANT_OR_SORCERY_SPELL);
+                    }
+                    casterPool.setCopyGrantingManaHeldBack(heldBackRiders);
+                }
                 bargainedFromHand = candidate.hasKeyword(Keyword.BARGAIN);
                 if (candidate.getAdditionalCostPerExtraTarget() > 0 && targetIds != null
                         && targetIds.size() > 1 && candidate.getEffects(EffectSlot.SPELL).stream()
@@ -3634,6 +3647,7 @@ public class SpellCastingService {
                 casterPool.setInstantSorceryOrClassLevelManaUsableForInstantSorcery(previousPermission);
                 casterPool.setKickedOrInstantSorceryOnlyManaUsableForKickedSpell(previousUnionKickedPermission);
                 casterPool.setKickedOrInstantSorceryOnlyManaUsableForInstantSorcery(previousUnionInstantPermission);
+                casterPool.setCopyGrantingManaHeldBack(Set.of());
             }
         }
     }

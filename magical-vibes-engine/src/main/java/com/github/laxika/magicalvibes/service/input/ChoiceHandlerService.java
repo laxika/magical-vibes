@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.LegacyWordSupport;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -2658,6 +2659,8 @@ public class ChoiceHandlerService {
             if (pathOfAncestryAmount > 0) {
                 manaPool.addPathOfAncestryManaTag(manaColor, pathOfAncestryAmount);
             }
+            manaPool.addCopyGrantingMana(ManaCopyRider.INSTANT_OR_SORCERY_SPELL, manaColor,
+                    gameData.consumePendingInstantSorceryCopyManaChoice(ctx.sourcePermanentId(), amount));
             if (ctx.tracksSourceForSpellCastTriggers() && ctx.sourcePermanentId() != null) {
                 manaPool.addSpellCastTriggerMana(ctx.sourcePermanentId(), manaColor, amount);
             }

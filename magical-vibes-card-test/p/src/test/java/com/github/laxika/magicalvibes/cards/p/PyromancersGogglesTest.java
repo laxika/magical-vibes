@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.m.ManaReflection;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -23,36 +24,34 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PyromancersGogglesTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Tapping the Goggles adds {R} and registers a pending red-spell copy")
-    void activationAddsRedManaAndRegistersCopy() {
+    @DisplayName("Tapping the Goggles adds {R} carrying the red-spell copy rider")
+    void activationAddsRedManaWithCopyRider() {
         Permanent goggles = addGoggles(player1);
 
         harness.activateAbility(player1, indexOf(player1, goggles), 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(gd.pendingNextRedInstantSorceryCopyCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gogglesMana()).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Casting a red instant with a pending copy puts a copy trigger on the stack")
+    @DisplayName("Casting a red instant with Goggles mana puts a copy trigger on the stack")
     void copiesRedInstant() {
-        gd.pendingNextRedInstantSorceryCopyCount.put(player1.getId(), 1);
+        activateGoggles();
 
         harness.setHand(player1, List.of(new LightningBolt()));
-        harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
 
         assertThat(copyTriggers()).isEqualTo(1);
-        assertThat(gd.pendingNextRedInstantSorceryCopyCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
+        assertThat(gogglesMana()).isZero();
     }
 
     @Test
     @DisplayName("Resolving the trigger puts a second copy of the spell on the stack")
     void copyTriggerCreatesSpellCopy() {
-        gd.pendingNextRedInstantSorceryCopyCount.put(player1.getId(), 1);
+        activateGoggles();
 
         harness.setHand(player1, List.of(new LightningBolt()));
-        harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities(); // resolve the copy trigger
 
@@ -63,9 +62,9 @@ class PyromancersGogglesTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A non-red instant or sorcery does not consume or trigger the pending copy")
+    @DisplayName("A non-red sorcery paid without the Goggles mana leaves its rider unspent")
     void nonRedSpellIsNotCopied() {
-        gd.pendingNextRedInstantSorceryCopyCount.put(player1.getId(), 1);
+        activateGoggles();
 
         harness.setHand(player1, List.of(new Divination()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -73,13 +72,13 @@ class PyromancersGogglesTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         assertThat(copyTriggers()).isZero();
-        assertThat(gd.pendingNextRedInstantSorceryCopyCount.get(player1.getId())).isEqualTo(1);
+        assertThat(gogglesMana()).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("A creature spell does not consume the pending copy")
+    @DisplayName("A creature spell paid without the Goggles mana leaves its rider unspent")
     void creatureSpellIsNotCopied() {
-        gd.pendingNextRedInstantSorceryCopyCount.put(player1.getId(), 1);
+        activateGoggles();
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -87,37 +86,41 @@ class PyromancersGogglesTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(copyTriggers()).isZero();
-        assertThat(gd.pendingNextRedInstantSorceryCopyCount.get(player1.getId())).isEqualTo(1);
+        assertThat(gogglesMana()).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Only the first red spell is copied — the trigger is one-shot")
+    @DisplayName("One Goggles mana copies only the red spell it pays for")
     void pendingCopyIsOneShot() {
-        gd.pendingNextRedInstantSorceryCopyCount.put(player1.getId(), 1);
+        activateGoggles();
 
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
         assertThat(copyTriggers()).isEqualTo(1);
 
-        // The second bolt is cast with the pending copy already consumed — no new trigger.
+        // The second bolt is paid with the untagged red mana — no new trigger.
         harness.castInstant(player1, 0, player2.getId());
 
         assertThat(copyTriggers()).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("The pending copy is cleared when mana pools drain")
+    @DisplayName("Goggles mana lost when mana pools drain cannot copy a later spell")
     void pendingCopyClearedOnManaDrain() {
-        gd.pendingNextRedInstantSorceryCopyCount.put(player1.getId(), 1);
+        activateGoggles();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.pendingNextRedInstantSorceryCopyCount).isEmpty();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(copyTriggers()).isZero();
     }
 
     @Test
@@ -238,6 +241,16 @@ class PyromancersGogglesTest extends BaseCardTest {
                 .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && e.getDescription() != null && e.getDescription().startsWith("Copy "))
                 .count();
+    }
+
+    private void activateGoggles() {
+        Permanent goggles = addGoggles(player1);
+        harness.activateAbility(player1, indexOf(player1, goggles), 0, null, null);
+    }
+
+    private int gogglesMana() {
+        return gd.playerManaPools.get(player1.getId())
+                .getCopyGrantingMana(ManaCopyRider.RED_INSTANT_OR_SORCERY_SPELL, ManaColor.RED);
     }
 
     private Permanent addGoggles(Player player) {

@@ -9,39 +9,37 @@ Remove an entry once the feature has landed and its tests pass.
 
 ---
 
-## 57. Per-unit copy riders for Pyromancer's Goggles and Primal Wellspring
+## 57. Copy-rider mana added only after a prompt (Sunken Palace, Pyromancer's Goggles)
 
-**Status:** open · **Found:** 2026-10-25, while finishing entry 40 (Sunken Palace's per-unit copy rider)
+**Status:** partial · **Found:** 2026-10-25, while finishing entry 40 (Sunken Palace's per-unit copy rider)
 
-**Failing tests:**
-- `PyromancersGogglesTest` "Each mana produced with a mana multiplier grants its own copy"
-- `PyromancersGogglesTest` "Spending Goggles mana on a non-red spell cannot copy a later red spell"
-- `PyromancersGogglesTest` "Only Goggles mana actually spent on a spell creates copies"
+**Progress (2026-10-27):** the per-unit riders landed. `ManaPool.copyGrantingMana` is now keyed by
+`ManaCopyRider` (`SPELL_OR_ABILITY`, `INSTANT_OR_SORCERY_SPELL`, `RED_INSTANT_OR_SORCERY_SPELL`);
+Sunken Palace and Pyromancer's Goggles use one parameterized `ManaCopyRiderEffect(rider)` (replacing
+`RegisterNextSpellOrAbilityCopyEffect` / `RegisterNextRedInstantSorceryCopyEffect`), Primal Wellspring
+tags its chosen mana through `GameData.markPendingInstantSorceryCopyManaChoice`, and
+`TriggerCollectionService.checkSpellCastTriggers` claims each rider's spent units, queuing one copy
+trigger per unit only when the spell matches. `GameData.pendingNextInstantSorceryCopyCount` /
+`pendingNextRedInstantSorceryCopyCount` are gone. Riders that can't fire for the current payment
+(mana abilities; spell-only riders on any ability; non-matching spells cast from hand) are held back so
+untagged mana is spent first. PyromancersGogglesTest and the Wellspring cases in PrimalAmuletTest pass.
 
-**What the rules require.** CR 106.6 / 106.6a: "When that mana is spent to cast a red instant or
-sorcery spell, copy that spell" is a delayed trigger on the mana itself, one per unit produced. The
-engine still arms these per player (`GameData.pendingNextRedInstantSorceryCopyCount`,
-`pendingNextInstantSorceryCopyCount`, set in `AnyColorManaChoiceSupport`), so the next matching spell is
-copied whatever mana paid for it. Sunken Palace now uses a pool tag instead
-(`ManaPool.addCopyGrantingMana` / `takeSpentCopyGrantingMana`, claimed in
-`TriggerCollectionService.checkSpellCastTriggers`, discarded at the end of every action by
-`GameData.discardUnclaimedSpentManaRiders`). Goggles and Wellspring need the same tag, with the spell
-filter (red instant/sorcery, instant/sorcery) checked when the spent units are claimed: units spent on a
-spell that doesn't match are spent without effect. Also: Sunken Palace's mana that is added only after a
-prompt (a land-mana replacement order or color choice) is not tagged yet (`tagCopyGrantingMana` in
-`ActivatedAbilityExecutionService` runs only when no mana choice is pending).
+**What remains.** CR 106.6a: mana that `ManaCopyRiderEffect` abilities add only after a prompt (a
+land-mana replacement order or a color choice from a replacement effect) is still not tagged —
+`tagCopyGrantingMana` in `ActivatedAbilityExecutionService` runs only when no mana choice is pending.
+Also, the hold-back for non-matching spells is only set when the spell is cast from hand
+(`SpellCastingService.playCardInternalOnce` knows the candidate only there).
 
-**Why it's large.** Medium: two more tags through every `ManaPool` copy/merge/convert/drain path, and the
-any-color choice handlers must tag the chosen color.
+**Failing tests:** none yet — add a Sunken Palace / Goggles test with a mana replacement that prompts.
 
 **Prompt to start it:**
 
 ```
-Implement missing-features-to-do.md entry 57: replace the per-player pendingNextRedInstantSorceryCopyCount /
-pendingNextInstantSorceryCopyCount arming for Pyromancer's Goggles and Primal Wellspring with per-unit
-ManaPool tags like Sunken Palace's copyGrantingMana (CR 106.6a), so only the matching spell the tagged
-mana actually pays for is copied, once per unit. Make the failing PyromancersGogglesTest cases pass and
-add Primal Wellspring tests. Don't run the full test suite; ask me. Don't commit until I say so.
+Implement the remainder of missing-features-to-do.md entry 57: tag mana produced by a
+ManaCopyRiderEffect ability even when its mana lands only after a prompt (land-mana replacement
+order or color choice), mirroring how Primal Wellspring's pending choice is tagged in
+ChoiceHandlerService (CR 106.6a). Add focused tests. Don't run the full test suite; ask me. Don't
+commit until I say so.
 ```
 
 ---

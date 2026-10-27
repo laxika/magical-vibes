@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.m.ManaReflection;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -266,6 +267,32 @@ class PrimalAmuletTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Divination()));
         harness.castSorcery(player1, 0, 0);
         assertThat(gd.stack).hasSize(3);
+    }
+
+    @Test
+    @CardUsed({ManaReflection.class})
+    @DisplayName("Each Wellspring mana produced with a mana multiplier grants its own copy")
+    void doubledWellspringManaCopiesOncePerUnit() {
+        harness.addToBattlefield(player1, new ManaReflection());
+        activateWellspringMana(ManaColor.BLUE);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new Divination()));
+        harness.castSorcery(player1, 0, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Wellspring mana is held back when other mana can pay for a creature spell")
+    void creatureSpellPaidWithOtherManaKeepsWellspringRider() {
+        activateWellspringMana(ManaColor.RED);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new GrizzlyBears(), new LightningBolt()));
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, player2.getId());
+        assertThat(gd.stack).hasSize(2);
     }
 
     @Test

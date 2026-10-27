@@ -8,11 +8,9 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * <p>
  * Unrestricted triggers use {@code GameData.pendingNextInstantSorceryCopyThisTurnCount}; limited
  * triggers use the per-player max-mana-value list. Both are consumed by the next matching spell
- * and cleared at end of turn. This is the turn-scoped
- * sibling of {@code pendingNextInstantSorceryCopyCount}, which backs Primal Wellspring's
- * mana-linked copy ({@link AwardAnyColorManaEffect} with
- * {@link ManaSpendRestriction#INSTANT_SORCERY_COPY}) and is instead cleared
- * whenever mana pools drain.
+ * and cleared at end of turn. Unlike Primal Wellspring's mana-linked copy
+ * ({@link AwardAnyColorManaEffect} with {@link ManaSpendRestriction#INSTANT_SORCERY_COPY}), which
+ * rides on the produced mana itself, this trigger isn't tied to any mana.
  * <p>
  * A non-null {@code maxManaValue} limits the trigger to spells with that mana value or less.
  * A non-null {@code dynamicCopyCount} registers a count evaluated when the next spell is cast.

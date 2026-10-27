@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
@@ -1560,66 +1561,17 @@ public class TriggerCollectionService {
             }
         }
 
-        // Primal Wellspring delayed mana trigger: copy next instant/sorcery (one-shot)
-        Integer pendingCopies = gameData.pendingNextInstantSorceryCopyCount.get(castingPlayerId);
-        if (pendingCopies != null && pendingCopies > 0
-                && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
-            StackEntry spellEntry = null;
-            for (StackEntry se : gameData.stack) {
-                if (se.getTargetableId().equals(spellCard.getId())) {
-                    spellEntry = se;
-                    break;
-                }
+        ManaPool spellPaymentPool = gameData.playerManaPools.get(castingPlayerId);
+        if (spellPaymentPool != null) {
+            boolean instantOrSorcery = spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY);
+            boolean red = spellCard.getColors() != null && spellCard.getColors().contains(CardColor.RED);
+            int wellspringCopies = spellPaymentPool.takeSpentCopyGrantingMana(ManaCopyRider.INSTANT_OR_SORCERY_SPELL);
+            int gogglesCopies = spellPaymentPool.takeSpentCopyGrantingMana(ManaCopyRider.RED_INSTANT_OR_SORCERY_SPELL);
+            if (instantOrSorcery) {
+                queueManaLinkedSpellCopyTriggers(gameData, spellCard, castingPlayerId, wellspringCopies);
             }
-            if (spellEntry != null) {
-                for (int copyNumber = 0; copyNumber < pendingCopies; copyNumber++) {
-                    StackEntry snapshot = new StackEntry(spellEntry);
-                    CopyControllerCastSpellEffect copyEffect =
-                            new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            spellCard,
-                            castingPlayerId,
-                            "Copy " + spellCard.getName() + " (Primal Wellspring)",
-                            new ArrayList<>(List.of(copyEffect))
-                    ));
-                }
-                gameData.pendingNextInstantSorceryCopyCount.remove(castingPlayerId);
-                gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied (Primal Wellspring)."));
-                log.info("Game {} - {} spell-copy trigger(s) queued for {} (Primal Wellspring)",
-                        gameData.id, pendingCopies, spellCard.getName());
-            }
-        }
-
-        // Pyromancer's Goggles delayed mana trigger: copy next *red* instant/sorcery (one-shot)
-        Integer pendingRedCopies = gameData.pendingNextRedInstantSorceryCopyCount.get(castingPlayerId);
-        if (pendingRedCopies != null && pendingRedCopies > 0
-                && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))
-                && spellCard.getColors() != null && spellCard.getColors().contains(CardColor.RED)) {
-            StackEntry spellEntry = null;
-            for (StackEntry se : gameData.stack) {
-                if (se.getTargetableId().equals(spellCard.getId())) {
-                    spellEntry = se;
-                    break;
-                }
-            }
-            if (spellEntry != null) {
-                for (int copyNumber = 0; copyNumber < pendingRedCopies; copyNumber++) {
-                    StackEntry snapshot = new StackEntry(spellEntry);
-                    CopyControllerCastSpellEffect copyEffect =
-                            new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            spellCard,
-                            castingPlayerId,
-                            "Copy " + spellCard.getName(),
-                            new ArrayList<>(List.of(copyEffect))
-                    ));
-                }
-                gameData.pendingNextRedInstantSorceryCopyCount.remove(castingPlayerId);
-                gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
-                log.info("Game {} - {} red spell-copy trigger(s) queued for {}",
-                        gameData.id, pendingRedCopies, spellCard.getName());
+            if (instantOrSorcery && red) {
+                queueManaLinkedSpellCopyTriggers(gameData, spellCard, castingPlayerId, gogglesCopies);
             }
         }
 
@@ -1951,7 +1903,8 @@ public class TriggerCollectionService {
         }
 
         ManaPool castingPlayerPool = gameData.playerManaPools.get(castingPlayerId);
-        int pendingSpellOrAbilityCopies = castingPlayerPool == null ? 0 : castingPlayerPool.takeSpentCopyGrantingMana();
+        int pendingSpellOrAbilityCopies = castingPlayerPool == null ? 0
+                : castingPlayerPool.takeSpentCopyGrantingMana(ManaCopyRider.SPELL_OR_ABILITY);
         if (pendingSpellOrAbilityCopies > 0) {
             StackEntry spellEntry = null;
             for (StackEntry se : gameData.stack) {
@@ -12702,13 +12655,47 @@ public class TriggerCollectionService {
     }
 
     /**
+     * Queues one "copy that spell" delayed trigger per unit of instant/sorcery copy-rider mana
+     * (Primal Wellspring, Pyromancer's Goggles) spent on this matching spell (CR 106.6a); the copy
+     * may choose new targets.
+     */
+    private void queueManaLinkedSpellCopyTriggers(GameData gameData, Card spellCard, UUID castingPlayerId,
+                                                  int copies) {
+        if (copies <= 0) return;
+        StackEntry spellEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getTargetableId().equals(spellCard.getId())) {
+                spellEntry = se;
+                break;
+            }
+        }
+        if (spellEntry == null) return;
+        for (int copyNumber = 0; copyNumber < copies; copyNumber++) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    spellCard,
+                    castingPlayerId,
+                    "Copy " + spellCard.getName(),
+                    new ArrayList<>(List.of(new CopyControllerCastSpellEffect(
+                            new StackEntry(spellEntry), castingPlayerId)))
+            ));
+        }
+        gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
+        log.info("Game {} - {} mana-linked spell-copy trigger(s) queued for {}",
+                gameData.id, copies, spellCard.getName());
+    }
+
+    /**
      * Queues one copy trigger per unit of copy-rider mana (Sunken Palace) spent to activate this
      * non-mana ability (CR 106.6a).
      */
     public void checkManaLinkedAbilityCopyTrigger(GameData gameData, UUID activatingPlayerId,
                                                    StackEntry abilityEntry, ActivatedAbility ability) {
         ManaPool pool = gameData.playerManaPools.get(activatingPlayerId);
-        int pendingCopies = pool == null ? 0 : pool.takeSpentCopyGrantingMana();
+        int pendingCopies = pool == null ? 0 : pool.takeSpentCopyGrantingMana(ManaCopyRider.SPELL_OR_ABILITY);
+        if (pool != null) {
+            pool.discardSpentCopyGrantingMana();
+        }
         if (abilityEntry == null) return;
         for (int i = 0; i < pendingCopies; i++) {
             CardEffect copyEffect = new CopyControllerActivatedAbilityEffect(
@@ -12734,7 +12721,7 @@ public class TriggerCollectionService {
     public void consumeManaLinkedCopyOnManaAbility(GameData gameData, UUID playerId) {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         if (pool != null) {
-            pool.takeSpentCopyGrantingMana();
+            pool.discardSpentCopyGrantingMana();
         }
     }
 

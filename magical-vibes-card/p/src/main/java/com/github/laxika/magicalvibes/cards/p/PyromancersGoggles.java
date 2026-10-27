@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterNextRedInstantSorceryCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaCopyRiderEffect;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class PyromancersGoggles extends Card {
         // copy that spell and you may choose new targets for the copy.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new AwardManaEffect(ManaColor.RED), new RegisterNextRedInstantSorceryCopyEffect()),
+                List.of(new AwardManaEffect(ManaColor.RED), new ManaCopyRiderEffect(ManaCopyRider.RED_INSTANT_OR_SORCERY_SPELL)),
                 "{T}: Add {R}. When that mana is spent to cast a red instant or sorcery spell, copy that spell and you may choose new targets for the copy."
         ));
     }

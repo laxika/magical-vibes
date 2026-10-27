@@ -881,12 +881,6 @@ public class TurnCleanupService {
                     protectedColors.add(replacementColor);
                 }
                 manaPool.drainNonPersistent(protectedColors);
-                boolean copyGrantManaPersists = protectedColors.stream()
-                        .anyMatch(color -> manaPool.get(color) > 0);
-                if (!copyGrantManaPersists) {
-                    gameData.pendingNextInstantSorceryCopyCount.remove(playerId);
-                    gameData.pendingNextRedInstantSorceryCopyCount.remove(playerId);
-                }
             }
         }
     }

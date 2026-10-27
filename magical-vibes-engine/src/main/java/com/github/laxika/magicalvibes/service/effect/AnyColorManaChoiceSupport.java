@@ -316,11 +316,11 @@ public final class AnyColorManaChoiceSupport {
         if (effect.restriction() == ManaSpendRestriction.PATH_OF_ANCESTRY) {
             gameData.markPendingPathOfAncestryManaChoice(sourcePermanentId, amount);
         }
-        beginOrQueueChoice(interactionHandlerRegistry, gameData, choice);
         if (effect.restriction() == ManaSpendRestriction.INSTANT_SORCERY_COPY) {
-            // Delayed trigger: copy the next instant/sorcery spell this mana is spent on.
-            gameData.pendingNextInstantSorceryCopyCount.merge(playerId, 1, Integer::sum);
+            // Every unit of the chosen mana carries the instant/sorcery copy rider (CR 106.6a).
+            gameData.markPendingInstantSorceryCopyManaChoice(sourcePermanentId, amount);
         }
+        beginOrQueueChoice(interactionHandlerRegistry, gameData, choice);
         return true;
     }
 
