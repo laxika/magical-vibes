@@ -6725,7 +6725,10 @@ public class AbilityActivationService {
      * printed abilities (unless it has lost all abilities, and minus any it has lost individually
      * via "loses this ability"), abilities granted by static effects,
      * and temporary/until-next-turn abilities. The list order defines the {@code abilityIndex}
-     * used by {@code activateAbility}.
+     * used by {@code activateAbility}. Printed abilities that function only while the card is in
+     * exile (CR 113.6b) are left out unless the card is in exile, so this list matches the ability
+     * list the client shows for a permanent. Because abilities drop out of this list, activation
+     * limits are counted by {@link #perTurnUseKey}, not by the position here.
      */
     public List<ActivatedAbility> getEffectiveActivatedAbilities(GameData gameData, Permanent permanent) {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
@@ -6750,6 +6753,10 @@ public class AbilityActivationService {
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         }
         abilities.removeIf(permanent::hasLostActivatedAbility);
+        if (abilities.stream().anyMatch(ActivatedAbility::isExileOnly)
+                && gameData.findExiledCard(permanent.getCard().getId()) == null) {
+            abilities.removeIf(ActivatedAbility::isExileOnly);
+        }
         permanent.getPersistentGrantedActivatedAbilities().forEach(ability -> {
             if (!abilities.contains(ability)) {
                 abilities.add(ability);
@@ -10760,7 +10767,7 @@ public class AbilityActivationService {
 
         Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisTurn.get(permanent.getId());
         int currentCount = perAbilityCounts != null
-                ? perAbilityCounts.getOrDefault(perTurnUseKey(permanent, abilityIndex), 0) : 0;
+                ? perAbilityCounts.getOrDefault(perTurnUseKey(gameData, permanent, ability, abilityIndex), 0) : 0;
         if (ability.getEffects().stream().anyMatch(
                 com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class::isInstance)) {
             // "Ignore this effect" is granted per player (Volrath's Curse), so a new controller of the
@@ -10814,7 +10821,7 @@ public class AbilityActivationService {
         Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisGame
                 .get(wholeGameUsesKey(permanent, ability));
         int currentCount = perAbilityCounts != null
-                ? perAbilityCounts.getOrDefault(wholeGameUsesIndex(ability, abilityIndex), 0) : 0;
+                ? perAbilityCounts.getOrDefault(wholeGameUsesIndex(gameData, permanent, ability, abilityIndex), 0) : 0;
         if (currentCount >= maxActivationsPerGame) {
             throw new IllegalStateException(maxActivationsPerGame == 1
                     ? "This ability can be activated only once"
@@ -10827,15 +10834,50 @@ public class AbilityActivationService {
         return ability.getAcquisitionId() != null ? ability.getAcquisitionId() : permanent.getId();
     }
 
-    private static int wholeGameUsesIndex(ActivatedAbility ability, int abilityIndex) {
-        return ability.getAcquisitionId() != null ? 0 : abilityIndex;
+    private int wholeGameUsesIndex(GameData gameData, Permanent permanent, ActivatedAbility ability,
+                                   int abilityIndex) {
+        return ability.getAcquisitionId() != null ? 0 : perTurnUseKey(gameData, permanent, ability, abilityIndex);
     }
 
-    /** Offsets the per-turn use key of a transformed permanent's abilities so each face counts apart. */
+    /** Offsets the use key of a transformed permanent's printed abilities so each face counts apart. */
     private static final int TRANSFORMED_FACE_USE_KEY_OFFSET = 1000;
 
-    private static int perTurnUseKey(Permanent permanent, int abilityIndex) {
-        return permanent.isTransformed() ? abilityIndex + TRANSFORMED_FACE_USE_KEY_OFFSET : abilityIndex;
+    /** Offsets the use key of abilities the permanent's card doesn't print (granted, temporary, ...). */
+    private static final int NON_PRINTED_USE_KEY_OFFSET = 2000;
+
+    /**
+     * The key an ability's activations are counted under for "activate only once each turn" and
+     * similar limits. Each activated ability is its own ability (CR 113.2c), so the key follows the
+     * ability rather than its position in {@link #getEffectiveActivatedAbilities}, which shifts when
+     * an earlier ability is lost ("loses this ability", losing all abilities). A printed ability is
+     * keyed by its position among the card's printed abilities (the index {@code ActivationCount}
+     * names); any other ability by its position among the permanent's non-printed abilities.
+     */
+    private int perTurnUseKey(GameData gameData, Permanent permanent, ActivatedAbility ability, int abilityIndex) {
+        List<ActivatedAbility> printed = permanent.getCard().getActivatedAbilities();
+        int printedIndex = indexOfIdentity(printed, ability);
+        if (printedIndex >= 0) {
+            return permanent.isTransformed() ? printedIndex + TRANSFORMED_FACE_USE_KEY_OFFSET : printedIndex;
+        }
+        List<ActivatedAbility> effective = getEffectiveActivatedAbilities(gameData, permanent);
+        int effectiveIndex = indexOfIdentity(effective, ability);
+        int position = effectiveIndex >= 0 ? effectiveIndex : Math.min(abilityIndex, effective.size());
+        int nonPrintedBefore = 0;
+        for (int i = 0; i < position; i++) {
+            if (indexOfIdentity(printed, effective.get(i)) < 0) {
+                nonPrintedBefore++;
+            }
+        }
+        return NON_PRINTED_USE_KEY_OFFSET + nonPrintedBefore;
+    }
+
+    private static int indexOfIdentity(List<ActivatedAbility> abilities, ActivatedAbility ability) {
+        for (int i = 0; i < abilities.size(); i++) {
+            if (abilities.get(i) == ability) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private void recordAbilityActivationUse(GameData gameData, Permanent permanent, int abilityIndex,
@@ -10848,11 +10890,11 @@ public class AbilityActivationService {
 
         Map<Integer, Integer> perAbilityCounts = gameData.activatedAbilityUsesThisTurn
                 .computeIfAbsent(permanent.getId(), ignored -> new ConcurrentHashMap<>());
-        perAbilityCounts.merge(perTurnUseKey(permanent, abilityIndex), 1, Integer::sum);
+        perAbilityCounts.merge(perTurnUseKey(gameData, permanent, ability, abilityIndex), 1, Integer::sum);
 
         gameData.activatedAbilityUsesThisGame
                 .computeIfAbsent(wholeGameUsesKey(permanent, ability), ignored -> new ConcurrentHashMap<>())
-                .merge(wholeGameUsesIndex(ability, abilityIndex), 1, Integer::sum);
+                .merge(wholeGameUsesIndex(gameData, permanent, ability, abilityIndex), 1, Integer::sum);
 
         if (ability.isModalModesMustBeUnused()) {
             ChooseOneEffect modal = ability.modalEffectAtActivation();

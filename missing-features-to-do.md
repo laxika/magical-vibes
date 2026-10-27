@@ -11,27 +11,32 @@ Remove an entry once the feature has landed and its tests pass.
 
 ## 66. Activated-ability indices shift when abilities drop out of the effective list
 
-**Status:** open · **Found:** 2026-10-26, while finishing entry 52 ("loses this ability" listing and copies)
+**Status:** partial · **Found:** 2026-10-26, while finishing entry 52 ("loses this ability" listing and copies)
 
-**Failing tests:** none yet.
+**Failing tests:** none.
 
-**What the rules require.** Each activated ability is its own ability; "activate only once each turn" and similar
-limits track that ability. The engine keys per-turn and per-game activation counts
-(`GameData.activatedAbilityUsesThisTurn`) by the position in `AbilityActivationService.getEffectiveActivatedAbilities`.
-That list drops abilities the permanent lost ("loses this ability", losing all non-mana abilities), so a later
-ability's position shifts mid-turn and it can inherit or lose another ability's count. Separately, `CardViewFactory`
-leaves exile-only abilities out of the client's list while the engine list keeps them, so a client index after an
-exile-only ability points one too far.
+**Progress (2026-10-27).** Landed: `AbilityActivationService.perTurnUseKey` now keys per-turn and per-game
+activation counts by the ability, not its effective-list position. A printed ability is keyed by its index
+among the card's printed abilities (what `ActivationCount` names; transformed faces still offset by 1000),
+so losing an earlier ability ("loses this ability", losing all abilities) no longer moves a later
+ability's count. `getEffectiveActivatedAbilities` also drops exile-only abilities (CR 113.6b) unless the
+card is in exile, so engine indices match the client's battlefield ability list. Tests:
+`ActivationLimitAbilityIdentityTest` (application module).
 
-**Why it's large.** Activation limits, the AI and the client all use the position; keying counts by ability
-identity touches every limit check.
+**What remains.** Abilities the card doesn't print (static grants, persistent/temporary/until-next-turn
+abilities) are keyed by their position among the permanent's non-printed abilities (offset 2000). That
+is stable when printed abilities are lost, but if an earlier granted ability goes away mid-turn (an
+Equipment moves, a grant ends), a later granted once-per-turn ability still shifts onto the earlier
+one's count. Static grants are rebuilt as copies on each layer pass, so identity can't key them; a fix
+needs a stable grant identity (granting source + ability within the grant, like `acquisitionId`).
 
 **Prompt to start it:**
 
 ```
-Fix missing-features-to-do.md entry 66: key activation-limit counts by ability rather than effective-list position,
-and make the client ability list and the engine's effective list agree on exile-only abilities. Write tests first:
-a permanent with a lost ability before a once-per-turn ability, activated before and after the loss.
+Finish missing-features-to-do.md entry 66: give non-printed activated abilities (static grants, temporary
+and persistent grants) a stable activation-limit key so a once-per-turn granted ability keeps its own count
+when an earlier granted ability goes away mid-turn. Write tests first: a creature with two granted
+once-per-turn abilities from two Equipment, activate the second, unattach the first, try again.
 Don't run the full test suite; ask me. Don't commit until I say so.
 ```
 
