@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.SacrificeXPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.effect.FatalLoreEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryOfLatNamEffect;
 import com.github.laxika.magicalvibes.model.effect.MisfortuneEffect;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -18409,7 +18410,9 @@ public class SpellCastingService {
                 .anyMatch(effect -> effect instanceof LibraryOfLatNamEffect latNam && latNam.drawThree() == null);
         boolean misfortuneChoice = castEntry.getEffectsToResolve().stream()
                 .anyMatch(effect -> effect instanceof MisfortuneEffect misfortune && misfortune.accepted() == null);
-        if (!latNamChoice && !misfortuneChoice) {
+        boolean fatalLoreChoice = castEntry.getEffectsToResolve().stream()
+                .anyMatch(effect -> effect instanceof FatalLoreEffect fatalLore && fatalLore.accepted() == null);
+        if (!latNamChoice && !misfortuneChoice && !fatalLoreChoice) {
             return;
         }
         UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
@@ -18423,6 +18426,13 @@ public class SpellCastingService {
                     + " Decline: they search their library for a card and put it into their hand.";
             gameData.pendingMayAbilities.add(new PendingMayAbility(castEntry.getCard(), opponentId,
                     List.of(new LibraryOfLatNamEffect()), prompt));
+        }
+        if (fatalLoreChoice) {
+            String prompt = "Choose one for " + controllerName + " (Fatal Lore) — Accept: they draw three"
+                    + " cards. Decline: they destroy up to two creatures you control (they can't be"
+                    + " regenerated) and you draw up to three cards.";
+            gameData.pendingMayAbilities.add(new PendingMayAbility(castEntry.getCard(), opponentId,
+                    List.of(new FatalLoreEffect()), prompt));
         }
         if (misfortuneChoice) {
             String prompt = "Choose one for " + controllerName + " (Misfortune) — Accept: they put a +1/+1"

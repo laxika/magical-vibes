@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.FatalLoreEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryOfLatNamEffect;
 import com.github.laxika.magicalvibes.model.effect.MisfortuneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombustibleGearhulkEffect;
@@ -1643,47 +1644,35 @@ public class MayPenaltyChoiceHandlerService {
     }
 
     /**
-     * Fatal Lore: the opponent ({@code player}) chooses one of two modes for the spell's controller.
-     * Accept is "you draw three cards"; decline is "you destroy up to two creatures that player
-     * controls, they can't be regenerated, then that player draws up to three cards". The decline
-     * mode's two effects ride one stack entry controlled by the spell's controller, so the destroy
-     * choice resumes into the opponent's draw.
+     * Fatal Lore: the opponent ({@code player}) chooses one of two modes for the spell's controller as
+     * the spell is cast (CR 700.2e). Accept is "you draw three cards"; decline is "you destroy up to two
+     * creatures that player controls, they can't be regenerated, then that player draws up to three
+     * cards". The choice is recorded on the spell and carried out as part of its resolution.
      */
     public void handleFatalLoreChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         UUID opponentId = ability.controllerId(); // opponent is the decision maker
-        UUID controllerId = null;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            if (!pid.equals(opponentId)) {
-                controllerId = pid;
-                break;
+        StackEntry spell = gameData.stack.stream()
+                .filter(entry -> entry.getCard() != null
+                        && entry.getCard().getId().equals(ability.sourceCard().getId()))
+                .reduce((first, second) -> second)
+                .orElse(null);
+        if (spell != null) {
+            List<CardEffect> effects = spell.getEffectsToResolve();
+            for (int i = 0; i < effects.size(); i++) {
+                if (effects.get(i) instanceof FatalLoreEffect fatalLore && fatalLore.accepted() == null) {
+                    spell.replaceEffectToResolve(i, new FatalLoreEffect(accepted));
+                    break;
+                }
             }
-        }
-        if (controllerId == null) {
-            throw new IllegalStateException("Cannot find Fatal Lore controller");
-        }
-
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        String opponentName = gameData.playerIdToName.get(opponentId);
-
-        List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects;
-        if (accepted) {
+            String controllerName = gameData.playerIdToName.get(spell.getControllerId());
+            String opponentName = gameData.playerIdToName.get(opponentId);
             gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
-                    + " draws three cards."));
-            effects = List.of(new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(3));
-        } else {
-            gameLogService.append(gameData, GameLog.text(opponentName + " chooses: " + controllerName
-                    + " destroys up to two creatures " + opponentName + " controls, then " + opponentName
-                    + " draws up to three cards."));
-            effects = List.of(
-                    new com.github.laxika.magicalvibes.model.effect.DestroyUpToNCreaturesOpponentControlsEffect(2, true),
-                    new com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect(3,
-                            com.github.laxika.magicalvibes.model.effect.DrawUpToRecipient.OPPONENT));
+                    + (accepted ? " draws three cards."
+                    : " destroys up to two creatures " + opponentName + " controls, then " + opponentName
+                    + " draws up to three cards.")));
+            log.info("Game {} - {} chooses mode {} for {} (Fatal Lore)", gameData.id, opponentName,
+                    accepted ? "draw-three" : "destroy", controllerName);
         }
-        log.info("Game {} - {} chooses mode {} for {} (Fatal Lore)", gameData.id, opponentName,
-                accepted ? "draw-three" : "destroy", controllerName);
-
-        gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
-                controllerId, ability.sourceCard().getName(), new ArrayList<>(effects), 0));
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

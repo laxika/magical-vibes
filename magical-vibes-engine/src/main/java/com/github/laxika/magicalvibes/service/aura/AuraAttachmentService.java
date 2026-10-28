@@ -134,8 +134,9 @@ public class AuraAttachmentService {
                         boolean hadOilCounter = p.getCounterCount(CounterType.OIL) > 0;
                         // An Aura enchanting a card in a graveyard whose card left was enchanting nothing when it
                         // fell off (Spellweaver Volute's triggered ability finds no enchanted card).
-                        snapshotDepartingSource(gameData, p, attachmentIsMissing
-                                && enchantsCardInZone(p, TargetPredicate.Kind.GRAVEYARD_CARD));
+                        // An Aura whose enchanted object already left in an earlier pass was enchanting nothing
+                        // when it last existed on the battlefield (CR 608.2h, CR 400.7).
+                        snapshotDepartingSource(gameData, p, attachmentIsMissing);
                         it.remove();
                         gameData.expireFloatingEffectsForDepartedSource(p.getId());
                         // An Aura controlled by someone else goes to its owner's graveyard (CR 400.3).

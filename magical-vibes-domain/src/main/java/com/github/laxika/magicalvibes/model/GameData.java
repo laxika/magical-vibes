@@ -3429,6 +3429,13 @@ public class GameData {
      */
     public final Map<UUID, List<Card>> eachPlayerSearchDeferredToHand = new ConcurrentHashMap<>();
 
+    /**
+     * Basic lands that players picked during an "each player searches ... puts it onto the battlefield"
+     * instruction (Field of Ruin), held out of the library per player until every player has chosen:
+     * the choices are made in APNAP order but the lands enter the battlefield at the same time (CR 101.4).
+     */
+    public final Map<UUID, List<Card>> eachPlayerSearchDeferredToBattlefield = new ConcurrentHashMap<>();
+
     /** Revealed hand cards waiting to be stamped onto the spell whose additional cost they paid. */
     public final Map<UUID, Card> pendingRevealedPowerCostCards = new ConcurrentHashMap<>();
 
@@ -10116,6 +10123,8 @@ public class GameData {
         copy.lastMilledCardColorSymbols.putAll(this.lastMilledCardColorSymbols);
         this.eachPlayerSearchDeferredToHand.forEach((playerId, cards) ->
                 copy.eachPlayerSearchDeferredToHand.put(playerId, new ArrayList<>(cards)));
+        this.eachPlayerSearchDeferredToBattlefield.forEach((playerId, cards) ->
+                copy.eachPlayerSearchDeferredToBattlefield.put(playerId, new ArrayList<>(cards)));
         copy.pendingRevealedPowerCostCards.putAll(this.pendingRevealedPowerCostCards);
         copy.pendingDiscardedCostCards.putAll(this.pendingDiscardedCostCards);
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);

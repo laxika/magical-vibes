@@ -484,31 +484,59 @@ public class GraveyardService {
             log.info("Game {} - {} discard replacement: put on top of library instead of graveyard", gameData.id, card.getName());
             return false;
         }
-        // Madness (CR 702.34a): discard into exile; triggered ability offers cast for madness cost.
+        // Madness (CR 702.35a): discard into exile; triggered ability offers cast for madness cost.
         // Cost is snapshotted now so granted madness still works if the grant source leaves the BF
-        // before the trigger resolves (Falkenrath Gorger ruling). Native MadnessCast preferred over grant.
-        String madnessCost = null;
+        // before the trigger resolves (Falkenrath Gorger ruling).
+        String nativeMadnessCost = null;
+        String grantedMadnessCost = null;
         if (!isToken(gameData, card)) {
-            madnessCost = card.getCastingOption(MadnessCast.class)
+            nativeMadnessCost = card.getCastingOption(MadnessCast.class)
                     .map(MadnessCast::manaCostString)
-                    .orElseGet(() -> gameQueryService.findGrantedMadnessCost(gameData, ownerId, card).orElse(null));
+                    .orElse(null);
+            grantedMadnessCost = gameQueryService.findGrantedMadnessCost(gameData, ownerId, card).orElse(null);
         }
+        if (nativeMadnessCost != null && grantedMadnessCost != null) {
+            // Falkenrath Gorger ruling: the discarding card's owner chooses which madness ability applies.
+            var choice = new PendingInteraction.ColorChoice(
+                    ownerId, null, null,
+                    new ChoiceContext.MadnessCostChoice(ownerId, card, nativeMadnessCost, grantedMadnessCost),
+                    List.of("Native madness " + nativeMadnessCost, "Granted madness " + grantedMadnessCost),
+                    "Choose which madness cost to use for " + card.getName() + ".");
+            if (gameData.interaction.isAwaitingInput()) {
+                gameData.pendingInteractions.addLast(choice);
+            } else {
+                interactionHandlerRegistry.begin(gameData, choice);
+            }
+            return false;
+        }
+        String madnessCost = nativeMadnessCost != null ? nativeMadnessCost : grantedMadnessCost;
         if (madnessCost != null) {
-            exileService.exileCard(gameData, ownerId, card);
-            gameLogService.append(gameData, GameLog.cardThen(card,
-                    " is discarded into exile (madness)."));
-            log.info("Game {} - {} discarded into exile for madness", gameData.id, card.getName());
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    ownerId,
-                    card.getName() + "'s madness",
-                    new ArrayList<>(List.of(new MadnessMayCastEffect(madnessCost)))
-            ));
-            gameData.priorityPassedBy.clear();
+            exileForMadness(gameData, ownerId, card, madnessCost);
             return false;
         }
         return addCardToGraveyard(gameData, ownerId, card, Zone.HAND);
+    }
+
+    /** Exiles a discarded card for madness and queues its madness trigger, which offers the cast for {@code madnessCost}. */
+    private void exileForMadness(GameData gameData, UUID ownerId, Card card, String madnessCost) {
+        exileService.exileCard(gameData, ownerId, card);
+        gameLogService.append(gameData, GameLog.cardThen(card,
+                " is discarded into exile (madness)."));
+        log.info("Game {} - {} discarded into exile for madness", gameData.id, card.getName());
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                ownerId,
+                card.getName() + "'s madness",
+                new ArrayList<>(List.of(new MadnessMayCastEffect(madnessCost)))
+        ));
+        gameData.priorityPassedBy.clear();
+    }
+
+    /** Applies the madness cost the discarding card's owner picked from a {@link ChoiceContext.MadnessCostChoice}. */
+    public void resolveMadnessCostChoice(GameData gameData, ChoiceContext.MadnessCostChoice choice, boolean nativeCost) {
+        exileForMadness(gameData, choice.ownerId(), choice.card(),
+                nativeCost ? choice.nativeCost() : choice.grantedCost());
     }
 
     public Card findDiscardToLibraryReplacementSource(GameData gameData, UUID ownerId) {

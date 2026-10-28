@@ -114,17 +114,18 @@ class FinestHourTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FinestHour());
 
         declareAttackers(player1, List.of(0), 1);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
         assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
         assertThat(bear.isTapped()).isFalse();
 
         declareAttackers(player1, List.of(0), 2);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
+        // The bear stays tapped into the third combat, so its declare-attackers step has no attacker
+        // to offer and auto-passes; the third combat phase still happened.
         assertThat(gd.combatPhasesThisTurn).isEqualTo(3);
-        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
         assertThat(bear.isTapped()).isTrue();
     }
 

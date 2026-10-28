@@ -102,8 +102,8 @@ class FlaringCinderTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        // With nothing to discard there is no choice to offer, so no may prompt appears.
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isNull();

@@ -463,6 +463,15 @@ public class StackEntry {
         resolutionResults = resolutionResults.withDrawnCardIds(drawnCardIds);
     }
 
+    /**
+     * Records whether the counter step being resolved actually countered its target spell, replacing that
+     * of earlier steps. A counter step calls this even when nothing was countered (false), so "if that
+     * spell is countered this way" reads this step's result.
+     */
+    public void recordCounteredSpell(boolean countered) {
+        resolutionResults = resolutionResults.withCounteredSpell(countered);
+    }
+
     /** Records what a player picked in the step being resolved, for the next step to act on. */
     public void recordPicks(List<UUID> pickedIds) {
         resolutionResults = resolutionResults.withPickedIds(pickedIds);

@@ -57,8 +57,8 @@ class FissureWizardTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(onTop));
 
         castWizard();
-        harness.handleMayAbilityChosen(player1, true);
 
+        // With nothing to discard there is no choice to offer, so no may prompt appears.
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onTop);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

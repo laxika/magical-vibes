@@ -109,10 +109,10 @@ class ForgersFoundryTest extends BaseCardTest {
         harness.assertInHand(player1, "Forger's Foundry");
 
         harness.castInstant(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(gd.getCardsExiledByPermanent(foundry.getId())).contains(highTide);
         harness.assertNotInGraveyard(player1, "High Tide");

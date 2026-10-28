@@ -457,6 +457,19 @@ public class ChoiceHandlerService {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.MadnessCostChoice choice) {
+            if (!player.getId().equals(colorChoice.playerId())) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+            int selected = colorChoice.options().indexOf(colorName);
+            if (selected < 0) {
+                throw new IllegalArgumentException("Invalid madness cost choice");
+            }
+            gameData.interaction.clearAwaitingInput();
+            graveyardService.resolveMadnessCostChoice(gameData, choice, selected == 0);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (colorChoice == null || !player.getId().equals(colorChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }

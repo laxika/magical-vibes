@@ -18935,7 +18935,8 @@ public class TriggerCollectionService {
             if (departed == null) continue;
             for (EffectRegistration registration : departed.getCard().getEffectRegistrations(
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL)) {
-                if (registration.effect() instanceof SpellCastTriggerEffect trigger
+                CardEffect rider = registration.effect() instanceof MayEffect may ? may.wrapped() : registration.effect();
+                if (rider instanceof SpellCastTriggerEffect trigger
                         && trigger.requiresManaProducedBySource()) {
                     dispatchSlotEffect(gameData, departed, castingPlayerId,
                             EffectSlot.ON_CONTROLLER_CASTS_SPELL, ctx, registration.effect());

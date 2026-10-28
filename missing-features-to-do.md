@@ -79,6 +79,40 @@ regression tests one class at a time.
 
 ---
 
+## 69. Activating another player's "any player may activate" ability is index-ambiguous
+
+**Status:** open · **Found:** 2026-10-28, F-card test batch
+
+**Failing tests:**
+- `FlailingSoldierTest` "An opponent can boost the Soldier even when their own permanent has an ability"
+
+**What the rules require.** Flailing Soldier and similar permanents (Oona's Prowler and others flagged
+`ActivatedAbility.isActivatableByAnyPlayer()`) let any player activate the ability. `ActivateAbilityRequest`
+identifies the source only by `permanentIndex`, and `AbilityActivationService.resolveActivationSource` first
+looks that index up on the activator's own battlefield. If the activator's own permanent at that index has an
+ability at the requested ability index, that permanent wins and the opponent's ability can't be reached. In
+the test, player2's Crenellated Wall at index 0 shadows player1's Flailing Soldier at index 0, so activation
+throws "Ability requires a target". Rewriting the test to use a different index would hide the bug.
+
+**Why it's large.** The fix is a protocol change: add an optional source `permanentId` to
+`ActivateAbilityRequest` (and the harness `activateAbility` helpers), resolve by ID when present, and send it
+from the Angular frontend for permanents the player doesn't control. Every activation entry point
+(`AbilityActivationService.activateAbilityInternal*`, the AI and simulation paths) has to stay compatible.
+
+**Prompt to start it:**
+
+```
+In magical-vibes, let a player activate an "any player may activate" ability on another player's permanent
+unambiguously. Add an optional source permanent ID to ActivateAbilityRequest, resolve the activation source by
+that ID in AbilityActivationService.resolveActivationSource when it is present (keeping index-based lookup for
+the common case), add a harness overload that activates by permanent ID, and update the Angular frontend to send
+the ID when activating a permanent the player doesn't control. Then fix FlailingSoldierTest "An opponent can boost
+the Soldier even when their own permanent has an ability" to activate the Soldier by ID. Read
+agent-docs/ARCHITECTURE.md first.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

@@ -92,6 +92,13 @@ public sealed interface ChoiceContext {
     record GraveyardShuffleOrExileReplacementChoice(UUID ownerId, Card card) implements ChoiceContext {}
 
     /**
+     * A discarded card with both its own madness ability and a granted one (CR 702.35a) is discarded
+     * into exile under the madness cost its owner picks. {@code nativeCost} and {@code grantedCost} are
+     * the two mana costs, in the order the choice offers them.
+     */
+    record MadnessCostChoice(UUID ownerId, Card card, String nativeCost, String grantedCost) implements ChoiceContext {}
+
+    /**
      * A resolving instant or sorcery spell has two exile replacement effects (rebound and plot), so
      * its controller picks which one applies (CR 616.1). {@code card} is the spell's card, {@code physicalCard}
      * the card that actually leaves the stack.

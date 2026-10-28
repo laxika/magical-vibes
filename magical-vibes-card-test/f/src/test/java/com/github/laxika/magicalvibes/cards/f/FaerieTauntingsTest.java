@@ -36,6 +36,7 @@ class FaerieTauntingsTest extends BaseCardTest {
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -55,6 +56,7 @@ class FaerieTauntingsTest extends BaseCardTest {
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -100,9 +102,11 @@ class FaerieTauntingsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -119,6 +123,7 @@ class FaerieTauntingsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 

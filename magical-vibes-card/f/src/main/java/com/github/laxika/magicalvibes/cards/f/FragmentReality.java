@@ -43,7 +43,7 @@ public class FragmentReality extends Card {
                 "Target must be a nontoken artifact, creature, or enchantment an opponent controls"))
                 .addEffect(EffectSlot.SPELL, new ExileTargetPermanentThenEffect(
                         EventStat.MANA_VALUE,
-                        new SeekLibraryEffect(
+                        SeekLibraryEffect.randomWithoutSeeking(
                                 new Fixed(1),
                                 new CardTypePredicate(CardType.CREATURE),
                                 LibrarySearchDestination.BATTLEFIELD_TAPPED,

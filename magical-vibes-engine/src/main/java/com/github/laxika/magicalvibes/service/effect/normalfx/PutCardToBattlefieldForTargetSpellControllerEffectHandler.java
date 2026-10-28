@@ -26,13 +26,16 @@ public class PutCardToBattlefieldForTargetSpellControllerEffectHandler implement
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutCardToBattlefieldForTargetSpellControllerEffect) effect;
         StackEntry targetSpell = findTargetSpell(gameData, entry.getTargetId());
-        if (targetSpell == null) {
+        UUID spellControllerId = targetSpell != null
+                ? targetSpell.getControllerId()
+                : entry.getCounteredSpellControllerId();
+        if (spellControllerId == null) {
             return;
         }
 
         playerInteractionSupport.applyPutCardToBattlefield(
                 gameData,
-                targetSpell.getControllerId(),
+                spellControllerId,
                 new PutCardToBattlefieldEffect(e.predicate(), e.label()),
                 entry.getXValue(),
                 null,

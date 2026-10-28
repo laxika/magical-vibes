@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.condition.TargetSpellCanBeCountered;
+import com.github.laxika.magicalvibes.model.condition.SpellCounteredThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -16,15 +16,18 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class FoldIntoAether extends Card {
 
     public FoldIntoAether() {
+        // Counter target spell. If that spell is countered this way, its controller may put a creature
+        // card from their hand onto the battlefield. The counter is listed first so the rider sees the
+        // outcome of the counter (CR 608.2c).
         target(null, 1, 1)
+                .addEffect(EffectSlot.SPELL, new CounterSpellEffect())
                 .addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                        new TargetSpellCanBeCountered(),
+                        new SpellCounteredThisWay(),
                         new MayEffect(
                                 new PutCardToBattlefieldForTargetSpellControllerEffect(
                                         new CardTypePredicate(CardType.CREATURE), "creature"),
                                 "Put a creature card from your hand onto the battlefield?",
                                 null,
-                                MayChoicePlayer.TARGET_SPELL_CONTROLLER)))
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+                                MayChoicePlayer.TARGET_SPELL_CONTROLLER)));
     }
 }

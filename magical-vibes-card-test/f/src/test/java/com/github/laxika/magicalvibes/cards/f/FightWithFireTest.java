@@ -272,18 +272,18 @@ class FightWithFireTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
     }
 
+    /**
+     * The kicked damage is divided among one or more targets (CR 601.2d: each announced target must
+     * receive at least one of the divided damage), so casting it with zero targets is rejected.
+     */
     @Test
-    void kickedCanChooseZeroTargets() {
+    void kickedCannotChooseZeroTargets() {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new FightWithFire()));
         harness.addMana(player1, ManaColor.RED, 9);
-        int lifeBefore = gd.getLife(player2.getId());
 
-        harness.castKickedSorcery(player1, 0, Map.of());
-        harness.passBothPriorities();
-
-        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
-        harness.assertInGraveyard(player1, "Fight with Fire");
+        assertThatThrownBy(() -> harness.castKickedSorcery(player1, 0, Map.of()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

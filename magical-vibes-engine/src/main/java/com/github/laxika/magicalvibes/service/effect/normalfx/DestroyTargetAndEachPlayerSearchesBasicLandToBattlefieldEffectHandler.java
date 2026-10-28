@@ -67,8 +67,10 @@ public class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandl
             }
         }
 
+        // Demolition Field's searches are "may" searches, while Field of Ruin's are mandatory ("Each player searches").
+        boolean maySearch = ((DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect) effect).targetControllerThenYou();
         // Start the first player's search; the queue remainder rides the search interaction
         librarySearchSupport.startNextEachPlayerBasicLandSearch(gameData,
-                LibrarySearchFollowUp.eachPlayerBasicLand(searchers, false));
+                LibrarySearchFollowUp.eachPlayerBasicLand(searchers, false), maySearch);
     }
 }

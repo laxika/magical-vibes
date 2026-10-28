@@ -27,6 +27,7 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        entry.recordCounteredSpell(false);
         UUID targetCardId = entry.getTargetId();
         if (targetCardId == null && entry.targetsForEffect(effect).size() == 1) {
             targetCardId = entry.targetsForEffect(effect).getFirst();
@@ -51,14 +52,24 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
         if (targetEntry == null) return;
         rememberTargetPlayerOfCounteredAbility(gameData, targetEntry);
 
-        switch (((CounterSpellEffect) effect).destination()) {
+        boolean countered = switch (((CounterSpellEffect) effect).destination()) {
             case GRAVEYARD -> counterSupport.counterSpell(gameData, entry, targetEntry);
             case EXILE -> counterSupport.counterSpellAndExile(gameData, entry, targetEntry);
-            case LIBRARY_TOP -> counterSupport.counterSpellAndPutOnTopOfLibrary(gameData, entry, targetEntry);
             case HAND -> counterSupport.counterSpellAndPutInHand(gameData, entry, targetEntry);
-            case LIBRARY_BOTTOM -> counterSupport.counterSpellAndPutOnBottomOfLibrary(gameData, entry, targetEntry);
-            case LIBRARY_TOP_OR_BOTTOM -> counterOntoChosenLibraryEnd(gameData, entry, targetEntry);
-        }
+            case LIBRARY_TOP -> {
+                counterSupport.counterSpellAndPutOnTopOfLibrary(gameData, entry, targetEntry);
+                yield true;
+            }
+            case LIBRARY_BOTTOM -> {
+                counterSupport.counterSpellAndPutOnBottomOfLibrary(gameData, entry, targetEntry);
+                yield true;
+            }
+            case LIBRARY_TOP_OR_BOTTOM -> {
+                counterOntoChosenLibraryEnd(gameData, entry, targetEntry);
+                yield true;
+            }
+        };
+        entry.recordCounteredSpell(countered);
     }
 
     /**

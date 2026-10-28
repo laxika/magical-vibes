@@ -18,10 +18,13 @@ import java.util.UUID;
  * @param pickedIds  the ids a player picked in an earlier step, for the next step to act on
  * @param drawnCardIds the cards the most recent draw step actually drew ("this way"); a draw step records
  *                   its result even when nothing was drawn, so a later step never reads an older draw
+ * @param counteredSpell whether the most recent counter step actually countered its target spell ("this
+ *                   way"); a counter step records its result even when nothing was countered
  */
-public record ResolutionResults(List<DepartureResult> departures, List<UUID> pickedIds, List<UUID> drawnCardIds) {
+public record ResolutionResults(List<DepartureResult> departures, List<UUID> pickedIds, List<UUID> drawnCardIds,
+                                boolean counteredSpell) {
 
-    public static final ResolutionResults EMPTY = new ResolutionResults(List.of(), List.of(), List.of());
+    public static final ResolutionResults EMPTY = new ResolutionResults(List.of(), List.of(), List.of(), false);
 
     public ResolutionResults {
         departures = List.copyOf(departures);
@@ -31,17 +34,22 @@ public record ResolutionResults(List<DepartureResult> departures, List<UUID> pic
 
     /** These results with {@code results} as the latest step's departures, replacing the earlier ones. */
     public ResolutionResults withDepartures(List<DepartureResult> results) {
-        return new ResolutionResults(results, pickedIds, drawnCardIds);
+        return new ResolutionResults(results, pickedIds, drawnCardIds, counteredSpell);
     }
 
     /** These results with {@code ids} as the latest picks, replacing the earlier ones. */
     public ResolutionResults withPickedIds(List<UUID> ids) {
-        return new ResolutionResults(departures, ids, drawnCardIds);
+        return new ResolutionResults(departures, ids, drawnCardIds, counteredSpell);
     }
 
     /** These results with {@code ids} as the latest draw step's drawn cards, replacing the earlier ones. */
     public ResolutionResults withDrawnCardIds(List<UUID> ids) {
-        return new ResolutionResults(departures, pickedIds, ids);
+        return new ResolutionResults(departures, pickedIds, ids, counteredSpell);
+    }
+
+    /** These results with {@code countered} as the latest counter step's outcome, replacing the earlier one. */
+    public ResolutionResults withCounteredSpell(boolean countered) {
+        return new ResolutionResults(departures, pickedIds, drawnCardIds, countered);
     }
 
     /** Whether a permanent was sacrificed this way, wherever it ended up. */

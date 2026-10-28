@@ -104,6 +104,17 @@ public record SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
                 faceDown, false, null, false, false);
     }
 
+    /**
+     * Randomly takes {@code count} matching cards from the library and puts them into the destination
+     * without seeking them: "whenever you seek" abilities do not trigger.
+     */
+    public static SeekLibraryEffect randomWithoutSeeking(DynamicAmount count, CardPredicate filter,
+                                                         LibrarySearchDestination destination,
+                                                         ManaValueBound manaValueBound) {
+        return new SeekLibraryEffect(count, filter, destination, manaValueBound, false, false, null, false,
+                false);
+    }
+
     private static int nonNegative(int count) {
         if (count < 0) {
             throw new IllegalArgumentException("count cannot be negative");

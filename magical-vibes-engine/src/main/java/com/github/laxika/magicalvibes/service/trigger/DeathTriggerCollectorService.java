@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.OneOrMoreArtifactOrCreatureDe
 import com.github.laxika.magicalvibes.model.effect.ArtifactGraveyardCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.LeavingPermanentCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -3223,7 +3224,7 @@ public class DeathTriggerCollectorService {
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(modal)),
+                new ArrayList<>(List.of(new ChooseOneAtResolutionEffect(modal))),
                 null,
                 match.permanent().getId()
         ));

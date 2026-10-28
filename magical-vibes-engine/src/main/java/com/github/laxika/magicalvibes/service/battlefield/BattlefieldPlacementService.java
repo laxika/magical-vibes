@@ -595,6 +595,9 @@ public class BattlefieldPlacementService {
         enteredCharacteristics.setSubtypes(java.util.Arrays.stream(CardSubtype.values())
                 .filter(subtype -> gameQueryService.hasEffectiveSubtype(gameData, permanent, subtype))
                 .toList());
+        enteredCharacteristics.setKeywords(java.util.Arrays.stream(Keyword.values())
+                .filter(keyword -> gameQueryService.hasKeyword(gameData, permanent, keyword))
+                .collect(java.util.stream.Collectors.toCollection(() -> EnumSet.noneOf(Keyword.class))));
         enteredCharacteristics.freeze();
         for (Map.Entry<CounterType, Integer> counter : permanent.getCounters().entrySet()) {
             if (counter.getValue() > 0) {

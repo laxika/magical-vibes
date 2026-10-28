@@ -52,7 +52,7 @@ class FlamerushRiderTest extends BaseCardTest {
     @Test
     @DisplayName("The copied attacker is exiled at end of combat")
     void copyIsExiledAtEndOfCombat() {
-        addCreatureReady(player1, new FlamerushRider());
+        Permanent rider = addCreatureReady(player1, new FlamerushRider());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         keepCombatOpen();
@@ -65,7 +65,8 @@ class FlamerushRiderTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst().orElseThrow();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(copy.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
+                .contains(new DelayedPermanentAction(copy.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT,
+                        false, null, null, null, false, rider.getCard(), player1.getId(), rider.getId()));
 
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 

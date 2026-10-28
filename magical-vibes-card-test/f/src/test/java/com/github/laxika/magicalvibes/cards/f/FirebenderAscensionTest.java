@@ -135,12 +135,20 @@ class FirebenderAscensionTest extends BaseCardTest {
     void attackingCreatureWithOneOrMoreAttackTriggerAddsQuestCounter() {
         Permanent ascension = harness.addToBattlefieldAndReturn(player1, new FirebenderAscension());
         Permanent teo = addCreatureReady(player1, new TeoSpiritedGlider());
+        addCreatureReady(player1, new FireSages());
+        harness.setHand(player1, List.of(new FireNationRaider()));
         harness.setLibrary(player1, List.of(new FireNationRaider()));
 
         declareAttackers(List.of(1));
+        while (gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class) == null
+                && !gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        harness.handleCardChosen(player1, 1);
         harness.handlePermanentChosen(player1, teo.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(ascension.getCounterCount(CounterType.QUEST)).isEqualTo(1);
+        assertThat(teo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }
