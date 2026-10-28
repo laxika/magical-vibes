@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.d.Disintegrate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.m.ManaLeak;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -18,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Fork.class, Disintegrate.class, Fireball.class, GrizzlyBears.class, Unsummon.class})
+@CardUsed({Fork.class, Disintegrate.class, Fireball.class, GrizzlyBears.class, LightningBolt.class, ManaLeak.class,
+        Unsummon.class})
 class ForkTest extends BaseCardTest {
 
     @Test
@@ -166,5 +169,30 @@ class ForkTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0,
                 harness.getGameData().stack.getFirst().getCard().getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void copiedCounterspellCannotBeRetargetedAtItself() {
+        LightningBolt bolt = new LightningBolt();
+        ManaLeak leak = new ManaLeak();
+        harness.setHand(player1, List.of(bolt, new Fork()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.setHand(player2, List.of(leak));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bolt.getId());
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, leak.getId());
+        StackEntry copy = gd.stack.getLast();
+        assertThat(copy.isCopy()).isTrue();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        // A spell on the stack is an illegal target for itself (CR 115.5).
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(bolt.getId(), leak.getId())
+                .doesNotContain(copy.getCard().getId());
     }
 }
