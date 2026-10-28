@@ -54,7 +54,7 @@ class MistsOfLRienTest extends BaseCardTest {
         harness.castSorceryWithRepeatedCosts(player1, 0, List.of("{U}"), List.of(originalTarget.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, copyTarget.getId());
         resolveAllTriggers();

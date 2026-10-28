@@ -57,6 +57,8 @@ class ShowOfConfidenceTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.stagedSpellCopies).hasSize(1);
+        harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
         assertThat(gd.stack.stream().filter(StackEntry::isCopy))
                 .allMatch(entry -> entry.getCard().getName().equals("Show of Confidence"));
@@ -85,14 +87,16 @@ class ShowOfConfidenceTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
         resolveAllTriggers();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
@@ -108,9 +112,10 @@ class ShowOfConfidenceTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
+        assertThat(gd.stagedSpellCopies).hasSize(2);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
@@ -151,9 +156,10 @@ class ShowOfConfidenceTest extends BaseCardTest {
         harness.castInstant(player1, 0, originalTarget.getId());
         gd.playerBattlefields.get(player1.getId()).remove(originalTarget);
         harness.passBothPriorities();
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, copyTarget.getId());
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
         resolveAllTriggers();
 
         assertThat(copyTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

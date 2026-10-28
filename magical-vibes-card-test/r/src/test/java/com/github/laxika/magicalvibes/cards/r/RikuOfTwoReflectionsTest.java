@@ -49,6 +49,9 @@ class RikuOfTwoReflectionsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.stagedSpellCopies).hasSize(1);
+        harness.handleMayAbilityChosen(player1, false);
+
         assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Lightning Bolt"))
                 .hasSize(2);
     }

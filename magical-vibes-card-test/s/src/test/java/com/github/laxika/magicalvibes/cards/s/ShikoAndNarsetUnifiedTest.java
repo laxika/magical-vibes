@@ -41,8 +41,9 @@ class ShikoAndNarsetUnifiedTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(gd.stack).anyMatch(StackEntry::isCopy);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack).anyMatch(StackEntry::isCopy);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -59,9 +60,10 @@ class ShikoAndNarsetUnifiedTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.castAndResolveInstant(player1, 0, player2.getId());
-        assertThat(gd.stack).anyMatch(StackEntry::isCopy);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player1.getId());
+        assertThat(gd.stack).anyMatch(StackEntry::isCopy);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -175,8 +177,9 @@ class ShikoAndNarsetUnifiedTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Lightning Bolt");
 
         harness.passBothPriorities();
-        assertThat(gd.stack).anyMatch(StackEntry::isCopy);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack).anyMatch(StackEntry::isCopy);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 17);
@@ -194,8 +197,9 @@ class ShikoAndNarsetUnifiedTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0, shiko.getId());
         harness.passBothPriorities();
-        assertThat(gd.stack).anyMatch(StackEntry::isCopy);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack).anyMatch(StackEntry::isCopy);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -218,8 +222,9 @@ class ShikoAndNarsetUnifiedTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        assertThat(gd.stack).anyMatch(StackEntry::isCopy);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack).anyMatch(StackEntry::isCopy);
         harness.passBothPriorities();
         harness.passBothPriorities();
 

@@ -127,6 +127,10 @@ class RefuseCooperateTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castAndResolveFlashback(player2, 0, boomerang.getId());
 
+        assertThat(gd.stagedSpellCopies).anySatisfy(se ->
+                assertThat(se.getDescription()).isEqualTo("Copy of Boomerang"));
+        harness.handleMayAbilityChosen(player2, false);
+
         assertThat(gd.stack).anySatisfy(se ->
                 assertThat(se.getDescription()).isEqualTo("Copy of Boomerang"));
     }

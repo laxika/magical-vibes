@@ -68,9 +68,10 @@ class StreamOfThoughtTest extends BaseCardTest {
                 List.of("{2}{U}{U}"), List.of(player2.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(entry -> entry.isCopy())).hasSize(1);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
 
         harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack.stream().filter(entry -> entry.isCopy())).hasSize(1);
         resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(8);
@@ -151,9 +152,10 @@ class StreamOfThoughtTest extends BaseCardTest {
                 List.of("{2}{U}{U}", "{2}{U}{U}"), List.of(player2.getId()));
         harness.passBothPriorities();
 
+        assertThat(gd.stagedSpellCopies).hasSize(2);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.stack.stream().filter(entry -> entry.isCopy())).hasSize(2);
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(12);

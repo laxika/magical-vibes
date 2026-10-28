@@ -134,7 +134,8 @@ class ExcavationTechniqueTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
                 .extracting(PendingInteraction.MayAbilityChoice::playerId)
                 .isEqualTo(player1.getId());
-        assertThat(gd.stack).filteredOn(StackEntry::isCopy)
+        assertThat(gd.stack).noneMatch(StackEntry::isCopy);
+        assertThat(gd.stagedSpellCopies)
                 .extracting(StackEntry::getControllerId)
                 .as("The opponent's copy is created only after the caster's copy has its targets")
                 .containsExactly(player1.getId());

@@ -52,9 +52,10 @@ class StormOfFormsTest extends BaseCardTest {
         permanent.setCounterCount(CounterType.CHARGE, 1);
         harness.passBothPriorities();
 
+        assertThat(gd.stagedSpellCopies).hasSize(2);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(2);
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
     }
 
     @Test

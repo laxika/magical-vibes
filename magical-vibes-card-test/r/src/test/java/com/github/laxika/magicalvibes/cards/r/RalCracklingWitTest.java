@@ -214,8 +214,9 @@ class RalCracklingWitTest extends BaseCardTest {
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
         resolveAllTriggers();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gd.getTotalSpellsCastThisTurnCount()).isEqualTo(2);

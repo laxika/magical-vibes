@@ -80,6 +80,9 @@ class ThousandYearStormTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.stagedSpellCopies).hasSize(2);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
     }
 

@@ -131,9 +131,10 @@ class SuperComboTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
+        assertThat(gd.stagedSpellCopies).hasSize(2);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
     }
 

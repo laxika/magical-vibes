@@ -59,7 +59,7 @@ class LoseFocusTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+        assertThat(gd.stagedSpellCopies).hasSize(2);
         assertThat(gd.pendingMayAbilities).hasSize(2);
 
         harness.handleMayAbilityChosen(player2, false);
@@ -177,8 +177,9 @@ class LoseFocusTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertInGraveyard(player2, "Lose Focus");
         harness.passBothPriorities();
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Youthful Knight");

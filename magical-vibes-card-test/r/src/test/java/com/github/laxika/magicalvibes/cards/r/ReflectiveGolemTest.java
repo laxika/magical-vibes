@@ -34,7 +34,7 @@ class ReflectiveGolemTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
     }

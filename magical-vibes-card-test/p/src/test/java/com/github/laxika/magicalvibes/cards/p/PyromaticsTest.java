@@ -50,7 +50,7 @@ class PyromaticsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+        assertThat(gd.stagedSpellCopies).hasSize(2);
         assertThat(gd.pendingMayAbilities).hasSize(2);
 
         harness.handleMayAbilityChosen(player1, false);

@@ -39,11 +39,12 @@ class ShatteringSpreeTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+        assertThat(gd.stagedSpellCopies).hasSize(2);
         assertThat(gd.pendingMayAbilities).hasSize(2);
 
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Gruul Signet");
