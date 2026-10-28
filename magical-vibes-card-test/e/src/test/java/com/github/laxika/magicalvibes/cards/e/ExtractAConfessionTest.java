@@ -28,13 +28,12 @@ class ExtractAConfessionTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        PendingInteraction.MultiPermanentChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player2.getId());
-        assertThat(choice.maxCount()).isEqualTo(1);
         assertThat(choice.validIds()).containsExactlyInAnyOrder(hillGiant.getId(), serraAngel.getId());
-        harness.handleMultiplePermanentsChosen(player2, List.of(hillGiant.getId()));
+        harness.handlePermanentChosen(player2, hillGiant.getId());
 
         harness.assertInGraveyard(player2, "Hill Giant");
         harness.assertOnBattlefield(player2, "Serra Angel");
@@ -112,7 +111,7 @@ class ExtractAConfessionTest extends BaseCardTest {
         castExtractAConfession();
 
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player2, List.of(giant.getId()));
+        harness.handlePermanentChosen(player2, giant.getId());
 
         harness.assertInGraveyard(player2, "Hill Giant");
         harness.assertOnBattlefield(player2, "Serra Angel");

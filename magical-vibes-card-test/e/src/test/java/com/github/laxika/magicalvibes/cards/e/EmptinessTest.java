@@ -160,12 +160,12 @@ class EmptinessTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castCreature(player1, 0, List.of());
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().interaction.isAwaitingInput()).isTrue();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();

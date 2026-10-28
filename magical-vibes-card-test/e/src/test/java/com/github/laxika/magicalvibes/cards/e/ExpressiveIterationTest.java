@@ -204,7 +204,7 @@ class ExpressiveIterationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.castFromExile(player1, exiled.getId());
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(remaining);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(exiled);

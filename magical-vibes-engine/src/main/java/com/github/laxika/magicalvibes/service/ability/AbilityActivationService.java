@@ -6141,6 +6141,7 @@ public class AbilityActivationService {
             source.setChosenSacrificedPermanentSnapshot(new Permanent(sacrificed));
             source.setChosenSacrificedPower(gameQueryService.getEffectivePower(gameData, sacrificed));
             source.setChosenSacrificedToughness(gameQueryService.getEffectiveToughness(gameData, sacrificed));
+            source.setChosenSacrificedColorCount(gameQueryService.getEffectiveColors(gameData, sacrificed).size());
         }
         if (!(costEffect instanceof SacrificePermanentCost)
                 || sacrificed == null

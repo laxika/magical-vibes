@@ -18500,6 +18500,13 @@ public class SpellCastingService {
                 || castEntry.isCastWithDisturb() || castEntry.isCastTransformed() || castModalBackFace)) {
             castCharacteristics = card.createRuntimeCopyWithFace(card.getBackFaceCard());
             castCharacteristics.freeze();
+            // A modal double-faced instant or sorcery is put on the stack as the whole card; while it is
+            // there it has only the characteristics of the face it was cast as (CR 712.8f), so a copy of it is built from
+            // them (CR 707.2) and copy triggers see an instant or sorcery rather than the front creature.
+            if (castModalBackFace && (castEntry.getEntryType() == StackEntryType.INSTANT_SPELL
+                    || castEntry.getEntryType() == StackEntryType.SORCERY_SPELL)) {
+                castEntry.setCastCard(castCharacteristics);
+            }
         }
 
         if (castEntry != null) {

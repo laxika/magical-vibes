@@ -8,11 +8,12 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateReturnedPermanentIfSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
@@ -22,7 +23,6 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "SOC", collectorNumber = "2")
 public class ExcavaTheRisenPast extends Card {
@@ -46,11 +46,10 @@ public class ExcavaTheRisenPast extends Card {
                         .enterWithCounter(CounterType.FINALITY)
                         .enterWithCounterCount(1)
                         .grantSubtype(CardSubtype.SPIRIT)
+                        .battlefieldEffectGrants(List.of(
+                                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.TARGET),
+                                SetBasePowerToughnessEffect.indefinitely(1, 1),
+                                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, GrantDuration.INDEFINITE)))
                         .build());
-        addEffect(EffectSlot.ON_ATTACK, new AnimateReturnedPermanentIfSubtypeEffect(
-                CardSubtype.SPIRIT,
-                new AnimatePermanentsEffect(1, 1, List.of(CardSubtype.SPIRIT),
-                        Set.of(Keyword.FLYING), null, Set.of(), GrantScope.TARGET,
-                        EffectDuration.PERMANENT)));
     }
 }

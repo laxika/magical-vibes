@@ -156,7 +156,6 @@ class ElfhameSanctuaryTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.DRAW, () ->
                 harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
                     harness.handleMayAbilityChosen(player1, true);
-                    harness.passBothPriorities();
                     assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
                 }));
     }

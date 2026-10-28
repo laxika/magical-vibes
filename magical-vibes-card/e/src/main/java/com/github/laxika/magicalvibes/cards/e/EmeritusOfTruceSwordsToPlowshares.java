@@ -41,7 +41,7 @@ public class EmeritusOfTruceSwordsToPlowshares extends Card {
         ));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
-                new OpponentControlsMoreCreatures(1), new BecomePreparedEffect()));
+                new OpponentControlsMoreCreatures(1), BecomePreparedEffect.triggerOnly(), false));
     }
 
     @Override

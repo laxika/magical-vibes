@@ -56,6 +56,7 @@ class EtchedHostDoombringerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Invasion of Kamigawa");
         harness.assertNotInGraveyard(player1, "Invasion of Kamigawa");
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Rooftop Saboteurs");

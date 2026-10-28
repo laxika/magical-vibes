@@ -92,7 +92,7 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
             return;
         }
         int maxX = maxPotentialX(pool, cost, maximumX);
-        if (maxX <= 0) {
+        if (maxX <= 0 && !hasFixedManaCost(manaCost)) {
             return;
         }
         interactionHandlerRegistry.begin(gameData,
@@ -117,6 +117,14 @@ public class PayXManaDrawXCardsEffectHandler implements NormalEffectHandlerBean 
             }
         }
         return low;
+    }
+
+    /**
+     * True when the cost has mana beyond its {X} symbol. Only then is paying with X=0 a real
+     * payment; a bare {X} cost is free at X=0, so offering that choice would be a no-op prompt.
+     */
+    private static boolean hasFixedManaCost(String manaCost) {
+        return !manaCost.replace("{X}", "").isBlank();
     }
 
     private static String formatCost(String manaCost, int chosenValue) {

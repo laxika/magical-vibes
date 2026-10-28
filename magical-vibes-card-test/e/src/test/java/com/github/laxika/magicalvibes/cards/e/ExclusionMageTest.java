@@ -75,6 +75,7 @@ class ExclusionMageTest extends BaseCardTest {
 
     @Test
     void returnsStolenCreatureToOwnerRatherThanController() {
+        harness.setHand(player2, List.of());
         var creature = harness.addToBattlefieldAndReturn(player1, new ColossalDreadmaw());
         takeControl(player2, creature);
         castMage(creature.getId());
@@ -87,6 +88,7 @@ class ExclusionMageTest extends BaseCardTest {
 
     @Test
     void targetBecomingControlledByTriggerControllerIsNotReturned() {
+        harness.setHand(player2, List.of());
         var creature = harness.addToBattlefieldAndReturn(player2, new ColossalDreadmaw());
         castMage(creature.getId());
         harness.passBothPriorities();

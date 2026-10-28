@@ -62,6 +62,10 @@ public class ExileTargetCreatureWithHitCounterEffectHandler implements NormalEff
                 gameLogService.append(gameData,
                         GameLog.cardThen(target.getCard(), " is exiled with a hit counter."));
             }
+        } else {
+            // A token in exile ceases to exist (CR 111.7). It is removed here rather than by the state-based
+            // action, which a lost game would skip before the loss check below ends the game.
+            gameData.removeFromExile(target.getCard().getId());
         }
 
         // The loss check reads every card the player owns in exile with a hit counter, so it applies

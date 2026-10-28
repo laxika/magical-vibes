@@ -82,15 +82,14 @@ class EbonDragonTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting the may ability does nothing when opponent has an empty hand")
-    void acceptingMayDoesNothingWithEmptyHand() {
+    @DisplayName("The may ability does nothing when opponent has an empty hand")
+    void mayAbilityDoesNothingWithEmptyHand() {
         harness.setHand(player2, new ArrayList<>());
         castEbonDragon();
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

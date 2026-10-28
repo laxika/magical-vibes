@@ -1858,7 +1858,10 @@ public class CombatDamageService {
 
     private void snapshotSelfDealsDamageEffects(GameData gameData, CombatDamageState state) {
         for (Permanent source : state.combatDamageDealt.keySet()) {
-            List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+            List<CardEffect> effects = new ArrayList<>();
+            if (!source.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, source)) {
+                effects.addAll(source.getCard().getEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
+            }
             effects.addAll(source.getTemporaryTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
             effects.addAll(source.getPersistentTriggeredEffects(EffectSlot.ON_SELF_DEALS_DAMAGE));
             effects.addAll(grantedTriggeredAbilitySupport.grantedTriggeredEffects(

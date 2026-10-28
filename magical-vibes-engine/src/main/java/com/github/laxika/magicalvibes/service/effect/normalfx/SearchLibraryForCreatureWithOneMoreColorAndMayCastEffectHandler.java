@@ -38,7 +38,7 @@ public class SearchLibraryForCreatureWithOneMoreColorAndMayCastEffectHandler
 
         CardAllOfPredicate filter = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),
-                new CardHasExactlyNColorsPredicate(sacrificed.getEffectiveColors().size() + 1)));
+                new CardHasExactlyNColorsPredicate(entry.getSacrificedColorCount() + 1)));
         searchLibraryEffectHandler.resolveWithFollowUp(
                 gameData,
                 entry,

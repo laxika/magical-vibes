@@ -2499,6 +2499,7 @@ public class ActivatedAbilityExecutionService {
             if (sacrificed != null) {
                 stackEntry.setSacrificedPower(permanent.getChosenSacrificedPower());
                 stackEntry.setSacrificedToughness(permanent.getChosenSacrificedToughness());
+                stackEntry.setSacrificedColorCount(permanent.getChosenSacrificedColorCount());
             }
         }
         if (sacrificedSourceSnapshot != null) {

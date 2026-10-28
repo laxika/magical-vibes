@@ -356,6 +356,7 @@ public class CopySupport {
         // CR 707.10: a copy refers to the objects used to pay the original's costs (e.g. a sacrificed permanent).
         copy.setSacrificedPermanentSnapshot(source.getSacrificedPermanentSnapshot() == null
                 ? null : new com.github.laxika.magicalvibes.model.Permanent(source.getSacrificedPermanentSnapshot()));
+        copy.setSacrificedColorCount(source.getSacrificedColorCount());
         copy.setKicked(source.isKicked());
         copy.setGiftPromised(source.isGiftPromised());
         copy.setAlternateCost(source.isAlternateCost());

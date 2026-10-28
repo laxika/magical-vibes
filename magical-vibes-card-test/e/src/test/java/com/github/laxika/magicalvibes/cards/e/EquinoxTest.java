@@ -180,7 +180,7 @@ class EquinoxTest extends BaseCardTest {
 
         harness.castSorcery(player2, 0, land.getId());
         harness.passPriority(player2);
-        harness.activateAbility(player1, 0, 0, spell.getId());
+        harness.activateAbility(player1, 0, 1, null, spell.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
@@ -203,7 +203,7 @@ class EquinoxTest extends BaseCardTest {
 
         harness.castSorcery(player2, 0);
         harness.passPriority(player2);
-        harness.activateAbility(player1, 0, 0, spell.getId());
+        harness.activateAbility(player1, 0, 1, null, spell.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);

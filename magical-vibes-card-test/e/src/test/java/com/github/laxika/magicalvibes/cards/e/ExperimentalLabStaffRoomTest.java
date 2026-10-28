@@ -63,6 +63,7 @@ class ExperimentalLabStaffRoomTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Put a +1/+1 counter on it");
+        resolveAllTriggers();
 
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -79,6 +80,7 @@ class ExperimentalLabStaffRoomTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Turn that creature face up");
+        resolveAllTriggers();
 
         assertThat(attacker.isFaceDown()).isFalse();
     }
@@ -110,6 +112,7 @@ class ExperimentalLabStaffRoomTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Turn that creature face up");
+        resolveAllTriggers();
 
         assertThat(attacker.isFaceDown()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
@@ -128,6 +131,7 @@ class ExperimentalLabStaffRoomTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Turn that creature face up");
+        resolveAllTriggers();
 
         assertThat(attacker.isFaceDown()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);

@@ -105,7 +105,7 @@ class EzioAuditoreDaFirenzeTest extends BaseCardTest {
         addAttackingEzio();
         harness.setLife(player2, 20);
 
-        resolveCombat();
+        resolveCombatKeepingDamageTrigger();
         assertThat(gd.stack).hasSize(1);
         harness.setLife(player2, 10);
         harness.passBothPriorities();
@@ -120,7 +120,7 @@ class EzioAuditoreDaFirenzeTest extends BaseCardTest {
     void combatDamageEnablesGrantedFreerunning() {
         addAttackingEzio();
         harness.setLife(player2, 20);
-        resolveCombat();
+        resolveCombatKeepingDamageTrigger();
         harness.passBothPriorities();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.setHand(player1, List.of(new AssassinInitiate()));
@@ -138,7 +138,7 @@ class EzioAuditoreDaFirenzeTest extends BaseCardTest {
         addAttackingEzio();
         harness.setLife(player2, 13);
 
-        resolveCombat();
+        resolveCombatKeepingDamageTrigger();
         assertThat(gd.stack).hasSize(1);
         harness.setLife(player2, 11);
         harness.passBothPriorities();
@@ -167,6 +167,15 @@ class EzioAuditoreDaFirenzeTest extends BaseCardTest {
     private void resolveCombatToMayPrompt() {
         resolveCombat();
         harness.passBothPriorities();
+    }
+
+    /**
+     * Resolves combat while holding priority at combat damage, so Ezio's damage trigger stays on the
+     * stack. Without the stop, auto-pass resolves a trigger that neither player can respond to as soon
+     * as it is put on the stack, before the test can inspect it.
+     */
+    private void resolveCombatKeepingDamageTrigger() {
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
     }
 
     private void markAssassinCombatDamage() {

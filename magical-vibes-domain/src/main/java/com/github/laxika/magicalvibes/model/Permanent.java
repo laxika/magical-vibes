@@ -324,6 +324,8 @@ public class Permanent {
     @Setter private int chosenSacrificedPower;
     /** Effective toughness of the permanent sacrificed to pay an ability cost, read while it was still on the battlefield. */
     @Setter private int chosenSacrificedToughness;
+    /** Effective color count of the permanent sacrificed to pay an ability cost, read while it was still on the battlefield. */
+    @Setter private int chosenSacrificedColorCount;
     @Setter private boolean cantBeBlocked;
     /** True when {@link #cantBeBlocked} comes from a granted "can't be blocked" ability (Ogre Marauder),
      *  which a later loss of all abilities removes. */
@@ -1097,6 +1099,7 @@ public class Permanent {
                 ? null : new Permanent(source.chosenSacrificedPermanentSnapshot);
         this.chosenSacrificedPower = source.chosenSacrificedPower;
         this.chosenSacrificedToughness = source.chosenSacrificedToughness;
+        this.chosenSacrificedColorCount = source.chosenSacrificedColorCount;
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBeBlockedGrantedAbility = source.cantBeBlockedGrantedAbility;
         this.cantBlockThisTurn = source.cantBlockThisTurn;

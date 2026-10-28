@@ -15539,7 +15539,13 @@ public class TriggerCollectionService {
                 addToBatchedEntryGroup(gameData, perm, resolved, enteringPermanent);
                 continue;
             }
-            if (dispatchEnter(gameData, perm, controllerId, slot, effect, resolved, markOnAcceptance, ctx)
+            // "Triggers only once each turn" is one trigger per event, so an extra trigger from a doubler
+            // (Panharmonicon) does not give it a second copy.
+            var effectCtx = oncePerTurn
+                    ? new TriggerContext.PermanentEnters(ctx.enteringCard(), ctx.enteringControllerId(),
+                    ctx.defaultTargetPlayerId(), 1, ctx.mayPayTargetCardId())
+                    : ctx;
+            if (dispatchEnter(gameData, perm, controllerId, slot, effect, resolved, markOnAcceptance, effectCtx)
                     && oncePerTurn && !markOnAcceptance) {
                 gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
             }

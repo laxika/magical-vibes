@@ -39,6 +39,7 @@ class EyesOfTheWisentTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.castInstant(player2, 0, bearsId);
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
