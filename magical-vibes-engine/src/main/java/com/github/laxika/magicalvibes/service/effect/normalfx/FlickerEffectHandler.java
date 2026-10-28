@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -672,10 +673,18 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         List<Permanent> simultaneous = returning.stream().map(flickered -> new Permanent(flickered.card())).toList();
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Runnable> afterEntry = new ArrayList<>();
-        for (int i = 0; i < returning.size(); i++) {
-            afterEntry.add(placeAfterImmediateExile(gameData, entry, effect, returning.get(i),
-                    simultaneous.get(i), enterTappedTypes, simultaneous));
+        // The returns are one event, so Don't Blink shuffles each owner's library once for all of them.
+        Set<UUID> shuffleOwners = new LinkedHashSet<>();
+        gameData.exileEntryShuffleBatchOwners = shuffleOwners;
+        try {
+            for (int i = 0; i < returning.size(); i++) {
+                afterEntry.add(placeAfterImmediateExile(gameData, entry, effect, returning.get(i),
+                        simultaneous.get(i), enterTappedTypes, simultaneous));
+            }
+        } finally {
+            gameData.exileEntryShuffleBatchOwners = null;
         }
+        shuffleOwners.forEach(ownerId -> LibraryShuffleHelper.shuffleLibrary(gameData, ownerId));
         afterEntry.forEach(Runnable::run);
         exiled.stream()
                 .filter(flickered -> !returning.contains(flickered) && flickered.hadBonusSubtype()

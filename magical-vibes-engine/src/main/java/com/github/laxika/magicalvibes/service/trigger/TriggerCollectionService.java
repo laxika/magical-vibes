@@ -15820,6 +15820,7 @@ public class TriggerCollectionService {
 
         for (Boon boon : List.copyOf(gameData.boons)) {
             if ((boon.trigger() != com.github.laxika.magicalvibes.model.BoonTrigger.CREATURE_ENTERS
+                    && boon.trigger() != com.github.laxika.magicalvibes.model.BoonTrigger.ONE_OR_MORE_CREATURES_ENTER
                     && boon.trigger() != com.github.laxika.magicalvibes.model.BoonTrigger.PERMANENT_ENTERS)
                     || !boon.controllerId().equals(controllerId)) continue;
 
@@ -15830,7 +15831,8 @@ public class TriggerCollectionService {
                 Permanent candidate = gameQueryService.findPermanentById(gameData, enteringPermanentId);
                 if (candidate == null) continue;
                 boolean candidateIsCreature = gameQueryService.isCreature(gameData, candidate);
-                if (boon.trigger() == com.github.laxika.magicalvibes.model.BoonTrigger.CREATURE_ENTERS
+                if ((boon.trigger() == com.github.laxika.magicalvibes.model.BoonTrigger.CREATURE_ENTERS
+                        || boon.trigger() == com.github.laxika.magicalvibes.model.BoonTrigger.ONE_OR_MORE_CREATURES_ENTER)
                         ? !candidateIsCreature
                         : candidateIsCreature != creatureEntries) {
                     continue;
@@ -15848,6 +15850,7 @@ public class TriggerCollectionService {
             if (enteringPermanent == null || resolved == null) continue;
 
             if (matchingEnteringIds.size() > 1 && boon.targetFilter() == null
+                    && boon.trigger() != com.github.laxika.magicalvibes.model.BoonTrigger.ONE_OR_MORE_CREATURES_ENTER
                     && resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                 // "Whenever a creature you control enters, [do something to] it": every creature that entered
                 // together triggers the boon separately and consumes its own use.
@@ -16582,6 +16585,8 @@ public class TriggerCollectionService {
         int extraTriggers = gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, enteringCard);
         var ctx = new TriggerContext.PermanentEnters(
                 enteringCard, controllerId, null, 1 + extraTriggers, enteringPermanentId);
+        Permanent enteringPermanent = enteringPermanentId == null
+                ? null : gameQueryService.findPermanentById(gameData, enteringPermanentId);
 
         for (Permanent perm : battlefield) {
             boolean isEnteringCard = perm.getCard() == enteringCard;
@@ -16595,6 +16600,7 @@ public class TriggerCollectionService {
                 for (CardEffect effect : effects) {
                     CardEffect resolved = unwrapEnteringCardSubtypeConditional(effect, enteringCard, gameData, controllerId);
                     if (resolved == null) continue;
+                    if (!passesEnterInterveningIf(gameData, perm, controllerId, enteringPermanent, resolved)) continue;
                     dispatchEnter(gameData, perm, controllerId, slot, resolved, ctx);
                 }
             }

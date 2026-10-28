@@ -26,7 +26,9 @@ import org.springframework.stereotype.Component;
  * {@link GameData#pendingEachPlayerDrawUpToQueue} (head = currently prompted player) and the answers pile
  * up in {@link GameData#pendingEachPlayerDrawUpToChoices}; once the last player has chosen, the draw counts
  * are snapshotted in {@link GameData#pendingEachPlayerDrawUpToInitialCounts} and the queue is refilled with
- * the players still to draw. Used by Temporary Truce.
+ * the players still to draw. Used by Temporary Truce. With
+ * {@link EachPlayerMayDrawUpToNGainLifePerCardBelowEffect#drawAfterEachChoice()} each player draws as soon
+ * as they choose, before the next player's prompt (Diminishing Returns).
  */
 @Component
 @RequiredArgsConstructor
@@ -49,6 +51,29 @@ public class EachPlayerMayDrawUpToNGainLifePerCardBelowEffectHandler implements 
         if (gameData.pendingEachPlayerDrawUpToInitialCounts != null) {
             drawThenGainLife(gameData, entry, e);
             return;
+        }
+
+        if (e.drawAfterEachChoice()) {
+            if (gameData.chosenXValue != null) {
+                int chosen = gameData.chosenXValue;
+                gameData.chosenXValue = null;
+                UUID playerId = gameData.pendingEachPlayerDrawUpToQueue.removeFirst();
+                gameData.pendingEachPlayerDrawUpToChoices.put(playerId, chosen);
+                if (chosen > 0) {
+                    playerInteractionSupport.applyDrawCards(gameData, playerId, chosen);
+                }
+                if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
+                    gameData.rerunCurrentEffectAfterInteraction = true;
+                    return;
+                }
+                promptNextOrFinishInTurnOrder(gameData, entry, e);
+                return;
+            }
+            if (!gameData.pendingEachPlayerDrawUpToChoices.isEmpty()) {
+                // Resuming after a prompt the last player's draw opened.
+                promptNextOrFinishInTurnOrder(gameData, entry, e);
+                return;
+            }
         }
 
         if (gameData.chosenXValue != null) {
@@ -83,12 +108,24 @@ public class EachPlayerMayDrawUpToNGainLifePerCardBelowEffectHandler implements 
         promptNext(gameData, entry, e);
     }
 
+    private void promptNextOrFinishInTurnOrder(GameData gameData, StackEntry entry,
+                                               EachPlayerMayDrawUpToNGainLifePerCardBelowEffect e) {
+        if (gameData.pendingEachPlayerDrawUpToQueue.isEmpty()) {
+            gameData.pendingEachPlayerDrawUpToChoices.clear();
+        } else {
+            promptNext(gameData, entry, e);
+        }
+    }
+
     private void promptNext(GameData gameData, StackEntry entry,
                             EachPlayerMayDrawUpToNGainLifePerCardBelowEffect e) {
         UUID playerId = gameData.pendingEachPlayerDrawUpToQueue.get(0);
         String cardName = entry.getCard().getName();
-        String prompt = "Draw up to " + e.maxDraw() + " cards for " + cardName + ". You gain "
-                + e.lifePerCardBelow() + " life for each card fewer than " + e.maxDraw() + " you draw.";
+        String prompt = "Draw up to " + e.maxDraw() + " cards for " + cardName + "."
+                + (e.lifePerCardBelow() > 0
+                        ? " You gain " + e.lifePerCardBelow() + " life for each card fewer than "
+                                + e.maxDraw() + " you draw."
+                        : "");
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.XValueChoice(playerId, e.maxDraw(), prompt, cardName));
     }

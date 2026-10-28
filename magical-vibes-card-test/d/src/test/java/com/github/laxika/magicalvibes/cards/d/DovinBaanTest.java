@@ -156,8 +156,8 @@ class DovinBaanTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The emblem requires two untaps when at least two permanents can untap")
-    void emblemRejectsFewerThanTwoUntaps() {
+    @DisplayName("The emblem caps untaps at two: choosing all three tapped permanents is rejected")
+    void emblemRejectsMoreThanTwoUntaps() {
         addReadyDovin(player1, 7);
         List<Permanent> permanents = addTappedPermanents(player2, 3);
 
@@ -165,10 +165,8 @@ class DovinBaanTest extends BaseCardTest {
         harness.passBothPriorities();
         advanceToNextTurn(player1);
 
-        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player2, List.of()))
-                .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(
-                player2, List.of(permanents.get(0).getId())))
+                player2, List.of(permanents.get(0).getId(), permanents.get(1).getId(), permanents.get(2).getId())))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.handleMultiplePermanentsChosen(player2,

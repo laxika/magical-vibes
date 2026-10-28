@@ -67,8 +67,10 @@ class DenOfTheBugbearTest extends BaseCardTest {
     void attackingCreatesTappedAndAttackingGoblin() {
         animateDen();
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         Permanent token = findPermanents(player1, "Goblin").stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -104,8 +106,10 @@ class DenOfTheBugbearTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         assertThat(findPermanents(player1, "Goblin"))
                 .hasSize(2)

@@ -17,7 +17,7 @@ public class DenryKlinEditorInChief extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseCounterTypeOnEnterEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, CounterType.FIRST_STRIKE, CounterType.VIGILANCE));
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
                 new ConditionalEffect(
                         new SourceCounterThreshold(1, CounterType.ANY),
                         new PutCountersOnEnteringCreatureEqualToSourceCountersEffect()));

@@ -52,7 +52,7 @@ class DragonrageTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 2, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid ability index");
+                .hasMessageContaining("Permanent has no activated ability");
         assertThat(nonAttacker.isAttacking()).isFalse();
     }
 
@@ -70,7 +70,7 @@ class DragonrageTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid ability index");
+                .hasMessageContaining("Permanent has no activated ability");
     }
 
     @Test
@@ -85,7 +85,7 @@ class DragonrageTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid ability index");
+                .hasMessageContaining("Permanent has no activated ability");
     }
 
     @Test
@@ -101,7 +101,7 @@ class DragonrageTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid ability index");
+                .hasMessageContaining("Permanent has no activated ability");
     }
 
     @Test
@@ -120,7 +120,7 @@ class DragonrageTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid ability index");
+                .hasMessageContaining("Permanent has no activated ability");
     }
 
     @Test
@@ -171,7 +171,7 @@ class DragonrageTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid ability index");
+                .hasMessageContaining("Permanent has no activated ability");
         int basePower = gqs.getEffectivePower(gd, remainingAttacker);
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();

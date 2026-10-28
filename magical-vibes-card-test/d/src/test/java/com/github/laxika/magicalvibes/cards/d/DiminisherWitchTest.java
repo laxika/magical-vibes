@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,7 +36,7 @@ class DiminisherWitchTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DiminisherWitch()));
         addMana();
 
-        harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+        castBargained(target.getId(), sacrifice.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -55,8 +56,8 @@ class DiminisherWitchTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DiminisherWitch()));
         addMana();
 
-        assertThatThrownBy(() -> harness.castKickedInstantWithSacrifice(
-                player1, 0, target.getId(), sacrifice.getId()))
+        assertThatThrownBy(() -> castBargained(
+                target.getId(), sacrifice.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -67,8 +68,8 @@ class DiminisherWitchTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DiminisherWitch()));
         addMana();
 
-        assertThatThrownBy(() -> harness.castKickedInstantWithSacrifice(
-                player1, 0, target.getId(), sacrifice.getId()))
+        assertThatThrownBy(() -> castBargained(
+                target.getId(), sacrifice.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -94,7 +95,7 @@ class DiminisherWitchTest extends BaseCardTest {
         for (int i = 0; i < 2; i++) {
             Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
             addMana();
-            harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+            castBargained(target.getId(), sacrifice.getId());
             harness.passBothPriorities();
             harness.passBothPriorities();
         }
@@ -111,13 +112,13 @@ class DiminisherWitchTest extends BaseCardTest {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new DarksteelRelic());
         harness.setHand(player1, List.of(new DiminisherWitch(), new DiminisherWitch()));
         addMana();
-        harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), sacrifice.getId());
+        castBargained(target.getId(), sacrifice.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
         Permanent firstRole = findPermanents(player1, "Cursed").getFirst();
 
         addMana();
-        harness.castKickedInstantWithSacrifice(player1, 0, target.getId(), firstRole.getId());
+        castBargained(target.getId(), firstRole.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -140,6 +141,12 @@ class DiminisherWitchTest extends BaseCardTest {
 
         harness.assertLife(player2, 20);
         harness.assertOnBattlefield(player1, "Diminisher Witch");
+    }
+
+    private void castBargained(UUID targetId, UUID sacrificeId) {
+        harness.castDeclaringEtbTargets(player1, 0, targetId, null, true, (castTargetId, castTargetIds) ->
+                gs.playCard(gd, player1, 0, 0, castTargetId, null, castTargetIds, List.of(), false,
+                        sacrificeId, null, null, null, null, true));
     }
 
     private void addMana() {

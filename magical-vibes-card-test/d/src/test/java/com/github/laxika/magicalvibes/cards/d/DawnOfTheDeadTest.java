@@ -54,7 +54,8 @@ class DawnOfTheDeadTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(returned.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
+                .anyMatch(action -> action.permanentId().equals(returned.getId())
+                        && action.kind() == DelayedPermanentActionKind.EXILE_AT_END_STEP);
     }
 
     @Test

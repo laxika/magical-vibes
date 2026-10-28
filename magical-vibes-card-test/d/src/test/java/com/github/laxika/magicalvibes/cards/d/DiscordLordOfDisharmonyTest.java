@@ -63,6 +63,8 @@ class DiscordLordOfDisharmonyTest extends BaseCardTest {
 
     @Test
     void permissionEndsWhenNextEndStepBegins() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new DiscordLordOfDisharmony());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -70,9 +72,10 @@ class DiscordLordOfDisharmonyTest extends BaseCardTest {
         resolveAllTriggers();
         Card copy = gd.getPlayerExiledCards(player1.getId()).getFirst();
 
-        gd.turnNumber += 2;
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        assertThat(gd.exilePlayPermissions).containsKey(copy.getId());
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         assertThat(gd.exilePlayPermissions).doesNotContainKey(copy.getId());
         assertThat(gd.exilePlayAnyManaType).doesNotContain(copy.getId());

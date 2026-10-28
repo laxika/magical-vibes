@@ -42,6 +42,9 @@ public class FlipCoinDoubleOrPreventNextDamageFromChosenSourceEffectHandler impl
             }
         });
         for (StackEntry stackEntry : gameData.stack) {
+            if (stackEntry == entry) {
+                continue;
+            }
             boolean ability = stackEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                     || stackEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
             UUID sourceController = ability && stackEntry.getDamageSourceControllerId() != null

@@ -144,8 +144,6 @@ class DisruptorOfCurrentsTest extends BaseCardTest {
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
         resolveAllTriggers();
-        harness.handlePermanentChosen(player1, player1.getId());
-        resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }

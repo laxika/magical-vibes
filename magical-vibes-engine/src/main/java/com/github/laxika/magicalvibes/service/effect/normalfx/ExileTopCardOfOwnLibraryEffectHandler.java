@@ -14,10 +14,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/**
+ * Exiles the top card of the controller's library. When the effect tracks the card with its source,
+ * the card is linked to that exile ability, so it is not treated as the source's imprint: a permanent
+ * that copies the source (Dermotaxi copying Rona) must not borrow it as the imprinted card.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ExileTopCardOfOwnLibraryEffectHandler implements NormalEffectHandlerBean {
+
+    private static final String EXILE_ABILITY_LINK = "exile-top-card-of-own-library";
 
     private final ExileService exileService;
     private final GameLogService gameLogService;
@@ -49,6 +56,10 @@ public class ExileTopCardOfOwnLibraryEffectHandler implements NormalEffectHandle
             UUID sourcePermanentId = entry.getSourcePermanentId();
             if (sourcePermanentId != null) {
                 exileService.exileCard(gameData, controllerId, topCard, sourcePermanentId);
+                synchronized (gameData.exiledCards) {
+                    gameData.exiledCards.replaceAll(exiled -> exiled.card().getId().equals(topCard.getId())
+                            ? exiled.withAbilityLink(EXILE_ABILITY_LINK) : exiled);
+                }
                 gameData.setImprintedCard(entry.getCard(), topCard);
             } else {
                 exileService.exileCard(gameData, controllerId, topCard);

@@ -55,7 +55,7 @@ class DuskTest extends BaseCardTest {
         assertThat(gameData.playerHands.get(player1.getId()))
                 .doesNotContain(highPowerCreature, land);
         assertThat(gameData.getPlayerExiledCards(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Dusk"));
+                .anyMatch(card -> card.getName().equals("Dusk // Dawn"));
     }
 
     @Test
@@ -72,7 +72,7 @@ class DuskTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Hill Giant");
-        harness.assertInGraveyard(player1, "Dusk");
+        harness.assertInGraveyard(player1, "Dusk // Dawn");
     }
 
     @Test

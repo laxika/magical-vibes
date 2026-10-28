@@ -189,7 +189,6 @@ class DireUndercurrentsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();

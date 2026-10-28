@@ -33,10 +33,14 @@ public class EndTurnEffectHandler implements NormalEffectHandlerBean {
         gameData.pendingMayAbilities.clear();
         gameData.pendingInteractions.removeIf(PermanentChoiceContext.DeathTriggerTarget.class::isInstance);
 
+        // The resolving spell stays on the stack while it resolves (an instant or sorcery is removed
+        // only at the end of its resolution), but it is exiled once by the end-turn branch of spell
+        // resolution, so take it off the stack here to keep the stack exile from exiling it a second time.
+        gameData.removeResolvingSpellFromStack(entry);
         // Rule 724.1b: Exile every object on the stack
         turnSupport.exileStackEntries(gameData);
-        // The resolving spell was exiled above; its disposition must not run later (the discard prompt
-        // pauses resolution), or it would be put into a graveyard after the exile.
+        // The resolving spell's disposition must not run later (the discard prompt pauses resolution),
+        // or it would be put into a graveyard after the exile.
         entry.setSpellDispositionHandled(true);
 
         // Rule 724.1d: Remove creatures from combat. An "exile at end of combat" delayed action has no

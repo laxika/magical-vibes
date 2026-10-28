@@ -4559,6 +4559,8 @@ public class GameQueryService {
             boolean floatingLock = gameData.floatingEffects.stream().anyMatch(floating ->
                     permanent.getId().equals(floating.affectedPermanentId())
                             && floating.effect() instanceof DoesntUntapEffect lock
+                            && (floating.scope() == null || predicateEvaluationService.matchesPermanentPredicate(
+                                    permanent, floating.scope(), FilterContext.of(gameData)))
                             && (lock.condition() == UntapLockCondition.ALWAYS
                                     || lock.condition() == UntapLockCondition.WHILE_SOURCE_CONTROLLED
                                     && gameData.playerBattlefields.getOrDefault(floating.controllerId(), List.of())

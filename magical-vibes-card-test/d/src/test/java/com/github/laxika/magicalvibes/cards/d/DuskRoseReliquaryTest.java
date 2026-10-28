@@ -158,6 +158,7 @@ class DuskRoseReliquaryTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new DuskRoseReliquary()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castSorceryWithSacrifice(player1, 0, targetId, sacrificeId);
+        harness.castDeclaringEtbTargets(player1, 0, targetId, null, (castTargetId, castTargetIds) ->
+                gs.playCard(gd, player1, 0, 0, castTargetId, null, castTargetIds, List.of(), false, sacrificeId));
     }
 }

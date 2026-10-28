@@ -138,10 +138,7 @@ class DampingFieldTest extends BaseCardTest {
         secondLand.tap();
 
         advanceToNextTurn(player2);
-        harness.handleMultiplePermanentsChosen(player1, List.of(firstLand.getId()));
-        if (gd.interaction.isAwaitingInput()) {
-            harness.handleMultiplePermanentsChosen(player1, List.of(firstArtifact.getId()));
-        }
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstLand.getId(), firstArtifact.getId()));
 
         assertThat(firstLand.isTapped()).isFalse();
         assertThat(secondLand.isTapped()).isTrue();

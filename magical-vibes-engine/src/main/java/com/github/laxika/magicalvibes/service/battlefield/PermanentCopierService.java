@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.LicidEndEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -35,6 +37,35 @@ public class PermanentCopierService {
 
     /** Includes characteristics selected by independent as-enters choices in a copy's base. */
     public Card copiableCard(Permanent permanent) {
+        Card copiable = printedCopiableCard(permanent);
+        if (permanent.isFaceDown() || permanent.getCopiableEntryCharacteristics().isEmpty()) {
+            return copiable;
+        }
+        // "As ... enters" conversions that set power and toughness are copiable values (CR 707.2).
+        Card converted = copiable.createRuntimeCopy();
+        Set<CardType> additionalTypes = EnumSet.noneOf(CardType.class);
+        additionalTypes.addAll(converted.getAdditionalTypes());
+        List<CardSubtype> subtypes = new ArrayList<>(converted.getSubtypes());
+        for (ControlledPermanentEntryCharacteristicsEffect characteristics : permanent.getCopiableEntryCharacteristics()) {
+            characteristics.addedCardTypes().stream()
+                    .filter(type -> type != converted.getType())
+                    .forEach(additionalTypes::add);
+            characteristics.addedSubtypes().stream()
+                    .filter(subtype -> !subtypes.contains(subtype))
+                    .forEach(subtypes::add);
+            if (characteristics.basePower() != null) {
+                converted.setPower(characteristics.basePower());
+            }
+            if (characteristics.baseToughness() != null) {
+                converted.setToughness(characteristics.baseToughness());
+            }
+        }
+        converted.setAdditionalTypes(additionalTypes);
+        converted.setSubtypes(subtypes);
+        return converted;
+    }
+
+    private Card printedCopiableCard(Permanent permanent) {
         if (permanent.isFaceDown()) {
             Card visible = new Card();
             visible.setName("");

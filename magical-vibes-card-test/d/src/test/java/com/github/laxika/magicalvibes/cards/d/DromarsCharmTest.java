@@ -53,6 +53,8 @@ class DromarsCharmTest extends BaseCardTest {
     @DisplayName("Mode 1 cannot target a nonspell permanent")
     void counterModeRejectsPermanentTarget() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new StarCompass());
+        harness.castFromHand(player1, new DromarsCharm(), "{W}{U}{B}");
+        harness.passPriority(player1);
         harness.setHand(player2, List.of(new DromarsCharm()));
         addMana(player2);
 

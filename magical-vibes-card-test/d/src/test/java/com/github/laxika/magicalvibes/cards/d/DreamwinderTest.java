@@ -33,7 +33,7 @@ class DreamwinderTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .containsExactly(island.getCard());
-        assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
+        assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
         assertThat(forest.getTransientSubtypes()).isEmpty();
     }
 
@@ -46,7 +46,7 @@ class DreamwinderTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(forest.getTransientLandTypeOverride()).isNull();
+        assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
     }
 
     @Test

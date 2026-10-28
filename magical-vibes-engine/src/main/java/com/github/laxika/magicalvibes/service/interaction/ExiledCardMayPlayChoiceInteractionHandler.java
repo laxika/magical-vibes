@@ -63,7 +63,7 @@ public class ExiledCardMayPlayChoiceInteractionHandler
             throw new IllegalStateException("Chosen card is no longer exiled");
         }
 
-        if (interaction.withoutPayingManaCost() && interaction.duration() == ExilePlayDuration.END_OF_TURN) {
+        if (interaction.castChosenImmediately()) {
             if (chosen.card().hasType(CardType.LAND)) {
                 gameData.pendingFreeCastLandPlayIds.add(chosenId);
             }

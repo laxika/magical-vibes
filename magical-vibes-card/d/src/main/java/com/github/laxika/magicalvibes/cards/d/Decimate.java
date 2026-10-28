@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,14 +21,17 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Decimate extends Card {
 
     public Decimate() {
+        // One "destroy" instruction over four targets (CR 608.2c: read the whole text), so one effect
+        // instance is bound to every target group and all four are destroyed at the same time.
+        CardEffect destroy = new DestroyTargetPermanentEffect();
         target(TargetFilters.artifact())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .addEffect(EffectSlot.SPELL, destroy);
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .bindEffect(destroy);
         target(TargetFilters.enchantment())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .bindEffect(destroy);
         target(TargetFilters.land())
-                .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+                .bindEffect(destroy);
         setAllowSharedTargets(true);
     }
 }

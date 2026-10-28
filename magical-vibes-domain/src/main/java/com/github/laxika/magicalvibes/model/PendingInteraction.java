@@ -1276,11 +1276,23 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** Choose one card among exiled cards and grant it a temporary play permission. */
+    /**
+     * Choose one card among exiled cards and grant it a temporary play permission. When
+     * {@code castChosenImmediately} is set, the chosen card is cast right away without paying its mana
+     * cost instead of being granted a permission to cast later.
+     */
     record ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                    ExilePlayDuration duration, boolean anyManaType,
-                                   boolean withoutPayingManaCost, boolean allowNoChoice)
+                                   boolean withoutPayingManaCost, boolean allowNoChoice,
+                                   boolean castChosenImmediately)
             implements PendingInteraction {
+        public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                       ExilePlayDuration duration, boolean anyManaType,
+                                       boolean withoutPayingManaCost, boolean allowNoChoice) {
+            this(playerId, validCardIds, duration, anyManaType, withoutPayingManaCost, allowNoChoice,
+                    withoutPayingManaCost && duration == ExilePlayDuration.END_OF_TURN);
+        }
+
         public ExiledCardMayPlayChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                        ExilePlayDuration duration) {
             this(playerId, validCardIds, duration, false, false, false);

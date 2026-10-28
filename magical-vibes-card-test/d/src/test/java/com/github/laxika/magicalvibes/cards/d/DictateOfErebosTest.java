@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -63,13 +63,13 @@ class DictateOfErebosTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
                 .isEqualTo(player2.getId());
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).context())
-                .isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).context())
+                .isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
 
-        harness.handleMultiplePermanentsChosen(player2, List.of( spiderId));
+        harness.handlePermanentChosen(player2, spiderId);
 
         harness.assertInGraveyard(player2, "Giant Spider");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -104,7 +104,7 @@ class DictateOfErebosTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player2, List.of( bearsId));
+        harness.handlePermanentChosen(player2, bearsId);
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Giant Spider");
         harness.passBothPriorities();

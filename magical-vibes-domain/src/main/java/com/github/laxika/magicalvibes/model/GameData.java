@@ -1982,6 +1982,8 @@ public class GameData {
     public boolean suppressNextLibrarySearchTriggers;
     /** Cards chosen but not yet returned while {@link #holdGraveyardHandReturns} is set, mapped to the player returning each. */
     public final Map<UUID, UUID> heldGraveyardHandReturns = Collections.synchronizedMap(new LinkedHashMap<>());
+    /** Owners whose libraries Don't Blink's replacement must shuffle once after a batch of creatures enters from exile together; null outside such a batch (never spans a mutation, so not copied). */
+    public Set<UUID> exileEntryShuffleBatchOwners;
     /** APNAP-ordered queue of players still to act in an "each player may draw" effect (Temporary Truce): the head player is prompted while choices are made, then each player in turn draws their chosen count. */
     public final List<UUID> pendingEachPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
     /** Each player's chosen draw count for the current "each player may draw up to N" effect, in APNAP order. */
@@ -3429,6 +3431,10 @@ public class GameData {
 
     /** Revealed hand cards waiting to be stamped onto the spell whose additional cost they paid. */
     public final Map<UUID, Card> pendingRevealedPowerCostCards = new ConcurrentHashMap<>();
+
+    /** Card discarded to pay a spell's discard cost, keyed by the spell's card id, waiting to be stamped
+     *  onto the spell's stack entry when a kicker discard is what it paid for. */
+    public final Map<UUID, Card> pendingDiscardedCostCards = new ConcurrentHashMap<>();
 
 
     /** Tracks how much life each player has gained so far this turn (for "if you gained life this turn"
@@ -10111,6 +10117,7 @@ public class GameData {
         this.eachPlayerSearchDeferredToHand.forEach((playerId, cards) ->
                 copy.eachPlayerSearchDeferredToHand.put(playerId, new ArrayList<>(cards)));
         copy.pendingRevealedPowerCostCards.putAll(this.pendingRevealedPowerCostCards);
+        copy.pendingDiscardedCostCards.putAll(this.pendingDiscardedCostCards);
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));

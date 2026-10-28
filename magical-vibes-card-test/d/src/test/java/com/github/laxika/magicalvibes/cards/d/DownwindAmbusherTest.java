@@ -59,7 +59,7 @@ class DownwindAmbusherTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleListChoice(player1,
                 "Destroy target creature an opponent controls that was dealt damage this turn"))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

@@ -39,6 +39,7 @@ class DenryKlinEditorInChiefTest extends BaseCardTest {
     @Test
     void copiesLastKnownCountersAfterDenryLeavesBattlefield() {
         Permanent denry = castDenry("+1/+1");
+        harness.passBothPriorities();
         denry.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         denry.setCounterCount(CounterType.VIGILANCE, 1);
         castBears();
@@ -56,6 +57,7 @@ class DenryKlinEditorInChiefTest extends BaseCardTest {
     @Test
     void copiesCountersPresentAtResolutionRatherThanAtEntry() {
         Permanent denry = castDenry("vigilance");
+        harness.passBothPriorities();
         castBears();
         denry.setCounterCount(CounterType.VIGILANCE, 0);
         denry.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
@@ -70,6 +72,7 @@ class DenryKlinEditorInChiefTest extends BaseCardTest {
     @Test
     void doesNotTriggerWithoutCountersEvenIfCountersAreAddedLater() {
         Permanent denry = castDenry("+1/+1");
+        harness.passBothPriorities();
         denry.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
         castBears();
         assertThat(gd.stack).isEmpty();
@@ -84,6 +87,7 @@ class DenryKlinEditorInChiefTest extends BaseCardTest {
     @Test
     void copiesEverySourceCounterKindAndCountToNontokenCreature() {
         Permanent denry = castDenry("+1/+1");
+        harness.passBothPriorities();
         denry.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         denry.setCounterCount(CounterType.FIRST_STRIKE, 1);
         denry.setCounterCount(CounterType.VIGILANCE, 3);
@@ -100,6 +104,7 @@ class DenryKlinEditorInChiefTest extends BaseCardTest {
     @Test
     void interveningIfIsCheckedWhenTriggerResolves() {
         Permanent denry = castDenry("+1/+1");
+        harness.passBothPriorities();
 
         castBears();
         denry.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
@@ -112,6 +117,8 @@ class DenryKlinEditorInChiefTest extends BaseCardTest {
     @Test
     void doesNotTriggerForTokens() {
         Permanent denry = castDenry("+1/+1");
+        harness.passBothPriorities();
+        int denryCounters = denry.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
 
         harness.setHand(player1, List.of(new MassProduction()));
         harness.addMana(player1, ManaColor.COLORLESS, 5);
@@ -120,7 +127,7 @@ class DenryKlinEditorInChiefTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Soldier")).isNotEmpty()
                 .allMatch(token -> token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) == 0);
-        assertThat(denry.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(denry.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(denryCounters);
     }
 
     private Permanent castDenry(String counterType) {

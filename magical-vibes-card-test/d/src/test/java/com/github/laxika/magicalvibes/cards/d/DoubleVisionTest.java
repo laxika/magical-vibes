@@ -43,9 +43,10 @@ class DoubleVisionTest extends BaseCardTest {
         assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
 
         harness.passBothPriorities();
-        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
     }
 
     @Test

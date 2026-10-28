@@ -7,6 +7,7 @@ import lombok.Setter;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 
 import java.util.AbstractMap;
@@ -272,6 +273,11 @@ public class Permanent {
      * (Molten Sentry): {@code true} for heads, {@code null} when no such flip happened.
      */
     @Setter private Boolean entryCoinFlipHeads;
+    /**
+     * "As a permanent you control enters, it becomes ..." conversions applied to this permanent as it entered
+     * (Displaced Dinosaurs). They are copiable values (CR 707.2), so a copy of this permanent takes them too.
+     */
+    private final List<ControlledPermanentEntryCharacteristicsEffect> copiableEntryCharacteristics = new ArrayList<>();
     /**
      * The "as this enters, flip a coin" flip (Molten Sentry) whose Krark's Thumb results disagreed, while its
      * flipping player has not yet chosen the kept result; {@code null} otherwise. The result is chosen before this
@@ -1070,6 +1076,7 @@ public class Permanent {
         this.chosenNumberDigits = List.copyOf(source.chosenNumberDigits);
         this.crossedNumberDigitPositions.addAll(source.crossedNumberDigitPositions);
         this.entryCoinFlipHeads = source.entryCoinFlipHeads;
+        this.copiableEntryCharacteristics.addAll(source.copiableEntryCharacteristics);
         this.entryCoinFlipAwaitingChoice = source.entryCoinFlipAwaitingChoice;
         this.chosenModeLabels.addAll(source.chosenModeLabels);
         this.chosenModeLabelsThisTurn.addAll(source.chosenModeLabelsThisTurn);

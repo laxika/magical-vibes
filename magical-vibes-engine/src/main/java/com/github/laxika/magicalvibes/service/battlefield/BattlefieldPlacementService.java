@@ -1161,7 +1161,11 @@ public class BattlefieldPlacementService {
             if (library != null && library.stream().noneMatch(existing -> existing.getId().equals(physicalCard.getId()))) {
                 library.add(physicalCard);
                 triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
-                LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+                if (gameData.exileEntryShuffleBatchOwners != null) {
+                    gameData.exileEntryShuffleBatchOwners.add(ownerId);
+                } else {
+                    LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
+                }
             }
             if (sourceStackEntry != null) {
                 sourceStackEntry.setSpellDispositionHandled(true);
@@ -2789,6 +2793,7 @@ public class BattlefieldPlacementService {
                     continue;
                 }
 
+                permanent.getCopiableEntryCharacteristics().add(characteristics);
                 permanent.getPersistentGrantedCardTypes().addAll(characteristics.addedCardTypes());
                 characteristics.addedSubtypes().forEach(subtype -> {
                     if (!permanent.getGrantedSubtypes().contains(subtype)) {

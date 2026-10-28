@@ -49,7 +49,6 @@ class DelinaWildMageTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, wolf.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
 
         Permanent token = findPermanents(player1, "Dire Wolf Prowler").stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -75,12 +74,10 @@ class DelinaWildMageTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, wolf.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         assertThat(findPermanents(player1, "Dire Wolf Prowler"))
                 .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(2);
@@ -95,7 +92,6 @@ class DelinaWildMageTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, delina.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
 
         Permanent token = findPermanents(player1, "Delina, Wild Mage").stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -114,7 +110,6 @@ class DelinaWildMageTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.handlePermanentChosen(player1, wolf.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player2.getId());
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(findPermanents(player1, "Dire Wolf Prowler"))
@@ -163,7 +158,6 @@ class DelinaWildMageTest extends BaseCardTest {
             declareAttackers(List.of(0));
             harness.handlePermanentChosen(player1, wolf.getId());
             harness.passBothPriorities();
-            harness.handlePermanentChosen(player1, player2.getId());
         });
         return findPermanents(player1, "Dire Wolf Prowler").stream()
                 .filter(permanent -> permanent.getCard().isToken())

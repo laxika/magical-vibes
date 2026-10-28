@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 
 import java.util.List;
 
@@ -26,7 +27,8 @@ public class DespoilerOfSouls extends Card {
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}{B}",
-                List.of(new ExileNCardsFromGraveyardCost(2, CardType.CREATURE),
+                List.of(new ExileNCardsFromGraveyardCost(2, CardType.CREATURE,
+                                new CardNotPredicate(new CardIsSelfPredicate())),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                 .filter(new CardIsSelfPredicate())

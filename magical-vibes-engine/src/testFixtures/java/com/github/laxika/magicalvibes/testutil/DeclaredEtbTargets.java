@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -112,6 +113,7 @@ final class DeclaredEtbTargets {
             }
         } else if (!listed.isEmpty() && card.getMaxTargets() > 0) {
             targetLegalityService.validateMultiSpellTargets(gameData, card, etbTargets, player.getId(), xValue, kicked);
+            validateEtbPermanentsTargetable(card, etbTargets, player.getId());
         } else if (modalEtbOption(card, xValue) != null) {
             // The mode is chosen as the spell is cast (xValue), so the target is checked against it.
             ChooseOneEffect.ChooseOneOption option = modalEtbOption(card, xValue);
@@ -135,6 +137,25 @@ final class DeclaredEtbTargets {
      * Checks a battlefield or player target against the card's ETB effects, since the spell-slot
      * validation sees none of them: it must be legal for at least one ETB effect that targets.
      */
+    /**
+     * Rejects a declared permanent target that the card's ETB ability cannot target, such as a creature
+     * with protection from the ability's source. The source is the card itself, so its subtypes and
+     * colors decide the protection that applies.
+     */
+    private void validateEtbPermanentsTargetable(Card card, List<UUID> targets, UUID controllerId) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (!targets.contains(permanent.getId())) {
+                    continue;
+                }
+                targetLegalityService.checkSpellPermanentTargetableReason(gameData, permanent, card, controllerId)
+                        .ifPresent(reason -> {
+                            throw new IllegalStateException(reason);
+                        });
+            }
+        }
+    }
+
     private void validateAgainstEtbEffects(Card card, UUID target, UUID controllerId, int xValue) {
         boolean onBattlefield = gameData.playerBattlefields.values().stream().flatMap(List::stream)
                 .anyMatch(permanent -> permanent.getId().equals(target));

@@ -10117,9 +10117,10 @@ public class AbilityActivationService {
 
     /**
      * Collects the cards in {@code graveyard} that can pay an {@link ExileNCardsFromGraveyardCost} of
-     * {@code requiredType} (null = any type), excluding {@code sourceCard}. Uses {@code hasType} so an
-     * artifact creature counts as an artifact card. The source is excluded so a graveyard-activated
-     * ability that returns itself (Salvage Titan) never exiles the very card it means to bring back.
+     * {@code requiredType} (null = any type) and the cost's predicate. Uses {@code hasType} so an
+     * artifact creature counts as an artifact card. {@code sourceCard} is passed to the predicate only:
+     * the source is eligible unless the cost's predicate excludes it (e.g. Despoiler of Souls' "other"
+     * via {@code CardNotPredicate(CardIsSelfPredicate)}), since a card may exile itself to pay its own cost.
      */
     private List<Card> matchingGraveyardExileCandidates(List<Card> graveyard,
                                                         ExileNCardsFromGraveyardCost cost,

@@ -632,6 +632,7 @@ public class SpellCastingService {
         if (cost.imprintOnSource()) {
             gameData.setImprintedCard(card, toDiscard);
         }
+        gameData.pendingDiscardedCostCards.put(card.getId(), toDiscard);
         gameLogService.append(gameData, GameLog.builder()
                 .text(player.getUsername() + " discards ")
                 .card(toDiscard)
@@ -640,6 +641,19 @@ public class SpellCastingService {
                 .text(".")
                 .build());
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+    }
+
+    /**
+     * Stamps the card discarded to pay a kicker's discard cost onto the spell's stack entry, so an
+     * "enters with counters equal to the discarded card's mana value" effect reads that card at
+     * resolution rather than whichever card was discarded last. Always clears the pending record.
+     */
+    private void stampKickerDiscardedCard(GameData gameData, StackEntry entry, boolean kicked) {
+        Card discarded = gameData.pendingDiscardedCostCards.remove(entry.getCard().getId());
+        KickerEffect kickerEffect = findKickerEffect(entry.getCard());
+        if (kicked && discarded != null && kickerEffect != null && kickerEffect.hasDiscardCost()) {
+            entry.setDiscardedCardSnapshot(discarded.createCardCopy());
+        }
     }
 
     /** Pays an additional cost that reveals a matching card from the caster's hand. */
@@ -6227,6 +6241,7 @@ public class SpellCastingService {
             entry.setRevealCardFromHandCostPaid(
                     isRevealCardFromHandCostPaid(additionalCosts, paymentCostSelection));
             stampRevealedPowerCostCard(gameData, entry);
+            stampKickerDiscardedCard(gameData, entry, kicked);
             entry.setCasualtyCostPaid(additionalCostPayment.casualtyCostPaid());
             entry.setWaterbendCostPaid(waterbendCostPaid);
             entry.setTeamworkCostPaid(isTeamworkCostPaid(additionalCosts, paymentCostSelection));
@@ -7654,6 +7669,7 @@ public class SpellCastingService {
                 gameData.stack.getLast().setRevealCardFromHandCostPaid(
                         isRevealCardFromHandCostPaid(additionalCosts, paymentCostSelection));
                 stampRevealedPowerCostCard(gameData, gameData.stack.getLast());
+                stampKickerDiscardedCard(gameData, gameData.stack.getLast(), kicked);
                 gameData.stack.getLast().setCasualtyCostPaid(additionalCostPayment.casualtyCostPaid());
                 gameData.stack.getLast().setWaterbendCostPaid(waterbendCostPaid);
                 gameData.stack.getLast().setTeamworkCostPaid(

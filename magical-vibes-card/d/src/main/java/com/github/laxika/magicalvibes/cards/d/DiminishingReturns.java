@@ -22,7 +22,7 @@ public class DiminishingReturns extends Card {
             addEffect(EffectSlot.SPELL, new ExileTopCardOfOwnLibraryEffect(false));
         }
 
-        // Then each player draws up to seven cards (a per-player choice; no life gain).
-        addEffect(EffectSlot.SPELL, new EachPlayerMayDrawUpToNGainLifePerCardBelowEffect(7, 0));
+        // Then each player draws up to seven cards: each chooses and draws before the next player chooses.
+        addEffect(EffectSlot.SPELL, EachPlayerMayDrawUpToNGainLifePerCardBelowEffect.drawUpToInTurnOrder(7));
     }
 }

@@ -2425,9 +2425,10 @@ public class PlayerInputService {
         Set<UUID> pool = new java.util.LinkedHashSet<>(candidateIds);
         int cap = maxUntap;
         if (restrictions.size() > 1) {
+            cap = 0;
             for (var restriction : restrictions) {
                 pool.addAll(untapStepService.staticOrbUntapCandidates(gameData, playerId, restriction));
-                cap = Math.max(cap, restriction.maxUntap());
+                cap += restriction.maxUntap();
             }
         }
         String prompt = "Choose up to " + cap + " permanent" + (cap == 1 ? "" : "s") + " to untap.";

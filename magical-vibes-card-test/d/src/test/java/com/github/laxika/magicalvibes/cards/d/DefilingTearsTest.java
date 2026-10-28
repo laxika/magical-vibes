@@ -96,7 +96,7 @@ class DefilingTearsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid ability index");
+                .hasMessageContaining("Permanent has no activated ability");
     }
 
     @Test

@@ -47,7 +47,7 @@ public class BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffectHandler imp
 
         List<ExiledCardEntry> eligible = gameData.getExiledWithPermanentEntries(
                         sourcePermanentId, entry.getCard().getId()).stream()
-                .filter(this::isEligible)
+                .filter(exiled -> isEligible(exiled, sourcePermanentId))
                 .toList();
         if (eligible.isEmpty()) {
             return;
@@ -68,8 +68,14 @@ public class BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffectHandler imp
         return entry != null && !entry.faceDown() && entry.card().hasType(CardType.CREATURE);
     }
 
+    /**
+     * Only the card imprinted on the source is copyable. A card exiled by an ability the source is
+     * copying (linked, see {@link ExileTopCardOfOwnLibraryEffectHandler}) is not the imprint, so it is
+     * ignored here (Dermotaxi's ruling: the copy ability refers only to the card exiled by imprint).
+     */
     private boolean isEligible(ExiledCardEntry entry, UUID sourcePermanentId) {
-        return isEligible(entry) && sourcePermanentId.equals(entry.sourcePermanentId());
+        return isEligible(entry) && entry.abilityLink() == null
+                && sourcePermanentId.equals(entry.sourcePermanentId());
     }
 
     private BecomeCopyOfCardUntilEndOfTurnEffect copyEffect(

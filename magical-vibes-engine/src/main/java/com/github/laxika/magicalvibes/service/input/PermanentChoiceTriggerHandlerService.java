@@ -92,7 +92,8 @@ public class PermanentChoiceTriggerHandlerService {
 
     /**
      * The message for a target answer that wasn't among the offered choices: when the answer is a player
-     * the trigger's source can't target, the reason (protection, hexproof, ...) is reported.
+     * the trigger's source can't target, the reason (protection, hexproof, ...) is reported. Otherwise the
+     * declared target filter's own error message, when it has one, follows the "Invalid permanent" text.
      */
     public String rejectedChoiceMessage(GameData gameData, PermanentChoiceContext context, UUID chosenId) {
         if (context instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget stt
@@ -103,17 +104,28 @@ public class PermanentChoiceTriggerHandlerService {
                 return reason;
             }
         }
-        com.github.laxika.magicalvibes.model.filter.TargetFilter declaredFilter = switch (context) {
+        TargetFilter declaredFilter = switch (context) {
             case PermanentChoiceContext.SpellTargetTriggerAnyTarget stt -> stt.targetFilter();
             case PermanentChoiceContext.ETBTokenTargetTrigger etb -> etb.targetFilter();
+            case PermanentChoiceContext.EntersTriggerTarget enters -> enters.targetFilter();
+            case PermanentChoiceContext.ETBTokenMultiTargetTrigger multi ->
+                    multi.currentGroupIndex() < multi.sourceCard().getSpellTargets().size()
+                            ? multi.sourceCard().getSpellTargets().get(multi.currentGroupIndex()).getFilter()
+                            : null;
             default -> null;
         };
+        String restriction = null;
         if (declaredFilter instanceof com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter playerFilter
                 && gameData.playerIds.contains(chosenId)) {
             // A player the trigger's own target restriction excludes (e.g. "target opponent").
-            return playerFilter.errorMessage();
+            restriction = playerFilter.errorMessage();
+        } else if (declaredFilter instanceof com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter permanentFilter
+                && !gameData.playerIds.contains(chosenId)) {
+            // A permanent the trigger's own target restriction excludes (e.g. "another nonland permanent").
+            restriction = permanentFilter.errorMessage();
         }
-        return "Invalid permanent: " + chosenId;
+        String message = "Invalid permanent: " + chosenId;
+        return restriction == null ? message : message + ". " + restriction;
     }
 
     public void handleCopySpellForOtherControlledCreature(GameData gameData, UUID permanentId,

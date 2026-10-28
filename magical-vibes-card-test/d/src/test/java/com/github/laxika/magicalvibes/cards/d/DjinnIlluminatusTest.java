@@ -29,7 +29,7 @@ class DjinnIlluminatusTest extends BaseCardTest {
         harness.castInstantWithRepeatedCosts(player1, 0, player2.getId(), List.of("{R}"));
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -124,7 +124,7 @@ class DjinnIlluminatusTest extends BaseCardTest {
         harness.castInstantWithRepeatedCosts(player1, 0, player2.getId(), List.of("{1}{R}"));
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
         harness.assertLife(player2, 18);

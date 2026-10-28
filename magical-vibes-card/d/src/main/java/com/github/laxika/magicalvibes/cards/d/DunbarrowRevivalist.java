@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.BoonTrigger;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -43,7 +44,7 @@ public class DunbarrowRevivalist extends Card {
         ));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new CreateBoonEffect(1, new CreateTokenAttachedToTargetEffect(
-                        wickedRoleToken(), PlayerRelation.ANY)));
+                        wickedRoleToken(), PlayerRelation.ANY), BoonTrigger.ONE_OR_MORE_CREATURES_ENTER, null));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new Kicked(), ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)

@@ -161,7 +161,7 @@ class DualCastingTest extends BaseCardTest {
         UUID counselId = counsel.getId();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, counselId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid ability index");
+                .hasMessageContaining("Permanent has no activated ability");
         assertThat(bearsPerm.isTapped()).isFalse();
     }
 

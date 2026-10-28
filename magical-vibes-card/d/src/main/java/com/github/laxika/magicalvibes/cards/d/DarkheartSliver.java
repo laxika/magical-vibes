@@ -28,7 +28,7 @@ public class DarkheartSliver extends Card {
 
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 gainLifeAbility,
-                GrantScope.ALL_CREATURES,
+                GrantScope.ALL_PERMANENTS,
                 sliver
         ));
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
