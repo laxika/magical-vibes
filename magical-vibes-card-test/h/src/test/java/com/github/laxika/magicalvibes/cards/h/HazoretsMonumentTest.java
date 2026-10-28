@@ -61,7 +61,7 @@ class HazoretsMonumentTest extends BaseCardTest {
     @DisplayName("Casting a creature puts the trigger on the stack; the optional choice waits for resolution")
     void creatureCastTriggersMayPrompt() {
         harness.addToBattlefield(player1, new HazoretsMonument());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new GrizzlyBears(), new HillGiant()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
@@ -149,8 +149,8 @@ class HazoretsMonumentTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();

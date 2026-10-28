@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.b.BearCub;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -129,8 +130,10 @@ class HarmonyOfNatureTest extends BaseCardTest {
         restricted.addTapRestriction(UUID.randomUUID());
 
         castHarmonyOfNature();
-        harness.handleMultiplePermanentsChosen(player1,
-                List.of(restricted.getId(), unrestricted.getId()));
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).doesNotContain(restricted.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(unrestricted.getId()));
 
         assertThat(restricted.isTapped()).isFalse();
         assertThat(unrestricted.isTapped()).isTrue();

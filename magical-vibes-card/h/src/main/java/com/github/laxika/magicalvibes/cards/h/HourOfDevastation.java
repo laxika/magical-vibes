@@ -28,6 +28,7 @@ public class HourOfDevastation extends Card {
         addEffect(EffectSlot.SPELL, new MassDamageEffect(5, false, false, true,
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.BOLAS))))));
+                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.BOLAS)))))
+                .withFilterAppliedToPlaneswalkers());
     }
 }

@@ -154,9 +154,8 @@ class HeadlessRiderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiseFromTheGrave()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, gd.playerGraveyards.get(player2.getId()).getFirst().getId());
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
 
         Permanent reanimated = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.hasEffectiveSubtype(gd, reanimated, CardSubtype.ZOMBIE)).isTrue();

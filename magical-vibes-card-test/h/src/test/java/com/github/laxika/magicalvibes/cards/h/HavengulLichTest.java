@@ -123,7 +123,7 @@ class HavengulLichTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromGraveyard(player2, shade.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Card cannot be cast from graveyard");
+                .hasMessageContaining("Card is not in your graveyard");
     }
 
     @Test

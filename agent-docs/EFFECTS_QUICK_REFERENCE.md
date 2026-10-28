@@ -3623,7 +3623,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `PutOnBottomOfLibraryInsteadOfDyingEffect()` — if this creature would die, put it on the bottom of its owner's library instead (static replacement, Nissa's Chosen)
 - `ShuffleIntoLibraryInsteadOfDyingEffect()` — if this creature would die, reveal and shuffle it into its owner's library instead (static replacement, Saiba Syphoner); only applies to battlefield-to-graveyard movement
 - `PutControlledCreatureOnTopOfLibraryEffect()` — "put a creature you control on top of its owner's library" (Nulltread Gargantuan ETB). Non-targeted, mandatory choice at resolution; the source itself is a legal pick (and forced when it's the only creature you control). One candidate resolves automatically; several prompt `PermanentChoiceContext.PutControlledCreatureOnTopOfLibrary`. No card target filter
-- `CounterSpellIfManaValueEqualsXEffect()` — counters the target spell only if its mana value equals the ability's X, which a `DiscardCardTypeCost` with `trackManaValue` snapshots off the discarded card. Benign `SPELL_ON_STACK` spec. Hisoka, Minamo Sensei
+- `CounterSpellIfManaValueEqualsXEffect()` — counters the target spell only if its mana value equals the ability's X, which a `DiscardCardTypeCost` with `trackManaValue` snapshots off the discarded card. Benign `SPELL_ON_STACK` spec. Hisoka, Minamo Sensei. `CounterSpellIfManaValueEqualsXEffect(true)` additionally restricts the discard to cards whose mana value equals the target spell's (Kozilek, the Great Distortion's "Discard a card with mana value X")
 
 ## Bounce / return to hand
 

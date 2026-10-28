@@ -105,7 +105,6 @@ class HollowsageTest extends BaseCardTest {
         runUntapStep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();

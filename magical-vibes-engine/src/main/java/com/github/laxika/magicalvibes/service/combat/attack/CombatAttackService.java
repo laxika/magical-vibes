@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Emblem;
@@ -2148,11 +2149,14 @@ public class CombatAttackService {
                         Card allyAttackCard = perm.getCard();
                         // A group no effect is bound to is a bare positional target that a bound effect reads by
                         // index (Gimli's Reckless Might's attacking creature read by its fight), so it must be
-                        // chosen too and the single-group shortcut cannot apply.
+                        // chosen too and the single-group shortcut cannot apply. A bare group belongs to the
+                        // ability of the next bound group after it, so one read by another ability (Hunter's
+                        // Talent's ETB "creature you control") does not count.
                         boolean singleBoundTargetGroup = filteredEffects.stream().allMatch(allyAttackCard::hasEffectTargetIndex)
                                 && filteredEffects.stream().map(allyAttackCard::getEffectTargetIndex).distinct().count() == 1
                                 && allyAttackCard.getSpellTargets().stream()
-                                .allMatch(group -> allyAttackCard.bindsEffectToTargetGroup(group.getIndex()));
+                                .allMatch(group -> allyAttackCard.bindsEffectToTargetGroup(group.getIndex())
+                                        || !bareGroupBelongsToEffects(allyAttackCard, group.getIndex(), filteredEffects));
                         if (allyAttackCard.getSpellTargets().size() > 1 && !singleBoundTargetGroup) {
                             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                     perm.getCard(), playerId, filteredEffects, perm.getId(),
@@ -4566,6 +4570,19 @@ public class CombatAttackService {
         Permanent snapshot = new Permanent(attacker);
         snapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, attacker));
         return snapshot;
+    }
+
+    /**
+     * Returns whether an unbound target group is read positionally by one of the given effects: it belongs to
+     * the ability of the next bound group after it (or to every ability when no bound group follows it).
+     */
+    private boolean bareGroupBelongsToEffects(Card card, int groupIndex, List<CardEffect> effects) {
+        for (SpellTarget group : card.getSpellTargets()) {
+            if (group.getIndex() > groupIndex && card.bindsEffectToTargetGroup(group.getIndex())) {
+                return effects.stream().anyMatch(effect -> card.isEffectBoundToTargetGroup(effect, group.getIndex()));
+            }
+        }
+        return true;
     }
 
     private Permanent snapshotDeclaredAttacker(GameData gameData, Permanent attacker) {

@@ -39,7 +39,7 @@ public class KozilekTheGreatDistortion extends Card {
                 null,
                 List.of(
                         new DiscardCardTypeCost(null, null, false, 1, false, true),
-                        new CounterSpellIfManaValueEqualsXEffect()),
+                        new CounterSpellIfManaValueEqualsXEffect(true)),
                 "Discard a card with mana value X: Counter target spell with mana value X."
         ));
     }

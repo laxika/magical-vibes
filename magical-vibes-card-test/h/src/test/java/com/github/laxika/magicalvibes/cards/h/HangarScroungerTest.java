@@ -129,8 +129,8 @@ class HangarScroungerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(undrawn));
 
         tapAndResolve(recipient);
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

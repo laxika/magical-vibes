@@ -4984,7 +4984,7 @@ public class AbilityActivationService {
             List<Card> hand = gameData.playerHands.get(playerId);
             List<Integer> validDiscardIndices = collectDiscardIndices(gameData, playerId, hand,
                     discardCardTypeCost, effectiveXValue);
-            if (abilityEffects.stream().anyMatch(e -> e instanceof CounterSpellIfManaValueEqualsXEffect)
+            if (abilityEffects.stream().anyMatch(e -> e instanceof CounterSpellIfManaValueEqualsXEffect counter && counter.discardMustMatchTarget())
                     && targetZone == Zone.STACK && targetId != null) {
                 UUID spellTargetId = targetId;
                 for (StackEntry targetSpell : gameData.stack) {
