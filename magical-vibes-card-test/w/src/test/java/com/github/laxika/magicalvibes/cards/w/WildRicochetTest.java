@@ -102,8 +102,9 @@ class WildRicochetTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         GameData gd = harness.getGameData();
-        // A copy of Lava Axe was created; a copy-retarget may prompt is now offered
-        StackEntry copyEntry = gd.stack.getLast();
+        // A copy of Lava Axe was created; a copy-retarget may prompt is now offered, and the copy waits off
+        // the stack until its targets are decided (CR 707.10c)
+        StackEntry copyEntry = gd.stagedSpellCopies.getFirst();
         assertThat(copyEntry.getDescription()).isEqualTo("Copy of Lava Axe");
         assertThat(copyEntry.getTargetId()).isEqualTo(player2.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

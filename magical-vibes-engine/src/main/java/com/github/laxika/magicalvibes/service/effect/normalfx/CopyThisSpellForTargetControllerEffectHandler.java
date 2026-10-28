@@ -63,17 +63,15 @@ public class CopyThisSpellForTargetControllerEffectHandler implements NormalEffe
         copyEntry.getEffectsToResolve().addAll(copyCard.getEffects(EffectSlot.SPELL));
         copyEntry.setEntryType(copyCard.hasType(CardType.INSTANT)
                 ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL);
-        copySupport.addCopyToStack(gameData, copyEntry);
-
-        gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
-        log.info("Game {} - copy of {} created for target's controller", gameData.id, spellCard.getName());
-
-        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+        copySupport.addCopyToStack(gameData, copyEntry, new PendingMayAbility(
                 spellCard,
                 copyControllerId,
                 List.of(new CopySpellEffect()),
                 "Choose new targets for the copy of " + spellCard.getName() + "?",
                 copyCard.getId()
         ));
+
+        gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
+        log.info("Game {} - copy of {} created for target's controller", gameData.id, spellCard.getName());
     }
 }

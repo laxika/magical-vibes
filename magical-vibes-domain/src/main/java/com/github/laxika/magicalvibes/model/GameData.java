@@ -1953,6 +1953,12 @@ public class GameData {
     /** Queue for "each player returns up to N cards from graveyard to battlefield" choices. */
     public final List<PendingGraveyardReturnChoice> pendingGraveyardReturnQueue = Collections.synchronizedList(new ArrayList<>());
     public final List<DeferredSpellCopy> deferredGraveyardCastCopies = Collections.synchronizedList(new ArrayList<>());
+    /**
+     * Spell copies whose controller is still choosing new targets, in creation order. A copy is put onto the
+     * stack only once its targets are decided (CR 707.10c), so it stays here, off the stack, while its
+     * "choose new targets" prompt or any per-target choice is pending.
+     */
+    public final List<StackEntry> stagedSpellCopies = Collections.synchronizedList(new ArrayList<>());
     public PendingGraveyardReturnBatch pendingGraveyardReturnBatch;
     /**
      * Set while the {@link #pendingGraveyardReturnQueue} choices of one effect share a single
@@ -9625,6 +9631,7 @@ public class GameData {
         copy.combatDamageFirstestStrikeAssignmentPhase = this.combatDamageFirstestStrikeAssignmentPhase;
         copy.pendingGraveyardReturnQueue.addAll(this.pendingGraveyardReturnQueue);
         copy.deferredGraveyardCastCopies.addAll(this.deferredGraveyardCastCopies);
+        this.stagedSpellCopies.forEach(se -> copy.stagedSpellCopies.add(new StackEntry(se)));
         copy.pendingGraveyardReturnBatch = this.pendingGraveyardReturnBatch;
         copy.graveyardReturnQueueLeaveBatchOpen = this.graveyardReturnQueueLeaveBatchOpen;
         copy.graveyardExileChoiceLeaveBatchOpen = this.graveyardExileChoiceLeaveBatchOpen;

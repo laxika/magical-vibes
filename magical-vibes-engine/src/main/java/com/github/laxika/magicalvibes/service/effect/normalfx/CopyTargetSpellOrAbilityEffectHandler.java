@@ -79,10 +79,20 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
         copyEntry.setNonTargeting(targetEntry.isNonTargeting());
         copyEntry.setChosenPermanentId(targetEntry.getChosenPermanentId());
         copyEntry.setAttackedTargetId(targetEntry.getAttackedTargetId());
-        copySupport.addCopyToStack(gameData, copyEntry);
+        PendingMayAbility retargetAbility = retargetChoice(gameData, entry, targetEntry, copyEntry);
+        boolean abilityCopy = copyEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || copyEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
+        if (abilityCopy) {
+            copySupport.addCopyToStack(gameData, copyEntry);
+            if (retargetAbility != null) {
+                gameData.pendingMayAbilities.addFirst(retargetAbility);
+            }
+        } else {
+            // A spell copy waits off the stack until its new targets are decided (CR 707.10c).
+            copySupport.addCopyToStack(gameData, copyEntry, retargetAbility);
+        }
 
         gameLogService.append(gameData, GameLog.text("A copy of " + targetEntry.getDescription() + " is created."));
-        queueRetargetChoice(gameData, entry, targetEntry, copyEntry);
     }
 
     private StackEntry findTargetEntry(GameData gameData, UUID targetCardId, StackEntryPredicate predicate) {
@@ -114,14 +124,14 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
         };
     }
 
-    private void queueRetargetChoice(GameData gameData, StackEntry entry,
-                                     StackEntry targetEntry, StackEntry copyEntry) {
+    private PendingMayAbility retargetChoice(GameData gameData, StackEntry entry,
+                                             StackEntry targetEntry, StackEntry copyEntry) {
         if (!targetEntry.isSingleTarget()) {
             if (!copyEntry.isNonTargeting() && !copyEntry.getDeclaredTargetIds().isEmpty()) {
-                psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), entry.getControllerId(),
-                        copyEntry.getTargetableId(), 0);
+                return psychicBattleSupport.nextChoicePrompt(gameData, entry.getCard(), entry.getControllerId(),
+                        copyEntry, 0);
             }
-            return;
+            return null;
         }
 
         CardEffect retargetEffect;
@@ -138,10 +148,9 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
             retargetEffect = new CopyTriggeredAbilityRetargetEffect();
         }
 
-        PendingMayAbility retargetAbility = new PendingMayAbility(
+        return new PendingMayAbility(
                 entry.getCard(), entry.getControllerId(), List.of(retargetEffect),
                 "Choose a new target for the copy of " + targetEntry.getDescription() + "?",
                 copyEntry.getTargetableId());
-        gameData.pendingMayAbilities.addFirst(retargetAbility);
     }
 }

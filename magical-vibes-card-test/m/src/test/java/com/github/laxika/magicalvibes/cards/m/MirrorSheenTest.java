@@ -42,7 +42,8 @@ class MirrorSheenTest extends BaseCardTest {
         harness.activateAbility(player2, sheenIdx, null, shock.getId());
         harness.passBothPriorities();
 
-        StackEntry copy = gd.stack.getLast();
+        // The copy waits off the stack until its targets are decided (CR 707.10c).
+        StackEntry copy = gd.stagedSpellCopies.getFirst();
         assertThat(copy.isCopy()).isTrue();
         assertThat(copy.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(copy.getControllerId()).isEqualTo(player2.getId());
@@ -200,7 +201,8 @@ class MirrorSheenTest extends BaseCardTest {
         harness.activateAbility(player2, sheenIdx, null, cone.getId());
         harness.passBothPriorities();
 
-        StackEntry copy = gd.stack.getLast();
+        // The copy waits off the stack until its targets are decided (CR 707.10c).
+        StackEntry copy = gd.stagedSpellCopies.getFirst();
         assertThat(copy.isCopy()).isTrue();
         assertThat(copy.getTargetIds()).containsExactly(player1.getId(), player2.getId(), sentinel.getId());
         harness.handleMayAbilityChosen(player2, true);

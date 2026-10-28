@@ -74,7 +74,8 @@ class GroundRiftTest extends BaseCardTest {
         castGroundRift(target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(2);
     }
 
     @Test
@@ -87,7 +88,8 @@ class GroundRiftTest extends BaseCardTest {
         castGroundRift(originalTarget.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, copyTarget.getId());
         resolveAllTriggers();
@@ -129,7 +131,8 @@ class GroundRiftTest extends BaseCardTest {
         castGroundRift(target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -151,7 +154,8 @@ class GroundRiftTest extends BaseCardTest {
         gd.playerGraveyards.get(player2.getId()).add(originalTarget.getCard());
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, copyTarget.getId());
         resolveAllTriggers();

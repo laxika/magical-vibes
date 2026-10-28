@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -50,7 +49,8 @@ class IndrisTheHydrostaticSurgeTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(1);
     }
 
     @Test

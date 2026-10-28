@@ -66,7 +66,8 @@ class ReapingTheGravesTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(2);
     }
 
     @Test

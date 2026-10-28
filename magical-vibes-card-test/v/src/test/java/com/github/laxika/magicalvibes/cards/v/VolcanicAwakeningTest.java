@@ -53,7 +53,8 @@ class VolcanicAwakeningTest extends BaseCardTest {
         castVolcanicAwakening(forest.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(2);
     }
 
     @Test
@@ -66,7 +67,8 @@ class VolcanicAwakeningTest extends BaseCardTest {
         castVolcanicAwakening(originalTarget.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, newTarget.getId());
         resolveAllTriggers();
@@ -129,7 +131,8 @@ class VolcanicAwakeningTest extends BaseCardTest {
         gd.recordSpellCast(player2.getId(), new BenalishCavalry());
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
         harness.assertInGraveyard(player2, "Forest");

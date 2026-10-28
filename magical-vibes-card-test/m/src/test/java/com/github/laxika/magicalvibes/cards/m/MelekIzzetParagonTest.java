@@ -30,7 +30,10 @@ class MelekIzzetParagonTest extends BaseCardTest {
 
         harness.castAndResolveFromLibraryTop(player1, player2.getId()); // resolve the copy trigger
 
-        assertThat(boltsOnStack()).isEqualTo(2);
+        // The copy waits off the stack until its targets are decided (CR 707.10c).
+        assertThat(boltsOnStack()).isEqualTo(1);
+        assertThat(gd.stagedSpellCopies).singleElement()
+                .satisfies(copy -> assertThat(copy.getCard().getName()).isEqualTo("Lightning Bolt"));
     }
 
     @Test

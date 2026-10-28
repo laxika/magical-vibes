@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -47,7 +46,8 @@ class TempestTechniqueTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(1);
 
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
@@ -135,7 +135,8 @@ class TempestTechniqueTest extends BaseCardTest {
         castTechnique(player1, creature);
 
         harness.passBothPriorities();
-        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(2);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(2);
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();

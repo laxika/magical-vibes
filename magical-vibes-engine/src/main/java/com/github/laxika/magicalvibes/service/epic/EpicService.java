@@ -74,15 +74,13 @@ public class EpicService {
         copy.setTargetFilter(copyCard.getTargetFilter());
         copy.setNonTargeting(!EffectResolution.needsTarget(copyCard)
                 && !EffectResolution.needsSpellTarget(copyCard));
-        copySupport.addCopyToStack(gameData, copy);
-        if (copy.getTargetId() != null) {
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    copyCard,
-                    controllerId,
-                    List.of(new CopySpellEffect()),
-                    "Choose new targets for the copy of " + copyCard.getName() + "?",
-                    copyCard.getId()));
-        }
+        copySupport.addCopyToStack(gameData, copy, copy.getTargetId() == null ? null
+                : new PendingMayAbility(
+                        copyCard,
+                        controllerId,
+                        List.of(new CopySpellEffect()),
+                        "Choose new targets for the copy of " + copyCard.getName() + "?",
+                        copyCard.getId()));
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", copyCard, " is put onto the stack by Epic."));
         log.info("Game {} - {} Epic copy pushed onto the stack", gameData.id, copyCard.getName());
     }

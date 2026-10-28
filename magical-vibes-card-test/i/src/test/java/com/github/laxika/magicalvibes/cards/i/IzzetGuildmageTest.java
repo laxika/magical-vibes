@@ -35,7 +35,8 @@ class IzzetGuildmageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, pyromatics.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.stack).filteredOn(StackEntry::isCopy)
+        // The copy waits off the stack until its targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies)
                 .singleElement()
                 .satisfies(copy -> {
                     assertThat(copy.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);

@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -330,15 +331,9 @@ public class MayCopyHandlerService {
             return;
         }
 
-        // Find the copy on the stack
+        // The copy normally waits off the stack until its targets are decided (CR 707.10c).
         UUID copyCardId = ability.targetCardId();
-        StackEntry copyEntry = null;
-        for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(copyCardId)) {
-                copyEntry = se;
-                break;
-            }
-        }
+        StackEntry copyEntry = CopySupport.findStagedOrStackEntry(gameData, copyCardId);
 
         if (copyEntry == null) {
             log.info("Game {} - Copy no longer on stack for retarget", gameData.id);

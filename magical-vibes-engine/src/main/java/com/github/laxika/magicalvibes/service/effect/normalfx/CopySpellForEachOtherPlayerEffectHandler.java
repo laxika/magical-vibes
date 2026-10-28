@@ -82,22 +82,18 @@ public class CopySpellForEachOtherPlayerEffectHandler implements NormalEffectHan
             Card copyCard = copySupport.createCopyCard(spellCard);
             StackEntry copyEntry = copySupport.createCopyStackEntry(spellSnapshot, copyCard, playerId, spellSnapshot.getTargetId());
 
-            copySupport.addCopyToStack(gameData, copyEntry);
+            PendingMayAbility retargetAbility = copyEntry.getTargetId() != null
+                    || !copyEntry.getDeclaredTargetIds().isEmpty() || !copyEntry.getTargetCardIds().isEmpty()
+                    ? new PendingMayAbility(
+                            entry.getCard(),
+                            playerId,
+                            List.of(new CopySpellEffect()),
+                            "Choose new targets for the copy of " + spellCard.getName() + "?",
+                            copyCard.getId())
+                    : null;
+            copySupport.addCopyToStack(gameData, copyEntry, retargetAbility);
 
-            
             gameLogService.append(gameData, GameLog.builder().text("A copy of ").card(spellCard).text(" is created for " + gameData.playerIdToName.get(playerId) + ".").build());
-
-            if (copyEntry.getTargetId() != null || !copyEntry.getDeclaredTargetIds().isEmpty()
-                    || !copyEntry.getTargetCardIds().isEmpty()) {
-                PendingMayAbility retargetAbility = new PendingMayAbility(
-                        entry.getCard(),
-                        playerId,
-                        List.of(new CopySpellEffect()),
-                        "Choose new targets for the copy of " + spellCard.getName() + "?",
-                        copyCard.getId()
-                );
-                gameData.pendingMayAbilities.addFirst(retargetAbility);
-            }
         }
 
         log.info("Game {} - {} triggers, copying {} for each other player",

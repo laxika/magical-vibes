@@ -255,7 +255,8 @@ class TwincastTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, boomerang.getId());
 
         GameData gd = harness.getGameData();
-        StackEntry copyEntry = gd.stack.getLast();
+        // The copy waits off the stack until its new targets are decided (CR 707.10c).
+        StackEntry copyEntry = gd.stagedSpellCopies.getFirst();
         assertThat(copyEntry.getDescription()).isEqualTo("Copy of Boomerang");
         assertThat(copyEntry.getTargetId()).isEqualTo(bearsPermId);
     }
@@ -465,7 +466,8 @@ class TwincastTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, boomerang.getId());
 
         GameData gd = harness.getGameData();
-        StackEntry copyEntry = gd.stack.getLast();
+        // The copy waits off the stack until its new targets are decided (CR 707.10c).
+        StackEntry copyEntry = gd.stagedSpellCopies.getFirst();
         assertThat(copyEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(copyEntry.getDescription()).isEqualTo("Copy of Boomerang");
     }

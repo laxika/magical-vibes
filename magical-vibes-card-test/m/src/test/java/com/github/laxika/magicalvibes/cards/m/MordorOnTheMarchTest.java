@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -66,7 +65,8 @@ class MordorOnTheMarchTest extends BaseCardTest {
         harness.castSorcery(player1, 0, gd.playerGraveyards.get(player1.getId()).getFirst().getId());
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(2);
     }
 
     private void addMana() {

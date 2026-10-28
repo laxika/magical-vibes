@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.ArmoredArmadillo;
 import com.github.laxika.magicalvibes.cards.d.Disintegrate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -20,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Fork.class, Disintegrate.class, Fireball.class, GrizzlyBears.class, LightningBolt.class, ManaLeak.class,
+@CardUsed({Fork.class, ArmoredArmadillo.class, Disintegrate.class, Fireball.class, GrizzlyBears.class, LightningBolt.class, ManaLeak.class,
         Unsummon.class})
 class ForkTest extends BaseCardTest {
 
@@ -41,7 +43,7 @@ class ForkTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gameData = harness.getGameData();
-        StackEntry copy = gameData.stack.getLast();
+        StackEntry copy = gameData.stagedSpellCopies.getFirst();
         assertThat(copy.isCopy()).isTrue();
         assertThat(copy.getCard().getColors()).containsExactly(CardColor.RED);
         assertThat(copy.getTargetId()).isEqualTo(firstTarget.getId());
@@ -185,7 +187,7 @@ class ForkTest extends BaseCardTest {
         harness.castInstant(player2, 0, bolt.getId());
         harness.passPriority(player2);
         harness.castAndResolveInstant(player1, 0, leak.getId());
-        StackEntry copy = gd.stack.getLast();
+        StackEntry copy = gd.stagedSpellCopies.getFirst();
         assertThat(copy.isCopy()).isTrue();
 
         harness.handleMayAbilityChosen(player1, true);
@@ -194,5 +196,61 @@ class ForkTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(bolt.getId(), leak.getId())
                 .doesNotContain(copy.getCard().getId());
+    }
+
+    @Test
+    void copyIsPutOntoTheStackOnlyOnceItsTargetsAreDecided() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Unsummon unsummon = new Unsummon();
+        harness.setHand(player1, List.of(unsummon));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player2, List.of(new Fork()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, unsummon.getId());
+        harness.passBothPriorities();
+
+        // CR 707.10c: the copy goes onto the stack once its controller has decided its targets.
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.stack).noneMatch(StackEntry::isCopy);
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getName()).contains("Unsummon");
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        StackEntry copy = gd.stack.getLast();
+        assertThat(copy.isCopy()).isTrue();
+        assertThat(copy.getTargetId()).isEqualTo(target.getId());
+        assertThat(gd.stagedSpellCopies).isEmpty();
+    }
+
+    @Test
+    void wardOfTheOriginalTargetDoesNotTriggerWhenTheCopyIsRetargetedAway() {
+        Permanent armadillo = harness.addToBattlefieldAndReturn(player1, new ArmoredArmadillo());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Unsummon unsummon = new Unsummon();
+        harness.setHand(player1, List.of(unsummon));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player2, List.of(new Fork()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, armadillo.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, unsummon.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, bears.getId());
+
+        // The copy never targets the ward creature (CR 707.10c), so ward (CR 702.21a) does not trigger.
+        assertThat(gd.stack).noneMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+        StackEntry copy = gd.stack.getLast();
+        assertThat(copy.isCopy()).isTrue();
+        assertThat(copy.getTargetId()).isEqualTo(bears.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(bears.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(armadillo);
     }
 }

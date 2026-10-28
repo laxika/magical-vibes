@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.s.ScornfulEgotist;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -39,7 +38,8 @@ class TendrilsOfAgonyTest extends BaseCardTest {
         castTendrilsOfAgony(player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(2);
     }
 
     @Test
@@ -117,7 +117,8 @@ class TendrilsOfAgonyTest extends BaseCardTest {
         castTendrilsOfAgony(player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         assertThat(gd.getTotalSpellsCastThisTurnCount()).isEqualTo(2);
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();

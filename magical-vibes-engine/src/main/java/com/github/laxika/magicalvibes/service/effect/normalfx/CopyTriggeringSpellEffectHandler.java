@@ -75,27 +75,25 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
                 copyEntry.replaceTargetIdAt(i, sourcePermanentId);
             }
         }
-        copySupport.addCopyToStack(gameData, copyEntry);
+        PendingMayAbility retargetAbility = null;
+        if (triggeringSpellEffect.mayChooseNewTargets() && !triggeringSpellEffect.retargetToSource()) {
+            if (psychicBattleSupport.targetIds(copyEntry).size() > 1) {
+                retargetAbility = psychicBattleSupport.nextChoicePrompt(gameData, entry.getCard(),
+                        spell.getControllerId(), copyEntry, 0);
+            } else if (copyEntry.getTargetId() != null || !copyEntry.getTargetIds().isEmpty()
+                    || !copyEntry.getTargetCardIds().isEmpty()) {
+                retargetAbility = new PendingMayAbility(
+                        entry.getCard(),
+                        spell.getControllerId(),
+                        List.of(new CopySpellEffect()),
+                        "Choose new targets for the copy of " + spellCard.getName() + "?",
+                        copyCard.getId()
+                );
+            }
+        }
+        copySupport.addCopyToStack(gameData, copyEntry, retargetAbility);
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
         log.info("Game {} - copy of {} created", gameData.id, spellCard.getName());
-
-        if (!triggeringSpellEffect.mayChooseNewTargets() || triggeringSpellEffect.retargetToSource()) {
-            return;
-        }
-        if (psychicBattleSupport.targetIds(copyEntry).size() > 1) {
-            psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), spell.getControllerId(),
-                    copyEntry.getTargetableId(), 0);
-        } else if (!triggeringSpellEffect.retargetToSource()
-                && (copyEntry.getTargetId() != null || !copyEntry.getTargetIds().isEmpty()
-                || !copyEntry.getTargetCardIds().isEmpty())) {
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    entry.getCard(),
-                    spell.getControllerId(),
-                    List.of(new CopySpellEffect()),
-                    "Choose new targets for the copy of " + spellCard.getName() + "?",
-                    copyCard.getId()
-            ));
-        }
     }
 }

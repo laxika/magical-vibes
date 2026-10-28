@@ -132,26 +132,25 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
             copyEntry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }
 
-        copySupport.addCopyToStack(gameData, copyEntry, e.copies() <= 1);
-
-        gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
-        log.info("Game {} - copy of {} created for controller", gameData.id, spellCard.getName());
-
+        PendingMayAbility retargetAbility = null;
         if (e.mayChooseNewTargets() && psychicBattleSupport.targetIds(copyEntry).size() > 1) {
-            psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), castingPlayerId,
-                    copyEntry.getTargetableId(), 0);
+            retargetAbility = psychicBattleSupport.nextChoicePrompt(gameData, entry.getCard(), castingPlayerId,
+                    copyEntry, 0);
         } else if (e.mayChooseNewTargets()
                 && (copyEntry.getTargetId() != null || copyEntry.getTargetIds().size() == 1
                 || (copyEntry.getTargetCardIds() != null && copyEntry.getTargetCardIds().size() == 1))) {
-            PendingMayAbility retargetAbility = new PendingMayAbility(
+            retargetAbility = new PendingMayAbility(
                     entry.getCard(),
                     castingPlayerId,
                     List.of(new CopySpellEffect()),
                     "Choose new targets for the copy of " + spellCard.getName() + "?",
                     copyCard.getId()
             );
-            gameData.pendingMayAbilities.addFirst(retargetAbility);
         }
+        copySupport.addCopyToStack(gameData, copyEntry, e.copies() <= 1, retargetAbility);
+
+        gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
+        log.info("Game {} - copy of {} created for controller", gameData.id, spellCard.getName());
     }
 
     private boolean isPermanentSpell(StackEntryType entryType) {

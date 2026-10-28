@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -94,7 +93,8 @@ class FlusterstormTest extends BaseCardTest {
         harness.castInstant(player2, 0, might.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(1);
     }
 
     @Test
@@ -135,7 +135,8 @@ class FlusterstormTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gameData = harness.getGameData();
-        assertThat(gameData.stack).filteredOn(StackEntry::isCopy).hasSize(3);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gameData.stagedSpellCopies).hasSize(3);
     }
 
     @Test

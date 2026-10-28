@@ -53,21 +53,17 @@ public class DestroyTargetPermanentThenMayCopyEffectHandler implements MayEffect
             UUID controllerId = ability.controllerId();
             StackEntry copyEntry = copySupport.createCopyStackEntry(
                     spellSnapshot, copyCard, controllerId, spellSnapshot.getTargetId());
-            copySupport.addCopyToStack(gameData, copyEntry);
+            copySupport.addCopyToStack(gameData, copyEntry, copyEntry.getTargetId() == null ? null
+                    : new PendingMayAbility(
+                            spellCard,
+                            controllerId,
+                            List.of(new CopySpellEffect()),
+                            "Choose new targets for the copy of " + spellCard.getName() + "?",
+                            copyCard.getId()));
 
             gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
             log.info("Game {} - copy of {} created for target permanent controller",
                     gameData.id, spellCard.getName());
-
-            if (copyEntry.getTargetId() != null) {
-                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                        spellCard,
-                        controllerId,
-                        List.of(new CopySpellEffect()),
-                        "Choose new targets for the copy of " + spellCard.getName() + "?",
-                        copyCard.getId()
-                ));
-            }
         } else {
             log.info("Game {} - {} can't be copied", gameData.id, spellCard.getName());
         }

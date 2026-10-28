@@ -109,29 +109,30 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
             copyEntry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }
 
-        copySupport.addCopyToStack(gameData, copyEntry, copyEffect.copies() <= 1);
+        // Only the instant/sorcery-copy mode offers "you may choose new targets for the copy"; such a copy
+        // waits off the stack until its targets are decided (CR 707.10c).
+        boolean offersNewTargets = !copyEffect.tokenCopy() && !copyEffect.tokenWithHaste()
+                && !copyEffect.permanentSpellToken()
+                && (copyEntry.getTargetId() != null || !copyEntry.getTargetIds().isEmpty()
+                || !copyEntry.getTargetCardIds().isEmpty());
+        PendingMayAbility retargetAbility = offersNewTargets
+                ? new PendingMayAbility(
+                        entry.getCard(),
+                        copyControllerId,
+                        List.of(new CopySpellEffect()),
+                        "Choose new targets for the copy of " + targetEntry.getCard().getName() + "?",
+                        copyCard.getId())
+                : null;
+        copySupport.addCopyToStack(gameData, copyEntry, copyEffect.copies() <= 1, retargetAbility);
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", targetEntry.getCard(), " is created."));
         log.info("Game {} - {} copies {}", gameData.id, entry.getCard().getName(), targetEntry.getCard().getName());
 
-        // The copy keeps the original's targets, so each of those objects becomes the target of a
-        // spell the copy's controller controls (e.g. "becomes the target of a spell you control").
-        if (copyEntry.getTargetId() != null || !copyEntry.getTargetIds().isEmpty()) {
+        // A copy put onto the stack with the original's targets makes each of those objects the target of a
+        // spell the copy's controller controls. A staged copy does so only when it is committed with its
+        // final targets.
+        if (!offersNewTargets && (copyEntry.getTargetId() != null || !copyEntry.getTargetIds().isEmpty())) {
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, copyEntry);
-        }
-
-        // Only the instant/sorcery-copy mode offers "you may choose new targets for the copy".
-        if (!copyEffect.tokenCopy() && !copyEffect.tokenWithHaste() && !copyEffect.permanentSpellToken()
-                && (copyEntry.getTargetId() != null || !copyEntry.getTargetIds().isEmpty()
-                || !copyEntry.getTargetCardIds().isEmpty())) {
-            PendingMayAbility retargetAbility = new PendingMayAbility(
-                    entry.getCard(),
-                    copyControllerId,
-                    List.of(new CopySpellEffect()),
-                    "Choose new targets for the copy of " + targetEntry.getCard().getName() + "?",
-                    copyCard.getId()
-            );
-            gameData.pendingMayAbilities.addFirst(retargetAbility);
         }
     }
 

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.s.SilverKnight;
 import com.github.laxika.magicalvibes.cards.s.Stabilizer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -40,7 +39,8 @@ class AstralSteelTest extends BaseCardTest {
         castAstralSteel(knight);
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(2);
         harness.handleMayAbilityChosen(player1, false);
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
@@ -115,7 +115,8 @@ class AstralSteelTest extends BaseCardTest {
         gd.recordSpellCast(player2.getId(), new SilverKnight());
 
         harness.passBothPriorities();
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 

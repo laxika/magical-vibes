@@ -44,20 +44,16 @@ public class CopyThisSpellForControllerEffectHandler implements NormalEffectHand
         // A copy of a spell isn't cast (CR 707.10), and the choice to copy is made on resolution, so
         // the copy carries no copy step of its own.
         copyEntry.getEffectsToResolve().removeIf(CopyThisSpellForControllerEffectHandler::isCopyStep);
-        copySupport.addCopyToStack(gameData, copyEntry);
+        copySupport.addCopyToStack(gameData, copyEntry, copyEntry.getTargetId() == null ? null
+                : new PendingMayAbility(
+                        spellCard,
+                        entry.getControllerId(),
+                        List.of(new CopySpellEffect()),
+                        "Choose new targets for the copy of " + spellCard.getName() + "?",
+                        copyCard.getId()));
 
         gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
         log.info("Game {} - copy of {} created for its controller", gameData.id, spellCard.getName());
-
-        if (copyEntry.getTargetId() != null) {
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    spellCard,
-                    entry.getControllerId(),
-                    List.of(new CopySpellEffect()),
-                    "Choose new targets for the copy of " + spellCard.getName() + "?",
-                    copyCard.getId()
-            ));
-        }
     }
 
     private static boolean isCopyStep(CardEffect effect) {

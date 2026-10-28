@@ -98,7 +98,8 @@ class WanderingArchaicTest extends BaseCardTest {
                 .playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.stack).anyMatch(StackEntry::isCopy);
+        // The copy waits off the stack until its targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).anyMatch(StackEntry::isCopy);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)
                 .playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, false);

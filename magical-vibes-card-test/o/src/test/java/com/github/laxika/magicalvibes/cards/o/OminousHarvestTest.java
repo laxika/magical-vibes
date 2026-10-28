@@ -46,7 +46,8 @@ class OminousHarvestTest extends BaseCardTest {
         castOminousHarvest(player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(1);
     }
 
     @Test
@@ -114,7 +115,8 @@ class OminousHarvestTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
         harness.passBothPriorities();
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        // The copies wait off the stack until their targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
         harness.passBothPriorities();

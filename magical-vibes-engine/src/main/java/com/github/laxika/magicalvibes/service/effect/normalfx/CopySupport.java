@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTargetAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.EpicEffect;
+import com.github.laxika.magicalvibes.model.effect.PsychicBattleRetargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,9 +76,35 @@ public class CopySupport {
      * their event count before creating the copies.</p>
      */
     public void addCopyToStack(GameData gameData, StackEntry copyEntry, boolean applySpellCopyReplacement) {
-        gameData.stack.add(copyEntry);
-        if (triggerCollectionService != null) {
-            triggerCollectionService.checkSpellCopyTriggers(gameData, copyEntry);
+        addCopyToStack(gameData, copyEntry, applySpellCopyReplacement, null);
+    }
+
+    /** {@link #addCopyToStack(GameData, StackEntry, boolean, PendingMayAbility)} with the spell-copy replacement applied. */
+    public void addCopyToStack(GameData gameData, StackEntry copyEntry, PendingMayAbility retargetPrompt) {
+        addCopyToStack(gameData, copyEntry, true, retargetPrompt);
+    }
+
+    /**
+     * Creates a copy whose controller may first choose new targets for it (CR 707.10c: once the targets
+     * are decided, the copy is put onto the stack with those targets).
+     *
+     * <p>With a {@code retargetPrompt} — a {@link CopySpellEffect} prompt naming the copy's id, or the
+     * first {@code PsychicBattleRetargetEffect} prompt of a per-target choice — the copy is staged in
+     * {@link GameData#stagedSpellCopies} instead of entering the stack, and the prompt is queued ahead of
+     * other pending may abilities but after the prompts of copies staged earlier, so copies created
+     * together are decided in creation order. {@link #commitDecidedStagedCopies} later puts it onto the
+     * stack. Without a prompt the copy is put onto the stack at once. Extra copies from global spell-copy
+     * replacements each get their own "choose new targets" prompt.</p>
+     */
+    public void addCopyToStack(GameData gameData, StackEntry copyEntry, boolean applySpellCopyReplacement,
+                               PendingMayAbility retargetPrompt) {
+        if (retargetPrompt != null) {
+            stageCopy(gameData, copyEntry, retargetPrompt);
+        } else {
+            gameData.stack.add(copyEntry);
+            if (triggerCollectionService != null) {
+                triggerCollectionService.checkSpellCopyTriggers(gameData, copyEntry);
+            }
         }
 
         if (!applySpellCopyReplacement || !isSpellCopy(copyEntry) || gameQueryService == null) {
@@ -89,15 +116,110 @@ public class CopySupport {
             Card extraCopyCard = createCopyCard(copyEntry.getCard());
             StackEntry extraCopy = createCopyStackEntry(
                     copyEntry, extraCopyCard, copyEntry.getControllerId(), copyEntry.getTargetId());
-            addCopyToStack(gameData, extraCopy, false);
-            if (hasTargets(extraCopy)) {
-                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                        extraCopy.getCard(),
-                        extraCopy.getControllerId(),
-                        List.of(new CopySpellEffect()),
-                        "Choose new targets for the additional copy of "
-                                + extraCopy.getCard().getName() + "?",
-                        extraCopyCard.getId()));
+            PendingMayAbility extraPrompt = hasTargets(extraCopy)
+                    ? new PendingMayAbility(
+                            extraCopy.getCard(),
+                            extraCopy.getControllerId(),
+                            List.of(new CopySpellEffect()),
+                            "Choose new targets for the additional copy of "
+                                    + extraCopy.getCard().getName() + "?",
+                            extraCopyCard.getId())
+                    : null;
+            addCopyToStack(gameData, extraCopy, false, extraPrompt);
+        }
+    }
+
+    private void stageCopy(GameData gameData, StackEntry copyEntry, PendingMayAbility retargetPrompt) {
+        gameData.stagedSpellCopies.add(copyEntry);
+        int index = 0;
+        while (index < gameData.pendingMayAbilities.size()
+                && awaitsStagedCopy(gameData, gameData.pendingMayAbilities.get(index))) {
+            index++;
+        }
+        gameData.pendingMayAbilities.add(index, retargetPrompt);
+    }
+
+    private static boolean awaitsStagedCopy(GameData gameData, PendingMayAbility pending) {
+        synchronized (gameData.stagedSpellCopies) {
+            for (StackEntry staged : gameData.stagedSpellCopies) {
+                if (awaitsDecisionFor(pending, staged.getTargetableId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean awaitsDecisionFor(PendingMayAbility pending, UUID copyId) {
+        for (CardEffect effect : pending.effects()) {
+            if (effect instanceof CopySpellEffect && copyId.equals(pending.targetCardId())) {
+                return true;
+            }
+            if (effect instanceof PsychicBattleRetargetEffect retarget && copyId.equals(retarget.spellCardId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** The staged (not yet on the stack) spell copy with this id, or {@code null}. */
+    public static StackEntry findStagedCopy(GameData gameData, UUID copyId) {
+        synchronized (gameData.stagedSpellCopies) {
+            for (StackEntry staged : gameData.stagedSpellCopies) {
+                if (staged.getTargetableId().equals(copyId)) {
+                    return staged;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** The staged spell copy with this id, otherwise the stack entry with this targetable id, or {@code null}. */
+    public static StackEntry findStagedOrStackEntry(GameData gameData, UUID id) {
+        StackEntry staged = findStagedCopy(gameData, id);
+        if (staged != null) {
+            return staged;
+        }
+        synchronized (gameData.stack) {
+            for (StackEntry entry : gameData.stack) {
+                if (entry.getTargetableId().equals(id)) {
+                    return entry;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** Whether this entry is a spell copy still waiting off the stack for its new targets. */
+    public static boolean isStagedCopy(GameData gameData, StackEntry entry) {
+        synchronized (gameData.stagedSpellCopies) {
+            return gameData.stagedSpellCopies.stream().anyMatch(staged -> staged == entry);
+        }
+    }
+
+    /**
+     * Puts staged spell copies whose targets are decided onto the stack, in creation order, stopping at
+     * the first copy whose prompt or per-target choice is still pending. Each copy enters the stack once,
+     * with its final targets (CR 707.10c); only then do "whenever you copy a spell" triggers and the
+     * becomes-the-target triggers of its final targets (such as ward, CR 702.21a) happen. Called from the
+     * input-completion epilogue, so every way a retarget decision can end commits through here.
+     */
+    public void commitDecidedStagedCopies(GameData gameData) {
+        while (!gameData.stagedSpellCopies.isEmpty()) {
+            StackEntry next = gameData.stagedSpellCopies.getFirst();
+            UUID copyId = next.getTargetableId();
+            boolean undecided = gameData.pendingMayAbilities.stream()
+                    .anyMatch(pending -> awaitsDecisionFor(pending, copyId));
+            if (undecided) {
+                return;
+            }
+            gameData.stagedSpellCopies.removeFirst();
+            gameData.stack.add(next);
+            if (triggerCollectionService != null) {
+                triggerCollectionService.checkSpellCopyTriggers(gameData, next);
+                if (next.getTargetId() != null || !next.getTargetIds().isEmpty()) {
+                    triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, next);
+                }
             }
         }
     }
@@ -149,13 +271,11 @@ public class CopySupport {
                 Card copyCard = createCopyCard(pending.cardToCast());
                 StackEntry copyEntry = createCopyStackEntry(
                         pending.original(), copyCard, pending.controllerId(), pending.original().getTargetId());
-                addCopyToStack(gameData, copyEntry, false);
-                if (copyEntry.getTargetId() != null) {
-                    gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                            pending.cardToCast(), pending.controllerId(), List.of(new CopySpellEffect()),
-                            "Choose new targets for the copy of " + pending.cardToCast().getName() + "?",
-                            copyCard.getId()));
-                }
+                addCopyToStack(gameData, copyEntry, false, copyEntry.getTargetId() == null ? null
+                        : new PendingMayAbility(
+                                pending.cardToCast(), pending.controllerId(), List.of(new CopySpellEffect()),
+                                "Choose new targets for the copy of " + pending.cardToCast().getName() + "?",
+                                copyCard.getId()));
             }
         }
     }

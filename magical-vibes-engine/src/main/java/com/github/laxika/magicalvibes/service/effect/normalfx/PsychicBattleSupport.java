@@ -38,6 +38,11 @@ public class PsychicBattleSupport {
                 return entry;
             }
         }
+        // A spell copy still waiting for its new targets is not on the stack yet (CR 707.10c).
+        StackEntry staged = CopySupport.findStagedCopy(gameData, cardId);
+        if (staged != null) {
+            return staged;
+        }
         // Legacy card-id reference: an ability sharing the spell's source card (a delayed copy
         // trigger, say) must not shadow the spell itself, so match the card only as a fallback.
         for (int i = gameData.stack.size() - 1; i >= 0; i--) {
@@ -87,23 +92,43 @@ public class PsychicBattleSupport {
     public boolean queueNextChoice(GameData gameData, Card sourceCard, UUID controllerId,
                                    UUID spellCardId, int targetIndex) {
         StackEntry entry = findTargetEntry(gameData, spellCardId);
-        if (entry == null || entry.isNonTargeting()) {
+        if (entry == null) {
             return false;
         }
+        PendingMayAbility prompt = nextChoicePrompt(gameData, sourceCard, controllerId, entry, spellCardId, targetIndex);
+        if (prompt == null) {
+            return false;
+        }
+        gameData.pendingMayAbilities.addFirst(prompt);
+        return true;
+    }
 
+    /**
+     * The "Change the target of ...?" prompt for the first target position at or after {@code targetIndex}
+     * that has a legal replacement, or {@code null} when no remaining position can be changed.
+     */
+    public PendingMayAbility nextChoicePrompt(GameData gameData, Card sourceCard, UUID controllerId,
+                                              StackEntry entry, int targetIndex) {
+        return nextChoicePrompt(gameData, sourceCard, controllerId, entry, entry.getTargetableId(), targetIndex);
+    }
+
+    private PendingMayAbility nextChoicePrompt(GameData gameData, Card sourceCard, UUID controllerId,
+                                               StackEntry entry, UUID spellCardId, int targetIndex) {
+        if (entry.isNonTargeting()) {
+            return null;
+        }
         List<UUID> targets = targetIds(entry);
         for (int index = Math.max(0, targetIndex); index < targets.size(); index++) {
             if (!collectLegalAlternatives(gameData, entry, index).isEmpty()) {
-                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                return new PendingMayAbility(
                         sourceCard,
                         controllerId,
                         List.of(new PsychicBattleRetargetEffect(spellCardId, index)),
                         "Change the target of " + entry.getCard().getName() + "?"
-                ));
-                return true;
+                );
             }
         }
-        return false;
+        return null;
     }
 
     public void replaceTarget(StackEntry entry, int targetIndex, UUID targetId) {

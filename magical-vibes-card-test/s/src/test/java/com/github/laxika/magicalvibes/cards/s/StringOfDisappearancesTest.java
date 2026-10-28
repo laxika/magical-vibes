@@ -45,10 +45,12 @@ class StringOfDisappearancesTest extends BaseCardTest {
                 .isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, true);
 
-        // The original stays on the stack until the final part of its resolution (CR 608.2n), beneath the copy.
-        assertThat(gd.stack).hasSize(2);
+        // The original stays on the stack until the final part of its resolution (CR 608.2n); the copy waits
+        // off the stack until its targets are decided (CR 707.10c).
+        assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
-        assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2.getId());
+        assertThat(gd.stagedSpellCopies).singleElement()
+                .satisfies(copy -> assertThat(copy.getControllerId()).isEqualTo(player2.getId()));
     }
 
     @Test

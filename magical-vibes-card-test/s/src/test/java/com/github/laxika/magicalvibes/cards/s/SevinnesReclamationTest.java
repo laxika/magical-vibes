@@ -59,10 +59,9 @@ class SevinnesReclamationTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         GameData gameData = harness.getGameData();
-        StackEntry copy = gameData.stack.stream()
-                .filter(StackEntry::isCopy)
-                .findFirst()
-                .orElseThrow();
+        // The copy waits off the stack until its targets are decided (CR 707.10c).
+        StackEntry copy = gameData.stagedSpellCopies.getFirst();
+        assertThat(copy.isCopy()).isTrue();
         assertThat(copy.getControllerId()).isEqualTo(player1.getId());
         assertThat(copy.getTargetId()).isEqualTo(bears.getId());
 

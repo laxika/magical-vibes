@@ -76,6 +76,9 @@ public class InputCompletionService {
     @Autowired
     @Lazy
     private com.github.laxika.magicalvibes.service.PermanentAuctionService permanentAuctionService;
+    @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport copySupport;
 
     /**
      * Process the next pending may ability (if any). If the queue is drained and
@@ -122,6 +125,12 @@ public class InputCompletionService {
         if (gameData.waitingForSubgame) return;
         if (gameData.status == GameStatus.FINISHED) return;
         if (gameData.interaction.isAwaitingInput()) return;
+        // Every way a spell copy's "choose new targets" decision ends reaches this epilogue; a copy whose
+        // targets are now decided goes onto the stack here (CR 707.10c).
+        if (copySupport != null) {
+            copySupport.commitDecidedStagedCopies(gameData);
+            if (gameData.interaction.isAwaitingInput()) return;
+        }
         flushDeferredExileBottoms(gameData);
         if (resumeSuspendedInteraction(gameData)) return;
         if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;

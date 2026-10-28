@@ -115,13 +115,8 @@ public class PermanentChoiceSpellHandlerService {
     }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
-        StackEntry targetSpell = null;
-        for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(retarget.spellCardId())) {
-                targetSpell = se;
-                break;
-            }
-        }
+        // A spell copy choosing its new targets is not on the stack yet (CR 707.10c).
+        StackEntry targetSpell = CopySupport.findStagedOrStackEntry(gameData, retarget.spellCardId());
         if (targetSpell == null) {
             log.info("Game {} - Target spell no longer on stack for retarget", gameData.id);
         } else {
@@ -187,13 +182,10 @@ public class PermanentChoiceSpellHandlerService {
             gameLogService.append(gameData, GameLog.text(logMsg));
             log.info("Game {} - {} retargeted to {}", gameData.id, spellName, targetName);
 
-            // Check becomes-target triggers for the new target (e.g. Livewire Lash).
-            if (targetSpell.getEntryType() == StackEntryType.ACTIVATED_ABILITY
-                    || targetSpell.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
-                triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, targetSpell);
-            } else {
-                triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, targetSpell);
-            }
+            // Check becomes-target triggers for the new target (e.g. Livewire Lash). A spell copy still
+            // choosing its targets makes them targets only when CopySupport.commitDecidedStagedCopies puts
+            // it onto the stack with all of them decided (CR 707.10c).
+            fireBecomesTargetTriggersUnlessStaged(gameData, targetSpell);
             if (gameData.interaction.isAwaitingInput()) return;
             if (retarget.chooseEachTarget() && retarget.targetIndex() != null
                     && psychicBattleSupport.beginEachTargetChoice(
@@ -224,12 +216,7 @@ public class PermanentChoiceSpellHandlerService {
                 gameData, retarget.sourceCard(), retarget.controllerId(),
                 retarget.spellCardId(), retarget.targetIndex() + 1);
 
-        if (targetSpell.getEntryType() == StackEntryType.ACTIVATED_ABILITY
-                || targetSpell.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
-            triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, targetSpell);
-        } else {
-            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, targetSpell);
-        }
+        fireBecomesTargetTriggersUnlessStaged(gameData, targetSpell);
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }
@@ -237,6 +224,18 @@ public class PermanentChoiceSpellHandlerService {
             playerInputService.processNextMayAbility(gameData);
         } else {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    private void fireBecomesTargetTriggersUnlessStaged(GameData gameData, StackEntry retargeted) {
+        if (CopySupport.isStagedCopy(gameData, retargeted)) {
+            return;
+        }
+        if (retargeted.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || retargeted.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+            triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, retargeted);
+        } else {
+            triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, retargeted);
         }
     }
 

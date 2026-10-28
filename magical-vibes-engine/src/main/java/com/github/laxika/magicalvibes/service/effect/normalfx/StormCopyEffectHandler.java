@@ -68,21 +68,18 @@ public class StormCopyEffectHandler implements NormalEffectHandlerBean {
             StackEntry copyEntry = copySupport.createCopyStackEntry(
                     copySource, copyCard, castingPlayerId, copySource.getTargetId());
 
-            copySupport.addCopyToStack(gameData, copyEntry, false);
+            PendingMayAbility retargetAbility = copyEntry.getTargetId() != null
+                    || !copyEntry.getDeclaredTargetIds().isEmpty() || !copyEntry.getTargetCardIds().isEmpty()
+                    ? new PendingMayAbility(
+                            entry.getCard(),
+                            castingPlayerId,
+                            List.of(new CopySpellEffect()),
+                            "Choose new targets for the copy of " + spellCard.getName() + "?",
+                            copyCard.getId())
+                    : null;
+            copySupport.addCopyToStack(gameData, copyEntry, false, retargetAbility);
 
             gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
-
-            if (copyEntry.getTargetId() != null || !copyEntry.getDeclaredTargetIds().isEmpty()
-                    || !copyEntry.getTargetCardIds().isEmpty()) {
-                PendingMayAbility retargetAbility = new PendingMayAbility(
-                        entry.getCard(),
-                        castingPlayerId,
-                        List.of(new CopySpellEffect()),
-                        "Choose new targets for the copy of " + spellCard.getName() + "?",
-                        copyCard.getId()
-                );
-                gameData.pendingMayAbilities.addFirst(retargetAbility);
-            }
         }
 
         log.info("Game {} - spell-copy effect creates {} copies of {} for {}",

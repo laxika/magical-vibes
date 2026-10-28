@@ -144,7 +144,8 @@ class SigilTracerTest extends BaseCardTest {
         tapWizards(2);
         harness.passBothPriorities();
 
-        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
+        // The copy waits off the stack until its targets are decided (CR 707.10c).
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player2, true);
         harness.handlePermanentChosen(player2, newTarget.getId());
         harness.passBothPriorities();

@@ -155,7 +155,8 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
 
                 copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
-                assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(targetPermId);
+                // A copy that may get new targets waits off the stack until they are decided (CR 707.10c).
+                assertThat(gd.stagedSpellCopies.getFirst().getTargetId()).isEqualTo(targetPermId);
             }
 
             @Test

@@ -187,7 +187,8 @@ class CopySpellEffectHandlerTest {
 
                 copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
-                StackEntry copyEntry = gd.stack.getLast();
+                // A copy that may get new targets waits off the stack until they are decided (CR 707.10c).
+                StackEntry copyEntry = gd.stagedSpellCopies.getFirst();
                 assertThat(copyEntry.getEffectsToResolve())
                         .hasSize(1)
                         .first()
@@ -210,7 +211,8 @@ class CopySpellEffectHandlerTest {
 
                 copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
-                StackEntry copyEntry = gd.stack.getLast();
+                // A copy that may get new targets waits off the stack until they are decided (CR 707.10c).
+                StackEntry copyEntry = gd.stagedSpellCopies.getFirst();
                 assertThat(copyEntry.getXValue()).isEqualTo(3);
             }
 
@@ -305,7 +307,8 @@ class CopySpellEffectHandlerTest {
 
                 copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
-                StackEntry copyEntry = gd.stack.getLast();
+                // A copy that may get new targets waits off the stack until they are decided (CR 707.10c).
+                StackEntry copyEntry = gd.stagedSpellCopies.getFirst();
                 assertThat(copyEntry.getDescription()).isEqualTo("Copy of Boomerang");
             }
 
@@ -323,7 +326,8 @@ class CopySpellEffectHandlerTest {
 
                 copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
-                StackEntry copyEntry = gd.stack.getLast();
+                // A copy that may get new targets waits off the stack until they are decided (CR 707.10c).
+                StackEntry copyEntry = gd.stagedSpellCopies.getFirst();
                 assertThat(copyEntry.getTargetId()).isEqualTo(bearsPermId);
             }
 
