@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.i.IzzetSignet;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +35,7 @@ class GigadrowseTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+        assertThat(gd.stagedSpellCopies).hasSize(2);
         assertThat(gd.pendingMayAbilities).hasSize(2);
 
         harness.handleMayAbilityChosen(player1, false);
@@ -111,7 +110,7 @@ class GigadrowseTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(originalTarget.getCard()));
 
         harness.passBothPriorities();
-        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, copyTarget.getId());
         resolveAllTriggers();

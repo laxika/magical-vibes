@@ -76,11 +76,9 @@ public class ExileOneOfCombatOpponentsAndTrackWithSourceEffectHandler implements
             if (candidate == null || gameQueryService.cantBeChosen(gameData, candidate)) {
                 continue;
             }
-            boolean stillInCombat = candidate.getBlockingTargetIds().contains(triggeringPermanentId)
-                    || (sourceCreature != null && sourceCreature.getBlockingTargetIds().contains(candidateId));
-            if (gameQueryService.isCreature(gameData, candidate) || stillInCombat) {
-                legalIds.add(candidateId);
-            }
+            // "Those creatures" names the objects that blocked or were blocked, so one that has since stopped
+            // being a creature or left combat can still be chosen while it stays on the battlefield.
+            legalIds.add(candidateId);
         }
         return legalIds;
     }

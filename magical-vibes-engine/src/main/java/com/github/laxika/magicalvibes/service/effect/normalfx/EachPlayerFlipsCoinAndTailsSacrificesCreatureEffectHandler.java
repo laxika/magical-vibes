@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerFlipsCoinAndTailsSa
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -30,7 +29,6 @@ public class EachPlayerFlipsCoinAndTailsSacrificesCreatureEffectHandler
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final TriggerCollectionService triggerCollectionService;
     private final StepDepartureSupport stepDepartureSupport;
 
     @Override
@@ -55,10 +53,8 @@ public class EachPlayerFlipsCoinAndTailsSacrificesCreatureEffectHandler
                     + " the coin flip for " + sourceName
                     + coinFlipService.replacementDetails(result) + "."));
 
+            // Heads-or-tails only (CR 705.2): neither result is a win or loss, so no coin-flip win/loss triggers.
             if (result.heads()) {
-                if (result.isActualCoinFlip()) {
-                    triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, playerId);
-                }
                 continue;
             }
 

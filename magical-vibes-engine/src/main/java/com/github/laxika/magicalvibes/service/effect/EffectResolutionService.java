@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
@@ -451,7 +452,8 @@ public class EffectResolutionService {
                 if (!groupTargets.isEmpty()) {
                     entry.setTargetIdForEffectResolution(groupTargets.getFirst());
                 } else if (targetIdx > 0 && entry.getTargetIds().isEmpty()
-                        && effect.targetSpec().declaredTarget() != null) {
+                        && effect.targetSpec().declaredTarget() != null
+                        && !choseGraveyardTargetsForTrigger(entry, effect)) {
                     continue;
                 }
             }
@@ -763,5 +765,16 @@ public class EffectResolutionService {
                 && other.getEntryType() != StackEntryType.TRIGGERED_ABILITY
                 && other.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                 && other.getCard() != null && other.getCard().getId().equals(entry.getCard().getId()));
+    }
+
+    /**
+     * Whether a triggered ability's graveyard-card choice went to this effect: a trigger whose graveyard
+     * target was chosen on its own (Gale, Waterdeep Prodigy's second trigger binds group 1) keeps the cards
+     * in the entry's target card list rather than in the per-group target list.
+     */
+    private static boolean choseGraveyardTargetsForTrigger(StackEntry entry, CardEffect effect) {
+        return entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                && !entry.getTargetCardIds().isEmpty();
     }
 }

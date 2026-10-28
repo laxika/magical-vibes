@@ -65,16 +65,17 @@ public class DestroyCombatOpponentsOfTargetAtEndOfCombatEffectHandler implements
     /**
      * The end-of-combat delayed trigger: destroys the creature's combat opponents, both those
      * remembered when the delayed trigger was created (carried as the entry's triggering
-     * permanents) and those recorded since. A source still on the battlefield that has been
-     * removed from combat (e.g. regenerated) has no combat opponents left, so the turn's
-     * recorded combat history is not consulted for it. They are destroyed together, as one departure batch that
-     * asks every CR 616.1 question before any of them leaves.
+     * permanents) and those recorded since. When the effect is {@code onlyWhileInCombat}, a source
+     * still on the battlefield that has been removed from combat (e.g. regenerated, CR 506.4) has no
+     * combat opponents left, so the turn's recorded combat history is not consulted for it. They are
+     * destroyed together, as one departure batch that asks every CR 616.1 question before any of them leaves.
      */
     private void destroyCombatOpponents(GameData gameData, StackEntry entry,
                                         DestroyCombatOpponentsOfTargetAtEndOfCombatEffect destroyEffect) {
         Set<UUID> opponentIds = new LinkedHashSet<>(entry.getTriggeringPermanentIds());
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        boolean sourceOutOfCombat = source != null && !source.isAttacking() && !source.isBlocking();
+        boolean sourceOutOfCombat = destroyEffect.onlyWhileInCombat() && source != null
+                && !source.isAttacking() && !source.isBlocking();
         if (!sourceOutOfCombat) {
             opponentIds.addAll(combatOpponentIds(gameData, entry.getSourcePermanentId(), destroyEffect));
         }

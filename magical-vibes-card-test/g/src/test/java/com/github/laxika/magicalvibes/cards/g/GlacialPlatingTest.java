@@ -193,7 +193,8 @@ class GlacialPlatingTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInGraveyard(player1, "Glacial Plating");
-        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isEqualTo(1);
+        // The sacrifice ends the upkeep step and unspent mana empties then (CR 500.5), so the pool is empty here.
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
     }

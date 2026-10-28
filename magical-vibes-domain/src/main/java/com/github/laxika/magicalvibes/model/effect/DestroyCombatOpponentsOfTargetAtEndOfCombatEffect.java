@@ -14,12 +14,23 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>
  * Unlike {@link DestroyCombatOpponentAtEndOfCombatEffect}, which is a Basilisk-style combat trigger
  * on the source permanent, this is a one-shot spell effect keyed to a chosen target.
+ * <p>
+ * With {@code onlyWhileInCombat}, the end-of-combat trigger destroys nothing when its source is no longer
+ * attacking or blocking, as for Kjeldoran Frostbeast's "destroy all creatures blocking or blocked by this
+ * creature". A regenerated creature is removed from combat (CR 506.4). Without it, the turn's combat history
+ * is used regardless of the source's current combat status, as for Gaze of the Gorgon's "blocked or were
+ * blocked by it this turn".
  */
-public record DestroyCombatOpponentsOfTargetAtEndOfCombatEffect(boolean onlyCreaturesBlockedByTarget)
+public record DestroyCombatOpponentsOfTargetAtEndOfCombatEffect(boolean onlyCreaturesBlockedByTarget,
+                                                                boolean onlyWhileInCombat)
         implements CardEffect, RemovalEffect {
 
     public DestroyCombatOpponentsOfTargetAtEndOfCombatEffect() {
-        this(false);
+        this(false, false);
+    }
+
+    public DestroyCombatOpponentsOfTargetAtEndOfCombatEffect(boolean onlyCreaturesBlockedByTarget) {
+        this(onlyCreaturesBlockedByTarget, false);
     }
 
     @Override

@@ -66,6 +66,29 @@ class GimlisRecklessMightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Total power counts non-attacking creatures you control")
+    void totalPowerCountsNonAttackingCreatures() {
+        harness.addToBattlefield(player1, new GimlisRecklessMight());
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(1, 2, 3));
+
+        assertThat(gd.interaction.permanentChoiceContext())
+                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+        harness.handlePermanentChosen(player1, firstAttacker.getId());
+        harness.handlePermanentChosen(player1, opposingCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(opposingCreature.getMarkedDamage()).isEqualTo(2);
+        assertThat(firstAttacker.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("May decline the opposing creature target")
     void mayDeclineSecondTarget() {
         harness.addToBattlefield(player1, new GimlisRecklessMight());

@@ -43,7 +43,7 @@ class GrixisIllusionistTest extends BaseCardTest {
     void chosenTypeReplacesSubtypes() {
         Permanent forest = becomeIsland(player1);
 
-        assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
+        assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
         assertThat(forest.getTransientSubtypes()).isEmpty();
     }
 
@@ -62,11 +62,11 @@ class GrixisIllusionistTest extends BaseCardTest {
     @DisplayName("Override is cleared at end of turn")
     void overrideClearedAtEndOfTurn() {
         Permanent forest = becomeIsland(player1);
-        assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
+        assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
 
         harness.passUntil(player2, TurnStep.UPKEEP);
 
-        assertThat(forest.getTransientLandTypeOverride()).isNull();
+        assertThat(gqs.effectiveLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
     }
 
     @Test

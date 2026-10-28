@@ -14,6 +14,6 @@ public class KjeldoranFrostbeast extends Card {
     public KjeldoranFrostbeast() {
         addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED, new ConditionalEffect(
                 new SourceAttackedOrBlockedThisCombat(),
-                new DestroyCombatOpponentsOfTargetAtEndOfCombatEffect()));
+                new DestroyCombatOpponentsOfTargetAtEndOfCombatEffect(false, true)));
     }
 }

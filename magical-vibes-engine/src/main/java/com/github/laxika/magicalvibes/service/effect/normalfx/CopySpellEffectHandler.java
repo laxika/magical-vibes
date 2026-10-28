@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
@@ -37,7 +38,9 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CopySpellEffect copyEffect = (CopySpellEffect) effect;
-        UUID targetCardId = entry.getTriggeringCardId() != null
+        // A graveyard ability's triggering card id names its own source card, not a spell to copy, so it
+        // copies its target (Geistblast).
+        UUID targetCardId = entry.getTriggeringCardId() != null && entry.getSourceZone() != Zone.GRAVEYARD
                 ? entry.getTriggeringCardId() : entry.getTargetId();
         if (targetCardId == null) return;
 

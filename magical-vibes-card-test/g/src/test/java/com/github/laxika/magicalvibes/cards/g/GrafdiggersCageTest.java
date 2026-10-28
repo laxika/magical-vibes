@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.p.PrecognitionField;
 import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
@@ -60,16 +59,14 @@ class GrafdiggersCageTest extends BaseCardTest {
     @Test
     @DisplayName("Blocks reanimation: a creature card stays in the graveyard")
     void blocksReanimationFromGraveyard() {
-        harness.setGraveyard(player1, List.of(testCreature()));
+        Card bears = testCreature();
+        harness.setGraveyard(player1, List.of(bears));
         harness.addToBattlefield(player1, new GrafdiggersCage());
         harness.setHand(player1, List.of(new RiseFromTheGrave()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
 
         // The creature card could not enter the battlefield and stays in the graveyard.
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -80,13 +77,13 @@ class GrafdiggersCageTest extends BaseCardTest {
     @Test
     @DisplayName("Without the Cage, the same reanimation puts the creature onto the battlefield")
     void reanimationWorksWithoutCage() {
-        harness.setGraveyard(player1, List.of(testCreature()));
+        Card bears = testCreature();
+        harness.setGraveyard(player1, List.of(bears));
         harness.setHand(player1, List.of(new RiseFromTheGrave()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
@@ -163,16 +160,16 @@ class GrafdiggersCageTest extends BaseCardTest {
     void allowsReanimationAfterCageLosesItsAbilities() {
         harness.addToBattlefield(player1, new GrafdiggersCage());
         harness.addToBattlefield(player1, new MarchOfTheMachines());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
         harness.setHand(player1, List.of(new TurnToFrog(), new RiseFromTheGrave()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grafdigger's Cage"));
         harness.passBothPriorities();
-        harness.castSorcery(player1, 0);
+        harness.castSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");

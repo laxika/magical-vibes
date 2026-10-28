@@ -55,15 +55,14 @@ public class DealDamageToEnchantedPermanentControllerEffectHandler implements No
         if (aura == null) {
             aura = entry.getSourcePermanentSnapshot();
         }
-        if (aura == null || aura.getAttachedTo() == null) {
-            return null;
-        }
-
-        Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        Permanent enchanted = aura == null || aura.getAttachedTo() == null
+                ? null : gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
         if (enchanted != null) {
             return gameQueryService.findPermanentController(gameData, enchanted.getId());
         }
 
+        // The enchanted permanent is gone and the Aura was put into the graveyard as an orphan, so its
+        // snapshot no longer names what it enchanted: use the controller captured when the permanent died.
         UUID capturedControllerId = entry.getTargetId();
         return capturedControllerId != null && gameData.playerIds.contains(capturedControllerId)
                 ? capturedControllerId : null;

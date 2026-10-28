@@ -2146,8 +2146,13 @@ public class CombatAttackService {
                                 gameData.id, perm.getCard().getName());
                     } else if (needsTarget) {
                         Card allyAttackCard = perm.getCard();
+                        // A group no effect is bound to is a bare positional target that a bound effect reads by
+                        // index (Gimli's Reckless Might's attacking creature read by its fight), so it must be
+                        // chosen too and the single-group shortcut cannot apply.
                         boolean singleBoundTargetGroup = filteredEffects.stream().allMatch(allyAttackCard::hasEffectTargetIndex)
-                                && filteredEffects.stream().map(allyAttackCard::getEffectTargetIndex).distinct().count() == 1;
+                                && filteredEffects.stream().map(allyAttackCard::getEffectTargetIndex).distinct().count() == 1
+                                && allyAttackCard.getSpellTargets().stream()
+                                .allMatch(group -> allyAttackCard.bindsEffectToTargetGroup(group.getIndex()));
                         if (allyAttackCard.getSpellTargets().size() > 1 && !singleBoundTargetGroup) {
                             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                     perm.getCard(), playerId, filteredEffects, perm.getId(),

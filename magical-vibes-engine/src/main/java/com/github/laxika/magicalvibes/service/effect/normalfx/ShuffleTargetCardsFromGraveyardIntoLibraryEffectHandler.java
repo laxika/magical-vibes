@@ -44,7 +44,8 @@ public class ShuffleTargetCardsFromGraveyardIntoLibraryEffectHandler implements 
         List<UUID> targetCardIds = gameQueryService.canGraveyardCardsBeTargeted(gameData)
                 ? entry.getTargetCardIdsForEffect(effect)
                 : List.of();
-        String playerName = gameData.playerIdToName.get(targetPlayerId);
+        // CR 608.2b: an illegal player target is not affected by this effect, so no cards are moved for it.
+        String playerName = targetPlayerId != null ? gameData.playerIdToName.get(targetPlayerId) : null;
 
         if (targetPlayerId == null || targetCardIds == null || targetCardIds.isEmpty()) {
             // No targets — just shuffle the target player's library if we have a target player

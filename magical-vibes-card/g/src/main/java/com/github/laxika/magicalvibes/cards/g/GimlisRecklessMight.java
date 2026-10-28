@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.condition.AttackingCreaturesTotalPowerAtLeast;
+import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -33,7 +33,7 @@ public class GimlisRecklessMight extends Card {
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
                 .addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                         new ConditionalEffect(
-                                new AttackingCreaturesTotalPowerAtLeast(8),
+                                new ControlledCreaturesTotalPowerAtLeast(8),
                                 new FightTargetsEffect()));
     }
 }
