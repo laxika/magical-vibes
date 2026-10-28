@@ -105,9 +105,10 @@ class AncestralCommunionTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, permanent.getId());
 
-        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
         harness.passBothPriorities();
 

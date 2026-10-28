@@ -67,7 +67,7 @@ class AzizaMageTowerCaptainTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         tapCreatures(player1, 3);
-        harness.passBothPriorities(); // resolve CopyControllerCastSpellEffect
+        harness.handleMayAbilityChosen(player1, false); // keep the copy's target; the copy goes on the stack
 
         long boltCount = gd.stack.stream()
                 .filter(e -> e.getCard().getName().equals("Lightning Bolt"))
@@ -136,9 +136,10 @@ class AzizaMageTowerCaptainTest extends BaseCardTest {
         assertThat(aziza.isTapped()).isTrue();
         assertThat(first.isTapped()).isTrue();
         assertThat(second.isTapped()).isTrue();
+        assertThat(gd.stagedSpellCopies).hasSize(1);
+        harness.handleMayAbilityChosen(player1, false);
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().isCopy()).isTrue();
-        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
@@ -162,8 +163,7 @@ class AzizaMageTowerCaptainTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         tapCreatures(player1, 3);
 
-        assertThat(gd.stack).hasSize(2);
-        assertThat(gd.stack.getLast().isCopy()).isTrue();
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 

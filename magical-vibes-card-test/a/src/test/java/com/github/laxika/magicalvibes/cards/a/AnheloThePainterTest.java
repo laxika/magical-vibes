@@ -225,7 +225,7 @@ class AnheloThePainterTest extends BaseCardTest {
                 List.of(fodder.getId()));
         harness.passBothPriorities();
 
-        assertThat(gd.stack.getLast().isCopy()).isTrue();
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }

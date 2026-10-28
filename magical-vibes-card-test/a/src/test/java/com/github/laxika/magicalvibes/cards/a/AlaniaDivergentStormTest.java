@@ -40,6 +40,7 @@ class AlaniaDivergentStormTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(8);
         assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(1);
