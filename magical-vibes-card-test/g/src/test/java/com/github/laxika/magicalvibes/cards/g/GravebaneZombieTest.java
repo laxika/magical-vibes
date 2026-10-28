@@ -1904,7 +1904,7 @@ class GravebaneZombieTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
-                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+                        choice -> assertThat(choice.inDepartureBatch()).isFalse());
         assertMayAnswerAskedWhileTheZombieStays();
 
         harness.handleListChoice(player2, "Put it into its owner's library");
@@ -1931,7 +1931,7 @@ class GravebaneZombieTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
-                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+                        choice -> assertThat(choice.inDepartureBatch()).isFalse());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
         assertMayAnswerAskedWhileTheZombieStays();
 
@@ -1961,7 +1961,7 @@ class GravebaneZombieTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
-                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+                        choice -> assertThat(choice.inDepartureBatch()).isFalse());
         assertMayAnswerAskedWhileTheZombieStays();
 
         harness.handleListChoice(player2, "Put it into its owner's library");
@@ -1993,7 +1993,7 @@ class GravebaneZombieTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOfSatisfying(ChoiceContext.DeathExileReplacementChoice.class,
-                        choice -> assertThat(choice.rerunsEffect()).isTrue());
+                        choice -> assertThat(choice.inDepartureBatch()).isFalse());
         assertMayAnswerAskedWhileTheZombieStays();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
 
