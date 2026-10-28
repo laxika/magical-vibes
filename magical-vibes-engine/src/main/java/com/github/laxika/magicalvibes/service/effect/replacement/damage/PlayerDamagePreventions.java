@@ -115,7 +115,7 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                         this::preventedWithCreatureLifeGain),
                 preventAll("SourcePreventedFromDealingDamage", "Prevent all damage the source would deal",
                         ctx -> !ctx.combat() && damageSupport.getObject().isSourcePermanentPreventedFromDealingDamage(
-                                ctx.gameData(), ctx.entry())),
+                                ctx.gameData(), ctx.entry(), false)),
                 preventAll("ProtectionFromColor", "Protection from the source's color",
                         ctx -> preventable(ctx) && gameQueryService.playerHasProtectionFromColor(ctx.gameData(), ctx.playerId(),
                                 gameQueryService.getDamageSourceColor(ctx.gameData(), sourceColor(ctx)))),

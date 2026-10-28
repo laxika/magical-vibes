@@ -2650,9 +2650,18 @@ public class PlayerInputService {
                                          List<CardType> excludedTypes, CardType requiredType, int maxCount,
                                          boolean drawForHandExiled, boolean excludeBasicLandNames,
                                          CreateTokenEffect tokenTemplate, String sourceSetCode) {
+        beginSpellCardNameChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes, requiredType, maxCount,
+                drawForHandExiled, excludeBasicLandNames, tokenTemplate, sourceSetCode, false);
+    }
+
+    public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
+                                         List<CardType> excludedTypes, CardType requiredType, int maxCount,
+                                         boolean drawForHandExiled, boolean excludeBasicLandNames,
+                                         CreateTokenEffect tokenTemplate, String sourceSetCode,
+                                         boolean findAllCards) {
         ChoiceContext.ExileByNameChoice choiceContext = new ChoiceContext.ExileByNameChoice(
                 targetPlayerId, choosingPlayerId, excludedTypes, maxCount, drawForHandExiled,
-                tokenTemplate, sourceSetCode);
+                tokenTemplate, sourceSetCode, findAllCards);
 
         List<String> cardNames = excludeBasicLandNames
                 ? collectNonbasicCardNamesInGame(gameData)

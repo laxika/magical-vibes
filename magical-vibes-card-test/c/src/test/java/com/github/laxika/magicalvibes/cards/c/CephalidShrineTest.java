@@ -156,8 +156,8 @@ class CephalidShrineTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The caster may pay even when the spell cannot be countered")
-    void offersPaymentForUncounterableSpell() {
+    @DisplayName("An uncounterable spell is not offered a payment to avoid being countered")
+    void noPaymentOfferedForUncounterableSpell() {
         harness.addToBattlefield(player1, new CephalidShrine());
         harness.setGraveyard(player1, List.of(new SurrakElusiveHunter()));
         harness.forceActivePlayer(player2);
@@ -165,12 +165,9 @@ class CephalidShrineTest extends BaseCardTest {
         harness.castFromHand(player2, new SurrakElusiveHunter(), "{2}{G}");
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.passBothPriorities();
-
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player2, "Surrak, Elusive Hunter");
         harness.assertNotInGraveyard(player2, "Surrak, Elusive Hunter");
     }

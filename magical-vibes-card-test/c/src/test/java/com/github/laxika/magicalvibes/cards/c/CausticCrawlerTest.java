@@ -129,6 +129,7 @@ class CausticCrawlerTest extends BaseCardTest {
     void multipleCrawlersGiveSeparateCumulativeReductions() {
         Permanent target = addCrawler();
         addCrawler();
+        harness.setAutoOrderTriggers(player1, false);
         harness.setHand(player1, List.of(new TectonicEdge()));
 
         harness.playLand(player1, 0);

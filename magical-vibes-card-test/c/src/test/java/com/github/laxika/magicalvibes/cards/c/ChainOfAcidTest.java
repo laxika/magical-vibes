@@ -39,11 +39,12 @@ class ChainOfAcidTest extends BaseCardTest {
         castAt(target.getId());
 
         harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
-                .isEqualTo(player2.getId());
     }
 
     @Test

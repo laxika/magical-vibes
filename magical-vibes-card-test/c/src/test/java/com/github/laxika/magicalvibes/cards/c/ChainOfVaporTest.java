@@ -58,6 +58,7 @@ class ChainOfVaporTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2.getId());
@@ -105,7 +106,6 @@ class ChainOfVaporTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, land.getId());
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(gd.stack).hasSize(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, true);
@@ -193,8 +193,8 @@ class ChainOfVaporTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, secondLand.getId());
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, thirdTarget.getId());
         harness.passBothPriorities();

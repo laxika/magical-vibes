@@ -191,8 +191,17 @@ class CockatriceTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
-                .anyMatch(a -> a.affectedPermanentId().equals(spider.getId()));
+        // Nobody has anything to do once the trigger has resolved, so priority passes on to end of combat, where the
+        // scheduled destruction is put onto the stack; either way it was not dropped when the blocker stopped being
+        // a creature.
+        assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class).stream()
+                .anyMatch(a -> a.affectedPermanentId().equals(spider.getId()))
+                || gd.stack.stream().anyMatch(se -> se.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && se.getCard() instanceof Cockatrice && spider.getId().equals(se.getTargetId()))).isTrue();
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
     }
 
     @Test

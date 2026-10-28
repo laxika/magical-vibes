@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -52,8 +51,7 @@ public class CrowdedCrypt extends Card {
                                 false,
                                 false,
                                 Map.of(
-                                        EffectSlot.STATIC, new CantBlockEffect(),
-                                        EffectSlot.ON_ATTACK, new SacrificeAtEndOfCombatEffect()),
+                                        EffectSlot.STATIC, new CantBlockEffect()),
                                 List.of(),
                                 false,
                                 false,

@@ -38,12 +38,12 @@ public class Counterflux extends Card {
 
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{U}{U}{R}"))));
-        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
-                new Overloaded(),
-                new CounterSpellEffect(),
-                new CounterMatchingSpellsEffect(spellYouDontControl)));
         target(new StackEntryPredicateTargetFilter(
                 spellYouDontControl,
-                "Target must be a spell you don't control"));
+                "Target must be a spell you don't control"))
+                .addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+                        new Overloaded(),
+                        new CounterSpellEffect(),
+                        new CounterMatchingSpellsEffect(spellYouDontControl)));
     }
 }

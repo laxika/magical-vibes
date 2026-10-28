@@ -62,6 +62,7 @@ class CircuDimirLobotomistTest extends BaseCardTest {
     @Test
     @DisplayName("Casting a blue and black spell triggers both of Circu's abilities")
     void blueAndBlackSpellTriggersBothAbilities() {
+        harness.setAutoOrderTriggers(player1, false);
         Permanent circu = harness.addToBattlefieldAndReturn(player1, new CircuDimirLobotomist());
         SnappingDrake controllerTopCard = new SnappingDrake();
         RoofstalkerWight opponentTopCard = new RoofstalkerWight();

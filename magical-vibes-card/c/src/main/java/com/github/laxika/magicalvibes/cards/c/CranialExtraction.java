@@ -12,6 +12,6 @@ import java.util.List;
 public class CranialExtraction extends Card {
 
     public CranialExtraction() {
-        addEffect(EffectSlot.SPELL, new ChooseCardNameAndExileFromZonesEffect(List.of(CardType.LAND)));
+        addEffect(EffectSlot.SPELL, ChooseCardNameAndExileFromZonesEffect.allCards(List.of(CardType.LAND)));
     }
 }

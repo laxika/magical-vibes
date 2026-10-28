@@ -270,7 +270,7 @@ public class MayMiscHandlerService {
                                                RegisterOpeningHandUpkeepTriggerEffect effect) {
         if (accepted) {
             gameData.openingHandUpkeepTriggers.add(new OpeningHandRevealTrigger(
-                    ability.controllerId(), ability.sourceCard(), effect.effect()));
+                    ability.controllerId(), ability.sourceCard(), effect.effect(), effect.revealersFirstUpkeep()));
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " reveals ",
                     ability.sourceCard(), " from their opening hand."));
         }

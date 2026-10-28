@@ -35,6 +35,7 @@ class ChainOfPlasmaTest extends BaseCardTest {
         assertThat(mayChoicePlayer()).isEqualTo(player2.getId());
 
         harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2.getId());
@@ -53,6 +54,7 @@ class ChainOfPlasmaTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
         harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.stack).hasSize(1);

@@ -19,7 +19,8 @@ import java.util.List;
 public record ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes, CardType requiredType,
                                                      int maxCount, boolean drawForHandExiled,
                                                      boolean excludeBasicLandNames,
-                                                     CreateTokenEffect tokenTemplate)
+                                                     CreateTokenEffect tokenTemplate,
+                                                     boolean findAllCards)
         implements CardEffect {
 
     public ChooseCardNameAndExileFromZonesEffect {
@@ -31,37 +32,46 @@ public record ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes
 
     /** Unlimited selection with no draw rider. */
     public ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes, CardType requiredType) {
-        this(excludedTypes, requiredType, Integer.MAX_VALUE, false, false, null);
+        this(excludedTypes, requiredType, Integer.MAX_VALUE, false, false, null, false);
     }
 
     public ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes, CardType requiredType,
                                                   boolean drawForHandExiled) {
-        this(excludedTypes, requiredType, Integer.MAX_VALUE, drawForHandExiled, false, null);
+        this(excludedTypes, requiredType, Integer.MAX_VALUE, drawForHandExiled, false, null, false);
     }
 
     public ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes, CardType requiredType,
                                                   int maxCount, boolean drawForHandExiled) {
-        this(excludedTypes, requiredType, maxCount, drawForHandExiled, false, null);
+        this(excludedTypes, requiredType, maxCount, drawForHandExiled, false, null, false);
     }
 
     public ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes, CardType requiredType,
                                                   boolean drawForHandExiled, int maxCount) {
-        this(excludedTypes, requiredType, maxCount, drawForHandExiled, false, null);
+        this(excludedTypes, requiredType, maxCount, drawForHandExiled, false, null, false);
     }
 
     public ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes, CardType requiredType,
                                                   boolean excludeBasicLandNames,
                                                   CreateTokenEffect tokenTemplate) {
-        this(excludedTypes, requiredType, Integer.MAX_VALUE, false, excludeBasicLandNames, tokenTemplate);
+        this(excludedTypes, requiredType, Integer.MAX_VALUE, false, excludeBasicLandNames, tokenTemplate, false);
+    }
+
+    /**
+     * "Search ... for all cards with that name and exile them" (Cranial Extraction): copies in the graveyard
+     * must be found, while copies in the hidden hand and library may still be left (CR 701.23b).
+     */
+    public static ChooseCardNameAndExileFromZonesEffect allCards(List<CardType> excludedTypes) {
+        return new ChooseCardNameAndExileFromZonesEffect(excludedTypes, null, Integer.MAX_VALUE, false, false, null,
+                true);
     }
 
     /** No required-type restriction (the offered names are only narrowed by {@code excludedTypes}). */
     public ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes) {
-        this(excludedTypes, null, Integer.MAX_VALUE, false, false, null);
+        this(excludedTypes, null, Integer.MAX_VALUE, false, false, null, false);
     }
 
     public ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes, int maxCount) {
-        this(excludedTypes, null, maxCount, false, false, null);
+        this(excludedTypes, null, maxCount, false, false, null, false);
     }
 
     /** No draw follow-up; retained for the existing name-choice exile cards. */

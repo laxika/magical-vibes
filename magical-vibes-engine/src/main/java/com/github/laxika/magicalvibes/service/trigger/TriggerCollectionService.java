@@ -5601,7 +5601,9 @@ public class TriggerCollectionService {
                         () -> collectBecomesTargetOfOpponentCounterTriggers(
                                 gameData, targetPermanent, controllerId, spellEntry));
             }
-            if (controllerId != null && !targetPermanent.isAttached()) {
+            // A bestowed permanent (Crystalline Nautilus) is still "this permanent" while attached as an Aura, so its
+            // own printed becomes-target abilities apply to it, unlike an ordinary Aura's (see the loop below).
+            if (controllerId != null && (!targetPermanent.isAttached() || targetPermanent.isBestow())) {
                 collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
                         () -> collectBecomesTargetOfSpellOrAbilityTriggers(
                                 gameData, targetPermanent, controllerId, spellEntry));
@@ -5633,9 +5635,13 @@ public class TriggerCollectionService {
                         // CR 603.3a: the triggered ability is controlled by the controller of the
                         // permanent that has it (the aura/equipment), not the enchanted creature —
                         // the two differ when an Aura like Spectral Prison enchants an opponent's creature.
-                        collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
-                                () -> collectBecomesTargetOfSpellOrAbilityTriggers(
-                                        gameData, attached, playerId, spellEntry));
+                        // A bestowed permanent's printed becomes-target abilities refer to itself, so they do not
+                        // fire when the creature it enchants is targeted; only its granted ability does (on that creature).
+                        if (!attached.isBestow()) {
+                            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                                    () -> collectBecomesTargetOfSpellOrAbilityTriggers(
+                                            gameData, attached, playerId, spellEntry));
+                        }
                         if (playerId.equals(controllerId)) {
                             collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
                                     () -> collectBecomesTargetTriggers(
@@ -5778,7 +5784,7 @@ public class TriggerCollectionService {
                         () -> collectBecomesTargetOfOpponentCounterTriggers(
                                 gameData, targetPermanent, controllerId, abilityEntry));
             }
-            if (controllerId != null && !targetPermanent.isAttached()) {
+            if (controllerId != null && (!targetPermanent.isAttached() || targetPermanent.isBestow())) {
                 collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
                         () -> collectBecomesTargetOfSpellOrAbilityTriggers(
                                 gameData, targetPermanent, controllerId, abilityEntry));
@@ -5817,10 +5823,13 @@ public class TriggerCollectionService {
                 for (Permanent attached : battlefield) {
                     if (attached.isAttached()
                             && attached.getAttachedTo().equals(targetPermanent.getId())) {
-                        // CR 603.3b: triggered ability controlled by the aura/equipment's controller
-                        collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
-                                () -> collectBecomesTargetOfSpellOrAbilityTriggers(
-                                        gameData, attached, playerId, abilityEntry));
+                        // CR 603.3a: triggered ability controlled by the aura/equipment's controller. A bestowed
+                        // permanent's printed abilities refer to itself, so they do not fire for the creature it enchants.
+                        if (!attached.isBestow()) {
+                            collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
+                                    () -> collectBecomesTargetOfSpellOrAbilityTriggers(
+                                            gameData, attached, playerId, abilityEntry));
+                        }
                         if (playerId.equals(controllerId)) {
                             collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
                                     () -> collectBecomesTargetOfOpponentCounterTriggers(
@@ -14029,6 +14038,24 @@ public class TriggerCollectionService {
         }
     }
 
+    /**
+     * Fires delayed "when you lose control of this creature, exile that creature" triggers (Coffin Queen)
+     * for a permanent whose control just changed away from {@code previousControllerId}. Each fires only
+     * once (CR 603.7b).
+     */
+    public void processDelayedTargetWhenSourceLosesControl(GameData gameData, Permanent permanent,
+                                                           UUID previousControllerId) {
+        if (!gameData.hasDelayedAction(DelayedDestroyTargetWhenSourceLeaves.class)) {
+            return;
+        }
+        for (DelayedDestroyTargetWhenSourceLeaves delayed : gameData.drainDelayedActions(
+                DelayedDestroyTargetWhenSourceLeaves.class,
+                d -> d.alsoWhenControlLost() && permanent.getId().equals(d.watchedPermanentId())
+                        && previousControllerId.equals(d.controllerId()))) {
+            enqueueDelayedDestroyTarget(gameData, delayed, permanent);
+        }
+    }
+
     private void enqueueDelayedDestroyTarget(GameData gameData, DelayedDestroyTargetWhenSourceLeaves delayed,
                                              Permanent watchedPermanent) {
         StackEntry se = new StackEntry(
@@ -14036,7 +14063,11 @@ public class TriggerCollectionService {
                 delayed.sourceCard(),
                 delayed.controllerId(),
                 delayed.sourceCard().getName() + "'s delayed trigger",
-                new ArrayList<>(List.of(new DestroyLinkedPermanentEffect(true, delayed.targetPermanentId()))),
+                new ArrayList<>(List.of(delayed.exile()
+                        ? new com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect(
+                                com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect.Mode.EXILE,
+                                delayed.targetPermanentId())
+                        : new DestroyLinkedPermanentEffect(true, delayed.targetPermanentId()))),
                 null,
                 List.of());
         se.setNonTargeting(true);

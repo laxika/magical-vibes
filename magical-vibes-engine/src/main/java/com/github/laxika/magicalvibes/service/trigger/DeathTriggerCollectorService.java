@@ -924,9 +924,14 @@ public class DeathTriggerCollectorService {
             MayEffect may, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
         MayEffect resolvedMay = (MayEffect) snapshotDynamicMaxManaValue(match, may, sd);
+        // Rebuild only when the binding changes: the card's target-group registration is keyed by
+        // effect identity, so a needless copy would drop the card-level target filter for this ability.
         if (resolvedMay.wrapped() instanceof DyingCreatureCardAwareEffect aware && sd.dyingPermanent() != null) {
-            resolvedMay = new MayEffect(aware.boundToDyingCard(sd.dyingPermanent().getOriginalCard().getId()),
-                    resolvedMay.prompt(), resolvedMay.elseEffect());
+            CardEffect bound = aware.boundToDyingCard(sd.dyingPermanent().getOriginalCard().getId());
+            if (bound != resolvedMay.wrapped()) {
+                resolvedMay = new MayEffect(bound, resolvedMay.prompt(), resolvedMay.elseEffect(),
+                        resolvedMay.choicePlayer(), resolvedMay.choicePlayerId());
+            }
         }
         // CR 603.3d: targeted "may" abilities need the target chosen when stacking — including one
         // whose targets are cards in a graveyard (Iname, Life Aspect's "you may exile it. If you do,

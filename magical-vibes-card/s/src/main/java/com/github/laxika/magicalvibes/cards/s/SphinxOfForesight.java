@@ -12,7 +12,7 @@ public class SphinxOfForesight extends Card {
 
     public SphinxOfForesight() {
         addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
-                new RegisterOpeningHandUpkeepTriggerEffect(new ScryEffect(3)),
+                new RegisterOpeningHandUpkeepTriggerEffect(new ScryEffect(3), true),
                 "Reveal this card from your opening hand?"
         ));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ScryEffect(1));

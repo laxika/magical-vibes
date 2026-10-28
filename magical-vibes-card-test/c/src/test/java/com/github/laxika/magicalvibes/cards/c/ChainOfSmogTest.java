@@ -43,6 +43,7 @@ class ChainOfSmogTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
         harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2.getId());

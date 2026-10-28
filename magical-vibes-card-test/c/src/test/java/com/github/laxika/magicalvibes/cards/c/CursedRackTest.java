@@ -48,8 +48,8 @@ class CursedRackTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No maximum hand size overrides Cursed Rack even when Rack enters later")
-    void unlimitedHandSizeOverridesRack() {
+    @DisplayName("Cursed Rack entering after Library of Leng sets the chosen opponent's maximum to four")
+    void rackEnteringLaterOverridesUnlimitedHandSize() {
         harness.addToBattlefield(player2, new LibraryOfLeng());
         harness.addToBattlefield(player1, new CursedRack());
         harness.setHand(player2, List.of(new Forest(), new Forest(), new Forest(),
@@ -59,8 +59,8 @@ class CursedRackTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.CLEANUP);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
-        assertThat(gd.playerHands.get(player2.getId())).hasSize(8);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(4);
     }
 
     @Test

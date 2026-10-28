@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedExileLinkedPermanentWhenSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -24,8 +24,9 @@ public class CoffinQueen extends Card {
         addEffect(EffectSlot.STATIC, new MayNotUntapDuringUntapStepEffect());
 
         // "{2}{B}, {T}: Put target creature card from a graveyard onto the battlefield under your
-        // control." The reanimated creature is linked to Coffin Queen so the exile triggers below can
-        // still refer to "that creature" once the ability has finished resolving.
+        // control." The reanimated creature is linked to Coffin Queen so the delayed exile trigger
+        // ("When this creature becomes untapped or you lose control of this creature, exile that
+        // creature") registered by the same resolution can refer to "that creature".
         addActivatedAbility(new ActivatedAbility(
                 true, "{2}{B}",
                 List.of(ReturnCardFromGraveyardEffect.builder()
@@ -34,17 +35,9 @@ public class CoffinQueen extends Card {
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .targetGraveyard(true)
                         .linkToSource(true)
-                        .build()),
+                        .build(),
+                        new RegisterDelayedExileLinkedPermanentWhenSourceLeavesEffect()),
                 "{2}{B}, {T}: Put target creature card from a graveyard onto the battlefield under your control."
         ));
-
-        // "When this creature becomes untapped or you lose control of this creature, exile that
-        // creature."
-        addEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED,
-                new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.EXILE));
-        addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.EXILE));
-        addEffect(EffectSlot.ON_SELF_BECOMES_CONTROLLED,
-                new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.EXILE));
     }
 }

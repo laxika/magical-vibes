@@ -8224,8 +8224,9 @@ public class ChoiceHandlerService {
         }
 
         // Present matching cards for "any number" selection; the searcher sees the whole searched zones.
+        // An unbounded count makes graveyard copies mandatory, which only "all cards" wording requires (CR 701.23b).
         playerInputService.beginMultiZoneExileChoice(gameData, controllerId, matchingCards,
-                Math.min(ctx.maxCount(), matchingCards.size()),
+                ctx.findAllCards() ? Integer.MAX_VALUE : Math.min(ctx.maxCount(), matchingCards.size()),
                 targetPlayerId, cardName, ctx.drawForHandExiled(), ctx.tokenTemplate(), ctx.sourceSetCode(), true);
         inputCompletionService.publishStateAfterInput(gameData);
     }

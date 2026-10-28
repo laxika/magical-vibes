@@ -801,6 +801,7 @@ public class DepartureService {
         lastKnown.setLosesAllAbilitiesUntilEndOfTurn(gameQueryService.hasLostPrintedAbilities(gameData, permanent));
         lastKnown.setLastKnownPower(gameQueryService.getEffectivePower(gameData, permanent));
         lastKnown.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, permanent));
+        permanentRemovalService.recordLastKnownAttachmentCounts(gameData, lastKnown);
         for (StackEntry stackEntry : gameData.stack) {
             Permanent stackSource = stackEntry.getSourcePermanentSnapshot();
             if (permanent.getId().equals(stackEntry.getSourcePermanentId())

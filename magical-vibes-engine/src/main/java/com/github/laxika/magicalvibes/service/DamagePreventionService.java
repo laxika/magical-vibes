@@ -3212,7 +3212,12 @@ public class DamagePreventionService {
                 sourceIsArtifact, sourceColors, combatDamage, null);
     }
 
-    /** Applies per-source prevention using a player's selected division when present. */
+    /**
+     * Applies per-source prevention using a player's selected division when present. Prevention shared with
+     * the controller's creatures ({@link PreventXDamagePerSourceToControllerAndCreaturesEffect}) is not
+     * covered here; the "ControllerAndCreaturesPerSource" rule applies it, so counting it here too would
+     * prevent it twice.
+     */
     public int applyControllerFixedPerSourceDamagePrevention(GameData gameData, UUID playerId, int damage,
                                                               boolean sourceIsCreature, boolean sourceIsArtifact,
                                                               Set<CardColor> sourceColors, boolean combatDamage,
@@ -3236,13 +3241,6 @@ public class DamagePreventionService {
                             && (sourceColors == null
                             || prevention.sourceColors().stream().noneMatch(sourceColors::contains))) continue;
                     reduction += prevention.amount();
-                } else if (effect instanceof PreventXDamagePerSourceToControllerAndCreaturesEffect prevention
-                        && (!prevention.combatOnly() || combatDamage)
-                        && (!prevention.creatureSourcesOnly() || sourceIsCreature)) {
-                    int amount = amountEvaluationService.evaluate(gameData, prevention.amount(),
-                            AmountContext.forStaticEffect(permanent, playerId));
-                    reduction += sharedCombatPreventionAmount(gameData, damageSourceId, permanent.getId(),
-                            playerId, amount, combatDamage);
                 }
             }
         }

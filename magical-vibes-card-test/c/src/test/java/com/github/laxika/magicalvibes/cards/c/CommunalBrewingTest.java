@@ -57,7 +57,6 @@ class CommunalBrewingTest extends BaseCardTest {
     void canChooseNoOpponents() {
         harness.setHand(player2, List.of());
         castCommunalBrewing(List.of());
-        harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
         assertThat(communalBrewing().getCounterCount(CounterType.INGREDIENT)).isEqualTo(1);

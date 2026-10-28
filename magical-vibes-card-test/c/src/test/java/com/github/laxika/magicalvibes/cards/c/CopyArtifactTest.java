@@ -63,7 +63,7 @@ class CopyArtifactTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(entered), null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid ability index");
+                .hasMessageContaining("has no activated ability");
 
         Tranquility tranquility = new Tranquility();
         harness.castFromHand(player1, tranquility, "{2}{G}");

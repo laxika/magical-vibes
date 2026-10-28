@@ -1093,11 +1093,21 @@ public class TriggeredAbilityQueueService {
                             "'s triggered ability has too few valid targets."));
                     continue;
                 }
-                playerInputService.beginMultiPermanentChoice(gameData, choosingPlayerId,
-                        candidateTargets, maxTargets,
-                        new MultiPermanentChoiceContext.AttackTriggerTargets(pending, minTargets),
-                        pending.sourceCard().getName() + "'s ability - Choose up to " + maxTargets
-                                + " target permanents.");
+                List<UUID> playerTargets = candidateTargets.stream()
+                        .filter(gameData.playerIds::contains).toList();
+                List<UUID> otherTargets = candidateTargets.stream()
+                        .filter(id -> !gameData.playerIds.contains(id)).toList();
+                String multiTargetPrompt = pending.sourceCard().getName() + "'s ability - Choose up to "
+                        + maxTargets + " target permanents.";
+                MultiPermanentChoiceContext multiTargetContext =
+                        new MultiPermanentChoiceContext.AttackTriggerTargets(pending, minTargets);
+                if (playerTargets.isEmpty()) {
+                    playerInputService.beginMultiPermanentChoice(gameData, choosingPlayerId,
+                            candidateTargets, maxTargets, multiTargetContext, multiTargetPrompt);
+                } else {
+                    playerInputService.beginMultiPermanentOrPlayerChoice(gameData, choosingPlayerId,
+                            otherTargets, playerTargets, maxTargets, multiTargetContext, multiTargetPrompt);
+                }
             } else if (optionalTarget) {
                 playerInputService.beginAnyTargetChoice(gameData, choosingPlayerId, candidateTargets,
                         List.of(pending.controllerId()),

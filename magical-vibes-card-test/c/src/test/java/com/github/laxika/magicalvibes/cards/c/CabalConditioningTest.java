@@ -190,7 +190,8 @@ class CabalConditioningTest extends BaseCardTest {
     private void discardCards(Player player, int amount) {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         for (int i = 0; i < amount; i++) {
-            harness.handleCardChosen(player, 0);
+            var choice = (PendingInteraction.DiscardChoice) gd.interaction.activeInteraction();
+            harness.handleCardChosen(player, choice.validIndices().get(0));
         }
     }
 }

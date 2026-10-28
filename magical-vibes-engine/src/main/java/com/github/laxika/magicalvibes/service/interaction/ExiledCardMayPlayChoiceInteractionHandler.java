@@ -63,7 +63,7 @@ public class ExiledCardMayPlayChoiceInteractionHandler
             throw new IllegalStateException("Chosen card is no longer exiled");
         }
 
-        if (interaction.withoutPayingManaCost()) {
+        if (interaction.withoutPayingManaCost() && interaction.duration() == ExilePlayDuration.END_OF_TURN) {
             if (chosen.card().hasType(CardType.LAND)) {
                 gameData.pendingFreeCastLandPlayIds.add(chosenId);
             }
@@ -86,6 +86,9 @@ public class ExiledCardMayPlayChoiceInteractionHandler
         } else {
             exileSupport.grantPlayUntilOwnersNextTurn(gameData, chosenId, interaction.playerId());
             durationDescription = " may be played until the end of its controller's next turn.";
+        }
+        if (interaction.withoutPayingManaCost()) {
+            gameData.exilePlayWithoutPayingManaCost.add(chosenId);
         }
         if (interaction.anyManaType()) {
             if (interaction.duration() == ExilePlayDuration.WHILE_EXILED) {

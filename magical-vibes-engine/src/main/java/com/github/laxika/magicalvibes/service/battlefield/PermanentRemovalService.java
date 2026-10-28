@@ -237,6 +237,22 @@ public class PermanentRemovalService {
         return departToGraveyard(gameData, target, intent, null);
     }
 
+    /**
+     * Records on {@code permanent} how many Auras and Equipment are attached to it right now, so
+     * a snapshot taken before it leaves can later answer "as long as it is equipped" from last-known
+     * information (CR 608.2h).
+     */
+    public void recordLastKnownAttachmentCounts(GameData gameData, Permanent permanent) {
+        final int[] attachmentCounts = {0, 0};
+        gameData.forEachPermanent((owner, attachment) -> {
+            if (!permanent.getId().equals(attachment.getAttachedTo())) return;
+            if (gameQueryService.hasEffectiveSubtype(gameData, attachment, CardSubtype.AURA)) attachmentCounts[0]++;
+            if (gameQueryService.hasEffectiveSubtype(gameData, attachment, CardSubtype.EQUIPMENT)) attachmentCounts[1]++;
+        });
+        permanent.setLastKnownAuraCount(attachmentCounts[0]);
+        permanent.setLastKnownEquipmentCount(attachmentCounts[1]);
+    }
+
     /** Preserves battlefield information while a simultaneous group of removals is performed. */
     public void performSimultaneousRemovals(GameData gameData, List<Permanent> permanents, Runnable removal) {
         Map<UUID, Permanent> oldPermanents = new java.util.HashMap<>(gameData.simultaneousDyingPermanents);
@@ -255,6 +271,7 @@ public class PermanentRemovalService {
                 snapshot.setLosesAllAbilitiesUntilEndOfTurn(gameQueryService.hasLostPrintedAbilities(gameData, permanent));
                 snapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, permanent));
                 snapshot.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, permanent));
+                recordLastKnownAttachmentCounts(gameData, snapshot);
                 snapshot.setCard(snapshotEffectivePermanentCard(gameData, permanent));
                 snapshotEffectiveSubtypes(gameData, snapshot);
                 gameData.simultaneousDyingPermanents.put(permanent.getId(), snapshot);
@@ -2470,15 +2487,8 @@ public class PermanentRemovalService {
                         : Set.copyOf(gameQueryService.getEffectiveColors(gameData, target)));
                 target.setLastKnownPower(gameData.simultaneousDyingPowers.getOrDefault(
                         target.getId(), gameQueryService.getEffectivePower(gameData, target)));
-                final int[] attachmentCounts = {0, 0};
-                gameData.forEachPermanent((owner, attachment) -> {
-                    if (!target.getId().equals(attachment.getAttachedTo())) return;
-                    if (gameQueryService.hasEffectiveSubtype(gameData, attachment, CardSubtype.AURA)) attachmentCounts[0]++;
-                    if (gameQueryService.hasEffectiveSubtype(gameData, attachment, CardSubtype.EQUIPMENT)) attachmentCounts[1]++;
-                });
                 rememberCombatEquipmentAttachments(gameData, target);
-                target.setLastKnownAuraCount(attachmentCounts[0]);
-                target.setLastKnownEquipmentCount(attachmentCounts[1]);
+                recordLastKnownAttachmentCounts(gameData, target);
                 if (gameQueryService.hasKeyword(gameData, target, Keyword.LIFELINK)) {
                     // Lifelink granted by an attachment falls off with it, so the permanent's last known
                     // information keeps it for damage its leave-the-battlefield ability deals.

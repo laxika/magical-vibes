@@ -11087,8 +11087,15 @@ public class SpellCastingService {
         if (targetId != null && targetIds.isEmpty() && spellEffects.stream().anyMatch(effect ->
                 effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
             Zone flashbackTargetZone = gameData.findExiledCard(targetId) != null ? Zone.EXILE : Zone.GRAVEYARD;
-            targetLegalityService.validateEffectTargetInZone(gameData, card, spellEffects,
-                    targetId, flashbackTargetZone, effectiveXValue, playerId);
+            if (flashbackTargetZone == Zone.GRAVEYARD && card.getMaxTargets() > 0) {
+                // Mixed graveyard + permanent targeting: the permanent group is chosen separately (and may be
+                // left empty), so only the graveyard-targeting effects are validated against this target.
+                targetLegalityService.validateGraveyardEffectTargetOnly(gameData, card, spellEffects,
+                        targetId, effectiveXValue, playerId);
+            } else {
+                targetLegalityService.validateEffectTargetInZone(gameData, card, spellEffects,
+                        targetId, flashbackTargetZone, effectiveXValue, playerId);
+            }
         }
         if (additionalCosts.discardXCardsCost() != null) {
             additionalSpellCostService.validateDiscardXCardsCost(gameData, player, castHalf,
@@ -16619,6 +16626,7 @@ public class SpellCastingService {
                                 && castingPermissionService.hasGraveyardPlayPermission(gameData, card, playerId))
                         || castingPermissionService.findGraveyardCastFilterPermission(gameData, card, playerId)
                                 .isPresent()
+                        || castingPermissionService.canCastViaFilteredGraveyardPermission(gameData, playerId, card)
                         || castingPermissionService.hasGrantedGraveyardCardCastPermission(gameData, card, playerId))) {
                     return new GraveyardCardLocation(graveyard, i);
                 }

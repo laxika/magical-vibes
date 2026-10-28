@@ -41,7 +41,17 @@ public class ChooseAttackTargetsForCreatedTokensEffectHandler implements NormalE
      */
     public void createdTokensAttack(GameData gameData, StackEntry entry, UUID controllerId, int createdFromIndex,
                                     boolean sacrificeAtEndStep) {
-        var step = new ChooseAttackTargetsForCreatedTokensEffect(controllerId, createdFromIndex, sacrificeAtEndStep);
+        createdTokensAttack(gameData, entry, controllerId, createdFromIndex, sacrificeAtEndStep, null);
+    }
+
+    /**
+     * As {@link #createdTokensAttack(GameData, StackEntry, UUID, int, boolean)}, but when {@code attackTargetId}
+     * is set every created creature token attacks that player or permanent without a choice.
+     */
+    public void createdTokensAttack(GameData gameData, StackEntry entry, UUID controllerId, int createdFromIndex,
+                                    boolean sacrificeAtEndStep, UUID attackTargetId) {
+        var step = new ChooseAttackTargetsForCreatedTokensEffect(controllerId, createdFromIndex, sacrificeAtEndStep,
+                attackTargetId);
         if (entry.getResolvingEffectIndex() >= 0) {
             entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(step));
         } else {
@@ -70,6 +80,12 @@ public class ChooseAttackTargetsForCreatedTokensEffectHandler implements NormalE
                 token.enterAttacking(true);
                 attackingTokenIds.add(token.getId());
             }
+        }
+        if (step.attackTargetId() != null) {
+            for (UUID tokenId : attackingTokenIds) {
+                gameQueryService.findPermanentById(gameData, tokenId).setAttackTarget(step.attackTargetId());
+            }
+            return;
         }
         chooseAttackTargets(gameData, controllerId, attackingTokenIds);
     }

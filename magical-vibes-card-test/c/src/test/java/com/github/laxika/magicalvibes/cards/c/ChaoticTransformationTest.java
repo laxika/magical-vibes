@@ -67,7 +67,7 @@ class ChaoticTransformationTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(skipped, revealed);
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getOriginalCard() == revealed);
-        assertThat(gd.stack).isEmpty();
+        assertThat(gd.stack).hasSize(1);
         harness.handleMayAbilityChosen(player2, true);
 
         Permanent entered = gd.playerBattlefields.get(player2.getId()).stream()

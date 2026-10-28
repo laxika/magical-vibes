@@ -3014,16 +3014,19 @@ public class StepTriggerService {
     }
 
     /**
-     * Puts the opening-hand reveal triggers of the active player onto the stack at that player's
-     * first upkeep ("at the beginning of your first upkeep"). Each trigger is consumed once, so a
-     * non-starting player's trigger waits for their own first upkeep.
+     * Puts pending opening-hand reveal triggers onto the stack. "At the beginning of the first upkeep"
+     * (the Chancellors) fires at the first upkeep of the game whichever player revealed the card, so the
+     * first upkeep drains all of those; "at the beginning of your first upkeep" (Sphinx of Foresight) waits
+     * for the revealing player's own first upkeep. The active player's triggers go on the stack first (APNAP).
      */
     private void handleOpeningHandUpkeepTriggers(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
-        for (OpeningHandRevealTrigger trigger : List.copyOf(gameData.openingHandUpkeepTriggers)) {
-            if (!trigger.revealingPlayerId().equals(activePlayerId)) {
-                continue;
-            }
+        List<OpeningHandRevealTrigger> due = new ArrayList<>(gameData.openingHandUpkeepTriggers.stream()
+                .filter(trigger -> !trigger.revealersFirstUpkeep()
+                        || trigger.revealingPlayerId().equals(activePlayerId))
+                .toList());
+        due.sort(java.util.Comparator.comparing(trigger -> !trigger.revealingPlayerId().equals(activePlayerId)));
+        for (OpeningHandRevealTrigger trigger : due) {
             gameData.openingHandUpkeepTriggers.remove(trigger);
             gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                     trigger.sourceCard(), trigger.revealingPlayerId(),

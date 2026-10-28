@@ -72,7 +72,7 @@ class CryptCreeperTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null, Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Ability requires a target");
+                .hasMessageContaining("Must select graveyard targets");
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creeper);
         harness.assertNotInGraveyard(player1, "Crypt Creeper");

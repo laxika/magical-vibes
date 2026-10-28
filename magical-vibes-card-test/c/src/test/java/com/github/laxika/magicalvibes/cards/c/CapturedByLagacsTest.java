@@ -118,8 +118,9 @@ class CapturedByLagacsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0,
-                List.of(enchanted.getId(), supportTarget.getId())))
+        // Cast through the engine directly: the harness's castEnchantment would move the extra id to the ETB trigger.
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(enchanted.getId(), supportTarget.getId()), List.of(), false, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 

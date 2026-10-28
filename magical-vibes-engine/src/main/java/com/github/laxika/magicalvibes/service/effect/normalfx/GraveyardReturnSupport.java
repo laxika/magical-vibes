@@ -2239,6 +2239,9 @@ public class GraveyardReturnSupport {
             int counters = gameQueryService.replaceCounters(gameData, permanent, controllerId,
                     enterWithCounter, enterWithCounterAmount, controllerId);
             permanent.setCounterCount(enterWithCounter, counters);
+            if (counters > 0) {
+                permanent.setCounterTimestamp(enterWithCounter, gameData.nextTimestamp());
+            }
         }
         if (enterTapped) {
             permanent.tap();

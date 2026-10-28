@@ -42,7 +42,7 @@ class CryptolithRiteTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid ability index");
+                .hasMessageContaining("Permanent has no activated ability");
     }
 
     @Test
@@ -53,7 +53,7 @@ class CryptolithRiteTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid ability index");
+                .hasMessageContaining("Permanent has no activated ability");
     }
 
     @Test
@@ -82,7 +82,7 @@ class CryptolithRiteTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid ability index");
+                .hasMessageContaining("Permanent has no activated ability");
     }
 
     @ParameterizedTest

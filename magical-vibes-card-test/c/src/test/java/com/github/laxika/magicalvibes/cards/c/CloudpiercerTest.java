@@ -57,15 +57,15 @@ class CloudpiercerTest extends BaseCardTest {
     }
 
     @Test
-    void acceptingWithEmptyHandDoesNotDraw() {
+    void emptyHandOffersNoChoiceAndDoesNotDraw() {
         Forest drawn = new Forest();
         Permanent cloudpiercer = addCreatureReady(player1, new Cloudpiercer());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawn));
 
         triggerMutation(cloudpiercer);
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();

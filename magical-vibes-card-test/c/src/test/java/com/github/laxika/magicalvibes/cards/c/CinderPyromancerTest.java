@@ -66,8 +66,8 @@ class CinderPyromancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities(); // resolve untap trigger, which asks the may choice
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve untap trigger
 
         assertThat(pyromancer.isTapped()).isFalse();
     }
@@ -81,6 +81,7 @@ class CinderPyromancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities(); // resolve untap trigger, which asks the may choice
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(pyromancer.isTapped()).isTrue();
@@ -128,11 +129,12 @@ class CinderPyromancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve untap trigger, which asks the may choice
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(pyromancer.isTapped()).isFalse();
-        harness.assertNotOnBattlefield(player1, "Duergar Hedge-Mage");
+        harness.assertOnBattlefield(player1, "Duergar Hedge-Mage");
     }
 
     @Test
@@ -146,6 +148,7 @@ class CinderPyromancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities(); // resolve untap trigger, which asks the may choice
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

@@ -182,10 +182,13 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         int createdFromIndex = entry.getCreatedPermanentIds().size();
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(gameData, controllerId,
                 bindDeathReturn(e, entry), amount, entry.getCard().getSetCode(), power, toughness);
-        if (e.tappedAndAttacking() && controllerId.equals(gameData.activePlayerId)
+        // The tokens' controller may differ from the one that created them (Crafty Cutpurse); only the active
+        // player's tokens attack, and their controller chooses what each one attacks once creation has finished (CR 508.4).
+        UUID tokenController = createdIds.isEmpty()
+                ? controllerId : gameQueryService.findPermanentController(gameData, createdIds.getFirst());
+        if (e.tappedAndAttacking() && tokenController.equals(gameData.activePlayerId)
                 && gameData.currentStep != null && gameData.currentStep.isCombatPhase()) {
-            // Their controller chooses what each one attacks once the ordered creation has finished (CR 508.4).
-            attackTargetsHandler.createdTokensAttack(gameData, entry, controllerId, createdFromIndex, false);
+            attackTargetsHandler.createdTokensAttack(gameData, entry, tokenController, createdFromIndex, false);
         }
         entry.getCreatedPermanentIds().addAll(createdIds);
         List<com.github.laxika.magicalvibes.model.action.DelayedPermanentAction> endOfCombatExiles =

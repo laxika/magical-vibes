@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -576,6 +577,13 @@ public class GameViewProjectionFactory {
         for (UUID pid : data.orderedPlayerIds) {
             List<Card> deck = data.playerDecks.get(pid);
             if (pid.equals(viewerId) && castingPermissionService.mayLookAtOwnLibraryTop(data, pid)) {
+                revealedPlayerIds.add(pid);
+            }
+            // A card whose own static ability lets it be cast from the top of its owner's library also lets its
+            // owner look at it there (Chittering Illuminator, Pearl Lake Warden; one ability, CR 113.6b).
+            if (pid.equals(viewerId) && deck != null && !deck.isEmpty()
+                    && deck.getFirst().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(AllowCastSourceCardFromTopOfLibraryEffect.class::isInstance)) {
                 revealedPlayerIds.add(pid);
             }
             if (pid.equals(viewerId)

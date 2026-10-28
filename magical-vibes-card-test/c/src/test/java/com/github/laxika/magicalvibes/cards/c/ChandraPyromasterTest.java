@@ -191,7 +191,7 @@ class ChandraPyromasterTest extends BaseCardTest {
     }
 
     @Test
-    void creatureStillCannotBlockWhenTargetPlaneswalkerLeaves() {
+    void creatureIsUnaffectedWhenTargetPlaneswalkerLeaves() {
         addReadyChandra(player1, 4);
         Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceMemoryAdept());
         jace.setCounterCount(CounterType.LOYALTY, 2);
@@ -205,7 +205,9 @@ class ChandraPyromasterTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Jace, Memory Adept");
         harness.passBothPriorities();
 
-        assertThat(creature.isCantBlockThisTurn()).isTrue();
+        // "That planeswalker's controller" needs information about the now-illegal planeswalker target, which
+        // the ability fails to determine (CR 608.2b), so the creature is no longer a legal target.
+        assertThat(creature.isCantBlockThisTurn()).isFalse();
     }
 
     @Test

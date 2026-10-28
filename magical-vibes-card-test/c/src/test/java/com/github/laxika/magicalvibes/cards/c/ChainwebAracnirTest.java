@@ -61,10 +61,11 @@ class ChainwebAracnirTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        gs.playFlashbackSpell(gd, player1, 0, null, target.getId(), List.of(), List.of(1, 2, 3, 4), null);
+        gs.playFlashbackSpell(gd, player1, 0, null, null, List.of(), List.of(1, 2, 3, 4), null);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrderElementsOf(otherCards);
 
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Cloud Sprite");
@@ -115,13 +116,14 @@ class ChainwebAracnirTest extends BaseCardTest {
                 new ChainwebAracnir(), new ChainwebAracnir(), new ChainwebAracnir()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
-        gs.playFlashbackSpell(gd, player1, 0, null, target.getId(), List.of(), List.of(1, 2, 3, 4), null);
+        gs.playFlashbackSpell(gd, player1, 0, null, null, List.of(), List.of(1, 2, 3, 4), null);
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Chainweb Aracnir")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         harness.assertOnBattlefield(player2, "Vexing Gull");
 
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Vexing Gull");

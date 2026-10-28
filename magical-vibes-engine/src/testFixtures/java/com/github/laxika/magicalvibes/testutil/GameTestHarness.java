@@ -2122,10 +2122,10 @@ public class GameTestHarness {
 
         TurnStep stepBefore = gameData.currentStep;
         int stackSizeBefore = gameData.stack.size();
-        StackEntry topBefore = gameData.stack.isEmpty() ? null : gameData.stack.getLast();
+        List<StackEntry> stackBefore = List.copyOf(gameData.stack);
 
         if (gameData.orderedPlayerIds.size() > 2) {
-            passEveryPlayerOnce(stepBefore, stackSizeBefore, topBefore);
+            passEveryPlayerOnce(stepBefore, stackSizeBefore, stackBefore);
             return;
         }
 
@@ -2134,7 +2134,7 @@ public class GameTestHarness {
         // After auto-pass rework, the first pass may trigger an auto-pass cascade
         // that handles the second player too (advancing the step or resolving the stack).
         // Also stop if the game entered an awaiting-input state (e.g. may ability prompt).
-        if (priorityRoundEnded(stepBefore, stackSizeBefore, topBefore)) {
+        if (priorityRoundEnded(stepBefore, stackSizeBefore, stackBefore)) {
             return;
         }
 
@@ -2145,23 +2145,23 @@ public class GameTestHarness {
      * Passes priority for each player of a game with more than two players, in turn order starting
      * with the player holding priority (CR 117.3d), until the round ends.
      */
-    private void passEveryPlayerOnce(TurnStep stepBefore, int stackSizeBefore, StackEntry topBefore) {
+    private void passEveryPlayerOnce(TurnStep stepBefore, int stackSizeBefore, List<StackEntry> stackBefore) {
         for (int passes = 0; passes < gameData.orderedPlayerIds.size(); passes++) {
             UUID holderId = gameData.currentPriorityPlayerId();
             if (holderId == null) {
                 return;
             }
             gameService.passPriority(gameData, playerById(holderId));
-            if (priorityRoundEnded(stepBefore, stackSizeBefore, topBefore)) {
+            if (priorityRoundEnded(stepBefore, stackSizeBefore, stackBefore)) {
                 return;
             }
         }
     }
 
-    private boolean priorityRoundEnded(TurnStep stepBefore, int stackSizeBefore, StackEntry topBefore) {
+    private boolean priorityRoundEnded(TurnStep stepBefore, int stackSizeBefore, List<StackEntry> stackBefore) {
         return gameData.status != GameStatus.RUNNING
                 || gameData.currentStep != stepBefore || gameData.stack.size() != stackSizeBefore
-                || (!gameData.stack.isEmpty() && gameData.stack.getLast() != topBefore)
+                || gameData.stack.stream().anyMatch(entry -> stackBefore.stream().noneMatch(before -> before == entry))
                 || gameData.interaction.isAwaitingInput();
     }
 

@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class CoerciveImpetus extends Card {
 
     public CoerciveImpetus() {
+        // "Whenever enchanted creature attacks, you draw ..." is the Aura's own ability, so "you" is the Aura's controller.
+        setAttackTriggerOwnedByAura(true);
+
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.STATIC, new GoadEquippedCreatureEffect());

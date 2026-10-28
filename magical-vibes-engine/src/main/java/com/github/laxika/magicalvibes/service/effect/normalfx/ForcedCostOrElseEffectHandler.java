@@ -1054,7 +1054,9 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
 
     private UUID resolvePayer(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {
         if (effect.payerIsEnchantedController()) {
-            return entry.getTargetId();
+            // "That player" on an each-phase trigger that targets nothing (Cheering Crowd's each-precombat-main
+            // trigger) is the active player recorded on the entry rather than a stack target.
+            return entry.getTargetId() != null ? entry.getTargetId() : entry.getActivePlayerId();
         }
         if (effect.payerIsDefendingPlayer()) {
             UUID attackedTargetId = entry.getAttackedTargetId();

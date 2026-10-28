@@ -127,6 +127,7 @@ class ContentiousPlanTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMultiplePermanentsChosen(player1, List.of(kefnet.getId()));
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Contentious Plan");
         harness.assertInGraveyard(player1, "God-Eternal Kefnet");

@@ -62,8 +62,14 @@ public class CreateTokenForTriggeringPlayerEffectHandler implements NormalEffect
                 gameData, playerId, e.token(), amount, entry.getCard().getSetCode(), power, toughness);
         entry.getCreatedPermanentIds().addAll(createdIds);
         if (e.token().tappedAndAttacking()) {
-            // Their controller chooses what each one attacks once the ordered creation has finished (CR 508.4).
-            attackTargetsHandler.createdTokensAttack(gameData, entry, playerId, createdFromIndex, false);
+            if (!e.attacking()) {
+                // Their controller chooses what each one attacks once the ordered creation has finished (CR 508.4).
+                attackTargetsHandler.createdTokensAttack(gameData, entry, playerId, createdFromIndex, false);
+            } else if (entry.getAttackedTargetId() != null) {
+                // Each one attacks the opponent the triggering attack was aimed at, with no choice.
+                attackTargetsHandler.createdTokensAttack(gameData, entry, playerId, createdFromIndex, false,
+                        entry.getAttackedTargetId());
+            }
         }
     }
 }

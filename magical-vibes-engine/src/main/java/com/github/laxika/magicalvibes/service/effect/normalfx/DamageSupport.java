@@ -786,6 +786,16 @@ public class DamageSupport {
     }
 
     public boolean isSourcePermanentPreventedFromDealingDamage(GameData gameData, StackEntry entry) {
+        return isSourcePermanentPreventedFromDealingDamage(gameData, entry, true);
+    }
+
+    /**
+     * @param includeGlobalCreaturePrevention {@code false} leaves out "prevent all damage dealt by creatures"
+     *        effects, which carry their own rider (Chant of Vitu-Ghazi's life gain) and are applied by their own
+     *        rule rather than as a plain source prevention
+     */
+    public boolean isSourcePermanentPreventedFromDealingDamage(GameData gameData, StackEntry entry,
+                                                               boolean includeGlobalCreaturePrevention) {
         if (!gameQueryService.isDamagePreventable(gameData) || entry.getSourcePermanentId() == null) return false;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {
@@ -800,7 +810,7 @@ public class DamageSupport {
         }
         if (source != null && (gameQueryService.isPreventedFromDealingDamage(gameData, source)
                 || gameQueryService.isDamageFromPermanentSourcePrevented(gameData, source)
-                || gameQueryService.isDamageByCreaturePrevented(gameData, source)
+                || (includeGlobalCreaturePrevention && gameQueryService.isDamageByCreaturePrevented(gameData, source))
                 || gameData.isPreventedFromDealingDamage(entry.getSourcePermanentId()))) return true;
         // Defang / Heart of Light: an aura can blank all damage dealt by the enchanted permanent,
         // including damage from its own activated and triggered abilities.

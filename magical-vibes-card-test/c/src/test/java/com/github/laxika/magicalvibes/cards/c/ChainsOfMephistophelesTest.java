@@ -215,8 +215,7 @@ class ChainsOfMephistophelesTest extends BaseCardTest {
         assertThat(gd.currentStep).isEqualTo(TurnStep.DRAW);
         drawCard(player1);
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId()))

@@ -33,6 +33,6 @@ public class CombatCalligrapher extends Card {
                         CardType.CREATURE, 1, "Inkling", 2, 1, CardColor.WHITE,
                         Set.of(CardColor.WHITE, CardColor.BLACK), List.of(CardSubtype.INKLING),
                         Set.of(Keyword.FLYING), Set.of(), true, false, Map.of(), List.of(),
-                        false, false, false, 0, Set.of()))));
+                        false, false, false, 0, Set.of()), true)));
     }
 }

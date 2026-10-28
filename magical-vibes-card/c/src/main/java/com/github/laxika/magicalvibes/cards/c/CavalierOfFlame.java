@@ -48,6 +48,7 @@ public class CavalierOfFlame extends Card {
                 new MassDamageEffect(landsInGraveyard, false, true,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsPlaneswalkerPredicate(),
-                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))))));
+                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))))
+                        .withFilterAppliedToPlaneswalkers()));
     }
 }

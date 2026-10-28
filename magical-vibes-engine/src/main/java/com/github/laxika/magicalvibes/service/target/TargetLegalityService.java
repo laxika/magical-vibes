@@ -4509,6 +4509,20 @@ public class TargetLegalityService {
             return filters;
         }
 
+        // An activated ability whose assignment targets are not bound to any card-level target group
+        // (Captain America's Throw beside the card's own Equipment target) must not inherit the
+        // card's group filters.
+        Card abilityCard = entry.getTargetingCard();
+        if (entry.isTargetIdsFromAssignments()
+                && entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                && abilityCard != null
+                && entry.getEffectsToResolve().stream().noneMatch(e -> abilityCard.getEffectTargetIndex(e) >= 0)) {
+            for (int i = 0; i < targetCount; i++) {
+                filters.add(null);
+            }
+            return filters;
+        }
+
         Card card = entry.getTargetingCard();
         if (card != null) {
             int firstFlatGroup = entry.isPrimaryTargetStoredSeparately() ? 1 : 0;

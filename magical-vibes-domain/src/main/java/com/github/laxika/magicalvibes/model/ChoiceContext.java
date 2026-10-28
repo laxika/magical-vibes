@@ -1411,7 +1411,15 @@ public sealed interface ChoiceContext {
     record ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes,
                               int maxCount, boolean drawForHandExiled,
                               com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
-                              String sourceSetCode) implements ChoiceContext {
+                              String sourceSetCode, boolean findAllCards) implements ChoiceContext {
+
+        public ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes,
+                                 int maxCount, boolean drawForHandExiled,
+                                 com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
+                                 String sourceSetCode) {
+            this(targetPlayerId, controllerId, excludedTypes, maxCount, drawForHandExiled, tokenTemplate,
+                    sourceSetCode, false);
+        }
 
         public ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes) {
             this(targetPlayerId, controllerId, excludedTypes, Integer.MAX_VALUE, false, null, null);

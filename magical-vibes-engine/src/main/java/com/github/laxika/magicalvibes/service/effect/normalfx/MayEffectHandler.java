@@ -173,6 +173,13 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        // An "up to N" target choice with no creature chosen (CR 601.2c) leaves nothing to tap, so no choice is offered.
+        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect tap
+                && tap.scope() == com.github.laxika.magicalvibes.model.effect.TapUntapScope.TARGET
+                && targetId == null && entry.getTargetIds().isEmpty()) {
+            return;
+        }
+
         if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTriggeringPermanentEffect
                 && entry.getDeclaredTargetIds().isEmpty() && targetId == null) {
             return;

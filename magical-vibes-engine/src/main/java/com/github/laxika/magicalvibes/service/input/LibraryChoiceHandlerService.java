@@ -5562,7 +5562,8 @@ public class LibraryChoiceHandlerService {
 
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.LibraryCastSpellTarget(card, ctx.controllerId(), spellEffects,
-                            spellType, null, ctx.discoverValue(), null, ctx.sourceZone()));
+                            spellType, null, ctx.discoverValue(),
+                            searchedCardOwnerOverride(gameData, card, ctx.controllerId()), ctx.sourceZone()));
             playerInputService.beginPermanentChoice(gameData, ctx.controllerId(), validTargets,
                     "Choose a target for " + card.getName() + ".");
 
@@ -5578,6 +5579,7 @@ public class LibraryChoiceHandlerService {
                 spellEffects, effectiveXValue, (UUID) null, null
         );
         modalSpell.setSourceZone(ctx.sourceZone());
+        modalSpell.setOwnerIdOverride(searchedCardOwnerOverride(gameData, card, ctx.controllerId()));
         gameData.stack.add(modalSpell);
         gameData.recordSpellCast(ctx.controllerId(), card);
         gameData.priorityPassedBy.clear();

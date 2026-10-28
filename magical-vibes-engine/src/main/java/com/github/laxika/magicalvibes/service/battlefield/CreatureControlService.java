@@ -302,6 +302,9 @@ public class CreatureControlService {
                         ? new RingState(ringState.level(), null)
                         : ringState);
         queueSelfControlLossTriggers(gameData, permanent, current);
+        if (triggerCollectionService != null) {
+            triggerCollectionService.processDelayedTargetWhenSourceLosesControl(gameData, permanent, current);
+        }
         boolean revertedToDefault = gameData.newestControlEffectFor(permanent.getId()) == null;
         queueControlLossUnattachTriggers(gameData, permanent, current);
 

@@ -93,9 +93,10 @@ class ConspiracyUnravelerTest extends BaseCardTest {
         harness.setGraveyard(player1, evidence);
         harness.setHand(player1, List.of(new CrimestopperSprite()));
 
-        gs.playCard(gd, player1, 0, 0, target.getId(), null,
+        gs.playCard(gd, player1, 0, 0, null, null,
                 List.of(), List.of(), false, null, null, null, null, List.of(0, 1));
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
