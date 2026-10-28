@@ -109,6 +109,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyRemoveKeywordEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -2329,12 +2330,20 @@ public class CombatAttackService {
             Permanent attacker = battlefield.get(idx);
             for (Permanent perm : battlefield) {
                 List<CardEffect> perCreatureAttackEffects = new ArrayList<>();
-                if (!perm.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
-                    perCreatureAttackEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS));
+                List<CardEffect> printedAttackEffects = LayerSystemService.currentCard(gameData, perm)
+                        .getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS);
+                if (!printedAttackEffects.isEmpty() && !perm.isFaceDown()
+                        && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+                    perCreatureAttackEffects.addAll(printedAttackEffects);
                 }
-                if (!gameQueryService.hasLostAllAbilities(gameData, perm)) {
-                    perCreatureAttackEffects.addAll(perm.getTemporaryTriggeredEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS));
-                    perCreatureAttackEffects.addAll(perm.getPersistentTriggeredEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS));
+                List<CardEffect> temporaryAttackEffects =
+                        perm.getTemporaryTriggeredEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS);
+                List<CardEffect> persistentAttackEffects =
+                        perm.getPersistentTriggeredEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS);
+                if ((!temporaryAttackEffects.isEmpty() || !persistentAttackEffects.isEmpty())
+                        && !gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                    perCreatureAttackEffects.addAll(temporaryAttackEffects);
+                    perCreatureAttackEffects.addAll(persistentAttackEffects);
                 }
                 List<CardEffect> grantedAttackEffects = grantedTriggeredAbilitySupport.grantedTriggeredEffects(
                         gameData, perm, EffectSlot.ON_ALLY_CREATURE_ATTACKS);

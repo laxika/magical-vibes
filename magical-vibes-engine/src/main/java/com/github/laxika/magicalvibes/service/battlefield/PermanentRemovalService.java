@@ -80,6 +80,7 @@ import java.util.Optional;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -995,25 +996,30 @@ public class PermanentRemovalService {
     private Set<CardSubtype> effectiveCreatureSubtypesAtDeath(GameData gameData, Permanent permanent) {
         Permanent subtypeSource = gameData.simultaneousDyingPermanents.getOrDefault(
                 permanent.getId(), permanent);
-        Set<CardSubtype> subtypes = new java.util.HashSet<>(
-                gameQueryService.effectiveCreatureSubtypes(gameData, subtypeSource));
-        for (CardSubtype subtype : CardSubtype.values()) {
-            if (gameQueryService.isCreatureSubtype(subtype)
-                    && gameQueryService.hasEffectiveSubtype(gameData, subtypeSource, subtype)) {
-                subtypes.add(subtype);
+        return gameQueryService.withQueryScope(gameData, () -> {
+            Set<CardSubtype> subtypes = new java.util.HashSet<>(
+                    gameQueryService.effectiveCreatureSubtypes(gameData, subtypeSource));
+            for (CardSubtype subtype : CardSubtype.values()) {
+                if (gameQueryService.isCreatureSubtype(subtype)
+                        && gameQueryService.hasEffectiveSubtype(gameData, subtypeSource, subtype)) {
+                    subtypes.add(subtype);
+                }
             }
-        }
-        return Set.copyOf(subtypes);
+            return Set.copyOf(subtypes);
+        });
     }
 
     void snapshotEffectiveSubtypes(GameData gameData, Permanent permanent) {
-        Set<CardSubtype> subtypes = java.util.EnumSet.noneOf(CardSubtype.class);
-        for (CardSubtype subtype : CardSubtype.values()) {
-            if (gameQueryService.hasEffectiveSubtype(gameData, permanent, subtype)) {
-                subtypes.add(subtype);
+        Set<CardSubtype> subtypes = gameQueryService.withQueryScope(gameData, () -> {
+            Set<CardSubtype> effective = java.util.EnumSet.noneOf(CardSubtype.class);
+            for (CardSubtype subtype : CardSubtype.values()) {
+                if (gameQueryService.hasEffectiveSubtype(gameData, permanent, subtype)) {
+                    effective.add(subtype);
+                }
             }
-        }
-        permanent.setLastKnownSubtypes(Set.copyOf(subtypes));
+            return Set.copyOf(effective);
+        });
+        permanent.setLastKnownSubtypes(subtypes);
     }
 
     private boolean tryApplyDyingCreatureReturnToHandReplacement(GameData gameData, Permanent target) {
@@ -2246,17 +2252,26 @@ public class PermanentRemovalService {
      * that creature's controller loses N life" (The Doctor's Tomb) would sacrifice instead (CR 614.6) if
      * {@code dying} died now with {@code chosen} as its controller's choice ({@code null} when nothing was chosen,
      * then the plane's is the replacement when it is its only option), or {@code null}. Its own death replacements
-     * are chosen inside the same replacement process, before anything happens (CR 616.1f).
+     * are chosen inside the same replacement process, before anything happens (CR 616.1f). {@code options}
+     * supplies {@code dying}'s death replacement options and is only computed when such a plane is face up.
      */
     public Permanent planarLifeLossSacrifice(GameData gameData, Permanent dying, UUID controllerId,
-                                             DeathExileReplacement chosen, List<DeathExileReplacement> options) {
-        PlanarCreatureExileReplacement planar = gameQueryService.isCreature(gameData, dying)
-                ? planarCreatureExileReplacement(gameData) : null;
-        boolean planarApplies = chosen != null
-                ? chosen.kind() == DeathExileReplacement.Kind.PLANAR
-                : options.size() == 1 && options.getFirst().kind() == DeathExileReplacement.Kind.PLANAR;
-        if (planar == null || !planarApplies || controllerId == null || planar.effect().lifeLoss() <= 0
-                || !gameQueryService.canPlayerLoseLife(gameData, controllerId)) {
+                                             DeathExileReplacement chosen,
+                                             Supplier<List<DeathExileReplacement>> options) {
+        PlanarCreatureExileReplacement planar = planarCreatureExileReplacement(gameData);
+        if (planar == null || controllerId == null || planar.effect().lifeLoss() <= 0
+                || !gameQueryService.isCreature(gameData, dying)) {
+            return null;
+        }
+        boolean planarApplies;
+        if (chosen != null) {
+            planarApplies = chosen.kind() == DeathExileReplacement.Kind.PLANAR;
+        } else {
+            List<DeathExileReplacement> dyingOptions = options.get();
+            planarApplies = dyingOptions.size() == 1
+                    && dyingOptions.getFirst().kind() == DeathExileReplacement.Kind.PLANAR;
+        }
+        if (!planarApplies || !gameQueryService.canPlayerLoseLife(gameData, controllerId)) {
             return null;
         }
         var sacrifice = lifeSupport.lifeLossSacrifice(gameData, controllerId);
@@ -2802,14 +2817,15 @@ public class PermanentRemovalService {
         }
 
         if (!dyingPermanent.isLosesAllAbilitiesUntilEndOfTurn()
-                && hasOwnSubtypeExileReplacement(dyingPermanent, dyingSubtypes)) {
+                && hasOwnSubtypeExileReplacement(dyingPermanent.getCard(), dyingSubtypes)) {
             return true;
         }
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(dyingControllerId);
         if (battlefield != null && battlefield.stream()
-                .anyMatch(source -> !gameQueryService.hasLostPrintedAbilities(gameData, source)
-                        && hasOwnSubtypeExileReplacement(source, dyingSubtypes))) {
+                .anyMatch(source -> hasOwnSubtypeExileReplacement(
+                        LayerSystemService.currentCard(gameData, source), dyingSubtypes)
+                        && !gameQueryService.hasLostPrintedAbilities(gameData, source))) {
             return true;
         }
 
@@ -2817,7 +2833,7 @@ public class PermanentRemovalService {
             UUID sourceControllerId = gameData.simultaneousDyingPermanentControllers.get(entry.getKey());
             if (dyingControllerId.equals(sourceControllerId)
                     && !entry.getValue().isLosesAllAbilitiesUntilEndOfTurn()
-                    && hasOwnSubtypeExileReplacement(entry.getValue(), dyingSubtypes)) {
+                    && hasOwnSubtypeExileReplacement(entry.getValue().getCard(), dyingSubtypes)) {
                 return true;
             }
         }
@@ -2861,8 +2877,8 @@ public class PermanentRemovalService {
     private record NontokenCreatureDyingExileReplacement(Card sourceCard, UUID sourcePermanentId) {
     }
 
-    private boolean hasOwnSubtypeExileReplacement(Permanent source, Set<CardSubtype> dyingSubtypes) {
-        return source.getCard().getEffects(EffectSlot.STATIC).stream()
+    private boolean hasOwnSubtypeExileReplacement(Card sourceCard, Set<CardSubtype> dyingSubtypes) {
+        return sourceCard.getEffects(EffectSlot.STATIC).stream()
                 .filter(ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect.class::isInstance)
                 .map(ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect.class::cast)
                 .anyMatch(effect -> dyingSubtypes.contains(effect.subtype()));
@@ -2975,16 +2991,16 @@ public class PermanentRemovalService {
     }
 
     private boolean hasControlledSourceExileReplacement(GameData gameData, Permanent effectSource) {
-        return !gameQueryService.hasLostAllAbilities(gameData, effectSource)
-                && effectSource.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect.class::isInstance);
+        return LayerSystemService.currentCard(gameData, effectSource).getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect.class::isInstance)
+                && !gameQueryService.hasLostAllAbilities(gameData, effectSource);
     }
 
     private boolean hasExileDamagedCreaturesInsteadOfDying(GameData gameData, Permanent permanent) {
         return permanent.isExileDamagedCreaturesInsteadOfDyingThisTurn()
-                || (!gameQueryService.hasLostAllAbilities(gameData, permanent)
-                && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(ExileCreaturesDamagedBySourceInsteadOfDyingEffect.class::isInstance));
+                || (LayerSystemService.currentCard(gameData, permanent).getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(ExileCreaturesDamagedBySourceInsteadOfDyingEffect.class::isInstance)
+                && !gameQueryService.hasLostAllAbilities(gameData, permanent));
     }
 
     private boolean auraOnSourceExilesDamagedCreatures(GameData gameData, UUID sourceId) {

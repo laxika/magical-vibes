@@ -73,6 +73,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 
 @Getter
@@ -1543,6 +1544,15 @@ public class Card {
 
     public List<EffectRegistration> getEffectRegistrations(EffectSlot slot) {
         return effectRegistrations.getOrDefault(slot, List.of());
+    }
+
+    /**
+     * Visits, in slot order, every slot that has held registered effects with how many it holds now,
+     * without touching the hundreds of slots that never had any — the cheap structural view the layer
+     * board-cache fingerprint hashes.
+     */
+    public void forEachEffectSlotSize(ObjIntConsumer<EffectSlot> visitor) {
+        effectRegistrations.forEach((slot, registrations) -> visitor.accept(slot, registrations.size()));
     }
 
     public void removeKeyword(Keyword keyword) {

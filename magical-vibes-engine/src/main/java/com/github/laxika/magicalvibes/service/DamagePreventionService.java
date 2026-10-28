@@ -2981,8 +2981,11 @@ public class DamagePreventionService {
 
         long totalReduction = 0;
         for (Permanent permanent : battlefield) {
-            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            List<CardEffect> statics = LayerSystemService.currentCard(gameData, permanent)
+                    .getEffects(EffectSlot.STATIC);
+            if (statics.stream().noneMatch(PreventDamageFromOpponentSourcesEffect.class::isInstance)
+                    || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
+            for (CardEffect effect : statics) {
                 if (effect instanceof PreventDamageFromOpponentSourcesEffect e
                         && (!toPermanent || e.includesPermanents())) {
                     totalReduction += e.amount();
@@ -3706,9 +3709,10 @@ public class DamagePreventionService {
     /** Whether Gisela-style effects halve damage to {@code recipientId}. */
     public boolean hasHalfDamagePrevention(GameData gameData, UUID recipientId) {
         return gameData.playerBattlefields.getOrDefault(recipientId, List.of()).stream()
-                .filter(permanent -> !gameQueryService.hasLostPrintedAbilities(gameData, permanent))
-                .anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(PreventHalfDamageToControllerAndTheirPermanentsEffect.class::isInstance));
+                .anyMatch(permanent -> LayerSystemService.currentCard(gameData, permanent)
+                        .getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(PreventHalfDamageToControllerAndTheirPermanentsEffect.class::isInstance)
+                        && !gameQueryService.hasLostPrintedAbilities(gameData, permanent));
     }
 
     /**
@@ -3757,10 +3761,10 @@ public class DamagePreventionService {
         if (protectedPlayerId == null || damagedPermanentId == null) return List.of();
         return gameData.playerBattlefields.getOrDefault(protectedPlayerId, List.of()).stream()
                 .filter(permanent -> !permanent.getId().equals(damagedPermanentId)
-                        && !gameQueryService.hasLostAllAbilities(gameData, permanent)
                         && gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
                         .anyMatch(effect -> effect instanceof RedirectPlayerDamageToSelfEffect redirect
-                                && redirect.includeOtherPermanents()))
+                                && redirect.includeOtherPermanents())
+                        && !gameQueryService.hasLostAllAbilities(gameData, permanent))
                 .toList();
     }
 

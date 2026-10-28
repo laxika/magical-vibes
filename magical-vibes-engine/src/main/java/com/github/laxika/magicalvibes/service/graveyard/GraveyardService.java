@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -1783,8 +1784,8 @@ public class GraveyardService {
         }
         for (UUID playerId : gameData.orderedPlayerIds) {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-                if (gameQueryService.hasLostPrintedAbilities(gameData, p)) continue;
-                if (exilesPermanentPlainly(gameData, p, battlefieldSnapshot)) {
+                if (exilesPermanentPlainly(gameData, p, LayerSystemService.currentCard(gameData, p),
+                        battlefieldSnapshot) && !gameQueryService.hasLostPrintedAbilities(gameData, p)) {
                     return true;
                 }
             }
@@ -1857,8 +1858,9 @@ public class GraveyardService {
         return false;
     }
 
-    private boolean exilesPermanentPlainly(GameData gameData, Permanent source, Permanent battlefieldSnapshot) {
-        for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+    private boolean exilesPermanentPlainly(GameData gameData, Permanent source, Card sourceCard,
+                                           Permanent battlefieldSnapshot) {
+        for (CardEffect effect : sourceCard.getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ExilePermanentsInsteadOfGraveyardEffect replacement
                     && !replacement.trackWithSource()
                     && !(replacement.excludeSource() && source.getId().equals(battlefieldSnapshot.getId()))
@@ -1913,8 +1915,8 @@ public class GraveyardService {
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (gameQueryService.hasLostPrintedAbilities(gameData, permanent)) continue;
-                if (exilesCardsOfColors(permanent, cardColors)) {
+                if (exilesCardsOfColors(LayerSystemService.currentCard(gameData, permanent), cardColors)
+                        && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                     return true;
                 }
             }
@@ -1923,15 +1925,15 @@ public class GraveyardService {
         // other's cards, even once an earlier member of the group has already left.
         for (Permanent permanent : gameData.simultaneousDyingPermanents.values()) {
             if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) continue;
-            if (exilesCardsOfColors(permanent, cardColors)) {
+            if (exilesCardsOfColors(permanent.getCard(), cardColors)) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean exilesCardsOfColors(Permanent permanent, Set<CardColor> cardColors) {
-        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+    private static boolean exilesCardsOfColors(Card card, Set<CardColor> cardColors) {
+        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
             if (effect instanceof GlobalColorGraveyardExileReplacement replacement
                     && cardColors.stream().anyMatch(replacement.colors()::contains)) {
                 return true;
@@ -2240,10 +2242,10 @@ public class GraveyardService {
 
     private boolean permanentExilesOwnCard(GameData gameData, Permanent permanent, Card card,
                                            boolean beingCycled) {
-        if (permanent.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+        if (permanent.isFaceDown()) {
             return false;
         }
-        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : LayerSystemService.currentCard(gameData, permanent).getEffects(EffectSlot.STATIC)) {
             if (!(effect instanceof OwnGraveyardExileReplacement replacement)) {
                 continue;
             }
@@ -2257,7 +2259,7 @@ public class GraveyardService {
                     && !predicateEvaluationService.matchesCardPredicate(card, replacement.filter(), null)) {
                 continue;
             }
-            return true;
+            return !gameQueryService.hasLostAllAbilities(gameData, permanent);
         }
         return false;
     }

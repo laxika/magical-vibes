@@ -693,7 +693,7 @@ public class DepartureService {
             }
             Permanent mastery = permanentRemovalService.planarLifeLossSacrifice(gameData, departing.permanent(),
                     departing.controllerId(), choosing.replacementAnswers().get(dyingId),
-                    permanentRemovalService.deathExileReplacementOptions(gameData, departing.permanent()));
+                    () -> permanentRemovalService.deathExileReplacementOptions(gameData, departing.permanent()));
             if (mastery == null || leavingIds.contains(mastery.getId())
                     || batch.replacementAnswers().containsKey(mastery.getId())
                     || batch.awaitingAnswerIds().contains(mastery.getId())) {

@@ -245,6 +245,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetRedirectionSupport;
 import com.github.laxika.magicalvibes.model.effect.MayFightTargetCreatureOnAllyCreatureEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
@@ -8148,9 +8149,10 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.AnyCreatureDealtDamage(
                 damagedCreature, damagedCreatureControllerId, damageDealt);
         gameData.forEachPermanent((playerId, perm) -> {
-            if (gameQueryService.hasLostAllAbilities(gameData, perm)) return;
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE);
+            List<CardEffect> effects = LayerSystemService.currentCard(gameData, perm)
+                    .getEffects(EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE);
             if (effects == null || effects.isEmpty()) return;
+            if (gameQueryService.hasLostAllAbilities(gameData, perm)) return;
 
             for (CardEffect effect : effects) {
                 var match = new TriggerMatchContext(gameData, perm, playerId, effect);
@@ -8559,10 +8561,12 @@ public class TriggerCollectionService {
         UUID controllerId = tappedPermanentControllerId;
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(controllerId)) return;
-            List<EffectRegistration> registrations = gameQueryService.hasLostPrintedAbilities(gameData, perm)
+            List<EffectRegistration> printed = LayerSystemService.currentCard(gameData, perm)
+                    .getEffectRegistrations(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED);
+            List<EffectRegistration> registrations = printed.isEmpty()
+                    || gameQueryService.hasLostPrintedAbilities(gameData, perm)
                     ? new ArrayList<>()
-                    : new ArrayList<>(perm.getCard().getEffectRegistrations(
-                    EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED));
+                    : new ArrayList<>(printed);
             perm.getTemporaryTriggeredEffects(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED).stream()
                     .map(EffectRegistration::new).forEach(registrations::add);
             perm.getPersistentTriggeredEffects(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED).stream()

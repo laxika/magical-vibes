@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.DamagePortion;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementCandidateSource;
 
@@ -182,8 +183,11 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
     private static Map<String, NumericInstance> globalMultipliers(GameData gameData, GameQueryService gameQueryService) {
         Map<String, NumericInstance> multipliers = new LinkedHashMap<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
-            if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) return;
-            collectGlobalMultipliers(gameData, permanent.getId().toString(), permanent.getCard(), multipliers);
+            if (permanent.isFaceDown()) return;
+            Card card = LayerSystemService.currentCard(gameData, permanent);
+            if (card.getEffects(EffectSlot.STATIC).stream().noneMatch(GlobalDamageMultiplyingEffect.class::isInstance)
+                    || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) return;
+            collectGlobalMultipliers(gameData, permanent.getId().toString(), card, multipliers);
         });
         if (gameData.planechase != null) {
             for (var plane : gameData.planechase.faceUp) {

@@ -5275,12 +5275,15 @@ public class GameQueryService {
 
     private List<CardEffect> staticEffectsIncludingTemporary(
             GameData gameData, Permanent permanent, UUID controllerId) {
-        if (permanent.isFaceDown() || hasLostPrintedAbilities(gameData, permanent)) {
+        if (permanent.isFaceDown()) {
             return List.of();
         }
         List<CardEffect> declaredEffects = new ArrayList<>(
-                permanent.getCard().getEffects(EffectSlot.STATIC));
+                LayerSystemService.currentCard(gameData, permanent).getEffects(EffectSlot.STATIC));
         declaredEffects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.STATIC));
+        if (declaredEffects.isEmpty() || hasLostPrintedAbilities(gameData, permanent)) {
+            return List.of();
+        }
         List<CardEffect> activeEffects = new ArrayList<>();
         for (CardEffect effect : declaredEffects) {
             collectActiveStaticEffects(gameData, permanent, controllerId, effect, activeEffects);
@@ -9782,13 +9785,15 @@ public class GameQueryService {
         int[] total = {0};
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent permanent : battlefield) {
-                if (hasLostAllAbilities(gameData, permanent)) {
-                    continue;
-                }
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                int prevented = 0;
+                for (CardEffect effect : LayerSystemService.currentCard(gameData, permanent)
+                        .getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof PreventFixedDamageFromSpellsEffect prevention) {
-                        total[0] += prevention.amount();
+                        prevented += prevention.amount();
                     }
+                }
+                if (prevented > 0 && !hasLostAllAbilities(gameData, permanent)) {
+                    total[0] += prevented;
                 }
             }
         });
@@ -12979,6 +12984,7 @@ public class GameQueryService {
                                          Class<? extends CardEffect> effectType) {
         UUID controllerId = findPermanentController(gameData, source.getId());
         if (controllerId == null || source.isFaceDown() || source.isStaticEffectSuppressed(effectType)
+                || LayerSystemService.currentCard(gameData, source).getEffects(EffectSlot.STATIC).isEmpty()
                 || hasLostPrintedAbilities(gameData, source)) return false;
         return source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .filter(effect -> !source.isStaticEffectSuppressed(effect.getClass()))

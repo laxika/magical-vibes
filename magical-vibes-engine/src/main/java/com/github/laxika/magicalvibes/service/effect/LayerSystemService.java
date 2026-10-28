@@ -548,6 +548,20 @@ public class LayerSystemService {
     }
 
     /**
+     * The card a battlefield permanent has as a layered pass would read it. Every pass first
+     * brings full-text copies in line with their controller's graveyard (see
+     * {@link #synchronizeFullTextCopies}); this does the same for {@code permanent} when it is
+     * one, so a scan can test printed effects before — and usually instead of — a layered
+     * ability-loss query without reading a stale card.
+     */
+    public static Card currentCard(GameData gameData, Permanent permanent) {
+        if (permanent.getFullTextCopyBaseCard() != null || hasFullTextCopyEffect(permanent.getCard())) {
+            synchronizeFullTextCopies(gameData);
+        }
+        return permanent.getCard();
+    }
+
+    /**
      * Keeps the mutable runtime identity used by the ordinary engine paths in sync with the
      * controller's current top creature card. The original card remains on the permanent so the
      * effect and the retained discard ability can be restored when the graveyard condition stops
@@ -884,14 +898,20 @@ public class LayerSystemService {
         h = mix(h, p.getLastChosenExiledCard() == null
                 ? 0 : System.identityHashCode(p.getLastChosenExiledCard()));
 
-        for (Map.Entry<CounterType, Integer> counter : p.getCounters().entrySet()) {
-            h = mix(h, counter.getKey().ordinal());
-            h = mix(h, counter.getValue());
+        // The counter maps are EnumMaps over every CounterType: iterating or hashing one walks the
+        // whole key range even when empty, so empty maps (the usual case) are skipped up front.
+        if (!p.getCounters().isEmpty()) {
+            for (Map.Entry<CounterType, Integer> counter : p.getCounters().entrySet()) {
+                h = mix(h, counter.getKey().ordinal());
+                h = mix(h, counter.getValue());
+            }
         }
-        h = mix(h, p.getLastCounterRemovalVersions().hashCode());
-        for (Map.Entry<CounterType, Long> timestamp : p.getCounterTimestamps().entrySet()) {
-            h = mix(h, timestamp.getKey().ordinal());
-            h = mix(h, timestamp.getValue());
+        h = mix(h, p.getLastCounterRemovalVersions().isEmpty() ? 0 : p.getLastCounterRemovalVersions().hashCode());
+        if (!p.getCounterTimestamps().isEmpty()) {
+            for (Map.Entry<CounterType, Long> timestamp : p.getCounterTimestamps().entrySet()) {
+                h = mix(h, timestamp.getKey().ordinal());
+                h = mix(h, timestamp.getValue());
+            }
         }
         h = mix(h, p.getPersistentPowerModifier());
         h = mix(h, p.getPowerModifier());
@@ -965,12 +985,12 @@ public class LayerSystemService {
         h = hashEnums(h, card.getKeywords());
         h = hashEnums(h, card.getAdditionalTypes());
         h = hashEnums(h, card.getSupertypes());
-        h = mix(h, card.getEffects(EffectSlot.STATIC).size());
-        // Chosen-as-enters protection is seeded from this slot in layer 6.
-        h = mix(h, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).size());
-        for (EffectSlot slot : EffectSlot.values()) {
-            h = mix(h, card.getEffects(slot).size());
-        }
+        // Every slot's size, the static slot and the layer-6 chosen-as-enters protection seed
+        // (ON_ENTER_BATTLEFIELD) included; slots that never held an effect are skipped.
+        long[] slotSizes = {h};
+        card.forEachEffectSlotSize((slot, size) ->
+                slotSizes[0] = mix(mix(slotSizes[0], slot.ordinal()), size));
+        h = slotSizes[0];
         h = mix(h, card.getActivatedAbilities().size());
         h = mix(h, card.getGraveyardActivatedAbilities().size());
         h = mix(h, card.getHandActivatedAbilities().size());

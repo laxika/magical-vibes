@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -350,9 +351,9 @@ public class AttackLegalityService {
         if (targetIsPlayer
                 && !gameData.playersWhoActedDuringTheirLastTurn.contains(targetId)
                 && gameData.anyPermanentMatches(permanent -> !permanent.isFaceDown()
-                && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)
-                && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect.class::isInstance))) {
+                && LayerSystemService.currentCard(gameData, permanent).getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect.class::isInstance)
+                && !gameQueryService.hasLostPrintedAbilities(gameData, permanent))) {
             return false;
         }
         // The protected player is the attacked player, or the controller of the attacked planeswalker.
@@ -477,8 +478,8 @@ public class AttackLegalityService {
             }
             for (Permanent source : battlefield) {
                 AttackDirection direction = chosenDirection(source);
-                if (source.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, source)
-                        || direction == null) {
+                if (direction == null || source.isFaceDown()
+                        || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
                     continue;
                 }
                 boolean hasRestriction = gameQueryService.getActiveStaticEffects(gameData, source).stream()
@@ -914,13 +915,17 @@ public class AttackLegalityService {
             // "Creatures you control attack each combat if able" (e.g. Hellraiser Goblin). A source that has
             // lost its printed abilities no longer imposes it.
             if (creatureControllerId != null && creatureControllerId.equals(playerId)
-                    && !permanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
-                count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    && !permanent.isFaceDown()) {
+                int imposed = (int) LayerSystemService.currentCard(gameData, permanent)
+                        .getEffects(EffectSlot.STATIC).stream()
                         .filter(e -> e instanceof MustAttackEffect mae
                                 && (mae.scope() == GrantScope.ALL_OWN_CREATURES
                                         || (mae.scope() == GrantScope.OWN_CREATURES
                                                 && !permanent.getId().equals(creature.getId()))))
                         .count();
+                if (imposed > 0 && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
+                    count[0] += imposed;
+                }
             }
             // Check for curses on the creature's controller (e.g. Curse of the Nightly Hunt)
             if (permanent.isAttached()
@@ -1274,9 +1279,9 @@ public class AttackLegalityService {
                 if (!playerId.equals(activePlayerId) && gameQueryService.isPlaneswalker(gameData, permanent)
                         && (ignoreRestrictions || !isAttackTargetRestricted(gameData, permanent))) {
                     validIds.add(permanent.getId());
-                } else if (gameQueryService.isBattle(gameData, permanent)
-                        && permanent.getProtectorPlayerId() != null
-                        && !activePlayerId.equals(permanent.getProtectorPlayerId())) {
+                } else if (permanent.getProtectorPlayerId() != null
+                        && !activePlayerId.equals(permanent.getProtectorPlayerId())
+                        && gameQueryService.isBattle(gameData, permanent)) {
                     validIds.add(permanent.getId());
                 }
             }
