@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSacrificedPermanentWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -22,6 +23,7 @@ public class ExileSacrificedPermanentWithSourceEffectHandler implements NormalEf
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
     private final GameLogService gameLogService;
+    private final PutCountersOnSelfEffectHandler putCountersOnSelfEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,6 +40,14 @@ public class ExileSacrificedPermanentWithSourceEffectHandler implements NormalEf
         }
         Card sacrificed = exileEffect.sacrificedCard();
         if (sourcePermanentId == null || sacrificed == null) {
+            return;
+        }
+        if (exileEffect.counterIfToken() != null && sacrificed.isToken()) {
+            putCountersOnSelfEffectHandler.resolve(gameData, entry, new PutCountersOnSelfEffect(exileEffect.counterIfToken()));
+        }
+
+        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(sacrificed.getId()) != entry.getTriggeringCardGraveyardEntryVersion()) {
             return;
         }
 

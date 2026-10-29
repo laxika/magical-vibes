@@ -274,6 +274,12 @@ public class Permanent {
      */
     @Setter private Boolean entryCoinFlipHeads;
     /**
+     * The shape Primal Clay chose as it entered, or {@code null} when this permanent made no such choice. The
+     * shape's keyword and Wall type are copiable values a copy takes, while its P/T is set by the copy's own choice
+     * (CR 707.2, CR 614.1c).
+     */
+    @Setter private PrimalClayForm primalClayForm;
+    /**
      * "As a permanent you control enters, it becomes ..." conversions applied to this permanent as it entered
      * (Displaced Dinosaurs). They are copiable values (CR 707.2), so a copy of this permanent takes them too.
      */
@@ -1078,6 +1084,7 @@ public class Permanent {
         this.chosenNumberDigits = List.copyOf(source.chosenNumberDigits);
         this.crossedNumberDigitPositions.addAll(source.crossedNumberDigitPositions);
         this.entryCoinFlipHeads = source.entryCoinFlipHeads;
+        this.primalClayForm = source.primalClayForm;
         this.copiableEntryCharacteristics.addAll(source.copiableEntryCharacteristics);
         this.entryCoinFlipAwaitingChoice = source.entryCoinFlipAwaitingChoice;
         this.chosenModeLabels.addAll(source.chosenModeLabels);

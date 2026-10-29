@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsReturnSelfIfCardTypeEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 public class TargetPlayerDiscardsReturnSelfIfCardTypeEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -27,13 +29,14 @@ public class TargetPlayerDiscardsReturnSelfIfCardTypeEffectHandler implements No
         var e = (TargetPlayerDiscardsReturnSelfIfCardTypeEffect) effect;
 
         UUID targetPlayerId = entry.getTargetId();
+        boolean opponentCaused = !targetPlayerId.equals(entry.getControllerId());
         List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
-        if (targetHand != null && !targetHand.isEmpty()) {
+        boolean discardPrevented = opponentCaused && gameQueryService.isDiscardPrevented(gameData, targetPlayerId);
+        if (!discardPrevented && targetHand != null && !targetHand.isEmpty()) {
             gameData.pendingReturnToHandOnDiscardType = new PendingReturnToHandOnDiscardType(
                     entry.getCard(), entry.getControllerId(), e.returnIfType());
         }
-        gameData.discardCausedByOpponent = true;
+        gameData.discardCausedByOpponent = opponentCaused;
         playerInteractionSupport.resolveDiscardCards(gameData, targetPlayerId, e.amount());
-    
     }
 }

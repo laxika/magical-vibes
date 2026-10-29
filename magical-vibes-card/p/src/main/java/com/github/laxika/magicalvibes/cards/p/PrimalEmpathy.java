@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsCreatureWithGreatestPower;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
@@ -23,6 +24,7 @@ public class PrimalEmpathy extends Card {
                 ConditionalEffect.unless(greatestPower, new DrawCardEffect()),
                 ConditionalEffect.unless(new NotCondition(greatestPower),
                         new PutCounterOnChosenOwnPermanentEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()))));
+                                CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1), new PermanentIsCreaturePredicate(),
+                                false, true))));
     }
 }

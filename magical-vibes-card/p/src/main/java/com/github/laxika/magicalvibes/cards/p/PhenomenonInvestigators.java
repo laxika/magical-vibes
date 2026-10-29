@@ -30,10 +30,12 @@ public class PhenomenonInvestigators extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseModeOnEnterEffect(List.of(BELIEVE, DOUBT)));
 
-        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
-                new ConditionalEffect(new SourceHasChosenMode(BELIEVE),
-                        new CreateTokenEffect(1, "Horror", 2, 2, CardColor.BLACK,
-                                List.of(CardSubtype.HORROR), Set.of(), Set.of(CardType.ENCHANTMENT))));
+        // Believe: "a nontoken creature you control" includes this creature, so it also triggers on its own death.
+        var believeHorror = new ConditionalEffect(new SourceHasChosenMode(BELIEVE),
+                new CreateTokenEffect(1, "Horror", 2, 2, CardColor.BLACK,
+                        List.of(CardSubtype.HORROR), Set.of(), Set.of(CardType.ENCHANTMENT)));
+        addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, believeHorror);
+        addEffect(EffectSlot.ON_DEATH, believeHorror);
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ConditionalEffect(new SourceHasChosenMode(DOUBT),

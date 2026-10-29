@@ -15,7 +15,7 @@ public class OverloadedMageRing extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new SacrificeSelfCost(), CopySpellEffect.permanentSpellBecomesToken()),
+                List.of(new SacrificeSelfCost(), CopySpellEffect.permanentSpellBecomesTokenMayChooseNewTargets()),
                 "{1}, {T}, Sacrifice Overloaded Mage-Ring: Copy target spell you control. You may choose new targets for the copy.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryControlledByPredicate(),

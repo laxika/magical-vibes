@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class PrimalCocoon extends Card {
 
     public PrimalCocoon() {
+        // "When enchanted creature attacks" is the Aura's own ability, so the sacrifice is of the Aura itself.
+        setAttackTriggerOwnedByAura(true);
+
         target(TargetFilters.creature())
                 // At the beginning of your upkeep, put a +1/+1 counter on enchanted creature.
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))

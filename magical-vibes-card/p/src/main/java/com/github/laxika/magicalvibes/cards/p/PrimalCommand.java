@@ -28,6 +28,7 @@ import java.util.List;
 public class PrimalCommand extends Card {
 
     public PrimalCommand() {
+        setAllowSharedTargets(true);
         // Choose two — each targeting mode declares its own per-mode target filter, so the choose-two
         // unwrap gives each chosen mode its own target slot (in card-text order). Modes 0/2 target a
         // player, mode 1 targets a noncreature permanent, mode 3 is non-targeting.

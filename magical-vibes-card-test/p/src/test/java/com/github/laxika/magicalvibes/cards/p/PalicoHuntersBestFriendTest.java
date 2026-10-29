@@ -36,9 +36,9 @@ class PalicoHuntersBestFriendTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
         harness.passBothPriorities();
 
-        harness.assertInGraveyard(player1, "Pacifism");
+        Permanent pacifism = findPermanent(player1, "Pacifism");
+        assertThat(pacifism.getAttachedTo()).isEqualTo(palico.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shock);
-        assertThat(palico.getAttachedTo()).isNull();
     }
 
     @Test

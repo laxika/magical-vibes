@@ -53,6 +53,11 @@ public class CreateTokenCopyOfEnchantedPermanentEffectHandler implements NormalE
                     .orElse(null);
         }
 
+        if (enchanted == null && enchantedId == null && aura == null && copyEffect.useTriggeringCreatureLastKnown()) {
+            // The Aura and its creature both left before resolution: use the creature as it last existed.
+            enchanted = entry.getAttachedPermanentSnapshot();
+        }
+
         if (enchanted == null) {
             log.info("Game {} - Enchanted permanent is no longer available, no token created", gameData.id);
             return;

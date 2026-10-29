@@ -62,6 +62,7 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
         String cardName = entry.getCard().getName();
 
         int sourcePower = gameQueryService.getPowerBasedDamage(gameData, sourceForPower);
+        int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);
 
         // Source deals damage equal to its power to target
         if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard(), entry.getControllerId()))) {
@@ -77,7 +78,6 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
             return;
         }
 
-        int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);
         if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, source, target.getCard(),
                 gameQueryService.findPermanentController(gameData, target.getId())))) {
             int targetDamage = targetPower;

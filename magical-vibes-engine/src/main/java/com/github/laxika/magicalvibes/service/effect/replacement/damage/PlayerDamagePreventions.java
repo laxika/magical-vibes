@@ -159,7 +159,8 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                 nextSourceShield("NextSourceShieldBySource", PlayerDamagePreventions::spellOrPermanentSourceId, true),
                 effect("ChosenSourceNextDamageShield", PREVENTION,
                         ctx -> prevention.hasChosenSourceNextDamageToAnyTargetShield(
-                                ctx.gameData(), ctx.damageSourceId(), ctx.playerId(), ctx.combat()),
+                                ctx.gameData(), ctx.damageSourceId(), ctx.playerId(), ctx.combat(),
+                                ctx.combat() ? null : ctx.entry()),
                         ctx -> "Use the shield against " + ctx.source().getName() + " (Sanctum Guardian)",
                         ctx -> {
                             int remaining = ctx.combat()

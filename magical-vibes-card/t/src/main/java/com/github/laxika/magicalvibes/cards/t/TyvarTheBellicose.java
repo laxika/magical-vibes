@@ -26,7 +26,7 @@ public class TyvarTheBellicose extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.ELF), Keyword.DEATHTOUCH));
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_SELF_MANA_ABILITY_RESOLVES,
-                new OncePerTurnTriggerEffect(new PutCountersOnSelfEffect(
+                OncePerTurnTriggerEffect.perGrant(new PutCountersOnSelfEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, new EventValue())),
                 GrantScope.ALL_OWN_CREATURES));
     }

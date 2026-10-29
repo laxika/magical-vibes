@@ -15871,9 +15871,11 @@ public class SpellCastingService {
         } else if (!(dividedEffect.totalDamage() instanceof Fixed)) {
             int expectedTotal = amountEvaluationService.evaluate(gameData, dividedEffect.totalDamage(),
                     com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId, resolvedXValue));
-            // CR 601.2d: the amount is divided among one or more targets, so a positive total needs at
-            // least one assigned target even when the card's "any number of targets" wording allows zero.
-            if (totalDamage != expectedTotal) {
+            // "Any number of targets" (unbounded) may choose zero targets, which deals nothing; the
+            // division of CR 601.2d only applies to targets that were actually chosen.
+            boolean zeroTargetsChosen = assignments.isEmpty() && dividedEffect.maxTargets() == 0
+                    && card.getMinTargets() == 0;
+            if (totalDamage != expectedTotal && !zeroTargetsChosen) {
                 throw new IllegalStateException("Damage assignments must sum to " + expectedTotal);
             }
             if (dividedEffect.maxTargets() > 0 && assignments.size() > dividedEffect.maxTargets()) {

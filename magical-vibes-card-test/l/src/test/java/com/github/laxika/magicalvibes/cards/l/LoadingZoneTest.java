@@ -141,6 +141,7 @@ class LoadingZoneTest extends BaseCardTest {
         resolveAllTriggers();
         harness.assertNotOnBattlefield(player1, "Loading Zone");
         assertThat(gd.findExiledCard(zone.getId())).isNotNull();
+        harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.m.ManaConfluence;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -99,11 +101,14 @@ class PropheticFlamespeakerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(top, remaining));
         harness.setLife(player2, 20);
         addReadyFlamespeaker();
-        harness.addToBattlefield(player2, new SatyrGrovedancer());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new SatyrGrovedancer());
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        resolveCombatDamageTrigger();
+        resolveCombat();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 1));
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         harness.assertLife(player2, 19);
         harness.assertInGraveyard(player2, "Satyr Grovedancer");

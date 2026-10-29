@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEff
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
@@ -3466,6 +3467,12 @@ public class ChoiceHandlerService {
 
         gameLogService.append(gameData,
                 GameLog.playerChoosesForCard(player.getUsername(), cardName, ctx.sourceCard()));
+        if (ctx.followUpSubtypeChoice() != null && ctx.sourcePermanentId() != null) {
+            ChooseSubtypeForSourceEffect followUp = ctx.followUpSubtypeChoice();
+            playerInputService.beginSubtypeChoiceForSource(gameData, ctx.controllerId(), ctx.sourcePermanentId(),
+                    followUp.allowedSubtypes(), followUp.untilEndOfTurn(), followUp.choicePrompt());
+            return;
+        }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -7004,11 +7011,16 @@ public class ChoiceHandlerService {
             if (form.subtype() != null) {
                 perm.getGrantedSubtypes().add(form.subtype());
             }
+            perm.setPrimalClayForm(form);
 
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses a " + form.power() + "/" + form.toughness()
                     + (form.keyword() != null ? " " + form.keyword().name().toLowerCase() : "")
                     + " shape for ", perm.getCard(), "."));
             log.info("Game {} - {} chooses shape {} for {}", gameData.id, player.getUsername(), form, perm.getCard().getName());
+
+            // The shape is chosen while the creature enters, so its enter abilities (and "whenever a creature
+            // you control enters" triggers that look at its power) run only once the shape is set.
+            battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), null, false);
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

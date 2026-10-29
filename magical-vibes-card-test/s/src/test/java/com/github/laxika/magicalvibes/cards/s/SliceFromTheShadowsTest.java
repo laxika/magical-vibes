@@ -119,6 +119,7 @@ class SliceFromTheShadowsTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, 1, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(3);

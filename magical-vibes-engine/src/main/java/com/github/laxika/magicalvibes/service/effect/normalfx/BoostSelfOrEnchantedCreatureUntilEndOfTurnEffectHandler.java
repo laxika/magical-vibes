@@ -31,7 +31,10 @@ public class BoostSelfOrEnchantedCreatureUntilEndOfTurnEffectHandler implements 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var boost = (BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect) effect;
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent liveSource = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        // An ability of an Aura that has since left the battlefield still boosts the creature it enchanted,
+        // judged by the Aura's last known information (CR 608.2h).
+        Permanent source = liveSource != null ? liveSource : entry.getSourcePermanentSnapshot();
         java.util.UUID targetId = entry.getTriggeringPermanentId() != null
                 ? entry.getTriggeringPermanentId() : source == null
                 ? entry.getTargetId()

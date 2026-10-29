@@ -3,10 +3,13 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 
 @CardRegistration(set = "INV", collectorNumber = "67")
 @CardRegistration(set = "DDM", collectorNumber = "25")
@@ -15,10 +18,12 @@ public class Prohibit extends Card {
 
     public Prohibit() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
-        target(new StackEntryPredicateTargetFilter(
-                new StackEntryMaxManaValuePredicate(2),
-                "Target spell must have mana value 2 or less, or 4 or less if kicked.",
-                new StackEntryMaxManaValuePredicate(4)
-        )).addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        // Any spell may be targeted; the mana value is checked as the spell resolves.
+        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
+                new Kicked(),
+                new ConditionalEffect(new TargetSpellMatches(new StackEntryMaxManaValuePredicate(2)),
+                        new CounterSpellEffect()),
+                new ConditionalEffect(new TargetSpellMatches(new StackEntryMaxManaValuePredicate(4)),
+                        new CounterSpellEffect())));
     }
 }

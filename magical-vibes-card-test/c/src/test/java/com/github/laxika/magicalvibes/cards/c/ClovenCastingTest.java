@@ -28,8 +28,10 @@ class ClovenCastingTest extends BaseCardTest {
                 && e.getCard().getName().equals("Cloven Casting"));
     }
 
+    /** Terminate spells on the stack plus copies still waiting off the stack for their new targets (CR 707.10c). */
     private long terminateCount() {
-        return gd.stack.stream().filter(e -> e.getCard().getName().equals("Terminate")).count();
+        return gd.stack.stream().filter(e -> e.getCard().getName().equals("Terminate")).count()
+                + gd.stagedSpellCopies.stream().filter(e -> e.getCard().getName().equals("Terminate")).count();
     }
 
     @Test
@@ -140,8 +142,9 @@ class ClovenCastingTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.stack.stream().filter(e -> e.getCard().getName().equals("Maelstrom Pulse")))
-                .hasSize(2);
+        assertThat(gd.stack.stream().filter(e -> e.getCard().getName().equals("Maelstrom Pulse")).count()
+                + gd.stagedSpellCopies.stream().filter(e -> e.getCard().getName().equals("Maelstrom Pulse")).count())
+                .isEqualTo(2);
         assertThat(hasClovenTrigger()).isFalse();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();

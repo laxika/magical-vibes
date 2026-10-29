@@ -69,11 +69,13 @@ public class SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffectHandler
             gameData.addCardToHand(controllerId, chosen);
             triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
                     gameData, controllerId, chosen);
-            gameData.queueDelayedAction(new DiscardSpecificCardAtNextEndStep(
-                    controllerId, chosen.getId(), entry.getCard()));
             soughtCards.add(chosen);
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                     .text("seeks and puts " + chosen.getName() + " into hand.").build());
+        }
+        if (!soughtCards.isEmpty()) {
+            gameData.queueDelayedAction(new DiscardSpecificCardAtNextEndStep(
+                    controllerId, soughtCards.stream().map(Card::getId).toList(), entry.getCard()));
         }
         triggerCollectionService.checkSeekTriggers(gameData, controllerId, soughtCards);
     }

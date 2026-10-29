@@ -83,10 +83,10 @@ class PauseForReflectionTest extends BaseCardTest {
     void doesNotPreventNoncombatDamage() {
         harness.setHand(player1, List.of(new PauseForReflection(), new DirectCurrent()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.addMana(player1, ManaColor.RED, 3);
         harness.setLife(player2, 20);
 
         harness.castAndResolveInstant(player1, 0);
+        harness.addMana(player1, ManaColor.RED, 3);
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 

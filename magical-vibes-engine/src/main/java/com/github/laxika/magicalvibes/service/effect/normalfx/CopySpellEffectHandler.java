@@ -112,10 +112,11 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
             copyEntry.getGrantedKeywordsOnEntry().add(Keyword.HASTE);
         }
 
-        // Only the instant/sorcery-copy mode offers "you may choose new targets for the copy"; such a copy
-        // waits off the stack until its targets are decided (CR 707.10c).
+        // Copies that keep their target offer "you may choose new targets for the copy" (Overloaded Mage-Ring),
+        // including permanent-spell copies that become tokens when the effect says so; such a copy waits off the
+        // stack until its targets are decided (CR 707.10c).
         boolean offersNewTargets = !copyEffect.tokenCopy() && !copyEffect.tokenWithHaste()
-                && !copyEffect.permanentSpellToken()
+                && (!copyEffect.permanentSpellToken() || copyEffect.mayChooseNewTargets())
                 && (copyEntry.getTargetId() != null || !copyEntry.getTargetIds().isEmpty()
                 || !copyEntry.getTargetCardIds().isEmpty());
         PendingMayAbility retargetAbility = offersNewTargets

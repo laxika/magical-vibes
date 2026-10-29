@@ -48,7 +48,8 @@ public class CopyCopiedSpellForTargetPlayerEffectHandler implements NormalEffect
         StackEntry copyEntry = copySupport.createCopyStackEntry(
                 spellSnapshot, copyCard, targetPlayerId, spellSnapshot.getTargetId());
         PendingMayAbility retargetAbility = null;
-        if (copyEntry.getTargetId() != null) {
+        if (copyEntry.getTargetId() != null || copyEntry.getTargetIds().size() > 1
+                || !copyEntry.getTargetCardIds().isEmpty()) {
             retargetAbility = new PendingMayAbility(
                     entry.getCard(),
                     targetPlayerId,

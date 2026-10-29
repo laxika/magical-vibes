@@ -15,10 +15,19 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param spellFilter which of the target's hand cards are eligible ({@code null} = any nonland)
  * @param targetsPlayer whether the player is chosen as a target rather than supplied by combat
  *                      damage context
+ * @param optionalLook whether looking at the hand is itself optional ("you may look at that player's
+ *                     hand. If you do, you may cast..."); the hand is then not shown up front and
+ *                     every card, lands included, is offered so declining reveals nothing
  */
 public record MayCastFromTargetPlayerHandWithoutPayingManaCostEffect(CardPredicate spellFilter,
-                                                                    boolean targetsPlayer)
+                                                                    boolean targetsPlayer,
+                                                                    boolean optionalLook)
         implements CombatDamageTriggerContextEffect {
+
+    public MayCastFromTargetPlayerHandWithoutPayingManaCostEffect(CardPredicate spellFilter,
+                                                                  boolean targetsPlayer) {
+        this(spellFilter, targetsPlayer, false);
+    }
 
     public MayCastFromTargetPlayerHandWithoutPayingManaCostEffect(CardPredicate spellFilter) {
         this(spellFilter, true);
@@ -27,6 +36,11 @@ public record MayCastFromTargetPlayerHandWithoutPayingManaCostEffect(CardPredica
     /** Any nonland spell from the player dealt combat damage by the source. */
     public static MayCastFromTargetPlayerHandWithoutPayingManaCostEffect damagedPlayer() {
         return new MayCastFromTargetPlayerHandWithoutPayingManaCostEffect(null, false);
+    }
+
+    /** "You may look at that player's hand. If you do, you may cast a spell from among those cards." */
+    public static MayCastFromTargetPlayerHandWithoutPayingManaCostEffect damagedPlayerMayLook() {
+        return new MayCastFromTargetPlayerHandWithoutPayingManaCostEffect(null, false, true);
     }
 
     /** A filtered spell from the player dealt combat damage by the source. */

@@ -52,15 +52,17 @@ class LivingInfernoTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Requires a target when dividing nonzero damage")
-    void requiresATargetWhenDividingNonzeroDamage() {
+    @DisplayName("May choose zero targets, which deals and receives no damage")
+    void mayChooseZeroTargets() {
         Permanent inferno = addCreatureReady(player1, new LivingInferno());
         prepareForActivation();
 
-        assertThatThrownBy(() -> harness.activateAbilityWithDamageAssignments(player1, 0, 0, null, Map.of()))
-                .isInstanceOf(IllegalStateException.class);
+        harness.activateAbilityWithDamageAssignments(player1, 0, 0, null, Map.of());
+        harness.passBothPriorities();
 
-        assertThat(inferno.isTapped()).isFalse();
+        assertThat(inferno.isTapped()).isTrue();
+        assertThat(inferno.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

@@ -8,7 +8,10 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,10 +23,15 @@ public class LongFengGrandSecretariat extends Card {
     public LongFengGrandSecretariat() {
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+                        // "Another creature you control or a land you control": Long Feng's own death is
+                        // covered by ON_DEATH below, and only when it was a land.
                         new TriggeringCardConditionalEffect(
-                                new CardAnyOfPredicate(List.of(
-                                        new CardTypePredicate(CardType.CREATURE),
-                                        new CardTypePredicate(CardType.LAND)
+                                new CardAllOfPredicate(List.of(
+                                        new CardNotPredicate(new CardIsSelfPredicate()),
+                                        new CardAnyOfPredicate(List.of(
+                                                new CardTypePredicate(CardType.CREATURE),
+                                                new CardTypePredicate(CardType.LAND)
+                                        ))
                                 )),
                                 new TriggeringPermanentControllerConditionalEffect(
                                         new PutCounterOnTargetPermanentEffect(

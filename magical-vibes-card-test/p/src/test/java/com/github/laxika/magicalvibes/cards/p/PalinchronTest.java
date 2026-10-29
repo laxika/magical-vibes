@@ -132,6 +132,7 @@ class PalinchronTest extends BaseCardTest {
 
     @Test
     void earlierActivationDoesNotReturnAnotherPalinchronAfterSourceLeaves() {
+        harness.setHand(player1, List.of());
         Palinchron original = new Palinchron();
         harness.addToBattlefield(player1, original);
         harness.addMana(player1, ManaColor.BLUE, 4);

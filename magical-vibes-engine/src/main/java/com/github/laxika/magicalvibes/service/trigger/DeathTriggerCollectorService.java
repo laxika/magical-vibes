@@ -1645,18 +1645,19 @@ public class DeathTriggerCollectorService {
             EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect effect,
             TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
-        match.gameData().queueMayAbility(
-                match.permanent().getCard(),
-                epd.dyingPermanentControllerId(),
+        // The trigger is the Aura's ability (controlled by the Aura's controller), but the dying creature's
+        // controller makes the choice and searches their own library.
+        StackEntry entry = addEnchantedPermanentDeathEntryReturning(match,
                 new MayEffect(
-                        new SearchLibraryEffect(new CardTypePredicate(CardType.CREATURE),
-                                LibrarySearchDestination.BATTLEFIELD),
-                        "Search your library for a creature card and put it onto the battlefield?"),
-                null,
-                match.permanent().getId());
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers (enchanted creature died)", match.gameData().id,
-                match.permanent().getCard().getName());
+                        new SearchLibraryEffect(new Fixed(1), new CardTypePredicate(CardType.CREATURE),
+                                LibrarySearchDestination.BATTLEFIELD,
+                                LibrarySearchPlayer.TRIGGERING_PERMANENT_CONTROLLER),
+                        "Search your library for a creature card and put it onto the battlefield?",
+                        null,
+                        MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER),
+                null, null, null);
+        entry.setNonTargeting(true);
+        entry.setTriggeringPermanentControllerId(epd.dyingPermanentControllerId());
         return true;
     }
 

@@ -201,7 +201,7 @@ class PrisonTermTest extends BaseCardTest {
         druid.tap();
         attachedPrisonTerm(player2, druid);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be activated");
         assertThat(druid.isTapped()).isTrue();

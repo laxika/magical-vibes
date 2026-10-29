@@ -206,9 +206,8 @@ class LilianasDevoteeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiseFromTheGrave()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
+        harness.castSorcery(player1, 0, gd.playerGraveyards.get(player1.getId()).getFirst().getId());
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
 
         Permanent devotee = findPermanent(player1, "Liliana's Devotee");
         assertThat(gqs.getEffectivePower(gd, devotee)).isEqualTo(3);

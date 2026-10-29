@@ -42,7 +42,8 @@ class MirrorMockeryTest extends BaseCardTest {
         assertThat(copy.isTapped()).isFalse();
         assertThat(copy.isAttackedThisTurn()).isFalse();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(copy.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
+                .anyMatch(action -> action.permanentId().equals(copy.getId())
+                        && action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
     }
 
     @Test

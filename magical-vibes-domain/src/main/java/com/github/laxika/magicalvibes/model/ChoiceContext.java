@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
@@ -1447,10 +1448,21 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /**
+     * @param followUpSubtypeChoice when non-null, the source's creature-subtype choice that is made right after the
+     *                              name is chosen (an "as this becomes attached" choice pair that is not put on
+     *                              the stack)
+     */
     record ChooseCardNameAtResolutionChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
-                                             CardType requiredType) implements ChoiceContext {
+                                             CardType requiredType,
+                                             ChooseSubtypeForSourceEffect followUpSubtypeChoice) implements ChoiceContext {
+        public ChooseCardNameAtResolutionChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
+                                                CardType requiredType) {
+            this(sourceCard, controllerId, sourcePermanentId, requiredType, null);
+        }
+
         public ChooseCardNameAtResolutionChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId) {
-            this(sourceCard, controllerId, sourcePermanentId, null);
+            this(sourceCard, controllerId, sourcePermanentId, null, null);
         }
     }
 

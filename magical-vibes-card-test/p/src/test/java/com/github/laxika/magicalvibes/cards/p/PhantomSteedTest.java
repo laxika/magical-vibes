@@ -52,7 +52,7 @@ class PhantomSteedTest extends BaseCardTest {
                     .findFirst()
                     .orElseThrow();
             assertThat(token.isTapped()).isTrue();
-            assertThat(token.isAttackedThisTurn()).isTrue();
+            assertThat(token.isAttacking()).isTrue();
             assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ILLUSION);
         });
 
@@ -99,7 +99,7 @@ class PhantomSteedTest extends BaseCardTest {
             Permanent token = findPermanent(player1, "Mishra's Factory");
             assertThat(token.getCard().isToken()).isTrue();
             assertThat(token.isTapped()).isTrue();
-            assertThat(token.isAttackedThisTurn()).isFalse();
+            assertThat(token.isAttacking()).isFalse();
             assertThat(gqs.isCreature(gd, token)).isFalse();
             assertThat(token.getCard().getSubtypes()).doesNotContain(CardSubtype.ILLUSION);
         });

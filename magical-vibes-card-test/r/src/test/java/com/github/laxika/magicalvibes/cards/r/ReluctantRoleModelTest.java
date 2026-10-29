@@ -65,6 +65,7 @@ class ReluctantRoleModelTest extends BaseCardTest {
         advanceToPostcombatMain(player1);
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Put a +1/+1 counter on this creature");
+        harness.passBothPriorities();
 
         harness.setHand(player1, List.of(new RelentlessAssault()));
         harness.addMana(player1, ManaColor.RED, 2);

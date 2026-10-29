@@ -82,6 +82,7 @@ class InvasionOfArcaviosTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities(); // resolve the trigger; the optional copy is chosen on resolution (CR 603.5)
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
                 .isNotNull();
 
@@ -143,6 +144,7 @@ class InvasionOfArcaviosTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities(); // resolve the trigger; the optional copy is chosen on resolution (CR 603.5)
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -163,6 +165,7 @@ class InvasionOfArcaviosTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities(); // resolve the trigger; the optional copy is chosen on resolution (CR 603.5)
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -182,6 +185,7 @@ class InvasionOfArcaviosTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities(); // resolve the trigger; the optional copy is chosen on resolution (CR 603.5)
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
@@ -194,6 +198,7 @@ class InvasionOfArcaviosTest extends BaseCardTest {
         addInvocation();
         harness.setLibrary(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
         harness.castFromHand(player1, new Divination(), "{2}{U}");
+        harness.passBothPriorities(); // resolve the trigger; the optional copy is chosen on resolution (CR 603.5)
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();

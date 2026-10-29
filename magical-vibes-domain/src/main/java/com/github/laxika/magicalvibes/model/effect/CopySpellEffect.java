@@ -22,23 +22,26 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
  * @param colorOverride           when non-null, the copy has exactly this color
  * @param copies                  how many copies this single copy event creates (Echo Mage copies a spell
  *                                twice); global "additional copy" replacements apply once to the event
+ * @param mayChooseNewTargets     when true, a copy of a permanent spell that becomes a token still offers
+ *                                "you may choose new targets for the copy" (Overloaded Mage-Ring); without it
+ *                                the permanent-spell token mode offers no retarget choice (Myojin of Cryptic Dreams)
  */
 public record CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWithHaste,
                               boolean sacrificeAtEndStep, boolean copyForTargetController,
                               boolean tokenCopy, boolean permanentSpellToken, boolean removeLegendary,
-                              CardColor colorOverride, int copies) implements CardEffect {
+                              CardColor colorOverride, int copies, boolean mayChooseNewTargets) implements CardEffect {
 
     public CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWithHaste,
                            boolean sacrificeAtEndStep, boolean copyForTargetController,
                            boolean tokenCopy, boolean permanentSpellToken, boolean removeLegendary,
                            CardColor colorOverride) {
         this(spellFilter, tokenWithHaste, sacrificeAtEndStep, copyForTargetController,
-                tokenCopy, permanentSpellToken, removeLegendary, colorOverride, 1);
+                tokenCopy, permanentSpellToken, removeLegendary, colorOverride, 1, false);
     }
 
     /** Copies the target spell the given number of times as one copy event. */
     public static CopySpellEffect times(int copies) {
-        return new CopySpellEffect(null, false, false, false, false, false, false, null, copies);
+        return new CopySpellEffect(null, false, false, false, false, false, false, null, copies, false);
     }
 
     public CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWithHaste,
@@ -78,6 +81,11 @@ public record CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWith
 
     public static CopySpellEffect permanentSpellBecomesToken() {
         return new CopySpellEffect(null, false, false, false, false, true, false, null);
+    }
+
+    /** Copies a permanent spell as a token that may also choose new targets for the copy (Overloaded Mage-Ring). */
+    public static CopySpellEffect permanentSpellBecomesTokenMayChooseNewTargets() {
+        return new CopySpellEffect(null, false, false, false, false, true, false, null, 1, true);
     }
 
     /** Form for copying a creature spell as a nonlegendary token. */

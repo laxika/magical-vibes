@@ -109,6 +109,7 @@ class PyreZombieTest extends BaseCardTest {
     @Test
     @DisplayName("Each Pyre Zombie in the graveyard requires its own upkeep payment")
     void paymentReturnsOnlyOneOfMultipleCopies() {
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of(new PyreZombie(), new PyreZombie()));
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.BLACK, 6);

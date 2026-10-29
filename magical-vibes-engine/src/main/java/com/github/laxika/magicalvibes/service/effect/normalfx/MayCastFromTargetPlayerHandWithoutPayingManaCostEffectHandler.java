@@ -49,13 +49,16 @@ public class MayCastFromTargetPlayerHandWithoutPayingManaCostEffectHandler imple
         List<Card> hand = gameData.playerHands.get(targetId);
         if (hand == null || hand.isEmpty()) return;
 
-        // The "look at that player's hand" form shows the controller every card, but a land among them is
-        // not a spell and so is never offered.
-        if (!e.targetsPlayer() && e.spellFilter() == null) {
+        // The mandatory "look at that player's hand" form shows the controller every card, but a land among
+        // them is not a spell and so is never offered. When the look is optional, the offers are the look:
+        // every card is offered (a land can be inspected but never cast) and nothing is shown until accepted.
+        boolean mandatoryLook = !e.targetsPlayer() && e.spellFilter() == null && !e.optionalLook();
+        if (mandatoryLook) {
             cardRevealService.lookAtHand(gameData, controllerId, targetId);
         }
+        boolean offerLands = e.optionalLook() && e.spellFilter() == null;
         List<Card> eligible = hand.stream()
-                .filter(c -> !c.hasType(CardType.LAND))
+                .filter(c -> offerLands || !c.hasType(CardType.LAND))
                 .filter(c -> predicateEvaluationService.matchesCardPredicate(c, e.spellFilter(), null))
                 .toList();
 

@@ -3897,6 +3897,14 @@ public class AmountEvaluationService {
      */
     private UUID attachedControllerId(GameData gameData, AmountContext ctx) {
         Permanent source = ctx.sourcePermanent();
+        if (source != null && !source.isAttached() && ctx.stackEntry() != null
+                && ctx.stackEntry().getTriggeringPermanentControllerId() != null
+                && source.getLastAttachedTo() != null
+                && source.getLastAttachedTo().equals(ctx.stackEntry().getTriggeringPermanentId())) {
+            // The Aura already fell off its creature (the creature left in response to the Aura's own
+            // trigger): use the creature's controller as last known when the trigger was put on the stack.
+            return ctx.stackEntry().getTriggeringPermanentControllerId();
+        }
         if (source == null || !source.isAttached()) {
             return null;
         }

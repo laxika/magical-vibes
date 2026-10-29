@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ParasiticImpetus extends Card {
 
     public ParasiticImpetus() {
+        // "Whenever enchanted creature attacks" is the Aura's own ability, controlled by the Aura's controller.
+        setAttackTriggerOwnedByAura(true);
+
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.STATIC, new GoadEquippedCreatureEffect());

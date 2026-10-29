@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.DelayedEffectOnDeath;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
@@ -138,6 +140,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
@@ -3275,6 +3278,15 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         entering.setChosenPermanentId(chosenPermanentId);
+        context.card().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(ChooseOpponentPermanentOnEnterEffect.class::isInstance)
+                .map(ChooseOpponentPermanentOnEnterEffect.class::cast)
+                .map(ChooseOpponentPermanentOnEnterEffect::whenChosenPermanentPutIntoGraveyard)
+                .filter(Objects::nonNull)
+                .forEach(delayed -> gameData.permanentTriggeringEffectOnGraveyardEntry
+                        .computeIfAbsent(chosen.getCard().getId(), id -> new ArrayList<>())
+                        .add(new DelayedEffectOnDeath(delayed, context.controllerId(), entering.getCard(),
+                                entering.getId(), chosen.getId())));
         gameLogService.append(gameData, GameLog.cardTextCard(entering.getCard(), " chooses ", chosen.getCard(), "."));
         log.info("Game {} - {} chooses {}", gameData.id,
                 entering.getCard().getName(), chosen.getCard().getName());

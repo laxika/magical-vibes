@@ -98,6 +98,8 @@ class SuspiciousDetonationTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
 
         assertThat(harness.getGameData().interaction.isAwaitingInput()).isFalse();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");

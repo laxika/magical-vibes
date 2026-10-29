@@ -360,6 +360,8 @@ public class AbilityActivationService {
         Set<ManaColor> intrinsicBasicLandManaColors = permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty()
                 || effectiveIntrinsicManaColors.size() > 1 ? effectiveIntrinsicManaColors : Set.of();
 
+        // Tapping for mana is a {T} mana ability, so a chosen-name lock (Phyrexian Revoker) applies here too.
+        validateNotBlockedByNameLock(gameData, permanent, true);
         if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty()
                 && overriddenManaColors.isEmpty() && intrinsicBasicLandManaColors.isEmpty()) {
             int abilityIndex = tapManaAbilityIndex(gameData, permanent);
@@ -6138,7 +6140,11 @@ public class AbilityActivationService {
         }
         if (costEffect instanceof CostEffect cost
                 && cost.recordsSacrificedPermanentSnapshot() && sacrificed != null) {
-            source.setChosenSacrificedPermanentSnapshot(new Permanent(sacrificed));
+            // The snapshot keeps the sacrificed creature's subtypes as they were when it was sacrificed (CR 608.2h),
+            // including ones granted by a permanent that may leave before the ability resolves (Maskwood Nexus).
+            Permanent snapshot = new Permanent(sacrificed);
+            snapshot.setLastKnownSubtypes(Set.copyOf(gameQueryService.getEffectiveSubtypes(gameData, sacrificed)));
+            source.setChosenSacrificedPermanentSnapshot(snapshot);
             source.setChosenSacrificedPower(gameQueryService.getEffectivePower(gameData, sacrificed));
             source.setChosenSacrificedToughness(gameQueryService.getEffectiveToughness(gameData, sacrificed));
             source.setChosenSacrificedColorCount(gameQueryService.getEffectiveColors(gameData, sacrificed).size());

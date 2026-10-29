@@ -85,6 +85,7 @@ class PutrefyingRotboarTest extends BaseCardTest {
 
         castHandCreature(player2);
         harness.assertLife(player2, 19);
+        harness.passBothPriorities();
         Permanent bears = findPermanent(player2, "Grizzly Bears");
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, bears));
         castHandCreature(player2);

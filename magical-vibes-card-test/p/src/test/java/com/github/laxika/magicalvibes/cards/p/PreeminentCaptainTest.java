@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.cards.c.ChangelingSentinel;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +29,7 @@ class PreeminentCaptainTest extends BaseCardTest {
         attackWithCaptain();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.handleCardChosen(player1, 0));
 
         Permanent soldier = findPermanent(player1, "Ballyrush Banneret");
         assertThat(soldier).isNotNull();
@@ -83,7 +85,7 @@ class PreeminentCaptainTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ChangelingSentinel()));
         attackWithCaptain();
 
-        harness.handleCardChosen(player1, 0);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.handleCardChosen(player1, 0));
 
         Permanent sentinel = findPermanent(player1, "Changeling Sentinel");
         assertThat(sentinel.isTapped()).isTrue();
@@ -110,7 +112,8 @@ class PreeminentCaptainTest extends BaseCardTest {
     @Test
     @DisplayName("The entering Soldier's attack destination is chosen independently of the Captain")
     void offersChoiceOfAttackDestination() {
-        harness.addToBattlefield(player2, new JaceBeleren());
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
         harness.setHand(player1, List.of(new BallyrushBanneret()));
         attackWithCaptain();
 
@@ -125,7 +128,9 @@ class PreeminentCaptainTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         addCreatureReady(player1, new PreeminentCaptain());
         harness.addToBattlefield(player2, new BallyrushBanneret());
-        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        resolveAllTriggers();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();

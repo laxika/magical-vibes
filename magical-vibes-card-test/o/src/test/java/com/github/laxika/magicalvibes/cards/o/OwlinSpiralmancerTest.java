@@ -27,6 +27,7 @@ class OwlinSpiralmancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.castSorcery(player1, 0, 1);
+        harness.passBothPriorities(); // resolve the trigger; the optional copy is chosen on resolution (CR 603.5)
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -44,6 +45,7 @@ class OwlinSpiralmancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castCreature(player1, 0, 2);
+        harness.passBothPriorities(); // resolve the trigger; the optional copy is chosen on resolution (CR 603.5)
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -64,6 +66,7 @@ class OwlinSpiralmancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         harness.castSorcery(player1, 0, 1);
+        harness.passBothPriorities(); // resolve the trigger; the optional copy is chosen on resolution (CR 603.5)
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -95,6 +98,7 @@ class OwlinSpiralmancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         harness.castSorcery(player1, 0, 1);
+        harness.passBothPriorities(); // resolve the trigger; the optional copy is chosen on resolution (CR 603.5)
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
         harness.castSorcery(player1, 0, 1);
@@ -113,6 +117,7 @@ class OwlinSpiralmancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities(); // resolve the trigger; the optional copy is chosen on resolution (CR 603.5)
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -149,6 +154,7 @@ class OwlinSpiralmancerTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.castSorcery(player1, 0, 1);
+        harness.passBothPriorities(); // resolve the trigger; the optional copy is chosen on resolution (CR 603.5)
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -179,6 +185,7 @@ class OwlinSpiralmancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         harness.castSorcery(player1, 0, 4, originalTarget.getId());
+        harness.passBothPriorities(); // resolve the trigger; the optional copy is chosen on resolution (CR 603.5)
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);

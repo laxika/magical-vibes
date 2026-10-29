@@ -68,18 +68,17 @@ public class EnchantedCreatureDealsPowerDamageToControllerEffectHandler implemen
             }
         }
 
-        if (entry.getSourcePermanentId() == null) {
-            return null;
-        }
-
-        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent aura = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (aura == null) {
             aura = entry.getSourcePermanentSnapshot();
         }
-        if (aura == null || aura.getAttachedTo() == null) {
-            return null;
+        if (aura != null && aura.getAttachedTo() != null) {
+            Permanent creature = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+            if (creature != null) {
+                return creature;
+            }
         }
-        Permanent creature = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
-        return creature != null ? creature : entry.getAttachedPermanentSnapshot();
+        return entry.getAttachedPermanentSnapshot();
     }
 }

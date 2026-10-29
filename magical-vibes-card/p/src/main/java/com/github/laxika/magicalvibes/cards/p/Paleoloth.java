@@ -15,14 +15,15 @@ public class Paleoloth extends Card {
 
     public Paleoloth() {
         // Whenever another creature you control with power 5 or greater enters, you may return
-        // target creature card from your graveyard to your hand. The min-power gate wraps the
-        // "you may" graveyard return (filter picks the creature card at resolution).
+        // target creature card from your graveyard to your hand. The target is chosen when the ability
+        // is put on the stack; the min-power gate wraps the "you may" graveyard return.
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureMinPowerConditionalEffect(5,
                         new MayEffect(
                                 ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.HAND)
                                         .filter(new CardTypePredicate(CardType.CREATURE))
+                                        .targetGraveyard(true)
                                         .build(),
                                 "Return a creature card from your graveyard to your hand?")));
     }

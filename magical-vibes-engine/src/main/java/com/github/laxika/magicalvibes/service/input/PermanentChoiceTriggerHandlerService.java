@@ -104,7 +104,7 @@ public class PermanentChoiceTriggerHandlerService {
                 return reason;
             }
         }
-        TargetFilter declaredFilter = switch (context) {
+        TargetFilter declaredFilter = context == null ? null : switch (context) {
             case PermanentChoiceContext.SpellTargetTriggerAnyTarget stt -> stt.targetFilter();
             case PermanentChoiceContext.ETBTokenTargetTrigger etb -> etb.targetFilter();
             case PermanentChoiceContext.EntersTriggerTarget enters -> enters.targetFilter();

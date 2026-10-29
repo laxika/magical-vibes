@@ -5609,19 +5609,23 @@ public class StepTriggerService {
         }
 
         if (gameData.hasDelayedAction(DiscardSpecificCardAtNextEndStep.class)) {
-            List<DiscardSpecificCardAtNextEndStep> pendingDiscards =
-                    gameData.drainDelayedActions(DiscardSpecificCardAtNextEndStep.class);
+            List<DiscardSpecificCardAtNextEndStep> pendingDiscards = gameData.drainDelayedActions(
+                    DiscardSpecificCardAtNextEndStep.class,
+                    pending -> pending.controllerId().equals(gameData.activePlayerId));
             for (DiscardSpecificCardAtNextEndStep pending : pendingDiscards) {
+                List<CardEffect> discards = pending.cardIds().stream()
+                        .<CardEffect>map(DiscardSpecificCardEffect::new)
+                        .toList();
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         pending.sourceCard(),
                         pending.controllerId(),
-                        pending.sourceCard().getName() + "'s delayed trigger — discard that card",
-                        new ArrayList<>(List.of(new DiscardSpecificCardEffect(pending.cardId()))));
+                        pending.sourceCard().getName() + "'s delayed trigger — discard those cards",
+                        new ArrayList<>(discards));
                 entry.setNonTargeting(true);
                 gameData.stack.add(entry);
                 gameLogService.append(gameData,
-                        GameLog.cardThen(pending.sourceCard(), "'s delayed trigger discards that card."));
+                        GameLog.cardThen(pending.sourceCard(), "'s delayed trigger discards those cards."));
                 log.info("Game {} - {} delayed specific discard trigger pushed onto stack",
                         gameData.id, pending.sourceCard().getName());
             }

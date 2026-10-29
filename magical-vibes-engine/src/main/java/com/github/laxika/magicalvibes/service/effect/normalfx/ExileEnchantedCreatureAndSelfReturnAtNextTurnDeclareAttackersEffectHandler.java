@@ -49,8 +49,10 @@ public class ExileEnchantedCreatureAndSelfReturnAtNextTurnDeclareAttackersEffect
             return;
         }
 
-        Permanent aura = entry.getSourcePermanentId() == null
-                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        // The attack ability is granted to the creature, so the entry's source permanent is the
+        // creature; the Aura is found by its card, wherever it is attached now.
+        Permanent aura = entry.getCard() == null
+                ? null : gameQueryService.findPermanentByCardId(gameData, entry.getCard().getId());
         List<Card> enchantedCards = enchanted.cardsLeavingBattlefield();
         List<Card> auraCards = aura == null ? List.of() : aura.cardsLeavingBattlefield();
         if (enchantedCards.isEmpty() || (aura != null && auraCards.isEmpty())) {

@@ -22,7 +22,7 @@ import java.util.List;
 public class PlasmaJockey extends Card {
 
     public PlasmaJockey() {
-        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{R}"))));
+        addCastingOption(AlternateHandCast.blitz("{2}{R}"));
 
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ATTACK, new CantBlockThisTurnEffect(TapUntapScope.TARGET));

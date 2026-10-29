@@ -12388,14 +12388,18 @@ public class GameQueryService {
         if (entry == null || controllerId == null) return List.of();
 
         List<DamageBonus> bonuses = new ArrayList<>();
+        Permanent liveSource = isSpellEntry(entry.getEntryType()) || entry.getSourcePermanentId() == null
+                ? null : findPermanentById(gameData, entry.getSourcePermanentId());
         gameData.forEachPermanent((playerId, p) -> {
             if (!playerId.equals(controllerId)) return;
+            if (hasLostAllAbilities(gameData, p)) return;
             forEachStaticEffect(p, (effect, instance) -> {
                 if (effect instanceof AdditionalControllerDamageEffect acde
                         && !(acde.anotherSourceOnly() && p.getId().equals(sourcePermanentId))
                         && (acde.stackFilter() == null
                         || !unfilteredOnly
-                        && predicateEvaluationService.matchesStackEntryPredicate(entry, acde.stackFilter(), null))) {
+                        && predicateEvaluationService.matchesStackEntryPredicate(
+                        entry, acde.stackFilter(), null, gameData, liveSource))) {
                     bonuses.add(new DamageBonus(instance, p.getCard().getName(), acde.amount()));
                 }
             });

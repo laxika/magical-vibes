@@ -19,6 +19,13 @@ public class CombatDamageState {
     /** Sources chosen by Reflect Damage shields present at the start of this simultaneous damage event. */
     public List<UUID> reflectDamageSourceIds = List.of();
 
+    /**
+     * Sources whose next-combat-damage-to-controller shield was consumed during this simultaneous
+     * damage event, mapped to the player the damage is redirected to. The shield replaces the whole
+     * event (CR 510.2), so every portion this source deals in it is redirected.
+     */
+    public final Map<UUID, UUID> consumedSourceCombatDamageRedirects = new HashMap<>();
+
     /** Pending replacement choices must finish before simultaneous damage is applied. */
     public int pendingOptionalDamageChoices;
     public boolean awaitingOptionalDamageChoices;

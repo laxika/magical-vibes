@@ -834,6 +834,8 @@ public class GameData {
     /** Delayed trigger: creature card ID → effect registrations to resolve if it dies this turn (Skeletonize, Initiate of Blood). */
     public final Map<UUID, List<DelayedEffectOnDeath>> creatureTriggeringEffectOnDeathThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<DelayedEffectOnDeath>> permanentTriggeringEffectOnDeathThisTurn = new ConcurrentHashMap<>();
+    /** Delayed trigger that does not expire: card ID of a chosen permanent → effects to resolve when it is put into a graveyard from the battlefield (Predatory Sludge). */
+    public final Map<UUID, List<DelayedEffectOnDeath>> permanentTriggeringEffectOnGraveyardEntry = new ConcurrentHashMap<>();
     /** Seraph: source Seraph permanent id → permanent ids of the creatures it returned under a player's control. */
     public final Map<UUID, Set<UUID>> seraphReturnedCreatures = new ConcurrentHashMap<>();
     /** Seraph: source Seraph permanent id → the player who last controlled it, watched for control-loss sacrifices. */
@@ -10467,6 +10469,8 @@ public class GameData {
                 copy.creatureTriggeringEffectOnDeathThisTurn.put(k, new ArrayList<>(v)));
         this.permanentTriggeringEffectOnDeathThisTurn.forEach((k, v) ->
                 copy.permanentTriggeringEffectOnDeathThisTurn.put(k, new ArrayList<>(v)));
+        this.permanentTriggeringEffectOnGraveyardEntry.forEach((k, v) ->
+                copy.permanentTriggeringEffectOnGraveyardEntry.put(k, new ArrayList<>(v)));
         this.seraphReturnedCreatures.forEach((k, v) ->
                 copy.seraphReturnedCreatures.put(k, new HashSet<>(v)));
         copy.seraphControlWatch.putAll(this.seraphControlWatch);

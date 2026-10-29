@@ -1813,8 +1813,7 @@ public class SpellCastTriggerCollectorService {
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new CreateTokenCopyOfTargetedSpellPermanentEffect(
-                        new StackEntry(spellEntry), trigger.copyEffect()))),
+                new ArrayList<>(List.of(trigger.withSpellSnapshot(new StackEntry(spellEntry)))),
                 null,
                 match.permanent().getId());
         List<UUID> copiedTargetIds = new ArrayList<>(spellEntry.getDeclaredTargetIds());

@@ -235,8 +235,11 @@ class TheMirariConjectureTest extends BaseCardTest {
         // Resolve the copy trigger (top of stack)
         harness.passBothPriorities();
 
-        // Now the stack should have the copy + original
+        // The copy waits off the stack until its new targets are decided (CR 707.10c), so count it there too.
         long spellCount = gd.stack.stream()
+                .filter(e -> e.getCard().getName().equals("Lightning Bolt"))
+                .count()
+                + gd.stagedSpellCopies.stream()
                 .filter(e -> e.getCard().getName().equals("Lightning Bolt"))
                 .count();
         assertThat(spellCount).isGreaterThanOrEqualTo(2);

@@ -175,14 +175,18 @@ class PanickedBystanderTest extends BaseCardTest {
         Permanent bystander = harness.addToBattlefieldAndReturn(player1, new PanickedBystander());
         Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         gd.lifeGainedThisTurn.put(player1.getId(), 2);
-        advanceToEndStep(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
         harness.setHand(player1, List.of(new Terminate()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castAndResolveInstant(player1, 0, ally.getId());
+        harness.castInstant(player1, 0, ally.getId());
         harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.lifeGainedThisTurn.get(player1.getId())).isEqualTo(3);
         assertThat(bystander.isTransformed()).isFalse();

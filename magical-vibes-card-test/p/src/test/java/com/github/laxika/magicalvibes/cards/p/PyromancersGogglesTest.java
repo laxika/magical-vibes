@@ -58,7 +58,11 @@ class PyromancersGogglesTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities(); // resolve the copy trigger
 
+        // The copy waits off the stack until its new targets are decided (CR 707.10c).
         long boltCount = gd.stack.stream()
+                .filter(e -> e.getCard().getName().equals("Lightning Bolt"))
+                .count()
+                + gd.stagedSpellCopies.stream()
                 .filter(e -> e.getCard().getName().equals("Lightning Bolt"))
                 .count();
         assertThat(boltCount).isGreaterThanOrEqualTo(2);

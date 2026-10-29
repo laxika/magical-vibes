@@ -38,6 +38,9 @@ public class PerpetuallyGiveSpellCastLifeLossToDefendingHandEffectHandler implem
                 ? attackedTargetId
                 : gameQueryService.findPermanentController(gameData, attackedTargetId);
         if (defendingPlayerId == null) {
+            defendingPlayerId = entry.getDefendingPlayerId();
+        }
+        if (defendingPlayerId == null) {
             return;
         }
 

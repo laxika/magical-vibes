@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -210,7 +211,8 @@ class PsychicMiasmaTest extends BaseCardTest {
     @Test
     @DisplayName("Preventing the discard still sends the resolved spell to its owner's graveyard")
     void preventedDiscardDoesNotStrandSpell() {
-        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales())
+                .setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player2, List.of(new Forest()));
         harness.setHand(player1, List.of(new PsychicMiasma()));
         harness.addMana(player1, ManaColor.BLACK, 2);

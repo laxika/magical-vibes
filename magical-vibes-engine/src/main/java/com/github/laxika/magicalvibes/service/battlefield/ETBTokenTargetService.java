@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
@@ -1126,6 +1127,10 @@ public class ETBTokenTargetService {
 
     private boolean matchesPlayerTargetFilter(GameData gameData, UUID controllerId, UUID candidatePlayerId,
                                               TargetFilter targetFilter) {
+        if (targetFilter instanceof AnyTargetPredicateTargetFilter anyFilter) {
+            return targetLegalityService.matchesPlayerPredicate(
+                    gameData, controllerId, candidatePlayerId, anyFilter.playerPredicate());
+        }
         if (!(targetFilter instanceof PlayerPredicateTargetFilter playerFilter)) {
             return true;
         }

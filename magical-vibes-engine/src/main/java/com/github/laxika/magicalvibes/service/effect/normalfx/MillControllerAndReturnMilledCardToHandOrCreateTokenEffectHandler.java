@@ -5,6 +5,10 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.effect.ReturnMilledPermanentToHandEffect;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndReturnMilledCardToHandOrCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -30,6 +34,7 @@ public class MillControllerAndReturnMilledCardToHandOrCreateTokenEffectHandler
     private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final CreateTokenEffectHandler createTokenEffectHandler;
+    private final PermanentRemovalService permanentRemovalService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,7 +45,9 @@ public class MillControllerAndReturnMilledCardToHandOrCreateTokenEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var millEffect = (MillControllerAndReturnMilledCardToHandOrCreateTokenEffect) effect;
         UUID controllerId = entry.getControllerId();
-        List<Card> milled = graveyardService.resolveMillPlayer(
+        // CR 701.17c: a replacement effect that exiles the milled card instead (Leyline of the Void) leaves it
+        // findable in the public zone it moved to, so it is still a milled card that can be put into hand.
+        List<Card> milled = graveyardService.resolveMillPlayerIncludingExiled(
                 gameData, controllerId, millEffect.count());
 
         Set<UUID> matchingMilledIds = milled.stream()
@@ -55,6 +62,26 @@ public class MillControllerAndReturnMilledCardToHandOrCreateTokenEffectHandler
                 .toList();
 
         if (validIndices.isEmpty()) {
+            List<ExiledCardEntry> exiledMatches = gameData.exiledCards.stream()
+                    .filter(exiled -> !exiled.faceDown() && matchingMilledIds.contains(exiled.card().getId()))
+                    .toList();
+            if (exiledMatches.size() == 1) {
+                ExiledCardEntry exiled = exiledMatches.getFirst();
+                gameData.exiledCards.remove(exiled);
+                permanentRemovalService.addCardToHandFromGraveyard(gameData, null, exiled.ownerId(), exiled.card());
+                return;
+            }
+            if (exiledMatches.size() > 1) {
+                UUID groupId = UUID.randomUUID();
+                for (int i = exiledMatches.size() - 1; i >= 0; i--) {
+                    Card card = exiledMatches.get(i).card();
+                    gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                            card, controllerId,
+                            List.of(new ReturnMilledPermanentToHandEffect(groupId, millEffect.filter())),
+                            "Put " + card.getName() + " into your hand?"));
+                }
+                return;
+            }
             createTokenEffectHandler.resolve(gameData, entry, millEffect.fallbackToken());
             return;
         }

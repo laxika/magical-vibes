@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
@@ -35,7 +36,8 @@ public class CreateTokenCopyOfTargetedSpellPermanentEffectHandler implements Nor
                 (CreateTokenCopyOfTargetedSpellPermanentEffect) effect;
         if (copyEffect.spellSnapshot() == null) return;
 
-        List<UUID> validTargetIds = validTargetIds(gameData, entry, currentSpellEntry(gameData, copyEffect.spellSnapshot()));
+        List<UUID> validTargetIds = validTargetIds(gameData, entry, currentSpellEntry(gameData, copyEffect.spellSnapshot()),
+                copyEffect.requiresTargetStillControlled());
         if (validTargetIds.isEmpty()) return;
 
         UUID chosenId = entry.getTargetId();
@@ -73,15 +75,20 @@ public class CreateTokenCopyOfTargetedSpellPermanentEffectHandler implements Nor
 
     /**
      * The spell's permanent targets that can still be copied. The trigger's condition was judged when the
-     * spell was cast, so a target that changed control or left the battlefield is still copied, using its
-     * last known card (CR 608.2h).
+     * spell was cast. With {@code requiresTargetStillControlled} (Orvar, the All-Form ruling, 2021-02-05) only
+     * targets still on the battlefield under the trigger controller's control can be copied; otherwise a target
+     * that changed control or left the battlefield is still copied, using its last known card (CR 608.2h).
      */
-    private List<UUID> validTargetIds(GameData gameData, StackEntry entry, StackEntry spellSnapshot) {
+    private List<UUID> validTargetIds(GameData gameData, StackEntry entry, StackEntry spellSnapshot,
+                                      boolean requiresTargetStillControlled) {
         List<UUID> targetIds = permanentTargetIds(gameData, spellSnapshot);
         List<UUID> validIds = new ArrayList<>();
         for (UUID targetId : targetIds) {
-            if (gameQueryService.findPermanentById(gameData, targetId) != null
-                    || entry.lastKnownPermanentCard(targetId) != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            boolean copiable = requiresTargetStillControlled
+                    ? target != null && entry.getControllerId().equals(gameData.findControllerOf(target))
+                    : target != null || entry.lastKnownPermanentCard(targetId) != null;
+            if (copiable) {
                 validIds.add(targetId);
             }
         }

@@ -243,12 +243,13 @@ class PhantomNishobaTest extends BaseCardTest {
         Permanent nishoba = harness.enterBattlefieldAndReturn(player1, new PhantomNishoba());
         nishoba.setSummoningSick(false);
         nishoba.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        addCreatureReady(player2, new SuntailHawk());
+        Permanent hawk = addCreatureReady(player2, new SuntailHawk());
         harness.setLife(player1, 20);
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(hawk.getId(), 1));
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(nishoba);

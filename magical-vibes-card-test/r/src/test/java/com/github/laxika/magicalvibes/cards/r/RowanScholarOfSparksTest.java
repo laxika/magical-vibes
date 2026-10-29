@@ -212,7 +212,9 @@ class RowanScholarOfSparksTest extends BaseCardTest {
         harness.castInstant(player1, 0, originalTarget.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Heated Debate")).hasSize(2);
+        // The copy waits off the stack until its new target is decided (CR 707.10c).
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Heated Debate")).hasSize(1);
+        assertThat(gd.stagedSpellCopies).filteredOn(entry -> entry.getCard().getName().equals("Heated Debate")).hasSize(1);
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, copyTarget.getId());
         resolveAllTriggers();

@@ -170,10 +170,11 @@ class PhantomNantukoTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, nantuko.getId());
         harness.passBothPriorities();
 
-        addCreatureReady(player1, new DwarvenDriller());
+        Permanent driller = addCreatureReady(player1, new DwarvenDriller());
         addCreatureReady(player1, new QuestingBeast());
-        declareAttackersAndPrepareBlockers(List.of(0));
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        int drillerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(driller);
+        declareAttackersAndPrepareBlockers(List.of(drillerIndex));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, drillerIndex)));
         harness.passBothPriorities();
 
         assertThat(findPermanent(player2, "Phantom Nantuko")).isSameAs(nantuko);

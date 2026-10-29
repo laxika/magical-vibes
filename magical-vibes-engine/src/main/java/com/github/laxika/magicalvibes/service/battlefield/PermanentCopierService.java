@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PrimalClayForm;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
@@ -38,7 +39,9 @@ public class PermanentCopierService {
     /** Includes characteristics selected by independent as-enters choices in a copy's base. */
     public Card copiableCard(Permanent permanent) {
         Card copiable = printedCopiableCard(permanent);
-        if (permanent.isFaceDown() || permanent.getCopiableEntryCharacteristics().isEmpty()) {
+        PrimalClayForm shape = permanent.getPrimalClayForm();
+        if (permanent.isFaceDown()
+                || permanent.getCopiableEntryCharacteristics().isEmpty() && shape == null) {
             return copiable;
         }
         // "As ... enters" conversions that set power and toughness are copiable values (CR 707.2).
@@ -58,6 +61,21 @@ public class PermanentCopierService {
             }
             if (characteristics.baseToughness() != null) {
                 converted.setToughness(characteristics.baseToughness());
+            }
+        }
+        if (shape != null) {
+            // Primal Clay's shape is an "as enters" conversion too: a copy takes its keyword and Wall type, while
+            // its P/T comes from the copy's own shape choice, which overrides this base (Gatherer ruling, Primal Clay).
+            converted.setPower(shape.power());
+            converted.setToughness(shape.toughness());
+            if (shape.keyword() != null) {
+                Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+                keywords.addAll(converted.getKeywords());
+                keywords.add(shape.keyword());
+                converted.setKeywords(keywords);
+            }
+            if (shape.subtype() != null && !subtypes.contains(shape.subtype())) {
+                subtypes.add(shape.subtype());
             }
         }
         converted.setAdditionalTypes(additionalTypes);

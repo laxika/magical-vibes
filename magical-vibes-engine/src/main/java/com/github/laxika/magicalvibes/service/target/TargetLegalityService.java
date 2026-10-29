@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureOfChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndReturnTargetCardsFromGraveyardEffect;
@@ -216,7 +217,8 @@ public class TargetLegalityService {
             // A filtered stack target that is on the stack but isn't an eligible spell gets the
             // filter's own message; a target that isn't on the stack at all gets the generic one.
             if (!includeAbilities && targetFilter instanceof StackEntryPredicateTargetFilter predicateFilter
-                    && gameData.stack.stream().anyMatch(e -> e.getCard() != null && targetId.equals(e.getCard().getId()))) {
+                    && gameData.stack.stream().anyMatch(e -> targetId.equals(e.getTargetableId())
+                    || e.getCard() != null && targetId.equals(e.getCard().getId()))) {
                 return Optional.of(predicateFilter.errorMessage());
             }
             return Optional.of(includeAbilities
@@ -983,7 +985,13 @@ public class TargetLegalityService {
                 if (peaceTalks != null) {
                     throw new IllegalStateException(peaceTalks);
                 }
-                validatePlayerTargetable(gameData, targetId, playerId, sourceCard);
+                // Preacher: the player index only selects whose creature is chosen; the player is
+                // not a target, so shroud/hexproof/protection don't apply to it.
+                boolean opponentIsChooserOnly = i == 0 && ability.isControllerChoosesOpponentForTarget()
+                        && ability.getOpponentChosenTargetIndex() == 1;
+                if (!opponentIsChooserOnly) {
+                    validatePlayerTargetable(gameData, targetId, playerId, sourceCard);
+                }
                 validatePlayerPredicate(gameData, playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage(),
                         findSourcePermanentIdByCardId(gameData, sourceCard.getId()));
                 continue;
@@ -3591,6 +3599,11 @@ public class TargetLegalityService {
                     legal = checkSpellTargetOnStack(gameData, targetId, effectiveTargetFilter,
                             entry.getControllerId(), entry.getSourcePermanentSnapshot(), entry.getXValue(), false)
                             .isEmpty();
+                } else if (i == 0 && gameData.playerIds.contains(targetId)
+                        && entry.getEffectsToResolve().stream()
+                        .anyMatch(GainControlOfTargetCreatureOfChosenPlayerEffect.class::isInstance)) {
+                    // Preacher: the player index only names whose creature is chosen; it isn't a target.
+                    legal = true;
                 } else {
                     legal = isBattlefieldTargetLegalOnResolution(gameData, entry, targetId, targetFilter)
                             && assignmentTargetMatchesRestriction(gameData, entry, targetId);

@@ -2670,6 +2670,7 @@ public class GraveyardReturnSupport {
         if (enterTapped) {
             permanent.tap();
         }
+        permanent.setEnteredFromZone(Zone.GRAVEYARD);
         permanent.setEnteredFromGraveyardOwnerId(controllerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
         if (enterTapped) {

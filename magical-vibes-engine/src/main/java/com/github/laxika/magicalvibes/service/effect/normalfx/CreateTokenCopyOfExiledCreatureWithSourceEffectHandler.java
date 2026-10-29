@@ -45,13 +45,13 @@ public class CreateTokenCopyOfExiledCreatureWithSourceEffectHandler implements N
         if (chosenCardId != null) {
             entry.setTargetId(null);
             ExiledCardEntry chosen = gameData.findExiledCard(chosenCardId);
-            if (isEligible(chosen, sourcePermanentId)) {
+            if (isEligible(chosen, sourcePermanentId, anyExiledCard(effect))) {
                 createTokenCopy(gameData, entry, effect, chosen.card());
             }
             return;
         }
 
-        List<ExiledCardEntry> eligible = eligibleCards(gameData, entry, sourcePermanentId);
+        List<ExiledCardEntry> eligible = eligibleCards(gameData, entry, sourcePermanentId, anyExiledCard(effect));
         if (eligible.isEmpty()) {
             return;
         }
@@ -69,18 +69,22 @@ public class CreateTokenCopyOfExiledCreatureWithSourceEffectHandler implements N
     }
 
     private List<ExiledCardEntry> eligibleCards(GameData gameData, StackEntry entry,
-                                                  UUID sourcePermanentId) {
+                                                  UUID sourcePermanentId, boolean anyExiledCard) {
         UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
         return gameData.getExiledWithPermanentEntries(sourcePermanentId, sourceCardId).stream()
-                .filter(exiled -> isEligible(exiled, sourcePermanentId))
+                .filter(exiled -> isEligible(exiled, sourcePermanentId, anyExiledCard))
                 .toList();
     }
 
-    private boolean isEligible(ExiledCardEntry exiled, UUID sourcePermanentId) {
+    private static boolean anyExiledCard(CardEffect effect) {
+        return ((CreateTokenCopyOfExiledCreatureWithSourceEffect) effect).anyExiledCard();
+    }
+
+    private boolean isEligible(ExiledCardEntry exiled, UUID sourcePermanentId, boolean anyExiledCard) {
         return exiled != null
                 && sourcePermanentId.equals(exiled.sourcePermanentId())
                 && !exiled.faceDown()
-                && exiled.card().hasType(CardType.CREATURE);
+                && (anyExiledCard || exiled.card().hasType(CardType.CREATURE));
     }
 
     private void createTokenCopy(GameData gameData, StackEntry entry, CardEffect effect, Card card) {

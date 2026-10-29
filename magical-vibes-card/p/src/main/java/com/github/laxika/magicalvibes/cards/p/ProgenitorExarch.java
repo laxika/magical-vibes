@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.RepeatEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,7 +26,7 @@ import java.util.Set;
 public class ProgenitorExarch extends Card {
 
     public ProgenitorExarch() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, incubatorTokens());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RepeatEffect(new XValue(), incubatorToken()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,
@@ -42,7 +44,7 @@ public class ProgenitorExarch extends Card {
         ));
     }
 
-    private static CreateTokenEffect incubatorTokens() {
+    private static CreateTokenEffect incubatorToken() {
         ActivatedAbility transform = new ActivatedAbility(
                 false,
                 "{2}",
@@ -50,7 +52,7 @@ public class ProgenitorExarch extends Card {
                 "{2}: Transform this token."
         );
         return new CreateTokenEffect(
-                CardType.ARTIFACT, new XValue(), "Incubator", 0, 0, null, null,
+                CardType.ARTIFACT, new Fixed(1), "Incubator", 0, 0, null, null,
                 List.of(), Set.of(), Set.of(), false, false, Map.of(), List.of(transform),
                 false, false, false, 3, Set.of()
         );

@@ -21,7 +21,7 @@ import java.util.List;
 public class TenaciousUnderdog extends Card {
 
     public TenaciousUnderdog() {
-        addCastingOption(new AlternateHandCast(List.of(
+        addCastingOption(AlternateHandCast.blitz(List.of(
                 new ManaCastingCost("{2}{B}{B}"), new LifeCastingCost(2))));
         addCastingOption(new GraveyardCast(null, "{2}{B}{B}", List.of(new LifeCastingCost(2)), null));
 

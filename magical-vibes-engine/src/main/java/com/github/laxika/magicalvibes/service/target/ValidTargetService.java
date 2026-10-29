@@ -817,9 +817,13 @@ public class ValidTargetService {
             if (positionFilter instanceof PlayerPredicateTargetFilter) {
                 // Player-targeting position: add valid players
                 if (!gameQueryService.isPeaceTalksActive(gameData)) {
+                boolean opponentSelectionOnly = ability.getOpponentChosenTargetIndex() == 1 && positionIndex == 0;
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
-                    if (isValidPlayerTarget(gameData, positionFilter, playerId, controllerId,
+                    if (opponentSelectionOnly
+                            ? matchesPlayerPredicateFilter(gameData, positionFilter, playerId, controllerId,
+                            abilitySourcePermanentId)
+                            : isValidPlayerTarget(gameData, positionFilter, playerId, controllerId,
                             abilitySourcePermanentId, sourceCard)) {
                         validPlayerIds.add(playerId);
                     }
@@ -1565,6 +1569,18 @@ public class ValidTargetService {
         }
 
         return true;
+    }
+
+    /**
+     * Player-predicate check without shroud or hexproof, for the opponent selection of an ability
+     * whose only real target is the creature that opponent then chooses (Preacher): the opponent
+     * is picked, not targeted, so their protection from targeting does not apply (CR 115.1).
+     */
+    private boolean matchesPlayerPredicateFilter(GameData gameData, TargetFilter targetFilter, UUID playerId,
+                                                 UUID controllerId, UUID sourcePermanentId) {
+        return !(targetFilter instanceof PlayerPredicateTargetFilter playerFilter)
+                || targetLegalityService.matchesPlayerPredicate(
+                gameData, controllerId, playerId, playerFilter.predicate(), sourcePermanentId);
     }
 
     private boolean targetFilterAllowsPlayer(TargetFilter targetFilter) {

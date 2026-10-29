@@ -47,9 +47,12 @@ class MirariTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.handleMayAbilityChosen(player1, true);
 
+        // The copy waits off the stack until its new targets are decided (CR 707.10c).
         assertThat(gd.stack.stream()
-                .filter(entry -> entry.getEntryType() == StackEntryType.INSTANT_SPELL))
-                .hasSize(2);
+                .filter(entry -> entry.getEntryType() == StackEntryType.INSTANT_SPELL).count()
+                + gd.stagedSpellCopies.stream()
+                .filter(entry -> entry.getEntryType() == StackEntryType.INSTANT_SPELL).count())
+                .isEqualTo(2);
     }
 
     @Test

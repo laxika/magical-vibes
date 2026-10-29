@@ -1032,8 +1032,16 @@ public class TokenCopySupport {
                 subtypes.addAll(sourceCard.getSubtypes());
             }
             if (effect.additionalSubtypes() != null) {
+                // CR 205.3d: a creature subtype can't be gained by an object that is not a creature
+                // (or kindred), e.g. a copied land.
+                boolean canGainCreatureSubtypes = isCreatureSubtype == null
+                        || sourceCard.hasType(CardType.CREATURE) || sourceCard.hasType(CardType.KINDRED)
+                        || (effect.additionalTypes() != null
+                        && (effect.additionalTypes().contains(CardType.CREATURE)
+                        || effect.additionalTypes().contains(CardType.KINDRED)));
                 for (CardSubtype subtype : effect.additionalSubtypes()) {
-                    if (!subtypes.contains(subtype)) {
+                    if (!subtypes.contains(subtype)
+                            && (canGainCreatureSubtypes || !isCreatureSubtype.test(subtype))) {
                         subtypes.add(subtype);
                     }
                 }

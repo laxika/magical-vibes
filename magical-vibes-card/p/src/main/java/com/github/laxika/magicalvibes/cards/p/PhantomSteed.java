@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfExiledCreatureWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -41,10 +41,10 @@ public class PhantomSteed extends Card {
                 false, false, false, true,
                 false, false, null, Set.of(),
                 false,
-                Map.of(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        List.of(new SacrificeAtEndOfCombatEffect())),
+                Map.of(),
                 List.of(), false, false, new Fixed(1), false, Set.of(), false);
         addEffect(EffectSlot.ON_ATTACK,
-                new CreateTokenCopyOfExiledCreatureWithSourceEffect(tokenCopy));
+                new CreateTokenCopyOfExiledCreatureWithSourceEffect(tokenCopy, false, true));
+        addEffect(EffectSlot.ON_ATTACK, new SacrificeCreatedPermanentsAtEndOfCombatEffect());
     }
 }

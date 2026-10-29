@@ -30,26 +30,29 @@ public class SacrificeEnchantedCreatureAndCreateTokenEffectHandler implements No
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        // Find the aura permanent via sourcePermanentId
+        // The Aura may already have left (or its creature may have): the ability still resolves using
+        // last-known information, and "you create a token" does not depend on the sacrifice.
         Permanent auraPerm = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (auraPerm == null) {
-            log.info("Game {} - Aura {} no longer on battlefield, skipping sacrifice trigger",
-                    gameData.id, entry.getCard().getName());
-            return;
+        UUID enchantedId = null;
+        if (auraPerm != null) {
+            enchantedId = auraPerm.getAttachedTo();
+        } else {
+            Permanent auraSnapshot = entry.getSourcePermanentSnapshot();
+            if (auraSnapshot != null) {
+                enchantedId = auraSnapshot.getAttachedTo() != null
+                        ? auraSnapshot.getAttachedTo() : auraSnapshot.getLastAttachedTo();
+            }
+            if (enchantedId == null && entry.getAttachedPermanentSnapshot() != null) {
+                enchantedId = entry.getAttachedPermanentSnapshot().getId();
+            }
         }
 
-        // Find the enchanted creature
-        UUID enchantedId = auraPerm.getAttachedTo();
-        if (enchantedId == null) {
-            log.info("Game {} - {} is not attached to anything, skipping sacrifice trigger",
-                    gameData.id, entry.getCard().getName());
-            return;
-        }
-
-        Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, enchantedId);
+        Permanent enchantedCreature = enchantedId == null
+                ? null : gameQueryService.findPermanentById(gameData, enchantedId);
         if (enchantedCreature == null) {
-            log.info("Game {} - Enchanted creature no longer on battlefield, skipping sacrifice",
-                    gameData.id);
+            log.info("Game {} - Enchanted creature of {} is gone, no sacrifice; token is still created",
+                    gameData.id, entry.getCard().getName());
+            continueAfterDeparture(gameData, entry, effect);
             return;
         }
 

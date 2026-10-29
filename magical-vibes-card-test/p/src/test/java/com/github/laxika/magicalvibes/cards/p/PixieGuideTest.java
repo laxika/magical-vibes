@@ -128,8 +128,12 @@ class PixieGuideTest extends BaseCardTest {
     }
 
     private void setRolls(int... results) {
-        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService",
-                new SequentialD20RollService(results));
+        SequentialD20RollService sequential = new SequentialD20RollService(results);
+        ReflectionTestUtils.setField(sequential, "gameQueryService",
+                ReflectionTestUtils.getField(originalD20RollService, "gameQueryService"));
+        ReflectionTestUtils.setField(sequential, "coinFlipService",
+                ReflectionTestUtils.getField(originalD20RollService, "coinFlipService"));
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", sequential);
     }
 
     private static final class SequentialD20RollService extends D20RollService {

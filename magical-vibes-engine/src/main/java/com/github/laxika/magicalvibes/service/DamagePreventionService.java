@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatDamagePreventionTokenShield;
 import com.github.laxika.magicalvibes.model.ChannelHarmShield;
 import com.github.laxika.magicalvibes.model.CombatDamagePreventionTokenShield;
+import com.github.laxika.magicalvibes.model.CombatDamageState;
 import com.github.laxika.magicalvibes.model.ComeuppanceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.CreatureControllerDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
@@ -96,6 +97,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceDamageWithMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageToEnchantedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -466,6 +468,29 @@ public class DamagePreventionService {
         return gameQueryService.findPermanentController(gameData, permanent.getId());
     }
 
+    /**
+     * Whether the creature's own static ability replaces its damage with +1/+1 counters (Phytohydra).
+     * Panther Habit's copy of {@link PreventDamageAndAddPlusCountersEffect} comes from an attached
+     * Equipment and is a prevention that only adds counters, so it doesn't count here.
+     */
+    private boolean hasOwnDamageToPlusOnePlusOneCountersReplacement(GameData gameData, Permanent permanent) {
+        return !gameQueryService.hasLostAllAbilities(gameData, permanent)
+                && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(PreventDamageAndAddPlusCountersEffect.class::isInstance);
+    }
+
+    private void putMinusOneCountersForDamage(GameData gameData, Permanent permanent, int damage) {
+        if (gameQueryService.cantHaveCounters(gameData, permanent)
+                || gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent)) {
+            return;
+        }
+        int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, permanent, damage);
+        if (counters > 0) {
+            permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
+                    permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
+        }
+    }
+
     private List<CreatureDamageStep> buildCreatureDamageSteps() {
         ReplacementOption.Kind replacement = ReplacementOption.Kind.REPLACEMENT;
         ReplacementOption.Kind prevention = ReplacementOption.Kind.PREVENTION;
@@ -497,6 +522,16 @@ public class DamagePreventionService {
                             recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gd, permanent, counters);
                         }
                     }
+                    return hasOwnDamageToPlusOnePlusOneCountersReplacement(gd, c.permanent())
+                            || preventable(gd, c) ? 0 : damage;
+                }));
+        steps.add(step("ReplaceDamageWithMinusOneCounters", "Put -1/-1 counters on it instead", replacement, false,
+                (gd, c, damage) -> damage > 0
+                        && !gameQueryService.hasLostAllAbilities(gd, c.permanent())
+                        && c.permanent().getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(ReplaceDamageWithMinusOneCountersEffect.class::isInstance),
+                (gd, c, damage) -> {
+                    putMinusOneCountersForDamage(gd, c.permanent(), damage);
                     return 0;
                 }));
         steps.add(step("DamageToMinusOneCounters", "Put -1/-1 counters on it instead", replacement, false,
@@ -505,15 +540,7 @@ public class DamagePreventionService {
                         && c.permanent().getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(PreventDamageAndAddMinusCountersEffect.class::isInstance),
                 (gd, c, damage) -> {
-                    Permanent permanent = c.permanent();
-                    if (!gameQueryService.cantHaveCounters(gd, permanent)
-                            && !gameQueryService.cantHaveMinusOneMinusOneCounters(gd, permanent)) {
-                        int counters = gameQueryService.reduceMinusOneMinusOneCounters(gd, permanent, damage);
-                        if (counters > 0) {
-                            permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
-                                    permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + counters);
-                        }
-                    }
+                    putMinusOneCountersForDamage(gd, c.permanent(), damage);
                     return 0;
                 }));
         steps.add(step("CombatDamageToPlusOneCounter", "Put a +1/+1 counter on it instead", replacement, false,
@@ -2068,10 +2095,27 @@ public class DamagePreventionService {
                 .findFirst().orElse(null);
     }
 
+    private CombatDamageState activeCombatDamageState(GameData gameData) {
+        return gameData.combatDamageStateInProgress != null
+                ? gameData.combatDamageStateInProgress : gameData.pendingCombatDamageState;
+    }
+
     /** Redirects a source's next combat damage to the stored controller of the effect that created the shield. */
     public int applySourceNextCombatDamageToControllerShield(GameData gameData, UUID sourcePermanentId, int damage) {
-        if (damage <= 0 || sourcePermanentId == null
-                || gameData.sourceNextCombatDamageToControllerShields.isEmpty()) {
+        if (damage <= 0 || sourcePermanentId == null) {
+            return damage;
+        }
+
+        CombatDamageState combatState = activeCombatDamageState(gameData);
+        UUID alreadyConsumedRecipient = combatState == null ? null
+                : combatState.consumedSourceCombatDamageRedirects.get(sourcePermanentId);
+        if (alreadyConsumedRecipient != null) {
+            gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                    null, sourcePermanentId, damage, alreadyConsumedRecipient));
+            return 0;
+        }
+
+        if (gameData.sourceNextCombatDamageToControllerShields.isEmpty()) {
             return damage;
         }
 
@@ -2092,6 +2136,9 @@ public class DamagePreventionService {
             return damage;
         }
 
+        if (combatState != null) {
+            combatState.consumedSourceCombatDamageRedirects.put(sourcePermanentId, matchingShield.controllerId());
+        }
         gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
                 null, sourcePermanentId, damage, matchingShield.controllerId()));
         return 0;
@@ -3566,11 +3613,22 @@ public class DamagePreventionService {
      */
     public boolean hasChosenSourceNextDamageToAnyTargetShield(GameData gameData, UUID sourcePermanentId,
                                                               UUID recipientId, boolean combatDamage) {
+        return hasChosenSourceNextDamageToAnyTargetShield(
+                gameData, sourcePermanentId, recipientId, combatDamage, null);
+    }
+
+    /**
+     * Stack-entry-aware form of {@link #hasChosenSourceNextDamageToAnyTargetShield(GameData, UUID, UUID, boolean)}:
+     * a spell source (Penance on a red instant) only satisfies a color filter when its stack entry is given.
+     */
+    public boolean hasChosenSourceNextDamageToAnyTargetShield(GameData gameData, UUID sourcePermanentId,
+                                                              UUID recipientId, boolean combatDamage,
+                                                              StackEntry sourceEntry) {
         if (sourcePermanentId == null) return false;
         boolean preventable = gameQueryService.isDamagePreventable(gameData, combatDamage);
         return gameData.sourceNextDamageToAnyTargetShields.stream()
                 .anyMatch(shield -> chosenSourceMatches(gameData, shield.sourceId(), sourcePermanentId)
-                        && chosenSourceKeepsRequiredProperties(gameData, shield, sourcePermanentId, null)
+                        && chosenSourceKeepsRequiredProperties(gameData, shield, sourcePermanentId, sourceEntry)
                         && (!shield.combatOnly() || combatDamage)
                         && (!shield.playersOnly() || gameData.playerIdToName.containsKey(recipientId))
                         && (shield.combatPhase() == null || shield.combatPhase().equals(gameData.combatPhasesThisTurn))
@@ -3937,6 +3995,11 @@ public class DamagePreventionService {
 
     /** Whether the next combat damage from {@code sourceId} is dealt to a stored controller instead. */
     public boolean hasSourceNextCombatDamageToControllerShield(GameData gameData, UUID sourceId) {
+        CombatDamageState combatState = activeCombatDamageState(gameData);
+        if (sourceId != null && combatState != null
+                && combatState.consumedSourceCombatDamageRedirects.containsKey(sourceId)) {
+            return true;
+        }
         return sourceId != null && gameData.sourceNextCombatDamageToControllerShields.stream()
                 .anyMatch(shield -> sourceId.equals(shield.sourcePermanentId())
                         && gameData.playerIds.contains(shield.controllerId()));

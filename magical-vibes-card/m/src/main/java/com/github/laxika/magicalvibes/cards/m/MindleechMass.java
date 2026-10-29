@@ -11,6 +11,6 @@ public class MindleechMass extends Card {
 
     public MindleechMass() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                MayCastFromTargetPlayerHandWithoutPayingManaCostEffect.damagedPlayer());
+                MayCastFromTargetPlayerHandWithoutPayingManaCostEffect.damagedPlayerMayLook());
     }
 }

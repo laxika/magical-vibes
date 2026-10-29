@@ -36,7 +36,7 @@ public class Vibrance extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsPlaneswalkerPredicate())),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
-                "Target must be any target"), 0, 1)
+                "Target must be any target"))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                         new ColorSpentToCast(ManaColor.RED, 2),
                         new DealDamageToAnyTargetEffect(3)), TriggerMode.INDEPENDENT);

@@ -38,7 +38,7 @@ public class SeeDouble extends Card {
         addEffect(EffectSlot.SPELL, ChooseOneEffect.oneOrMoreWhen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Copy target spell. You may choose new targets for the copy",
-                        CopySpellEffect.permanentSpellBecomesToken(),
+                        CopySpellEffect.permanentSpellBecomesTokenMayChooseNewTargets(),
                         spell),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a token that's a copy of target creature",

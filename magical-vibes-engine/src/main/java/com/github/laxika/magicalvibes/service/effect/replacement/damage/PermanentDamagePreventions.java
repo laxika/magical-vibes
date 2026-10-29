@@ -156,7 +156,8 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                         ctx.gameData(), ctx.target().getId(), ctx.damageSourceKey(), ctx.amount(), ctx.combat()))));
         all.add(effect("ChosenSourceNextDamageShield", PREVENTION,
                 ctx -> !ctx.targetProtectedFromPrevention() && prevention.hasChosenSourceNextDamageToAnyTargetShield(
-                        ctx.gameData(), ctx.damageSourceKey(), ctx.target().getId(), ctx.combat()),
+                        ctx.gameData(), ctx.damageSourceKey(), ctx.target().getId(), ctx.combat(),
+                        ctx.combat() ? null : ctx.entry()),
                 ctx -> "Use the shield against " + ctx.sourceCard().getName() + " (Sanctum Guardian)",
                 ctx -> {
                     int remaining = ctx.combat()

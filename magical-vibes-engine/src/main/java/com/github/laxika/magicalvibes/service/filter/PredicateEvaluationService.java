@@ -1182,9 +1182,17 @@ public class PredicateEvaluationService {
                         .filter(commander -> gameQueryService.cardHasType(
                                 commander, CardType.CREATURE, gameData,
                                 commander.getOwnerId() != null ? commander.getOwnerId() : cardOwnerId))
-                        .anyMatch(commander -> sharesCreatureType(
-                                gameData, card, card.getOwnerId() != null ? card.getOwnerId() : cardOwnerId,
-                                commander, commander.getOwnerId() != null ? commander.getOwnerId() : cardOwnerId));
+                        .anyMatch(commander -> {
+                            UUID cardOwner = card.getOwnerId() != null ? card.getOwnerId() : cardOwnerId;
+                            // A commander on the battlefield is compared by its current creature types, so
+                            // type-changing effects on it (Turn to Frog) count.
+                            Permanent commanderPermanent = findPermanentByOriginalCardId(gameData, commander.getId());
+                            if (commanderPermanent != null) {
+                                return gameQueryService.shareCreatureType(gameData, commanderPermanent, card, cardOwner);
+                            }
+                            return sharesCreatureType(gameData, card, cardOwner, commander,
+                                    commander.getOwnerId() != null ? commander.getOwnerId() : cardOwnerId);
+                        });
             }
             case CardToughnessLessThanSourceToughnessPredicate ignored -> {
                 if (gameData == null || sourceCardId == null || card.getToughness() == null) {
@@ -5158,6 +5166,19 @@ public class PredicateEvaluationService {
      *                          such context applies (e.g. damage-multiplier evaluation)
      */
     public boolean matchesStackEntryPredicate(StackEntry entry, StackEntryPredicate predicate, UUID enchantedPlayerId) {
+        return matchesStackEntryPredicate(entry, predicate, enchantedPlayerId, null, null);
+    }
+
+    /**
+     * Same as {@link #matchesStackEntryPredicate(StackEntry, StackEntryPredicate, UUID)}, but color and
+     * card type predicates read the current characteristics of {@code liveSource} (the permanent an
+     * ability came from, CR 113.7a) instead of the printed card, so a planeswalker that is now a
+     * colorless Forest no longer counts as a red planeswalker.
+     *
+     * @param liveSource the battlefield permanent the ability came from, or {@code null} to use the card
+     */
+    public boolean matchesStackEntryPredicate(StackEntry entry, StackEntryPredicate predicate, UUID enchantedPlayerId,
+                                              GameData gameData, Permanent liveSource) {
         if (predicate == null) return false;
         return switch (predicate) {
             case StackEntryControlledByEnchantedPlayerPredicate ignored ->
@@ -5165,6 +5186,10 @@ public class PredicateEvaluationService {
             case StackEntryTypeInPredicate typeIn ->
                     typeIn.spellTypes().contains(entry.getEntryType());
             case StackEntryColorInPredicate colorIn -> {
+                if (liveSource != null) {
+                    yield gameQueryService.getEffectiveColors(gameData, liveSource).stream()
+                            .anyMatch(colorIn.colors()::contains);
+                }
                 List<CardColor> colors = entry.getCard().getColors();
                 if (colors == null) yield false;
                 for (CardColor color : colors) {
@@ -5175,26 +5200,28 @@ public class PredicateEvaluationService {
             case StackEntryIsLoyaltyAbilityPredicate ignored -> entry.isLoyaltyAbility();
             case StackEntryIsMulticoloredPredicate ignored ->
                     entry.getCard().getColors() != null && entry.getCard().getColors().size() >= 2;
-            case StackEntryCardTypeInPredicate cardTypeIn ->
-                    cardTypeIn.cardTypes().stream().anyMatch(entry.getCard()::hasType);
+            case StackEntryCardTypeInPredicate cardTypeIn -> liveSource != null
+                    ? gameQueryService.getEffectiveCardTypes(gameData, liveSource).stream()
+                    .anyMatch(cardTypeIn.cardTypes()::contains)
+                    : cardTypeIn.cardTypes().stream().anyMatch(entry.getCard()::hasType);
             case StackEntrySubtypeInPredicate subtypeIn ->
                     entry.getCard().getSubtypes().stream().anyMatch(subtypeIn.subtypes()::contains);
             case StackEntrySupertypeInPredicate supertypeIn ->
                     entry.getCard().getSupertypes().stream().anyMatch(supertypeIn.supertypes()::contains);
             case StackEntryAllOfPredicate allOf -> {
                 for (StackEntryPredicate nested : allOf.predicates()) {
-                    if (!matchesStackEntryPredicate(entry, nested, enchantedPlayerId)) yield false;
+                    if (!matchesStackEntryPredicate(entry, nested, enchantedPlayerId, gameData, liveSource)) yield false;
                 }
                 yield true;
             }
             case StackEntryAnyOfPredicate anyOf -> {
                 for (StackEntryPredicate nested : anyOf.predicates()) {
-                    if (matchesStackEntryPredicate(entry, nested, enchantedPlayerId)) yield true;
+                    if (matchesStackEntryPredicate(entry, nested, enchantedPlayerId, gameData, liveSource)) yield true;
                 }
                 yield false;
             }
             case StackEntryNotPredicate not ->
-                    !matchesStackEntryPredicate(entry, not.predicate(), enchantedPlayerId);
+                    !matchesStackEntryPredicate(entry, not.predicate(), enchantedPlayerId, gameData, liveSource);
             case StackEntryCastFromZonePredicate castFrom ->
                     entry.getSourceZone() == castFrom.sourceZone();
             case StackEntryCastWithAdventurePredicate ignored -> entry.isCastWithAdventure();

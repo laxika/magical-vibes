@@ -137,7 +137,12 @@ public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlD
 
     /** Creates Henzie's blitz alternate cost, which equals the card's mana cost. */
     public static AlternateHandCast blitz(String manaCost) {
-        return new AlternateHandCast(List.of(new ManaCastingCost(manaCost)), Set.of(), null,
+        return blitz(List.of(new ManaCastingCost(manaCost)));
+    }
+
+    /** Creates a blitz alternate cost paying the given costs (e.g. mana plus "Pay 2 life"). */
+    public static AlternateHandCast blitz(List<CastingCost> costs) {
+        return new AlternateHandCast(costs, Set.of(), null,
                 false, false, false, null, null, null, false, false, null, false, true);
     }
 

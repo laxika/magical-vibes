@@ -705,6 +705,13 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId()
         );
         triggerEntry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        if (wrapped instanceof SacrificedPermanentCardAwareEffect) {
+            // CR 400.7: the trigger refers to this stay in the graveyard; if the card leaves and returns before
+            // the trigger resolves, it is a new object the trigger no longer finds.
+            triggerEntry.setTriggeringCardId(as.sacrificedCard().getId());
+            triggerEntry.setTriggeringCardGraveyardEntryVersion(
+                    match.gameData().graveyardEntryVersion(as.sacrificedCard().getId()));
+        }
         match.gameData().enqueueTrigger(triggerEntry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on matching permanent sacrifice", match.gameData().id, cardName);

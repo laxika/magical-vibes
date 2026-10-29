@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
@@ -67,7 +68,10 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachedCreatureBecomesCopyOfExiledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorForSourceEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AttachedCreatureBecomesCopyOfExiledCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardNameAtResolutionEffectHandler;
 import com.github.laxika.magicalvibes.model.effect.CommanderCreaturesDealPowerDamageToPreventedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetControllerIsTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
@@ -129,6 +133,8 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfCasualtyPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForXValueEffect;
@@ -345,6 +351,12 @@ public class TriggerCollectionService {
     private ObjectProvider<StateTriggerService> stateTriggerService;
     @Autowired
     private ObjectProvider<VisualCueService> visualCueService;
+    @Autowired
+    @Lazy
+    private AttachedCreatureBecomesCopyOfExiledCreatureEffectHandler attachedCreatureCopyHandler;
+    @Autowired
+    @Lazy
+    private ChooseCardNameAtResolutionEffectHandler chooseCardNameHandler;
 
     public List<CardEffect> grantedTriggeredEffects(GameData gameData, Permanent permanent, EffectSlot slot) {
         return grantedTriggeredAbilitySupport.grantedTriggeredEffects(gameData, permanent, slot);
@@ -4664,14 +4676,13 @@ public class TriggerCollectionService {
 
         TriggerContext context = new TriggerContext.ManaAbilityResolved(controllerId, manaProduced);
         for (CardEffect effect : effects) {
-            boolean oncePerTurn = effect instanceof OncePerTurnTriggerEffect;
             CardEffect resolved = unwrapOncePerTurnTrigger(gameData, sourcePermanent, effect);
             if (resolved == null) continue;
             boolean triggered = dispatch(new TriggerMatchContext(
                     gameData, sourcePermanent, controllerId, effect),
                     EffectSlot.ON_SELF_MANA_ABILITY_RESOLVES, resolved, context);
-            if (triggered && oncePerTurn) {
-                gameData.oncePerTurnTriggersFiredThisTurn.add(sourcePermanent.getId());
+            if (triggered) {
+                OncePerTurnTriggerSupport.markIfNeeded(gameData, sourcePermanent, effect);
             }
         }
     }
@@ -11854,7 +11865,12 @@ public class TriggerCollectionService {
                 entry.setSourcePermanentSnapshot(new Permanent(perm));
                 entry.setTriggeringPermanentId(dyingPermanent.getId());
                 entry.rememberLastKnownPermanentCard(dyingPermanent.getId(), dyingCard);
-                entry.setTriggeringPermanentPowerAtTrigger(dyingPower);
+                // A comparison against another creature's power uses the dying creature's actual last
+                // known power, which can be negative (CR 208.3); only damage amounts treat it as 0.
+                boolean comparesPower = entryEffects.stream().anyMatch(
+                        e -> e instanceof ConditionalEffect c
+                                && c.condition() instanceof TriggeringPermanentPowerGreaterThanSourcePower);
+                entry.setTriggeringPermanentPowerAtTrigger(comparesPower ? dyingPowerAtDeath : dyingPower);
                 entry.setTriggeringCardId(dyingCard.getId());
                 entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(dyingCard.getId()));
                 // A mana value bound compares against the creature's actual last known power, which can be
@@ -15275,6 +15291,11 @@ public class TriggerCollectionService {
         if (permanentRegistrations != null) {
             registrations.addAll(permanentRegistrations);
         }
+        List<DelayedEffectOnDeath> graveyardRegistrations =
+                gameData.permanentTriggeringEffectOnGraveyardEntry.remove(dyingPermanentCardId);
+        if (graveyardRegistrations != null) {
+            registrations.addAll(graveyardRegistrations);
+        }
         if (registrations.isEmpty()) {
             return;
         }
@@ -17285,6 +17306,32 @@ public class TriggerCollectionService {
                 continue;
             }
 
+            if (effect instanceof SequenceEffect sequence && sequence.steps().size() == 2
+                    && sequence.steps().get(0) instanceof ChooseCardNameAtResolutionEffect nameChoice
+                    && sequence.steps().get(1) instanceof ChooseSubtypeForSourceEffect subtypeChoice) {
+                // "As this Equipment becomes attached to a creature, choose a creature card name and a creature
+                // type" is not a triggered ability, so both choices are made during the attachment.
+                chooseCardNameHandler.begin(gameData, equipment.getCard(), controllerId, equipment.getId(),
+                        nameChoice, subtypeChoice);
+                continue;
+            }
+
+            if (effect instanceof AttachedCreatureBecomesCopyOfExiledCreatureEffect) {
+                // "As this Equipment becomes attached to a creature, choose an exiled creature card ..." is not a
+                // triggered ability, so the copy is made as the equipment attaches, without another stack resolution.
+                StackEntry attachment = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        equipment.getCard(),
+                        controllerId,
+                        equipment.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        equipment.getId());
+                attachment.setTriggeringPermanentId(equipped.getId());
+                attachedCreatureCopyHandler.resolve(gameData, attachment, effect);
+                continue;
+            }
+
             if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                 gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
@@ -18099,6 +18146,11 @@ public class TriggerCollectionService {
                     continue;
                 }
 
+                if (trigger.effect() instanceof ConditionalEffect conditional && conditional.interveningIf()
+                        && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forCard(object.getCard(), planarControllerId))) {
+                    continue;
+                }
                 if (trigger.oncePerDamageStep() && !firedBatchedSources.add(object.getId())) {
                     continue;
                 }

@@ -33,7 +33,7 @@ import java.util.Set;
 public class JaxisTheTroublemaker extends Card {
 
     public JaxisTheTroublemaker() {
-        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{R}"))));
+        addCastingOption(AlternateHandCast.blitz("{1}{R}"));
 
         addEffect(EffectSlot.STATIC, new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
