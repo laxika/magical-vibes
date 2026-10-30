@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -71,6 +72,8 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(gameQueryService.withQueryScope(any(), any()))
+                .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(1).get());
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

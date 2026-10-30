@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -136,6 +137,8 @@ class SacrificePermanentsEffectHandlerTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(gameQueryService.withQueryScope(any(), any()))
+                .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(1).get());
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

@@ -413,7 +413,7 @@ public class LayerSystemService {
         private PermanentSlot enteringSlot;
         private LayeredBoardState board;
         private boolean boardReady;
-        private final Map<UUID, GameQueryService.StaticBonus> bonusMemo = new HashMap<>();
+        private final Map<Permanent, GameQueryService.StaticBonus> bonusMemo = new IdentityHashMap<>();
         private final Map<UUID, GameQueryService.StaticBonus> preliminaryBonusMemo = new HashMap<>();
 
         private Pass(GameData gameData, Pass parent) {
@@ -435,7 +435,12 @@ public class LayerSystemService {
             return boardReady;
         }
 
-        public Map<UUID, GameQueryService.StaticBonus> bonusMemo() {
+        /**
+         * Finished bonuses keyed by the queried object, not its id: a last-known-information
+         * snapshot ({@code GameData.simultaneousDyingPermanents}) shares its permanent's id but
+         * assembles on its own, so one must never be handed the other's bonus.
+         */
+        public Map<Permanent, GameQueryService.StaticBonus> bonusMemo() {
             return bonusMemo;
         }
 

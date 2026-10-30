@@ -150,6 +150,21 @@ class VATSTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No targets are destroyed when a middle target's toughness changes")
+    void destroysNothingWhenMiddleTargetToughnessChanges() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent middle = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent last = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        cast(List.of(first.getId(), middle.getId(), last.getId()));
+        middle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first, middle, last);
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Any number permits more than ninety-nine targets")
     void destroysOneHundredEqualToughnessTargets() {
         List<UUID> targets = IntStream.range(0, 100)

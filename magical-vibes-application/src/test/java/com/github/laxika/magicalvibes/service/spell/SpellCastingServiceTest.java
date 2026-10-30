@@ -90,6 +90,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -288,6 +289,8 @@ class SpellCastingServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(gameQueryService.withQueryScope(any(), any()))
+                .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(1).get());
         lenient().when(castingPermissionService.canCastWithCastCondition(any(), any(), any())).thenReturn(true);
         lenient().when(castingPermissionService.isFlashCastTargetPermissionSatisfied(
                 any(), any(), any(), any(), any())).thenReturn(true);

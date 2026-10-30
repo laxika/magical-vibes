@@ -76,6 +76,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -151,6 +152,8 @@ class ValidTargetServiceTest {
                 new TargetPredicateEvaluationService(
                         new PredicateEvaluationService(gameQueryService), targetLegalityService));
         lenient().when(targetValidationService.checkEffectTargets(any(), any())).thenReturn(Optional.empty());
+        lenient().when(gameQueryService.withQueryScope(any(), any()))
+                .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(1).get());
         // Enumeration evaluates the restriction a spell's effects declare ("target creature", "any
         // target") for real, so the mocked GameQueryService has to answer isCreature honestly for the
         // cards these tests build. Individual tests still override it to model animation or a

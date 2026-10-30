@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -173,6 +174,8 @@ class PermanentRemovalServiceTest {
     void setUp() {
         lenient().when(gameQueryService.triggeredAbilityCanMoveCreatureToken(any(), any())).thenReturn(true);
         lenient().when(gameQueryService.delayedTriggeredAbilityCanMoveCreatureToken(any(), any())).thenReturn(true);
+        lenient().when(gameQueryService.withQueryScope(any(), any()))
+                .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(1).get());
         lenient().when(auraAttachmentService.removeOrphanedAuras(any(), any())).thenReturn(NO_ATTACHMENT_CHANGE);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

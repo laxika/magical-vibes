@@ -88,6 +88,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -209,6 +210,8 @@ class TargetLegalityServiceTest {
                 .thenAnswer(invocation -> invocation.<Card>getArgument(1).getPower());
         lenient().when(gameQueryService.getEffectiveCardToughness(eq(gd), any(Card.class)))
                 .thenAnswer(invocation -> invocation.<Card>getArgument(1).getToughness());
+        lenient().when(gameQueryService.withQueryScope(any(), any()))
+                .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(1).get());
     }
 
     private static Set<CardColor> effectiveColors(Card card) {
@@ -1996,6 +1999,44 @@ class TargetLegalityServiceTest {
                     spell.getEffects(EffectSlot.SPELL), 0, List.of(player2Id, UUID.randomUUID()));
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
+        }
+
+        @Test
+        @DisplayName("equal-toughness targets stay legal while they all still share a toughness")
+        void equalToughnessTargetsStayLegalWhileToughnessMatches() {
+            List<Permanent> targets = List.of(
+                    addPermanentWithToughness("First", 2),
+                    addPermanentWithToughness("Second", 2),
+                    addPermanentWithToughness("Third", 2));
+            StackEntry entry = equalToughnessSpell(targets);
+
+            assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
+        }
+
+        @Test
+        @DisplayName("every equal-toughness target is illegal once a middle target's toughness differs")
+        void everyEqualToughnessTargetIllegalWhenMiddleTargetDiffers() {
+            List<Permanent> targets = List.of(
+                    addPermanentWithToughness("First", 2),
+                    addPermanentWithToughness("Second", 3),
+                    addPermanentWithToughness("Third", 2));
+            StackEntry entry = equalToughnessSpell(targets);
+
+            assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
+        }
+
+        private Permanent addPermanentWithToughness(String name, int toughness) {
+            Permanent permanent = addPermanent(player2Id, createCreature(name, CardColor.GREEN));
+            lenient().when(gameQueryService.getEffectiveToughness(gd, permanent)).thenReturn(toughness);
+            return permanent;
+        }
+
+        private StackEntry equalToughnessSpell(List<Permanent> targets) {
+            Card spell = createTargetingSpell("Equal Toughness", CardColor.BLACK);
+            spell.setMultiTargetConstraint(
+                    com.github.laxika.magicalvibes.model.MultiTargetConstraint.SHARE_TOUGHNESS);
+            return new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Equal Toughness",
+                    spell.getEffects(EffectSlot.SPELL), 0, targets.stream().map(Permanent::getId).toList());
         }
 
         @Test

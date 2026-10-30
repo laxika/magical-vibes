@@ -540,12 +540,29 @@ public class DepartureService {
         }
     }
 
+    /**
+     * Gathering changes nothing until its questions are asked, which happens once the query scope closes: each
+     * permanent's destruction replacement lookups scan the whole board, so unscoped they cost one board fingerprint
+     * and static-bonus assembly per permanent looked at.
+     */
     private DepartureBatch gather(GameData gameData, DepartureBatch batch, boolean canAsk) {
+        Map<Departing, Map<String, String>> questions = new LinkedHashMap<>();
+        DepartureBatch gathered = gameQueryService.withQueryScope(gameData,
+                () -> gatherInScope(gameData, batch, canAsk, questions));
+        if (!questions.isEmpty()) {
+            gameData.pendingDepartureBatch = gathered;
+            questions.forEach((departing, options) ->
+                    graveyardService.askDepartureDestructionReplacement(gameData, departing.permanent(), options));
+        }
+        return gathered;
+    }
+
+    private DepartureBatch gatherInScope(GameData gameData, DepartureBatch batch, boolean canAsk,
+                                         Map<Departing, Map<String, String>> questions) {
         DepartureBatch gathering = batch;
         List<Departing> destroyed = locate(gameData, gathering,
                 intent -> intent.cause().isDestruction() && !intent.destructionReplacementsApplied())
                 .stream().filter(departing -> !isUnaffected(gameData, departing)).toList();
-        Map<Departing, Map<String, String>> questions = new LinkedHashMap<>();
         if (canAsk) {
             for (Departing departing : inApnapOrder(gameData, destroyed)) {
                 if (gathering.destructionAnswers().containsKey(departing.intent().permanentId())
@@ -560,9 +577,6 @@ public class DepartureService {
             }
         }
         if (!questions.isEmpty()) {
-            gameData.pendingDepartureBatch = batch;
-            questions.forEach((departing, options) ->
-                    graveyardService.askDepartureDestructionReplacement(gameData, departing.permanent(), options));
             return batch;
         }
         // Nothing is applied yet: a permanent a replacement will keep survives, and the replacements are applied
@@ -631,27 +645,11 @@ public class DepartureService {
         if (!canAsk) {
             return batch.withStage(DepartureStage.PERFORM);
         }
-        DepartureBatch choosing = batch;
+        // Finding the questions changes nothing and scans the whole board per permanent, so it shares one query
+        // scope; they are asked once it closes.
+        DepartureBatch answered = batch;
         Map<Departing, List<DeathExileReplacement>> questions = new LinkedHashMap<>();
-        for (Departing departing : inApnapOrder(gameData, locate(gameData, choosing, intent ->
-                !choosing.survivorIds().contains(intent.permanentId())
-                        && !choosing.replacementAnswers().containsKey(intent.permanentId())))) {
-            if (isUnaffected(gameData, departing)) {
-                continue;
-            }
-            List<DeathExileReplacement> options =
-                    permanentRemovalService.deathExileReplacementOptions(gameData, departing.permanent());
-            if (options.size() > 1) {
-                questions.put(departing, options);
-            } else if (permanentRemovalService.hasMayLibraryReplacement(gameData, departing.permanent())) {
-                // Its only replacement is a "may": asked through the usual may prompt.
-                questions.put(departing, List.of());
-            } else {
-                continue;
-            }
-            batch = batch.awaitingAnswer(departing.intent().permanentId());
-        }
-        batch = askPlanarLifeLossSacrifices(gameData, batch, questions);
+        batch = gameQueryService.withQueryScope(gameData, () -> chooseInScope(gameData, answered, questions));
         if (questions.isEmpty()) {
             return batch.withStage(DepartureStage.PERFORM);
         }
@@ -670,6 +668,30 @@ public class DepartureService {
             permanentRemovalService.endDeathReplacementChoiceBatch(gameData);
         }
         return batch;
+    }
+
+    private DepartureBatch chooseInScope(GameData gameData, DepartureBatch batch,
+                                         Map<Departing, List<DeathExileReplacement>> questions) {
+        DepartureBatch choosing = batch;
+        for (Departing departing : inApnapOrder(gameData, locate(gameData, choosing, intent ->
+                !choosing.survivorIds().contains(intent.permanentId())
+                        && !choosing.replacementAnswers().containsKey(intent.permanentId())))) {
+            if (isUnaffected(gameData, departing)) {
+                continue;
+            }
+            List<DeathExileReplacement> options =
+                    permanentRemovalService.deathExileReplacementOptions(gameData, departing.permanent());
+            if (options.size() > 1) {
+                questions.put(departing, options);
+            } else if (permanentRemovalService.hasMayLibraryReplacement(gameData, departing.permanent())) {
+                // Its only replacement is a "may": asked through the usual may prompt.
+                questions.put(departing, List.of());
+            } else {
+                continue;
+            }
+            batch = batch.awaitingAnswer(departing.intent().permanentId());
+        }
+        return askPlanarLifeLossSacrifices(gameData, batch, questions);
     }
 
     /**
@@ -735,18 +757,27 @@ public class DepartureService {
         DepartureBatch performing = batch;
         List<Departing> departing = locate(gameData, performing,
                 intent -> !performing.survivorIds().contains(intent.permanentId()));
-        for (Departing leaving : departing) {
-            if (isUnaffected(gameData, leaving)) {
-                continue;
+        // Taking the snapshots changes nothing on the battlefield (it fills new last-known copies), so every
+        // leaving permanent's layered reads share one query scope.
+        List<DepartureSnapshot> snapshots = gameQueryService.withQueryScope(gameData, () -> {
+            List<DepartureSnapshot> taken = new ArrayList<>();
+            for (Departing leaving : departing) {
+                if (isUnaffected(gameData, leaving)) {
+                    continue;
+                }
+                taken.add(snapshot(gameData, leaving));
+                Permanent permanent = leaving.permanent();
+                List<UUID> ids = new ArrayList<>(2);
+                if (permanent.getOriginalCard() != null) {
+                    ids.add(permanent.getOriginalCard().getId());
+                }
+                ids.add(permanent.getCard().getId());
+                cardIds.put(leaving.intent().permanentId(), ids);
             }
-            batch = batch.withSnapshot(snapshot(gameData, leaving));
-            Permanent permanent = leaving.permanent();
-            List<UUID> ids = new ArrayList<>(2);
-            if (permanent.getOriginalCard() != null) {
-                ids.add(permanent.getOriginalCard().getId());
-            }
-            ids.add(permanent.getCard().getId());
-            cardIds.put(leaving.intent().permanentId(), ids);
+            return taken;
+        });
+        for (DepartureSnapshot snapshot : snapshots) {
+            batch = batch.withSnapshot(snapshot);
         }
         batch = batch.withStage(DepartureStage.PERFORM);
 

@@ -6619,7 +6619,7 @@ public class GameQueryService {
                         gameData, active.board(), target, targetControllerId);
             }
             if (targetControllerId == null) {
-                StaticBonus memoized = active.bonusMemo().get(target.getId());
+                StaticBonus memoized = active.bonusMemo().get(target);
                 if (memoized != null) {
                     return memoized;
                 }
@@ -6627,7 +6627,7 @@ public class GameQueryService {
             StaticBonus bonus = assembleStaticBonusForController(
                     gameData, active.board(), target, targetControllerId);
             if (targetControllerId == null) {
-                active.bonusMemo().put(target.getId(), bonus);
+                active.bonusMemo().put(target, bonus);
             }
             return bonus;
         }
@@ -6880,6 +6880,9 @@ public class GameQueryService {
         List<StaticSource> sources = new ArrayList<>();
         UUID resolvedTargetControllerId = targetControllerId;
         int position = 0;
+        // Board-wide, so read at most once per assembly, and only once a graveyard holds a static source.
+        Boolean graveyardAbilitiesLost = null;
+        Set<UUID> selfStaticGrantSourceIds = floatingSelfStaticGrantSourceIds(gameData);
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
@@ -6888,15 +6891,25 @@ public class GameQueryService {
             }
             boolean targetOnSameBattlefield = playerId.equals(resolvedTargetControllerId);
             for (Permanent source : bf) {
+                int sourcePosition = position++;
+                if (!hasStaticEffectsToApply(board, source, selfStaticGrantSourceIds)) {
+                    continue;
+                }
                 sources.add(new StaticSource(
-                        source, playerId, targetOnSameBattlefield, source.getTimestamp(), position++, false));
+                        source, playerId, targetOnSameBattlefield, source.getTimestamp(), sourcePosition, false));
             }
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard != null && !graveyardCardsHaveLostAllAbilities(gameData)) {
+            if (graveyard != null) {
                 for (Card card : graveyard) {
                     if (card.getEffects(EffectSlot.STATIC).stream()
                             .noneMatch(GraveyardStaticEffect.class::isInstance)) {
                         continue;
+                    }
+                    if (graveyardAbilitiesLost == null) {
+                        graveyardAbilitiesLost = graveyardCardsHaveLostAllAbilities(gameData);
+                    }
+                    if (graveyardAbilitiesLost) {
+                        break;
                     }
                     sources.add(new StaticSource(new Permanent(card), playerId,
                             targetOnSameBattlefield, 0, position++, true));
@@ -6928,7 +6941,7 @@ public class GameQueryService {
             boolean sourceAbilitiesGone = sourceState != null
                     && (sourceState.isLosesAllAbilities() || sourceState.isLosesAllNonManaAbilities()
                     || sourceState.isPrintedAbilitiesRemoved());
-            if (!sourceAbilitiesGone && !source.isAttached()) {
+            if (!sourceAbilitiesGone && !source.isAttached() && selfStaticGrantSourceIds.contains(source.getId())) {
                 applyFloatingStaticGrantsFromSource(gameData, sourceSlot, target, accumulator, globalWordChange);
             }
             StaticEffectContext context = new StaticEffectContext(
@@ -7448,6 +7461,42 @@ public class GameQueryService {
             }
         }
         return powerBonus;
+    }
+
+    /**
+     * Whether a battlefield permanent has anything for a static-bonus assembly to run: a printed static ability, a
+     * static ability the layered pass granted it, or a floating static grant to itself. A source with none would
+     * apply no handler, so the assembly leaves it out instead of visiting every permanent on the battlefield.
+     */
+    private static boolean hasStaticEffectsToApply(LayerSystemService.LayeredBoardState board, Permanent source,
+                                                   Set<UUID> selfStaticGrantSourceIds) {
+        if (!source.getCard().getEffects(EffectSlot.STATIC).isEmpty()
+                || selfStaticGrantSourceIds.contains(source.getId())) {
+            return true;
+        }
+        CharacteristicState state = board.states().get(source.getId());
+        return state != null && !state.getGrantedStaticEffects().isEmpty();
+    }
+
+    /**
+     * The permanents a floating effect grants a static ability of their own, the grants
+     * {@link #applyFloatingStaticGrantsFromSource} applies.
+     */
+    private static Set<UUID> floatingSelfStaticGrantSourceIds(GameData gameData) {
+        Set<UUID> sourceIds = null;
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (floating.effect() instanceof GrantStaticEffectToSourceEffect
+                        && floating.sourcePermanentId() != null
+                        && floating.sourcePermanentId().equals(floating.affectedPermanentId())) {
+                    if (sourceIds == null) {
+                        sourceIds = new HashSet<>();
+                    }
+                    sourceIds.add(floating.sourcePermanentId());
+                }
+            }
+        }
+        return sourceIds == null ? Set.of() : sourceIds;
     }
 
     private void applyFloatingStaticGrantsFromSource(GameData gameData, StaticSource sourceSlot,

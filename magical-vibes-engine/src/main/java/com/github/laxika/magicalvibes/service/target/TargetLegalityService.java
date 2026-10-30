@@ -2204,10 +2204,14 @@ public class TargetLegalityService {
                 .sum();
         PermanentPredicate declaredRestriction = EffectResolution
                 .declaredPermanentRestriction(card.getEffects(EffectSlot.SPELL)).orElse(null);
-        for (int i = 0; i < targetIds.size(); i++) {
-            validateMultiSpellTargetPosition(gameData, card, targetIds.get(i), controllerId,
-                    positionOffset + i, groupIndex, group.getFilter(kicked), declaredRestriction, kicked);
-        }
+        // Read-only per-target layered queries: one query scope for the group.
+        gameQueryService.withQueryScope(gameData, () -> {
+            for (int i = 0; i < targetIds.size(); i++) {
+                validateMultiSpellTargetPosition(gameData, card, targetIds.get(i), controllerId,
+                        positionOffset + i, groupIndex, group.getFilter(kicked), declaredRestriction, kicked);
+            }
+            return null;
+        });
     }
 
     /** Validates the permanent target groups that follow a separately stored primary target. */
@@ -2269,11 +2273,27 @@ public class TargetLegalityService {
                 firstGroupIndex, selectedEffects, targetGroupSizes, giftPromised, false);
     }
 
+    /**
+     * Every target's legality checks (protection, hexproof, "can't be the target of") are layered queries, so the
+     * validation, which changes nothing, shares one query scope instead of re-fingerprinting the board per query.
+     */
     private void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds,
                                            UUID controllerId, int xValue, boolean kicked, int firstGroupIndex,
                                            List<CardEffect> selectedEffects,
                                            List<Integer> targetGroupSizes, boolean giftPromised,
                                            boolean skipStackTargetGroups) {
+        gameQueryService.withQueryScope(gameData, () -> {
+            validateMultiSpellTargetsInScope(gameData, card, targetIds, controllerId, xValue, kicked,
+                    firstGroupIndex, selectedEffects, targetGroupSizes, giftPromised, skipStackTargetGroups);
+            return null;
+        });
+    }
+
+    private void validateMultiSpellTargetsInScope(GameData gameData, Card card, List<UUID> targetIds,
+                                                  UUID controllerId, int xValue, boolean kicked,
+                                                  int firstGroupIndex, List<CardEffect> selectedEffects,
+                                                  List<Integer> targetGroupSizes, boolean giftPromised,
+                                                  boolean skipStackTargetGroups) {
         List<SpellTarget> targetGroups = card.getSpellTargets().stream()
                 .filter(group -> group.getIndex() >= firstGroupIndex)
                 .filter(group -> !skipStackTargetGroups || selectedEffects.stream()
@@ -3425,6 +3445,39 @@ public class TargetLegalityService {
         return entry.getCard() == null ? null : entry.getCard().getMultiTargetConstraint();
     }
 
+    /**
+     * Whether the targets still legal on resolution all have the same toughness. Equal toughness is transitive, so
+     * each is compared with the first.
+     */
+    private boolean legalTargetsShareToughness(GameData gameData, List<UUID> targetIds, boolean[] targetLegal) {
+        int legalCount = 0;
+        for (int i = 0; i < targetIds.size(); i++) {
+            if (targetLegal[i]) {
+                legalCount++;
+            }
+        }
+        if (legalCount < 2) {
+            return true;
+        }
+        Integer toughness = null;
+        for (int i = 0; i < targetIds.size(); i++) {
+            if (!targetLegal[i]) {
+                continue;
+            }
+            Permanent target = gameQueryService.findPermanentById(gameData, targetIds.get(i));
+            if (target == null) {
+                return false;
+            }
+            int targetToughness = gameQueryService.getEffectiveToughness(gameData, target);
+            if (toughness == null) {
+                toughness = targetToughness;
+            } else if (targetToughness != toughness) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private void validateAttachedToFirstTarget(GameData gameData, List<UUID> targetIds) {
         if (targetIds.size() < 2) {
             return;
@@ -3453,7 +3506,16 @@ public class TargetLegalityService {
         }
     }
 
+    /**
+     * Rechecks the entry's targets as it resolves. Each target's legality checks are layered queries, so the
+     * recheck shares one query scope; what it writes (the entry's illegal-target marks, a dropped primary target)
+     * is read by neither the layered board nor the static-bonus assembly.
+     */
     public boolean isTargetIllegalOnResolution(GameData gameData, StackEntry entry) {
+        return gameQueryService.withQueryScope(gameData, () -> isTargetIllegalOnResolutionInScope(gameData, entry));
+    }
+
+    private boolean isTargetIllegalOnResolutionInScope(GameData gameData, StackEntry entry) {
         if (entry.isNonTargeting()) {
             return false;
         }
@@ -3652,19 +3714,7 @@ public class TargetLegalityService {
                 }
             }
             if (multiTargetConstraint == MultiTargetConstraint.SHARE_TOUGHNESS) {
-                boolean equalToughness = true;
-                for (int i = 0; i < declaredTargetIds.size() && equalToughness; i++) {
-                    for (int j = i + 1; j < declaredTargetIds.size() && equalToughness; j++) {
-                        if (!targetLegal[i] || !targetLegal[j]) {
-                            continue;
-                        }
-                        Permanent a = gameQueryService.findPermanentById(gameData, declaredTargetIds.get(i));
-                        Permanent b = gameQueryService.findPermanentById(gameData, declaredTargetIds.get(j));
-                        equalToughness = a != null && b != null
-                                && gameQueryService.haveEqualToughness(gameData, a, b);
-                    }
-                }
-                if (!equalToughness) {
+                if (!legalTargetsShareToughness(gameData, declaredTargetIds, targetLegal)) {
                     for (int i = 0; i < targetLegal.length; i++) {
                         if (targetLegal[i]) {
                             targetLegal[i] = false;

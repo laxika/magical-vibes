@@ -796,7 +796,38 @@ battlefield, so unscoped this was targets × collectors × permanents fingerprin
 hash — a 100-target Fireball over 100 creatures spent ~20 s re-confirming an unchanged board.
 Detection writes inside the scope, but only state neither the board nor the assembly reads
 (triggered abilities on the stack, log lines, queued choices/may abilities, once-per-turn
-markers); the pending-target prompts it queues are started after the scope closes. Note that
+markers); the pending-target prompts it queues are started after the scope closes.
+`DepartureService.gather`/`choose` find a departure batch's destruction and death replacement
+questions inside one scope (both change nothing; the questions are asked once it closes) — each
+permanent's lookups scan the whole board, so a 100-creature V.A.T.S. paid a fingerprint and an
+assembly per permanent looked at, per creature. Performing the batch can't share one scope, since
+the board changes between removals; instead each removal's read-only source scans
+(`findReturnToHandReplacement`, `exilesBattlefieldCardWithSources`, the lost-printed-ability
+watcher record, the battlefield exile replacement's ability-loss reads) open their own, as do
+`deathExileReplacementOptions` as a whole, the batch's snapshot loop (`DepartureService.perform`,
+before anything is published or removed) and the look-back reads `removePermanentToGraveyard` takes
+just before the permanent leaves (`lookBackAtDeath`). So does each death's trigger detection —
+`PermanentRemovalService.collectTriggersInScope` around the put-into-a-graveyard collectors, the
+look-back `checkCreaturePutIntoOwnersGraveyard…` call, the creature-death collectors and the
+leaves-the-battlefield collectors after the `processDelayed…` steps, and the trigger checks of
+`GraveyardService.addCardToGraveyard` (same CR 603.2 argument and write audit as
+becomes-the-target). State an assembly may read — the death counts and the
+`graveyardLookBackExcludedCardIds` set/cleared around the look-back call — is written between those
+scopes, never inside one; the `processDelayedSacrifice…` steps stay unscoped because they can
+sacrifice permanents on the spot, and so do `removeFromBattlefield`'s last-known reads, which write
+the live permanent's `lastKnownPower` (read by `PermanentPowerDifferentFromBasePowerPredicate` while
+it is still on the battlefield) and can destroy an attached permanent on unattach. Independent of
+scopes, `assembleStaticBonusUnguarded` leaves out battlefield sources with nothing to apply — no
+printed STATIC effect, no static effect the pass granted them, no floating static grant to
+themselves — so a target's assembly costs the board's static sources, not its size. The `bonusMemo` is keyed by
+object identity, not id: a dying permanent's LKI snapshot (`simultaneousDyingPermanents`) shares the
+live permanent's id but assembles on its own, so a scope that reads both never hands one the other's
+bonus. Target legality runs scoped as well: `TargetLegalityService.validateMultiSpellTargets` (every
+public overload funnels into the scoped one) and `validateSpellTargetGroup` at cast, and
+`isTargetIllegalOnResolution` as a spell or ability resolves (its only writes are the entry's
+illegal-target marks and a dropped primary target, which no layered read looks at) — each target's
+protection, hexproof and "can't be the target of" checks are layered queries. Within it the
+`SHARE_TOUGHNESS` recheck compares each legal target with the first. Note that
 only `computeStaticBonus` and the `activeStateFor`-first queries (`hasLostPrintedAbilities`,
 `hasLostAllAbilities`, subtype/keyword reads) answer from the scope's board — a direct nested
 `beginPass` still fingerprints.

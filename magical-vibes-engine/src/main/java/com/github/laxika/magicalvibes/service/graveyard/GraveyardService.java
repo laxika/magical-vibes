@@ -953,9 +953,26 @@ public class GraveyardService {
                 gameData.deferredBatchLandCard = card;
             }
         }
+        // These abilities all trigger on this one event (CR 603.2) and go on the stack later (CR 603.3); their
+        // collectors write nothing the layered board or the static-bonus assembly reads (the land-entry count is
+        // read only by trigger collection), so their per-permanent queries share one query scope instead of each
+        // re-fingerprinting the board.
+        Card enteredCard = card;
+        Boolean oncePerBatchOnly = suppressOncePerBatchLandTriggers ? Boolean.FALSE : null;
+        gameQueryService.withQueryScope(gameData, () -> {
+            collectCardPutIntoGraveyardTriggers(gameData, ownerId, enteredCard, sourceZone,
+                    suppressLibraryBatchTriggers, oncePerBatchOnly);
+            return null;
+        });
+        return true;
+    }
+
+    private void collectCardPutIntoGraveyardTriggers(GameData gameData, UUID ownerId, Card card, Zone sourceZone,
+                                                     boolean suppressLibraryBatchTriggers,
+                                                     Boolean oncePerBatchOnly) {
         if (!isToken(gameData, card) && isPermanentCard(card)) {
             triggerCollectionService.checkPermanentCardPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card,
-                    suppressOncePerBatchLandTriggers ? Boolean.FALSE : null);
+                    oncePerBatchOnly);
             if (sourceZone == Zone.LIBRARY) {
                 triggerCollectionService.checkPermanentCardPutIntoGraveyardFromLibraryTriggers(
                         gameData, ownerId, card);
@@ -964,7 +981,7 @@ public class GraveyardService {
         if (!isToken(gameData, card) && card.hasType(CardType.LAND)) {
             gameData.landCardGraveyardEntriesThisTurn.merge(ownerId, 1, Integer::sum);
             triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card,
-                    suppressOncePerBatchLandTriggers ? Boolean.FALSE : null);
+                    oncePerBatchOnly);
             triggerCollectionService.checkAnyLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
             if (sourceZone == Zone.LIBRARY) {
                 triggerCollectionService.checkLandCardMilledTriggers(gameData, ownerId, card);
@@ -1003,7 +1020,6 @@ public class GraveyardService {
             }
         }
         triggerCollectionService.checkBlackCardPutIntoOpponentGraveyardFromAnywhereTriggers(gameData, ownerId, card);
-        return true;
     }
 
     private boolean isPermanentCard(Card card) {
@@ -1852,9 +1868,16 @@ public class GraveyardService {
 
     /**
      * The permanents whose graveyard replacement would exile {@code battlefieldSnapshot}'s card with
-     * them (Void Maw), including members of a simultaneous group that already left. Changes nothing.
+     * them (Void Maw), including members of a simultaneous group that already left. Changes nothing, so the board
+     * scan shares one query scope.
      */
     public List<Permanent> exilesBattlefieldCardWithSources(GameData gameData, Permanent battlefieldSnapshot) {
+        return gameQueryService.withQueryScope(gameData,
+                () -> exilesBattlefieldCardWithSourcesInScope(gameData, battlefieldSnapshot));
+    }
+
+    private List<Permanent> exilesBattlefieldCardWithSourcesInScope(GameData gameData,
+                                                                    Permanent battlefieldSnapshot) {
         List<Permanent> sources = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
@@ -2196,14 +2219,24 @@ public class GraveyardService {
 
     private boolean tryApplyBattlefieldExilePermanentsReplacement(GameData gameData, UUID ownerId, Card card,
                                                                    Permanent battlefieldSnapshot) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent p : bf) {
-                if (gameQueryService.hasLostPrintedAbilities(gameData, p)) continue;
-                if (applyBattlefieldExilePermanentsReplacement(gameData, ownerId, card, p, battlefieldSnapshot)) {
-                    return true;
+        // Which sources still have their abilities is read up front under one query scope: an attempt that doesn't
+        // apply changes nothing, so the board is the same one each later source would have been checked against.
+        List<Permanent> sources = gameQueryService.withQueryScope(gameData, () -> {
+            List<Permanent> withAbilities = new ArrayList<>();
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+                if (bf == null) continue;
+                for (Permanent p : bf) {
+                    if (!gameQueryService.hasLostPrintedAbilities(gameData, p)) {
+                        withAbilities.add(p);
+                    }
                 }
+            }
+            return withAbilities;
+        });
+        for (Permanent p : sources) {
+            if (applyBattlefieldExilePermanentsReplacement(gameData, ownerId, card, p, battlefieldSnapshot)) {
+                return true;
             }
         }
         // Permanents leaving the battlefield together still apply their replacement effects to each
