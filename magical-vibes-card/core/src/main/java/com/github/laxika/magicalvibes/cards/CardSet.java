@@ -3,6 +3,10 @@ package com.github.laxika.magicalvibes.cards;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 /**
  * The card sets the game knows about, identified by their short set code.
  *
@@ -379,16 +383,14 @@ public enum CardSet {
     SET_YSNC("YSNC"),
     SET_YTDM("YTDM");
 
+    private static final Map<String, CardSet> BY_CODE = Arrays.stream(values())
+            .collect(Collectors.toUnmodifiableMap(CardSet::getCode, set -> set));
+
     @Getter
     private final String code;
 
     /** The set with this code, or null when no set matches. */
     public static CardSet findByCode(String code) {
-        for (CardSet set : values()) {
-            if (set.code.equals(code)) {
-                return set;
-            }
-        }
-        return null;
+        return code == null ? null : BY_CODE.get(code);
     }
 }

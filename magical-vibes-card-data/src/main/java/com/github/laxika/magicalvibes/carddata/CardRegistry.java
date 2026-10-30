@@ -16,11 +16,13 @@ import org.springframework.stereotype.Service;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -141,17 +143,19 @@ public class CardRegistry implements CardCatalog {
      *                                  indexed back face
      */
     public void ensureCardDataLoaded(List<Class<? extends Card>> cardClasses) {
-        Set<Class<? extends Card>> remaining = new LinkedHashSet<>(cardClasses);
-        for (Class<? extends Card> cardClass : remaining) {
-            if (setsFor(cardClass).isEmpty()) {
+        Map<Class<? extends Card>, Set<CardSet>> remaining = new LinkedHashMap<>();
+        for (Class<? extends Card> cardClass : cardClasses) {
+            Set<CardSet> cardSets = setsFor(cardClass);
+            if (cardSets.isEmpty()) {
                 throw new IllegalArgumentException(
                         "No registered printing found for " + cardClass.getName());
             }
+            remaining.put(cardClass, cardSets);
         }
         while (!remaining.isEmpty()) {
-            CardSet cardSet = setCoveringMost(remaining);
+            CardSet cardSet = setCoveringMost(remaining.values());
             ensureSetLoaded(cardSet);
-            remaining.removeIf(cardClass -> setsFor(cardClass).contains(cardSet));
+            remaining.values().removeIf(cardSets -> cardSets.contains(cardSet));
         }
     }
 
@@ -193,14 +197,15 @@ public class CardRegistry implements CardCatalog {
         }
     }
 
-    private CardSet setCoveringMost(Set<Class<? extends Card>> cardClasses) {
-        return Arrays.stream(CardSet.values())
-                .max(Comparator.comparingLong((CardSet cardSet) -> cardClasses.stream()
-                                .filter(cardClass -> setsFor(cardClass).contains(cardSet))
-                                .count())
-                        .thenComparingInt(CardSet::ordinal))
-                .filter(cardSet -> cardClasses.stream()
-                        .anyMatch(cardClass -> setsFor(cardClass).contains(cardSet)))
+    /** The set holding the most of the given classes' printings; ties go to the later-declared set. */
+    private static CardSet setCoveringMost(Collection<Set<CardSet>> uncoveredClassSets) {
+        Map<CardSet, Integer> coverage = new EnumMap<>(CardSet.class);
+        uncoveredClassSets.forEach(cardSets ->
+                cardSets.forEach(cardSet -> coverage.merge(cardSet, 1, Integer::sum)));
+        return coverage.entrySet().stream()
+                .max(Map.Entry.<CardSet, Integer>comparingByValue()
+                        .thenComparing(Map.Entry.comparingByKey()))
+                .map(Map.Entry::getKey)
                 .orElse(null);
     }
 
