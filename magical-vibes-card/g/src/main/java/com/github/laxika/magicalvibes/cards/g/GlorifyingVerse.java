@@ -32,7 +32,7 @@ public class GlorifyingVerse extends Card {
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))),
-                List.of(new ConjureCardToHandEffect("Glorifying Verse")),
+                List.of(new ConjureCardToHandEffect("YSOS", "19")),
                 new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate())
         ));
     }

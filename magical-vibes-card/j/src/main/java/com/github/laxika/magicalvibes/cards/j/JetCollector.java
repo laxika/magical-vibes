@@ -23,7 +23,7 @@ public class JetCollector extends Card {
     public JetCollector() {
         addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, new ConditionalEffect(
                 new GraveyardCardThreshold(4, null),
-                new OnceOnlyTriggerEffect(new ConjureCardNamedIntoHandEffect("Mox Jet", false))));
+                new OnceOnlyTriggerEffect(new ConjureCardNamedIntoHandEffect("LEA", "262", false))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

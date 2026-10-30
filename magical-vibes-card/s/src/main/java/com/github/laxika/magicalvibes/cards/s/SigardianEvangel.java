@@ -16,11 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 @CardRegistration(set = "MB2", collectorNumber = "258")
 public class SigardianEvangel extends Card {
 
-    private static final String NAME = "Sigardian Evangel";
-
     public SigardianEvangel() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConjureCardNamedIntoHandEffect(NAME, true), TriggerMode.INDEPENDENT);
+                new ConjureCardNamedIntoHandEffect("YMID", "9", true), TriggerMode.INDEPENDENT);
 
         PermanentPredicate permanentYouDoNotControl = new PermanentNotPredicate(
                 new PermanentControlledBySourceControllerPredicate());

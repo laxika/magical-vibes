@@ -27,7 +27,7 @@ public class SapphireCollector extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, SpellCastTriggerEffect.nth(
                 2,
                 noncreatureSpell,
-                List.of(new OnceOnlyTriggerEffect(new ConjureCardNamedIntoHandEffect("Mox Sapphire", false)))));
+                List.of(new OnceOnlyTriggerEffect(new ConjureCardNamedIntoHandEffect("LEA", "265", false)))));
 
         CardPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
@@ -16,22 +17,22 @@ import java.util.List;
 @CardRegistration(set = "YMID", collectorNumber = "59")
 public class KeyToTheArchive extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "Approach of the Second Sun",
-            "Claim the Firstborn",
-            "Counterspell",
-            "Day of Judgment",
-            "Demonic Tutor",
-            "Despark",
-            "Doom Blade",
-            "Electrolyze",
-            "Growth Spiral",
-            "Krosan Grip",
-            "Lightning Bolt",
-            "Lightning Helix",
-            "Putrefy",
-            "Regrowth",
-            "Time Warp");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("AKH", "4"),
+            new DraftFromSpellbookEffect.SpellbookCard("ELD", "118"),
+            new DraftFromSpellbookEffect.SpellbookCard("LEA", "54"),
+            new DraftFromSpellbookEffect.SpellbookCard("ZEN", "9"),
+            new DraftFromSpellbookEffect.SpellbookCard("LEA", "104"),
+            new DraftFromSpellbookEffect.SpellbookCard("WAR", "190"),
+            new DraftFromSpellbookEffect.SpellbookCard("M10", "93"),
+            new DraftFromSpellbookEffect.SpellbookCard("GPT", "111"),
+            new DraftFromSpellbookEffect.SpellbookCard("RNA", "178"),
+            new DraftFromSpellbookEffect.SpellbookCard("TSP", "202"),
+            new DraftFromSpellbookEffect.SpellbookCard("LEA", "161"),
+            new DraftFromSpellbookEffect.SpellbookCard("RAV", "213"),
+            new DraftFromSpellbookEffect.SpellbookCard("RAV", "221"),
+            new DraftFromSpellbookEffect.SpellbookCard("LEA", "214"),
+            new DraftFromSpellbookEffect.SpellbookCard("TMP", "97"));
 
     public KeyToTheArchive() {
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardRecipient;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealMatchingCardsFromTargetHandAndExileEffect;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -16,22 +17,22 @@ import java.util.List;
 @CardRegistration(set = "YMID", collectorNumber = "26")
 public class BreakExpectations extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "Colossal Plow",
-            "Millstone",
-            "Whirlermaker",
-            "Magistrate's Scepter",
-            "Replicating Ring",
-            "Raiders' Karve",
-            "Weapon Rack",
-            "Relic Amulet",
-            "Orazca Relic",
-            "Fifty Feet of Rope",
-            "Pyre of Heroes",
-            "Treasure Chest",
-            "Leather Armor",
-            "Spiked Pit Trap",
-            "Gingerbrute");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "236"),
+            new DraftFromSpellbookEffect.SpellbookCard("ATQ", "56"),
+            new DraftFromSpellbookEffect.SpellbookCard("KLD", "239"),
+            new DraftFromSpellbookEffect.SpellbookCard("MMQ", "304"),
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "244"),
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "242"),
+            new DraftFromSpellbookEffect.SpellbookCard("ELD", "236"),
+            new DraftFromSpellbookEffect.SpellbookCard("ZNR", "247"),
+            new DraftFromSpellbookEffect.SpellbookCard("RIX", "181"),
+            new DraftFromSpellbookEffect.SpellbookCard("AFR", "244"),
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "241"),
+            new DraftFromSpellbookEffect.SpellbookCard("AFR", "252"),
+            new DraftFromSpellbookEffect.SpellbookCard("AFR", "248"),
+            new DraftFromSpellbookEffect.SpellbookCard("AFR", "251"),
+            new DraftFromSpellbookEffect.SpellbookCard("ELD", "219"));
 
     public BreakExpectations() {
         target(new PlayerPredicateTargetFilter(

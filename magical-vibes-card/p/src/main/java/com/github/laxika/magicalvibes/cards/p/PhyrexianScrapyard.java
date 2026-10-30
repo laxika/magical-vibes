@@ -29,7 +29,7 @@ public class PhyrexianScrapyard extends Card {
                 "{1}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new ConjureCardNamedIntoHandEffect("Phyrexian Scrapyard", false)
+                        new ConjureCardNamedIntoHandEffect("YONE", "30", false)
                 ),
                 "{1}, {T}, Discard a card: Conjure a card named Phyrexian Scrapyard into your hand."
         ));
@@ -45,7 +45,7 @@ public class PhyrexianScrapyard extends Card {
                                         new PermanentIsLandPredicate(),
                                         new PermanentNamedPredicate("Phyrexian Scrapyard")
                                 ))),
-                        new ConjureCardToBattlefieldEffect("Soul of New Phyrexia")
+                        new ConjureCardToBattlefieldEffect("M15", "231")
                 ),
                 "{2}, {T}, Sacrifice three lands named Phyrexian Scrapyard: Conjure a card named Soul of New "
                         + "Phyrexia onto the battlefield. Activate only as a sorcery.",

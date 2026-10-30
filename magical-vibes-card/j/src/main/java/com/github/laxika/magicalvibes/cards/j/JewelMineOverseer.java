@@ -15,7 +15,7 @@ public class JewelMineOverseer extends Card {
 
     public JewelMineOverseer() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConjureCardNamedIntoLibraryEffect(
-                "Seven Dwarves", 7,
+                "ELD", "141", 7,
                 Map.of(EffectSlot.ON_ENTER_BATTLEFIELD, List.of(new DrawCardEffect(1)))));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ExileTopCardMayPlayThisTurnEffect(false));
     }

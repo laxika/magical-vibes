@@ -22,7 +22,7 @@ public class NornsFetchling extends Card {
         addEffect(EffectSlot.STATIC, new ToxicEffect(1));
 
         ConjureCardNamedIntoHandEffect conjurePlains =
-                new ConjureCardNamedIntoHandEffect("Plains", false);
+                new ConjureCardNamedIntoHandEffect("LEA", "286", false);
         SeekLibraryToHandEffect seekNonland = new SeekLibraryToHandEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)));
 

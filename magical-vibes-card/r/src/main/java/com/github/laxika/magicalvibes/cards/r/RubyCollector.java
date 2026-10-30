@@ -18,7 +18,7 @@ public class RubyCollector extends Card {
     public RubyCollector() {
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
                 new MinimumAttackers(3),
-                new OnceOnlyTriggerEffect(new ConjureCardNamedIntoHandEffect("Mox Ruby", false))));
+                new OnceOnlyTriggerEffect(new ConjureCardNamedIntoHandEffect("LEA", "264", false))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

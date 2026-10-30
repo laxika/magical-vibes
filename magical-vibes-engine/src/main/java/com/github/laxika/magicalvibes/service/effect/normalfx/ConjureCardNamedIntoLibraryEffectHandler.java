@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.cards.CardCatalog;
-import com.github.laxika.magicalvibes.cards.CardPrinting;
-import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -41,13 +39,16 @@ public class ConjureCardNamedIntoLibraryEffectHandler implements NormalEffectHan
         }
 
         int conjuredCount = 0;
+        String conjuredName = null;
         for (int i = 0; i < conjure.count(); i++) {
-            Card card = createCardByName(conjure.cardName());
+            Card card = cardCatalog.createCardIfImplemented(conjure.setCode(), conjure.collectorNumber());
             if (card == null) {
                 break;
             }
 
+            card.setConjured(true);
             card.setOwnerId(controllerId);
+            conjuredName = card.getName();
             conjure.additionalEffects().forEach((slot, effects) ->
                     effects.forEach(additionalEffect -> card.addEffect(slot, additionalEffect)));
             card.freeze();
@@ -64,20 +65,7 @@ public class ConjureCardNamedIntoLibraryEffectHandler implements NormalEffectHan
         LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures " + conjuredCount + " card" + (conjuredCount == 1 ? "" : "s")
-                        + " named " + conjure.cardName() + " into "
+                        + " named " + conjuredName + " into "
                         + gameData.playerIdToName.get(controllerId) + "'s library, then shuffles."));
-    }
-
-    private Card createCardByName(String cardName) {
-        for (CardSet set : CardSet.values()) {
-            for (CardPrinting printing : cardCatalog.getPrintings(set)) {
-                Card card = printing.createCard();
-                card.setConjured(true);
-                if (cardName.equals(card.getName())) {
-                    return card;
-                }
-            }
-        }
-        return null;
     }
 }

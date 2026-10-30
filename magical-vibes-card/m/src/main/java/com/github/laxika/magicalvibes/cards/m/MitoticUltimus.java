@@ -15,7 +15,7 @@ public class MitoticUltimus extends Card {
         addEffect(EffectSlot.STATIC,
                 new ReduceOwnCastCostEffect(new GreatestPowerAmongControlled()));
         addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
-                new ConjureCardToBattlefieldEffect("Mitotic Slime"),
-                new ConjureCardToBattlefieldEffect("Mitotic Slime")));
+                new ConjureCardToBattlefieldEffect("M11", "185"),
+                new ConjureCardToBattlefieldEffect("M11", "185")));
     }
 }

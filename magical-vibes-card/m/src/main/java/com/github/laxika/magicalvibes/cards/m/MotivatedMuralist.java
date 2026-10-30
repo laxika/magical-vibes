@@ -10,6 +10,6 @@ public class MotivatedMuralist extends Card {
 
     public MotivatedMuralist() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConjureCardToHandEffect("Inspiring Statuary"));
+                new ConjureCardToHandEffect("AER", "160"));
     }
 }

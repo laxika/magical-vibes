@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -69,6 +70,7 @@ public class CardRegistry implements CardCatalog {
     private final Map<String, Integer> setCardTotals = new ConcurrentHashMap<>();
     private final Set<CardSet> loadedSets = EnumSet.noneOf(CardSet.class);
     private final Set<String> loadedOracleClassNames = ConcurrentHashMap.newKeySet();
+    private final Map<String, CardPrinting> loadedPrintingsByName = new ConcurrentHashMap<>();
     private volatile Map<CardSet, List<CardPrinting>> printings = Map.of();
     private volatile Map<Class<? extends Card>, CardSet> backFaceSets = Map.of();
 
@@ -273,6 +275,7 @@ public class CardRegistry implements CardCatalog {
             verifyOracleNameMatchesClass(cardSet, printing, front, back, faceNames);
             Card.registerOracle(printing.simpleCardClassName(), front);
             loadedOracleClassNames.add(printing.simpleCardClassName());
+            loadedPrintingsByName.putIfAbsent(front.name(), printing);
 
             if (loadMode == OracleLoadMode.EAGER || printing.hasBackFace()) {
                 Card tempCard = constructForRegistration(printing);
@@ -400,6 +403,11 @@ public class CardRegistry implements CardCatalog {
     @Override
     public List<CardPrinting> getPrintings(CardSet set) {
         return printings.getOrDefault(set, List.of());
+    }
+
+    @Override
+    public Optional<CardPrinting> findLoadedPrintingByName(String cardName) {
+        return Optional.ofNullable(loadedPrintingsByName.get(cardName));
     }
 
     @Override

@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.cards.CardCatalog;
-import com.github.laxika.magicalvibes.cards.CardPrinting;
-import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureSpellbookIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -42,13 +41,14 @@ public class ConjureSpellbookIntoLibraryEffectHandler implements NormalEffectHan
         }
 
         int conjuredCount = 0;
-        for (String cardName : conjure.cardNames()) {
+        for (DraftFromSpellbookEffect.SpellbookCard reference : conjure.spellbook()) {
             for (int i = 0; i < conjure.copies(); i++) {
-                Card card = createCardByName(cardName);
+                Card card = cardCatalog.createCardIfImplemented(reference.setCode(), reference.collectorNumber());
                 if (card == null) {
                     continue;
                 }
 
+                card.setConjured(true);
                 card.setOwnerId(controllerId);
                 card.freeze();
                 library.add(card);
@@ -66,18 +66,5 @@ public class ConjureSpellbookIntoLibraryEffectHandler implements NormalEffectHan
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " conjures " + conjuredCount + " cards from its spellbook into "
                         + gameData.playerIdToName.get(controllerId) + "'s library, then shuffles."));
-    }
-
-    private Card createCardByName(String cardName) {
-        for (CardSet set : CardSet.values()) {
-            for (CardPrinting printing : cardCatalog.getPrintings(set)) {
-                Card card = printing.createCard();
-                card.setConjured(true);
-                if (cardName.equals(card.getName())) {
-                    return card;
-                }
-            }
-        }
-        return null;
     }
 }

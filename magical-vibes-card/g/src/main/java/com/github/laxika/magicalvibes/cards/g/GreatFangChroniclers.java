@@ -16,7 +16,7 @@ public class GreatFangChroniclers extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{G}",
-                List.of(new ConjureCardToBattlefieldEffect("Muraganda Petroglyphs"),
+                List.of(new ConjureCardToBattlefieldEffect("FUT", "146"),
                         new LoseThisActivatedAbilityEffect()),
                 "{3}{G}: Conjure a card named Muraganda Petroglyphs onto the battlefield, then this creature loses this ability. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED

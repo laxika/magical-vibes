@@ -25,8 +25,8 @@ public class KamiOfBambooGroves extends Card {
                 false,
                 "{2}{G}",
                 List.of(SequenceEffect.of(
-                        new ConjureCardNamedIntoHandEffect("Forest", false),
-                        new ConjureCardNamedIntoHandEffect("Forest", false))),
+                        new ConjureCardNamedIntoHandEffect("LEA", "294", false),
+                        new ConjureCardNamedIntoHandEffect("LEA", "294", false))),
                 "Channel — {2}{G}, Discard this card: Conjure two cards named Forest into your hand."
         ));
     }

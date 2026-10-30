@@ -11,6 +11,6 @@ public class SwarmSaboteur extends Card {
     public SwarmSaboteur() {
         addNinjutsu("{B}");
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                new ConjureCardToHandEffect("Virus Beetle"));
+                new ConjureCardToHandEffect("NEO", "128"));
     }
 }

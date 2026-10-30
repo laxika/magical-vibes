@@ -16,7 +16,7 @@ public class GiltLeafAlchemist extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new ConjureCardToBattlefieldEffect("Forest")),
+                List.of(new ConjureCardToBattlefieldEffect("LEA", "294")),
                 "{T}: Conjure a card named Forest onto the battlefield. Activate only if two or more Elf cards are in your graveyard."
         ).withRequiredGraveyardCards(
                 new CardSubtypePredicate(CardSubtype.ELF), 2, "Elf cards in your graveyard"));

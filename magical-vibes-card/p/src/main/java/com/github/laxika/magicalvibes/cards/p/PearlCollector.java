@@ -26,7 +26,7 @@ public class PearlCollector extends Card {
     public PearlCollector() {
         addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, new ConditionalEffect(
                 new GainedLifeThisTurn(4),
-                new OnceOnlyTriggerEffect(new ConjureCardNamedIntoHandEffect("Mox Pearl", false))));
+                new OnceOnlyTriggerEffect(new ConjureCardNamedIntoHandEffect("LEA", "263", false))));
 
         PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

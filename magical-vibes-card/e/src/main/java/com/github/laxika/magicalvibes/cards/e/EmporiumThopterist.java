@@ -16,6 +16,6 @@ public class EmporiumThopterist extends Card {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.THOPTER)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                new ConjureCardNamedIntoHandEffect("Ornithopter", false));
+                new ConjureCardNamedIntoHandEffect("ATQ", "60", false));
     }
 }

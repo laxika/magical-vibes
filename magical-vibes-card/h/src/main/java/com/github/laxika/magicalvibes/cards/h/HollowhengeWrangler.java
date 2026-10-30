@@ -30,7 +30,7 @@ public class HollowhengeWrangler extends Card {
                 null,
                 List.of(
                         new DiscardCardTypeCost(new CardTypePredicate(CardType.LAND), "land"),
-                        new ConjureCardNamedIntoHandEffect("Hollowhenge Beast", false)
+                        new ConjureCardNamedIntoHandEffect("DKA", "118", false)
                 ),
                 "Discard a land card: Conjure a card named Hollowhenge Beast into your hand. "
                         + "You may also activate this ability while Hollowhenge Wrangler is in your graveyard."

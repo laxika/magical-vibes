@@ -23,7 +23,7 @@ public class StormforgedArmor extends Card {
         addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 SequenceEffect.of(
-                        new ConjureCardToBattlefieldEffect("Ball Lightning"),
+                        new ConjureCardToBattlefieldEffect("DRK", "57"),
                         new MakeCreatedPermanentsAttackingEffect(true)),
                 GrantScope.EQUIPPED_CREATURE));
 

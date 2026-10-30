@@ -20,7 +20,7 @@ public class UrsineGuideRangersMerit extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomePreparedEffect());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastFromOutsideStartingDeckTriggerEffect(List.of(
-                        new ConjureCardToBattlefieldEffect("Bear Cub"),
+                        new ConjureCardToBattlefieldEffect("FDN", "552"),
                         new BecomePreparedEffect())));
     }
 

@@ -15,7 +15,7 @@ public class AGoldenOpportunity extends Card {
 
     public AGoldenOpportunity() {
         addEffect(EffectSlot.SAGA_CHAPTER_I,
-                new ConjureCardToBattlefieldEffect("Gilded Goose"));
+                new ConjureCardToBattlefieldEffect("ELD", "160"));
         addEffect(EffectSlot.SAGA_CHAPTER_II, chapterTwoOrThreeEffect());
         addEffect(EffectSlot.SAGA_CHAPTER_III, chapterTwoOrThreeEffect());
     }
@@ -25,7 +25,7 @@ public class AGoldenOpportunity extends Card {
                 new TapMultiplePermanentsCost(
                         1, new PermanentHasSubtypePredicate(CardSubtype.BIRD)),
                 new PermanentIsArtifactPredicate(),
-                new ConjureCardToBattlefieldEffect("Golden Egg"),
+                new ConjureCardToBattlefieldEffect("ELD", "220"),
                 "an artifact",
                 "Tap an untapped Bird you control and sacrifice an artifact?");
     }

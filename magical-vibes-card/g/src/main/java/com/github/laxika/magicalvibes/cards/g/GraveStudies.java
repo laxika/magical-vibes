@@ -12,7 +12,7 @@ public class GraveStudies extends Card {
     public GraveStudies() {
         // Conjure a card named Teacher's Pest onto the battlefield, then each player sacrifices a
         // creature.
-        addEffect(EffectSlot.SPELL, new ConjureCardToBattlefieldEffect("Teacher's Pest"));
+        addEffect(EffectSlot.SPELL, new ConjureCardToBattlefieldEffect("SOS", "238"));
         addEffect(EffectSlot.SPELL, new EachPlayerSacrificesCreatureEffect());
     }
 }

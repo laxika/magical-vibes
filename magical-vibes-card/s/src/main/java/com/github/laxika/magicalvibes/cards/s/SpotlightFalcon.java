@@ -14,6 +14,6 @@ public class SpotlightFalcon extends Card {
     public SpotlightFalcon() {
         addEffect(EffectSlot.SPELL, new CollectEvidenceCost(5, true));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
-                new CollectEvidenceCostPaid(), new ConjureCardToHandEffect("Spotlight Falcon")));
+                new CollectEvidenceCostPaid(), new ConjureCardToHandEffect("YMKM", "3")));
     }
 }

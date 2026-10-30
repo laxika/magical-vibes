@@ -43,7 +43,7 @@ public class HighMarshalArguel extends Card {
         addEffect(EffectSlot.ON_DEATH, new ConditionalReplacementEffect(
                 controlsArguelsBloodFastAndTemple,
                 SequenceEffect.of(
-                        new ConjureCardToBattlefieldEffect("Arguel's Blood Fast"),
+                        new ConjureCardToBattlefieldEffect("XLN", "90"),
                         new MayEffect(new TransformCreatedPermanentEffect(), "Transform it?")),
                 vampireDemons));
     }

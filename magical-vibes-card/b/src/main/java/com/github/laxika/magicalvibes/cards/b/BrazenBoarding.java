@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffec
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -21,22 +22,22 @@ import java.util.List;
 @CardRegistration(set = "YLCI", collectorNumber = "23")
 public class BrazenBoarding extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "Colossal Plow",
-            "Millstone",
-            "Whirlermaker",
-            "Magistrate's Scepter",
-            "Replicating Ring",
-            "Raiders' Karve",
-            "Weapon Rack",
-            "Relic Amulet",
-            "Orazca Relic",
-            "Fifty Feet of Rope",
-            "Pyre of Heroes",
-            "Treasure Chest",
-            "Leather Armor",
-            "Spiked Pit Trap",
-            "Gingerbrute");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "236"),
+            new DraftFromSpellbookEffect.SpellbookCard("ATQ", "56"),
+            new DraftFromSpellbookEffect.SpellbookCard("KLD", "239"),
+            new DraftFromSpellbookEffect.SpellbookCard("MMQ", "304"),
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "244"),
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "242"),
+            new DraftFromSpellbookEffect.SpellbookCard("ELD", "236"),
+            new DraftFromSpellbookEffect.SpellbookCard("ZNR", "247"),
+            new DraftFromSpellbookEffect.SpellbookCard("RIX", "181"),
+            new DraftFromSpellbookEffect.SpellbookCard("AFR", "244"),
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "241"),
+            new DraftFromSpellbookEffect.SpellbookCard("AFR", "252"),
+            new DraftFromSpellbookEffect.SpellbookCard("AFR", "248"),
+            new DraftFromSpellbookEffect.SpellbookCard("AFR", "251"),
+            new DraftFromSpellbookEffect.SpellbookCard("ELD", "219"));
 
     public BrazenBoarding() {
         target(new PermanentPredicateTargetFilter(
@@ -48,7 +49,7 @@ public class BrazenBoarding extends Card {
                 .addEffect(EffectSlot.SPELL, new ConditionalEffect(
                         new EventValueAtLeast(1), SequenceEffect.of(
                                 new ConditionalEffect(new EventValueAtLeast(4),
-                                        new ConjureCardToBattlefieldEffect("Admiral Beckett Brass")),
+                                        new ConjureCardToBattlefieldEffect("XLN", "217")),
                                 new ConditionalEffect(new NotCondition(new EventValueAtLeast(4)),
                                         new ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect(
                                                 SPELLBOOK, new EventValue())))));

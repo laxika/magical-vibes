@@ -76,6 +76,40 @@ class CardRegistryOnDemandTest {
     }
 
     @Test
+    void createsCardsOnlyForImplementedPrintings() {
+        RecordingLoader loader = new RecordingLoader();
+        registry = new CardRegistry(loader, OracleLoadMode.ON_DEMAND);
+        registry.load();
+
+        Card pacifism = registry.createCardIfImplemented("10E", "31");
+
+        assertThat(pacifism).isInstanceOf(Pacifism.class);
+        assertThat(pacifism.getSetCode()).isEqualTo("10E");
+        assertThat(pacifism.getCollectorNumber()).isEqualTo("31");
+        assertThat(pacifism.getCardText()).isEqualTo("10E #31");
+        assertThat(registry.createCardIfImplemented("NOPE", "1")).isNull();
+        assertThat(registry.createCardIfImplemented("10E", "9999")).isNull();
+        assertThat(loader.loadedSetCodes).containsExactly("10E");
+    }
+
+    @Test
+    void findsPrintingsByNameOnlyAmongLoadedCards() {
+        RecordingLoader loader = new RecordingLoader();
+        registry = new CardRegistry(loader, OracleLoadMode.ON_DEMAND);
+        registry.load();
+
+        new Pacifism();
+        String loadedSet = loader.loadedSetCodes.getFirst();
+
+        CardPrinting printing = registry.findLoadedPrintingByName("Pacifism").orElseThrow();
+        assertThat(printing.cardClassName()).isEqualTo(Pacifism.class.getName());
+        assertThat(printing.setCode()).isEqualTo(loadedSet);
+        assertThat(CardScanner.collectorNumberOf(CurseclothWrappings.class, loadedSet)).isEmpty();
+        assertThat(registry.findLoadedPrintingByName("CurseclothWrappings")).isEmpty();
+        assertThat(loader.loadedSetCodes).containsExactly(loadedSet);
+    }
+
+    @Test
     void missingPreferredPrintingFallsBackToAnotherRegisteredSet() {
         List<CardSet> cardSets = Arrays.stream(CardSet.values())
                 .filter(set -> CardScanner.collectorNumberOf(Pacifism.class, set.getCode()).isPresent())

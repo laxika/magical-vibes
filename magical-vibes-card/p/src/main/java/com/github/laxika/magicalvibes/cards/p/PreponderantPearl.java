@@ -14,12 +14,12 @@ public class PreponderantPearl extends Card {
 
     public PreponderantPearl() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConjureCardToHandEffect("Ponder"));
+                new ConjureCardToHandEffect("LRW", "79"));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.MERFOLK),
-                        new SacrificeSelfThenEffect(new ConjureCardToHandEffect("Flooded Strand")),
+                        new SacrificeSelfThenEffect(new ConjureCardToHandEffect("ONS", "316")),
                         false,
                         true));
     }

@@ -27,7 +27,7 @@ public class HangarbackAssembler extends Card {
     public HangarbackAssembler() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 SequenceEffect.of(
-                        new ConjureCardToBattlefieldEffect("Hangarback Walker"),
+                        new ConjureCardToBattlefieldEffect("ORI", "229"),
                         new PutCountersOnCreatedPermanentsEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
 

@@ -30,7 +30,7 @@ public class CaseOfTheLostWitness extends Card {
 
     public CaseOfTheLostWitness() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
-                new ConjureCardNamedIntoLibraryEffect("Fblthp, the Lost", 4),
+                new ConjureCardNamedIntoLibraryEffect("WAR", "50", 4),
                 new DrawCardEffect(1)));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,

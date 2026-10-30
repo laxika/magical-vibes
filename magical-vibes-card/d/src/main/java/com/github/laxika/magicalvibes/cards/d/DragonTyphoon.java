@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -22,14 +23,14 @@ import java.util.Set;
 @CardRegistration(set = "YTDM", collectorNumber = "12")
 public class DragonTyphoon extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "Thunderbreak Regent",
-            "Stormscale Scion",
-            "Magmatic Hellkite",
-            "Boltwing Marauder",
-            "Neriv, Heart of the Storm",
-            "Caldera Pyremaw",
-            "Thundermane Dragon");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("DTK", "162"),
+            new DraftFromSpellbookEffect.SpellbookCard("TDM", "123"),
+            new DraftFromSpellbookEffect.SpellbookCard("TDM", "111"),
+            new DraftFromSpellbookEffect.SpellbookCard("DTK", "214"),
+            new DraftFromSpellbookEffect.SpellbookCard("TDM", "210"),
+            new DraftFromSpellbookEffect.SpellbookCard("TDC", "33"),
+            new DraftFromSpellbookEffect.SpellbookCard("FDC", "182"));
 
     public DragonTyphoon() {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,

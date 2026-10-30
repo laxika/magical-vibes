@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatedPermanentsMustAttackThisCombatEffect;
@@ -18,12 +19,12 @@ import java.util.List;
 @CardRegistration(set = "YMKM", collectorNumber = "28")
 public class TajicLegionsValor extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "Boros Recruit",
-            "Swiftblade Vindicator",
-            "Skyknight Legionnaire",
-            "Spark Trooper",
-            "Aurelia, the Law Above");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("RAV", "243"),
+            new DraftFromSpellbookEffect.SpellbookCard("GRN", "203"),
+            new DraftFromSpellbookEffect.SpellbookCard("RAV", "232"),
+            new DraftFromSpellbookEffect.SpellbookCard("GTC", "199"),
+            new DraftFromSpellbookEffect.SpellbookCard("MKM", "188"));
 
     public TajicLegionsValor() {
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, SequenceEffect.of(

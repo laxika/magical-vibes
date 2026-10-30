@@ -2,15 +2,19 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import java.util.List;
 
-/** Offers three distinct spellbook cards and exiles the chosen card with the source permanent. */
-public record DraftCardFromSpellbookToExileEffect(List<String> cardNames, boolean faceDown)
+/**
+ * Offers three distinct spellbook cards and exiles the chosen card with the source permanent. The
+ * spellbook lists printings; a printing that is not implemented yet is left out of the offer.
+ */
+public record DraftCardFromSpellbookToExileEffect(List<DraftFromSpellbookEffect.SpellbookCard> spellbook,
+                                                  boolean faceDown)
         implements CardEffect {
 
-    public DraftCardFromSpellbookToExileEffect(List<String> cardNames) {
-        this(cardNames, true);
+    public DraftCardFromSpellbookToExileEffect(List<DraftFromSpellbookEffect.SpellbookCard> spellbook) {
+        this(spellbook, true);
     }
 
     public DraftCardFromSpellbookToExileEffect {
-        cardNames = List.copyOf(cardNames);
+        spellbook = List.copyOf(spellbook);
     }
 }

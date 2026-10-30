@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToExileEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.PutAllCardsExiledWithSourceIntoOwnersHandsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
@@ -12,22 +13,22 @@ import java.util.List;
 @CardRegistration(set = "YSNC", collectorNumber = "1")
 public class CelestialVault extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "Angel of Destiny",
-            "Resplendent Angel",
-            "Angel of Vitality",
-            "Righteous Valkyrie",
-            "Angel of Invention",
-            "Angel of Sanctions",
-            "Valkyrie Harbinger",
-            "Emancipation Angel",
-            "Youthful Valkyrie",
-            "Resplendent Marshal",
-            "Enduring Angel",
-            "Sigardian Savior",
-            "Serra Angel",
-            "Stalwart Valkyrie",
-            "Segovian Angel");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("ZNR", "2"),
+            new DraftFromSpellbookEffect.SpellbookCard("M19", "34"),
+            new DraftFromSpellbookEffect.SpellbookCard("M20", "4"),
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "24"),
+            new DraftFromSpellbookEffect.SpellbookCard("KLD", "4"),
+            new DraftFromSpellbookEffect.SpellbookCard("AKH", "1"),
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "374"),
+            new DraftFromSpellbookEffect.SpellbookCard("AVR", "19"),
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "382"),
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "22"),
+            new DraftFromSpellbookEffect.SpellbookCard("MID", "17"),
+            new DraftFromSpellbookEffect.SpellbookCard("MID", "34"),
+            new DraftFromSpellbookEffect.SpellbookCard("LEA", "39"),
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "31"),
+            new DraftFromSpellbookEffect.SpellbookCard("MH1", "25"));
 
     public CelestialVault() {
         addActivatedAbility(new ActivatedAbility(

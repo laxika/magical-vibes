@@ -6,15 +6,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/** Conjures the named card into the resolving controller's library. */
+/**
+ * "Conjure … cards named … into your library": conjures copies of the given printing into the
+ * resolving controller's library. Nothing is conjured while that printing is not implemented.
+ */
 public record ConjureCardNamedIntoLibraryEffect(
-        String cardName,
+        String setCode,
+        String collectorNumber,
         int count,
         Map<EffectSlot, List<CardEffect>> additionalEffects
 ) implements CardEffect {
 
-    public ConjureCardNamedIntoLibraryEffect(String cardName, int count) {
-        this(cardName, count, Map.of());
+    public ConjureCardNamedIntoLibraryEffect(String setCode, String collectorNumber, int count) {
+        this(setCode, collectorNumber, count, Map.of());
     }
 
     public ConjureCardNamedIntoLibraryEffect {

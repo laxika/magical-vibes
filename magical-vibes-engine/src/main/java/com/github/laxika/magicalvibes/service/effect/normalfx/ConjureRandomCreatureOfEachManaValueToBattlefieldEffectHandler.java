@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCreatureOfEachManaValueToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -45,11 +46,11 @@ public class ConjureRandomCreatureOfEachManaValueToBattlefieldEffectHandler
             return;
         }
 
-        List<String> names = new ArrayList<>();
+        List<DraftFromSpellbookEffect.SpellbookCard> printings = new ArrayList<>();
         for (int manaValue = 1; manaValue <= maxManaValue; manaValue++) {
-            findRandomCreatureName(manaValue).ifPresent(names::add);
+            findRandomCreaturePrinting(manaValue).ifPresent(printings::add);
         }
-        List<CardEffect> conjures = ConjureCardToBattlefieldEffect.asOneEvent(names);
+        List<CardEffect> conjures = ConjureCardToBattlefieldEffect.asOneEvent(printings);
 
         int index = entry.getEffectsToResolve().indexOf(effect);
         if (index < 0) {
@@ -58,8 +59,8 @@ public class ConjureRandomCreatureOfEachManaValueToBattlefieldEffectHandler
         entry.insertEffectsToResolve(index + 1, conjures);
     }
 
-    private Optional<String> findRandomCreatureName(int manaValue) {
-        List<String> matchingNames = new ArrayList<>();
+    private Optional<DraftFromSpellbookEffect.SpellbookCard> findRandomCreaturePrinting(int manaValue) {
+        List<DraftFromSpellbookEffect.SpellbookCard> matching = new ArrayList<>();
         Set<String> inspectedClasses = new HashSet<>();
         for (CardSet cardSet : CardSet.values()) {
             for (CardPrinting printing : cardCatalog.getPrintings(cardSet)) {
@@ -69,13 +70,14 @@ public class ConjureRandomCreatureOfEachManaValueToBattlefieldEffectHandler
                 Card card = printing.createCard();
                 card.setConjured(true);
                 if (card.hasType(CardType.CREATURE) && card.getManaValue() == manaValue) {
-                    matchingNames.add(card.getName());
+                    matching.add(new DraftFromSpellbookEffect.SpellbookCard(
+                            printing.setCode(), printing.collectorNumber()));
                 }
             }
         }
-        if (matchingNames.isEmpty()) {
+        if (matching.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(matchingNames.get(ThreadLocalRandom.current().nextInt(matchingNames.size())));
+        return Optional.of(matching.get(ThreadLocalRandom.current().nextInt(matching.size())));
     }
 }

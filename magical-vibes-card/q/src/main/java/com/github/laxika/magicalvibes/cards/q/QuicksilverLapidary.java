@@ -10,6 +10,6 @@ public class QuicksilverLapidary extends Card {
 
     public QuicksilverLapidary() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConjureCardToHandEffect("Mox Opal"));
+                new ConjureCardToHandEffect("SOM", "179"));
     }
 }

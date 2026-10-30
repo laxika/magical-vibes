@@ -4,18 +4,19 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 
 import java.util.List;
 
 @CardRegistration(set = "HBG", collectorNumber = "67")
 public class FollowTheTracks extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "Gate to the Citadel",
-            "Gate to Seatower",
-            "Gate of the Black Dragon",
-            "Gate to Tumbledown",
-            "Gate to Manorborn");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("HBG", "80"),
+            new DraftFromSpellbookEffect.SpellbookCard("HBG", "79"),
+            new DraftFromSpellbookEffect.SpellbookCard("HBG", "77"),
+            new DraftFromSpellbookEffect.SpellbookCard("HBG", "81"),
+            new DraftFromSpellbookEffect.SpellbookCard("HBG", "78"));
 
     public FollowTheTracks() {
         addEffect(EffectSlot.SPELL, DraftCardFromSpellbookEffect.conjureToBattlefield(SPELLBOOK));

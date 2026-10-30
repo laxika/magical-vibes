@@ -17,6 +17,6 @@ public class LamStormCraneElder extends Card {
     public LamStormCraneElder() {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                List.of(new ConjureCardToBattlefieldEffect("Monastery Mentor"))));
+                List.of(new ConjureCardToBattlefieldEffect("FRF", "20"))));
     }
 }

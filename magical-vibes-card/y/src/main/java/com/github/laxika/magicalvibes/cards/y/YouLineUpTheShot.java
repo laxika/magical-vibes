@@ -16,10 +16,10 @@ public class YouLineUpTheShot extends Card {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Aim for the Wyvern — Conjure a card named Plummet into your hand",
-                        new ConjureCardNamedIntoHandEffect("Plummet", false)),
+                        new ConjureCardNamedIntoHandEffect("M11", "190", false)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Aim for the Cursed Amulet — Conjure a card named Naturalize into your hand",
-                        new ConjureCardNamedIntoHandEffect("Naturalize", false)),
+                        new ConjureCardNamedIntoHandEffect("ONS", "275", false)),
                 new ChooseOneEffect.ChooseOneOption("Fire a Warning Shot — Draw a card", new DrawCardEffect())
         )));
     }

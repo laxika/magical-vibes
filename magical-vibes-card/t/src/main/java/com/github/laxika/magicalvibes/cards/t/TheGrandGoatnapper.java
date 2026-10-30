@@ -43,7 +43,7 @@ public class TheGrandGoatnapper extends Card {
                 null,
                 List.of(
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.GOAT, EffectDuration.PERMANENT, false, true),
-                        new ConjureCardNamedIntoHandEffect("Goatnap", false)
+                        new ConjureCardNamedIntoHandEffect("ECL", "142", false)
                 ),
                 "{T}: Another target non-Goat creature perpetually becomes a Goat in addition to its other types. "
                         + "Then conjure a card named Goatnap into your hand. Activate only as a sorcery.",

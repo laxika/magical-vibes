@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -23,8 +24,10 @@ import java.util.List;
 @CardRegistration(set = "YWOE", collectorNumber = "17")
 public class DroverOfTheSwine extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "First Little Pig", "Second Little Pig", "Third Little Pig");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("YWOE", "18"),
+            new DraftFromSpellbookEffect.SpellbookCard("YWOE", "24"),
+            new DraftFromSpellbookEffect.SpellbookCard("YWOE", "28"));
 
     public DroverOfTheSwine() {
         CardPredicate boarCreature = new CardAllOfPredicate(List.of(

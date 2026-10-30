@@ -11,6 +11,6 @@ public class PredatorySludge extends Card {
 
     public PredatorySludge() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ChooseOpponentPermanentOnEnterEffect(new ConjureCardNamedIntoHandEffect("Predatory Sludge", false)));
+                new ChooseOpponentPermanentOnEnterEffect(new ConjureCardNamedIntoHandEffect("YMID", "30", false)));
     }
 }

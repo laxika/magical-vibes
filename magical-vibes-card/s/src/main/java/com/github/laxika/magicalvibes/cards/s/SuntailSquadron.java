@@ -10,6 +10,6 @@ public class SuntailSquadron extends Card {
 
     public SuntailSquadron() {
         addEffect(EffectSlot.SPELL,
-                new ConjureCardNamedIntoHandEffect("Suntail Hawk", false, 7));
+                new ConjureCardNamedIntoHandEffect("JUD", "28", false, 7));
     }
 }

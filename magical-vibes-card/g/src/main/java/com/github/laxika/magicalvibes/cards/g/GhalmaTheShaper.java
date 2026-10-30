@@ -15,7 +15,7 @@ import java.util.Set;
 public class GhalmaTheShaper extends Card {
 
     public GhalmaTheShaper() {
-        addEffect(EffectSlot.ON_ATTACK, new ConjureCardNamedIntoHandEffect("Tempered Steel", false));
+        addEffect(EffectSlot.ON_ATTACK, new ConjureCardNamedIntoHandEffect("SOM", "24", false));
         addEffect(EffectSlot.ON_ATTACK,
                 new CreateTokenEffect(1, "Myr", 1, 1, null,
                         List.of(CardSubtype.MYR), Set.of(), Set.of(CardType.ARTIFACT)));

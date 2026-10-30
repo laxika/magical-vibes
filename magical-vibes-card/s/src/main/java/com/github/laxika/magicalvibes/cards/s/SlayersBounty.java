@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnlyEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.LookAtCreatureCardsInTargetPlayerHandEffect;
@@ -21,22 +22,22 @@ import java.util.List;
 @CardRegistration(set = "YMID", collectorNumber = "10")
 public class SlayersBounty extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "Bounty Agent",
-            "Outflank",
-            "Bound in Gold",
-            "Bring to Trial",
-            "Glass Casket",
-            "Reprobation",
-            "Collar the Culprit",
-            "Compulsory Rest",
-            "Expel",
-            "Fairgrounds Warden",
-            "Iron Verdict",
-            "Luminous Bonds",
-            "Raise the Alarm",
-            "Seal Away",
-            "Summary Judgment");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("GRN", "2"),
+            new DraftFromSpellbookEffect.SpellbookCard("ELD", "23"),
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "5"),
+            new DraftFromSpellbookEffect.SpellbookCard("RNA", "5"),
+            new DraftFromSpellbookEffect.SpellbookCard("ELD", "15"),
+            new DraftFromSpellbookEffect.SpellbookCard("MH1", "23"),
+            new DraftFromSpellbookEffect.SpellbookCard("GRN", "5"),
+            new DraftFromSpellbookEffect.SpellbookCard("AKH", "9"),
+            new DraftFromSpellbookEffect.SpellbookCard("STX", "18"),
+            new DraftFromSpellbookEffect.SpellbookCard("KLD", "13"),
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "17"),
+            new DraftFromSpellbookEffect.SpellbookCard("RIX", "12"),
+            new DraftFromSpellbookEffect.SpellbookCard("MRD", "16"),
+            new DraftFromSpellbookEffect.SpellbookCard("DOM", "31"),
+            new DraftFromSpellbookEffect.SpellbookCard("RNA", "24"));
 
     private static DraftCardFromSpellbookEffect draftFromSpellbook() {
         return new DraftCardFromSpellbookEffect(SPELLBOOK);

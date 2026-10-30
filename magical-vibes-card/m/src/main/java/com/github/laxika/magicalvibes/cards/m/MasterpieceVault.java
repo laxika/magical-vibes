@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AttachSelectedEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -17,14 +18,14 @@ import java.util.UUID;
 @CardRegistration(set = "YDFT", collectorNumber = "29")
 public class MasterpieceVault extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "Champion's Helm",
-            "Lightning Greaves",
-            "Sword of Body and Mind",
-            "Sword of Feast and Famine",
-            "Sword of Fire and Ice",
-            "Sword of Light and Shadow",
-            "Sword of War and Peace");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("CMD", "244"),
+            new DraftFromSpellbookEffect.SpellbookCard("MRD", "199"),
+            new DraftFromSpellbookEffect.SpellbookCard("SOM", "208"),
+            new DraftFromSpellbookEffect.SpellbookCard("MBS", "138"),
+            new DraftFromSpellbookEffect.SpellbookCard("DST", "148"),
+            new DraftFromSpellbookEffect.SpellbookCard("DST", "149"),
+            new DraftFromSpellbookEffect.SpellbookCard("NPH", "161"));
 
     private static final LibrarySelectionFollowUp ATTACHMENT_FOLLOW_UP = new LibrarySelectionFollowUp() {
         @Override

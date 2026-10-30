@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -261,6 +262,7 @@ public class CombatAttackService {
     private final com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
     private final ETBTokenTargetService etbTokenTargetService;
     private final StaticEffectConditionResolver staticEffectConditionResolver;
+    private final CardCatalog cardCatalog;
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
@@ -1833,13 +1835,13 @@ public class CombatAttackService {
             }
             int doubleTeamInstances = gameQueryService.triggerKeywordInstances(
                     gameData, attacker, Keyword.DOUBLE_TEAM);
+            Optional<ConjureCardToHandEffect> conjureDuplicate = conjureDoubleTeamDuplicate(attacker.getCard());
             int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
             try {
                 for (int instance = 0; instance < doubleTeamInstances; instance++) {
-                    List<CardEffect> doubleTeamEffects = List.of(
-                            new PerpetuallyRemoveKeywordEffect(Keyword.DOUBLE_TEAM),
-                            ConjureCardToHandEffect.withoutKeyword(
-                                    attacker.getCard().getName(), Keyword.DOUBLE_TEAM));
+                    List<CardEffect> doubleTeamEffects = new ArrayList<>();
+                    doubleTeamEffects.add(new PerpetuallyRemoveKeywordEffect(Keyword.DOUBLE_TEAM));
+                    conjureDuplicate.ifPresent(doubleTeamEffects::add);
                     StackEntry doubleTeamTrigger = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             attacker.getCard(),
@@ -4689,5 +4691,19 @@ public class CombatAttackService {
                 ? attackedPermanent.getProtectorPlayerId()
                 : gameQueryService.findPermanentController(gameData, attackedTargetId);
         return defendingPlayerId != null ? defendingPlayerId : attackedTargetId;
+    }
+
+    /**
+     * Double team's duplicate is a fresh card of the attacker's printing, without double team. A
+     * card that carries no printing of its own (built straight from its class) is found by name.
+     */
+    private Optional<ConjureCardToHandEffect> conjureDoubleTeamDuplicate(Card attackerCard) {
+        if (attackerCard.getSetCode() != null && attackerCard.getCollectorNumber() != null) {
+            return Optional.of(ConjureCardToHandEffect.withoutKeyword(
+                    attackerCard.getSetCode(), attackerCard.getCollectorNumber(), Keyword.DOUBLE_TEAM));
+        }
+        return cardCatalog.findLoadedPrintingByName(attackerCard.getName())
+                .map(printing -> ConjureCardToHandEffect.withoutKeyword(
+                        printing.setCode(), printing.collectorNumber(), Keyword.DOUBLE_TEAM));
     }
 }

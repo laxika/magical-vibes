@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToExileEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCopyOfExiledCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -20,22 +21,22 @@ import java.util.Set;
 @CardRegistration(set = "YSNC", collectorNumber = "14")
 public class LooseInThePark extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "Exuberant Wolfbear",
-            "Master Symmetrist",
-            "Thrashing Brontodon",
-            "Ornery Dilophosaur",
-            "Prized Unicorn",
-            "Sabertooth Mauler",
-            "Spike-Tailed Ceratops",
-            "Bristling Boar",
-            "Enraged Ceratok",
-            "Spore Crawler",
-            "Predatory Wurm",
-            "Gaea's Protector",
-            "Wardscale Crocodile",
-            "Overgrown Armasaur",
-            "World Shaper");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("IKO", "151"),
+            new DraftFromSpellbookEffect.SpellbookCard("STX", "138"),
+            new DraftFromSpellbookEffect.SpellbookCard("RIX", "148"),
+            new DraftFromSpellbookEffect.SpellbookCard("M21", "194"),
+            new DraftFromSpellbookEffect.SpellbookCard("M10", "199"),
+            new DraftFromSpellbookEffect.SpellbookCard("M21", "202"),
+            new DraftFromSpellbookEffect.SpellbookCard("XLN", "209"),
+            new DraftFromSpellbookEffect.SpellbookCard("M19", "170"),
+            new DraftFromSpellbookEffect.SpellbookCard("RNA", "125"),
+            new DraftFromSpellbookEffect.SpellbookCard("VOW", "222"),
+            new DraftFromSpellbookEffect.SpellbookCard("M21", "338"),
+            new DraftFromSpellbookEffect.SpellbookCard("DOM", "162"),
+            new DraftFromSpellbookEffect.SpellbookCard("WAR", "183"),
+            new DraftFromSpellbookEffect.SpellbookCard("RIX", "141"),
+            new DraftFromSpellbookEffect.SpellbookCard("RIX", "151"));
 
     public LooseInThePark() {
         target(TargetFilters.land());

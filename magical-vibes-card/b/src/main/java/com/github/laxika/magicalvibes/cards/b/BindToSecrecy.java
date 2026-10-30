@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTargetCreatureCardFromOpponentGraveyardIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
@@ -24,11 +25,22 @@ import java.util.Set;
 @CardRegistration(set = "YSNC", collectorNumber = "19")
 public class BindToSecrecy extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "Corpse Churn", "Corpse Hauler", "Courier Bat", "Durable Coilbug", "Fear of Death",
-            "Gorging Vulture", "Liliana's Elite", "Locked in the Cemetery", "Naga Oracle",
-            "Necrotic Wound", "Obsessive Stitcher", "Reassembling Skeleton", "Strategic Planning",
-            "Unmarked Grave", "Wonder");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("OGW", "83"),
+            new DraftFromSpellbookEffect.SpellbookCard("M14", "90"),
+            new DraftFromSpellbookEffect.SpellbookCard("VOW", "102"),
+            new DraftFromSpellbookEffect.SpellbookCard("IKO", "85"),
+            new DraftFromSpellbookEffect.SpellbookCard("VOW", "59"),
+            new DraftFromSpellbookEffect.SpellbookCard("M20", "102"),
+            new DraftFromSpellbookEffect.SpellbookCard("EMN", "94"),
+            new DraftFromSpellbookEffect.SpellbookCard("MID", "60"),
+            new DraftFromSpellbookEffect.SpellbookCard("AKH", "62"),
+            new DraftFromSpellbookEffect.SpellbookCard("GRN", "79"),
+            new DraftFromSpellbookEffect.SpellbookCard("M21", "223"),
+            new DraftFromSpellbookEffect.SpellbookCard("M11", "112"),
+            new DraftFromSpellbookEffect.SpellbookCard("HOU", "47"),
+            new DraftFromSpellbookEffect.SpellbookCard("MH2", "106"),
+            new DraftFromSpellbookEffect.SpellbookCard("JUD", "54"));
 
     public BindToSecrecy() {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(

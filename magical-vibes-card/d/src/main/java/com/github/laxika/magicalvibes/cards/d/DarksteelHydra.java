@@ -25,7 +25,7 @@ public class DarksteelHydra extends Card {
                 new SetPowerToughnessToAmountEffect(twiceOilCounters, twiceOilCounters));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
-                new ConjureCardToHandEffect("Darksteel Ingot"),
-                new ConjureCardToHandEffect("Darksteel Plate")));
+                new ConjureCardToHandEffect("DST", "112"),
+                new ConjureCardToHandEffect("MBS", "104")));
     }
 }

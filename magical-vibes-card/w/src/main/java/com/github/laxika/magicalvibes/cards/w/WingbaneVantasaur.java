@@ -15,10 +15,10 @@ public class WingbaneVantasaur extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Conjure a card named Savage Stomp into your hand",
-                        new ConjureCardNamedIntoHandEffect("Savage Stomp", false)),
+                        new ConjureCardNamedIntoHandEffect("XLN", "205", false)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Conjure a card named Naturalize into your hand",
-                        new ConjureCardNamedIntoHandEffect("Naturalize", false))
+                        new ConjureCardNamedIntoHandEffect("ONS", "275", false))
         )));
     }
 }

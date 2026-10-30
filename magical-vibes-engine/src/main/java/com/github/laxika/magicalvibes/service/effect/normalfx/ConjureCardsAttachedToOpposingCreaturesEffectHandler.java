@@ -38,8 +38,8 @@ public class ConjureCardsAttachedToOpposingCreaturesEffectHandler implements Nor
         List<Permanent> creatures = opposingCreatures(gameData, entry.getControllerId());
         for (Permanent creature : creatures) {
             int createdBefore = entry.getCreatedPermanentIds().size();
-            conjureCardToBattlefieldEffectHandler.resolve(
-                    gameData, entry, ConjureCardToBattlefieldEffect.partOfEvent(conjure.cardName(), 0));
+            conjureCardToBattlefieldEffectHandler.resolve(gameData, entry,
+                    ConjureCardToBattlefieldEffect.partOfEvent(conjure.setCode(), conjure.collectorNumber(), 0));
             if (entry.getCreatedPermanentIds().size() == createdBefore) {
                 continue;
             }

@@ -18,6 +18,6 @@ public class SyndicateRecruiter extends Card {
                 new MillEffect(4, MillRecipient.CONTROLLER),
                 new ConditionalEffect(
                         new DistinctManaValuesAmongCardsInGraveyardAtLeast(5),
-                        new ConjureCardToHandEffect("Dig Up the Body"))));
+                        new ConjureCardToHandEffect("SNC", "76"))));
     }
 }

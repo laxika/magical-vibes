@@ -14,7 +14,7 @@ import java.util.List;
 public class CallTheCrash extends Card {
 
     public CallTheCrash() {
-        addEffect(EffectSlot.SPELL, new ConjureCardsToBattlefieldEffect("Siege Rhino", new Fixed(2)));
+        addEffect(EffectSlot.SPELL, new ConjureCardsToBattlefieldEffect("KTK", "200", new Fixed(2)));
         addHandActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{W}{B}{G}",

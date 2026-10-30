@@ -50,7 +50,7 @@ public class TendToTheKiln extends Card {
                                 new SourceCounterThreshold(3, CounterType.FLAME),
                                 SequenceEffect.of(
                                         new RemoveAllCountersEffect(CounterType.FLAME),
-                                        new ConjureCardToBattlefieldEffect("Flamebraider"),
+                                        new ConjureCardToBattlefieldEffect("ECL", "139"),
                                         new GrantKeywordEffect(
                                                 Keyword.HASTE,
                                                 GrantScope.TOKENS_CREATED_THIS_RESOLUTION,

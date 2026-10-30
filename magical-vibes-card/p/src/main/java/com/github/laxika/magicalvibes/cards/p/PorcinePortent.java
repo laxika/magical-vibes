@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -16,8 +17,10 @@ import java.util.List;
 @CardRegistration(set = "YWOE", collectorNumber = "23")
 public class PorcinePortent extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "First Little Pig", "Second Little Pig", "Third Little Pig");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("YWOE", "18"),
+            new DraftFromSpellbookEffect.SpellbookCard("YWOE", "24"),
+            new DraftFromSpellbookEffect.SpellbookCard("YWOE", "28"));
 
     public PorcinePortent() {
         setBackFaceCard(new LendAHam());

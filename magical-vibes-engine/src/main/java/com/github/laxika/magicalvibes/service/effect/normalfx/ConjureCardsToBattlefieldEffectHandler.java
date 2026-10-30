@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardsToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -34,8 +35,8 @@ public class ConjureCardsToBattlefieldEffectHandler implements NormalEffectHandl
             return;
         }
 
-        List<CardEffect> conjures = ConjureCardToBattlefieldEffect.asOneEvent(
-                Collections.nCopies(count, conjure.cardName()));
+        List<CardEffect> conjures = ConjureCardToBattlefieldEffect.asOneEvent(Collections.nCopies(count,
+                new DraftFromSpellbookEffect.SpellbookCard(conjure.setCode(), conjure.collectorNumber())));
 
         int index = entry.getEffectsToResolve().indexOf(effect);
         if (index < 0) {

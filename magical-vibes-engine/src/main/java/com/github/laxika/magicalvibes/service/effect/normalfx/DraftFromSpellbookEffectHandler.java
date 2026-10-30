@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.cards.CardCatalog;
-import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -62,7 +61,8 @@ public class DraftFromSpellbookEffectHandler implements NormalEffectHandlerBean 
         }
 
         List<Card> availableCards = draft.spellbook().stream()
-                .map(this::createCardIfImplemented)
+                .map(reference -> cardCatalog.createCardIfImplemented(
+                        reference.setCode(), reference.collectorNumber()))
                 .filter(card -> card != null)
                 .toList();
         if (availableCards.isEmpty()) {
@@ -78,17 +78,5 @@ public class DraftFromSpellbookEffectHandler implements NormalEffectHandlerBean 
                 offeredCards,
                 "Choose a card from " + entry.getCard().getName() + "'s spellbook.",
                 draft.mode(), 1, 1, null, draft.conjure()));
-    }
-
-    private Card createCardIfImplemented(DraftFromSpellbookEffect.SpellbookCard reference) {
-        CardSet set = CardSet.findByCode(reference.setCode());
-        if (set == null) {
-            return null;
-        }
-        try {
-            return cardCatalog.findByCollectorNumber(set, reference.collectorNumber()).createCard();
-        } catch (IllegalArgumentException ignored) {
-            return null;
-        }
     }
 }

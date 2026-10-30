@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerUnlessControllerTakesDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 import java.util.List;
@@ -23,22 +24,22 @@ import java.util.Set;
 @CardRegistration(set = "YMID", collectorNumber = "43")
 public class TibaltWickedTormentor extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "Chained Brute",
-            "Charmbreaker Devils",
-            "Festival Crasher",
-            "Forge Devil",
-            "Frenzied Devils",
-            "Havoc Jester",
-            "Hellrider",
-            "Hobblefiend",
-            "Pitchburn Devils",
-            "Sin Prodder",
-            "Spiteful Prankster",
-            "Tibalt's Rager",
-            "Torch Fiend",
-            "Brimstone Vandal",
-            "Devil's Play");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("JMP", "19"),
+            new DraftFromSpellbookEffect.SpellbookCard("ISD", "134"),
+            new DraftFromSpellbookEffect.SpellbookCard("MID", "140"),
+            new DraftFromSpellbookEffect.SpellbookCard("DKA", "91"),
+            new DraftFromSpellbookEffect.SpellbookCard("VOW", "159"),
+            new DraftFromSpellbookEffect.SpellbookCard("M21", "149"),
+            new DraftFromSpellbookEffect.SpellbookCard("DKA", "93"),
+            new DraftFromSpellbookEffect.SpellbookCard("M21", "152"),
+            new DraftFromSpellbookEffect.SpellbookCard("ISD", "156"),
+            new DraftFromSpellbookEffect.SpellbookCard("SOI", "181"),
+            new DraftFromSpellbookEffect.SpellbookCard("SLD", "801"),
+            new DraftFromSpellbookEffect.SpellbookCard("WAR", "147"),
+            new DraftFromSpellbookEffect.SpellbookCard("DKA", "106"),
+            new DraftFromSpellbookEffect.SpellbookCard("MID", "130"),
+            new DraftFromSpellbookEffect.SpellbookCard("ISD", "140"));
 
     public TibaltWickedTormentor() {
         // +1: Add {R}{R}. Draft a card from Tibalt, Wicked Tormentor's spellbook, then exile it.

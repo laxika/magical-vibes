@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards;
 
+import com.github.laxika.magicalvibes.model.Card;
+
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Read access to what is known about each {@link CardSet}: which printings are implemented, and
@@ -25,6 +28,28 @@ public interface CardCatalog {
      * @throws IllegalArgumentException if the set has no implemented printing with that number
      */
     CardPrinting findByCollectorNumber(CardSet set, String collectorNumber);
+
+    /**
+     * Creates the card of a printing named by set code and collector number, or returns null when
+     * the set is unknown or has no implemented printing with that number. Spellbooks and conjure
+     * effects name their cards this way, and may list printings that are not implemented yet.
+     */
+    default Card createCardIfImplemented(String setCode, String collectorNumber) {
+        CardSet set = CardSet.findByCode(setCode);
+        if (set == null || getPrintings(set).stream()
+                .noneMatch(printing -> printing.collectorNumber().equals(collectorNumber))) {
+            return null;
+        }
+        return findByCollectorNumber(set, collectorNumber).createCard();
+    }
+
+    /**
+     * The first registered printing of the card with this name, among cards whose oracle data is
+     * already loaded; empty for any other name. Every card in a game had its oracle data loaded
+     * when it was built, so this names the printing of a card that carries none of its own — a
+     * runtime copy, or a card built straight from its class. Loads no set and builds no card.
+     */
+    Optional<CardPrinting> findLoadedPrintingByName(String cardName);
 
     /** The set's full name from the oracle data, falling back to its code when not loaded. */
     String getName(CardSet set);

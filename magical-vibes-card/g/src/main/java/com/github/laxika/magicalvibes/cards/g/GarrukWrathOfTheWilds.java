@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualPowerToughnessAndCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -17,22 +18,22 @@ import java.util.List;
 @CardRegistration(set = "YMID", collectorNumber = "47")
 public class GarrukWrathOfTheWilds extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "Mosscoat Goriak",
-            "Sylvan Brushstrider",
-            "Murasa Rootgrazer",
-            "Dire Wolf Prowler",
-            "Ferocious Pup",
-            "Pestilent Wolf",
-            "Garruk's Uprising",
-            "Dawntreader Elk",
-            "Nessian Hornbeetle",
-            "Territorial Scythecat",
-            "Trufflesnout",
-            "Wary Okapi",
-            "Scurrid Colony",
-            "Barkhide Troll",
-            "Underdark Basilisk");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("IKO", "167"),
+            new DraftFromSpellbookEffect.SpellbookCard("RNA", "144"),
+            new DraftFromSpellbookEffect.SpellbookCard("ZNR", "229"),
+            new DraftFromSpellbookEffect.SpellbookCard("AFR", "179"),
+            new DraftFromSpellbookEffect.SpellbookCard("M20", "171"),
+            new DraftFromSpellbookEffect.SpellbookCard("MID", "192"),
+            new DraftFromSpellbookEffect.SpellbookCard("M21", "186"),
+            new DraftFromSpellbookEffect.SpellbookCard("DKA", "111"),
+            new DraftFromSpellbookEffect.SpellbookCard("THB", "182"),
+            new DraftFromSpellbookEffect.SpellbookCard("ZNR", "213"),
+            new DraftFromSpellbookEffect.SpellbookCard("M21", "212"),
+            new DraftFromSpellbookEffect.SpellbookCard("GRN", "149"),
+            new DraftFromSpellbookEffect.SpellbookCard("STX", "142"),
+            new DraftFromSpellbookEffect.SpellbookCard("M20", "165"),
+            new DraftFromSpellbookEffect.SpellbookCard("AFR", "208"));
 
     public GarrukWrathOfTheWilds() {
         // +1: Choose a creature card in your hand. It perpetually gets +1/+1 and perpetually gains

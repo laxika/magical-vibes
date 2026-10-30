@@ -13,8 +13,8 @@ public class OutfittedJouster extends Card {
 
     public OutfittedJouster() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
-                new ConjureCardToBattlefieldEffect("Steelclaw Lance"),
-                new ConjureCardToBattlefieldEffect("Brawler's Plate"),
+                new ConjureCardToBattlefieldEffect("ELD", "202"),
+                new ConjureCardToBattlefieldEffect("M15", "213"),
                 new AttachCreatedEquipmentToSourceEffect()));
 
         addEffect(EffectSlot.STATIC, new PreventDamageAndSacrificeAttachedEquipmentEffect());

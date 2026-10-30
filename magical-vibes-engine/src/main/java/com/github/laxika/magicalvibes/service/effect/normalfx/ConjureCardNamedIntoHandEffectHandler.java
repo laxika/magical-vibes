@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.cards.CardCatalog;
-import com.github.laxika.magicalvibes.cards.CardPrinting;
-import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -33,11 +31,12 @@ public class ConjureCardNamedIntoHandEffectHandler implements NormalEffectHandle
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ConjureCardNamedIntoHandEffect conjure = (ConjureCardNamedIntoHandEffect) effect;
         do {
-            Card card = createCardByName(conjure.cardName());
+            Card card = cardCatalog.createCardIfImplemented(conjure.setCode(), conjure.collectorNumber());
             if (card == null) {
                 return;
             }
 
+            card.setConjured(true);
             card.setOwnerId(entry.getControllerId());
             card.freeze();
             gameData.addCardToHand(entry.getControllerId(), card);
@@ -52,18 +51,5 @@ public class ConjureCardNamedIntoHandEffectHandler implements NormalEffectHandle
         } while (conjure.repeatUntilHandSize() > 0
                 && gameData.playerHands.getOrDefault(entry.getControllerId(), java.util.List.of()).size()
                 < conjure.repeatUntilHandSize());
-    }
-
-    private Card createCardByName(String cardName) {
-        for (CardSet set : CardSet.values()) {
-            for (CardPrinting printing : cardCatalog.getPrintings(set)) {
-                Card card = printing.createCard();
-                card.setConjured(true);
-                if (cardName.equals(card.getName())) {
-                    return card;
-                }
-            }
-        }
-        return null;
     }
 }

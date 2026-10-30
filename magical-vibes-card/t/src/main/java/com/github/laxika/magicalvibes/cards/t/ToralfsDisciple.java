@@ -11,6 +11,6 @@ public class ToralfsDisciple extends Card {
 
     public ToralfsDisciple() {
         addEffect(EffectSlot.ON_ATTACK,
-                new ConjureCardNamedIntoLibraryEffect("Lightning Bolt", 4));
+                new ConjureCardNamedIntoLibraryEffect("LEA", "161", 4));
     }
 }

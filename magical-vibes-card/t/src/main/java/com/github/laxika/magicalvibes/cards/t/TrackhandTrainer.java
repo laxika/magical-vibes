@@ -22,7 +22,7 @@ public class TrackhandTrainer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}",
-                List.of(new ConjureCardToBattlefieldEffect("Training Grounds")),
+                List.of(new ConjureCardToBattlefieldEffect("ROE", "91")),
                 "Exhaust — {U}: Conjure a card named Training Grounds onto the battlefield."
                         + " (Activate each exhaust ability only once.)"
         ).withMaxActivationsPerGame(1).withExhaust());

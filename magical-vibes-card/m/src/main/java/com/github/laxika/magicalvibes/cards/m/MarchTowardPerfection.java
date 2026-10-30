@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCounterToTriggeringCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -18,22 +19,22 @@ import java.util.List;
 @CardRegistration(set = "YONE", collectorNumber = "9")
 public class MarchTowardPerfection extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "Archfiend of the Dross",
-            "Bilious Skulldweller",
-            "Diminished Returner",
-            "Entomber Exarch",
-            "Myr Convert",
-            "Phyrexian Fleshgorger",
-            "Phyrexian Gargantua",
-            "Phyrexian Obliterator",
-            "Phyrexian Rager",
-            "Phyrexian Revoker",
-            "Scrapwork Rager",
-            "Soulless Jailer",
-            "Toxic Abomination",
-            "Vault Skirge",
-            "Zenith Chronicler");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("ONE", "82"),
+            new DraftFromSpellbookEffect.SpellbookCard("ONE", "83"),
+            new DraftFromSpellbookEffect.SpellbookCard("YDMU", "9"),
+            new DraftFromSpellbookEffect.SpellbookCard("NPH", "59"),
+            new DraftFromSpellbookEffect.SpellbookCard("ONE", "234"),
+            new DraftFromSpellbookEffect.SpellbookCard("BRO", "121"),
+            new DraftFromSpellbookEffect.SpellbookCard("APC", "48"),
+            new DraftFromSpellbookEffect.SpellbookCard("NPH", "68"),
+            new DraftFromSpellbookEffect.SpellbookCard("APC", "49"),
+            new DraftFromSpellbookEffect.SpellbookCard("MBS", "122"),
+            new DraftFromSpellbookEffect.SpellbookCard("BRO", "123"),
+            new DraftFromSpellbookEffect.SpellbookCard("ONE", "241"),
+            new DraftFromSpellbookEffect.SpellbookCard("DMU", "112"),
+            new DraftFromSpellbookEffect.SpellbookCard("NPH", "76"),
+            new DraftFromSpellbookEffect.SpellbookCard("ONE", "246"));
 
     public MarchTowardPerfection() {
         addEffect(EffectSlot.SPELL,

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -16,22 +17,22 @@ import java.util.List;
 @CardRegistration(set = "YMID", collectorNumber = "52")
 public class IshkanahBroodmother extends Card {
 
-    private static final List<String> SPELLBOOK = List.of(
-            "Twin-Silk Spider",
-            "Drider",
-            "Brood Weaver",
-            "Glowstone Recluse",
-            "Gnottvold Recluse",
-            "Hatchery Spider",
-            "Mammoth Spider",
-            "Netcaster Spider",
-            "Sentinel Spider",
-            "Snarespinner",
-            "Sporecap Spider",
-            "Spidery Grasp",
-            "Spider Spawning",
-            "Prey Upon",
-            "Arachnoform");
+    private static final List<DraftFromSpellbookEffect.SpellbookCard> SPELLBOOK = List.of(
+            new DraftFromSpellbookEffect.SpellbookCard("MH1", "188"),
+            new DraftFromSpellbookEffect.SpellbookCard("AFR", "98"),
+            new DraftFromSpellbookEffect.SpellbookCard("MID", "173"),
+            new DraftFromSpellbookEffect.SpellbookCard("IKO", "156"),
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "172"),
+            new DraftFromSpellbookEffect.SpellbookCard("GRN", "132"),
+            new DraftFromSpellbookEffect.SpellbookCard("DOM", "171"),
+            new DraftFromSpellbookEffect.SpellbookCard("M15", "186"),
+            new DraftFromSpellbookEffect.SpellbookCard("M13", "189"),
+            new DraftFromSpellbookEffect.SpellbookCard("WAR", "176"),
+            new DraftFromSpellbookEffect.SpellbookCard("ROE", "209"),
+            new DraftFromSpellbookEffect.SpellbookCard("ISD", "204"),
+            new DraftFromSpellbookEffect.SpellbookCard("ISD", "203"),
+            new DraftFromSpellbookEffect.SpellbookCard("ISD", "200"),
+            new DraftFromSpellbookEffect.SpellbookCard("KHM", "159"));
 
     public IshkanahBroodmother() {
         // Other Spiders you control get +1/+2.

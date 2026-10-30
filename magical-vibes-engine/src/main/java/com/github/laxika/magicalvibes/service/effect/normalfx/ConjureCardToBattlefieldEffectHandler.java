@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.cards.CardCatalog;
-import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -16,9 +15,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /** Resolves a full card copy conjured onto its controller's battlefield. */
 @Component
@@ -38,9 +35,7 @@ public class ConjureCardToBattlefieldEffectHandler implements NormalEffectHandle
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ConjureCardToBattlefieldEffect conjure = (ConjureCardToBattlefieldEffect) effect;
-        Card conjuredCard = conjure.setCode() == null
-                ? findCard(conjure.cardName())
-                : findPrinting(conjure.setCode(), conjure.collectorNumber());
+        Card conjuredCard = findPrinting(conjure.setCode(), conjure.collectorNumber());
         conjuredCard.setOwnerId(entry.getControllerId());
 
         Permanent permanent = new Permanent(conjuredCard);
@@ -69,22 +64,5 @@ public class ConjureCardToBattlefieldEffectHandler implements NormalEffectHandle
         Card conjured = cardCatalog.findByCollectorNumber(set, collectorNumber).createCard();
         conjured.setConjured(true);
         return conjured;
-    }
-
-    private Card findCard(String cardName) {
-        Set<String> inspectedClasses = new HashSet<>();
-        for (CardSet cardSet : CardSet.values()) {
-            for (CardPrinting printing : cardCatalog.getPrintings(cardSet)) {
-                if (!inspectedClasses.add(printing.cardClassName())) {
-                    continue;
-                }
-                Card card = printing.createCard();
-                card.setConjured(true);
-                if (cardName.equals(card.getName())) {
-                    return card;
-                }
-            }
-        }
-        throw new IllegalStateException("Cannot conjure unimplemented card: " + cardName);
     }
 }

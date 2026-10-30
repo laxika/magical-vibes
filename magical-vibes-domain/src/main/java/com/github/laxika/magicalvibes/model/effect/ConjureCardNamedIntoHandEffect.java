@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Creates a card with the named card's characteristics in the controller's hand. */
+/**
+ * "Conjure a card named … into your hand": creates the card of the given printing in the
+ * controller's hand. Nothing is conjured while that printing is not implemented.
+ */
 public record ConjureCardNamedIntoHandEffect(
-        String cardName, boolean discardAtNextEndStep, int repeatUntilHandSize)
+        String setCode, String collectorNumber, boolean discardAtNextEndStep, int repeatUntilHandSize)
         implements CardEffect {
 
-    public ConjureCardNamedIntoHandEffect(String cardName, boolean discardAtNextEndStep) {
-        this(cardName, discardAtNextEndStep, 0);
+    public ConjureCardNamedIntoHandEffect(String setCode, String collectorNumber, boolean discardAtNextEndStep) {
+        this(setCode, collectorNumber, discardAtNextEndStep, 0);
     }
 
     public ConjureCardNamedIntoHandEffect {

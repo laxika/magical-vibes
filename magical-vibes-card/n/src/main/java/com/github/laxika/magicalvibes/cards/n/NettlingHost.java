@@ -22,7 +22,7 @@ public class NettlingHost extends Card {
                 null,
                 List.of(
                         new ExileSelfFromGraveyardCost(),
-                        new ConjureCardNamedIntoHandEffect("Nettlecyst", false)
+                        new ConjureCardNamedIntoHandEffect("MH2", "231", false)
                 ),
                 "Corrupted — Exile Nettling Host from your graveyard: Conjure a card named Nettlecyst into your hand. "
                         + "Activate only if an opponent has three or more poison counters."

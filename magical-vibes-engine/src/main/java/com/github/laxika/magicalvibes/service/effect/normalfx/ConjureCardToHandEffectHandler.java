@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.cards.CardCatalog;
-import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -16,8 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
 
 /** Resolves a full card copy conjured into its controller's hand. */
 @Component
@@ -36,9 +33,7 @@ public class ConjureCardToHandEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ConjureCardToHandEffect conjure = (ConjureCardToHandEffect) effect;
-        Card conjuredCard = conjure.setCode() == null
-                ? findCard(conjure.cardName())
-                : findPrinting(conjure.setCode(), conjure.collectorNumber());
+        Card conjuredCard = findPrinting(conjure.setCode(), conjure.collectorNumber());
         conjuredCard.setOwnerId(entry.getControllerId());
         if (!conjure.removedKeywords().isEmpty()) {
             EnumSet<Keyword> keywords = conjuredCard.getKeywords().isEmpty()
@@ -62,22 +57,5 @@ public class ConjureCardToHandEffectHandler implements NormalEffectHandlerBean {
         Card conjured = cardCatalog.findByCollectorNumber(set, collectorNumber).createCard();
         conjured.setConjured(true);
         return conjured;
-    }
-
-    private Card findCard(String cardName) {
-        Set<String> inspectedClasses = new HashSet<>();
-        for (CardSet cardSet : CardSet.values()) {
-            for (CardPrinting printing : cardCatalog.getPrintings(cardSet)) {
-                if (!inspectedClasses.add(printing.cardClassName())) {
-                    continue;
-                }
-                Card card = printing.createCard();
-                card.setConjured(true);
-                if (cardName.equals(card.getName())) {
-                    return card;
-                }
-            }
-        }
-        throw new IllegalStateException("Cannot conjure unimplemented card: " + cardName);
     }
 }

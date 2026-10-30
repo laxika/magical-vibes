@@ -27,7 +27,7 @@ public class Infestation extends Card {
         // When this creature enters, conjure a card named Blowfly Infestation onto the battlefield.
         // Then put a -1/-1 counter on each creature.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
-                new ConjureCardToBattlefieldEffect("Blowfly Infestation"),
+                new ConjureCardToBattlefieldEffect("SHM", "58"),
                 new PutCounterOnEachMatchingPermanentEffect(
                         CounterType.MINUS_ONE_MINUS_ONE, 1,
                         new PermanentIsCreaturePredicate(), EachPermanentScope.ALL_PLAYERS)));

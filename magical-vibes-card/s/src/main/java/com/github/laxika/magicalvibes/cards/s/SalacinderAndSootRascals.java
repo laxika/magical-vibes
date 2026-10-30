@@ -19,10 +19,10 @@ public class SalacinderAndSootRascals extends Card {
         ChooseOneEffect modes = new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Conjure a card named Rite of Flame into your hand",
-                        new ConjureCardNamedIntoHandEffect("Rite of Flame", false)),
+                        new ConjureCardNamedIntoHandEffect("CSP", "96", false)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Conjure a card named Take Inventory into your hand",
-                        new ConjureCardNamedIntoHandEffect("Take Inventory", false))));
+                        new ConjureCardNamedIntoHandEffect("EMN", "76", false))));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(modes));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,

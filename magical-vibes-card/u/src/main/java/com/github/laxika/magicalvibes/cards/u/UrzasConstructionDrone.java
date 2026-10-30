@@ -19,9 +19,9 @@ public class UrzasConstructionDrone extends Card {
 
     public UrzasConstructionDrone() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
-                new ConjureCardNamedIntoLibraryEffect("Urza's Mine", 1),
-                new ConjureCardNamedIntoLibraryEffect("Urza's Power Plant", 1),
-                new ConjureCardNamedIntoLibraryEffect("Urza's Tower", 1)));
+                new ConjureCardNamedIntoLibraryEffect("ATQ", "83a", 1),
+                new ConjureCardNamedIntoLibraryEffect("ATQ", "84a", 1),
+                new ConjureCardNamedIntoLibraryEffect("ATQ", "85a", 1)));
 
         CardAllOfPredicate urzasLand = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.LAND),

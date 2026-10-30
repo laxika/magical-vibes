@@ -28,6 +28,6 @@ public class ExpeditionSupplier extends Card {
                 new CardAnyOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.HUMAN),
                         new CardSubtypePredicate(CardSubtype.WARRIOR))),
-                new OncePerTurnTriggerEffect(new ConjureCardToBattlefieldEffect("Utility Knife")));
+                new OncePerTurnTriggerEffect(new ConjureCardToBattlefieldEffect("ZNR", "256")));
     }
 }

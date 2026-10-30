@@ -24,7 +24,7 @@ public class RuskoClockmaker extends Card {
     public RuskoClockmaker() {
         // When Rusko enters the battlefield, conjure a card named Midnight Clock onto the battlefield.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConjureCardToBattlefieldEffect("Midnight Clock"));
+                new ConjureCardToBattlefieldEffect("ELD", "54"));
 
         // Whenever you cast a noncreature spell, put an hour counter on each Midnight Clock you control.
         // Each opponent loses 1 life and you gain 1 life.

@@ -17,6 +17,6 @@ public class LandloreNavigator extends Card {
         addEffect(EffectSlot.ON_ATTACK, CreateTokenEffect.ofMapToken(1));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
                 new PermanentEnteredThisTurn(new CardTypePredicate(CardType.ARTIFACT), 2),
-                new ConjureCardToBattlefieldEffect("Thieving Magpie")));
+                new ConjureCardToBattlefieldEffect("UDS", "49")));
     }
 }

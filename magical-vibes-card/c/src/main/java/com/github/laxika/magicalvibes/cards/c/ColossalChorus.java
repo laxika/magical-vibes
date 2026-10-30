@@ -15,7 +15,7 @@ public class ColossalChorus extends Card {
     public ColossalChorus() {
         addEffect(EffectSlot.SPELL, new InitializeSourceIntensityEffect(2));
         addEffect(EffectSlot.SPELL,
-                new ConjureCardsToBattlefieldEffect("Colossal Dreadmaw", new SourceIntensity()));
+                new ConjureCardsToBattlefieldEffect("XLN", "180", new SourceIntensity()));
         addEffect(EffectSlot.SPELL, new IntensifyCardsOfSubtypeEffect(CardSubtype.CHORUS));
     }
 }

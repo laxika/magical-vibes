@@ -20,7 +20,7 @@ public class EmeraldCollector extends Card {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(1));
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS,
                 new OnceOnlyTriggerEffect(new NthCardDrawTriggerEffect(3,
-                        new ConjureCardNamedIntoHandEffect("Mox Emerald", false))));
+                        new ConjureCardNamedIntoHandEffect("LEA", "261", false))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

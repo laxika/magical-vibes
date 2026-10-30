@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.cards.CardCatalog;
-import com.github.laxika.magicalvibes.cards.CardPrinting;
-import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -11,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCardFromSpellbookToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -18,9 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 /** Resolves a random full card from a named spellbook onto the battlefield. */
@@ -43,9 +40,10 @@ public class ConjureRandomCardFromSpellbookToBattlefieldEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var conjure = (ConjureRandomCardFromSpellbookToBattlefieldEffect) effect;
         List<Card> candidates = new ArrayList<>();
-        for (String cardName : conjure.cardNames()) {
-            Card card = findCard(cardName);
+        for (DraftFromSpellbookEffect.SpellbookCard reference : conjure.spellbook()) {
+            Card card = cardCatalog.createCardIfImplemented(reference.setCode(), reference.collectorNumber());
             if (card != null) {
+                card.setConjured(true);
                 candidates.add(card);
             }
         }
@@ -76,22 +74,5 @@ public class ConjureRandomCardFromSpellbookToBattlefieldEffectHandler
         perpetualCard.setPower(conjure.basePower());
         perpetualCard.setToughness(conjure.baseToughness());
         permanent.exchangeCard(perpetualCard);
-    }
-
-    private Card findCard(String cardName) {
-        Set<String> inspectedClasses = new HashSet<>();
-        for (CardSet cardSet : CardSet.values()) {
-            for (CardPrinting printing : cardCatalog.getPrintings(cardSet)) {
-                if (!inspectedClasses.add(printing.cardClassName())) {
-                    continue;
-                }
-                Card card = printing.createCard();
-                card.setConjured(true);
-                if (cardName.equals(card.getName())) {
-                    return card;
-                }
-            }
-        }
-        return null;
     }
 }

@@ -10,7 +10,7 @@ public class PerforatorCrocodile extends Card {
 
     public PerforatorCrocodile() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new ConjureCardsAttachedToOpposingCreaturesEffect("Stab Wound"));
+                new ConjureCardsAttachedToOpposingCreaturesEffect("RTR", "78"));
         addCycling("{1}{B}");
     }
 }

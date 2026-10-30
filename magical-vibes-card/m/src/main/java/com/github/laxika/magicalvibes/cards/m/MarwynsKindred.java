@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardsToBattlefieldEffe
 public class MarwynsKindred extends Card {
 
     public MarwynsKindred() {
-        addEffect(EffectSlot.SPELL, new ConjureCardToBattlefieldEffect("Marwyn, the Nurturer"));
-        addEffect(EffectSlot.SPELL, new ConjureCardsToBattlefieldEffect("Llanowar Elves", new XValue()));
+        addEffect(EffectSlot.SPELL, new ConjureCardToBattlefieldEffect("DOM", "172"));
+        addEffect(EffectSlot.SPELL, new ConjureCardsToBattlefieldEffect("LEA", "210", new XValue()));
     }
 }

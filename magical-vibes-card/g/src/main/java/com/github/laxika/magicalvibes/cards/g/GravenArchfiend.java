@@ -34,6 +34,6 @@ public class GravenArchfiend extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         new CardNotPredicate(new CardSubtypePredicate(CardSubtype.DEMON))
                 )), "a non-Demon creature"),
-                new ConjureCardToBattlefieldEffect("Demonic Pact")));
+                new ConjureCardToBattlefieldEffect("ORI", "92")));
     }
 }

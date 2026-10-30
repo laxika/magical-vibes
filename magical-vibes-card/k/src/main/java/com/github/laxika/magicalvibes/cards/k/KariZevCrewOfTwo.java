@@ -27,7 +27,7 @@ public class KariZevCrewOfTwo extends Card {
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                         new PermanentHasSubtypePredicate(CardSubtype.MONKEY)))),
                 SequenceEffect.of(
-                        new ConjureCardToBattlefieldEffect("Ragavan, Nimble Pilferer"),
+                        new ConjureCardToBattlefieldEffect("MH2", "138"),
                         new MakeCreatedPermanentsAttackingEffect(true),
                         new ScheduleCreatedPermanentsEffect(DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP))));
     }
