@@ -14,7 +14,7 @@ public class DinosaurHeaddress extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new AttachSourceEquipmentToTargetCreatureEffect());
         addEffect(EffectSlot.ON_EQUIPMENT_ATTACHED,
-                new AttachedCreatureBecomesCopyOfExiledCreatureEffect());
+                new AttachedCreatureBecomesCopyOfExiledCreatureEffect(true));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

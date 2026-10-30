@@ -100,7 +100,8 @@ class ProfessionalFaceBreakerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ProfessionalFaceBreaker());
         addCreatureReady(player2, new ProfessionalFaceBreaker());
 
-        declareAttackers(player2, List.of(0));
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
         resolveCombat(player2);
         resolveAllTriggers();
 

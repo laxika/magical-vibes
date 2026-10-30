@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseColorForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -487,6 +488,18 @@ public class ChoiceHandlerService {
             gameData.interaction.clearAwaitingInput();
             gameData.rerunCurrentEffectAfterInteraction = false;
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.CombatDamageAssignmentModeChoice choice) {
+            if (!player.getId().equals(choice.controllerId()) || !colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid combat damage assignment choice");
+            }
+            gameData.interaction.clearAwaitingInput();
+            gameData.combatDamageAssignmentModeChoices.put(choice.creatureId(),
+                    ChoiceContext.CombatDamageAssignmentModeChoice.TOUGHNESS.equals(colorName)
+                            ? com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentMode.TOUGHNESS
+                            : com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentMode.MANA_VALUE);
+            turnProgressionService.handleCombatResult(combatDamageService.resolveCombatDamage(gameData), gameData);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.CombatSharedDamagePreventionChoice choice) {
@@ -1823,6 +1836,7 @@ public class ChoiceHandlerService {
         if (perm != null) {
             perm.setChosenColor(color);
             perm.setChosenColorChoiceMade(true);
+            perm.setChosenColorTimestamp(gameData.nextTimestamp());
 
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses " + color.name().toLowerCase() + " for " , perm.getCard(), "."));
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), color, perm.getCard().getName());
@@ -1837,7 +1851,14 @@ public class ChoiceHandlerService {
                 playerInputService.beginSubtypeChoice(gameData, player.getId(), perm.getId(), subtypeChoice);
                 return;
             }
-            battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), etbTargetId, false);
+            // A color chosen while the source's own triggered ability resolves ("draw a card, then choose a
+            // color") is the end of that ability; the entry effects must not run a second time.
+            boolean chosenByResolvingEffect = gameData.pendingEffectResolutionEntry != null
+                    && gameData.pendingEffectResolutionEntry.getEffectsToResolve().stream()
+                    .anyMatch(ChooseColorForSourceEffect.class::isInstance);
+            if (!chosenByResolvingEffect) {
+                battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), etbTargetId, false);
+            }
         }
 
         // CR 603.8 — the chosen color can immediately satisfy a state-triggered ability
@@ -4145,6 +4166,9 @@ public class ChoiceHandlerService {
         return switch (counterKind) {
             case "POISON" -> gameData.playerPoisonCounters.getOrDefault(targetId, 0);
             case "ENERGY" -> gameData.playerEnergyCounters.getOrDefault(targetId, 0);
+            case "RAD" -> gameData.playerRadCounters.getOrDefault(targetId, 0);
+            case "EXPERIENCE" -> gameData.playerExperienceCounters.getOrDefault(targetId, 0);
+            case "SPARK" -> gameData.playerSparkCounters.getOrDefault(targetId, 0);
             default -> 0;
         };
     }
@@ -4168,6 +4192,12 @@ public class ChoiceHandlerService {
             case "POISON" -> gameData.playerPoisonCounters.computeIfPresent(
                     targetId, (id, count) -> Math.max(0, count - amount));
             case "ENERGY" -> gameData.removePlayerEnergyCounters(targetId, amount);
+            case "RAD" -> gameData.playerRadCounters.computeIfPresent(
+                    targetId, (id, count) -> Math.max(0, count - amount));
+            case "EXPERIENCE" -> gameData.playerExperienceCounters.computeIfPresent(
+                    targetId, (id, count) -> Math.max(0, count - amount));
+            case "SPARK" -> gameData.playerSparkCounters.computeIfPresent(
+                    targetId, (id, count) -> Math.max(0, count - amount));
             default -> throw new IllegalArgumentException("Unknown player counter kind: " + counterKind);
         }
     }
@@ -6484,7 +6514,13 @@ public class ChoiceHandlerService {
             throw new IllegalArgumentException("Invalid counter assignment: " + numberText);
         }
 
-        int chosen = Integer.parseInt(numberText);
+        applyCounterDistributionAssignment(gameData, player, Integer.parseInt(numberText), ctx);
+    }
+
+    /** Records the amount chosen for the next target of a division and continues or completes it. */
+    public void applyCounterDistributionAssignment(
+            GameData gameData, Player player, int chosen,
+            ChoiceContext.CounterDistributionAssignment ctx) {
         UUID targetId = ctx.targetIds().get(ctx.nextTargetIndex());
         java.util.Map<UUID, Integer> assignments = new java.util.LinkedHashMap<>(ctx.assignments());
         assignments.put(targetId, chosen);
@@ -7054,6 +7090,11 @@ public class ChoiceHandlerService {
         if (ctx.turnFaceUp() && perm != null) {
             turnFaceUpCopyService.finishTurnFaceUp(gameData, player.getId(), perm.getId());
         } else {
+            // The form is chosen as the creature enters, so its enter abilities and "whenever another
+            // creature enters" triggers run only once the form is set (the as-enters path returned early).
+            if (perm != null) {
+                battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), null, false);
+            }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
     }

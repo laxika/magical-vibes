@@ -49,9 +49,16 @@ public class ShuffleIntoLibraryEffectHandler implements NormalEffectHandlerBean 
         // handler then runs again on resumption, so it must not add a second copy.
         Card physicalCard = entry.getPhysicalCard();
         List<Card> deck = gameData.playerDecks.get(entry.getOwnerId());
-        if (deck.contains(physicalCard)) return;
+        if (deck.stream().anyMatch(libraryCard -> libraryCard.getId().equals(physicalCard.getId()))) return;
 
-        deck.add(physicalCard);
+        // A card shuffled in transformed is a runtime copy of the same physical card showing its back face;
+        // live cards are frozen, so the face cannot be changed in place.
+        boolean transformed = effect instanceof ShuffleIntoLibraryEffect shuffle && shuffle.transformed()
+                && physicalCard.getBackFaceCard() != null;
+        Card libraryCard = transformed
+                ? physicalCard.createRuntimeCopyWithFace(physicalCard.getBackFaceCard())
+                : physicalCard;
+        deck.add(libraryCard);
         if (triggerCollectionService != null) {
             triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, entry.getOwnerId(), 1);
         }

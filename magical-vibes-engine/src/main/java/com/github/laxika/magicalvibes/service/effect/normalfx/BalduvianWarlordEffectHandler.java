@@ -83,7 +83,7 @@ public class BalduvianWarlordEffectHandler implements NormalEffectHandlerBean {
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.getOrDefault(defenderId, List.of());
         BlockLegalityContext blockContext =
                 blockLegalityService.createBlockLegalityContext(gameData, defenderBattlefield);
-        if (!blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)) {
+        if (!blockLegalityService.canBeMadeToBlockAttacker(blockContext, blocker, attacker)) {
             return;
         }
 
@@ -131,7 +131,7 @@ public class BalduvianWarlordEffectHandler implements NormalEffectHandlerBean {
             if (attacker.isAttacking()
                     && gameQueryService.isCreature(gameData, attacker)
                     && attacks(gameData, defenderId, attacker)
-                    && blockLegalityService.canBlockAttacker(blockContext, blocker, attacker)
+                    && blockLegalityService.canBeMadeToBlockAttacker(blockContext, blocker, attacker)
                     && !gameQueryService.cantBeChosen(gameData, attacker)) {
                 result.add(attacker.getId());
             }

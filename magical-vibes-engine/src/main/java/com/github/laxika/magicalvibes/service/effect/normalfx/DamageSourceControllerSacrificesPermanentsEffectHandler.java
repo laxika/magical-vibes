@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +26,7 @@ public class DamageSourceControllerSacrificesPermanentsEffectHandler implements 
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,7 +36,10 @@ public class DamageSourceControllerSacrificesPermanentsEffectHandler implements 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DamageSourceControllerSacrificesPermanentsEffect) effect;
-        UUID sacrificingPlayerId = e.sacrificingPlayerId();
+        UUID sacrificingPlayerId = e.damageSourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentController(gameData, e.damageSourcePermanentId());
+        if (sacrificingPlayerId == null) sacrificingPlayerId = e.sacrificingPlayerId();
                 int count = e.count();
 
                 if (sacrificingPlayerId == null || count <= 0 || !gameData.playerIds.contains(sacrificingPlayerId)) {

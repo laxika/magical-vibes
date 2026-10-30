@@ -148,6 +148,7 @@ import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.LifePaymentReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentLifeLossReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceControlledCounterWithExileAndPlayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenPlayersDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenPlayerRecipientDamageMultiplyingEffect;
@@ -4187,6 +4188,11 @@ public class GameQueryService {
         if (card == null || chosenName == null) {
             return false;
         }
+        if (card.getType() == CardType.EMBLEM) {
+            // CR 114.3: an emblem has no characteristics other than the abilities defined by its creator, so
+            // it has no name even though the engine labels it with its source's name.
+            return false;
+        }
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
                 if (permanent.getCard().getId().equals(card.getId())) {
@@ -5162,6 +5168,11 @@ public class GameQueryService {
                 }
             }
         }
+        for (CardEffect effect : playerGrantedPlusOneReplacements(
+                gameData, controllerId, controllerId, counterType, affectedPermanentIsCreature, false)) {
+            result = MaroGoneNutsSupport.apply(
+                    gameData, effect, ((CounterReplacementEffect) effect).replace(counterType, result));
+        }
         result = applyGlobalCounterReplacements(gameData, counterType, result,
                 affectedPermanentIsCreature, affectedPermanentIsArtifact);
         result = applyPlanarCounterReplacements(gameData, controllerId, counterType, result,
@@ -5171,6 +5182,32 @@ public class GameQueryService {
                     affectedPermanent);
         }
         return limitCounters(gameData, affectedPermanent, controllerId, counterType, result);
+    }
+
+    /**
+     * The +1/+1 counter replacements a player was granted until end of turn (Prairie Dog): they apply
+     * only when that player puts the counters on a permanent that player controls, and outlive
+     * the permanent that granted them.
+     */
+    private List<CardEffect> playerGrantedPlusOneReplacements(
+            GameData gameData, UUID affectedControllerId, UUID placingPlayerId, CounterType counterType,
+            boolean creature, boolean nonCreatureVehicle) {
+        if (affectedControllerId == null || counterType != CounterType.PLUS_ONE_PLUS_ONE
+                || (placingPlayerId != null && !placingPlayerId.equals(affectedControllerId))) {
+            return List.of();
+        }
+        List<CardEffect> granted = gameData.playerStaticEffectsUntilEndOfTurn.get(affectedControllerId);
+        if (granted == null) {
+            return List.of();
+        }
+        List<CardEffect> applicable = new ArrayList<>();
+        for (CardEffect effect : granted) {
+            if (effect instanceof com.github.laxika.magicalvibes.model.effect.PlusOnePlusOneCountersReplacementEffect replacement
+                    && (creature || (nonCreatureVehicle && replacement.appliesToNonCreatureVehicles()))) {
+                applicable.add(effect);
+            }
+        }
+        return applicable;
     }
 
     private int applyGlobalCounterReplacements(GameData gameData, CounterType counterType, int count,
@@ -5461,6 +5498,11 @@ public class GameQueryService {
                 }
             }
         });
+        for (CardEffect effect : playerGrantedPlusOneReplacements(
+                gameData, affectedControllerId, placingPlayerId, counterType, creature, nonCreatureVehicle)) {
+            modifiers.add(new com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement(
+                    "Until end of turn (" + (modifiers.size() + 1) + ")", effect));
+        }
         if (gameData.planechase != null && affectedControllerId != null) {
             for (var planar : gameData.planechase.faceUp) {
                 for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
@@ -5583,6 +5625,11 @@ public class GameQueryService {
                 }
             }
         });
+        for (CardEffect effect : playerGrantedPlusOneReplacements(
+                gameData, controllerId, placingPlayerId, counterType, creature, nonCreatureVehicle)) {
+            result[0] = MaroGoneNutsSupport.apply(
+                    gameData, effect, ((CounterReplacementEffect) effect).replace(counterType, result[0]));
+        }
         result[0] = applyPlanarCounterReplacements(gameData, controllerId, counterType,
                 result[0], creature, artifact);
         return recordEntryCounterPlacement(gameData, permanent, controllerId, counterType, count,
@@ -6276,7 +6323,14 @@ public class GameQueryService {
             int power = getEffectivePower(gameData, creature);
             int toughness = getEffectiveToughness(gameData, creature);
 
-            if (hasSelfToughnessAssignEffect(gameData, creature)) {
+            if (hasCompetingCombatDamageAssignmentEffects(gameData, creature)
+                    && gameData.combatDamageAssignmentModeChoices.get(creature.getId())
+                    == CombatDamageAssignmentMode.TOUGHNESS) {
+                return Math.max(0, toughness);
+            }
+
+            if (hasSelfToughnessAssignEffect(gameData, creature)
+                    && !hasCompetingCombatDamageAssignmentEffects(gameData, creature)) {
                 return Math.max(0, toughness);
             }
 
@@ -6311,6 +6365,21 @@ public class GameQueryService {
             // 0 or negative power assigns 0 combat damage.
             return Math.max(0, power);
         });
+    }
+
+    /**
+     * Whether an effect that assigns combat damage equal to mana value and an effect that assigns it equal to
+     * toughness both apply to {@code creature} and would give different amounts, so its controller chooses which
+     * applies. Its choice is read from {@link GameData#combatDamageAssignmentModeChoices}.
+     */
+    public boolean hasCompetingCombatDamageAssignmentEffects(GameData gameData, Permanent creature) {
+        return withQueryScope(gameData, () -> hasGlobalCombatDamageAssignmentEffect(
+                        gameData, CombatDamageAssignmentMode.MANA_VALUE)
+                && (hasSelfToughnessAssignEffect(gameData, creature)
+                || hasGlobalToughnessAssignEffect(gameData)
+                || hasControllerToughnessAssignEffect(gameData, creature))
+                && (creature.isFaceDown() ? 0 : Math.max(0, creature.getCard().getManaValue()))
+                != Math.max(0, getEffectiveToughness(gameData, creature)));
     }
 
     private boolean hasSelfToughnessAssignEffect(GameData gameData, Permanent creature) {
@@ -7786,6 +7855,14 @@ public class GameQueryService {
                 protectedTypes.addAll(protection.protectionFromCardTypes());
             }
         }
+        // Protection gained perpetually (Priest of Possibility) is a persistent static effect of the card.
+        for (CardEffect effect : target.getPersistentTriggeredEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ProtectionGrantingEffect protection
+                    && !hasLostPrintedAbilities(gameData, target)) {
+                if (protection.protectsFromEverything()) return true;
+                protectedTypes.addAll(protection.protectionFromCardTypes());
+            }
+        }
         // Protection granted by another permanent's static effect (e.g. Spirit Mantle via
         // GrantEffectEffect(ProtectionFromCardTypesEffect, ENCHANTED_CREATURE)).
         for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
@@ -7815,8 +7892,11 @@ public class GameQueryService {
         }
         Set<CardType> protectedTypes = EnumSet.noneOf(CardType.class);
         protectedTypes.addAll(target.getProtectionFromCardTypes());
-        List<CardEffect> printedEffects = target.isFaceDown() || target.isLosesAllAbilitiesUntilEndOfTurn()
-                ? List.of() : target.getCard().getEffects(EffectSlot.STATIC);
+        List<CardEffect> printedEffects = new ArrayList<>();
+        if (!target.isFaceDown() && !target.isLosesAllAbilitiesUntilEndOfTurn()) {
+            printedEffects.addAll(target.getCard().getEffects(EffectSlot.STATIC));
+            printedEffects.addAll(target.getPersistentTriggeredEffects(EffectSlot.STATIC));
+        }
         for (CardEffect effect : printedEffects) {
             if (effect instanceof ProtectionGrantingEffect protection) {
                 // Protection from everything (Progenitus): every source has a card type, so this is
@@ -9361,6 +9441,28 @@ public class GameQueryService {
      * because the spell's controller has turn-duration protection from countering by spells
      * of that color (e.g. Autumn's Veil). Only applies when the source is an instant or sorcery.
      */
+    /**
+     * Whether {@code controllerId} controls a permanent that replaces their countering of spells with
+     * exile and a free play (Guile). A spell exiled this way was not countered.
+     */
+    public boolean controlsCounterExileReplacement(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return false;
+        }
+        for (Permanent permanent : battlefield) {
+            if (hasLostAllAbilities(gameData, permanent)) {
+                continue;
+            }
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof ReplaceControlledCounterWithExileAndPlayEffect) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public boolean isProtectedFromCounterBySourceCard(GameData gameData, UUID spellControllerId, Card sourceCard) {
         Set<CardColor> protectedColors = gameData.playerSpellsCantBeCounteredByColorsThisTurn.get(spellControllerId);
         if (protectedColors == null || protectedColors.isEmpty()) {
@@ -9715,6 +9817,16 @@ public class GameQueryService {
     /** Returns whether a targeted instant or sorcery spell has its damage prevented this turn. */
     public boolean isDamageFromTargetSpellPrevented(GameData gameData, StackEntry entry) {
         return getTargetSpellDamagePreventionShield(gameData, entry) != null;
+    }
+
+    /**
+     * Returns whether the shield preventing {@code entry}'s damage is a plain "prevent all damage a source would
+     * deal" shield on a permanent (no life gain). That is the same prevention as the source-based rules apply, so
+     * offering both as separate replacement choices would ask the player to order two identical effects.
+     */
+    public boolean isTargetSpellShieldPlainPermanentSourcePrevention(GameData gameData, StackEntry entry) {
+        TargetSpellDamagePreventionShield shield = getTargetSpellDamagePreventionShield(gameData, entry);
+        return shield != null && shield.sourcePermanentId() != null && shield.lifeGainPlayerId() == null;
     }
 
     /** Returns whether a spell that targets the given permanent has its damage prevented there. */

@@ -122,7 +122,7 @@ class SupremeExemplarTest extends BaseCardTest {
         castSupremeExemplar();
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Supreme Exemplar");
         harness.assertNotOnBattlefield(player1, "Supreme Exemplar");

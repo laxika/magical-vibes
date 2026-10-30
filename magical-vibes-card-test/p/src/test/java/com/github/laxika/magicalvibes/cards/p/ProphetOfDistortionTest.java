@@ -51,10 +51,13 @@ class ProphetOfDistortionTest extends BaseCardTest {
         ProphetOfDistortion firstCard = new ProphetOfDistortion();
         ProphetOfDistortion secondCard = new ProphetOfDistortion();
         harness.setLibrary(player1, List.of(firstCard, secondCard));
-        harness.addMana(player1, ManaColor.BLUE, 6);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, null);
+        // Generic costs are auto-paid from colorless first, so the second activation's mana is added separately
+        // to keep the single colorless needed for {C} available.
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

@@ -136,8 +136,13 @@ class PulsemageAdvocateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
-                .containsAll(opponentCards.subList(missingOpponentTargets, 3).stream().map(Card::getId).toList())
-                .doesNotContainAnyElementsOf(opponentCards.subList(0, missingOpponentTargets).stream().map(Card::getId).toList());
+                .containsAll(opponentCards.subList(missingOpponentTargets, 3).stream().map(Card::getId).toList());
+        if (missingOpponentTargets > 0) {
+            // AssertJ rejects doesNotContainAnyElementsOf(<empty>) on a non-empty actual, so only check it when
+            // some targets actually went missing.
+            assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
+                    .doesNotContainAnyElementsOf(opponentCards.subList(0, missingOpponentTargets).stream().map(Card::getId).toList());
+        }
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId())))
                 .isEqualTo(creatureStillLegal);

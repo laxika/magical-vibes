@@ -220,6 +220,7 @@ import com.github.laxika.magicalvibes.model.condition.ExactlyAttackers;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEnteringPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivate;
@@ -277,6 +278,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -1507,26 +1509,25 @@ public class TriggerCollectionService {
             }
         }
 
-        // Sloppity Bilepiper: the next creature spell this turn has cascade. The spell's effective
-        // mana value is snapshotted so the existing CascadeEffect handler uses the cast spell's value.
+        // Sloppity Bilepiper: the next creature spell this turn has cascade. Each granted instance of
+        // cascade is its own triggered ability (CR 702.85c), so each goes on the stack separately. The
+        // spell's effective mana value is snapshotted so the existing CascadeEffect handler uses it.
         int pendingCreatureSpellCascades = gameData.consumeNextCreatureSpellCascade(
                 castingPlayerId, spellCard);
-        if (pendingCreatureSpellCascades > 0) {
-            List<CardEffect> cascadeEffects = new ArrayList<>(pendingCreatureSpellCascades);
-            for (int i = 0; i < pendingCreatureSpellCascades; i++) {
-                cascadeEffects.add(new CascadeEffect());
-            }
+        for (int i = 0; i < pendingCreatureSpellCascades; i++) {
             StackEntry cascadeTrigger = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     spellCard,
                     castingPlayerId,
                     spellCard.getName() + "'s ability",
-                    cascadeEffects);
+                    new ArrayList<>(List.of(new CascadeEffect())));
             cascadeTrigger.setTriggeringCardId(spellCard.getId());
             cascadeTrigger.setEventValue(spellManaValue(gameData, spellCard));
             gameData.stack.add(cascadeTrigger);
             gameLogService.append(gameData, GameLog.cardThen(
                     spellCard, " has cascade from Sloppity Bilepiper."));
+        }
+        if (pendingCreatureSpellCascades > 0) {
             log.info("Game {} - queued {} delayed cascade grant(s) for {}",
                     gameData.id, pendingCreatureSpellCascades, spellCard.getName());
         }
@@ -11747,8 +11748,10 @@ public class TriggerCollectionService {
                 CardEffect resolvedEffect = unwrapCreatureDeathConditional(
                         statChecked, dyingCard, dyingPermanent, gameData, dyingCreatureControllerId, perm);
                 if (resolvedEffect == null) continue;
-                boolean oncePerTurn = resolvedEffect instanceof OncePerTurnTriggerEffect;
-                CardEffect triggerBody = oncePerTurn
+                boolean markOnAcceptance = resolvedEffect instanceof OncePerTurnTriggerEffect markOnce
+                        && markOnce.markOnAcceptance();
+                boolean oncePerTurn = resolvedEffect instanceof OncePerTurnTriggerEffect && !markOnAcceptance;
+                CardEffect triggerBody = resolvedEffect instanceof OncePerTurnTriggerEffect
                         ? ((OncePerTurnTriggerEffect) resolvedEffect).wrapped() : resolvedEffect;
                 boolean wasBatched = triggerBody instanceof BatchedCreatureDeathTriggerEffect;
                 if (wasBatched) {
@@ -11798,7 +11801,7 @@ public class TriggerCollectionService {
                     // that died").
                     gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                             perm.getCard(), dyingCreatureControllerId, new ArrayList<>(List.of(resolvedEffect)),
-                            dyingPower, new Permanent(perm), dyingCard.getId()
+                            dyingPower, new Permanent(perm), null, dyingCard.getId(), true, markOnAcceptance
                     ));
                     anyEffectFired = true;
                     if (oncePerTurn) {
@@ -11905,6 +11908,12 @@ public class TriggerCollectionService {
 
     private CardEffect snapshotDyingPermanentManaValue(GameData gameData, UUID controllerId,
                                                        CardEffect effect, Permanent dyingPermanent) {
+        if (effect instanceof MayEffect may && may.wrapped() instanceof ReturnCardFromGraveyardEffect) {
+            CardEffect snapshotted = snapshotDyingPermanentManaValue(
+                    gameData, controllerId, may.wrapped(), dyingPermanent);
+            return snapshotted == may.wrapped() ? effect : new MayEffect(
+                    snapshotted, may.prompt(), may.elseEffect(), may.choicePlayer(), may.choicePlayerId());
+        }
         if (!(effect instanceof ReturnCardFromGraveyardEffect returnEffect)
                 || returnEffect.dynamicMaxManaValue() == null
                 || dyingPermanent == null) {
@@ -12407,7 +12416,7 @@ public class TriggerCollectionService {
         gameData.forEachPermanent((playerId, perm) -> {
             dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx);
 
-            if (!playerId.equals(graveyardOwnerId)) {
+            if (!playerId.equals(artifactControllerId)) {
                 dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD, ctx);
             }
         });
@@ -12417,7 +12426,7 @@ public class TriggerCollectionService {
             UUID controllerId = gameData.simultaneousDyingPermanentControllers.get(permanentId);
             if (controllerId == null) return;
             dispatchSlot(gameData, permanent, controllerId, EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx);
-            if (!controllerId.equals(graveyardOwnerId)) {
+            if (!controllerId.equals(artifactControllerId)) {
                 dispatchSlot(gameData, permanent, controllerId,
                         EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD, ctx);
             }
@@ -14828,7 +14837,7 @@ public class TriggerCollectionService {
 
         for (Permanent perm : watchers) {
             if (perm.getId().equals(leavingId)) continue;
-            if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+            if (perm.isLosesAllAbilitiesUntilEndOfTurn() || perm.isFaceDown()) continue;
             for (CardEffect effect : perm.getCard().getEffects(
                     EffectSlot.ON_ANOTHER_NONTOKEN_ARTIFACT_PUT_INTO_GRAVEYARD_OR_EXILE_FROM_BATTLEFIELD)) {
                 if (effect.targetSpec().declaredTarget() != null) {
@@ -15532,10 +15541,14 @@ public class TriggerCollectionService {
                                                         Permanent enteringPermanent, EffectSlot slot,
                                                         List<CardEffect> effects, TriggerContext.PermanentEnters ctx) {
         // "Whenever this creature or another Ally enters": the Ally condition only gates the other
-        // creatures, so the source's own entry triggers whatever its current subtypes are.
+        // creatures, so the source's own entry triggers whatever its current subtypes are. A token gate
+        // ("Whenever a creature token you control enters") is not an "this creature or another" wording,
+        // so the source's own entry must satisfy it like any other entering creature.
         boolean sourceEntering = enteringPermanent != null && enteringPermanent.getId().equals(perm.getId());
         for (CardEffect effect : effects) {
             CardEffect resolved = sourceEntering && effect instanceof TriggeringCardConditionalEffect selfGate
+                    && !(selfGate.predicate() instanceof CardIsTokenPredicate)
+                    && !selfGate.gatesSource()
                     ? selfGate.wrapped()
                     : unwrapTriggeringCardConditional(
                     effect, enteringCharacteristics, gameData, controllerId, perm.getCard().getId());
@@ -15657,6 +15670,15 @@ public class TriggerCollectionService {
                     boolean oncePerTurn = resolved instanceof OncePerTurnTriggerEffect;
                     boolean markOnAcceptance = resolved instanceof OncePerTurnTriggerEffect once
                             && once.markOnAcceptance();
+                    // A once-each-turn trigger already collected for this event still gathers the other
+                    // creatures that entered with it, though the limit now blocks a new trigger.
+                    if (resolved instanceof OncePerTurnTriggerEffect once
+                            && gameData.collectingSimultaneousCreatureEntryTriggers
+                            && gameData.simultaneousCreatureEntryTriggers
+                            .getOrDefault(perm.getId(), Set.of()).contains(effect)) {
+                        addToBatchedEntryGroup(gameData, perm, once.wrapped(), enteringPermanent);
+                        continue;
+                    }
                     resolved = unwrapOncePerTurnTrigger(gameData, perm, resolved);
                     if (resolved == null) continue;
                     if (!passesEnterInterveningIf(gameData, perm, controllerId, enteringPermanent, resolved)) continue;
@@ -16635,6 +16657,10 @@ public class TriggerCollectionService {
 
         List<Card> commandZone = gameData.playerCommandZones.get(controllerId);
         if (commandZone != null) {
+            // Panharmonicon-style doublers only multiply triggers of permanents (CR 603.2d), so a
+            // command-zone source is triggered exactly once.
+            var commandZoneCtx = new TriggerContext.PermanentEnters(
+                    enteringCard, controllerId, null, 1, enteringPermanentId);
             for (Card sourceCard : new ArrayList<>(commandZone)) {
                 List<CardEffect> effects = sourceCard.getEffects(
                         EffectSlot.COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD);
@@ -16645,7 +16671,7 @@ public class TriggerCollectionService {
                     if (resolved == null) continue;
                     dispatch(new TriggerMatchContext(gameData, null, controllerId, resolved, sourceCard),
                             EffectSlot.COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
-                            resolved, ctx);
+                            resolved, commandZoneCtx);
                 }
             }
         }
@@ -16987,6 +17013,18 @@ public class TriggerCollectionService {
         checkAllyTokenEntersTriggers(gameData, controllerId, permanentIds.size(), permanentIds);
     }
 
+    /**
+     * Extra trigger copies for a batch of tokens entering under {@code controllerId}. Doublers such as
+     * Panharmonicon only apply when the entering permanent matches their predicate (CR 603.2d), so the
+     * first entering token is checked against them.
+     */
+    private int countAllyTokenBatchExtraTriggers(GameData gameData, UUID controllerId, List<UUID> permanentIds) {
+        if (permanentIds.isEmpty()) return 0;
+        Permanent firstToken = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+        if (firstToken == null) return 0;
+        return gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, firstToken.getCard());
+    }
+
     private void checkAllyTokenEntersTriggers(GameData gameData, UUID controllerId, int count,
                                                List<UUID> permanentIds) {
         if (count <= 0) return;
@@ -16994,7 +17032,7 @@ public class TriggerCollectionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null || battlefield.isEmpty()) return;
 
-        int extraTriggers = gameQueryService.countETBExtraTriggersForAnyPermanent(gameData, controllerId);
+        int extraTriggers = countAllyTokenBatchExtraTriggers(gameData, controllerId, permanentIds);
         TriggerContext.TokensEnter ctx = new TriggerContext.TokensEnter(
                 count, 1 + extraTriggers, permanentIds);
         for (Permanent permanent : new ArrayList<>(battlefield)) {
@@ -17316,7 +17354,7 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            if (effect instanceof AttachedCreatureBecomesCopyOfExiledCreatureEffect) {
+            if (effect instanceof AttachedCreatureBecomesCopyOfExiledCreatureEffect copy && copy.asAttaches()) {
                 // "As this Equipment becomes attached to a creature, choose an exiled creature card ..." is not a
                 // triggered ability, so the copy is made as the equipment attaches, without another stack resolution.
                 StackEntry attachment = new StackEntry(
@@ -19142,6 +19180,13 @@ public class TriggerCollectionService {
                 return false;
             }
             conditionedEffect = conditional.wrapped();
+        }
+        if (slot == EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD
+                && effect instanceof ConditionalEffect conditional
+                && conditional.condition() instanceof SourceClassLevelAtLeast
+                && !conditionEvaluationService.isMet(gameData, conditional.condition(),
+                ConditionContext.forPermanent(perm, controllerId))) {
+            return false;
         }
 
         if (slot == EffectSlot.ON_CONTROLLER_DISCARD_EVENT

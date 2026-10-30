@@ -463,12 +463,28 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * the CR 605.3a window so the player may tap mana sources while the prompt is up.
      */
     record XValueChoice(UUID playerId, int minValue, int maxValue, String prompt, String cardName,
-                        boolean manaPayment, String manaCost, PendingMayAbility graveyardCastAbility)
+                        boolean manaPayment, String manaCost, PendingMayAbility graveyardCastAbility,
+                        ChoiceContext.CounterDistributionAssignment distribution)
             implements PendingInteraction {
 
         public XValueChoice(UUID playerId, int minValue, int maxValue, String prompt, String cardName,
+                            boolean manaPayment, String manaCost, PendingMayAbility graveyardCastAbility) {
+            this(playerId, minValue, maxValue, prompt, cardName, manaPayment, manaCost, graveyardCastAbility, null);
+        }
+
+        public XValueChoice(UUID playerId, int minValue, int maxValue, String prompt, String cardName,
                             boolean manaPayment, String manaCost) {
-            this(playerId, minValue, maxValue, prompt, cardName, manaPayment, manaCost, null);
+            this(playerId, minValue, maxValue, prompt, cardName, manaPayment, manaCost, null, null);
+        }
+
+        /**
+         * Per-target amount pick of a damage division announced at resolution; {@code distribution}
+         * carries the division so far and receives the chosen amount.
+         */
+        public static XValueChoice forDistribution(UUID playerId, int minValue, int maxValue, String prompt,
+                                                   String cardName,
+                                                   ChoiceContext.CounterDistributionAssignment distribution) {
+            return new XValueChoice(playerId, minValue, maxValue, prompt, cardName, false, null, null, distribution);
         }
 
         /** Non-mana number pick (discard counts, life payments, bids). */

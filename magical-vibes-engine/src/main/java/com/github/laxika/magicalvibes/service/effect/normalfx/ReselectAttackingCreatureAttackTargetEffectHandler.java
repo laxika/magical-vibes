@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -59,7 +60,8 @@ public class ReselectAttackingCreatureAttackTargetEffectHandler implements Norma
                 : gameData.orderedPlayerIds.stream()
                         .flatMap(playerId -> gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream())
                         .filter(permanent -> validAttackTargetIds.contains(permanent.getId()))
-                        .filter(permanent -> !attackerControllerId.equals(gameData.findControllerOf(permanent)))
+                        .filter(permanent -> !attackerControllerId.equals(gameData.findControllerOf(permanent))
+                                || isSiegeBattle(gameData, permanent))
                         .map(Permanent::getId)
                         .toList();
 
@@ -75,5 +77,10 @@ public class ReselectAttackingCreatureAttackTargetEffectHandler implements Norma
                 validPermanentIds,
                 validPlayerIds,
                 "Choose the player or permanent for the attacking creature to attack.");
+    }
+
+    private boolean isSiegeBattle(GameData gameData, Permanent permanent) {
+        return gameQueryService.isBattle(gameData, permanent)
+                && permanent.getCard().getSubtypes().contains(CardSubtype.SIEGE);
     }
 }

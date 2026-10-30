@@ -107,6 +107,7 @@ class PuppetMasterStringPullerTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, goaded.getId());
         resolveAllTriggers();
         assertThat(gqs.isGoaded(gd, goaded)).isTrue();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> gs.declareBlockers(gd, player1, List.of()));
 
         for (Permanent bear : List.of(goaded, other)) {
             bear.setAttacking(true);

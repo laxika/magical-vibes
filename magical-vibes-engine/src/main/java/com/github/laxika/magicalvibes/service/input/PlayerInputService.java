@@ -550,6 +550,16 @@ public class PlayerInputService {
                 ? "Choose how much damage to deal to this target."
                 : "Choose how many " + context.counterType().name().toLowerCase().replace('_', ' ')
                 + " counters to put on the target creature.";
+        boolean announcedAtResolution = context.counterType() == null && context.effects().stream()
+                .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect divided
+                        && divided.etbAssignments() && divided.xValueDivisionPrompt());
+        if (announcedAtResolution) {
+            int maxForTarget = remaining - (remainingTargets - 1);
+            int minForTarget = !context.allowsPartialDistribution() && remainingTargets == 1 ? remaining : 1;
+            interactionHandlerRegistry.begin(gameData, PendingInteraction.XValueChoice.forDistribution(
+                    playerId, minForTarget, maxForTarget, prompt, context.sourceCard().getName(), context));
+            return;
+        }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, context, options, prompt));
     }

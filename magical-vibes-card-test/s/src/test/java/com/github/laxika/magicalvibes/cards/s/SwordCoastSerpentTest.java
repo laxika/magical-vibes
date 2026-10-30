@@ -112,7 +112,7 @@ class SwordCoastSerpentTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasCantBeBlocked(gd, serpent)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasCantBeBlocked(gd, serpent)).isFalse();
     }

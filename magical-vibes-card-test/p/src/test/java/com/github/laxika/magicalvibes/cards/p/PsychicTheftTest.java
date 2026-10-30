@@ -188,7 +188,7 @@ class PsychicTheftTest extends BaseCardTest {
                 .hasMessageContaining("sorcery-speed");
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(spell);
 
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(spell);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(spell.getId());
     }

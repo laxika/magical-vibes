@@ -1090,6 +1090,7 @@ public class TurnProgressionService {
         gameData.landCardsPlayedThisTurn.clear();
         gameData.playersWhoTappedLandForManaThisTurn.clear();
         gameData.additionalLandsThisTurn.clear();
+        gameData.permanentsEnteredSincePlayerLastTurnEnded.remove(endingActivePlayerId);
         gameData.permanentsEnteredBattlefieldLastTurn.clear();
         gameData.permanentsEnteredBattlefieldThisTurn.forEach((playerId, entered) ->
                 gameData.permanentsEnteredBattlefieldLastTurn.put(playerId, new ArrayList<>(entered)));

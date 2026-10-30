@@ -147,6 +147,7 @@ class SpitFlameTest extends BaseCardTest {
     void oldTriggerCannotReturnNewGraveyardObject() {
         SpitFlame spitFlame = new SpitFlame();
         harness.setGraveyard(player1, List.of(spitFlame));
+        harness.setHand(player1, List.of());
         prepareMain(player1);
         harness.addToBattlefield(player2, new HillGiant());
         harness.enterBattlefieldAndReturn(player1, new DragonEgg());

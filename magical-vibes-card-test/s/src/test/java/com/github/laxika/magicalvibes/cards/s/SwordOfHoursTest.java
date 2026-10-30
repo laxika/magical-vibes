@@ -44,6 +44,7 @@ class SwordOfHoursTest extends BaseCardTest {
 
     @Test
     void equippedCreatureGetsCounterWhenAttacking() {
+        ReflectionTestUtils.setField(rollHandler, "diceRollService", new FixedDiceRollService(1));
         Permanent creature = addCreatureReady(player1);
         Permanent sword = addSwordReady(player1);
         sword.setAttachedTo(creature.getId());
@@ -150,6 +151,7 @@ class SwordOfHoursTest extends BaseCardTest {
 
     @Test
     void attackCounterStaysWithTheAttackerWhenSwordMovesInResponse() {
+        ReflectionTestUtils.setField(rollHandler, "diceRollService", new FixedDiceRollService(1));
         Permanent attacker = addCreatureReady(player1);
         Permanent sword = addSwordReady(player1);
         Permanent otherCreature = addCreatureReady(player1);

@@ -112,6 +112,7 @@ class PickTheBrainTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With delirium and only lands in hand, nothing is exiled but the library is still searched")
     void deliriumRevealsLandOnlyHandAndExilesNothing() {
         enableDelirium();
         Forest land = new Forest();
@@ -121,6 +122,11 @@ class PickTheBrainTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).isEmpty();
+        harness.handleCardChosen(player1, -1);
+
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
                 .anyMatch(message -> message.contains("Forest"));

@@ -151,10 +151,10 @@ class PhantasmalFiendTest extends BaseCardTest {
     void switchedFiendSurvivesZeroPower() {
         Permanent fiend = harness.addToBattlefieldAndReturn(player1, new PhantasmalFiend());
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.BLACK, 5);
-
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
+        // Added after the switch so its generic {1} can't be auto-paid with black mana meant for the boosts.
+        harness.addMana(player1, ManaColor.BLACK, 5);
         for (int i = 0; i < 5; i++) {
             harness.activateAbility(player1, 0, 0, null, null);
             harness.passBothPriorities();

@@ -326,6 +326,14 @@ public class ManaCost {
     }
 
     /**
+     * Whether this cost contains any hybrid mana symbol, including hybrid Phyrexian symbols such as
+     * {G/U/P}, which are hybrid symbols as well as Phyrexian ones (CR 107.4f).
+     */
+    public boolean hasAnyHybridMana() {
+        return !hybridCosts.isEmpty();
+    }
+
+    /**
      * Number of mana symbols in this cost that include the given color (chroma counting). A colored
      * symbol like {W}, a Phyrexian symbol {W/P}, and a hybrid symbol containing white ({W/U}, {2/W})
      * each count as one white mana symbol; generic and {X} symbols never count.
@@ -4540,7 +4548,10 @@ public class ManaCost {
             int highestAmount = 0;
             for (ManaColor color : ManaColor.values()) {
                 int amount = pool.get(color);
-                if (amount > highestAmount) {
+                // Equal piles: spend the color this cost already asks for, so the other color stays available.
+                if (amount > highestAmount
+                        || amount > 0 && amount == highestAmount && !coloredCosts.containsKey(highestColor)
+                        && coloredCosts.containsKey(color)) {
                     highestAmount = amount;
                     highestColor = color;
                 }

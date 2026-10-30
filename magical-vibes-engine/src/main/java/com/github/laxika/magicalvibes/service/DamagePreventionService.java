@@ -222,9 +222,8 @@ public class DamagePreventionService {
                                                    UUID sourceControllerId, boolean combatDamage) {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return false;
         if (damage <= 0) return false;
-        boolean hasEffect = target.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof PreventDamageToSelfAndSourceControllerDrawsEffect);
-        if (!hasEffect) return false;
+        if (!gameQueryService.hasActiveStaticEffect(gameData, target,
+                PreventDamageToSelfAndSourceControllerDrawsEffect.class)) return false;
         if (sourceControllerId != null) {
             for (int i = 0; i < damage; i++) {
                 drawService.resolveDrawCard(gameData, sourceControllerId);
@@ -608,6 +607,10 @@ public class DamagePreventionService {
                         .applyDamageToPermanentByRemovingCountersOrSacrificing(gd, c.permanent(), damage) ? 0 : damage,
                 NEVER, (gd, c, damage) -> damagePreventionReplacementSupport.sacrificesForDamage(
                         gd, c.permanent(), damage) ? DepartureIntent.sacrifice(c.permanent().getId()) : null));
+        steps.add(preventAll("ProtectionCompetingWithCounterRemoval", "Prevent the damage (protection)",
+                (gd, c, damage) -> damage > 0 && c.damageSource() != null && preventable(gd, c)
+                        && preventRemovePlusOneCountersEffect(gd, c.permanent()) != null
+                        && gameQueryService.hasProtectionFromDamageSource(gd, c.permanent(), c.damageSource())));
         steps.add(new CreatureDamageStep("RemovePlusOneCounters", "Remove +1/+1 counters from it instead",
                 replacement, false,
                 (gd, c, damage) -> {
@@ -3951,8 +3954,8 @@ public class DamagePreventionService {
     /** Whether Swans of Bryn Argoll would prevent damage dealt to {@code target}. */
     public boolean hasSwansSourceControllerDraw(GameData gameData, Permanent target, boolean combatDamage) {
         return gameQueryService.isDamagePreventable(gameData, combatDamage)
-                && target.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(PreventDamageToSelfAndSourceControllerDrawsEffect.class::isInstance);
+                && gameQueryService.hasActiveStaticEffect(gameData, target,
+                PreventDamageToSelfAndSourceControllerDrawsEffect.class);
     }
 
     /** Vengeful Archon-style shields protecting a player from combat or noncombat damage. */

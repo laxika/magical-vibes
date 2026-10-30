@@ -29,6 +29,7 @@ public class DestroyCreatureBlockingThisEffectHandler implements NormalEffectHan
                     return;
                 }
 
-                destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName());
+                destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(),
+                        ((DestroyCreatureBlockingThisEffect) effect).cannotBeRegenerated());
     }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentMayDrawCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -39,7 +40,10 @@ public class TargetOpponentMayDrawCardEffectHandler implements NormalEffectHandl
 
         UUID opponentId;
         if (effect instanceof TargetOpponentMayDrawCardEffect draw && draw.chosenTarget()) {
-            opponentId = entry.targetsForEffect(effect).stream().findFirst().orElse(null);
+            List<UUID> bound = entry.targetsForBoundEffectGroup(effect);
+            opponentId = bound == null
+                    ? entry.getTargetId()
+                    : bound.stream().findFirst().orElse(null);
         } else {
             opponentId = gameQueryService.getOpponentId(gameData, controllerId);
         }

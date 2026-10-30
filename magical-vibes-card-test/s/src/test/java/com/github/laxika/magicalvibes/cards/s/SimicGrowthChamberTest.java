@@ -101,8 +101,9 @@ class SimicGrowthChamberTest extends BaseCardTest {
     @Test
     @DisplayName("A borrowed land is returned to its owner rather than its controller")
     void returnsBorrowedLandToItsOwner() {
-        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        gd.stolenCreatures.put(island.getId(), player2.getId());
+        Island borrowedLand = new Island();
+        borrowedLand.setOwnerId(player2.getId());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, borrowedLand);
         harness.setHand(player1, List.of(new SimicGrowthChamber()));
         harness.playLand(player1, 0);
         harness.passBothPriorities();

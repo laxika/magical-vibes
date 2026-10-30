@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -53,20 +54,16 @@ public class PutCounterOnSelfThenTransformIfThresholdEffectHandler implements No
 
         if (currentCount >= e.threshold()) {
             if (e.optional()) {
-                // "you may remove those counters and transform it" — put may ability on the stack
-                gameData.queueMayAbility(
-                        entry.getCard(),
-                        entry.getControllerId(),
+                // "you may remove those counters and transform it" is part of this resolution, so the
+                // choice is offered inline right after the counter is placed, not as a separate object.
+                entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
                         new MayEffect(
                                 SequenceEffect.of(
                                         new RemoveAllCountersEffect(e.counterType()),
                                         new TransformSelfEffect()
                                 ),
                                 "Remove counters and transform?"
-                        ),
-                        null,
-                        selfId
-                );
+                        )));
             } else {
                 Permanent snapshot = entry.getSourcePermanentSnapshot();
                 boolean transformedSinceActivated = snapshot != null && snapshot.getId().equals(self.getId())

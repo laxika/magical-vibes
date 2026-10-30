@@ -56,8 +56,9 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
                 && occurrences.stream().allMatch(id -> Objects.equals(id, sourcePermanentId));
         boolean repeatedSourceTargetsAllowed = redirectEffect.requiresSourceTarget()
                 && redirectEffect.allowsRepeatedSourceTarget() && onlySource;
-        if (!targetSpell.isSingleTarget() && !repeatedSourceTargetsAllowed) {
-            
+        boolean namesSourceMoreThanOnce = redirectEffect.requiresSourceTarget()
+                && !redirectEffect.allowsRepeatedSourceTarget() && occurrences.size() > 1;
+        if ((!targetSpell.isSingleTarget() || namesSourceMoreThanOnce) && !repeatedSourceTargetsAllowed) {
             gameLogService.append(gameData, GameLog.cardTextCard(sourceCard, " has no effect (", targetSpell.getCard(), " no longer has a single target)."));
             return;
         }

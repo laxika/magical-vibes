@@ -171,7 +171,7 @@ class ProsperTomeBoundTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
         assertThat(gd.exilePlayPermissions).containsEntry(land.getId(), player1.getId());
 
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);

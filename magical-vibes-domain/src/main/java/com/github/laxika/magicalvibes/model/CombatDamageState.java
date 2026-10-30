@@ -30,6 +30,13 @@ public class CombatDamageState {
     public int pendingOptionalDamageChoices;
     public boolean awaitingOptionalDamageChoices;
 
+    /** Whether the proliferatelink check for this simultaneous damage event has been made. */
+    public boolean proliferateLinksChecked;
+    /** Whether this step is parked on the proliferating its proliferatelink sources earned. */
+    public boolean parkedForProliferateLinks;
+    /** Times each controller still has to proliferate for proliferatelink damage dealt in this event. */
+    public final Map<UUID, Integer> pendingProliferateLinks = new java.util.LinkedHashMap<>();
+
     public int damageToDefendingPlayer;
     public int poisonDamageToDefendingPlayer;
     public int unpreventableDamageToDefendingPlayer;

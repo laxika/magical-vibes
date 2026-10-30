@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
@@ -16,16 +19,23 @@ import java.util.Set;
 @CardRegistration(set = "KLR", collectorNumber = "26")
 public class PropellerPioneer extends Card {
 
+    private static final CreateTokenEffect SERVO = new CreateTokenEffect(1, "Servo", 1, 1, null,
+            List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT));
+
     public PropellerPioneer() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on Propeller Pioneer",
-                        new PutCountersOnSourceEffect(1, 1, 1)
+                        List.of(
+                                ConditionalEffect.unless(new SourceIsOnBattlefield(),
+                                        new PutCountersOnSourceEffect(1, 1, 1)),
+                                ConditionalEffect.unless(new NotCondition(new SourceIsOnBattlefield()),
+                                        SERVO)
+                        )
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a 1/1 colorless Servo artifact creature token",
-                        new CreateTokenEffect(1, "Servo", 1, 1, null,
-                                List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT))
+                        SERVO
                 )
         )));
     }

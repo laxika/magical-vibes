@@ -88,6 +88,7 @@ class ParanormalAnalystTest extends BaseCardTest {
         Card manifestedCard = new Forest();
         Card graveyardCard = new CautiousSurvivor();
         harness.addToBattlefield(player2, new ParanormalAnalyst());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(manifestedCard, graveyardCard));
         harness.castFromHand(player1, new UnsettlingTwins(), "{3}{W}");
         harness.passBothPriorities();

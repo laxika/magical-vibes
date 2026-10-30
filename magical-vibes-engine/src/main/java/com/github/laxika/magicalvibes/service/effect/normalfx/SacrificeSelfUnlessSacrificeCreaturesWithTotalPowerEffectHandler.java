@@ -42,8 +42,7 @@ public class SacrificeSelfUnlessSacrificeCreaturesWithTotalPowerEffectHandler im
         UUID controllerId = entry.getControllerId();
         UUID sourcePermanentId = entry.getSourcePermanentId();
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source == null || !controllerId.equals(
-                gameQueryService.findPermanentController(gameData, sourcePermanentId))) {
+        if (source == null) {
             return;
         }
 
@@ -74,7 +73,8 @@ public class SacrificeSelfUnlessSacrificeCreaturesWithTotalPowerEffectHandler im
 
     private void sacrificeSource(GameData gameData, UUID controllerId, UUID sourcePermanentId) {
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source != null) {
+        // CR 701.21a: a permanent the ability's controller doesn't control can't be sacrificed by them.
+        if (source != null && controllerId.equals(gameQueryService.findPermanentController(gameData, sourcePermanentId))) {
             destructionSupport.sacrificeAndLog(gameData, source, controllerId);
         }
     }

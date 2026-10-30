@@ -1709,6 +1709,11 @@ public class GameService {
                 ManaPool.TurnPermanentsFaceUpManaState turnPermanentsFaceUpMana =
                         pool.promoteTurnPermanentsFaceUpMana();
                 try {
+                    if (manifestedOrCloaked && cost.hasX() && xValue == null) {
+                        // CR 107.3g: a card off the stack treats the {X} in its mana cost as 0, so a manifested or
+                        // cloaked creature turned face up for its mana cost never asks for X.
+                        xValue = 0;
+                    }
                     if (cost.hasX() && xValue == null) {
                         ManaPool potentialPool = potentialManaService != null
                                 ? potentialManaService.buildVirtualManaPool(gameData, player.getId()) : pool;

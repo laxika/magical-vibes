@@ -64,7 +64,7 @@ class PartWaterTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.ISLANDWALK)).isTrue();
 
-        harness.passUntilWithNoAttackers(player2, TurnStep.UNTAP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, bear, Keyword.ISLANDWALK)).isFalse();
     }

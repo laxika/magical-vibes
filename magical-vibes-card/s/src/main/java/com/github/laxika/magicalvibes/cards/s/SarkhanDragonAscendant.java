@@ -31,7 +31,7 @@ public class SarkhanDragonAscendant extends Card {
                                 new BeholdEffect(CardSubtype.DRAGON, CreateTokenEffect.ofTreasureToken(1)),
                                 "Behold a Dragon?")));
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new TriggeringCardConditionalEffect(
+                TriggeringCardConditionalEffect.gatingSource(
                         new CardSubtypePredicate(CardSubtype.DRAGON),
                         SequenceEffect.of(
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),

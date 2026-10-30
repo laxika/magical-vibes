@@ -43,7 +43,11 @@ class MaddeningImpTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bear.isMustAttackThisTurn()).isTrue();
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        assertThat(bear.isAttacking()).isTrue();
     }
 
     @Test

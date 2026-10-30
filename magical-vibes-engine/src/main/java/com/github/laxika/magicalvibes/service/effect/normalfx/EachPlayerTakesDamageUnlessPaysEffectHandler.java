@@ -41,7 +41,7 @@ public class EachPlayerTakesDamageUnlessPaysEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        offerToPlayers(gameData, entry, (EachPlayerTakesDamageUnlessPaysEffect) effect, apnapOrder(gameData));
+        offer(gameData, entry, (EachPlayerTakesDamageUnlessPaysEffect) effect, apnapOrder(gameData), false);
     }
 
     /**
@@ -50,6 +50,12 @@ public class EachPlayerTakesDamageUnlessPaysEffectHandler implements NormalEffec
      */
     public void offerToPlayers(GameData gameData, StackEntry entry,
             EachPlayerTakesDamageUnlessPaysEffect effect, List<UUID> payers) {
+        offer(gameData, entry, effect, payers, true);
+    }
+
+    private void offer(GameData gameData, StackEntry entry,
+            EachPlayerTakesDamageUnlessPaysEffect effect, List<UUID> payers, boolean batchDamage) {
+        gameData.eachPlayerDamageUnlessPaysBatched = batchDamage;
         gameData.eachPlayerDamageUnlessPaysRemaining.clear();
         gameData.eachPlayerDamageUnlessPaysDeclined.clear();
         if (payers.isEmpty()) {
@@ -62,13 +68,21 @@ public class EachPlayerTakesDamageUnlessPaysEffectHandler implements NormalEffec
     }
 
     /**
-     * After a player's may-pay decision: remember that they declined/couldn't pay, then offer the
+     * After a player's may-pay decision: when the prompts are not batched (each player once, e.g.
+     * Lim-Dul's Hex) damage is dealt to a player who declined right away; otherwise remember that they declined/couldn't pay, then offer the
      * next remaining player. Once every prompt is answered the declined damage is dealt at the same
      * time, one combined amount per player, so a single prevention shield covers all of it.
      * Called from {@code MayPenaltyChoiceHandlerService}.
      */
     public void afterPlayerDecision(GameData gameData, PendingMayAbility ability,
             EachPlayerTakesDamageUnlessPaysEffect effect, UUID playerId, boolean paid) {
+        if (!gameData.eachPlayerDamageUnlessPaysBatched) {
+            if (!paid) {
+                dealDamageToPlayer(gameData, ability, playerId, effect.damage());
+            }
+            offerNext(gameData, ability, effect);
+            return;
+        }
         if (!paid) {
             gameData.eachPlayerDamageUnlessPaysDeclined.add(playerId);
         }

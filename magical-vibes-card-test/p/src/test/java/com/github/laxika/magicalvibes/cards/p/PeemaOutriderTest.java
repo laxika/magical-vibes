@@ -21,8 +21,8 @@ class PeemaOutriderTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate mode puts a +1/+1 counter on Peema Outrider")
     void fabricateCountersMode() {
-        castOutrider(0);
-        resolveAllTriggers();
+        castOutrider();
+        resolveCreatureAndEtb(true);
 
         Permanent outrider = findPermanent(player1, "Peema Outrider");
         assertThat(outrider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -31,8 +31,8 @@ class PeemaOutriderTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate mode creates a 1/1 colorless Servo artifact creature token")
     void fabricateServoMode() {
-        castOutrider(1);
-        resolveAllTriggers();
+        castOutrider();
+        resolveCreatureAndEtb(false);
 
         List<Permanent> servos = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SERVO))
@@ -47,16 +47,23 @@ class PeemaOutriderTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, servo)).isEqualTo(1);
     }
 
-    private void castOutrider(int mode) {
+    private void castOutrider() {
         harness.setHand(player1, List.of(new PeemaOutrider()));
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
+    }
+
+    /** Fabricate's choice is made as the trigger resolves (CR 702.123a). */
+    private void resolveCreatureAndEtb(boolean putCounter) {
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, putCounter);
     }
 
     @Test
     @DisplayName("Fabricate creates a Servo when Outrider dies before its trigger resolves")
     void fabricateCreatesServoWhenSourceDies() {
-        castOutrider(0);
+        castOutrider();
         harness.passBothPriorities();
 
         Permanent outrider = findPermanent(player1, "Peema Outrider");

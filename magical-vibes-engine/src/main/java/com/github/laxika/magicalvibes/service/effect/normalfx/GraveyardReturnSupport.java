@@ -372,59 +372,87 @@ public class GraveyardReturnSupport {
             }
         }
 
-        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
-
+        // A card that returns to the battlefield leaves the graveyard as that move happens, so the
+        // "leaves your graveyard" notifications wait until it has entered (it is then a new object that may be
+        // judged against effects such as Hushbringer's).
+        boolean returningToBattlefield = effect.destination() == GraveyardChoiceDestination.BATTLEFIELD;
         Permanent returnedPermanent = null;
-        // Unconditional "+1/+1 counters" are put on the card as it enters, so entry triggers see them.
-        boolean entersWithPlusOneCounters = entersWithPlusOneCounters(gameData, targetCard, targetOwnerId, effect)
-                || entersWithConditionalPlusOneCounters(gameData, entry, destinationPlayerId, effect);
-        boolean hasteOrExileEntry = effect.grantHaste() || effect.exileAtEndStep()
-                || effect.exileAtYourNextEndStep() || effect.sacrificeAtEndStep();
-        // The haste/exile entry path doesn't place counters, so the riders below still do.
-        boolean entersWithEffectCounters = !entersWithPlusOneCounters && !hasteOrExileEntry
-                && effect.enterWithCounter() != null && effect.enterWithCounterCount() > 0;
-        if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
-            if (effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
-                    || effect.sacrificeAtEndStep()) {
-                returnedPermanent = putCardOntoBattlefieldWithHasteAndExile(gameData, destinationPlayerId, targetCard,
-                        effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
-                        effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking(),
-                        effect.exileAtYourNextEndStep(), losesAllAbilitiesBeforeEntering(effect), entry.getCard());
-                limitHasteToThisTurn(effect, returnedPermanent);
-            } else {
-                returnedPermanent = putCardOntoBattlefield(gameData, destinationPlayerId, targetCard,
-                        effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking(),
-                        entersWithEffectCounters ? effect.enterWithCounter()
-                                : entersWithPlusOneCounters ? CounterType.PLUS_ONE_PLUS_ONE : null,
-                        effect.grantIndestructible(), losesAllAbilitiesBeforeEntering(effect),
-                        entersWithEffectCounters ? effect.enterWithCounterCount()
-                                : entersWithPlusOneCounters ? effect.plusOneCounterCount() : 0,
-                        permanent -> {
-                            permanent.setEnteredFromGraveyardOwnerId(targetOwnerId);
-                            if (effect.battlefieldEffectGrants() != null) {
-                                for (CardEffect grant : effect.battlefieldEffectGrants()) {
-                                    if (grant instanceof GrantColorEffect || grant instanceof SetCardTypesEffect
-                                            || grant instanceof GrantCardTypeEffect
-                                            || grant instanceof GrantSubtypeEffect
-                                            || grant instanceof SetBasePowerToughnessEffect) {
-                                        gameData.addFloatingEffect(new FloatingContinuousEffect(
-                                                UUID.randomUUID(), entry.getCard().getName(),
-                                                entry.getSourcePermanentId(), entry.getControllerId(), grant,
-                                                permanent.getId(), null, null,
-                                                effect.battlefieldEffectGrantDuration() == null
-                                                        ? EffectDuration.PERMANENT
-                                                        : effect.battlefieldEffectGrantDuration(), 0));
+        boolean entersWithPlusOneCounters;
+        boolean hasteOrExileEntry;
+        boolean entersWithEffectCounters;
+        if (returningToBattlefield) {
+            graveyardService.beginGraveyardLeaveBatch(gameData);
+        }
+        try {
+            permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+
+            PendingGraveyardReturnBatch openBatch = gameData.pendingGraveyardReturnBatch;
+            if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD
+                    && openBatch != null && openBatch.closedByEffect()) {
+                // Liliana, the Necromancer's -7: the chosen cards wait until a later effect puts them all onto the
+                // battlefield together (CR 603.6a).
+                gameData.pendingGraveyardReturnBatch = openBatch.add(targetCard,
+                        targetOwnerId != null ? targetOwnerId : controllerId);
+                gameLogService.append(gameData, GameLog.textCardText(
+                        gameData.playerIdToName.get(controllerId) + " chooses ", targetCard, " from a graveyard."));
+                return;
+            }
+
+            // Unconditional "+1/+1 counters" are put on the card as it enters, so entry triggers see them.
+            entersWithPlusOneCounters = entersWithPlusOneCounters(gameData, targetCard, targetOwnerId, effect)
+                    || entersWithConditionalPlusOneCounters(gameData, entry, destinationPlayerId, effect);
+            hasteOrExileEntry = effect.grantHaste() || effect.exileAtEndStep()
+                    || effect.exileAtYourNextEndStep() || effect.sacrificeAtEndStep();
+            // The haste/exile entry path doesn't place counters, so the riders below still do.
+            entersWithEffectCounters = !entersWithPlusOneCounters && !hasteOrExileEntry
+                    && effect.enterWithCounter() != null && effect.enterWithCounterCount() > 0;
+            if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
+                if (effect.grantHaste() || effect.exileAtEndStep() || effect.exileAtYourNextEndStep()
+                        || effect.sacrificeAtEndStep()) {
+                    returnedPermanent = putCardOntoBattlefieldWithHasteAndExile(gameData, destinationPlayerId, targetCard,
+                            effect.grantHaste(), effect.exileAtEndStep(), effect.sacrificeAtEndStep(),
+                            effect.exileIfLeavesBattlefield(), effect.enterTapped(), effect.enterAttacking(),
+                            effect.exileAtYourNextEndStep(), losesAllAbilitiesBeforeEntering(effect), entry.getCard());
+                    limitHasteToThisTurn(effect, returnedPermanent);
+                } else {
+                    returnedPermanent = putCardOntoBattlefield(gameData, destinationPlayerId, targetCard,
+                            effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking(),
+                            entersWithEffectCounters ? effect.enterWithCounter()
+                                    : entersWithPlusOneCounters ? CounterType.PLUS_ONE_PLUS_ONE : null,
+                            effect.grantIndestructible(), losesAllAbilitiesBeforeEntering(effect),
+                            entersWithEffectCounters ? effect.enterWithCounterCount()
+                                    : entersWithPlusOneCounters ? effect.plusOneCounterCount() : 0,
+                            permanent -> {
+                                permanent.setEnteredFromGraveyardOwnerId(targetOwnerId);
+                                if (effect.battlefieldEffectGrants() != null) {
+                                    for (CardEffect grant : effect.battlefieldEffectGrants()) {
+                                        if (grant instanceof GrantColorEffect || grant instanceof SetCardTypesEffect
+                                                || grant instanceof GrantCardTypeEffect
+                                                || grant instanceof GrantSubtypeEffect
+                                                || grant instanceof SetBasePowerToughnessEffect) {
+                                            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                                                    UUID.randomUUID(), entry.getCard().getName(),
+                                                    entry.getSourcePermanentId(), entry.getControllerId(), grant,
+                                                    permanent.getId(), null, null,
+                                                    effect.battlefieldEffectGrantDuration() == null
+                                                            ? EffectDuration.PERMANENT
+                                                            : effect.battlefieldEffectGrantDuration(), 0));
+                                        }
                                     }
                                 }
-                            }
-                            if (effect.grantSubtypes() != null) {
-                                permanent.getGrantedSubtypes().addAll(effect.grantSubtypes());
-                            }
-                        });
+                                if (effect.grantSubtypes() != null) {
+                                    permanent.getGrantedSubtypes().addAll(effect.grantSubtypes());
+                                }
+                            });
+                }
+            } else {
+                moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination(),
+                        effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
             }
-        } else {
-            moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination(),
-                    effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
+        } finally {
+            if (returningToBattlefield) {
+                graveyardService.endGraveyardLeaveBatch(gameData);
+            }
         }
 
         if (effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
@@ -2288,7 +2316,8 @@ public class GraveyardReturnSupport {
             }
         }
 
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes,
+                enteredBatchMates(deferredEtbs));
         if (enterAttacking) {
             permanent.enterAttacking(true);
         }
@@ -2388,9 +2417,6 @@ public class GraveyardReturnSupport {
             if (batch.enterTapped()) {
                 permanent.tap();
             }
-            if (batch.enterWithCounter() != null) {
-                permanent.setCounterCount(batch.enterWithCounter(), 1);
-            }
             UUID battlefieldControllerId = batch.underOwnersControl()
                     ? card.getOwnerId() != null ? card.getOwnerId() : graveyardOwnerId
                     : batch.eachPlayerChooses() ? graveyardOwnerId : batch.controllerId();
@@ -2422,6 +2448,12 @@ public class GraveyardReturnSupport {
             Permanent permanent = placement.preparedPermanent();
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, placement.controllerId(), permanent, enterTappedTypes, simultaneouslyEntered);
+            if (batch.enterWithCounter() != null && !gameQueryService.cantHaveCounters(gameData, permanent)) {
+                // Entry counters are set before any state-based action runs; a permanent that can't have
+                // counters (Tatterkite) enters without the additional counter.
+                permanent.setCounterCount(batch.enterWithCounter(),
+                        permanent.getCounterCount(batch.enterWithCounter()) + 1);
+            }
             // A card taken from another player's graveyard still belongs to that player (Ghouls' Night Out).
             UUID graveyardOwnerId = permanent.getEnteredFromGraveyardOwnerId();
             if (graveyardOwnerId != null && !graveyardOwnerId.equals(placement.controllerId())
@@ -2494,6 +2526,15 @@ public class GraveyardReturnSupport {
     }
 
     private record ReturnedPermanent(UUID controllerId, Permanent permanent, Card card) {}
+
+    /**
+     * The permanents of the same return-all batch that already entered. They enter simultaneously with the
+     * next one, so none of them may see it enter or apply their replacement effects to it (CR 614.12).
+     */
+    private static List<Permanent> enteredBatchMates(List<ReturnedPermanent> deferredEtbs) {
+        return deferredEtbs == null ? List.of()
+                : deferredEtbs.stream().map(ReturnedPermanent::permanent).toList();
+    }
 
     /**
      * Reanimates a targeted graveyard {@code card} under {@code controllerId}: removes it from
@@ -2672,7 +2713,8 @@ public class GraveyardReturnSupport {
         }
         permanent.setEnteredFromZone(Zone.GRAVEYARD);
         permanent.setEnteredFromGraveyardOwnerId(controllerId);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes,
+                enteredBatchMates(deferredEtbs));
         if (enterTapped) {
             permanent.tap();
         }
@@ -3834,7 +3876,7 @@ public class GraveyardReturnSupport {
      * pile for one card to put into their hand. The search is a {@code LibraryRevealChoice} marked
      * by {@link PendingPortalPileSearch}; {@code LibraryChoiceHandlerService} shuffles the pile's
      * leftovers back into the library once the pick lands. An empty chosen pile has nothing to
-     * search, so the effect simply finishes.
+     * search, but the library is still shuffled as the ability instructs.
      */
     private void completePortalPileSearch(GameData gameData, UUID controllerId, String controllerName,
                                           List<Card> allCards, List<UUID> chosenPileCardIds,
@@ -3853,6 +3895,7 @@ public class GraveyardReturnSupport {
         }
         if (chosenPile.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(controllerName + " has no cards to search."));
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             return;
         }
 
@@ -3861,7 +3904,7 @@ public class GraveyardReturnSupport {
                 controllerId, chosenPile, chosenPile.stream().map(Card::getId).toList(),
                 false, true, false, false, false, 0, null, 1,
                 "Search this pile for a card to put into your hand. "
-                        + "The rest of the pile is shuffled into your library."));
+                        + "The rest of the pile is shuffled into your library.", 1, false));
     }
 
     private String describePileSize(List<UUID> cardIds) {

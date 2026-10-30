@@ -1157,7 +1157,10 @@ public class LibrarySearchSupport {
                         .filter(card -> !existingCardIds.contains(card.getId()))
                         .forEach(cards::add);
                 if (cards.size() > params.cards().size()) {
-                    params = params.withCards(cards);
+                    Set<UUID> castOnlyCardIds = castableCards.stream().map(Card::getId)
+                            .filter(id -> !existingCardIds.contains(id))
+                            .collect(java.util.stream.Collectors.toSet());
+                    params = params.withCards(cards).withCastOnlyCardIds(castOnlyCardIds);
                     prompt += " You may also cast a card with a library-search permission.";
                 }
             }

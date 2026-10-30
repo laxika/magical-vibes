@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -25,7 +24,7 @@ public class PrimalAdversary extends Card {
         AnimatePermanentsEffect animateLands = new AnimatePermanentsEffect(
                 3, 3,
                 List.of(CardSubtype.WOLF), Set.of(Keyword.HASTE),
-                CardColor.GREEN, Set.of(), GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN
+                null, Set.of(), GrantScope.TARGET, EffectDuration.PERMANENT
         );
         targetUpTo(new XValue(), TargetFilters.landYouControl(), 100)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, animateLands);

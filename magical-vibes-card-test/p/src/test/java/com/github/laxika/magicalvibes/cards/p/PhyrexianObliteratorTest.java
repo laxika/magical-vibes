@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -259,9 +260,11 @@ class PhyrexianObliteratorTest extends BaseCardTest {
         secondElf.setBlocking(true);
         secondElf.addBlockingTarget(0);
 
-        resolveCombat();
-        harness.handleCombatDamageAssigned(player1, 0, Map.of(
-                firstElf.getId(), 1, secondElf.getId(), 1, player2.getId(), 3));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            resolveCombat();
+            harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                    firstElf.getId(), 1, secondElf.getId(), 1, player2.getId(), 3));
+        });
 
         assertThat(obliterator.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
         assertThat(gd.stack).hasSize(2);
@@ -289,7 +292,7 @@ class PhyrexianObliteratorTest extends BaseCardTest {
         obliterator.setBlocking(true);
         obliterator.addBlockingTarget(0);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         harness.assertInGraveyard(player2, "Phyrexian Obliterator");
         harness.assertOnBattlefield(player1, "Chancellor of the Tangle");

@@ -24,7 +24,7 @@ public class SteadfastArmasaur extends Card {
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
-                                new PermanentInCombatWithSourcePredicate()
+                                new PermanentInCombatWithSourcePredicate(true)
                         )),
                         "Target must be a creature blocking or blocked by this creature"
                 )

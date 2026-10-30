@@ -68,7 +68,7 @@ class SeraphOfTheSunsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Seraph of the Suns");
         harness.assertNotInGraveyard(player2, "Seraph of the Suns");
-        harness.assertInGraveyard(player1, "Never");
+        harness.assertInGraveyard(player1, "Never // Return");
     }
 
     @Test

@@ -149,6 +149,7 @@ class PrimordialMistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLUE, 8);
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new PrimordialMist(), new PrimordialMist(), new PrimordialMist()));
 
         harness.castFromExile(player1, cruise.getId());

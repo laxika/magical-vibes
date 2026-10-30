@@ -155,7 +155,7 @@ class PariahsShieldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handlePermanentChosen(player2, second.getId());
+        harness.handleListChoice(player2, "Watchwolf (2): deal the damage to it instead");
 
         harness.assertLife(player2, 20);
         assertThat(first.getMarkedDamage()).isZero();

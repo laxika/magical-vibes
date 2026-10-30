@@ -46,6 +46,11 @@ public class SacrificeTriggeringPermanentThenConjureDuplicateEffectHandler imple
         Card sourceCard = triggeringPermanent != null
                 ? triggeringPermanent.getCard() : entry.getTriggeringCardSnapshot();
         if (sourceCard == null) {
+            // The entering creature left the battlefield before the trigger resolved, so "it" is used by
+            // last known information (CR 608.2h); the card object is the snapshot available here.
+            sourceCard = gameQueryService.findCardById(gameData, entry.getTriggeringCardId());
+        }
+        if (sourceCard == null) {
             return;
         }
 

@@ -15,7 +15,9 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPutMilledLandsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -64,12 +66,38 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             // Nothing can be discarded, so there is no choice to offer and "if you do" can't happen.
             return;
         }
+        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect reveal
+                && gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).stream()
+                .noneMatch(card -> gameQueryService.cardHasSubtype(
+                        card, reveal.subtype(), gameData, entry.getControllerId()))) {
+            // No card of the subtype in hand to reveal, so no choice is offered and the ability does nothing.
+            return;
+        }
         if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.ReturnDelayedGraveyardCardUnderControlEffect delayedReturn
                 && delayedReturn.pending().requireSourceOnBattlefield()
                 && (delayedReturn.pending().sourcePermanentId() == null
                 || gameQueryService.findPermanentById(gameData, delayedReturn.pending().sourcePermanentId()) == null)) {
             // "If it is still on the battlefield" (Shirei) fails, so the return can't happen and there is nothing to decide.
             return;
+        }
+        if (e.wrapped() instanceof LookAtTopCardsOfTargetLibraryEffect look
+                && look.action() == TargetLibraryAction.MAY_PUT_TOP_ON_BOTTOM
+                && entry.getTargetId() != null
+                && gameData.playerDecks.getOrDefault(entry.getTargetId(), List.of()).isEmpty()) {
+            // The targeted library is empty, so there is no top card to look at and no choice is offered.
+            return;
+        }
+        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.ExchangeControlOfSourceAndTriggeringSpellEffect) {
+            // Both objects are already controlled by the same player, so the exchange does nothing and no choice is offered.
+            Permanent exchangeSource = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            StackEntry exchangeSpell = entry.getTriggeringCardId() == null ? null
+                    : gameQueryService.findStackEntryByCardId(gameData, entry.getTriggeringCardId());
+            if (exchangeSource != null && exchangeSpell != null
+                    && java.util.Objects.equals(
+                    gameQueryService.findPermanentController(gameData, exchangeSource.getId()),
+                    exchangeSpell.getControllerId())) {
+                return;
+            }
         }
         CardEffect leadingEffect = e.wrapped() instanceof SequenceEffect leadingSequence && !leadingSequence.steps().isEmpty()
                 ? leadingSequence.steps().getFirst() : e.wrapped();
@@ -234,12 +262,13 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         UUID discarderId = optionalAction instanceof DiscardEffect discard
                 ? switch (discard.recipient()) {
                     case CONTROLLER -> entry.getControllerId();
-                    case TARGET_PLAYER -> targetId;
+                    case TARGET_PLAYER -> !discard.random() && !entry.isNonTargeting() ? targetId : null;
                     default -> null;
                 }
                 : null;
         if (discarderId != null && gameData.playerHands.getOrDefault(discarderId, List.of()).isEmpty()) {
-            // Nothing can be discarded, so no discard choice is offered and "if you don't" applies.
+            // Nothing can be discarded, so no discard choice is offered and "if you don't" applies. A random
+            // discard, or a discard by "that player" from a nontargeting combat damage trigger, is still asked (CR 603.5).
             gameData.resolvingMayEffectFromStack = false;
             insertElseEffect(entry, e);
             return;
@@ -264,7 +293,13 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 && count.value() > 0
                 && (sacrifice.recipient() == com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.TARGET_PLAYER
                 || sacrifice.recipient() == com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.CONTROLLER)) {
-            cannotSacrifice = gameData.playerBattlefields.getOrDefault(choicePlayerId, List.of()).stream()
+            UUID sacrificingPlayerId = sacrifice.recipient()
+                    == com.github.laxika.magicalvibes.model.effect.SacrificeRecipient.TARGET_PLAYER && targetId != null
+                    ? targetId : choicePlayerId;
+            // The choice is only withheld when the deciding player is the one who would sacrifice; a
+            // controller choosing for a targeted opponent is asked whatever that opponent controls.
+            cannotSacrifice = choicePlayerId.equals(sacrificingPlayerId)
+                    && gameData.playerBattlefields.getOrDefault(sacrificingPlayerId, List.of()).stream()
                     .noneMatch(permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent, sacrifice.filter())
                             && (sacrifice.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
                             gameData, permanent, sacrifice.filter())));

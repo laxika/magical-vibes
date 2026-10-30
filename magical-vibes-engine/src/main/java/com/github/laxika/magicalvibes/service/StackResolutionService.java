@@ -1824,7 +1824,7 @@ public class StackResolutionService {
                 .anyMatch(ShuffleIntoLibraryEffect.class::isInstance)) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             List<Card> deck = gameData.playerDecks.get(ownerId);
-            if (!deck.contains(physicalCard)) {
+            if (deck.stream().noneMatch(libraryCard -> libraryCard.getId().equals(physicalCard.getId()))) {
                 deck.add(physicalCard);
                 triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, ownerId, 1);
                 LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);

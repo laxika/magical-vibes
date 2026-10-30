@@ -54,8 +54,11 @@ public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
         if (createThen.thenEffect() instanceof AttachCreatedEquipmentToTargetCreatureEffect
                 || createThen.thenEffect() instanceof ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect
                 || createThen.thenEffect() instanceof ReturnCardFromGraveyardEffect ret && ret.attachToSource()) {
-            queueTargetedReflexiveAbility(gameData, entry, createThen.thenEffect(),
-                    entry.getCreatedPermanentIds().get(createdBefore), false);
+            // A replacement effect that doubles the tokens makes "that token" refer to each created token in turn.
+            for (UUID createdId : List.copyOf(entry.getCreatedPermanentIds()
+                    .subList(createdBefore, entry.getCreatedPermanentIds().size()))) {
+                queueTargetedReflexiveAbility(gameData, entry, createThen.thenEffect(), createdId, false);
+            }
         } else {
             queueTargetedReflexiveAbility(gameData, entry, createThen.thenEffect());
         }

@@ -31,7 +31,7 @@ class SmugglersShareTest extends BaseCardTest {
                 List.of(new Forest(), new Forest()));
 
         advanceToEndStep(player1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
@@ -46,7 +46,7 @@ class SmugglersShareTest extends BaseCardTest {
                 List.of(new Forest()));
 
         advanceToEndStep(player1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
@@ -61,7 +61,7 @@ class SmugglersShareTest extends BaseCardTest {
         gd.permanentsEnteredBattlefieldThisTurn.put(player2.getId(), List.of(new Forest()));
 
         advanceToEndStep(player2);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
@@ -76,7 +76,7 @@ class SmugglersShareTest extends BaseCardTest {
                 List.of(new Forest(), new Forest(), new Forest()));
 
         advanceToEndStep(player2);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
@@ -94,7 +94,7 @@ class SmugglersShareTest extends BaseCardTest {
                 List.of(new Forest(), new GrizzlyBears(), new GrizzlyBears()));
 
         advanceToEndStep(player1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
@@ -113,7 +113,7 @@ class SmugglersShareTest extends BaseCardTest {
         gd.cardsDrawnThisTurn.put(player2.getId(), 2);
         gd.permanentsEnteredBattlefieldThisTurn.put(player2.getId(),
                 List.of(new Forest(), new Forest()));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
@@ -131,7 +131,7 @@ class SmugglersShareTest extends BaseCardTest {
         advanceToEndStep(player1);
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).clear();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);

@@ -90,9 +90,9 @@ class SwansOfBrynArgollTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Snakeform(), new Shock()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player1, 0, swans.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 0, swans.getId());
 
         harness.assertNotOnBattlefield(player2, "Swans of Bryn Argoll");

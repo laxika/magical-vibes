@@ -40,7 +40,9 @@ class PhantomBladeTest extends BaseCardTest {
     void entersWithoutChoosingEitherTarget() {
         Permanent ownCreature = addCreatureReady(player1);
         Permanent opponentCreature = addCreatureReady(player2);
-        castPhantomBlade();
+        harness.setHand(player1, List.of(new PhantomBlade()));
+        addManaForCast();
+        harness.castCreature(player1, 0);
 
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player1.getId());
@@ -80,7 +82,6 @@ class PhantomBladeTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1);
         Permanent blade = harness.enterBattlefieldAndReturn(player1, new PhantomBlade());
         harness.handlePermanentChosen(player1, creature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(blade.getAttachedTo()).isEqualTo(creature.getId());

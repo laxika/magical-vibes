@@ -879,17 +879,24 @@ public class TokenCopySupport {
             Card sourceCard = tokenPermanent.getCard();
             gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
         }
-        for (Permanent tokenPermanent : tokens) {
-            Card sourceCard = tokenPermanent.getCard();
-            battlefieldEntryService.handleCreatureEnteredBattlefield(
-                    gameData, tokenControllerId, sourceCard, null, false);
-            if (sourceCard.isSaga()) {
-                sagaChapterService.initializeSaga(gameData, tokenPermanent, sourceCard, tokenControllerId);
+        List<Permanent> enteredTokens = tokens;
+        Runnable entryNotifications = () -> {
+            for (Permanent tokenPermanent : enteredTokens) {
+                Card sourceCard = tokenPermanent.getCard();
+                battlefieldEntryService.handleCreatureEnteredBattlefield(
+                        gameData, tokenControllerId, sourceCard, null, false);
+                if (sourceCard.isSaga()) {
+                    sagaChapterService.initializeSaga(gameData, tokenPermanent, sourceCard, tokenControllerId);
+                }
             }
+            battlefieldEntryService.checkAllyTokenEntersTriggers(
+                    gameData, tokenControllerId, enteredTokens.stream().map(Permanent::getId).toList());
+        };
+        if (gameData.deferredTokenEntryNotifications != null) {
+            gameData.deferredTokenEntryNotifications.add(entryNotifications);
+        } else {
+            entryNotifications.run();
         }
-
-        battlefieldEntryService.checkAllyTokenEntersTriggers(
-                gameData, tokenControllerId, tokens.stream().map(Permanent::getId).toList());
         animateTokensThatAreNotCreatures(gameData, entry, tokens, tokenControllerId, effect);
         if (afterEntry != null) {
             afterEntry.accept(gameData, tokens);

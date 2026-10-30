@@ -1895,14 +1895,14 @@ public class PermanentChoiceTriggerHandlerService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent p : bf) {
-                if (exchange != null && exchange.requireOpponentPowerNotGreater()
+                if ((exchange != null && exchange.requireOpponentPowerNotGreater()
                         ? ownTarget != null && gameQueryService.isCreature(gameData, p)
                                 && gameQueryService.getEffectivePower(gameData, p)
                                 <= gameQueryService.getEffectivePower(gameData, ownTarget)
-                                && !validTargetService.isBlockedByHexproofOrGrantedEffect(
-                                        gameData, p, pmot.controllerId())
                         : !p.getCard().hasType(CardType.LAND)
-                                && p.getCard().getManaValue() <= ownManaValue) {
+                                && p.getCard().getManaValue() <= ownManaValue)
+                        && !validTargetService.isBlockedByHexproofOrGrantedEffect(
+                                gameData, p, pmot.controllerId())) {
                     validOpponentTargets.add(p.getId());
                 }
             }

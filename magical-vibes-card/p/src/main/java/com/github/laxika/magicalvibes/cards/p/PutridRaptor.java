@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class PutridRaptor extends Card {
 
     public PutridRaptor() {
-        addMorph("{4}{B}{B}", new DiscardCardTypeCost(
+        addMorph("{0}", new DiscardCardTypeCost(
                 new CardSubtypePredicate(CardSubtype.ZOMBIE), "Zombie"));
     }
 }

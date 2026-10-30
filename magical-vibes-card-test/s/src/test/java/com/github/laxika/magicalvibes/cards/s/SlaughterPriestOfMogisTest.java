@@ -71,8 +71,8 @@ class SlaughterPriestOfMogisTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         resolveAllTriggers();
 
-        assertThat(priest.getEffectivePower()).isEqualTo(5);
-        assertThat(priest.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, priest)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, priest)).isEqualTo(3);
         assertThat(priest.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }

@@ -78,7 +78,6 @@ class KaitoDancingShadowTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, attacker.getId());
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities();
         }
 
         harness.forceActivePlayer(player1);

@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class Pandemonium extends Card {
 
     public Pandemonium() {
-        addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ANY_CREATURE_ENTERS_BATTLEFIELD,
                 new MayEffect(DealDamageToAnyTargetEffect.fromEnteringPermanent(new SourcePower()),
                         "Have it deal damage to any target?", null,
                         MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));

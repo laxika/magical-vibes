@@ -64,9 +64,12 @@ class PainForAllTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        assertThatThrownBy(() -> harness.castEnchantment(
-                player1, 0, List.of(enchanted.getId(), enchanted.getId())))
-                .isInstanceOf(IllegalStateException.class);
+        harness.castEnchantment(player1, 0, List.of(enchanted.getId(), enchanted.getId()));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(enchanted.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

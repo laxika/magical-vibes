@@ -746,7 +746,7 @@ public class PredicateEvaluationService {
             }
             case CardHasHybridManaPredicate ignored -> {
                 ManaCost manaCost = card.getParsedManaCost();
-                yield manaCost != null && manaCost.hasHybridMana();
+                yield manaCost != null && manaCost.hasAnyHybridMana();
             }
             case CardDoesNotShareColorWithSourceControlledCreaturePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
@@ -2656,14 +2656,10 @@ public class PredicateEvaluationService {
                         || gameData.turnsTakenByPlayer.getOrDefault(sourceControllerId, 0) < 2) {
                     yield false;
                 }
-                UUID currentCardId = permanent.getCard().getId();
-                UUID originalCardId = permanent.getOriginalCard().getId();
-                yield Stream.concat(
-                                gameData.permanentsEnteredBattlefieldThisTurn.values().stream(),
-                                gameData.permanentsEnteredBattlefieldLastTurn.values().stream())
-                        .flatMap(List::stream)
-                        .anyMatch(card -> card.getId().equals(currentCardId)
-                                 || card.getId().equals(originalCardId));
+                Set<UUID> enteredSinceLastTurnEnded = gameData.permanentsEnteredSincePlayerLastTurnEnded
+                        .getOrDefault(sourceControllerId, Set.of());
+                yield enteredSinceLastTurnEnded.contains(permanent.getCard().getId())
+                        || enteredSinceLastTurnEnded.contains(permanent.getOriginalCard().getId());
             }
             case PermanentFoughtThisTurnPredicate ignored ->
                     gameData != null
@@ -2901,12 +2897,16 @@ public class PredicateEvaluationService {
                                 .getOrDefault(sourcePermanentId, java.util.Set.of())
                                 .contains(permanent.getId());
             }
-            case PermanentInCombatWithSourcePredicate ignored -> {
+            case PermanentInCombatWithSourcePredicate combatWithSource -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
                 }
                 Permanent sourcePermanent = findPermanentByOriginalCardId(gameData, sourceCardId);
                 boolean sourceLeftBattlefield = sourcePermanent == null;
+                if (sourceLeftBattlefield && filterContext != null && filterContext.activatedAbilitySource()
+                        && !combatWithSource.lastKnownCombatForActivatedAbility()) {
+                    yield false;
+                }
                 if (sourcePermanent == null && filterContext != null) {
                     sourcePermanent = filterContext.sourcePermanentSnapshot();
                 }

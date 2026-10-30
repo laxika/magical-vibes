@@ -97,6 +97,7 @@ import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOrMoreOfYo
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksOneOfYourOpponentsWithPowerOrToughnessEqualToSourceChosenNumber;
 import com.github.laxika.magicalvibes.model.condition.PlayerAttacksNotController;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
+import com.github.laxika.magicalvibes.model.condition.SourceClassLevelAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
@@ -2293,6 +2294,12 @@ public class CombatAttackService {
                             continue;
                         }
                         matchingEffects.add(conditional.wrapped());
+                    } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.condition() instanceof SourceClassLevelAtLeast) {
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(), targetContext)) {
+                            continue;
+                        }
+                        matchingEffects.add(effect);
                     } else {
                         matchingEffects.add(effect);
                     }
@@ -2686,7 +2693,7 @@ public class CombatAttackService {
                         innerEffect = ce.wrapped();
                     }
 
-                    gameData.stack.add(new StackEntry(
+                    StackEntry attackTrigger = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
                             playerId,
@@ -2699,7 +2706,11 @@ public class CombatAttackService {
                             null,
                             null,
                             null
-                    ));
+                    );
+                    // CR 400.7: a card that leaves and re-enters the graveyard before this trigger resolves is a
+                    // new object, so the trigger must not act on it.
+                    attackTrigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                    gameData.stack.add(attackTrigger);
                     gameLogService.append(gameData,
                             GameLog.builder().card(card).text("'s graveyard attack ability triggers.").build());
                     log.info("Game {} - {} GRAVEYARD_ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
@@ -2752,13 +2763,18 @@ public class CombatAttackService {
             UUID attackedTargetId = resolvedTargets.get(idx);
             Permanent attackedBattle = gameData.playerIds.contains(attackedTargetId)
                     ? null : gameQueryService.findPermanentById(gameData, attackedTargetId);
-            if (attackedBattle != null && gameQueryService.isBattle(gameData, attackedBattle)) continue;
+            boolean battleAttacked = attackedBattle != null && gameQueryService.isBattle(gameData, attackedBattle);
+            // CR 310.9d: for an attacked battle, "defending player" refers to its protector.
             UUID attackedPlayerId = gameData.playerIds.contains(attackedTargetId)
                     ? attackedTargetId
+                    : battleAttacked
+                    ? attackedBattle.getProtectorPlayerId()
                     : gameQueryService.findPermanentController(gameData, attackedTargetId);
             if (attackedPlayerId == null) continue;
-            triggerCollectionService.checkTemporaryGlobalCreatureAttacksYouTriggers(
-                    gameData, attacker, attackedPlayerId, attackedTargetId);
+            if (!battleAttacked) {
+                triggerCollectionService.checkTemporaryGlobalCreatureAttacksYouTriggers(
+                        gameData, attacker, attackedPlayerId, attackedTargetId);
+            }
             List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
@@ -2767,8 +2783,12 @@ public class CombatAttackService {
                     continue;
                 }
                 List<CardEffect> attackedTriggerEffects = new ArrayList<>();
-                List<CardEffect> candidateEffects = new ArrayList<>(
-                        perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_YOU));
+                List<CardEffect> candidateEffects = new ArrayList<>();
+                if (!battleAttacked) {
+                    candidateEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_YOU));
+                }
+                candidateEffects.addAll(
+                        perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_DEFENDING_PLAYER));
                 if (gameData.playerIds.contains(attackedTargetId)) {
                     candidateEffects.addAll(
                             perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_YOU_DIRECTLY));
@@ -2797,7 +2817,8 @@ public class CombatAttackService {
                     List<List<CardEffect>> abilities = new ArrayList<>();
                     List<CardEffect> bundledEffects = new ArrayList<>(attackedTriggerEffects);
                     for (EffectSlot triggerSlot : List.of(EffectSlot.ON_CREATURE_ATTACKS_YOU,
-                            EffectSlot.ON_CREATURE_ATTACKS_YOU_DIRECTLY)) {
+                            EffectSlot.ON_CREATURE_ATTACKS_YOU_DIRECTLY,
+                            EffectSlot.ON_CREATURE_ATTACKS_DEFENDING_PLAYER)) {
                         for (var registration : perm.getCard().getEffectRegistrations(triggerSlot)) {
                             if (registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT
                                     && bundledEffects.remove(registration.effect())) {

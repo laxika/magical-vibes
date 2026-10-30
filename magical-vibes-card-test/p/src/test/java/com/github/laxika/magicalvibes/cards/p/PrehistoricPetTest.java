@@ -7,13 +7,19 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -200,11 +206,10 @@ class PrehistoricPetTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.activateAbility(player1, 0, 0, null, target.getId());
 
-        gd.playerBattlefields.get(player1.getId()).remove(target);
-        gd.playerBattlefields.get(player2.getId()).add(target);
-        gd.stolenCreatures.put(target.getId(), player1.getId());
+        giveControl(target, player2.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.findControllerOf(target)).isEqualTo(player2.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
         harness.assertNotInHand(player1, "Prehistoric Pet");
         harness.assertNotInHand(player2, "Prehistoric Pet");
@@ -215,10 +220,11 @@ class PrehistoricPetTest extends BaseCardTest {
     @DisplayName("Returns a creature you control to its owner rather than its controller")
     void returnsBorrowedCreatureToOwnersHand() {
         addCreatureReady(player1, new PrehistoricPet());
-        Permanent borrowed = addCreatureReady(player2, new PrehistoricPet());
-        gd.playerBattlefields.get(player2.getId()).remove(borrowed);
-        gd.playerBattlefields.get(player1.getId()).add(borrowed);
+        PrehistoricPet ownedByPlayer2 = new PrehistoricPet();
+        ownedByPlayer2.setOwnerId(player2.getId());
+        Permanent borrowed = harness.addToBattlefieldAndReturn(player2, ownedByPlayer2);
         gd.stolenCreatures.put(borrowed.getId(), player2.getId());
+        giveControl(borrowed, player1.getId());
         prepareMainPhase(player1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -233,6 +239,13 @@ class PrehistoricPetTest extends BaseCardTest {
     private void declareAttackAndPrepareBlockers(Permanent attacker) {
         attacker.setAttacking(true);
         prepareDeclareBlockers(player1);
+    }
+
+    private void giveControl(Permanent permanent, UUID controllerId) {
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, controllerId, permanent,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, "Test setup"));
     }
 
     private void prepareMainPhase(Player activePlayer) {

@@ -104,7 +104,16 @@ public class MultiPermanentChoiceHandlerService {
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.ForcedCostOrElseEffectHandler forcedCostOrElseEffectHandler;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.mayfx
+            .AnyPlayerMaySacrificeCreaturesThenSacrificeSourceHandler
+            anyPlayerMaySacrificeCreaturesThenSacrificeSourceHandler;
+
     private final InputCompletionService inputCompletionService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.combat.CombatDamageService combatDamageService;
     private final com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService waterbendPaymentService;
     private final MayCastHandlerService mayCastHandlerService;
     private final GameQueryService gameQueryService;
@@ -402,6 +411,10 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice
                 && permanentIds.size() != maxCount) {
             throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to sacrifice");
+        }
+        if (context instanceof MultiPermanentChoiceContext.AnyPlayerSacrificeCreaturesChoice
+                && permanentIds.size() != maxCount) {
+            throw new IllegalStateException("Must choose exactly " + maxCount + " creatures to sacrifice");
         }
         if (context instanceof MultiPermanentChoiceContext.ExileForEachLifeLost
                 && permanentIds.size() != maxCount) {
@@ -1109,6 +1122,8 @@ public class MultiPermanentChoiceHandlerService {
             }
         } else if (context instanceof MultiPermanentChoiceContext.TapOtherCreaturesForUnblockable ctx) {
             handleTapOtherCreaturesForUnblockable(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.AnyPlayerSacrificeCreaturesChoice ctx) {
+            completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext
                 .ChooseUpToNMatchingCreaturesThenMayExileRest ctx) {
             chooseUpToNMatchingCreaturesThenMayExileRestEffectHandler.completeChoice(
@@ -2313,6 +2328,10 @@ public class MultiPermanentChoiceHandlerService {
                 handleForcedSacrifice(gameData, permanentIds, ctx);
                 return;
             }
+            case MultiPermanentChoiceContext.AnyPlayerSacrificeCreaturesChoice ctx -> {
+                anyPlayerMaySacrificeCreaturesThenSacrificeSourceHandler.completeChoice(gameData, ctx, permanentIds);
+                return;
+            }
             case MultiPermanentChoiceContext.EachPlayerSacrificesCreature ctx ->
                     eachPlayerSacrificesCreatureHandler.completeChoice(gameData, permanentIds, ctx);
             case MultiPermanentChoiceContext.EachPlayerSacrificesCreatureCreateTokenEqualToTotalPower ctx ->
@@ -2875,7 +2894,8 @@ public class MultiPermanentChoiceHandlerService {
             MultiPermanentChoiceContext.SacrificeCreaturesWithTotalPowerOrSacrificeSource context) {
         if (permanentIds.isEmpty()) {
             Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
-            if (source != null) {
+            // CR 701.21a: a permanent its controller no longer controls can't be sacrificed by this player.
+            if (source != null && playerId.equals(gameQueryService.findPermanentController(gameData, source.getId()))) {
                 destructionSupport.sacrificeAndLog(gameData, source, playerId);
             }
         } else {
@@ -3332,6 +3352,15 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
+        // Proliferatelink proliferating happens before combat damage is checked for lethality: the parked
+        // combat damage step carries on once every such proliferate is done.
+        if (combatDamageService.isParkedForProliferateLinks(gameData)) {
+            if (!combatDamageService.continueAfterProliferateLink(gameData)) {
+                turnProgressionService.handleCombatResult(combatDamageService.resolveCombatDamage(gameData), gameData);
+            }
+            return;
+        }
+
         // All proliferates done — now check SBA
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
@@ -3374,7 +3403,8 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
         if (totalPlaced > 0) {
-            if (!entry.getCounteredPermanentIdsThisResolution().contains(permanent.getId())) {
+            // Proliferatelink proliferates outside any resolving ability, so there is no entry to note it on.
+            if (entry != null && !entry.getCounteredPermanentIdsThisResolution().contains(permanent.getId())) {
                 entry.getCounteredPermanentIdsThisResolution().add(permanent.getId());
             }
             triggerCollectionService.checkYouPutCountersTriggers(gameData, playerId, totalPlaced);

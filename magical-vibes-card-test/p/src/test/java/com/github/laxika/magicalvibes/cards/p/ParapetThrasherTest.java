@@ -144,6 +144,7 @@ class ParapetThrasherTest extends BaseCardTest {
     void modeBecomesAvailableNextTurn() {
         addCreatureReady(player1, new ParapetThrasher());
         harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         declareAttackers(List.of(0));
         chooseMode(DAMAGE);
         resolveAllTriggers();

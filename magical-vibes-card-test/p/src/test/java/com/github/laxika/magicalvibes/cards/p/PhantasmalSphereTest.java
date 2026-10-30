@@ -95,6 +95,7 @@ class PhantasmalSphereTest extends BaseCardTest {
 
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().removePermanentToHand(gd, sphere));
+        queueLeaveTriggerTarget();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
@@ -115,6 +116,7 @@ class PhantasmalSphereTest extends BaseCardTest {
 
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().removePermanentToExile(gd, sphere));
+        queueLeaveTriggerTarget();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(player1.getId());
         harness.handlePermanentChosen(player2, player1.getId());
@@ -134,12 +136,18 @@ class PhantasmalSphereTest extends BaseCardTest {
 
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().removePermanentToHand(gd, sphere));
+        queueLeaveTriggerTarget();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Phantasmal Sphere");
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.gameLog).anySatisfy(log ->
-                assertThat(log.plainText()).contains("0/0 blue Orb creature token enters the battlefield"));
+                assertThat(log.plainText()).contains("0/0 Blue Orb creature token enters the battlefield"));
+    }
+
+    private void queueLeaveTriggerTarget() {
+        harness.inMutationScope(() ->
+                harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd));
     }
 }

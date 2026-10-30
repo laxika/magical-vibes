@@ -522,6 +522,10 @@ public class SpellCastTriggerCollectorService {
             CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect trigger,
             TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        // A spell that can't be countered (Surrak, Elusive Hunter) is never offered the payment to avoid it.
+        if (gameQueryService.isUncounterable(match.gameData(), sc.spellCard())) {
+            return false;
+        }
         CounterUnlessPaysEffect counterUnlessPays = new CounterUnlessPaysEffect(
                 new CardsInGraveyard(new CardNamedPredicate(sc.spellCard().getName()), CountScope.ANY_PLAYER));
         StackEntry entry = new StackEntry(
@@ -3053,6 +3057,14 @@ public class SpellCastTriggerCollectorService {
      * The spell as it exists on the stack: an {@code {X}} in its mana cost is the chosen X value (CR 202.3e),
      * so a mana value filter sees the real total. Returns the card itself when there is no chosen X.
      */
+    private static Card adventureHalfOnStack(StackEntry spellEntry, Card spellCard) {
+        if (spellEntry == null || !(spellEntry.isCastWithAdventure() || spellEntry.isCastWithOmen())) {
+            return spellCard;
+        }
+        Card physical = spellEntry.getPhysicalCard() != null ? spellEntry.getPhysicalCard() : spellCard;
+        return physical.getBackFaceCard() != null ? physical.getBackFaceCard() : spellCard;
+    }
+
     static Card spellOnStackWithChosenX(Card spellCard, Integer chosenX) {
         String manaCost = spellCard.getManaCost();
         if (chosenX == null || manaCost == null || !manaCost.contains("{X}")) {
@@ -3139,10 +3151,13 @@ public class SpellCastTriggerCollectorService {
 
         StackEntry triggeringSpell = findStackEntryForCard(match.gameData(), spellCard.getId());
         Integer spellXValue = triggeringSpell == null ? null : triggeringSpell.getXValue();
+        // A spell cast as an Adventure has only the adventure half's characteristics while on the stack
+        // (CR 715.3b), so its colors, types and mana cost are read from that half.
+        Card spellFace = adventureHalfOnStack(triggeringSpell, spellCard);
         // A spell keeps the {X} in its mana cost on the stack (CR 107.3), so a filter asking for it
         // reads the printed cost rather than the cost with the chosen X substituted.
         Card evaluatedSpell = mentionsXInManaCost(trigger.spellFilter())
-                ? spellCard : spellOnStackWithChosenX(spellCard, spellXValue);
+                ? spellFace : spellOnStackWithChosenX(spellFace, spellXValue);
         if (!predicateEvaluationService.matchesCardPredicate(evaluatedSpell,
                 trigger.spellFilter(), sourceOriginalCardId,
                 match.gameData(), castingPlayerId, null, null, spellXValue)) return false;

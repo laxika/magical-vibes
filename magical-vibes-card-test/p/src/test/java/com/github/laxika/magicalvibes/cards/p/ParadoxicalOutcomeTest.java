@@ -13,12 +13,18 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -100,6 +106,7 @@ class ParadoxicalOutcomeTest extends BaseCardTest {
     void drawsOnlyForCardsReturnedToCastersHand() {
         Permanent stolen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         gd.stolenCreatures.put(stolen.getId(), player2.getId());
+        giveControl(stolen, player1.getId());
         Permanent owned = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new ParadoxicalOutcome()));
         harness.setLibrary(player1, List.of(new Forest(), new Island()));
@@ -118,6 +125,7 @@ class ParadoxicalOutcomeTest extends BaseCardTest {
     void returningOnlyAnOpponentsCardDrawsNothing() {
         Permanent stolen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         gd.stolenCreatures.put(stolen.getId(), player2.getId());
+        giveControl(stolen, player1.getId());
         harness.setHand(player1, List.of(new ParadoxicalOutcome()));
         harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.BLUE, 4);
@@ -171,9 +179,8 @@ class ParadoxicalOutcomeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castInstant(player1, 0, List.of(creature.getId(), artifact.getId()));
-        gd.playerBattlefields.get(player1.getId()).remove(creature);
-        gd.playerBattlefields.get(player2.getId()).add(creature);
         gd.stolenCreatures.put(creature.getId(), player1.getId());
+        giveControl(creature, player2.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -190,14 +197,20 @@ class ParadoxicalOutcomeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castInstant(player1, 0, List.of(creature.getId()));
-        gd.playerBattlefields.get(player1.getId()).remove(creature);
-        gd.playerBattlefields.get(player2.getId()).add(creature);
         gd.stolenCreatures.put(creature.getId(), player1.getId());
+        giveControl(creature, player2.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Paradoxical Outcome");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    private void giveControl(Permanent permanent, UUID controllerId) {
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CreatureControlService.class)
+                .applyControlEffect(gd, controllerId, permanent,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, "Test setup"));
     }
 }

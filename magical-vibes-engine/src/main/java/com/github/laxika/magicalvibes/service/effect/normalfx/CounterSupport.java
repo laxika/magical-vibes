@@ -415,7 +415,7 @@ public class CounterSupport {
             return false;
         }
 
-        if (!controlsCounterExileReplacement(gameData, counterControllerId)) {
+        if (!gameQueryService.controlsCounterExileReplacement(gameData, counterControllerId)) {
             return false;
         }
 
@@ -441,24 +441,6 @@ public class CounterSupport {
         gameData.playerDecks.get(target.getOwnerId()).add(target.getPhysicalCard());
         triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, target.getOwnerId(), 1);
         return true;
-    }
-
-    private boolean controlsCounterExileReplacement(GameData gameData, UUID controllerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return false;
-        }
-        for (Permanent permanent : battlefield) {
-            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
-                continue;
-            }
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof ReplaceControlledCounterWithExileAndPlayEffect) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /**

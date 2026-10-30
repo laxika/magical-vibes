@@ -47,6 +47,13 @@ public class GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffec
             return;
         }
 
+        if (counters.countedOnEntry()) {
+            gameData.spellAdditionalEnterCounterAmounts
+                    .computeIfAbsent(spellCardId, id -> new java.util.concurrent.CopyOnWriteArrayList<>())
+                    .add(new GameData.EnterCounterAmount(counters.amount(), entry.getControllerId()));
+            return;
+        }
+
         Permanent source = entry.getSourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());

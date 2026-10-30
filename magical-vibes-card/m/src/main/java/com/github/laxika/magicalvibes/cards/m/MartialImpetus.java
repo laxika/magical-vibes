@@ -23,6 +23,9 @@ import java.util.List;
 public class MartialImpetus extends Card {
 
     public MartialImpetus() {
+        // "Whenever enchanted creature attacks" is the Aura's own ability, controlled by the Aura's controller.
+        setAttackTriggerOwnedByAura(true);
+
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.STATIC, new GoadEquippedCreatureEffect());

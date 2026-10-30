@@ -72,7 +72,7 @@ class PhotonMightyMarvelTest extends BaseCardTest {
         photon.setPowerModifier(3);
         photon.setAttacking(true);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         assertThat(gd.stack).hasSize(1);
         harness.assertLife(player2, 15);
         gd.playerBattlefields.get(player1.getId()).remove(photon);

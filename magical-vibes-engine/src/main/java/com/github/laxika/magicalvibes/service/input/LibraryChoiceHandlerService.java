@@ -299,15 +299,23 @@ public class LibraryChoiceHandlerService {
                 && (targetPlayerId == null || targetPlayerId.equals(playerId))
                 && sourceCards == null
                 && librarySearch.decisionPlayerId() == null
+                && (librarySearch.castOnlyCardIds().contains(searchCards.get(cardIndex).getId())
+                // Library ninjutsu is an activated ability, not a cast: it is on offer for a card the search
+                // would find anyway, which is the point of activating it while searching.
+                || librarySearchSupport.libraryNinjutsuEffect(searchCards.get(cardIndex)) != null)
                 && librarySearchSupport.isLibrarySearchCastableCard(searchCards.get(cardIndex))) {
             Card selectedCard = searchCards.get(cardIndex);
             LibraryNinjutsuEffect libraryNinjutsu = librarySearchSupport.libraryNinjutsuEffect(selectedCard);
-            if (libraryNinjutsu != null) {
-                handleLibraryNinjutsu(gameData, player, activeSearch, selectedCard, libraryNinjutsu);
-            } else {
+            if (libraryNinjutsu == null) {
                 handleLibrarySearchCast(gameData, player, activeSearch, selectedCard);
+                return;
             }
-            return;
+            // Library ninjutsu can only be activated with an unblocked attacker to shuffle; without one
+            // the found card is simply taken as a plain search result.
+            if (!unblockedAttackerIds(gameData, playerId).isEmpty()) {
+                handleLibraryNinjutsu(gameData, player, activeSearch, selectedCard, libraryNinjutsu);
+                return;
+            }
         }
 
         if (cardIndex >= 0
@@ -1051,6 +1059,10 @@ public class LibraryChoiceHandlerService {
                         + " puts the unchosen cards on the bottom of their library in a random order."));
                 finishSearchAndResume(gameData);
                 return;
+            }
+            // Cards found under Opposition Agent were exiled as they were found, not accumulated for the destination.
+            if (librarySearch.decisionPlayerId() != null && !librarySearch.decisionPlayerId().equals(playerId)) {
+                accumulatedCards.clear();
             }
             // CR 608.2f: Place any accumulated battlefield cards before finishing
             if (!accumulatedCards.isEmpty() && toBattlefield) {
@@ -2437,11 +2449,7 @@ public class LibraryChoiceHandlerService {
                                        PendingInteraction.LibrarySearch activeSearch, Card card,
                                        LibraryNinjutsuEffect libraryNinjutsu) {
         UUID playerId = player.getId();
-        List<UUID> attackers = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, permanent, new PermanentIsUnblockedAttackingPredicate()))
-                .map(Permanent::getId)
-                .toList();
+        List<UUID> attackers = unblockedAttackerIds(gameData, playerId);
         if (attackers.isEmpty()) {
             throw new IllegalStateException("Library ninjutsu requires an unblocked attacker you control");
         }
@@ -2454,9 +2462,22 @@ public class LibraryChoiceHandlerService {
                 "Choose an unblocked attacker to shuffle into your library for library ninjutsu.");
     }
 
+    private List<UUID> unblockedAttackerIds(GameData gameData, UUID playerId) {
+        return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, new PermanentIsUnblockedAttackingPredicate()))
+                .map(Permanent::getId)
+                .toList();
+    }
+
     /** Completes the attacker choice made after a library-ninjutsu card was selected. */
     public void completeLibraryNinjutsuChoice(GameData gameData, Player player, UUID attackerId,
                                               PermanentChoiceContext.LibraryNinjutsu choice) {
+        Card shuffledAttacker = gameData.playerBattlefields.getOrDefault(player.getId(), List.of()).stream()
+                .filter(permanent -> permanent.getId().equals(attackerId))
+                .map(Permanent::getOriginalCard)
+                .findFirst()
+                .orElse(null);
         try {
             abilityActivationService.activateLibraryNinjutsu(
                     gameData, player, choice.card(), choice.manaCost(), attackerId);
@@ -2474,7 +2495,39 @@ public class LibraryChoiceHandlerService {
             throw exception;
         }
 
-        continueLibrarySearchAfterLibraryAction(gameData, player, choice.search(), choice.card());
+        continueLibrarySearchAfterLibraryAction(gameData, player,
+                withShuffledAttacker(gameData, player, choice.search(), shuffledAttacker), choice.card());
+    }
+
+    /**
+     * The attacker shuffled into the library as library ninjutsu's cost is a card in the library the search is
+     * still looking through, so a search it matches can find it.
+     */
+    private PendingInteraction.LibrarySearch withShuffledAttacker(GameData gameData, Player player,
+                                                                   PendingInteraction.LibrarySearch search,
+                                                                   Card shuffledAttacker) {
+        LibrarySearchParams params = search.params();
+        UUID deckOwnerId = params.targetPlayerId() != null ? params.targetPlayerId() : player.getId();
+        if (shuffledAttacker == null || params.sourceCards() != null
+                || params.cards().stream().anyMatch(card -> card.getId().equals(shuffledAttacker.getId()))) {
+            return search;
+        }
+        Card inLibrary = gameData.playerDecks.getOrDefault(deckOwnerId, List.of()).stream()
+                .filter(card -> card.getId().equals(shuffledAttacker.getId()))
+                .findFirst()
+                .orElse(null);
+        if (inLibrary == null
+                || params.filterCardTypes() != null && !params.filterCardTypes().isEmpty()
+                && !com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport.matchesCardTypes(inLibrary, params.filterCardTypes())
+                || params.filterCardName() != null && !params.filterCardName().equals(inLibrary.getName())
+                || params.filterPredicate() != null && !predicateEvaluationService.matchesCardPredicate(
+                inLibrary, params.filterPredicate(), null, gameData, deckOwnerId)) {
+            return search;
+        }
+        List<Card> cards = new ArrayList<>(params.cards());
+        cards.add(inLibrary);
+        return new PendingInteraction.LibrarySearch(params.withCards(cards),
+                search.messagePrompt(), search.messageCanFailToFind());
     }
 
     private void continueLibrarySearchAfterLibraryAction(GameData gameData, Player player,
@@ -4757,9 +4810,10 @@ public class LibraryChoiceHandlerService {
     }
 
     /**
-     * Phyrexian Portal: the controller has searched the pile they kept. The selected card (searching
-     * may fail to find, CR 701.23b) goes to their hand and every other card of the pile goes back
-     * into their library, which is then shuffled.
+     * Phyrexian Portal: the controller has searched the pile they kept. The selected card goes to their
+     * hand and every other card of the pile goes back into their library, which is then shuffled. The
+     * search names no quality (CR 701.23b does not apply), so one card must be found from a nonempty
+     * pile. The searched card is not named in the log, since the library is hidden.
      */
     private void handlePortalPileSearch(GameData gameData, List<Card> pileCards,
                                         List<UUID> selectedCardIds, UUID controllerId) {
@@ -4771,8 +4825,7 @@ public class LibraryChoiceHandlerService {
         for (Card card : pileCards) {
             if (chosenIds.contains(card.getId())) {
                 gameData.addCardToHand(controllerId, card);
-                gameLogService.append(gameData,
-                        GameLog.textCardText(playerName + " puts ", card, " into their hand."));
+                gameLogService.append(gameData, GameLog.text(playerName + " puts a card into their hand."));
             } else {
                 deck.add(card);
             }

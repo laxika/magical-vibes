@@ -31,7 +31,7 @@ public class ResoundingSilence extends Card {
                 null,
                 List.of(),
                 0,
-                2).withCyclingTriggerTargets());
+                2).withCyclingTriggerUpToTargets());
         addEffect(EffectSlot.ON_SELF_CYCLED, new ExileTargetPermanentEffect());
     }
 }

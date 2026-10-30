@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -19,12 +20,12 @@ public class PucasCovenant extends Card {
     public PucasCovenant() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentHasCountersPredicate(CounterType.ANY),
-                new OncePerTurnTriggerEffect(ReturnCardFromGraveyardEffect.builder()
+                OncePerTurnTriggerEffect.markOnAcceptance(new MayEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardIsPermanentPredicate())
                         .targetGraveyard(true)
                         .upTo(true)
                         .dynamicMaxManaValue(new TotalCountersOnSource())
-                        .build())));
+                        .build(), "Return that card to your hand?"))));
     }
 }

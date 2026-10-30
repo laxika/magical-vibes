@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -30,8 +32,9 @@ public class PyrewildShaman extends Card {
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(
                         null,
-                        new MayPayManaEffect("{3}", new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                                "Pay {3} to return Pyrewild Shaman from your graveyard to your hand?"),
+                        new ConditionalEffect(new SourceCardInGraveyard(),
+                                new MayPayManaEffect("{3}", new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
+                                        "Pay {3} to return Pyrewild Shaman from your graveyard to your hand?")),
                         false,
                         true));
     }

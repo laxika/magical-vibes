@@ -70,7 +70,10 @@ class PostmortemLungeTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
 
         // Creature should be marked for exile at end step
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).contains(new DelayedPermanentAction(creature.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).anySatisfy(action -> {
+            assertThat(action.permanentId()).isEqualTo(creature.getId());
+            assertThat(action.kind()).isEqualTo(DelayedPermanentActionKind.EXILE_AT_END_STEP);
+        });
     }
 
     @Test

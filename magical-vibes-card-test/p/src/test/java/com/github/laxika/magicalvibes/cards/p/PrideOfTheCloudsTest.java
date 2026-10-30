@@ -107,9 +107,9 @@ class PrideOfTheCloudsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateHandAbility(player1, 0, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.passBothPriorities());
         harness.activateHandAbility(player1, 1, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.passBothPriorities());
 
         assertThat(countPermanents(player1, "Bird")).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -139,7 +139,7 @@ class PrideOfTheCloudsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.activateHandAbility(player1, 0, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.passBothPriorities());
 
         harness.clearMessages();
         harness.publishState();

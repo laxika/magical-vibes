@@ -39,8 +39,8 @@ class PrimaryResearchTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(bears));
         castAndResolveSpell();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.stack).hasSize(1);
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -52,12 +52,13 @@ class PrimaryResearchTest extends BaseCardTest {
     @Test
     @DisplayName("Returns a nonland permanent card with mana value 3 or less to the battlefield")
     void reanimatesLowManaValuePermanent() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears())); // 2/2 creature, MV 2
+        GrizzlyBears bears = new GrizzlyBears(); // 2/2 creature, MV 2
+        harness.setGraveyard(player1, List.of(bears));
         castAndResolveSpell();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -70,7 +71,7 @@ class PrimaryResearchTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new AvatarOfMight())); // MV 8
         castAndResolveSpell();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Avatar of Might");
     }
 
@@ -80,18 +81,19 @@ class PrimaryResearchTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new Forest()));
         castAndResolveSpell();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Forest");
     }
 
     @Test
     @DisplayName("Reanimating a card triggers the end-step draw (a card left your graveyard)")
     void reanimationTriggersEndStepDraw() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
         harness.setLibrary(player1, List.of(new Forest()));
         castAndResolveSpell();
 
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities(); // Grizzly Bears leaves the graveyard
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -124,10 +126,11 @@ class PrimaryResearchTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot choose a high-mana-value card even when it sits in the graveyard alongside a legal one")
     void onlyLowManaValueCardsAreValidChoices() {
-        harness.setGraveyard(player1, List.of(new AvatarOfMight(), new GrizzlyBears()));
+        AvatarOfMight avatar = new AvatarOfMight();
+        harness.setGraveyard(player1, List.of(avatar, new GrizzlyBears()));
         castAndResolveSpell();
-        // Index 0 is Avatar of Might (MV 8) — not a valid choice
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
+        // Avatar of Might (MV 8) is not a valid choice
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(avatar.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -138,17 +141,18 @@ class PrimaryResearchTest extends BaseCardTest {
         castAndResolveSpell();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Holy Day");
     }
 
     @Test
     @DisplayName("A noncreature permanent at mana value three can be returned")
     void reanimatesArtifactAtManaValueLimit() {
-        harness.setGraveyard(player1, List.of(new LoxodonWarhammer()));
+        LoxodonWarhammer warhammer = new LoxodonWarhammer();
+        harness.setGraveyard(player1, List.of(warhammer));
         castAndResolveSpell();
 
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(warhammer.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Loxodon Warhammer");
@@ -158,13 +162,14 @@ class PrimaryResearchTest extends BaseCardTest {
     @Test
     @DisplayName("A legal graveyard target must be chosen rather than declining the return")
     void cannotDeclineMandatoryTarget() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
         castAndResolveSpell();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -177,25 +182,27 @@ class PrimaryResearchTest extends BaseCardTest {
         castAndResolveSpell();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
     @DisplayName("Reanimation does not draw a card during an opponent's end step")
     void noDrawOnOpponentsEndStep() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
         harness.setLibrary(player1, List.of(new Forest()));
         castAndResolveSpell();
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }

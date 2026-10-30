@@ -120,9 +120,8 @@ class PyrewildShamanTest extends BaseCardTest {
         Card shaman = putShamanInGraveyard();
         addReadyAttacker();
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage(); // graveyard trigger goes on the stack, unresolved
         assertThat(gd.stack).hasSize(1);
 
         harness.setGraveyard(player1, List.of());

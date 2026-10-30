@@ -27,8 +27,8 @@ class VeteranIceClimberTest extends BaseCardTest {
 
         declareAttackers(List.of(indexOf(player1, veteran)));
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
@@ -43,7 +43,7 @@ class VeteranIceClimberTest extends BaseCardTest {
 
         declareAttackers(List.of(indexOf(player1, veteran)));
 
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
@@ -73,7 +73,7 @@ class VeteranIceClimberTest extends BaseCardTest {
         harness.setLibrary(player2, libraryWithFiveCards());
 
         declareAttackers(List.of(indexOf(player1, veteran)));
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
@@ -89,7 +89,7 @@ class VeteranIceClimberTest extends BaseCardTest {
         harness.setLibrary(player2, libraryWithFiveCards());
 
         declareAttackers(List.of(indexOf(player1, veteran)));
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         veteran.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.passBothPriorities();
 
@@ -105,7 +105,7 @@ class VeteranIceClimberTest extends BaseCardTest {
         harness.setLibrary(player2, libraryWithFiveCards());
 
         declareAttackers(List.of(indexOf(player1, veteran)));
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
@@ -120,7 +120,7 @@ class VeteranIceClimberTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new VeteranIceClimber()));
 
         declareAttackers(List.of(indexOf(player1, veteran)));
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
@@ -135,7 +135,7 @@ class VeteranIceClimberTest extends BaseCardTest {
         declareAttackers(List.of(indexOf(player1, veteran)));
 
         assertThat(veteran.isTapped()).isFalse();
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         harness.passBothPriorities();
     }
 

@@ -17,6 +17,6 @@ public class PsychicPuppetry extends Card {
                 new TapOrUntapTargetPermanentEffect(),
                 "Tap or untap target permanent?"
         ));
-        addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{1}{U}"));
+        addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{U}"));
     }
 }

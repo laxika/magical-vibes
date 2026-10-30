@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTur
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantPlayerStaticEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
@@ -26,8 +26,8 @@ public class PrairieDog extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{W}",
-                List.of(new GrantEffectToSourceUntilEndOfTurnEffect(
-                        EffectSlot.STATIC, new AddOnePlusOneCountersEffect())),
+                List.of(new GrantPlayerStaticEffectsUntilEndOfTurnEffect(
+                        List.of(new AddOnePlusOneCountersEffect()))),
                 "{4}{W}: If you would put one or more +1/+1 counters on a creature you control, put "
                         + "that many plus one +1/+1 counters on it instead."
         ));

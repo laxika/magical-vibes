@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -77,9 +78,11 @@ class PreyseizerDragonTest extends BaseCardTest {
         assertThat(dragon().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         dragon().setSummoningSick(false);
         harness.setLife(player2, 20);
-        declareAttackers(player1, List.of(0));
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            harness.handlePermanentChosen(player1, player2.getId());
+            harness.passBothPriorities();
+        });
         harness.assertLife(player2, 20);
     }
 
@@ -90,10 +93,12 @@ class PreyseizerDragonTest extends BaseCardTest {
         attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         attacker.setCounterCount(CounterType.CHARGE, 7);
         harness.setLife(player2, 20);
-        declareAttackers(player1, List.of(0));
-        harness.handlePermanentChosen(player1, player2.getId());
-        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(0));
+            harness.handlePermanentChosen(player1, player2.getId());
+            attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+            harness.passBothPriorities();
+        });
         harness.assertLife(player2, 15);
     }
 }

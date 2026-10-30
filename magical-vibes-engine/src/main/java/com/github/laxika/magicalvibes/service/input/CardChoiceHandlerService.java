@@ -706,6 +706,9 @@ public class CardChoiceHandlerService {
             }
             // The card waits in hand and enters with the other held cards once every step has chosen.
             if (!isTargeted && gameData.holdingHandBattlefieldPuts) {
+                if (gameData.heldHandBattlefieldPutsLeaveHand) {
+                    hand.remove(cardIndex);
+                }
                 gameData.heldHandBattlefieldPuts.add(new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
                         playerId, playerId, selectedCard, Zone.HAND, null).withTapped(enterTapped));
                 gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses ", selectedCard, "."));

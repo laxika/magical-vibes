@@ -2,11 +2,15 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -87,7 +91,25 @@ public class ExileTargetPermanentThenEffectHandler implements NormalEffectHandle
                     case TARGET_OWNER -> targetOwnerId;
                     case CONTROLLER, TARGET_CONTROLLER_AS_TARGET, TARGET_OWNER_AS_TARGET -> entry.getControllerId();
                 };
-                if (thenControllerId != null) {
+                if (thenControllerId != null && e.thenEffect() instanceof MayEffect may && may.elseEffect() == null
+                        && may.choicePlayer() == MayChoicePlayer.CONTROLLER
+                        && may.wrapped() instanceof SearchLibraryEffect search
+                        && search.searchPlayer() == LibrarySearchPlayer.CONTROLLER) {
+                    var boundSearch = new SearchLibraryEffect(search.count(), search.filter(), search.destination(),
+                            search.manaValueBound(), search.castFromGraveyardCount(), search.requireDifferentNames(),
+                            search.grantHaste(), search.exileAtEndStep(), search.returnToHandAtEndStep(),
+                            search.animateFound(), LibrarySearchPlayer.TRIGGERING_PERMANENT_CONTROLLER,
+                            search.onlyIfSacrificed(), search.battlefieldIfChosenBeholdType(),
+                            search.shuffleAfterSelection(), search.battlefieldCounter(), search.enterWithCounters(),
+                            search.topLibraryPosition(), search.battlefieldIfOpponentControlsMoreLands(),
+                            search.topLibraryFractionDenominator());
+                    // The exiled permanent's controller (or owner) decides by identity whether to search.
+                    var boundMay = MayEffect.forPlayer(boundSearch, may.prompt(), thenControllerId);
+                    entry.setTriggeringPermanentControllerId(thenControllerId);
+                    entry.setEventValue(statValue);
+                    entry.replaceEffectToResolve(entry.getResolvingEffectIndex(), boundMay);
+                    effectHandlerRegistry.getHandler(boundMay).resolve(gameData, entry, boundMay);
+                } else if (thenControllerId != null) {
                     UUID thenTargetId = switch (e.recipient()) {
                         case TARGET_CONTROLLER_AS_TARGET -> targetControllerId;
                         case TARGET_OWNER_AS_TARGET -> targetOwnerId;

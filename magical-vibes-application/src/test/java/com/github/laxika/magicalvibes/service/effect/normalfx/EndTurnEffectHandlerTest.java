@@ -85,7 +85,7 @@ class EndTurnEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        endTurnEffectHandler = new EndTurnEffectHandler(turnSupport, gameLogService);
+        endTurnEffectHandler = new EndTurnEffectHandler(turnSupport, gameLogService, exileService);
 
     }
 
@@ -249,8 +249,8 @@ class EndTurnEffectHandlerTest {
             }
 
             @Test
-            @DisplayName("Sets endTurnRequested flag")
-            void setsEndTurnRequestedFlag() {
+            @DisplayName("Exiles the resolving spell before skipping to cleanup instead of flagging it")
+            void exilesResolvingSpellImmediately() {
                 assertThat(gd.endTurnRequested).isFalse();
 
                 Card card = createCard("Time Stop", CardType.INSTANT);
@@ -258,7 +258,8 @@ class EndTurnEffectHandlerTest {
 
                 endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
-                assertThat(gd.endTurnRequested).isTrue();
+                verify(exileService).exileCard(gd, player1Id, card);
+                assertThat(gd.endTurnRequested).isFalse();
             }
 
             @Test

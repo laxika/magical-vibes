@@ -28,12 +28,16 @@ class IlhargTheRazeBoarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        // Without a stop, answering lets auto-pass carry the game through combat damage and out of combat.
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleCardChosen(player1, 0);
+        });
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.isTapped()).isTrue();
-        assertThat(bears.isAttackedThisTurn()).isTrue();
+        assertThat(bears.isAttacking()).isTrue();
+        assertThat(bears.isAttackedThisTurn()).isFalse();
         assertThat(ilharg.isAttackedThisTurn()).isTrue();
     }
 

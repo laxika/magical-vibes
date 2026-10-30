@@ -3,10 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsCommanderPredicate;
 
 import java.util.List;
 
@@ -17,7 +16,7 @@ public class SkyfirePhoenix extends Card {
         addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 null,
                 List.of(new ReturnSourceCardFromGraveyardToBattlefieldEffect(false)),
-                new StackEntryCastFromZonePredicate(Zone.COMMAND)
+                new StackEntrySourceIsCommanderPredicate()
         ));
     }
 }

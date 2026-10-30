@@ -655,6 +655,9 @@ public class CloneService {
         UUID ninjutsuAttackTargetId = gameData.cloneOperation.ninjutsuAttackTargetId;
         boolean landPlay = gameData.cloneOperation.landPlay;
         int xValue = gameData.cloneOperation.xValue;
+        Card graveyardCardToExile = exileCopiedGraveyardCard ? targetCard
+                : gameData.cloneOperation.graveyardCardToExileAfterEntry;
+        gameData.cloneOperation.graveyardCardToExileAfterEntry = null;
 
         gameData.cloneOperation.card = null;
         gameData.cloneOperation.physicalCard = null;
@@ -811,6 +814,7 @@ public class CloneService {
                 perm.getCard(), etbTargetId, xValue, perm.getOriginalCard(), transformed)) {
             gameData.cloneOperation.preparedPermanent = perm;
             gameData.cloneOperation.battlefieldEntryBatch = battlefieldEntryBatch;
+            gameData.cloneOperation.graveyardCardToExileAfterEntry = graveyardCardToExile;
             return;
         }
         gameData.cloneOperation.entryRequest = null;
@@ -819,11 +823,11 @@ public class CloneService {
 
         if (battlefieldEntryBatch != null) {
             List<StackEntry> triggers = new ArrayList<>();
-            if (exileCopiedGraveyardCard && targetCard != null) {
+            if (graveyardCardToExile != null) {
                 StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(), controllerId,
                         perm.getCard().getName() + "'s reflexive ability",
                         List.of(new ExileTriggeringCardFromGraveyardEffect()), 0, perm.getId());
-                trigger.setTriggeringCardId(targetCard.getId());
+                trigger.setTriggeringCardId(graveyardCardToExile.getId());
                 triggers.add(trigger);
             }
             if (targetPerm != null && !reflexiveEffects.isEmpty()) {
@@ -907,7 +911,7 @@ public class CloneService {
                     !ninjutsuEntry && entryRequest == null, 0, copiedEntryX, false, List.of());
         }
 
-        if (exileCopiedGraveyardCard && targetCard != null) {
+        if (graveyardCardToExile != null) {
             StackEntry exileTrigger = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     enteredCard,
@@ -916,7 +920,7 @@ public class CloneService {
                     List.of(new ExileTriggeringCardFromGraveyardEffect()),
                     0,
                     perm.getId());
-            exileTrigger.setTriggeringCardId(targetCard.getId());
+            exileTrigger.setTriggeringCardId(graveyardCardToExile.getId());
             gameData.stack.add(exileTrigger);
         }
 
@@ -1024,7 +1028,9 @@ public class CloneService {
     }
 
     private void applyTypeAppropriateCounters(GameData gameData, UUID controllerId, Permanent perm) {
-        if (perm.getCard().hasType(CardType.CREATURE)) {
+        // Creature-ness is evaluated on the entering copy, so a copy of a permanent that is a creature only
+        // on some turns (Gideon Blackblade during its controller's turn) gets the creature counter too.
+        if (gameQueryService.isCreature(gameData, perm, controllerId)) {
             applyAdditionalPlusOnePlusOneCounters(gameData, controllerId, perm,
                     new Fixed(1), 0);
         }

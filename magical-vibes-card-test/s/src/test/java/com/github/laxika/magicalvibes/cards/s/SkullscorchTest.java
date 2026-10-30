@@ -122,11 +122,12 @@ class SkullscorchTest extends BaseCardTest {
     void preventedDamageStillAvoidsDiscard() {
         Skullscorch skullscorch = new Skullscorch();
         harness.setHand(player1, List.of(skullscorch));
-        harness.setHand(player2, List.of(new NantukoShade(), new TaintedIsle()));
+        harness.setHand(player2, List.of(new PayNoHeed(), new NantukoShade(), new TaintedIsle()));
         harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.WHITE, 1);
 
         harness.castSorcery(player1, 0, player2.getId());
-        harness.castFromHand(player2, new PayNoHeed(), "{W}");
+        harness.castInstant(player2, 0);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player2, skullscorch.getId());
         harness.passBothPriorities();

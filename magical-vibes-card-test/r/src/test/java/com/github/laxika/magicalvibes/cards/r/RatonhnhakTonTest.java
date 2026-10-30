@@ -132,6 +132,7 @@ class RatonhnhakTonTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(findPermanents(player1, "Assassin")).hasSize(2);
         harness.handleMultipleCardsChosen(player1, List.of(firstEquipment.getId()));
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(secondEquipment.getId()));

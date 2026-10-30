@@ -316,8 +316,11 @@ public class GameViewProjectionFactory {
                                     && imprint.faceDown());
                     boolean grantsImplicitLookPermission = !exiledFaceDownFromHandOnEnter
                             && !data.exiledCardsWithIntelCounters.contains(entry.card().getId())
-                            && java.util.Arrays.stream(EffectSlot.values())
-                            .flatMap(slot -> p.getCard().getEffects(slot).stream())
+                            && java.util.stream.Stream.concat(
+                                    java.util.Arrays.stream(EffectSlot.values())
+                                            .flatMap(slot -> p.getCard().getEffects(slot).stream()),
+                                    p.getCard().getActivatedAbilities().stream()
+                                            .flatMap(ability -> ability.getEffects().stream()))
                             .filter(com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect.class::isInstance)
                             .map(com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect.class::cast)
                             .noneMatch(effect -> effect.faceDown() && !effect.mayLookAtFaceDownCards());

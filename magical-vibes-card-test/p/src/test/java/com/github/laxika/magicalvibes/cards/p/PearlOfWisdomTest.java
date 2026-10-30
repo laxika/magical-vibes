@@ -26,6 +26,7 @@ class PearlOfWisdomTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castAndResolveSorcery(player1, 0, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
     }
@@ -51,6 +52,7 @@ class PearlOfWisdomTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castAndResolveSorcery(player1, 0, 0);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);

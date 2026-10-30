@@ -72,7 +72,7 @@ class PhaseDolphinTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(dolphin.isCantBeBlocked()).isFalse();
     }
@@ -86,7 +86,7 @@ class PhaseDolphinTest extends BaseCardTest {
         declareAttackers(List.of(1));
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(dolphin.isCantBeBlocked()).isFalse();
         assertThat(attacker.isCantBeBlocked()).isFalse();

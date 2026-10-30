@@ -525,6 +525,10 @@ public class TriggeredAbilityQueueService {
                 : pending.sourcePermanentSnapshot() == null
                 ? null : pending.sourcePermanentSnapshot().getEffectivePower();
         gameData.graveyardTargetOperation.targetPlayerId = primaryTargetId;
+        if (pending.markSourceOncePerTurnOnAcceptance() && pending.sourcePermanentSnapshot() != null) {
+            gameData.graveyardTargetOperation.sourcePermanentId = pending.sourcePermanentSnapshot().getId();
+            gameData.graveyardTargetOperation.markSourceOncePerTurnOnAcceptance = true;
+        }
 
         String zoneLabel = switch (target.scope()) {
             case ALL_GRAVEYARDS -> "a graveyard";

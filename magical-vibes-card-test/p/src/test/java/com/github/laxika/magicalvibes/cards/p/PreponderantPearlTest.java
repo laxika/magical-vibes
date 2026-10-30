@@ -118,12 +118,13 @@ class PreponderantPearlTest extends BaseCardTest {
         addCreatureReady(player1, new CoralMerfolk());
         addCreatureReady(player1, new CoralMerfolk());
 
-        declareAttackersAndPrepareBlockers(List.of(1, 2));
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
-        harness.resolveCombatDamage();
+        declareAttackers(List.of(1, 2));
+        resolveCombat();
 
         harness.assertLife(player2, 16);
-        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.gameLog.stream()
+                .filter(entry -> entry.plainText().equals("Preponderant Pearl's triggered ability goes on the stack.")))
+                .hasSize(1);
         resolveAllTriggers();
         assertThat(gd.playerHands.get(player1.getId()))
                 .filteredOn(card -> card.getName().equals("Flooded Strand"))

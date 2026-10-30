@@ -108,6 +108,8 @@ public class PermanentChoiceHandlerService {
     private final EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenDealsManaValueDamageEffectHandler
             gildedAmbusherEffectHandler;
     private final SuspectChosenOtherCreatureEffectHandler suspectChosenOtherCreatureEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfTargetPermanentEffectHandler
+            createTokenCopyOfTargetPermanentEffectHandler;
     private final ChooseCounterTypeOnControlledCreatureThenPutOnOtherCreaturesEffectHandler
             contractualSafeguardEffectHandler;
     private final ChooseCounterTypeOnControlledPermanentThenPutOnTargetPermanentEffectHandler
@@ -1254,6 +1256,9 @@ public class PermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.TemptTheRingBearerChoice ringBearerChoice) {
             temptTheRingEffectHandler.completeChoice(gameData, permanentId, ringBearerChoice);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof PermanentChoiceContext.CreateTokenCopyOfOneOfTriggeringPermanents) {
+            createTokenCopyOfTargetPermanentEffectHandler.completeTriggeringPermanentChoice(gameData, permanentId);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.SuspectChosenOtherCreature) {
             suspectChosenOtherCreatureEffectHandler.completeChoice(gameData, permanentId);

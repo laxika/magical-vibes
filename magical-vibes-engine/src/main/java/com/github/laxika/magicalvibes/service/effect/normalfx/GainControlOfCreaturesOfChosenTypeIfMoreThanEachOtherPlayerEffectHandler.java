@@ -72,7 +72,9 @@ public class GainControlOfCreaturesOfChosenTypeIfMoreThanEachOtherPlayerEffectHa
 
         List<Permanent> toSeize = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (!playerId.equals(controllerId)
+            boolean needsSeizing = !playerId.equals(controllerId)
+                    || !controllerId.equals(gameData.ownerOf(permanent.getCard()));
+            if (needsSeizing
                     && predicateEvaluationService.matchesPermanentPredicate(
                     permanent, creatureTypeFilter, filterContext)) {
                 toSeize.add(permanent);

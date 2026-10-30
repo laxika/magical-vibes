@@ -46,7 +46,7 @@ public class PlantASapling extends Card {
 
         addEffect(EffectSlot.SPELL, new SearchLibraryEffect(
                 CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND, null, false));
-        addEffect(EffectSlot.SPELL, new ShuffleIntoLibraryEffect());
+        addEffect(EffectSlot.SPELL, new ShuffleIntoLibraryEffect(true));
     }
 
     @Override

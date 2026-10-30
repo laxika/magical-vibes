@@ -176,7 +176,7 @@ class ProteanHydraTest extends BaseCardTest {
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // Combat damage: Bears deal 2, remove 2 counters

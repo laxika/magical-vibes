@@ -77,7 +77,7 @@ class NightOfTheSweetsRevengeTest extends BaseCardTest {
         castNight();
 
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(cookie),
-                1, null, null);
+                2, null, null);
 
         assertThat(cookie.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);

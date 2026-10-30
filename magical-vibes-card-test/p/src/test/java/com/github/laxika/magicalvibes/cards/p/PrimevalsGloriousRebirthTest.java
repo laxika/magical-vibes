@@ -273,6 +273,7 @@ class PrimevalsGloriousRebirthTest extends BaseCardTest {
     @DisplayName("Returning legendary Auras attach to a chosen legal creature")
     void returnsLegendaryAuraAttachedToChosenCreature() {
         harness.addToBattlefield(player1, new ArvadTheCursed());
+        harness.addToBattlefield(player2, new BalothGorger());
         harness.setGraveyard(player1, List.of(new OnSerrasWings()));
 
         castPrimevalsGloriousRebirth();

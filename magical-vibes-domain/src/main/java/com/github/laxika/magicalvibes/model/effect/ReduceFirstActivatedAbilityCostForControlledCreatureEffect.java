@@ -12,7 +12,7 @@ public record ReduceFirstActivatedAbilityCostForControlledCreatureEffect(int amo
         implements FirstActivatedAbilityCostReducingEffect {
 
     private static final PermanentPredicate ALL_PERMANENTS = new PermanentTruePredicate();
-    private static final String USAGE_KEY = "first-activated-ability-targeting-controlled-creature";
+    public static final String USAGE_KEY = "first-activated-ability-targeting-controlled-creature";
 
     @Override
     public String usageKey() {

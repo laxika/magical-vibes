@@ -9,6 +9,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesCreaturePutsVowCounterThenSacrificesRestEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -92,6 +101,7 @@ public class EachPlayerChoosesCreaturePutsVowCounterThenSacrificesRestEffectHand
             if (permanent != null) {
                 permanentCounterSupport.placeCounterOnPermanent(
                         gameData, entry, permanent, CounterType.VOW, 1);
+                restrictWhileVowCounterRemains(gameData, entry, permanent);
             }
         }
 
@@ -128,6 +138,26 @@ public class EachPlayerChoosesCreaturePutsVowCounterThenSacrificesRestEffectHand
         }
         log.info("Game {} - {} sacrifices {} creatures", gameData.id, entry.getCard().getName(),
                 toSacrifice.size());
+    }
+
+    /**
+     * "Each of those creatures can't attack you or planeswalkers you control for as long as it has a vow
+     * counter on it": bound to this creature and to the counter just placed, so the restriction ends for
+     * good when that counter is removed and never passes to another creature that later gets a vow counter.
+     */
+    private void restrictWhileVowCounterRemains(GameData gameData, StackEntry entry, Permanent permanent) {
+        if (permanent.getCounterCount(CounterType.VOW) <= 0) {
+            return;
+        }
+        PermanentPredicate scope = new PermanentAllOfPredicate(List.of(
+                new PermanentIsSpecificPermanentPredicate(permanent.getId()),
+                new PermanentHasCountersPredicate(CounterType.VOW,
+                        permanent.getLastCounterRemovalVersions().getOrDefault(CounterType.VOW, 0L))));
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), entry.getCard().getName(), null,
+                entry.getControllerId(),
+                new CreaturesCantAttackControllerUnlessPredicateEffect(
+                        new PermanentNotPredicate(new PermanentTruePredicate()), true),
+                null, null, scope, EffectDuration.PERMANENT, 0, true));
     }
 
     private List<UUID> apnapPlayers(GameData gameData) {

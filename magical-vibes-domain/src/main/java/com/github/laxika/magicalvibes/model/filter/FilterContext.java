@@ -12,6 +12,9 @@ import java.util.UUID;
  *        source-relative predicates when the source has left the battlefield (CR 608.2b: "If the
  *        source of an ability has left the zone it was in, its last known information is used").
  *        Set on resolution-time target re-checks; {@code null} elsewhere.
+ * @param activatedAbilitySource true when evaluating for an activated ability on the stack; the
+ *        source's last known combat relationships are then not used once it has left the battlefield
+ *        (that look-back is reserved for triggered abilities such as death triggers).
  */
 public record FilterContext(
         GameData gameData,
@@ -26,7 +29,8 @@ public record FilterContext(
         UUID targetCardId,
         UUID triggeringPermanentControllerId,
         UUID enteringControllerId,
-        Permanent attachedPermanentSnapshot
+        Permanent attachedPermanentSnapshot,
+        boolean activatedAbilitySource
 ) {
     public FilterContext(GameData gameData, UUID sourceCardId, UUID sourceControllerId,
                          Integer xValue, Permanent sourcePermanentSnapshot, UUID sourcePermanentId,
@@ -35,7 +39,7 @@ public record FilterContext(
                          UUID enteringControllerId) {
         this(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId,
-                targetCardId, triggeringPermanentControllerId, enteringControllerId, null);
+                targetCardId, triggeringPermanentControllerId, enteringControllerId, null, false);
     }
 
     public FilterContext(GameData gameData, UUID sourceCardId, UUID sourceControllerId,
@@ -98,73 +102,79 @@ public record FilterContext(
     public FilterContext withSourceCardId(UUID sourceCardId) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot);
+                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot, activatedAbilitySource);
     }
 
     public FilterContext withSourceControllerId(UUID sourceControllerId) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot);
+                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot, activatedAbilitySource);
     }
 
     public FilterContext withXValue(int xValue) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot);
+                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot, activatedAbilitySource);
     }
 
     public FilterContext withSourcePermanentSnapshot(Permanent sourcePermanentSnapshot) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot);
+                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot, activatedAbilitySource);
     }
 
     public FilterContext withSourcePermanentId(UUID sourcePermanentId) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot);
+                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot, activatedAbilitySource);
     }
 
     public FilterContext withMadness(boolean madness) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot);
+                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot, activatedAbilitySource);
     }
 
     public FilterContext withDefendingPlayerId(UUID defendingPlayerId) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot);
+                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot, activatedAbilitySource);
     }
 
     public FilterContext withTriggeringPermanentId(UUID triggeringPermanentId) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot);
+                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot, activatedAbilitySource);
     }
 
     public FilterContext withTriggeringPermanentControllerId(UUID triggeringPermanentControllerId) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot);
+                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot, activatedAbilitySource);
     }
 
     public FilterContext withTargetCardId(UUID targetCardId) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot);
+                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot, activatedAbilitySource);
     }
 
     public FilterContext withEnteringControllerId(UUID enteringControllerId) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot);
+                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot, activatedAbilitySource);
     }
 
     /** Last-known state of the creature the source Aura or Equipment was attached to when it triggered. */
     public FilterContext withAttachedPermanentSnapshot(Permanent attachedPermanentSnapshot) {
         return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
                 sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
-                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot);
+                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot, activatedAbilitySource);
+    }
+
+    public FilterContext withActivatedAbilitySource(boolean activatedAbilitySource) {
+        return new FilterContext(gameData, sourceCardId, sourceControllerId, xValue, sourcePermanentSnapshot,
+                sourcePermanentId, madness, defendingPlayerId, triggeringPermanentId, targetCardId,
+                triggeringPermanentControllerId, enteringControllerId, attachedPermanentSnapshot, activatedAbilitySource);
     }
 }

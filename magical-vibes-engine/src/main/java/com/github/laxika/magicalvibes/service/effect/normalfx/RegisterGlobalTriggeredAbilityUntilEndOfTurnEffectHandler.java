@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TemporaryGlobalTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -34,6 +36,12 @@ public class RegisterGlobalTriggeredAbilityUntilEndOfTurnEffectHandler implement
         CardEffect triggeredEffect = registration.triggeredEffect();
         if (triggeredEffect instanceof TemporaryGlobalTriggerEffect temporary) {
             triggeredEffect = temporary.bindTo(entry.getSourcePermanentId(), entry.getTargetId());
+        }
+        if (triggeredEffect instanceof CopyImprintedCardAndMayCastCopyEffect copyEffect) {
+            Card imprinted = gameData.getImprintedCard(entry.getCard());
+            if (imprinted != null) {
+                triggeredEffect = copyEffect.boundTo(imprinted.getId());
+            }
         }
         gameData.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
                 entry.getControllerId(), entry.getCard(), registration.slot(), triggeredEffect));

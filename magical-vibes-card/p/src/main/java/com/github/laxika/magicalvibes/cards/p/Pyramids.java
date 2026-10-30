@@ -32,6 +32,6 @@ public class Pyramids extends Card {
                                 TargetFilters.land())
                 ))),
                 "{2}: Choose one — Destroy target Aura attached to a land. The next time target land would be destroyed this turn, remove all damage marked on it instead."
-        ));
+        ).withModalChoiceAtActivation());
     }
 }

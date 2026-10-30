@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.t.Tarmogoyf;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -70,7 +71,7 @@ class PhosphorescentFeastTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertLife(player1, 20);
-        assertThat(gd.pendingInteractions).isNotEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class)).isNotNull();
     }
 
     @Test
@@ -80,7 +81,7 @@ class PhosphorescentFeastTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PhosphorescentFeast(), new PhosphorescentFeast()));
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        assertThat(gd.pendingInteractions).isNotEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class)).isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.assertLife(player1, 20);
@@ -95,7 +96,7 @@ class PhosphorescentFeastTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PhosphorescentFeast(), revealed, new Tarmogoyf()));
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        assertThat(gd.pendingInteractions).isNotEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealAnyNumberOfCardsFromHandChoice.class)).isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(revealed.getId()));
 
         harness.assertLife(player1, 26);

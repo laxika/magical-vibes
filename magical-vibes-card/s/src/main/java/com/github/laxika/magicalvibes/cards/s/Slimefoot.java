@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -25,15 +26,18 @@ public class Slimefoot extends Card {
 
     public Slimefoot() {
         // Whenever a Saproling you control dies, Slimefoot, the Stowaway deals 1 damage to each
-        // opponent and you gain 1 life.
+        // opponent and you gain 1 life. This is one triggered ability, so both steps share one stack
+        // entry. A Saproling Slimefoot is itself a Saproling you control as it dies, so the ON_DEATH
+        // copy covers its own death (CR 603.10a look-back).
+        CardSubtypePredicate saproling = new CardSubtypePredicate(CardSubtype.SAPROLING);
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.SAPROLING),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
-                new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.SAPROLING),
-                        new GainLifeEffect(1)));
+                new TriggeringCardConditionalEffect(saproling, SequenceEffect.of(
+                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                        new GainLifeEffect(1))));
+        addEffect(EffectSlot.ON_DEATH,
+                new TriggeringCardConditionalEffect(saproling, SequenceEffect.of(
+                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                        new GainLifeEffect(1))));
 
         // {4}: Create a 1/1 green Saproling creature token.
         addActivatedAbility(new ActivatedAbility(false, "{4}",

@@ -66,7 +66,8 @@ public class EachOpponentMayDiscardOrLoseLifeEffectHandler implements NormalEffe
                     + " life. (" + entry.getCard().getName() + ")";
             gameData.pendingMayAbilities.addLast(new PendingMayAbility(
                     entry.getCard(), opponentId,
-                    List.of(new LoseLifeUnlessDiscardEffect(discardEffect.lifeLoss())), prompt));
+                    List.of(new LoseLifeUnlessDiscardEffect(discardEffect.lifeLoss())), prompt,
+                    null, controllerId));
         }
     }
 

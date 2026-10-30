@@ -65,6 +65,7 @@ class InspiringEaselTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castAndResolveInstant(player1, 1, player2.getId());
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).anyMatch(entry -> entry.getDescription() != null
                 && entry.getDescription().startsWith("Copy of Lightning Bolt"));

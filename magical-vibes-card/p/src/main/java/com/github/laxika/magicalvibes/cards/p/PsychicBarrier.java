@@ -19,7 +19,7 @@ public class PsychicBarrier extends Card {
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)),
                 "Target must be a creature spell."
         ))
-                .addEffect(EffectSlot.SPELL, new TargetSpellControllerLosesLifeEffect(1))
-                .addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+                .addEffect(EffectSlot.SPELL, new CounterSpellEffect())
+                .addEffect(EffectSlot.SPELL, new TargetSpellControllerLosesLifeEffect(1));
     }
 }

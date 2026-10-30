@@ -31,6 +31,7 @@ public class PutCardsOntoBattlefieldTogetherEffectHandler implements NormalEffec
         var together = (PutCardsOntoBattlefieldTogetherEffect) effect;
         if (!gameData.holdingHandBattlefieldPuts) {
             gameData.holdingHandBattlefieldPuts = true;
+            gameData.heldHandBattlefieldPutsLeaveHand = together.pickedCardsLeaveHand();
             gameData.heldHandBattlefieldPuts.clear();
             List<CardEffect> stepsThenFinish = new ArrayList<>(together.steps());
             stepsThenFinish.add(together);
@@ -41,6 +42,10 @@ public class PutCardsOntoBattlefieldTogetherEffectHandler implements NormalEffec
         gameData.holdingHandBattlefieldPuts = false;
         List<BattlefieldEntryCard> held = List.copyOf(gameData.heldHandBattlefieldPuts);
         gameData.heldHandBattlefieldPuts.clear();
+        if (gameData.heldHandBattlefieldPutsLeaveHand) {
+            gameData.heldHandBattlefieldPutsLeaveHand = false;
+            held.forEach(heldCard -> gameData.playerHands.get(heldCard.zoneOwnerId()).add(heldCard.card()));
+        }
         if (!held.isEmpty()) {
             battlefieldEntryBatchSupport.begin(gameData, held);
         }

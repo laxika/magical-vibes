@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -376,8 +377,11 @@ public class PermanentControlSupport {
             }
 
             String colorDesc;
-            if (tokenBlueprint.colors() != null && !tokenBlueprint.colors().isEmpty()) {
-                colorDesc = tokenBlueprint.colors().stream()
+            Set<CardColor> logColors = tokenBlueprint.colors() != null && !tokenBlueprint.colors().isEmpty()
+                    ? tokenBlueprint.colors()
+                    : tokenBlueprint.color() != null ? Set.of(tokenBlueprint.color()) : Set.of();
+            if (!logColors.isEmpty()) {
+                colorDesc = logColors.stream()
                         .map(c -> c.name().charAt(0) + c.name().substring(1).toLowerCase())
                         .reduce((a, b) -> a + " and " + b).orElse("");
                 colorDesc += " ";

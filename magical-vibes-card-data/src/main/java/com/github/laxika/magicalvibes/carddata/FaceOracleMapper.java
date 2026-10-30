@@ -172,9 +172,18 @@ public final class FaceOracleMapper {
 
         // The second half of a split card (an aftermath half cast from the graveyard) is a back
         // face too. Like any half it is the colour of its own mana cost (CR 202.2), which Scryfall
-        // does not report on a half — reading the provider's colours left it colourless.
-        if (isBackFace && isSplitLayout(face.layout())) {
+        // does not report on a half — reading the provider's colours left it colourless. An
+        // adventure's spell half (an Omen such as Charring Bite) is a separate spell with its own
+        // mana cost and is coloured the same way.
+        if (isBackFace && (isSplitLayout(face.layout()) || "adventure".equals(face.layout()))) {
             return mapColors(manaCostColorSymbols(face.manaCost()));
+        }
+
+        // A flip card's flipped half keeps the colour of the card, which the provider reports only on the
+        // card (Tok-Tok, Volcano Born is red); the face itself reads as colourless. The card-level colour
+        // identity of such a creature is its colour.
+        if (isBackFace && "flip".equals(face.layout()) && face.colors().isEmpty()) {
+            return mapColors(face.colorIdentity());
         }
 
         // CR 202.2: an object is the colour of the mana symbols in its mana cost, and nothing else.

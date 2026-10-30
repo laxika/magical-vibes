@@ -45,6 +45,14 @@ public class ChampionCreatureEffectHandler implements NormalEffectHandlerBean {
         Permanent sourcePermanent = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                 : findSourcePermanent(gameData, controllerId, sourceCard);
+        if (sourcePermanent != null
+                && !controllerId.equals(gameQueryService.findPermanentController(gameData, sourcePermanent.getId()))) {
+            // The ability's controller no longer controls the permanent, so it can't sacrifice it and
+            // exiling another creature would gain nothing.
+            gameLogService.append(gameData, GameLog.text(playerName + " does not control "
+                    + sourceCard.getName() + ", so it can't be championed or sacrificed."));
+            return;
+        }
         List<UUID> validIds = collectValidChampionTargets(gameData, sourcePermanent, controllerId, e.championedSubtypes());
 
         if (validIds.isEmpty()) {

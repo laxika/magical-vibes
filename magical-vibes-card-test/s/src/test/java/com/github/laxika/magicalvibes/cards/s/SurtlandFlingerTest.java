@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,12 +23,14 @@ class SurtlandFlingerTest extends BaseCardTest {
         Permanent giant = addCreatureReady(player1, new HillGiant());
         int lifeBefore = gd.getLife(player2.getId());
 
-        declareAttackers(List.of(0));
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, giant.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handlePermanentChosen(player1, giant.getId());
+            harness.handlePermanentChosen(player1, player2.getId());
+            harness.passBothPriorities();
+        });
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 6);
         harness.assertNotOnBattlefield(player1, "Hill Giant");
@@ -40,12 +43,14 @@ class SurtlandFlingerTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         int lifeBefore = gd.getLife(player2.getId());
 
-        declareAttackers(List.of(0));
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handlePermanentChosen(player1, bears.getId());
+            harness.handlePermanentChosen(player1, player2.getId());
+            harness.passBothPriorities();
+        });
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -58,9 +63,12 @@ class SurtlandFlingerTest extends BaseCardTest {
         addCreatureReady(player1, new HillGiant());
         int lifeBefore = gd.getLife(player2.getId());
 
-        declareAttackers(List.of(0));
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+        });
+
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
         harness.assertOnBattlefield(player1, "Hill Giant");

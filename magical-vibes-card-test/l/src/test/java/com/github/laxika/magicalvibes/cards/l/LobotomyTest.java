@@ -77,12 +77,17 @@ class LobotomyTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No choice is made when the revealed hand holds only basic lands")
-    void noPromptWhenHandIsAllBasicLands() {
+    @DisplayName("With only basic lands in the revealed hand, nothing is exiled but the library may still be searched")
+    void searchesLibraryWithNothingToFindWhenHandIsAllBasicLands() {
         castLobotomyAt(List.of(new Forest()));
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).isEmpty();
+        harness.handleCardChosen(player1, -1);
+
         harness.assertInHand(player2, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -90,8 +95,9 @@ class LobotomyTest extends BaseCardTest {
     void shufflesLibraryWhenNoCardCanBeChosen() {
         harness.setLibrary(player2, List.of(new TrainedArmodon(), new StalkingStones()));
         castLobotomyAt(List.of(new Forest()));
+        harness.handleCardChosen(player1, -1);
 
-        assertThat(gameLogContains("shuffles their library")).isTrue();
+        assertThat(gameLogContains("'s library is shuffled.")).isTrue();
     }
 
     @Test
@@ -109,9 +115,14 @@ class LobotomyTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No choice is made when the target's hand is empty")
-    void noPromptWhenHandEmpty() {
+    @DisplayName("With an empty hand, nothing is exiled but the library may still be searched")
+    void searchesLibraryWithNothingToFindWhenHandEmpty() {
         castLobotomyAt(List.of());
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).isEmpty();
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }

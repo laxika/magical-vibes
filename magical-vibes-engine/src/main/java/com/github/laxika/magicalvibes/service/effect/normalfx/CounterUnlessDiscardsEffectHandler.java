@@ -51,6 +51,7 @@ public class CounterUnlessDiscardsEffectHandler implements NormalEffectHandlerBe
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetControllerId,
                 List.of((CounterUnlessDiscardsEffect) effect),
-                prompt, targetCardId));
+                prompt, targetCardId, null, null, null, 0, 0, null, null, null, null,
+                entry.getControllerId(), null, 0, null, null, null, null));
     }
 }

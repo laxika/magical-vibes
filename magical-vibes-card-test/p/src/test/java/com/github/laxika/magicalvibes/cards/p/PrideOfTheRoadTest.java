@@ -62,8 +62,7 @@ class PrideOfTheRoadTest extends BaseCardTest {
         advanceToCombat(player1);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(creature.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
@@ -115,7 +114,7 @@ class PrideOfTheRoadTest extends BaseCardTest {
         advanceToCombat(player2);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     @Test
@@ -205,7 +204,8 @@ class PrideOfTheRoadTest extends BaseCardTest {
     @Test
     void startsEnginesAndIncreasesSpeedOnlyOncePerOwnTurn() {
         harness.forceActivePlayer(player1);
-        harness.enterBattlefieldAndReturn(player1, new PrideOfTheRoad());
+        harness.castFromHand(player1, new PrideOfTheRoad(), "{3}{W}");
+        harness.passBothPriorities();
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
 
         harness.inMutationScope(() -> harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "Life loss"));

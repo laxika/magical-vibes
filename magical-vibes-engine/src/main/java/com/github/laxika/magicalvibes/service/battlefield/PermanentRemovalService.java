@@ -3736,7 +3736,9 @@ public class PermanentRemovalService {
                 .flatMap(ability -> ability.getEffects().stream())
                 .anyMatch(effect -> (effect instanceof MayEffect may ? may.wrapped() : effect)
                         instanceof ExileTargetPermanentUntilSourceLeavesEffect leaveTriggerExile
-                        && leaveTriggerExile.returnsOnSourceLeavesTrigger())
+                        && leaveTriggerExile.returnsOnSourceLeavesTrigger()
+                        || effect instanceof com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect handExile
+                        && handExile.returnOnSourceLeave())
                 && !pendingReturns.isEmpty();
         // Wall of Nets style: the exile is the source's end-of-combat triggered ability, and the return is its
         // separate leaves-the-battlefield triggered ability, so it goes on the stack when cards were exiled.
@@ -3757,7 +3759,7 @@ public class PermanentRemovalService {
                 return;
             }
             List<PendingExileReturn> returnBatches = returnsOnSourceLeavesTrigger || hasLeavesTriggerExileAll
-                    || returnsThroughEndOfCombatLeavesTrigger
+                    || returnsThroughEndOfCombatLeavesTrigger || returnsThroughActivatedAbilityLeavesTrigger
                     ? mergeSameControllerReturns(pendingReturns)
                     : pendingReturns;
             List<CardEffect> effects = returnBatches.stream()

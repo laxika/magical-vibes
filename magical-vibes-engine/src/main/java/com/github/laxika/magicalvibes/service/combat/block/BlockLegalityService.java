@@ -250,7 +250,16 @@ public class BlockLegalityService {
 
     /** Pairwise block legality against a shared context — the allocation-free fast path. */
     public boolean canBlockAttacker(BlockLegalityContext context, Permanent blocker, Permanent attacker) {
-        return findBlockDenial(context, blocker, attacker) == null;
+        return findBlockDenial(context, blocker, attacker, false) == null;
+    }
+
+    /**
+     * Pairwise block legality for an effect that puts a creature into combat as a blocker rather than
+     * declaring it (False Orders, Balduvian Warlord). Only the declaration requires an untapped creature,
+     * so tapped status is ignored; every evasion and restriction check still applies.
+     */
+    public boolean canBeMadeToBlockAttacker(BlockLegalityContext context, Permanent blocker, Permanent attacker) {
+        return findBlockDenial(context, blocker, attacker, true) == null;
     }
 
     /** Whether the attacker carries the restriction that every defending creature must block it. */
@@ -285,7 +294,7 @@ public class BlockLegalityService {
 
     /** Message form of {@link #canBlockAttacker(BlockLegalityContext, Permanent, Permanent)}. */
     public Optional<String> getBlockingIllegalityReason(BlockLegalityContext context, Permanent blocker, Permanent attacker) {
-        BlockDenial denial = findBlockDenial(context, blocker, attacker);
+        BlockDenial denial = findBlockDenial(context, blocker, attacker, false);
         return denial == null
                 ? Optional.empty()
                 : Optional.of(blockDenialMessageService.describe(denial, blocker, attacker));
@@ -299,9 +308,10 @@ public class BlockLegalityService {
      * exactly once per creature; check order matches the pre-context implementation so the
      * surfaced message is unchanged when several rules fail at once.
      */
-    private BlockDenial findBlockDenial(BlockLegalityContext context, Permanent blocker, Permanent attacker) {
+    private BlockDenial findBlockDenial(BlockLegalityContext context, Permanent blocker, Permanent attacker,
+                                        boolean ignoreTapped) {
         GameData gameData = context.gameData;
-        if (blocker.isTapped() && !canBlockAsThoughUntapped(context, blocker)) {
+        if (!ignoreTapped && blocker.isTapped() && !canBlockAsThoughUntapped(context, blocker)) {
             return BlockDenial.CANT_BLOCK;
         }
         if (isOutsideChosenBlockers(gameData, blocker)) {

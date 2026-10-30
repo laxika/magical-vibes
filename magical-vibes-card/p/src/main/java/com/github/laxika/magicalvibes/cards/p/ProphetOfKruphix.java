@@ -8,6 +8,11 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "199")
 @CardRegistration(set = "CP1", collectorNumber = "5")
@@ -15,7 +20,10 @@ public class ProphetOfKruphix extends Card {
 
     public ProphetOfKruphix() {
         addEffect(EffectSlot.STATIC,
-                new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP));
+                new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP,
+                        new PermanentAnyOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentIsLandPredicate()))));
         addEffect(EffectSlot.STATIC, new GrantFlashToCardTypeEffect(
                 new CardTypePredicate(CardType.CREATURE)));
     }

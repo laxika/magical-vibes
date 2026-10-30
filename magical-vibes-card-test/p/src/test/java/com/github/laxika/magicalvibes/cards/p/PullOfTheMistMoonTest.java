@@ -47,6 +47,7 @@ class PullOfTheMistMoonTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0, firstTarget.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.PerpetualEnterExileHandCardChoice.class);
 
@@ -103,6 +104,7 @@ class PullOfTheMistMoonTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0, target.getId());
         harness.passBothPriorities();
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())

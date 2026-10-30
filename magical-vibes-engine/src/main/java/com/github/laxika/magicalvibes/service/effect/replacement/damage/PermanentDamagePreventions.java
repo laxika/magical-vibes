@@ -101,7 +101,11 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                 (ctx, result) -> logSpellPrevented(ctx)));
         all.add(effect("TargetSpellPrevented", PREVENTION,
                 ctx -> !ctx.targetProtectedFromPrevention() && ctx.dealtByStackEntry()
-                        && gameQueryService.isDamageFromTargetSpellPrevented(ctx.gameData(), ctx.entry()),
+                        && gameQueryService.isDamageFromTargetSpellPrevented(ctx.gameData(), ctx.entry())
+                        && !(!ctx.combat() && preventionSource(ctx) != null
+                        && gameQueryService.isPreventedFromDealingDamage(ctx.gameData(), preventionSource(ctx))
+                        && gameQueryService.isTargetSpellShieldPlainPermanentSourcePrevention(
+                        ctx.gameData(), ctx.entry())),
                 ctx -> "Prevent the targeted spell's damage",
                 ctx -> {
                     damageSupport.getObject().gainLifeForTargetSpellDamage(ctx.gameData(), ctx.entry(), ctx.amount());
@@ -186,9 +190,7 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                 ctx -> "Prevent the damage; the source's controller draws that many cards",
                 ctx -> {
                     prevention.applySwansSourceControllerDraw(ctx.gameData(), ctx.target(), ctx.amount(),
-                            ctx.dealtByStackEntry() ? ctx.entry().getControllerId()
-                                    : gameQueryService.findPermanentController(ctx.gameData(),
-                                    ctx.event().explicitSource().getId()), ctx.combat());
+                            ctx.sourceControllerId(), ctx.combat());
                     logPrevented(ctx, null);
                     return prevented(ctx);
                 }));

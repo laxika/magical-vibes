@@ -180,6 +180,7 @@ import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfWasDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceDamagedCreatureDiedThisTurn;
+import com.github.laxika.magicalvibes.model.effect.AdditionalUpkeepStepEffect;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsUpkeepSacrificeUnlessPayEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -1174,13 +1175,10 @@ public class StepTriggerService {
                     gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId(),
                             activePlayerId, new Permanent(perm));
                 } else if (effect instanceof MayRevealSubtypeFromHandEffect mayReveal) {
-                    List<Card> hand = gameData.playerHands.get(activePlayerId);
-                    boolean hasSubtype = hand != null && hand.stream()
-                            .anyMatch(c -> c.getSubtypes().contains(mayReveal.subtype()));
-                    if (hasSubtype) {
-                        MayEffect may = new MayEffect(mayReveal.thenEffect(), mayReveal.prompt());
-                        gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId());
-                    }
+                    // CR 603.5: an optional ability goes on the stack whether or not its controller can
+                    // exercise the option. The reveal (and its hand check) is resolved by MayEffectHandler.
+                    MayEffect may = new MayEffect(mayReveal, mayReveal.prompt());
+                    gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId());
                 } else if (effect instanceof BecomeCopyOfTargetCreatureEffect copyEffect) {
                     // Targeted upkeep trigger: target is chosen at trigger time (CR 603.3d).
                     // Collect valid creature targets excluding self ("another creature").
@@ -1952,6 +1950,9 @@ public class StepTriggerService {
                 entry.setActivePlayerId(activePlayerId);
                 entry.setTriggeringPermanentPowerAtTrigger(enchantedPermanentPowerAtTrigger);
                 entry.setSourcePermanentSnapshot(new Permanent(triggerSource));
+                if (enchantedPermanent != null) {
+                    entry.setAttachedPermanentSnapshot(new Permanent(enchantedPermanent));
+                }
                 if (grantedToCreature) {
                     entry.setTriggeringPermanentId(perm.getId());
                 } else {
@@ -1978,6 +1979,11 @@ public class StepTriggerService {
             if (!enchantedPlayerId.equals(activePlayerId)) return;
 
             for (CardEffect effect : enchantedPlayerUpkeepEffects) {
+                // "At the beginning of enchanted player's first upkeep each turn" (Paradox Haze): an additional
+                // upkeep does not trigger it, so it is not put on the stack at all.
+                if (effect instanceof AdditionalUpkeepStepEffect && gameData.currentUpkeepIsAdditional) {
+                    continue;
+                }
                 // Bake the enchanted player ID into effects that need it
                 CardEffect effectForStack = effect;
                 if (effect instanceof ExileGraveyardCardsEffect e && e.scope() == GraveyardExileScope.OWN) {
@@ -2929,6 +2935,7 @@ public class StepTriggerService {
             if (battlefield != null) {
                 for (Permanent own : battlefield) {
                     if (!gameQueryService.isCreature(gameData, own)) continue;
+                    if (validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, own, trigger.controllerId())) continue;
                     int ownPower = gameQueryService.getEffectivePower(gameData, own);
                     if (hasOpponentCreatureAtMostPower(gameData, trigger.controllerId(), ownPower)) {
                         validOwnTargets.add(own.getId());
@@ -2966,7 +2973,8 @@ public class StepTriggerService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(trigger.controllerId());
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (!p.getCard().hasType(CardType.LAND) && p.getCard().getManaValue() >= minOpponentManaValue) {
+                if (!p.getCard().hasType(CardType.LAND) && p.getCard().getManaValue() >= minOpponentManaValue
+                        && !validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, p, trigger.controllerId())) {
                     validOwnTargets.add(p.getId());
                 }
             }

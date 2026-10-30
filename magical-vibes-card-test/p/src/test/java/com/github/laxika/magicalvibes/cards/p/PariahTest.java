@@ -399,7 +399,7 @@ class PariahTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .contains(firstCreature, secondCreature);
-        harness.handlePermanentChosen(player2, secondCreature.getId());
+        harness.handleListChoice(player2, "Grizzly Bears (2): deal the damage to it instead");
 
         harness.assertLife(player2, 20);
         assertThat(gd.playerBattlefields.get(player2.getId()))

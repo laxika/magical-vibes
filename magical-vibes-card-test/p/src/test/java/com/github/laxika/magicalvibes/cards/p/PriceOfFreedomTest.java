@@ -31,6 +31,7 @@ class PriceOfFreedomTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
 
         harness.assertNotOnBattlefield(player2, "Fountain of Youth");
         harness.assertInGraveyard(player2, "Fountain of Youth");
@@ -55,6 +56,7 @@ class PriceOfFreedomTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
 
         harness.assertInGraveyard(player2, "Forest");

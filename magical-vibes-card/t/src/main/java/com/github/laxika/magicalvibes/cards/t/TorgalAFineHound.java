@@ -32,7 +32,7 @@ public class TorgalAFineHound extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSubtypePredicate(CardSubtype.HUMAN))),
                 List.of(new GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect(
-                        new PermanentCount(dogsAndWolves, CountScope.CONTROLLER)))));
+                        new PermanentCount(dogsAndWolves, CountScope.CONTROLLER), true))));
 
         addActivatedAbility(ManaAbilities.tapForAnyColor());
     }

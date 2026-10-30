@@ -429,8 +429,10 @@ public class MayPenaltyChoiceHandlerService {
             }
 
             if (!validIndices.isEmpty()) {
-                // Paying the Ward cost is the controller's own choice — not an opponent-caused discard.
-                gameData.discardCausedByOpponent = false;
+                // The discard is caused by the ability that demanded it, so it is opponent-caused when that
+                // ability's controller is not the discarding player (Loxodon Smiter, Reality Smasher).
+                gameData.discardCausedByOpponent = ability.sourceControllerId() != null
+                        && !ability.sourceControllerId().equals(controllerId);
                 if (effect.random()) {
                     playerInteractionSupport.resolveRandomDiscardCards(
                             gameData, controllerId, ability.sourceCard().getName(), effect.ransomMagnitude());

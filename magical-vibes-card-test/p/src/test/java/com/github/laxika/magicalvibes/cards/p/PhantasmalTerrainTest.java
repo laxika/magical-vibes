@@ -96,16 +96,19 @@ class PhantasmalTerrainTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Changing a nonbasic land to a basic type removes its printed abilities")
+    @DisplayName("Changing a nonbasic land to a basic type removes its printed abilities and gains the basic mana ability")
     void changingNonbasicLandToBasicTypeRemovesPrintedAbilities() {
         Permanent city = harness.addToBattlefieldAndReturn(player1, new CityOfBrass());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new PhantasmalTerrain());
         aura.setAttachedTo(city.getId());
         aura.setChosenSubtype(CardSubtype.SWAMP);
+        int lifeBefore = gd.getLife(player1.getId());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class);
-        assertThat(city.isTapped()).isFalse();
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
     }
 
     @Test

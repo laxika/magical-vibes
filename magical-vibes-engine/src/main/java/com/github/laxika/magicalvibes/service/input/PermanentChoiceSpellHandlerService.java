@@ -538,7 +538,7 @@ public class PermanentChoiceSpellHandlerService {
         int totalSlots = card.getMaxTargets();
         if (chosen.size() < totalSlots) {
             List<UUID> nextCandidates = exileCastTargetSupport.nextSlotCandidates(gameData, card, ect.controllerId(), chosen);
-            if (nextCandidates.isEmpty()) {
+            if (nextCandidates.isEmpty() && chosen.size() < card.getMinTargets()) {
                 // The full target set was pre-validated before prompting, so this only happens if a
                 // remaining slot's targets vanished mid-selection. The spell can't be legally cast:
                 // a copy ceases to exist (CR 707.10a), a real card goes to its owner's graveyard.
@@ -558,15 +558,17 @@ public class PermanentChoiceSpellHandlerService {
                 return;
             }
 
-            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
-                    card, ect.controllerId(), ect.spellEffects(), ect.spellType(), ect.copy(), chosen,
-                    ect.genericCostReduction(), ect.resolutionCast(), ect.lifeLossAfterCast(),
-                    ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard(), ect.payManaCost(),
-                    ect.afterSuccessfulCastEffect(), ect.sourcePermanentId(), ect.xValue(), ect.physicalCard()));
-            playerInputService.beginPermanentChoice(gameData, ect.controllerId(), nextCandidates,
-                    "Choose a target for " + card.getName() + ".");
-            gameLogService.append(gameData, GameLog.builder().card(card).text(" targets " + getTargetDisplayName(gameData, permanentId) + " — choosing next target.").build());
-            return;
+            if (!nextCandidates.isEmpty()) {
+                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
+                        card, ect.controllerId(), ect.spellEffects(), ect.spellType(), ect.copy(), chosen,
+                        ect.genericCostReduction(), ect.resolutionCast(), ect.lifeLossAfterCast(),
+                        ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard(), ect.payManaCost(),
+                        ect.afterSuccessfulCastEffect(), ect.sourcePermanentId(), ect.xValue(), ect.physicalCard()));
+                playerInputService.beginPermanentChoice(gameData, ect.controllerId(), nextCandidates,
+                        "Choose a target for " + card.getName() + ".");
+                gameLogService.append(gameData, GameLog.builder().card(card).text(" targets " + getTargetDisplayName(gameData, permanentId) + " — choosing next target.").build());
+                return;
+            }
         }
 
         // Every target slot is filled — put the spell on the stack preserving the declared order.

@@ -69,11 +69,17 @@ public class ReturnTargetPermanentsThenEffectHandler implements NormalEffectHand
 
         List<Permanent> returned = new ArrayList<>();
         int eventValue = 0;
+        int cardsReturned = 0;
         for (Permanent target : toReturn) {
             int statValue = snapshotStat(gameData, target, e.stat());
+            // A melded permanent leaving the battlefield puts two cards into hand (CR 712.21).
+            int cardCount = e.countOnlyCardsReturnedToControllersHand()
+                    ? cardsOwnedBy(gameData, target, entry.getControllerId())
+                    : target.cardsLeavingBattlefield().size();
             if (permanentRemovalService.removePermanentToHand(gameData, target, true)) {
                 returned.add(target);
                 eventValue += statValue;
+                cardsReturned += cardCount;
                 gameLogService.append(gameData,
                         GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
                 log.info("Game {} - {} returned to owner's hand by {}",
@@ -89,10 +95,27 @@ public class ReturnTargetPermanentsThenEffectHandler implements NormalEffectHand
 
         StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(e.thenEffect()), entry.getTargetId(), entry.getSourcePermanentId());
-        thenEntry.setEventValue(e.stat() == EventStat.NONE ? returned.size() : eventValue);
+        thenEntry.setEventValue(e.stat() == EventStat.NONE ? cardsReturned : eventValue);
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         effectResolutionService.resolveEffects(gameData, thenEntry);
         gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    private int cardsOwnedBy(GameData gameData, Permanent target, UUID playerId) {
+        UUID trackedOwnerId = gameData.stolenCreatures.get(target.getId());
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        int count = 0;
+        for (var card : target.cardsLeavingBattlefield()) {
+            boolean original = card.getId().equals(target.getOriginalCard().getId());
+            UUID ownerId = original && trackedOwnerId != null ? trackedOwnerId : gameData.ownerOf(card);
+            if (ownerId == null) {
+                ownerId = controllerId;
+            }
+            if (playerId.equals(ownerId)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private int snapshotStat(GameData gameData, Permanent target, EventStat stat) {

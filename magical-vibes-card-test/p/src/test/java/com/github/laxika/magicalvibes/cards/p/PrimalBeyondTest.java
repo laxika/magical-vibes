@@ -170,7 +170,7 @@ class PrimalBeyondTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Frogtosser Banneret");
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
     }
 
     @Test
@@ -247,7 +247,7 @@ class PrimalBeyondTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Brighthearth Banneret");
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
     }
 
     private Permanent addLandReady(Player player) {

@@ -1159,11 +1159,22 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * @param excludedGraveyardCardId a card excluded by an "other" graveyard target restriction,
      *                                usually the creature that caused the trigger; {@code null}
      *                                when no such restriction applies.
+     * @param markSourceOncePerTurnOnAcceptance whether the once-per-turn limit of the source is used
+     *                                          only when the "you may" is accepted on resolution
      */
     record DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
                               Integer eventValue, Permanent sourcePermanentSnapshot,
                               TargetFilter targetFilter, UUID excludedGraveyardCardId,
-                              boolean creaturesOnly) implements PermanentChoiceContext {
+                              boolean creaturesOnly,
+                              boolean markSourceOncePerTurnOnAcceptance) implements PermanentChoiceContext {
+
+        public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
+                                  Integer eventValue, Permanent sourcePermanentSnapshot,
+                                  TargetFilter targetFilter, UUID excludedGraveyardCardId,
+                                  boolean creaturesOnly) {
+            this(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot, targetFilter,
+                    excludedGraveyardCardId, creaturesOnly, false);
+        }
 
         public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects) {
             this(dyingCard, controllerId, effects, null, null, null, null, true);
@@ -3166,6 +3177,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             implements PermanentChoiceContext {}
 
     record SuspectChosenOtherCreature() implements PermanentChoiceContext {}
+
+    /** Twilight Diviner: choose which of the creatures that entered together a token copy is made of. */
+    record CreateTokenCopyOfOneOfTriggeringPermanents() implements PermanentChoiceContext {}
 
     /** Contractual Safeguard: choose the creature whose counter kind is copied. */
     record ContractualSafeguardReference() implements PermanentChoiceContext {}

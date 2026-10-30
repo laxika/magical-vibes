@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenAndLinkToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -27,20 +28,23 @@ import java.util.Set;
 public class SplinteringWind extends Card {
 
     public SplinteringWind() {
-        // The Splinter token carries its own cumulative upkeep and leaves-the-battlefield trigger.
+        // The Splinter token carries its own cumulative upkeep. "When it leaves the battlefield" is a
+        // delayed triggered ability of this ability (CR 603.7), so "you" stays the activating player
+        // even if the token has changed controllers.
         Map<EffectSlot, CardEffect> splinterEffects = Map.of(
-                EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{G}"),
-                EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, SequenceEffect.of(
-                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER),
-                        new MassDamageEffect(1, false, false, new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentControlledBySourceControllerPredicate())))));
+                EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{G}"));
+        CardEffect splinterLeaves = SequenceEffect.of(
+                new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER),
+                new MassDamageEffect(1, false, false, new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentControlledBySourceControllerPredicate()))));
 
         CreateTokenEffect splinter = new CreateTokenEffect(1, "Splinter", 1, 1, CardColor.GREEN,
                 List.of(CardSubtype.SPLINTER), Set.of(Keyword.FLYING), Set.of(), splinterEffects);
 
         addActivatedAbility(new ActivatedAbility(false, "{2}{G}",
-                List.of(new DealDamageToTargetCreatureEffect(1), splinter),
+                List.of(new DealDamageToTargetCreatureEffect(1),
+                        new CreateTokenAndLinkToSourceEffect(splinter, false, splinterLeaves)),
                 "{2}{G}: Splintering Wind deals 1 damage to target creature. Create a 1/1 green "
                         + "Splinter creature token. It has flying and \"Cumulative upkeep {G}.\" When it "
                         + "leaves the battlefield, it deals 1 damage to you and each creature you control."));

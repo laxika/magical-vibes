@@ -31,14 +31,21 @@ public class ManifestDreadTriggerCollectorService {
         Card graveyardCard = manifestDread.cardPutIntoGraveyard();
         ReturnTriggeringCardToOwnerHandEffect baked = new ReturnTriggeringCardToOwnerHandEffect(
                 graveyardCard == null ? null : graveyardCard.getId(), manifestDread.manifestingPlayerId());
-        match.gameData().enqueueTrigger(new StackEntry(
+        StackEntry trigger = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(baked)),
                 null,
-                match.permanent().getId()));
+                match.permanent().getId());
+        if (graveyardCard != null) {
+            // CR 400.7: if the card leaves the graveyard before the trigger resolves, it is a new object
+            // and the return must not happen.
+            trigger.setTriggeringCardGraveyardEntryVersion(
+                    match.gameData().graveyardEntryVersion(graveyardCard.getId()));
+        }
+        match.gameData().enqueueTrigger(trigger);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on manifest dread", match.gameData().id, sourceCard.getName());
         return true;

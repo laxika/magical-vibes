@@ -8,10 +8,18 @@ import java.util.List;
  * each entrant's abilities see the others enter (Michelangelo, Improviser's "a creature card and/or a
  * land card"). Held cards stay in hand and are not offered to later steps. Only the enter-tapped option
  * of a held put applies.
+ *
+ * <p>With {@code pickedCardsLeaveHand} a picked card is taken out of the hand at once, so later steps number the
+ * remaining hand cards without it (Patron of the Moon); the cards return to the hand just before entering together.
  */
-public record PutCardsOntoBattlefieldTogetherEffect(List<CardEffect> steps) implements CardEffect {
+public record PutCardsOntoBattlefieldTogetherEffect(List<CardEffect> steps, boolean pickedCardsLeaveHand)
+        implements CardEffect {
 
     public PutCardsOntoBattlefieldTogetherEffect {
         steps = List.copyOf(steps);
+    }
+
+    public PutCardsOntoBattlefieldTogetherEffect(List<CardEffect> steps) {
+        this(steps, false);
     }
 }

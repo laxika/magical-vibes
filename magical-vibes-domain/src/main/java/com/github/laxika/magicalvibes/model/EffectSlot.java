@@ -1355,6 +1355,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Attacking a planeswalker they control does not trigger it. The attacking creature's permanent
      *  ID is stored as the non-targeting targetId. Checked in {@code CombatAttackService.declareAttackers}. */
     ON_CREATURE_ATTACKS_YOU_DIRECTLY,
+    /** Triggers once per attacking creature whenever a creature attacks the player this permanent's
+     *  controller is the defending player for, including a battle that player protects (CR 310.9d,
+     *  "defending player" refers to the protector of an attacked battle). Attacks on battles fire only
+     *  this slot, not {@link #ON_CREATURE_ATTACKS_YOU}. Checked in {@code CombatAttackService.declareAttackers}. */
+    ON_CREATURE_ATTACKS_DEFENDING_PLAYER,
     /** Triggers once per combat when one or more creatures attack the controller of this permanent.
      *  Unlike {@link #ON_CREATURE_ATTACKS_YOU} this fires a single time no matter how many creatures
      *  attack, and only counts creatures attacking the player directly (attacking a planeswalker they

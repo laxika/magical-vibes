@@ -14,7 +14,7 @@ public class SoldOut extends Card {
 
     public SoldOut() {
         target(TargetFilters.creature()).addEffect(EffectSlot.SPELL, new ExileTargetPermanentThenEffect(
-                CreateTokenEffect.ofClueToken(1),
+                CreateTokenEffect.ofClueToken(1).withInvestigate(false),
                 ThenEffectRecipient.CONTROLLER,
                 new PermanentDealtDamageThisTurnPredicate()));
     }

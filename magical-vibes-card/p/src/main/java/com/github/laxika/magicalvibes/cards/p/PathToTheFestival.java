@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.BasicLandTypesAmongControlledLandsAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -19,5 +20,7 @@ public class PathToTheFestival extends Card {
                 CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
                 new BasicLandTypesAmongControlledLandsAtLeast(3), new ScryEffect(1)));
+
+        addCastingOption(new FlashbackCast("{4}{G}"));
     }
 }

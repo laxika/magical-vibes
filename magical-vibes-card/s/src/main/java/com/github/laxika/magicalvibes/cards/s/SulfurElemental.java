@@ -15,7 +15,7 @@ import java.util.Set;
 public class SulfurElemental extends Card {
 
     public SulfurElemental() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, -1, GrantScope.ALL_CREATURES,
+        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, -1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))));
     }
 }

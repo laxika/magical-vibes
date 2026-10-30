@@ -79,6 +79,7 @@ class SuspiciousStowawayTest extends BaseCardTest {
         stowaway.setAttacking(true);
         DawnhartRejuvenator drawn = new DawnhartRejuvenator();
         harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of());
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         resolveCombat();

@@ -2617,6 +2617,7 @@ public class DamageTriggerCollectorService {
                 == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER) {
             entry.setTargetId(sd.damagedPlayerId());
         }
+        entry.setTriggeringPermanentId(sd.sourcePermanentId());
         entry.setNonTargeting(true);
         entry.setEventValue(damage);
         entry.setSourcePermanentSnapshot(new Permanent(equipment));

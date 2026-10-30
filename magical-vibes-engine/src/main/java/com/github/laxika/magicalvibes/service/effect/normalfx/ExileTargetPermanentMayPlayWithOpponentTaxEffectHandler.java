@@ -52,32 +52,36 @@ public class ExileTargetPermanentMayPlayWithOpponentTaxEffectHandler implements 
                 continue;
             }
 
-            Card exiledCard = target.getOriginalCard();
+            // A melded permanent is exiled as its two component cards, each of which its owner may play.
+            List<Card> exiledCards = target.getMeldComponentCards().isEmpty()
+                    ? List.of(target.getOriginalCard()) : List.copyOf(target.getMeldComponentCards());
             permanentRemovalService.removePermanentToExile(gameData, target);
 
-            UUID ownerId = gameQueryService.findExileOwnerById(gameData, exiledCard.getId());
-            if (ownerId != null) {
-                if (exile.opponentTax() > 0) {
-                    exileSupport.grantPlayWhileExiledWithOpponentTax(
-                            gameData, exiledCard.getId(), ownerId, entry.getControllerId(), exile.opponentTax());
+            for (Card exiledCard : exiledCards) {
+                UUID ownerId = gameQueryService.findExileOwnerById(gameData, exiledCard.getId());
+                if (ownerId != null) {
+                    if (exile.opponentTax() > 0) {
+                        exileSupport.grantPlayWhileExiledWithOpponentTax(
+                                gameData, exiledCard.getId(), ownerId, entry.getControllerId(), exile.opponentTax());
+                    } else {
+                        exileSupport.grantPlayWhileExiled(gameData, exiledCard.getId(), ownerId);
+                    }
+                    String ownerName = gameData.playerIdToName.get(ownerId);
+                    String permissionText = " may play it for as long as it remains exiled";
+                    if (exile.opponentTax() > 0) {
+                        permissionText += "; opponents pay {" + exile.opponentTax()
+                                + "} more to cast it this way";
+                    }
+                    gameLogService.append(gameData, GameLog.builder()
+                            .card(exiledCard)
+                            .text(" is exiled - " + ownerName + permissionText + ".")
+                            .build());
                 } else {
-                    exileSupport.grantPlayWhileExiled(gameData, exiledCard.getId(), ownerId);
+                    gameLogService.append(gameData, GameLog.cardThen(exiledCard, " is exiled."));
                 }
-                String ownerName = gameData.playerIdToName.get(ownerId);
-                String permissionText = " may play it for as long as it remains exiled";
-                if (exile.opponentTax() > 0) {
-                    permissionText += "; opponents pay {" + exile.opponentTax()
-                            + "} more to cast it this way";
-                }
-                gameLogService.append(gameData, GameLog.builder()
-                        .card(exiledCard)
-                        .text(" is exiled - " + ownerName + permissionText + ".")
-                        .build());
-            } else {
-                gameLogService.append(gameData, GameLog.cardThen(exiledCard, " is exiled."));
+                log.info("Game {} - {} exiled by {} (owner may play while exiled)",
+                        gameData.id, exiledCard.getName(), entry.getCard().getName());
             }
-            log.info("Game {} - {} exiled by {} (owner may play while exiled)",
-                    gameData.id, exiledCard.getName(), entry.getCard().getName());
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);

@@ -47,6 +47,12 @@ import java.util.List;
  * @param tapDamagedCreatures if {@code true}, each creature dealt damage this way is tapped.
  * @param damagedPlayersCantCastNoncreatureSpells if {@code true}, each player dealt damage this way
  *                          can't cast noncreature spells for the rest of the turn.
+ * @param xValueDivisionPrompt if {@code true}, the resolution-time division is prompted target by
+ *                          target with an X-value choice (Polukranos) instead of the list choice.
+ * @param allowsZeroTargetsWithPositiveTotal if {@code true}, the caster may choose zero targets even
+ *                          when the computed total is positive (Impact Resonance, Shatterskull
+ *                          Smashing); otherwise a positive total needs at least one target
+ *                          (CR 601.2d; Rolling Thunder, Fire Covenant).
  */
 public record DealDividedDamageEffect(
         DynamicAmount totalDamage,
@@ -59,7 +65,45 @@ public record DealDividedDamageEffect(
         boolean etbAssignments,
         boolean tapDamagedCreatures,
         boolean damagedPlayersCantCastNoncreatureSpells,
-        boolean canTargetPlaneswalkers) implements CardEffect {
+        boolean canTargetPlaneswalkers,
+        boolean xValueDivisionPrompt,
+        boolean allowsZeroTargetsWithPositiveTotal) implements CardEffect {
+
+    public DealDividedDamageEffect(
+            DynamicAmount totalDamage,
+            List<Integer> orderedAmounts,
+            DivisionMode mode,
+            PermanentPredicate targetRestriction,
+            int maxTargets,
+            boolean canTargetPlayers,
+            boolean damagedCreaturesCantBlock,
+            boolean etbAssignments,
+            boolean tapDamagedCreatures,
+            boolean damagedPlayersCantCastNoncreatureSpells,
+            boolean canTargetPlaneswalkers,
+            boolean xValueDivisionPrompt) {
+        this(totalDamage, orderedAmounts, mode, targetRestriction, maxTargets, canTargetPlayers,
+                damagedCreaturesCantBlock, etbAssignments, tapDamagedCreatures,
+                damagedPlayersCantCastNoncreatureSpells, canTargetPlaneswalkers,
+                xValueDivisionPrompt, false);
+    }
+
+    public DealDividedDamageEffect(
+            DynamicAmount totalDamage,
+            List<Integer> orderedAmounts,
+            DivisionMode mode,
+            PermanentPredicate targetRestriction,
+            int maxTargets,
+            boolean canTargetPlayers,
+            boolean damagedCreaturesCantBlock,
+            boolean etbAssignments,
+            boolean tapDamagedCreatures,
+            boolean damagedPlayersCantCastNoncreatureSpells,
+            boolean canTargetPlaneswalkers) {
+        this(totalDamage, orderedAmounts, mode, targetRestriction, maxTargets, canTargetPlayers,
+                damagedCreaturesCantBlock, etbAssignments, tapDamagedCreatures,
+                damagedPlayersCantCastNoncreatureSpells, canTargetPlaneswalkers, false, false);
+    }
 
     /**
      * Convenience constructor for the common case with neither of the two rider clauses (tapping
@@ -140,6 +184,16 @@ public record DealDividedDamageEffect(
                 new PermanentIsCreaturePredicate(), 0, false, false, false);
     }
 
+    /**
+     * Dynamic total divided among any number of target creatures where the caster may choose zero
+     * targets even if the total is positive (Impact Resonance).
+     */
+    public static DealDividedDamageEffect chosenAmongTargetCreaturesAllowingNoTargets(DynamicAmount totalDamage) {
+        return new DealDividedDamageEffect(
+                totalDamage, null, DivisionMode.CHOSEN, new PermanentIsCreaturePredicate(), 0,
+                false, false, false, false, false, false, false, true);
+    }
+
     /** Fixed total divided as you choose among any number of target creatures and planeswalkers. */
     public static DealDividedDamageEffect chosenAmongTargetCreaturesAndPlaneswalkers(int totalDamage) {
         return new DealDividedDamageEffect(
@@ -174,7 +228,7 @@ public record DealDividedDamageEffect(
     public static DealDividedDamageEffect xAmongTargetCreaturesAtResolution() {
         return new DealDividedDamageEffect(
                 new XValue(), null, DivisionMode.CHOSEN,
-                new PermanentIsCreaturePredicate(), 0, false, false, true);
+                new PermanentIsCreaturePredicate(), 0, false, false, true, false, false, false, true);
     }
 
     /**

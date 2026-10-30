@@ -144,7 +144,7 @@ class PlumesOfPeaceTest extends BaseCardTest {
         assertThat(revealed.size()).isEqualTo(1);
         assertThat(revealed.get(0).get("id").asText()).isEqualTo(plumes.getId().toString());
 
-        harness.passUntil(player1, TurnStep.DRAW);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         harness.clearMessages();
         harness.publishState();
 

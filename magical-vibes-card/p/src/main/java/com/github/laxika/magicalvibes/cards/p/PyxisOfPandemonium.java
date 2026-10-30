@@ -17,7 +17,8 @@ public class PyxisOfPandemonium extends Card {
     public PyxisOfPandemonium() {
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new ExileTopCardsToSourceEffect(1, true, false, LibraryScope.EACH_PLAYER)),
+                List.of(new ExileTopCardsToSourceEffect(1, true, false, LibraryScope.EACH_PLAYER,
+                        false, null, false, false)),
                 "{T}: Each player exiles the top card of their library face down."));
 
         addActivatedAbility(new ActivatedAbility(

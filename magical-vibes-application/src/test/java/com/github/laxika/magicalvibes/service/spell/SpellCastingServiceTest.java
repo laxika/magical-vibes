@@ -1197,6 +1197,7 @@ class SpellCastingServiceTest {
             // so paying the last 6 life is legal; losing at 0 is a separate state-based action.
             gd.playerLifeTotals.put(player1Id, 6);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(gameQueryService.canPlayerLoseLife(gd, player1Id)).thenReturn(true);
 
             Permanent first = new Permanent(createCreature("Bear", "{1}{G}"));
             Permanent second = new Permanent(createCreature("Elk", "{1}{G}"));

@@ -137,7 +137,7 @@ class PyricSalamanderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
         assertThat(gqs.getEffectivePower(gd, salamander)).isEqualTo(2);
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);

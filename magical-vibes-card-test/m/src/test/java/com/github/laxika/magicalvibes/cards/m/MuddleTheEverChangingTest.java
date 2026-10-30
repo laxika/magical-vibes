@@ -69,8 +69,8 @@ class MuddleTheEverChangingTest extends BaseCardTest {
         assertThat(token.isAttacking()).isTrue();
         assertThat(token.getAttackTarget()).isEqualTo(thirdPlayerId);
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(token.getId(),
-                        DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
+                .anyMatch(action -> action.permanentId().equals(token.getId())
+                        && action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
 
         harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.withAutoStop(TurnStep.END_OF_COMBAT, harness::passBothPriorities);

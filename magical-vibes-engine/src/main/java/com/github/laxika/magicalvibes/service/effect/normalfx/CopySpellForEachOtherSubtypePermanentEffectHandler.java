@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypeP
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,14 +54,15 @@ public class CopySpellForEachOtherSubtypePermanentEffectHandler implements Norma
         gameData.forEachPermanent((pid, perm) -> {
             if (perm.getId().equals(originalTargetId)) return;
             if (!perm.getCard().getSubtypes().contains(subtype)) return;
-            if (!validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spellCard, castingPlayerId)) return;
+            if (!validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spellCard, castingPlayerId,
+                    spellSnapshot.getXValue())) return;
 
             eligibleTargets.add(perm);
         });
 
         for (Permanent target : eligibleTargets) {
             Card copyCard = copySupport.createCopyCard(spellCard);
-            StackEntry copyEntry = copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, target.getId());
+            StackEntry copyEntry = createCopyRetargetingEveryTarget(spellSnapshot, copyCard, castingPlayerId, target);
 
             copySupport.addCopyToStack(gameData, copyEntry);
 
@@ -70,5 +73,24 @@ public class CopySpellForEachOtherSubtypePermanentEffectHandler implements Norma
         log.info("Game {} - {} triggers, creating {} copies of {} for each other {}",
                 gameData.id, entry.getCard().getName(), eligibleTargets.size(),
                 spellCard.getName(), subtype.getDisplayName());
+    }
+
+    /**
+     * The original targets all name the one Golem the spell targets, so every repeated target id and every
+     * divided damage portion moves onto the new target.
+     */
+    private StackEntry createCopyRetargetingEveryTarget(StackEntry spellSnapshot, Card copyCard,
+                                                        UUID castingPlayerId, Permanent target) {
+        if (!spellSnapshot.getDamageAssignments().isEmpty()) {
+            int totalDamage = spellSnapshot.getDamageAssignments().values().stream()
+                    .mapToInt(Integer::intValue).sum();
+            return copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, target.getId(),
+                    Map.of(target.getId(), totalDamage), List.of(target.getId()));
+        }
+        if (spellSnapshot.getTargetIds().size() > 1) {
+            return copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, target.getId(),
+                    Map.of(), new ArrayList<>(Collections.nCopies(spellSnapshot.getTargetIds().size(), target.getId())));
+        }
+        return copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, target.getId());
     }
 }

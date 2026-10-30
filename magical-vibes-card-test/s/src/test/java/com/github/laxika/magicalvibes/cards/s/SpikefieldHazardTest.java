@@ -94,6 +94,7 @@ class SpikefieldHazardTest extends BaseCardTest {
 
     @Test
     void exileReplacementExpiresAtCleanup() {
+        harness.setHand(player2, List.of());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new TurntimberAscetic());
         castHazard(target.getId());
 

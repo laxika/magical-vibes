@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandToPerpetuallyGrantEnterExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -21,7 +22,8 @@ public class PullOfTheMistMoon extends Card {
         target(TargetFilters.nonlandPermanentAnOpponentControls())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ExileTargetPermanentUntilSourceLeavesEffect(
-                                false, TargetFilters.nonlandPermanentAnOpponentControls().predicate()));
+                                false, TargetFilters.nonlandPermanentAnOpponentControls().predicate()),
+                        TriggerMode.INDEPENDENT);
 
         // If it was kicked, choose a nonland permanent card in your hand. It perpetually gains the
         // same exile ability when it enters.

@@ -65,7 +65,11 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                 preventAll("InstantOrSorceryPrevented", "Prevent damage from instants and sorceries",
                         ctx -> gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(ctx.gameData(), ctx.entry())),
                 effect("TargetSpellPrevented", PREVENTION,
-                        ctx -> gameQueryService.isDamageFromTargetSpellPrevented(ctx.gameData(), ctx.entry()),
+                        ctx -> gameQueryService.isDamageFromTargetSpellPrevented(ctx.gameData(), ctx.entry())
+                                && !(!ctx.combat() && damageSupport.getObject().isSourcePermanentPreventedFromDealingDamage(
+                                ctx.gameData(), ctx.entry(), false)
+                                && gameQueryService.isTargetSpellShieldPlainPermanentSourcePrevention(
+                                ctx.gameData(), ctx.entry())),
                         ctx -> "Prevent the targeted spell's damage",
                         ctx -> {
                             damageSupport.getObject().gainLifeForTargetSpellDamage(ctx.gameData(), ctx.entry(), ctx.amount());

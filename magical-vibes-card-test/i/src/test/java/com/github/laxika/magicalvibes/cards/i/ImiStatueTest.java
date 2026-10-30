@@ -104,7 +104,6 @@ class ImiStatueTest extends BaseCardTest {
         forest.tap();
 
         advanceToNextTurn(player2);
-        harness.handleMultiplePermanentsChosen(player1, List.of(firstKite.getId(), secondKite.getId()));
 
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
                 List.of(firstKite.getId(), secondKite.getId())))
@@ -132,7 +131,6 @@ class ImiStatueTest extends BaseCardTest {
         secondForest.tap();
 
         advanceToNextTurn(player2);
-        harness.handleMultiplePermanentsChosen(player1, List.of(firstKite.getId()));
         harness.handleMultiplePermanentsChosen(player1, List.of(firstKite.getId(), firstForest.getId()));
 
         assertThat(firstKite.isTapped()).isFalse();

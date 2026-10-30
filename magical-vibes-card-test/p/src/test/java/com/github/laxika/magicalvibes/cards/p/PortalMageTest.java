@@ -100,7 +100,8 @@ class PortalMageTest extends BaseCardTest {
         int lifeBefore = gd.getLife(player2.getId());
         preparePortalMage();
         declareAttackers(List.of(0));
-        harness.addToBattlefield(player2, new BlazingArchon());
+        // Tapped, so the Archon can't block and the reselected attack connects.
+        harness.addToBattlefieldAndReturn(player2, new BlazingArchon()).tap();
 
         castPortalMage(attacker.getId());
         harness.passBothPriorities();

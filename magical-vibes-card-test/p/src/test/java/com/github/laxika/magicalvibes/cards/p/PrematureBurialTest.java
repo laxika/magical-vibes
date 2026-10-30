@@ -164,6 +164,9 @@ class PrematureBurialTest extends BaseCardTest {
                                      Map<UUID, List<Card>> entriesByController) {
         harness.addToBattlefield(player2, creature);
         entriesByController.put(player2.getId(), new ArrayList<>(List.of(creature)));
+        gd.permanentsEnteredSincePlayerLastTurnEnded
+                .computeIfAbsent(player1.getId(), id -> new java.util.HashSet<>())
+                .add(creature.getId());
     }
 
     private void castPrematureBurial(Card creature) {

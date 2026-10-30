@@ -156,6 +156,7 @@ public class CombatService {
         gameData.ragingRiverBlockRestrictionsThisCombat.clear();
         gameData.combatDamagePlayerAssignments.clear();
         gameData.combatSharedDamagePreventionAllocations.clear();
+        gameData.combatDamageAssignmentModeChoices.clear();
         gameData.combatDamagePendingIndices.clear();
         gameData.combatDamageBlockerAssignments.clear();
         gameData.combatDamagePendingBlockerIndices.clear();

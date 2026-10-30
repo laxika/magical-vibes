@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.FreeEquipEffect;
 import com.github.laxika.magicalvibes.model.effect.FreeEquipWhileEnduringStoryEffect;
 import com.github.laxika.magicalvibes.model.effect.FreePowerUpEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstActivatedAbilityCostReducingEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceFirstActivatedAbilityCostForControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSacrificePerManaSymbolTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeSpellCost;
@@ -1568,6 +1569,12 @@ public class CastingCostService {
     public void recordActivatedAbilityCostReductionUse(GameData gameData, UUID activatingPlayerId,
                                                         Permanent sourcePermanent, ActivatedAbility ability,
                                                         UUID targetId, List<UUID> targetIds) {
+        if (activatingPlayerId.equals(gameData.activePlayerId)
+                && targetsControlledCreature(gameData, activatingPlayerId, targetId, targetIds)) {
+            gameData.keyedOncePerTurnTriggersFiredThisTurn
+                    .computeIfAbsent(activatingPlayerId, ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                    .add(ReduceFirstActivatedAbilityCostForControlledCreatureEffect.USAGE_KEY);
+        }
         List<Permanent> battlefield = gameData.playerBattlefields.get(activatingPlayerId);
         if (battlefield == null) return;
 
@@ -1600,7 +1607,9 @@ public class CastingCostService {
             if (!activatingPlayerId.equals(gameData.activePlayerId)
                     || first.isUsedThisTurn(gameData, reducingPermanent.getId())
                     || (first.requiresControlledCreatureTarget()
-                    && !targetsControlledCreature(gameData, activatingPlayerId, targetId, targetIds))) {
+                    && (!targetsControlledCreature(gameData, activatingPlayerId, targetId, targetIds)
+                    || gameData.keyedOncePerTurnTriggersFiredThisTurn
+                    .getOrDefault(activatingPlayerId, Set.of()).contains(first.usageKey())))) {
                 return false;
             }
         }

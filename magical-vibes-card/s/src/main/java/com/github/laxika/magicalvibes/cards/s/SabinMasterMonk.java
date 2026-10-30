@@ -25,7 +25,7 @@ public class SabinMasterMonk extends Card {
     public SabinMasterMonk() {
         List<CastingCost> blitzCosts = List.of(
                 new ManaCastingCost("{2}{R}{R}"), new DiscardCardCastingCost());
-        addCastingOption(new AlternateHandCast(blitzCosts));
+        addCastingOption(AlternateHandCast.blitz(blitzCosts));
         addCastingOption(new GraveyardCast(null, "{2}{R}{R}",
                 List.of(new DiscardCardCastingCost()), null));
 

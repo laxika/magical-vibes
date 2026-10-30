@@ -132,7 +132,7 @@ class SyntheticDestinyTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         harness.assertOnBattlefield(player1, "Air Elemental");
         harness.assertOnBattlefield(player2, "Llanowar Elves");

@@ -28,6 +28,7 @@ public class Persist extends Card {
                         new CardNotPredicate(new CardSupertypePredicate(CardSupertype.LEGENDARY)))))
                 .targetGraveyard(true)
                 .enterWithCounter(CounterType.MINUS_ONE_MINUS_ONE)
+                .enterWithCounterCount(1)
                 .build());
     }
 }

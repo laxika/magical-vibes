@@ -51,11 +51,15 @@ public class DealDamageToAnyTargetThenExileIfDamagedEffectHandler implements Nor
 
         damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, damage, false);
 
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        int damageBeforeThisEffect = damageBefore.getOrDefault(targetId, 0);
-        int damageAfterThisEffect = gameData.damageDealtToPermanentsThisTurn.getOrDefault(targetId, 0);
-        if (target != null && damageAfterThisEffect > damageBeforeThisEffect) {
-            target.setExileInsteadOfDieThisTurn(true);
+        // The damage may have been redirected (Harms Way), so the permanent that actually received it is marked.
+        for (Map.Entry<UUID, Integer> dealtDamage : gameData.damageDealtToPermanentsThisTurn.entrySet()) {
+            if (dealtDamage.getValue() <= damageBefore.getOrDefault(dealtDamage.getKey(), 0)) {
+                continue;
+            }
+            Permanent damaged = gameQueryService.findPermanentById(gameData, dealtDamage.getKey());
+            if (damaged != null) {
+                damaged.setExileInsteadOfDieThisTurn(true);
+            }
         }
 
         gameOutcomeService.checkWinCondition(gameData);

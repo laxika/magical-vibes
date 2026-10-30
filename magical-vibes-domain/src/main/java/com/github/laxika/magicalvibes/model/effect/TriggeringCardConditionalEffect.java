@@ -10,8 +10,25 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  */
 public record TriggeringCardConditionalEffect(
         CardPredicate predicate,
-        CardEffect wrapped
+        CardEffect wrapped,
+        boolean gatesSource
 ) implements CardEffect, BlockedCreatureTriggerEffect {
+
+    /**
+     * Gate for an ordinary "whenever [matching creature] enters" wording. In a self-or-ally slot
+     * ("this creature or another [type]") the source's own entry is not subject to the gate.
+     */
+    public TriggeringCardConditionalEffect(CardPredicate predicate, CardEffect wrapped) {
+        this(predicate, wrapped, false);
+    }
+
+    /**
+     * Gate that also applies to the source's own entry in a self-or-ally slot, for wordings such as
+     * "whenever a Dragon you control enters" where the source only counts if it matches itself.
+     */
+    public static TriggeringCardConditionalEffect gatingSource(CardPredicate predicate, CardEffect wrapped) {
+        return new TriggeringCardConditionalEffect(predicate, wrapped, true);
+    }
 
     @Override
     public boolean hasAbilityResolutionCondition() {

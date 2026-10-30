@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventTargetCreatureRegenerationThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
@@ -22,9 +20,7 @@ public class PhyrexianSlayer extends Card {
         addEffect(EffectSlot.ON_BECOMES_BLOCKED,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE)),
-                        SequenceEffect.of(
-                                new PreventTargetCreatureRegenerationThisTurnEffect(),
-                                new DestroyCreatureBlockingThisEffect())),
+                        new DestroyCreatureBlockingThisEffect(true)),
                 TriggerMode.PER_BLOCKER);
     }
 }

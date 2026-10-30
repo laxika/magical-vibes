@@ -76,7 +76,6 @@ class OriginOfTheHiddenOnesTest extends BaseCardTest {
                     gd.playerBattlefields.get(player1.getId()).indexOf(assassin),
                     gd.playerBattlefields.get(player1.getId()).indexOf(nonAssassin)));
             resolveAllTriggers();
-            harness.handlePermanentChosen(player1, player2.getId());
 
             assertThat(assassinTokens()).hasSize(1)
                     .allSatisfy(token -> {
@@ -129,9 +128,7 @@ class OriginOfTheHiddenOnesTest extends BaseCardTest {
                     gd.playerBattlefields.get(player1.getId()).indexOf(first),
                     gd.playerBattlefields.get(player1.getId()).indexOf(second)));
             resolveAllTriggers();
-            harness.handlePermanentChosen(player1, player2.getId());
             resolveAllTriggers();
-            harness.handlePermanentChosen(player1, player2.getId());
 
             assertThat(assassinTokens()).hasSize(2).allSatisfy(token -> {
                 assertThat(token.isTapped()).isTrue();

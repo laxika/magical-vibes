@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 public class PsychicStrike extends Card {
 
     public PsychicStrike() {
-        // Counter target spell. Its controller mills two cards. The mill is listed before the
-        // counter so the spell is still on the stack when TARGET_SPELL_CONTROLLER is resolved
-        // (rules-equivalent; also mills for an uncounterable spell).
-        addEffect(EffectSlot.SPELL, new MillEffect(2, MillRecipient.TARGET_SPELL_CONTROLLER));
+        // Counter target spell. Its controller mills two cards. The counter is applied first (CR 608.2c),
+        // so the countered spell enters the graveyard before the milled cards; the mill still finds the
+        // spell's controller through the countered-spell record kept on the stack entry.
         addEffect(EffectSlot.SPELL, new CounterSpellEffect());
+        addEffect(EffectSlot.SPELL, new MillEffect(2, MillRecipient.TARGET_SPELL_CONTROLLER));
     }
 }

@@ -14,7 +14,7 @@ public class TwilightDiviner extends Card {
 
     public TwilightDiviner() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SurveilEffect(2));
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ALLY_CREATURES_ENTERS_BATTLEFIELD,
                 new EnteringCreatureFromGraveyardConditionalEffect(
                         new OncePerTurnTriggerEffect(new CreateTokenCopyOfTargetPermanentEffect())));
     }

@@ -25,7 +25,7 @@ public class PropheticTitan extends Card {
 
     public PropheticTitan() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(
-                ChooseOneEffect.oneOrMoreWhen(List.of(
+                ChooseOneEffect.allWhen(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "This creature deals 4 damage to any target.",
                                 new DealDamageToAnyTargetEffect(4),

@@ -122,6 +122,7 @@ class PathToTheWorldTreeTest extends BaseCardTest {
         harness.setLife(player1, 10);
         harness.setLife(player2, 20);
         addAbilityMana();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId(), creature.getId()));
         harness.assertInGraveyard(player1, "Path to the World Tree");
@@ -131,7 +132,7 @@ class PathToTheWorldTreeTest extends BaseCardTest {
 
         harness.assertLife(player1, 12);
         harness.assertLife(player2, 18);
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
         harness.assertOnBattlefield(player1, "Bear");
         harness.assertInHand(player2, "Grizzly Bears");
     }

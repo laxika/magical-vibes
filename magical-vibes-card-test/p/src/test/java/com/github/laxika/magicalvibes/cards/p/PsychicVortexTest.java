@@ -82,7 +82,7 @@ class PsychicVortexTest extends BaseCardTest {
 
         gd.playerBattlefields.get(player1.getId()).remove(vortex);
         gd.playerGraveyards.get(player1.getId()).add(vortex.getCard());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(island);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

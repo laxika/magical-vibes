@@ -55,9 +55,10 @@ public class PlanewideCelebration extends Card {
                         List<CardEffect> effects = new ArrayList<>();
                         addRepeated(effects, createCitizen, counts[0]);
                         if (counts[1] > 0) {
+                            // Each chosen instance of the mode has its own target, so one card can fill them all.
                             effects.add(new ReturnTargetCardsFromGraveyardToHandEffect(
                                     new CardIsPermanentPredicate(), counts[1], null,
-                                    false, false, counts[1], false, Set.of(), false));
+                                    false, false, 1, false, Set.of(), false));
                         }
                         addRepeated(effects, proliferate, counts[2]);
                         addRepeated(effects, gainLife, counts[3]);

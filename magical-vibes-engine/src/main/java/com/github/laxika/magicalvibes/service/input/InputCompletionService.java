@@ -43,6 +43,9 @@ public class InputCompletionService {
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerMayPutCardFromHandToBattlefieldSupport
             eachPlayerMayPutSupport;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.ExileTopCardMayPutPermanentSupport
+            exileTopCardMayPutSupport;
 
 
     @Autowired
@@ -167,6 +170,13 @@ public class InputCompletionService {
             eachPlayerMayPutSupport.beginNextChoice(gameData, putContinuation.remainingPlayerIds(),
                     putContinuation.chosenCardIds(), putContinuation.effect(), putContinuation.cardName(),
                     putContinuation.cardPutThisRound(), putContinuation.startingPlayerId());
+            if (gameData.interaction.isAwaitingInput()) return;
+        }
+        var exileTopRepeat = gameData.pendingExileTopCardRepeat;
+        if (exileTopRepeat != null) {
+            gameData.pendingExileTopCardRepeat = null;
+            exileTopCardMayPutSupport.exileTopCardAndPromptIfPermanent(gameData, exileTopRepeat.controllerId(),
+                    exileTopRepeat.sourceName());
             if (gameData.interaction.isAwaitingInput()) return;
         }
         if (gameData.pendingInteractions.stream().anyMatch(pending ->

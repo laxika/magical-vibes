@@ -78,6 +78,7 @@ class PutridPalsTest extends BaseCardTest {
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, new PutridPals());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, permanent));
         harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.passUntil(player2, TurnStep.UPKEEP);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);

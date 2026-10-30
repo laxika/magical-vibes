@@ -38,7 +38,8 @@ class PlantASaplingTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
-        assertThat(gd.playerDecks.get(player1.getId())).contains(plant).doesNotContain(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).anyMatch(card -> card.getId().equals(plant.getId()))
+                .doesNotContain(forest);
     }
 
     @Test
@@ -53,7 +54,7 @@ class PlantASaplingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerDecks.get(player1.getId())).contains(plant);
+        assertThat(gd.playerDecks.get(player1.getId())).anyMatch(card -> card.getId().equals(plant.getId()));
     }
 
     @Test
@@ -129,7 +130,9 @@ class PlantASaplingTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(plant, forest);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2)
+                .contains(forest)
+                .anyMatch(card -> card.getId().equals(plant.getId()));
     }
 
     @Test

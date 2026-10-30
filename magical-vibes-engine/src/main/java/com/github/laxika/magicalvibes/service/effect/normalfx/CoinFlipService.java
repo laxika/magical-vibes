@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.RecordedCoinFlip;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -247,6 +250,16 @@ public class CoinFlipService {
 
         boolean pokeyApplies = applyPokey && gameQueryService.countPlayerControlledStaticEffects(
                 gameData, playerId, PokeyTheScallywaggEffect.class) > 0;
+        if (pokeyApplies && choiceWindow && interactionHandlerRegistry != null
+                && !gameData.interaction.isAwaitingInput()) {
+            Boolean answer = gameData.pokeyReplacementAnswer;
+            gameData.pokeyReplacementAnswer = null;
+            if (answer == null) {
+                beginPokeyReplacementChoice(gameData, playerId);
+                throw new CoinFlipChoicePending();
+            }
+            pokeyApplies = answer;
+        }
         if (pokeyApplies) {
             List<RecordedCoinFlip> rolls = new ArrayList<>(count);
             for (int coin = 0; coin < count; coin++) {
@@ -304,6 +317,37 @@ public class CoinFlipService {
             throw new CoinFlipChoicePending();
         }
         return flips;
+    }
+
+    /**
+     * Asks {@code playerId} whether Pokey, the Scallywagg replaces the coin flip with a d20 roll ("you may instead roll
+     * a d20"). The resolving effect is resolved again once answered; {@link #answerPokeyReplacement} keeps the answer.
+     */
+    private void beginPokeyReplacementChoice(GameData gameData, UUID playerId) {
+        Permanent pokey = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(PokeyTheScallywaggEffect.class::isInstance)
+                        && !gameQueryService.hasLostAllAbilities(gameData, permanent))
+                .findFirst().orElseThrow();
+        gameData.rerunCurrentEffectAfterInteraction = true;
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                pokey.getCard(), playerId, List.of(new PokeyTheScallywaggEffect()),
+                "Roll a d20 instead of flipping a coin?", null, null, pokey.getId()));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MayAbilityChoice(
+                playerId, "Roll a d20 instead of flipping a coin?", null));
+    }
+
+    /**
+     * Keeps the answer to the question of {@link #beginPokeyReplacementChoice} and completes the stopped answer, or
+     * resolves the stopped effect again, with it.
+     */
+    public void answerPokeyReplacement(GameData gameData, boolean replace) {
+        gameData.pokeyReplacementAnswer = replace;
+        if (completeAgainAfterResultChoices(gameData)) {
+            return;
+        }
+        gameData.rerunCurrentEffectAfterInteraction = false;
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private static List<CoinFlipResult> toResults(List<RecordedCoinFlip> flips) {

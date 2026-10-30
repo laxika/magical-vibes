@@ -103,8 +103,8 @@ class PhylacteryLichTest extends BaseCardTest {
         harness.setHand(player1, List.of(new RiseFromTheGrave()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handleGraveyardCardChosen(player1, 0);
+        UUID lichId = gd.playerGraveyards.get(player1.getId()).getFirst().getId();
+        harness.castAndResolveSorcery(player1, 0, 0, lichId);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, artifactId);

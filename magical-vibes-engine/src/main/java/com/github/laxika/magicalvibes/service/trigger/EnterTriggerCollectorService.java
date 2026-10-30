@@ -1330,6 +1330,7 @@ public class EnterTriggerCollectorService {
 
     @CollectsTrigger(value = MayEffect.class,
             slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         if (may.choicePlayer() == com.github.laxika.magicalvibes.model.MayChoicePlayer.CONTROLLER
                 || may.targetSpec() != TargetSpec.NONE) {
@@ -1927,6 +1928,8 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
                     slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
+                    slot = EffectSlot.ON_ALLY_CREATURES_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
                     slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
                     slot = EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD),
@@ -1958,6 +1961,7 @@ public class EnterTriggerCollectorService {
                     enteringPermanentId,
                     sourcePermanentId);
             entry.setNonTargeting(true);
+            entry.setTriggeringPermanentIds(List.of(enteringPermanentId));
             entry.setSourcePlanarObject(match.sourcePlanarObject() == null
                     ? null : match.sourcePlanarObject().copy());
             entry.rememberLastKnownPermanentCard(enteringPermanentId, pe.enteringCard());
@@ -2802,7 +2806,11 @@ public class EnterTriggerCollectorService {
                 entry.setTriggeringPermanentId(enteringPermanentId);
                 entry.setTriggeringPermanentIds(List.of(enteringPermanentId));
                 entry.setTriggeringCardId(enteringPermanent.getCard().getId());
-                entry.setAttachedPermanentSnapshot(new Permanent(enteringPermanent));
+                if (!(effect instanceof com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect)) {
+                    // An attachment's "equipped/enchanted creature gets ..." refers to the creature it is attached
+                    // to, not the entering creature, so no entering-creature snapshot is bound for it.
+                    entry.setAttachedPermanentSnapshot(new Permanent(enteringPermanent));
+                }
                 entry.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(
                         match.gameData(), enteringPermanentId));
                 entry.setTriggeringPermanentPowerAtTrigger(

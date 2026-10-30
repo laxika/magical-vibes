@@ -145,6 +145,15 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /**
+     * Which of several competing combat damage assignment effects (assign damage equal to mana value or to toughness)
+     * a creature's controller applies to that creature's combat damage.
+     */
+    record CombatDamageAssignmentModeChoice(UUID creatureId, UUID controllerId) implements ChoiceContext {
+        public static final String MANA_VALUE = "Mana value";
+        public static final String TOUGHNESS = "Toughness";
+    }
+
     /** A separately applicable counter replacement, identified by its source. */
     record CounterReplacement(String label, CardEffect effect) {}
 

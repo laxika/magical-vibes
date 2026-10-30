@@ -101,13 +101,16 @@ class LavabrinkFloodgatesTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Removing a counter from an artifact with none does nothing")
-    void removingCounterAtZeroDoesNothing() {
+    @DisplayName("Removing a counter cannot be chosen when the artifact has none (CR 608.2d)")
+    void removingCounterAtZeroCannotBeChosen() {
         Permanent floodgates = addFloodgates(player1, 0);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "Remove a doom counter from Lavabrink Floodgates");
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.disabledOptions()).contains("Remove a doom counter from Lavabrink Floodgates");
+        harness.handleListChoice(player2, "Done");
 
         harness.assertOnBattlefield(player1, "Lavabrink Floodgates");
         assertThat(floodgates.getCounterCount(CounterType.DOOM)).isZero();

@@ -117,6 +117,8 @@ class SloppityBilepiperTest extends BaseCardTest {
     @Test
     void unusedGrantExpiresAtEndOfTurn() {
         setupBilepiper();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
         Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -145,6 +147,8 @@ class SloppityBilepiperTest extends BaseCardTest {
     private void activateBilepiper(Permanent sacrificed) {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, null);
-        harness.handlePermanentChosen(player1, sacrificed.getId());
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, sacrificed.getId());
+        }
     }
 }

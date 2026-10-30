@@ -42,13 +42,13 @@ class KunorosHoundOfAthreosTest extends BaseCardTest {
     @Test
     @DisplayName("Prevents creature cards in graveyards from entering the battlefield")
     void preventsCreatureReanimation() {
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
         harness.addToBattlefield(player1, new KunorosHoundOfAthreos());
         harness.setHand(player1, List.of(new RiseFromTheGrave()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -70,13 +70,13 @@ class KunorosHoundOfAthreosTest extends BaseCardTest {
 
     @Test
     void preventsReanimationFromOpponentsGraveyard() {
+        GrizzlyBears bears = new GrizzlyBears();
         harness.addToBattlefield(player2, new KunorosHoundOfAthreos());
-        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(bears));
         harness.setHand(player1, List.of(new RiseFromTheGrave()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingExileTopCardRepeat;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -32,13 +33,14 @@ public class ExileTopCardMayPutPermanentSupport {
      * Runs one iteration: exiles the top card of {@code controllerId}'s library and, when it is a
      * permanent card, begins the accept/decline put prompt. Returns {@code true} when a prompt was
      * begun (resolution must pause), {@code false} when the process is over — an empty library, a
-     * nonpermanent card (it stays in exile), or an ETB from a previously put permanent that already
-     * opened its own interaction.
+     * nonpermanent card (it stays in exile), or a previously put permanent that already opened its own
+     * interaction (the repeat is then parked in {@link GameData#pendingExileTopCardRepeat}).
      */
     public boolean exileTopCardAndPromptIfPermanent(GameData gameData, UUID controllerId, String sourceName) {
         if (gameData.interaction.isAwaitingInput()) {
-            // A previously put permanent's ETB opened its own prompt; that decision owns the
-            // interaction slot, so the loop stops here rather than clobbering it.
+            // A previously put permanent opened its own prompt (an as-enters choice or an Aura's host);
+            // that decision owns the interaction slot, so the repeat waits until it has been answered.
+            gameData.pendingExileTopCardRepeat = new PendingExileTopCardRepeat(controllerId, sourceName);
             return false;
         }
 

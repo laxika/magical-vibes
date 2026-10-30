@@ -59,6 +59,8 @@ public class ShatterskullSmashing extends Card {
                 false,
                 false,
                 false,
+                true,
+                false,
                 true);
     }
 

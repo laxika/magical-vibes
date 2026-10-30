@@ -9,10 +9,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -47,7 +45,5 @@ public class PhyrexianSeedling extends Card {
     public PhyrexianSeedling() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
-        addEffect(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE,
-                new ProliferateEffect(new EventValue()));
     }
 }

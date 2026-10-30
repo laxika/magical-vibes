@@ -226,7 +226,8 @@ public class ExileCastTargetSupport {
         for (int slot = 0; slot < totalSlots; slot++) {
             List<UUID> candidates = nextSlotCandidates(gameData, card, controllerId, chosen);
             if (candidates.isEmpty()) {
-                return false;
+                // A slot beyond the required minimum (a gift-only or optional group) may stay empty.
+                return slot >= card.getMinTargets();
             }
             chosen.add(candidates.getFirst());
         }

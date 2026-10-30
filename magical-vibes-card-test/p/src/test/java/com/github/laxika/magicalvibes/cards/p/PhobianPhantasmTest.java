@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.r.RimeboundDead;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -149,7 +150,7 @@ class PhobianPhantasmTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(phantasm);
         harness.assertInGraveyard(player1, "Phobian Phantasm");

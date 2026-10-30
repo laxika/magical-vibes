@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -32,10 +33,10 @@ public class SkyriderPatrol extends Card {
                 "Target must be another creature you control"
         )).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new MayPayManaEffect(
                 "{G}{U}",
-                SequenceEffect.of(
+                new QueueReflexiveAbilityEffect(SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)
-                ),
+                )),
                 "Pay {G}{U} to put a +1/+1 counter on another creature you control and give it flying?"
         ));
     }

@@ -34,16 +34,25 @@ public class EnchantedCreatureDealsPowerDamageToTargetCreatureEffectHandler impl
                 && entry.getSourcePermanentSnapshot().getCard().isAura()
                 ? entry.getSourcePermanentSnapshot()
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (aura == null || !aura.isAttached()) {
+        // An Aura that left the battlefield is detached, but still remembers the creature it enchanted.
+        UUID enchantedId = aura == null ? null
+                : aura.getAttachedTo() != null ? aura.getAttachedTo() : aura.getLastAttachedTo();
+        if (enchantedId == null) {
             return;
         }
 
-        Permanent creature = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+        Permanent creature = gameQueryService.findPermanentById(gameData, enchantedId);
         boolean creatureGone = false;
         if (creature == null && entry.getAttachedPermanentSnapshot() != null
-                && aura.getAttachedTo().equals(entry.getAttachedPermanentSnapshot().getId())) {
+                && enchantedId.equals(entry.getAttachedPermanentSnapshot().getId())) {
             creature = entry.getAttachedPermanentSnapshot();
             creatureGone = true;
+        }
+        if (creature == null) {
+            creature = gameData.departedPermanentSnapshots.values().stream()
+                    .filter(snapshot -> enchantedId.equals(snapshot.getId()))
+                    .findFirst().orElse(null);
+            creatureGone = creature != null;
         }
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (creature == null || target == null) {
@@ -66,6 +75,9 @@ public class EnchantedCreatureDealsPowerDamageToTargetCreatureEffectHandler impl
         UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
         if (controllerId == null && creatureGone) {
             controllerId = entry.getTriggeringPermanentControllerId();
+        }
+        if (controllerId == null && creatureGone) {
+            controllerId = gameData.departedPermanentControllerIds.get(creature.getCard().getId());
         }
         if (controllerId == null) {
             return;

@@ -55,7 +55,7 @@ class PiratePeddlersTest extends BaseCardTest {
         Permanent pirate = harness.addToBattlefieldAndReturn(player1, new PiratePeddlers());
         harness.addToBattlefield(player1, new ZuranOrb());
         Permanent firstForest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        Permanent secondForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
         prepareMainPhase(player1);
 
         harness.activateAbility(player1, 1, 0, null, null);
@@ -64,7 +64,6 @@ class PiratePeddlersTest extends BaseCardTest {
         assertThat(pirate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         harness.activateAbility(player1, 1, 0, null, null);
-        harness.handlePermanentChosen(player1, secondForest.getId());
         resolveAllTriggers();
 
         assertThat(pirate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

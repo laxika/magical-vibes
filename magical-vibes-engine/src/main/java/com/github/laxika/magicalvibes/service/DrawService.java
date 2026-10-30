@@ -523,7 +523,12 @@ public class DrawService {
         Map<String, UUID> nextDrawWordsOptions = collectNextDrawWordsOptions(
                 gameData, playerId, wordsOfWorshipSource, wordsOfWildingSource);
         boolean wordsCompete = nextDrawWordsOptions.size() > 1;
+        Permanent competingEnduringRenewalSource = findRevealTopCreatureToGraveyardElseDrawSource(gameData, playerId);
+        Permanent competingStudyCounterSource = competingEnduringRenewalSource == null ? null
+                : findCounterDrawReplacementSource(gameData, playerId, CounterType.STUDY);
+        boolean enduringRenewalCompetesWithStudyCounter = competingStudyCounterSource != null;
         if (exileReplacementSources.size() > 1
+                || enduringRenewalCompetesWithStudyCounter
                 || (!exileReplacementSources.isEmpty() && maySkipDrawSource != null)
                 || (!exileReplacementSources.isEmpty() && ringPending)
                 || sagesAndUbaMaskCompete
@@ -556,6 +561,12 @@ public class DrawService {
             }
             if (wordsCompete) {
                 nextDrawWordsOptions.forEach(sourceIds::putIfAbsent);
+            }
+            if (enduringRenewalCompetesWithStudyCounter) {
+                sourceIds.putIfAbsent(competingEnduringRenewalSource.getCard().getName(),
+                        competingEnduringRenewalSource.getId());
+                sourceIds.putIfAbsent(competingStudyCounterSource.getCard().getName(),
+                        competingStudyCounterSource.getId());
             }
             if (ringPending) {
                 // The Ring's exiled source is gone, so its replacement is keyed by the drawing player's id.
@@ -2445,6 +2456,23 @@ public class DrawService {
         if (zursWeirdingSource != null && zursWeirdingSource.getId().equals(sourcePermanentId)) {
             logZursWeirdingReveal(gameData, playerId, zursWeirdingSource.getCard());
             beginZursWeirdingOffer(gameData, playerId, zursWeirdingSource);
+            return;
+        }
+        Permanent enduringRenewalSource = findRevealTopCreatureToGraveyardElseDrawSource(gameData, playerId);
+        if (enduringRenewalSource != null && enduringRenewalSource.getId().equals(sourcePermanentId)) {
+            resolveRevealTopCreatureToGraveyardElseDraw(gameData, playerId, enduringRenewalSource);
+            return;
+        }
+        Permanent studyCounterSource = findCounterDrawReplacementSource(gameData, playerId, CounterType.STUDY);
+        if (studyCounterSource != null && studyCounterSource.getId().equals(sourcePermanentId)) {
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    studyCounterSource.getCard(),
+                    playerId,
+                    List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.STUDY_COUNTER)),
+                    "Put a study counter on " + studyCounterSource.getCard().getName() + " instead of drawing?",
+                    null,
+                    null,
+                    studyCounterSource.getId()));
             return;
         }
         boolean firstDrawStepDraw = Boolean.TRUE.equals(gameData.pendingDrawFirstDrawStepFlags.get(playerId));

@@ -87,8 +87,12 @@ class PeaceStriderTest extends BaseCardTest {
     @Test
     @DisplayName("Entering without being cast also triggers the life gain")
     void etbGainsLifeWithoutBeingCast() {
-        harness.getBattlefieldEntryService().putPermanentOntoBattlefield(
-                gd, player1.getId(), new Permanent(new PeaceStrider()));
+        Permanent strider = new Permanent(new PeaceStrider());
+        harness.inMutationScope(() -> {
+            harness.getBattlefieldEntryService().putPermanentOntoBattlefield(gd, player1.getId(), strider);
+            harness.getBattlefieldEntryService().handleCreatureEnteredBattlefield(
+                    gd, player1.getId(), strider.getCard(), null, false);
+        });
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Peace Strider");

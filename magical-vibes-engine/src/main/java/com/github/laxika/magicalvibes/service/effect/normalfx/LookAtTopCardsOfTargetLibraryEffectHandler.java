@@ -353,7 +353,11 @@ public class LookAtTopCardsOfTargetLibraryEffectHandler implements NormalEffectH
                 controllerName + " looks at the top card of " + targetName + "'s library."));
         String prompt = sourceName + " — Top card of " + targetName + "'s library: " + deck.getFirst().getName()
                 + ". Put it on the bottom of that library?";
-        int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+        // The look may be wrapped in an outer MayEffect (Precognition), in which case the list holds the
+        // wrapper rather than this record, so the position being resolved is the reliable anchor.
+        int effectIndex = entry.getResolvingEffectIndex() >= 0
+                ? entry.getResolvingEffectIndex()
+                : entry.getEffectsToResolve().indexOf(effect);
         entry.insertEffectsToResolve(effectIndex + 1, List.of(
                 new MayEffect(new PutTopCardOfTargetLibraryOnBottomEffect(), prompt)));
         log.info("Game {} - {} looks at the top card of {}'s library ({})",

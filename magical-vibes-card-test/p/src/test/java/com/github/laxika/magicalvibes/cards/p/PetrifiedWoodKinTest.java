@@ -149,7 +149,7 @@ class PetrifiedWoodKinTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, permanent.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid target");
+                .hasMessageContaining("has protection from instants");
     }
 
     private void castPetrifiedWoodKin() {

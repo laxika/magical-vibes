@@ -37,8 +37,11 @@ public class StruggleForProjectPurity extends Card {
                         new EachOpponentDrawsCardEffect(1),
                         new DrawCardEffect(new CardsDrawnThisResolution()))));
 
+        // "Whenever a player attacks you with one or more creatures" is the trigger event itself, so the
+        // attack is judged once when it is declared. Rechecking it on resolution would wrongly stop the
+        // trigger when every declared attacker has since left combat.
         addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
-                new ConditionalEffect(
+                ConditionalEffect.atTriggerTime(
                         new AllOf(List.of(
                                 new SourceHasChosenMode(ENCLAVE),
                                 new OpponentAttacksWithAtLeastCreatures(1, false))),

@@ -116,6 +116,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
@@ -609,6 +610,13 @@ public class BattlefieldPlacementService {
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
                 .add(enteredCharacteristics);
+        for (UUID playerId : gameData.playerIds) {
+            Set<UUID> enteredSinceTurnEnded = gameData.permanentsEnteredSincePlayerLastTurnEnded
+                    .computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet());
+            enteredSinceTurnEnded.add(enteredCharacteristics.getId());
+            enteredSinceTurnEnded.add(permanent.getCard().getId());
+            enteredSinceTurnEnded.add(permanent.getOriginalCard().getId());
+        }
         if (permanent.isFaceDown()) {
             gameData.faceDownPermanentsEnteredBattlefieldThisTurn
                     .computeIfAbsent(controllerId, k -> new ArrayList<>())
@@ -2405,6 +2413,16 @@ public class BattlefieldPlacementService {
         Integer granted = gameData.spellAdditionalEnterCounters.remove(permanent.getCard().getId());
         if (granted == null && sourceStackEntry != null && sourceStackEntry.isCopy()) {
             granted = sourceStackEntry.getAdditionalEnterCounters();
+        }
+        List<GameData.EnterCounterAmount> countedOnEntry =
+                gameData.spellAdditionalEnterCounterAmounts.remove(permanent.getCard().getId());
+        if (countedOnEntry != null) {
+            int entryCount = 0;
+            for (GameData.EnterCounterAmount amount : countedOnEntry) {
+                entryCount += Math.max(0, amountEvaluationService.evaluate(gameData, amount.amount(),
+                        AmountContext.forEnteringPermanent(amount.controllerId(), permanent, 0)));
+            }
+            granted = (granted == null ? 0 : granted) + entryCount;
         }
         if (granted == null || granted <= 0) return;
 

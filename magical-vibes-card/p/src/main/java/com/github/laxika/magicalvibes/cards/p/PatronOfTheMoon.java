@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldTogetherEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -29,12 +30,12 @@ public class PatronOfTheMoon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(
+                List.of(new PutCardsOntoBattlefieldTogetherEffect(List.of(
                         new MayEffect(new PutCardToBattlefieldEffect(land, "land", true),
                                 "Put a land card from your hand onto the battlefield tapped?"),
                         new MayEffect(new PutCardToBattlefieldEffect(land, "land", true),
                                 "Put a second land card from your hand onto the battlefield tapped?")
-                ),
+                ), true)),
                 "{1}: Put up to two land cards from your hand onto the battlefield tapped."
         ));
     }

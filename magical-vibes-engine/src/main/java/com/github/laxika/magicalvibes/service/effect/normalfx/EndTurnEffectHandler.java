@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +23,7 @@ public class EndTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final TurnSupport turnSupport;
     private final GameLogService gameLogService;
+    private final ExileService exileService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,11 +37,18 @@ public class EndTurnEffectHandler implements NormalEffectHandlerBean {
         gameData.pendingInteractions.removeIf(PermanentChoiceContext.DeathTriggerTarget.class::isInstance);
 
         // The resolving spell stays on the stack while it resolves (an instant or sorcery is removed
-        // only at the end of its resolution), but it is exiled once by the end-turn branch of spell
-        // resolution, so take it off the stack here to keep the stack exile from exiling it a second time.
+        // only at the end of its resolution), so take it off the stack here to keep the stack exile from
+        // exiling it a second time.
         gameData.removeResolvingSpellFromStack(entry);
-        // Rule 724.1b: Exile every object on the stack
+        // Rule 724.1b: Exile every object on the stack, including the object that's resolving. This happens
+        // before the skip to cleanup, so the cleanup discard prompt sees the spell already in exile.
         turnSupport.exileStackEntries(gameData);
+        boolean exileResolvingSpell = !entry.isCopy()
+                && (entry.getEntryType() == StackEntryType.SORCERY_SPELL
+                || entry.getEntryType() == StackEntryType.INSTANT_SPELL);
+        if (exileResolvingSpell) {
+            exileService.exileCard(gameData, entry.getOwnerId(), entry.getPhysicalCard());
+        }
         // The resolving spell's disposition must not run later (the discard prompt pauses resolution),
         // or it would be put into a graveyard after the exile.
         entry.setSpellDispositionHandled(true);
@@ -56,8 +66,9 @@ public class EndTurnEffectHandler implements NormalEffectHandlerBean {
         // Rule 724.1d: Skip to cleanup step
         turnSupport.skipToCleanupStep(gameData);
 
-        // Flag so resolveTopOfStack exiles the resolving card instead of graveyard (rule 724.1b)
-        gameData.endTurnRequested = true;
+        // Flag so resolveTopOfStack exiles the resolving card instead of graveyard (rule 724.1b). A non-copy
+        // spell was already exiled above, so the flag is only needed for copies, which cease to exist.
+        gameData.endTurnRequested = !exileResolvingSpell;
 
         gameLogService.append(gameData, GameLog.text("The turn ends."));
         log.info("Game {} - End the turn effect resolved, skipping to cleanup", gameData.id);

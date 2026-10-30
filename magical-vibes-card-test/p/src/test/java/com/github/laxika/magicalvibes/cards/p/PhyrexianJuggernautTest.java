@@ -147,7 +147,7 @@ class PhyrexianJuggernautTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> gs.declareAttackers(gd, player1, List.of(0)));
         assertThat(juggernaut.isAttacking()).isTrue();
 
         juggernaut.setAttacking(false);

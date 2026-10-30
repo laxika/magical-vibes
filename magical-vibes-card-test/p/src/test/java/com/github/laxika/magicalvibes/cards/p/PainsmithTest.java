@@ -195,6 +195,6 @@ class PainsmithTest extends BaseCardTest {
         assertThat(painsmith.getPowerModifier()).isEqualTo(2);
         assertThat(painsmith.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
         harness.assertNotOnBattlefield(player1, "Memnite");
-        assertThat(harness.getGameData().stack).anyMatch(e -> e.getEntryType() == StackEntryType.CREATURE_SPELL);
+        assertThat(harness.getGameData().stack).anyMatch(e -> e.getCard() != null && e.getCard().getName().equals("Memnite"));
     }
 }

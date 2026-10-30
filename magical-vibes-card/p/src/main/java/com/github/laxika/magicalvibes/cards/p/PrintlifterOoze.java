@@ -24,7 +24,7 @@ public class PrintlifterOoze extends Card {
         addMorph("{3}{G}");
 
         PermanentCount otherCreatures = new PermanentCount(
-                new PermanentIsCreaturePredicate(), CountScope.CONTROLLER, true);
+                new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP,
                 new CreateXTokenWithXCountersEffect(
                         new CreateTokenEffect(

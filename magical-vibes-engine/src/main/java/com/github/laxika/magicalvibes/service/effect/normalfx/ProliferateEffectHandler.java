@@ -46,6 +46,14 @@ public class ProliferateEffectHandler implements NormalEffectHandlerBean {
                 ? 1
                 : Math.max(0, amountEvaluationService.evaluate(gameData, typedEffect.amount(),
                         AmountContext.forStackEntry(entry, null)));
+        begin(gameData, controllerId, totalProliferates);
+    }
+
+    /**
+     * Has {@code controllerId} proliferate {@code totalProliferates} times, one prompt after another. Used by
+     * proliferate effects and by proliferatelink, whose proliferating is not an ability on the stack.
+     */
+    public void begin(GameData gameData, UUID controllerId, int totalProliferates) {
         totalProliferates = gameQueryService.replaceProliferateCount(
                 gameData, controllerId, totalProliferates);
         if (totalProliferates <= 0) {

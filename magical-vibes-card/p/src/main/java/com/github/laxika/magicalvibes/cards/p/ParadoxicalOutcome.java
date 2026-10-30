@@ -26,7 +26,7 @@ public class ParadoxicalOutcome extends Card {
                         new PermanentNotPredicate(new PermanentIsLandPredicate()),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                 "Target must be a nonland, nontoken permanent you control"), 0, 99)
-                .addEffect(EffectSlot.SPELL, new ReturnTargetPermanentsThenEffect(
+                .addEffect(EffectSlot.SPELL, ReturnTargetPermanentsThenEffect.countingCardsReturnedToYourHand(
                         new DrawCardEffect(new EventValue())));
     }
 }

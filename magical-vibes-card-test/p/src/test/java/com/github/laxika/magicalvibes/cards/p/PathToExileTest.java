@@ -44,7 +44,10 @@ class PathToExileTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Grizzly Bears"));
 
-        // The exiled creature's controller (player2) is the one offered the tapped basic-land search.
+        // The exiled creature's controller (player2) is the one asked, then offered the tapped basic-land search.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
                 .isEqualTo(player2.getId());
@@ -60,6 +63,7 @@ class PathToExileTest extends BaseCardTest {
         givePath();
 
         harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player2, true);
 
         harness.handleCardChosen(player2, 0);
 
@@ -79,6 +83,7 @@ class PathToExileTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Grizzly Bears"));
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
                 .isEqualTo(player1.getId());
     }
@@ -102,11 +107,7 @@ class PathToExileTest extends BaseCardTest {
         givePath();
 
         harness.castAndResolveInstant(player1, 0, target.getId());
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
-            harness.handleMayAbilityChosen(player2, false);
-        } else {
-            harness.handleCardChosen(player2, -1);
-        }
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();

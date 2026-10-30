@@ -56,8 +56,15 @@ public class LookAtTopCardMayRevealTypeTransformHandler implements MayEffectHand
                     if (matches) {
                         Permanent self = ability.sourcePermanentId() != null
                                 ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;
-                        if (self != null && !self.isTransformed()) {
-                            animationSupport.transformToBackFace(gameData, self);
+                        if (self != null && !gameQueryService.isTransformPrevented(gameData, self)) {
+                            // A transformed permanent only has this ability while copying Delver (Olag,
+                            // Ludevic's Hubris); transforming it flips the card back while the copy effect
+                            // keeps applying (2021-09-24 ruling).
+                            if (self.isTransformed()) {
+                                animationSupport.transformToFrontFace(gameData, self);
+                            } else {
+                                animationSupport.transformToBackFace(gameData, self);
+                            }
                         }
                     } else {
                         log.info("Game {} - {} revealed {} but it's not a matching type, no transform",

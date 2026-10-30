@@ -55,7 +55,9 @@ public class BoostAllCreaturesEffectHandler implements NormalEffectHandlerBean {
                 .withSourceControllerId(entry.getControllerId())
                 .withSourcePermanentId(entry.getSourcePermanentId())
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
-                .withDefendingPlayerId(entry.getDefendingPlayerId());
+                .withDefendingPlayerId(entry.getDefendingPlayerId())
+                .withTargetCardId(entry.getTargetCardIds() == null || entry.getTargetCardIds().isEmpty()
+                        ? null : entry.getTargetCardIds().getFirst());
         final int[] count = {0};
 
         java.util.function.BiConsumer<UUID, Permanent> apply = (playerId, permanent) -> {

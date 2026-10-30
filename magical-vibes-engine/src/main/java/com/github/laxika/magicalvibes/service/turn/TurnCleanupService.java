@@ -576,6 +576,7 @@ public class TurnCleanupService {
         gameData.nextCreatureSpellCascadeThisTurn.clear();
         gameData.nextCreatureSpellDelayedTriggersThisTurn.clear();
         gameData.spellAdditionalEnterCounters.clear();
+        gameData.spellAdditionalEnterCounterAmounts.clear();
         gameData.spellEntryCounters.clear();
         gameData.spellGrantedSubtypesOnEntry.clear();
         gameData.spellsGrantedHasteOnEntry.clear();

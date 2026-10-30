@@ -47,7 +47,12 @@ public class CopyImprintedCardAndMayCastCopyEffectHandler implements NormalEffec
         // imprint pointer alive in that case (same fallback as the token-copy handler).
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         List<Card> imprintedCards = new ArrayList<>();
-        if (copyEffect.copyOtherExiledCard()) {
+        if (copyEffect.boundImprintedCardId() != null) {
+            var bound = gameData.findExiledCard(copyEffect.boundImprintedCardId());
+            if (bound != null) {
+                imprintedCards.add(bound.card());
+            }
+        } else if (copyEffect.copyOtherExiledCard()) {
             // "Copy the other": every card exiled with the source besides the one that matched the cast
             // card (a doubled imprint trigger links more than two).
             gameData.getCardsExiledByPermanent(entry.getSourcePermanentId()).stream()

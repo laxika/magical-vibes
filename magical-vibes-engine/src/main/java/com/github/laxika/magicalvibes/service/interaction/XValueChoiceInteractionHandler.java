@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ExileNormalCostCop
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileReducedCastSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OutsideGameNormalCostCastSupport;
 import com.github.laxika.magicalvibes.service.battlefield.AsEntersDiscardSupport;
+import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
 import org.springframework.beans.factory.ObjectProvider;
@@ -46,6 +47,7 @@ public class XValueChoiceInteractionHandler implements InteractionHandler<Pendin
     private final ObjectProvider<ExileReducedCastSupport> exileReducedCastSupport;
     private final ObjectProvider<CopyDrawnInstantOrSorceryAndMayCastCopyHandler> copyDrawnCastHandler;
     private final ObjectProvider<OutsideGameNormalCostCastSupport> outsideGameNormalCostCastSupport;
+    private final ObjectProvider<ChoiceHandlerService> choiceHandlerService;
 
     @Autowired
     public XValueChoiceInteractionHandler(InputCompletionService inputCompletionService,
@@ -56,7 +58,9 @@ public class XValueChoiceInteractionHandler implements InteractionHandler<Pendin
                                           ObjectProvider<AsEntersDiscardSupport> asEntersDiscardSupport,
                                           ObjectProvider<ExileReducedCastSupport> exileReducedCastSupport,
                                           ObjectProvider<CopyDrawnInstantOrSorceryAndMayCastCopyHandler> copyDrawnCastHandler,
-                                          ObjectProvider<OutsideGameNormalCostCastSupport> outsideGameNormalCostCastSupport) {
+                                          ObjectProvider<OutsideGameNormalCostCastSupport> outsideGameNormalCostCastSupport,
+                                          ObjectProvider<ChoiceHandlerService> choiceHandlerService) {
+        this.choiceHandlerService = choiceHandlerService;
         this.outsideGameNormalCostCastSupport = outsideGameNormalCostCastSupport;
         this.exileReducedCastSupport = exileReducedCastSupport;
         this.copyDrawnCastHandler = copyDrawnCastHandler;
@@ -92,6 +96,11 @@ public class XValueChoiceInteractionHandler implements InteractionHandler<Pendin
                     + " and " + maxAllowed);
         }
 
+        if (interaction.distribution() != null) {
+            choiceHandlerService.getObject().applyCounterDistributionAssignment(
+                    gameData, player, chosenValue, interaction.distribution());
+            return;
+        }
         if (gameData.pendingAbilityCounterCostActivation != null) {
             abilityActivationService.handleActivatedAbilityCounterCostChosen(gameData, player, chosenValue);
             return;

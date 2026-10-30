@@ -590,6 +590,9 @@ public class EtbTriggerService {
                                         : ConditionContext.forCard(card, controllerId));
                 int minimumChoices = choice.choicesRequired();
                 int maximumChoices = choice.effectiveChoicesMax(additionalModesAllowed);
+                if (additionalModesAllowed && choice.allModesWhenConditionMet()) {
+                    minimumChoices = maximumChoices;
+                }
                 if (triggerTimeChoice.maximumChoices() != null) {
                     minimumChoices = 0;
                     maximumChoices = Math.min(

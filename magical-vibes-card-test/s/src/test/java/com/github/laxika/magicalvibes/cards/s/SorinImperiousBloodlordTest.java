@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SorinImperiousBloodlord.class, CaptivatingVampire.class, LanternBearer.class,
-        ImprisonedInTheMoon.class, SigardaHostOfHerons.class})
+        ImprisonedInTheMoon.class, SigardaHostOfHerons.class, Shock.class})
 class SorinImperiousBloodlordTest extends BaseCardTest {
 
     @Test
@@ -268,26 +268,24 @@ class SorinImperiousBloodlordTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Sacrifice trigger does not gain life if its target becomes a land")
+    @DisplayName("Sacrifice trigger does not gain life if its target is gone before it resolves")
     void sacrificeTriggerIllegalTargetPreventsLifeGain() {
         addReadySorin(player1);
         Permanent vampire = harness.addToBattlefieldAndReturn(player1, new CaptivatingVampire());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new LanternBearer());
         int lifeBefore = gd.getLife(player1.getId());
-        harness.setHand(player1, List.of(new ImprisonedInTheMoon()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, vampire.getId());
         harness.handlePermanentChosen(player1, target.getId());
-        harness.castEnchantment(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Lantern Bearer");
+        harness.assertInGraveyard(player2, "Lantern Bearer");
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
     }
 

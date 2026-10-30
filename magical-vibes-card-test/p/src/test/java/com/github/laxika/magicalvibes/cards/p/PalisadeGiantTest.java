@@ -108,6 +108,7 @@ class PalisadeGiantTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+        resolveCombat();
 
         harness.assertInGraveyard(player2, "Palisade Giant");
         harness.assertOnBattlefield(player2, "Izzet Staticaster");

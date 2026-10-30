@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class PrimalRage extends Card {
 
     public PrimalRage() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
     }
 }

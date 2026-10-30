@@ -17,7 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class PugnaciousHammerskull extends Card {
 
     public PugnaciousHammerskull() {
-        addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
+        // "Whenever this creature attacks while you don't control another Dinosaur" is judged when the
+        // attack is declared only; a Dinosaur gained in response does not stop the stun counter.
+        addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(
                 new NotCondition(new ControlsAnotherPermanent(
                         new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR))),
                 new PutCountersOnSelfEffect(CounterType.STUN)));

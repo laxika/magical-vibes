@@ -119,7 +119,7 @@ class LibraryOfLatNamTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.stack).isEmpty();
+        assertThat(gd.stack).hasSize(1);
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(searchedCard);

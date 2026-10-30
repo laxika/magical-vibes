@@ -62,7 +62,7 @@ class PsychicPuppetryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castWithSplice(player1, 0, konda.getId(), List.of(1));
+        harness.castWithSpliceTargets(player1, 0, List.of(konda.getId(), konda.getId()), List.of(1));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -82,7 +82,7 @@ class PsychicPuppetryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castWithSplice(player1, 0, konda.getId(), List.of(1));
+        harness.castWithSpliceTargets(player1, 0, List.of(konda.getId(), konda.getId()), List.of(1));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -102,7 +102,7 @@ class PsychicPuppetryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castWithSplice(player1, 0, konda.getId(), List.of(1));
+        harness.castWithSpliceTargets(player1, 0, List.of(konda.getId(), konda.getId()), List.of(1));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 

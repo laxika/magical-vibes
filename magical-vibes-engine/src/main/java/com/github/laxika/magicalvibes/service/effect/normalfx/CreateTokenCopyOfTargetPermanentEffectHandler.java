@@ -32,6 +32,7 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
     private final ObjectProvider<CreateTokenCopyOfChosenCreatureEffectHandler> chosenCreatureCopyHandler;
     private final ObjectProvider<CreateTokenCopyOfEquippedCreatureEffectHandler> equippedCreatureCopyHandler;
     private final ObjectProvider<CreateTokenCopyOfEnchantedPermanentEffectHandler> enchantedPermanentCopyHandler;
+    private final com.github.laxika.magicalvibes.service.input.PlayerInputService playerInputService;
 
     static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect effect) {
         return TokenCopySupport.buildTokenCopyCard(sourceCard, effect);
@@ -45,6 +46,20 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var copyEffect = (CreateTokenCopyOfTargetPermanentEffect) effect;
+
+        if (entry.getTriggeringPermanentIds().size() > 1 && entry.getTargetIds().isEmpty()) {
+            List<UUID> candidates = entry.getTriggeringPermanentIds().stream()
+                    .filter(id -> gameQueryService.findPermanentById(gameData, id) != null)
+                    .toList();
+            if (candidates.size() > 1) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new com.github.laxika.magicalvibes.model.PermanentChoiceContext
+                                .CreateTokenCopyOfOneOfTriggeringPermanents());
+                playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), candidates,
+                        "Choose one of the creatures that entered to create a token copy of.");
+                return;
+            }
+        }
 
         List<UUID> targetIds = entry.targetsForBoundEffectGroup(copyEffect);
         if (targetIds == null) {
@@ -94,6 +109,27 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         for (UUID targetId : targetIds) {
             resolveForTarget(gameData, entry, copyEffect, targetId, copyCount);
         }
+    }
+
+    /** Copies the creature chosen from the group that triggered the paused ability. */
+    public void completeTriggeringPermanentChoice(GameData gameData, UUID chosenPermanentId) {
+        StackEntry entry = gameData.pendingEffectResolutionEntry;
+        if (entry == null) {
+            throw new IllegalStateException("No effect is waiting for a creature choice");
+        }
+        if (!entry.getTriggeringPermanentIds().contains(chosenPermanentId)
+                || gameQueryService.findPermanentById(gameData, chosenPermanentId) == null) {
+            throw new IllegalStateException("Choose a creature that entered");
+        }
+        CreateTokenCopyOfTargetPermanentEffect copyEffect = entry.getEffectsToResolve().stream()
+                .filter(CreateTokenCopyOfTargetPermanentEffect.class::isInstance)
+                .map(CreateTokenCopyOfTargetPermanentEffect.class::cast)
+                .findFirst().orElseThrow();
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        int copyCount = amountEvaluationService.evaluate(
+                gameData, copyEffect.amount(), AmountContext.forStackEntry(entry, sourcePermanent));
+        resolveForTarget(gameData, entry, copyEffect, chosenPermanentId, copyCount);
     }
 
     /**

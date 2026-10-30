@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class LuminousWake extends Card {
 
     public LuminousWake() {
+        setAttackTriggerOwnedByAura(true);
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ATTACK, new GainLifeEffect(4))
                 .addEffect(EffectSlot.ON_BLOCK, new GainLifeEffect(4));

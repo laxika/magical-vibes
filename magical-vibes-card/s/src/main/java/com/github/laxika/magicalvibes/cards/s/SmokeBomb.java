@@ -19,7 +19,7 @@ import java.util.List;
 public class SmokeBomb extends Card {
 
     public SmokeBomb() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ALL_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ALL_CREATURES_INCLUDING_SELF));
 
         var ownCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

@@ -179,8 +179,10 @@ class PhelddagrifTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
         harness.assertInHand(player1, "Phelddagrif");
+        harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
 

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /** Installs source-independent continuous effects keyed to a counter on the affected permanent. */
@@ -46,7 +47,7 @@ public class GrantEffectsToCounterBearersEffectHandler implements NormalEffectHa
             var boundCounterScope = new PermanentHasCountersPredicate(rule.counterType(),
                     bound.getLastCounterRemovalVersions().getOrDefault(rule.counterType(), 0L));
             scope = new PermanentAllOfPredicate(List.of(boundPredicate, boundCounterScope));
-        } else if (ruleAlreadyEstablished(gameData, rule, scope)) {
+        } else if (ruleAlreadyEstablished(gameData, rule, scope, entry.getControllerId())) {
             return;
         }
 
@@ -86,10 +87,11 @@ public class GrantEffectsToCounterBearersEffectHandler implements NormalEffectHa
     }
 
     private boolean ruleAlreadyEstablished(GameData gameData, GrantEffectsToCounterBearersEffect rule,
-                                           PermanentPredicate scope) {
+                                           PermanentPredicate scope, UUID controllerId) {
         synchronized (gameData.floatingEffects) {
             return rule.effects().stream().allMatch(grantedEffect -> gameData.floatingEffects.stream()
                     .anyMatch(floating -> scope.equals(floating.scope())
+                            && Objects.equals(controllerId, floating.controllerId())
                             && grantedEffect.equals(floating.effect())));
         }
     }

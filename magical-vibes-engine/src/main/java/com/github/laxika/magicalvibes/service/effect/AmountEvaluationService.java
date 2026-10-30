@@ -999,12 +999,7 @@ public class AmountEvaluationService {
                         : gameQueryService.getEffectivePower(gameData, source);
                 yield power.allowNegative() ? value : Math.max(0, value);
             }
-            case SourceToughness ignored ->
-                    ctx.sourcePermanent() == null ? 0
-                            : Math.max(0, gameQueryService.findPermanentById(gameData, ctx.sourcePermanent().getId()) == null
-                            && ctx.sourcePermanent().getLastKnownToughness() != null
-                            ? ctx.sourcePermanent().getLastKnownToughness()
-                            : gameQueryService.getEffectiveToughness(gameData, ctx.sourcePermanent()));
+            case SourceToughness ignored -> sourceToughness(gameData, ctx);
             case TargetToughness ignored ->
                     targetEffectiveToughness(gameData, ctx);
             case TriggeringPermanentToughness ignored ->
@@ -1347,16 +1342,31 @@ public class AmountEvaluationService {
     /** Effective power of the permanent the source Aura enchants; 0 if there is none. */
     private int enchantedPermanentPower(GameData gameData, AmountContext ctx, boolean allowNegative) {
         Permanent source = ctx.sourcePermanent();
-        if (source != null && source.getAttachedTo() != null) {
-            Permanent enchanted = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
+        UUID enchantedId = source == null ? null : source.getAttachedTo();
+        if (enchantedId == null && ctx.stackEntry() != null) {
+            // The Aura has left or been detached (it fell off with its creature): the host it had when the
+            // ability went on the stack, or the Aura's own last known attachment, is still its enchanted creature.
+            StackEntry entry = ctx.stackEntry();
+            if (entry.getAttachedPermanentSnapshot() != null) {
+                enchantedId = entry.getAttachedPermanentSnapshot().getId();
+            } else if (entry.getSourcePermanentId() != null) {
+                UUID auraId = entry.getSourcePermanentId();
+                Permanent departedAura = gameData.departedPermanentSnapshots.values().stream()
+                        .filter(snapshot -> auraId.equals(snapshot.getId()))
+                        .findFirst().orElse(null);
+                enchantedId = departedAura == null ? null : departedAura.getAttachedTo();
+            }
+        }
+        if (enchantedId != null) {
+            Permanent enchanted = gameQueryService.findPermanentById(gameData, enchantedId);
             if (enchanted != null) {
                 int power = gameQueryService.getEffectivePower(gameData, enchanted);
                 return allowNegative ? power : Math.max(0, power);
             }
             // Last known information (CR 608.2h): the enchanted creature's power just before it left.
-            UUID enchantedId = source.getAttachedTo();
+            UUID departedId = enchantedId;
             Permanent departed = gameData.departedPermanentSnapshots.values().stream()
-                    .filter(snapshot -> enchantedId.equals(snapshot.getId()))
+                    .filter(snapshot -> departedId.equals(snapshot.getId()))
                     .findFirst().orElse(null);
             if (departed != null && departed.getLastKnownPower() != null) {
                 int power = departed.getLastKnownPower();
@@ -3787,17 +3797,27 @@ public class AmountEvaluationService {
         return imprinted.getManaValue();
     }
 
+    /**
+     * Sums the characteristic over every exiled creature card linked to the source (CR 607.3): several imprint
+     * triggers (Panharmonicon) can each exile one.
+     */
     private int imprintedCreaturePT(GameData gameData, AmountContext ctx, boolean power) {
         if (ctx.sourcePermanent() == null) return 0;
+        List<Card> imprintedCards = new ArrayList<>(gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId()));
         Card imprinted = gameData.getImprintedCard(ctx.sourcePermanent().getCard());
-        if (imprinted == null
-                || gameData.findExiledCard(imprinted.getId()) == null
-                || !imprinted.hasType(CardType.CREATURE)) {
-            return 0;
+        if (imprinted != null && imprintedCards.stream().noneMatch(card -> card.getId().equals(imprinted.getId()))) {
+            imprintedCards.add(imprinted);
         }
-        Integer value = power ? gameQueryService.getEffectiveCardPower(gameData, imprinted)
-                : gameQueryService.getEffectiveCardToughness(gameData, imprinted);
-        return value == null ? 0 : value;
+        int total = 0;
+        for (Card card : imprintedCards) {
+            if (gameData.findExiledCard(card.getId()) == null || !card.hasType(CardType.CREATURE)) {
+                continue;
+            }
+            Integer value = power ? gameQueryService.getEffectiveCardPower(gameData, card)
+                    : gameQueryService.getEffectiveCardToughness(gameData, card);
+            total += value == null ? 0 : value;
+        }
+        return total;
     }
 
     private int damageDealtToOpponentsThisTurn(GameData gameData, AmountContext ctx) {
@@ -3966,5 +3986,25 @@ public class AmountEvaluationService {
             return null;
         }
         return gameQueryService.getOpponentId(gameData, gameData.activePlayerId);
+    }
+    /**
+     * "This creature's toughness": a source still on the battlefield that is not a creature has no toughness
+     * (Phenax, God of Deception stopped being a creature), so it reads as 0. A source that has left the
+     * battlefield uses its last-known toughness.
+     */
+    private int sourceToughness(GameData gameData, AmountContext ctx) {
+        Permanent source = ctx.sourcePermanent();
+        if (source == null) {
+            return 0;
+        }
+        if (gameQueryService.findPermanentById(gameData, source.getId()) == null) {
+            return Math.max(0, source.getLastKnownToughness() != null
+                    ? source.getLastKnownToughness()
+                    : gameQueryService.getEffectiveToughness(gameData, source));
+        }
+        if (!gameQueryService.isCreature(gameData, source)) {
+            return 0;
+        }
+        return Math.max(0, gameQueryService.getEffectiveToughness(gameData, source));
     }
 }

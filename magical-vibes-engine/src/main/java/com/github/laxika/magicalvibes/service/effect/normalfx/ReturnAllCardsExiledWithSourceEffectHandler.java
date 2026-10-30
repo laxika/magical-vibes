@@ -91,6 +91,7 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
         boolean underControllerControl = returnEffect.underControllerControl();
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
+        List<SimultaneousEntry> enteredCreatures = new ArrayList<>();
         entry.clearReturnedPermanentIds();
 
         // CR 303.4f/303.4g: an Aura returning here is attached as its entering player chooses, and
@@ -150,7 +151,15 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
             gameLogService.append(gameData, GameLog.builder().card(card).text(" returns to the battlefield under " + gameData.playerIdToName.get(newControllerId) + "'s control.").build());
             log.info("Game {} - {} returns from exile via {} (put into graveyard from battlefield)",
                     gameData.id, card.getName(), entry.getCard().getName());
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, newControllerId, card, null, false);
+            enteredCreatures.add(new SimultaneousEntry(card, newControllerId));
+        }
+
+        // CR 603.6a: every permanent in one batch is on the battlefield before enters-the-battlefield
+        // triggers are checked, so each newcomer sees the others (e.g. Purphoros and a creature it sees
+        // enter from the same pile).
+        for (SimultaneousEntry enteredCreature : enteredCreatures) {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, enteredCreature.controllerId(),
+                    enteredCreature.card(), null, false);
         }
 
         if (auraAwaitingHost != null) {
@@ -230,5 +239,9 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
                         permanent.getCounterCount(effect.enteringCounterType()) + placed);
             }
         }
+    }
+
+    /** A card returned by this batch, with the player it entered under, kept until the whole batch is on the battlefield. */
+    private record SimultaneousEntry(Card card, UUID controllerId) {
     }
 }

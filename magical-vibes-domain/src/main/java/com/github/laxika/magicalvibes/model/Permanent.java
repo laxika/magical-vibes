@@ -231,6 +231,10 @@ public class Permanent {
     private final Set<CardColor> chosenColors = EnumSet.noneOf(CardColor.class);
     /** Whether an as-enters color choice has been completed, including an optional empty choice. */
     @Setter private boolean chosenColorChoiceMade;
+
+    /** CR 613.7 timestamp of the latest color choice for this permanent's "becomes the chosen color" effect
+     *  (Puca's Eye): the effect is created when the choice is made, not when the permanent entered. */
+    @Setter private long chosenColorTimestamp;
     @Setter private String chosenName;
     /** Names chosen by resolving abilities of this permanent during its current battlefield visit. */
     private final Set<String> chosenNamesAtResolution = new HashSet<>();
@@ -1067,6 +1071,7 @@ public class Permanent {
         this.chosenColor = source.chosenColor;
         this.chosenColors.addAll(source.chosenColors);
         this.chosenColorChoiceMade = source.chosenColorChoiceMade;
+        this.chosenColorTimestamp = source.chosenColorTimestamp;
         this.chosenName = source.chosenName;
         this.chosenNamesAtResolution.addAll(source.chosenNamesAtResolution);
         this.secondChosenName = source.secondChosenName;

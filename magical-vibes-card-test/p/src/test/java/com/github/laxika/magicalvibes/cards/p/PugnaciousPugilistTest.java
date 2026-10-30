@@ -24,8 +24,10 @@ class PugnaciousPugilistTest extends BaseCardTest {
     void attackingCreatesDevilToken() {
         addCreatureReady(player1, new PugnaciousPugilist());
 
-        declareAttackers(List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
 
         Permanent devil = findPermanents(player1, "Devil").stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -79,7 +81,6 @@ class PugnaciousPugilistTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
         harness.passBothPriorities();
         resolveAllTriggers();
 

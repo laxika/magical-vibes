@@ -3914,6 +3914,8 @@ public class TargetLegalityService {
                                                 .withXValue(entry.getXValue())
                                                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
                                                 .withTriggeringPermanentId(entry.getTriggeringPermanentId())
+                                                .withActivatedAbilitySource(
+                                                        entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY)
                                                 .withMadness(entry.isMadness()));
                             } catch (IllegalStateException e) {
                                 targetFizzled = true;
@@ -4072,6 +4074,19 @@ public class TargetLegalityService {
         if (card != null) {
             if (!gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
                 return false;
+            }
+            int position = entry.getTargetCardIds().indexOf(cardId);
+            if (position >= 0) {
+                // A positional graveyard target group (Pulsemage Advocate's first three targets) is legal while its
+                // own card is still in a graveyard, regardless of what the other groups' effects want. The scope was
+                // enforced when the target was chosen; a card in a graveyard can't change owner.
+                for (CardEffect candidate : entry.getEffectsToResolve()) {
+                    if (candidate instanceof ReturnTargetCardsFromGraveyardToHandEffect returnTargets
+                            && position < returnTargets.targetGroups().size()) {
+                        return returnTargets.filter() == null || predicateEvaluationService.matchesCardPredicate(
+                                card, returnTargets.filter(), entry.getCard().getId());
+                    }
+                }
             }
             List<ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect> chosenTypeEffects =
                     entry.getEffectsToResolve().stream()
@@ -4385,6 +4400,7 @@ public class TargetLegalityService {
                         filterContext(gameData, entry.getCard() != null ? entry.getCard().getId() : null,
                                 entry.getControllerId(), defendingPlayerId(gameData, entry)).withXValue(entry.getXValue())
                                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
+                                .withActivatedAbilitySource(entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY)
                                 .withMadness(entry.isMadness()));
             } catch (IllegalStateException e) {
                 return false;

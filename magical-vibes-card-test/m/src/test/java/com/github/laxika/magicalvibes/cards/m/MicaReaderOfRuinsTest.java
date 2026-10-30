@@ -159,10 +159,14 @@ class MicaReaderOfRuinsTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handlePermanentChosen(player1, artifact.getId());
 
-        assertThat(gd.stack).hasSize(2)
+        // CR 707.10c: the copy is put onto the stack only once its controller has decided its targets.
+        assertThat(gd.stack).hasSize(1)
                 .allMatch(entry -> entry.getCard().getName().equals("Lightning Bolt"));
+        assertThat(gd.stagedSpellCopies).hasSize(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack).hasSize(2)
+                .allMatch(entry -> entry.getCard().getName().equals("Lightning Bolt"));
         resolveAllTriggers();
 
         harness.assertLife(player2, 14);

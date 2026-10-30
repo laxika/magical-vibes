@@ -46,6 +46,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeSacrificedLandCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -1839,12 +1841,23 @@ public class AbilityActivationService {
      * abilities are appended after the card's own so indices stay aligned with the client's card view.
      */
     public List<ActivatedAbility> effectiveGraveyardAbilities(GameData gameData, Card card, UUID ownerId) {
-        if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)) {
+        if (gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)
+                || perpetuallyLostAllAbilities(gameData, card)) {
             return List.of();
         }
         List<ActivatedAbility> abilities = new ArrayList<>(card.getGraveyardActivatedAbilities());
         abilities.addAll(gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCard(gameData, ownerId, card));
         return abilities;
+    }
+
+    /**
+     * Whether the card lost all its abilities perpetually (Patriar's Humiliation). The loss is recorded
+     * against the card identity, so it still holds when the card is in a graveyard.
+     */
+    private boolean perpetuallyLostAllAbilities(GameData gameData, Card card) {
+        return gameData.perpetualCardBattlefieldEffectGrants.getOrDefault(card.getId(), List.of()).stream()
+                .anyMatch(effect -> effect instanceof GrantEffectEffect grant
+                        && grant.effect() instanceof LosesAllAbilitiesEffect);
     }
 
     /**
@@ -2547,8 +2560,9 @@ public class AbilityActivationService {
         ManaPool handManaPool = gameData.playerManaPools.get(playerId);
         int handTreasureManaBefore = handManaPool.getTreasureManaTotal();
         if (abilityCost != null || activationCostModifier > 0) {
+            // Mana restricted to abilities of a subtype (Primal Beyond) is not spent on abilities of a card in hand.
             payManaCostForSourceCard(gameData, playerId, card, abilityCost == null ? "{0}" : abilityCost, effectiveXValue,
-                    false, false, activationCostModifier);
+                    false, false, activationCostModifier, Set.of());
         }
         gameData.abilityActivationUsedTreasureMana.put(card.getId(),
                 handTreasureManaBefore > handManaPool.getTreasureManaTotal());
@@ -9443,7 +9457,14 @@ public class AbilityActivationService {
                                            String abilityCost, int effectiveXValue,
                                            boolean artifactContext, boolean myrContext,
                                            int additionalCost) {
-        Set<CardSubtype> sourceSubtypes = cardSourceSpellOrAbilitySubtypes(sourceCard);
+        payManaCostForSourceCard(gameData, playerId, sourceCard, abilityCost, effectiveXValue, artifactContext,
+                myrContext, additionalCost, cardSourceSpellOrAbilitySubtypes(sourceCard));
+    }
+
+    private void payManaCostForSourceCard(GameData gameData, UUID playerId, Card sourceCard,
+                                           String abilityCost, int effectiveXValue,
+                                           boolean artifactContext, boolean myrContext,
+                                           int additionalCost, Set<CardSubtype> sourceSubtypes) {
         if (!sourceCard.hasType(CardType.CREATURE)) {
             payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext,
                     sourceSubtypes, additionalCost);

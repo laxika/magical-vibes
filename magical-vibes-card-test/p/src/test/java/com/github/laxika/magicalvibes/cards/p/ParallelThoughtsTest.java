@@ -241,7 +241,11 @@ class ParallelThoughtsTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player2, List.of(opponentLibraryCard));
 
-        resolveDrawChoice();
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "Parallel Thoughts");
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)

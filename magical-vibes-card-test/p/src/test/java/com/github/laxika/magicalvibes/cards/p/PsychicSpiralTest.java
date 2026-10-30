@@ -5,10 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.cards.c.CentaurHealer;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -118,7 +120,8 @@ class PsychicSpiralTest extends BaseCardTest {
         harness.setHand(player1, List.of(spiral));
         harness.addMana(player1, ManaColor.BLUE, 5);
         harness.castInstant(player1, 0, player2.getId());
-        gd.playersWithShroudThisTurn.add(player2.getId());
+        gd.playerKeywordsUntilEndOfTurn.computeIfAbsent(player2.getId(), id -> ConcurrentHashMap.newKeySet())
+                .add(Keyword.SHROUD);
 
         harness.passBothPriorities();
 

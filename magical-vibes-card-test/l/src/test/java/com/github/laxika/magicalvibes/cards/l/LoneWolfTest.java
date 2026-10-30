@@ -183,6 +183,7 @@ class LoneWolfTest extends BaseCardTest {
         assertThat(loneWolf.isBlockedWithoutBlockers()).isTrue();
 
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 2));
 
         harness.assertLife(player2, 18);
     }

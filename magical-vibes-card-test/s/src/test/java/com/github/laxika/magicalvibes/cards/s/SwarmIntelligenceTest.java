@@ -50,6 +50,8 @@ class SwarmIntelligenceTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        // CR 707.10c: the copy enters the stack only once its controller has decided on its targets.
+        harness.handleMayAbilityChosen(player1, false);
 
         long boltCount = gd.stack.stream()
                 .filter(e -> e.getCard().getName().equals("Lightning Bolt"))

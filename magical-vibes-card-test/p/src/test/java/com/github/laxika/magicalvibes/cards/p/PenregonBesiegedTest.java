@@ -78,9 +78,8 @@ class PenregonBesiegedTest extends BaseCardTest {
 
     private void advanceToEndStep(com.github.laxika.magicalvibes.model.Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
         resolveAllTriggers();
     }
 

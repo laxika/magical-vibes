@@ -1567,8 +1567,8 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("MayRevealSubtypeFromHandEffect does not queue when hand lacks matching subtype")
-        void mayRevealSubtypeSkipsWhenNoSubtypeInHand() {
+        @DisplayName("MayRevealSubtypeFromHandEffect still triggers when hand lacks matching subtype")
+        void mayRevealSubtypeTriggersWhenNoSubtypeInHand() {
             gd.turnNumber = 2;
             Card priestCard = createCardWithName("Priest of the Wakening Sun");
             priestCard.addEffect(EffectSlot.UPKEEP_TRIGGERED,
@@ -1583,12 +1583,14 @@ class StepTriggerServiceTest {
 
             sut.handleUpkeepTriggers(gd);
 
-            assertThat(gd.stack).isEmpty();
+            // CR 603.5: an optional trigger goes on the stack even if its option can't be exercised.
+            assertThat(gd.stack).isNotEmpty();
+            assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst()).isInstanceOf(MayEffect.class);
         }
 
         @Test
-        @DisplayName("MayRevealSubtypeFromHandEffect does not queue when hand is empty")
-        void mayRevealSubtypeSkipsWhenHandEmpty() {
+        @DisplayName("MayRevealSubtypeFromHandEffect still triggers when hand is empty")
+        void mayRevealSubtypeTriggersWhenHandEmpty() {
             gd.turnNumber = 2;
             Card priestCard = createCardWithName("Priest of the Wakening Sun");
             priestCard.addEffect(EffectSlot.UPKEEP_TRIGGERED,
@@ -1598,7 +1600,9 @@ class StepTriggerServiceTest {
 
             sut.handleUpkeepTriggers(gd);
 
-            assertThat(gd.stack).isEmpty();
+            // CR 603.5: an optional trigger goes on the stack even if its option can't be exercised.
+            assertThat(gd.stack).isNotEmpty();
+            assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst()).isInstanceOf(MayEffect.class);
         }
     }
 

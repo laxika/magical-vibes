@@ -14,34 +14,44 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentMayDrawCardEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import java.util.List;
 import java.util.Set;
 
 /**
- * Each ability pairs a benefit for the controller with a gift for the opponent. The opponent is
- * derived rather than targeted — this engine is two-player, so "target opponent" has exactly one
- * legal choice.
+ * Each ability pairs a benefit for the controller with a gift for the opponent. Each ability targets
+ * the opponent, so the opponent's hexproof stops activation, and an opponent who becomes illegal
+ * while the ability is on the stack makes the whole ability fizzle.
  */
 @CardRegistration(set = "ALL", collectorNumber = "115")
 @CardRegistration(set = "ME1", collectorNumber = "150")
 public class Phelddagrif extends Card {
+
+    private static final TargetFilter OPPONENT_TARGET = new PlayerPredicateTargetFilter(
+            new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent");
 
     public Phelddagrif() {
         addActivatedAbility(new ActivatedAbility(false, "{G}",
                 List.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF),
                         new TargetOpponentCreatesTokenEffect(new CreateTokenEffect("Hippo", 1, 1,
                                 CardColor.GREEN, List.of(CardSubtype.HIPPO), Set.of(), Set.of()))),
-                "{G}: Phelddagrif gains trample until end of turn. Target opponent creates a 1/1 green Hippo creature token."));
+                "{G}: Phelddagrif gains trample until end of turn. Target opponent creates a 1/1 green Hippo creature token.",
+                OPPONENT_TARGET));
 
         addActivatedAbility(new ActivatedAbility(false, "{W}",
                 List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF),
                         new GainLifeEffect(new Fixed(2), GainLifeRecipient.OPPONENT)),
-                "{W}: Phelddagrif gains flying until end of turn. Target opponent gains 2 life."));
+                "{W}: Phelddagrif gains flying until end of turn. Target opponent gains 2 life.",
+                OPPONENT_TARGET));
 
         addActivatedAbility(new ActivatedAbility(false, "{U}",
-                List.of(ReturnToHandEffect.self(), new TargetOpponentMayDrawCardEffect()),
-                "{U}: Return Phelddagrif to its owner's hand. Target opponent may draw a card."));
+                List.of(ReturnToHandEffect.self(), TargetOpponentMayDrawCardEffect.ofChosenTarget()),
+                "{U}: Return Phelddagrif to its owner's hand. Target opponent may draw a card.",
+                OPPONENT_TARGET));
     }
 }

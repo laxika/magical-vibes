@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.b.BarkformHarvester;
 import com.github.laxika.magicalvibes.cards.c.CacheGrab;
 import com.github.laxika.magicalvibes.cards.c.ClifftopLookout;
-import com.github.laxika.magicalvibes.cards.d.DazzlingDenial;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.h.HeapedHarvest;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfZendikar;
 import com.github.laxika.magicalvibes.cards.s.SazacapsBrew;
@@ -21,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PortentOfCalamity.class, Forest.class, ClifftopLookout.class, DazzlingDenial.class,
+@CardUsed({PortentOfCalamity.class, Forest.class, ClifftopLookout.class, GiantGrowth.class,
         HeapedHarvest.class, CacheGrab.class, BarkformHarvester.class, SazacapsBrew.class, InvasionOfZendikar.class})
 class PortentOfCalamityTest extends BaseCardTest {
 
@@ -150,7 +150,7 @@ class PortentOfCalamityTest extends BaseCardTest {
     void uncastableSelectedSpellStillGoesIntoHand() {
         Forest forest = new Forest();
         ClifftopLookout creature = new ClifftopLookout();
-        DazzlingDenial instant = new DazzlingDenial();
+        GiantGrowth instant = new GiantGrowth();
         HeapedHarvest artifact = new HeapedHarvest();
         cast(4, List.of(forest, creature, instant, artifact));
         chooseNextTypeCard();

@@ -823,7 +823,8 @@ public class GraveyardChoiceHandlerService {
 
         // Separate "target X card and target Y card" instances of the word "target" may pick the
         // same card (CR 115.3), so naming it twice is one selection.
-        if (!requiredCardTypes(gameData).isEmpty() || hasActiveOneOfEachFilterEffect(gameData)) {
+        if (!requiredCardTypes(gameData).isEmpty() || hasActiveOneOfEachFilterEffect(gameData)
+                || hasActiveRepeatedModeReturnEffect(gameData)) {
             cardIds = cardIds.stream().distinct().toList();
         }
 
@@ -2263,6 +2264,22 @@ public class GraveyardChoiceHandlerService {
                 ? List.of(activeEffect) : gameData.graveyardTargetOperation.effects;
         return effects != null && effects.stream()
                 .anyMatch(ReturnUpToOneOfEachFilterFromGraveyardToHandEffect.class::isInstance);
+    }
+
+    /**
+     * Whether the active return effect is a modal spell's mode chosen more than once (Planewide Celebration's
+     * "return target permanent card" chosen several times). Each chosen instance has its own target, so one
+     * card may fill several of them (CR 115.3) and naming it repeatedly is one selection.
+     */
+    private boolean hasActiveRepeatedModeReturnEffect(GameData gameData) {
+        CardEffect activeEffect = gameData.graveyardTargetOperation.activeSpellGraveyardChoiceEffect;
+        List<CardEffect> effects = activeEffect != null
+                ? List.of(activeEffect) : gameData.graveyardTargetOperation.effects;
+        return effects != null && effects.stream()
+                .filter(ReturnTargetCardsFromGraveyardToHandEffect.class::isInstance)
+                .map(ReturnTargetCardsFromGraveyardToHandEffect.class::cast)
+                .anyMatch(effect -> effect.minTargets() == 1 && effect.maxTargets() > 1 && !effect.exactTargets()
+                        && !effect.xScaled() && effect.dynamicMaxTargets() == null);
     }
 
     private Set<CardType> requiredCardTypes(GameData gameData) {

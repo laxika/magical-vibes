@@ -58,7 +58,7 @@ class ParcelMyrTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
 
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);

@@ -157,6 +157,7 @@ class ScapegoatTest extends BaseCardTest {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new HonorGuard());
         Permanent changedController = harness.addToBattlefieldAndReturn(player1, new VenerableMonk());
         harness.setHand(player1, List.of(new Scapegoat()));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castInstantWithSacrifice(player1, 0, changedController.getId(), sacrifice.getId());

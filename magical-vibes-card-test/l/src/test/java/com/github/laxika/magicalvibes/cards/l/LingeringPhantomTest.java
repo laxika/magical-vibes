@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.cards.m.MemorialToFolly;
 import com.github.laxika.magicalvibes.cards.p.PutridImp;
 import com.github.laxika.magicalvibes.cards.t.TheFlameOfKeld;
@@ -207,9 +208,8 @@ class LingeringPhantomTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.castArtifact(player1, 0);
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, phantom.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, 0);
         harness.assertInHand(player1, "Lingering Phantom");
 
         harness.activateAbility(player1, 0, null, null);

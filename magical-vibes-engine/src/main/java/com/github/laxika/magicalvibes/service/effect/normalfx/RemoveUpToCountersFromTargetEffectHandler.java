@@ -71,6 +71,15 @@ public class RemoveUpToCountersFromTargetEffectHandler implements NormalEffectHa
         if (gameData.playerEnergyCounters.getOrDefault(targetId, 0) > 0) {
             kinds.add("ENERGY");
         }
+        if (gameData.playerRadCounters.getOrDefault(targetId, 0) > 0) {
+            kinds.add("RAD");
+        }
+        if (gameData.playerExperienceCounters.getOrDefault(targetId, 0) > 0) {
+            kinds.add("EXPERIENCE");
+        }
+        if (gameData.playerSparkCounters.getOrDefault(targetId, 0) > 0) {
+            kinds.add("SPARK");
+        }
         return kinds;
     }
 
@@ -82,6 +91,9 @@ public class RemoveUpToCountersFromTargetEffectHandler implements NormalEffectHa
         return switch (counterKind) {
             case "POISON" -> gameData.playerPoisonCounters.getOrDefault(targetId, 0);
             case "ENERGY" -> gameData.playerEnergyCounters.getOrDefault(targetId, 0);
+            case "RAD" -> gameData.playerRadCounters.getOrDefault(targetId, 0);
+            case "EXPERIENCE" -> gameData.playerExperienceCounters.getOrDefault(targetId, 0);
+            case "SPARK" -> gameData.playerSparkCounters.getOrDefault(targetId, 0);
             default -> 0;
         };
     }

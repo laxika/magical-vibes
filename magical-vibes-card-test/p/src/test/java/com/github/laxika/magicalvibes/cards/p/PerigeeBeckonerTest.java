@@ -108,6 +108,7 @@ class PerigeeBeckonerTest extends BaseCardTest {
     void warpExilesAndAllowsCastingOnALaterTurn() {
         PerigeeBeckoner beckoner = new PerigeeBeckoner();
         harness.setHand(player1, List.of(beckoner));
+        harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);

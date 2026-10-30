@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -362,8 +364,16 @@ public class GameTestHarness {
             if (permanent.getCard().isSaga()) {
                 sagaChapterService.initializeSaga(gameData, permanent, permanent.getCard(), player.getId());
             }
-            battlefieldEntryService.processCreatureETBEffects(
-                    gameData, player.getId(), permanent.getCard(), null, false);
+            // Devour is an as-enters replacement (CR 702.82a): its sacrifice choice precedes the entry triggers.
+            boolean asEntersDevour = permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .anyMatch(effect -> effect instanceof DevourEffect);
+            if (asEntersDevour) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(
+                        gameData, player.getId(), permanent.getCard(), null, false);
+            } else {
+                battlefieldEntryService.processCreatureETBEffects(
+                        gameData, player.getId(), permanent.getCard(), null, false);
+            }
             triggerCollectionService.processNextTriggeredModalTrigger(gameData);
         });
         return permanent;

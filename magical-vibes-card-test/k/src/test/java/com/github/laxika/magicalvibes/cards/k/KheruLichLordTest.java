@@ -54,8 +54,11 @@ class KheruLichLordTest extends BaseCardTest {
         assertThat(returned.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(returned.isExileIfLeavesBattlefield()).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(returned.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP,
-                        player1.getId()));
+                .anySatisfy(action -> {
+                    assertThat(action.permanentId()).isEqualTo(returned.getId());
+                    assertThat(action.kind()).isEqualTo(DelayedPermanentActionKind.EXILE_AT_END_STEP);
+                    assertThat(action.controllerId()).isEqualTo(player1.getId());
+                });
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
     }
 

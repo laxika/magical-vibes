@@ -65,6 +65,7 @@ class PriestOfForgottenGodsTest extends BaseCardTest {
     @Test
     @DisplayName("The ability can resolve with no targets and still gives mana and a card")
     void resolvesWithNoTargets() {
+        harness.setHand(player1, List.of());
         addCreatureReady(player1, new PriestOfForgottenGods());
         Permanent firstCostCreature = addCreatureReady(player1, new FeralMaaka());
         addCreatureReady(player1, new FeralMaaka());
@@ -104,6 +105,7 @@ class PriestOfForgottenGodsTest extends BaseCardTest {
     @Test
     @DisplayName("The targeted player chooses which creature to sacrifice before mana and draw")
     void targetChoosesCreatureAndResolutionResumes() {
+        harness.setHand(player1, List.of());
         addCreatureReady(player1, new PriestOfForgottenGods());
         Permanent first = addCreatureReady(player1, new FeralMaaka());
         addCreatureReady(player1, new FeralMaaka());

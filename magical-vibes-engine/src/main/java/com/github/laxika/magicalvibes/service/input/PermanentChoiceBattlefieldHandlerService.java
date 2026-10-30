@@ -2780,8 +2780,12 @@ public class PermanentChoiceBattlefieldHandlerService {
             gameData.exploitedPermanentIdsBySource
                     .computeIfAbsent(ctx.sourcePermanentId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
                     .add(toSacrifice.getId());
+            // The exploit ability belongs to the exploiting permanent's controller when the exploit happens,
+            // which can differ from the player who chose the sacrifice (Profaner of the Dead under Illusory Gains).
+            UUID exploitController = gameQueryService.findPermanentController(gameData, ctx.sourcePermanentId());
             triggerCollectionService.checkExploitTriggers(
-                    gameData, ctx.sourceCard(), ctx.controllerId(), ctx.sourcePermanentId());
+                    gameData, ctx.sourceCard(), exploitController != null ? exploitController : ctx.controllerId(),
+                    ctx.sourcePermanentId());
             triggerCollectionService.checkAllyCreatureExploitTriggers(
                     gameData, ctx.controllerId(), ctx.sourcePermanent(), exploitedCard, sacrificedPower);
             if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class)

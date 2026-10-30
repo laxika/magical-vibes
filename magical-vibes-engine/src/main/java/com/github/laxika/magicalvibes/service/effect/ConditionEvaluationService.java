@@ -552,6 +552,8 @@ public class ConditionEvaluationService {
             ThreadLocal.withInitial(HashSet::new);
     private static final ThreadLocal<Set<UUID>> SELF_KEYWORD_EVALUATION =
             ThreadLocal.withInitial(HashSet::new);
+    private static final ThreadLocal<Set<UUID>> HAND_SIZE_EVALUATION =
+            ThreadLocal.withInitial(HashSet::new);
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -1110,10 +1112,7 @@ public class ConditionEvaluationService {
                             && gameData.playerHands.getOrDefault(ctx.controllerId(), List.of()).stream()
                             .noneMatch(card -> card.hasType(CardType.LAND));
             case ControllerMaximumHandSizeOtherThanSeven ignored ->
-                    ctx.controllerId() != null
-                            && turnCleanupService != null
-                            && !turnCleanupService.hasNoMaximumHandSize(gameData, ctx.controllerId())
-                            && turnCleanupService.getMaxHandSize(gameData, ctx.controllerId()) != 7;
+                    isMaximumHandSizeOtherThanSeven(gameData, ctx);
             case ControllerOwnsCardInExile ignored ->
                     controllerOwnsCardInExile(gameData, ctx.controllerId());
             case ControllerHadNoCardsInHandAtTurnStart ignored ->
@@ -1690,7 +1689,8 @@ public class ConditionEvaluationService {
                 yield targetSpell != null
                         && !gameQueryService.isUncounterable(gameData, targetSpell.getCard())
                         && !(ctx.sourceCard() != null && gameQueryService.isProtectedFromCounterBySourceCard(
-                                gameData, targetSpell.getControllerId(), ctx.sourceCard()));
+                                gameData, targetSpell.getControllerId(), ctx.sourceCard()))
+                        && !gameQueryService.controlsCounterExileReplacement(gameData, ctx.controllerId());
             }
             case TargetSpellManaSpentLessThanManaValue ignored -> {
                 if (ctx.targetId() == null) {
@@ -2847,6 +2847,26 @@ public class ConditionEvaluationService {
     }
 
     /** Coven: three or more controlled creatures with different effective powers. */
+    /**
+     * Whether the controller has a maximum hand size other than seven. Computing the maximum hand size
+     * reads the active static abilities of the controller's permanents, which can evaluate this same
+     * condition again (Learned Learner); the nested evaluation is treated as unmet so it cannot recurse.
+     */
+    private boolean isMaximumHandSizeOtherThanSeven(GameData gameData, ConditionContext ctx) {
+        if (ctx.controllerId() == null || turnCleanupService == null) return false;
+        Set<UUID> evaluating = HAND_SIZE_EVALUATION.get();
+        if (!evaluating.add(ctx.controllerId())) return false;
+        try {
+            return !turnCleanupService.hasNoMaximumHandSize(gameData, ctx.controllerId())
+                    && turnCleanupService.getMaxHandSize(gameData, ctx.controllerId()) != 7;
+        } finally {
+            evaluating.remove(ctx.controllerId());
+            if (evaluating.isEmpty()) {
+                HAND_SIZE_EVALUATION.remove();
+            }
+        }
+    }
+
     private boolean isCovenMet(GameData gameData, ConditionContext ctx) {
         if (ctx.controllerId() == null) return false;
         if (!GameQueryService.isStaticEvaluationActive()) {

@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class OrdealOfThassa extends Card {
 
     public OrdealOfThassa() {
+        // "Whenever enchanted creature attacks" is the Aura's own ability, controlled by the Aura's controller.
+        setAttackTriggerOwnedByAura(true);
+
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
                         new PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),

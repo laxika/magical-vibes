@@ -17,6 +17,6 @@ public class PyromancersSwath extends Card {
     public PyromancersSwath() {
         addEffect(EffectSlot.STATIC, new AdditionalControllerDamageEffect(2,
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL))));
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new DiscardHandEffect());
+        addEffect(EffectSlot.END_STEP_TRIGGERED, new DiscardHandEffect());
     }
 }

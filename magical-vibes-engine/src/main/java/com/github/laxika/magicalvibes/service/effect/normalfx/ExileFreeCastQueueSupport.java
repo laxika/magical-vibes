@@ -377,6 +377,14 @@ public class ExileFreeCastQueueSupport {
                         DiscardFollowUp.NONE.withPendingSpellCast(pendingCast));
                 return;
             }
+            if (additionalCosts.discardCost() != null
+                    && spellEffects.stream().filter(CostEffect.class::isInstance)
+                    .allMatch(DiscardCardTypeCost.class::isInstance)
+                    && needsCastTarget(cardToCast, spellEffects)
+                    && additionalSpellCostService.satisfiable(gameData, playerId, cardToCast)) {
+                castPreparedSpell(gameData, playerId, card, cardToCast, spellEffects, spellType, asCopy, 0);
+                return;
+            }
             skipCardWithUnsupportedCost(gameData, playerId, card, asCopy);
             return;
         }

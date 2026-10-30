@@ -30,7 +30,7 @@ public class PrideOfTheRoad extends Card {
                         new PermanentControlledBySourceControllerPredicate())),
                 "Target must be a creature or Vehicle you control"))
                 .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
-                        new ConditionalEffect(new MaxSpeed(),
+                        ConditionalEffect.atTriggerTime(new MaxSpeed(),
                                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET)));
     }
 }

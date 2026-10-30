@@ -116,6 +116,8 @@ class ProfessorHojoTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
 
         harness.activateAbility(player2, 0, null, target.getId());
 

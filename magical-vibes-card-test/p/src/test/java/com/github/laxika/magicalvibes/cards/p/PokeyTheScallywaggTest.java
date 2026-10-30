@@ -25,6 +25,8 @@ class PokeyTheScallywaggTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
         assertThat(gameLogContains("Pokey, the Scallywagg rolled a d20:")).isTrue();
@@ -73,6 +75,8 @@ class PokeyTheScallywaggTest extends BaseCardTest {
         int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
 
         harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
         assertThat(gameLogContains("Pokey, the Scallywagg rolled a d20:")).isTrue();

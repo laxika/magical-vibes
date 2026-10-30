@@ -495,7 +495,8 @@ public class GraveyardService {
                     .orElse(null);
             grantedMadnessCost = gameQueryService.findGrantedMadnessCost(gameData, ownerId, card).orElse(null);
         }
-        if (nativeMadnessCost != null && grantedMadnessCost != null) {
+        if (nativeMadnessCost != null && grantedMadnessCost != null
+                && !nativeMadnessCost.equals(grantedMadnessCost)) {
             // Falkenrath Gorger ruling: the discarding card's owner chooses which madness ability applies.
             var choice = new PendingInteraction.ColorChoice(
                     ownerId, null, null,
@@ -2656,15 +2657,22 @@ public class GraveyardService {
                         gameData, 1);
             }
             for (UUID ownerId : gameData.graveyardLeaveNotificationPendingCreatureOwners) {
-                triggerCollectionService.checkControllerCreatureCardsLeaveGraveyardTriggers(gameData, ownerId,
-                        gameData.graveyardLeaveNotificationPendingCreatureCards.getOrDefault(ownerId, List.of()));
+                List<Card> pendingCards = gameData.graveyardLeaveNotificationPendingCreatureCards
+                        .getOrDefault(ownerId, List.of());
+                List<Card> notified = withoutSuppressedEntries(gameData, pendingCards);
+                if (pendingCards.isEmpty() || !notified.isEmpty()) {
+                    triggerCollectionService.checkControllerCreatureCardsLeaveGraveyardTriggers(
+                            gameData, ownerId, notified);
+                }
             }
             for (var pending : gameData.graveyardLeaveNotificationPendingCreatureCardCounts.entrySet()) {
-                for (int i = 0; i < pending.getValue(); i++) {
+                List<Card> pendingCards = gameData.graveyardLeaveNotificationPendingCreatureCards
+                        .getOrDefault(pending.getKey(), List.of());
+                List<Card> notified = withoutSuppressedEntries(gameData, pendingCards);
+                int count = pending.getValue() - (pendingCards.size() - notified.size());
+                for (int i = 0; i < count; i++) {
                     triggerCollectionService.checkControllerCreatureCardLeavesGraveyardTriggers(
-                            gameData, pending.getKey(),
-                            gameData.graveyardLeaveNotificationPendingCreatureCards
-                                    .getOrDefault(pending.getKey(), List.of()));
+                            gameData, pending.getKey(), notified);
                 }
             }
             for (UUID ownerId : gameData.graveyardLeaveNotificationPendingArtifactOrCreatureOwners) {
@@ -2915,10 +2923,27 @@ public class GraveyardService {
                     .addAll(cards);
             return;
         }
-        triggerCollectionService.checkControllerCreatureCardsLeaveGraveyardTriggers(gameData, ownerId, cards);
-        for (int i = 0; i < count; i++) {
-            triggerCollectionService.checkControllerCreatureCardLeavesGraveyardTriggers(gameData, ownerId, cards);
+        List<Card> notified = withoutSuppressedEntries(gameData, cards);
+        if (notified.isEmpty()) {
+            return;
         }
+        triggerCollectionService.checkControllerCreatureCardsLeaveGraveyardTriggers(gameData, ownerId, notified);
+        for (int i = 0; i < notified.size(); i++) {
+            triggerCollectionService.checkControllerCreatureCardLeavesGraveyardTriggers(gameData, ownerId, notified);
+        }
+    }
+
+    /**
+     * Drops the creature cards that left the graveyard by entering the battlefield while a static effect
+     * such as Hushbringer stops creatures entering from causing abilities to trigger: that zone change is
+     * the creature entering, so the "leaves your graveyard" abilities it would cause don't trigger.
+     */
+    private List<Card> withoutSuppressedEntries(GameData gameData, List<Card> cards) {
+        List<Card> notified = new ArrayList<>(cards);
+        gameData.forEachPermanent((controllerId, permanent) -> notified.removeIf(card ->
+                permanent.getCard().getId().equals(card.getId())
+                        && gameQueryService.areCreatureETBTriggersSuppressed(gameData, card)));
+        return notified;
     }
 
     private void notifyArtifactOrCreatureCardsLeftGraveyard(GameData gameData, UUID ownerId,

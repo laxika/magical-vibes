@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield.etb;
 
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
@@ -87,8 +88,13 @@ public class EtbEffectResolver {
     public EtbEffectResolver(ConditionEvaluationService conditionEvaluationService) {
         // "you lose the game unless this was cast from your hand" — no-op (drop) when cast from hand,
         // otherwise materialise into the controller losing the game.
-        register(LoseGameIfNotCastFromHandEffect.class, (ctx, effect) ->
-                ctx.wasCastFromHand() ? null : new TargetPlayerLosesGameEffect(ctx.controllerId()));
+        register(LoseGameIfNotCastFromHandEffect.class, (ctx, effect) -> {
+            Permanent source = ctx.sourcePermanent();
+            boolean castFromHand = source != null && source.isCast() && source.getCastFromZone() != null
+                    ? source.getCastFromZone() == Zone.HAND
+                    : ctx.wasCastFromHand();
+            return castFromHand ? null : new TargetPlayerLosesGameEffect(ctx.controllerId());
+        });
 
         // Tribute's "if tribute wasn't paid" ability is an intervening-if trigger. The choice is
         // recorded on the entering permanent before this resolver runs.

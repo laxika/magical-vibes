@@ -113,6 +113,7 @@ public class DamageSupport {
     private final ObjectProvider<com.github.laxika.magicalvibes.service.input.PlayerInputService> playerInputService;
     private final VisualCueService visualCueService;
     private final ObjectProvider<DepartureService> departureService;
+    private final ObjectProvider<ProliferateEffectHandler> proliferateHandler;
 
     /**
      * Whether a creature source's damage is dealt by another object, such as the Equipment whose granted
@@ -438,6 +439,7 @@ public class DamageSupport {
             } else {
                 checkSpellLifelink(gameData, entry, damage);
             }
+            checkProliferatelink(gameData, entry, damageSource, damage);
             queueEnchantedCreatureDealsDamageTrigger(gameData, entry, damageSource, damage);
         }
         processPendingRedirectDamage(gameData);
@@ -558,6 +560,40 @@ public class DamageSupport {
         queueLifelinkGain(gameData, entry, controllerId, damageSource.getId(), damageSource.getCard(), damage);
     }
 
+    /**
+     * Proliferatelink: damage a source with the keyword deals also makes its controller proliferate that many
+     * times. Like lifelink the damage one source deals in one damage event is totalled; the proliferating
+     * happens as that event ends ({@link #flushProliferateLinks}), before any state-based action check.
+     */
+    private void checkProliferatelink(GameData gameData, StackEntry entry, Permanent damageSource, int damage) {
+        if (damage <= 0 || !gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.PROLIFERATELINK)) {
+            return;
+        }
+        UUID sourcePermanentId = damageSource != null ? damageSource.getId() : entry.getSourcePermanentId();
+        UUID controllerId = sourcePermanentId == null ? null
+                : gameQueryService.findPermanentController(gameData, sourcePermanentId);
+        if (controllerId == null && sourcePermanentId != null) {
+            controllerId = entry.lastKnownPermanentController(sourcePermanentId);
+        }
+        if (controllerId == null) controllerId = entry.getDamageSourceControllerId();
+        if (controllerId == null) controllerId = entry.getControllerId();
+        gameData.pendingProliferateLinks.merge(controllerId, damage, Integer::sum);
+    }
+
+    /**
+     * Starts the proliferating the open damage event's proliferatelink sources earned, one player at a time.
+     * Returns {@code false} while a player's proliferate prompt waits; the resolution then comes back here for
+     * the next player.
+     */
+    private boolean flushProliferateLinks(GameData gameData) {
+        var iterator = gameData.pendingProliferateLinks.entrySet().iterator();
+        if (!iterator.hasNext()) return true;
+        var next = iterator.next();
+        iterator.remove();
+        proliferateHandler.getObject().begin(gameData, next.getKey(), next.getValue());
+        return !gameData.interaction.isAwaitingInput();
+    }
+
     private void queueLifelinkGain(GameData gameData, StackEntry entry, UUID gainingPlayerId, UUID sourceId,
                                    Card sourceCard, int amount) {
         UUID sourceControllerId = lifeSupport.resolveSpellOrAbilityControllerId(gameData);
@@ -600,12 +636,13 @@ public class DamageSupport {
     public boolean endOpenDamageEvent(GameData gameData) {
         if (!dealSimultaneousDamage(gameData)) return false;
         flushLifelinkGains(gameData);
-        return true;
+        return flushProliferateLinks(gameData);
     }
 
     /** Ends the last damage event when the outermost resolution finishes, gaining its lifelink. */
     public void endDamageEvent(GameData gameData) {
         flushLifelinkGains(gameData);
+        gameData.pendingProliferateLinks.clear();
         gameData.sourceRedirectShieldsUsedInOpenEvent.clear();
         gameData.playerSourceShieldsUsedInOpenEvent.clear();
         gameData.openDamageEvent = null;
@@ -1641,6 +1678,7 @@ public class DamageSupport {
                     gameData, playerId, sourceControllerId, effectiveDamage);
             triggerCollectionService.checkRedSpellOrPlaneswalkerDamageToOpponentTriggers(gameData, playerId, entry);
             checkSpellLifelink(gameData, entry, effectiveDamage);
+            checkProliferatelink(gameData, entry, null, effectiveDamage);
         }
         processEyeForAnEyeReflections(gameData);
     }

@@ -81,6 +81,9 @@ class ParallaxNexusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(nexus);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(exiledCard);
+        harness.passBothPriorities();
+
         assertThat(gd.playerHands.get(player2.getId())).contains(retainedCard, exiledCard);
         assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(exiledCard);
     }
@@ -187,7 +190,8 @@ class ParallaxNexusTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
 
-        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, nexus);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, nexus));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(nexus);
         assertThat(gd.playerHands.get(player2.getId())).doesNotContain(exiledCard);

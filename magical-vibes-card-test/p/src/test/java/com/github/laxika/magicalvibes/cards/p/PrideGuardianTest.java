@@ -65,8 +65,8 @@ class PrideGuardianTest extends BaseCardTest {
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(startingLife);
-        gd.playerBattlefields.get(player2.getId()).remove(guardian);
-        gd.playerGraveyards.get(player2.getId()).add(guardian.getCard());
+        guardian.setMarkedDamage(3);
+        harness.runStateBasedActions();
 
         harness.passBothPriorities();
 

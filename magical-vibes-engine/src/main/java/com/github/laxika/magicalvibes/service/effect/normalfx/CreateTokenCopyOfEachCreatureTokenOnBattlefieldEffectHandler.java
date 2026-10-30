@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,9 +46,21 @@ public class CreateTokenCopyOfEachCreatureTokenOnBattlefieldEffectHandler implem
             }
         }
 
-        for (Map.Entry<UUID, List<Card>> sourceEntry : sourceCardsByController.entrySet()) {
-            tokenCopySupport.createTokenCopies(
-                    gameData, entry, sourceEntry.getValue(), null, sourceEntry.getKey(), PLAIN_TOKEN_COPY);
+        boolean outermost = gameData.deferredTokenEntryNotifications == null;
+        if (outermost) {
+            gameData.deferredTokenEntryNotifications = new ArrayList<>();
+        }
+        try {
+            for (Map.Entry<UUID, List<Card>> sourceEntry : sourceCardsByController.entrySet()) {
+                tokenCopySupport.createTokenCopies(
+                        gameData, entry, sourceEntry.getValue(), null, sourceEntry.getKey(), PLAIN_TOKEN_COPY);
+            }
+        } finally {
+            if (outermost) {
+                List<Runnable> notifications = gameData.deferredTokenEntryNotifications;
+                gameData.deferredTokenEntryNotifications = null;
+                notifications.forEach(Runnable::run);
+            }
         }
     }
 }

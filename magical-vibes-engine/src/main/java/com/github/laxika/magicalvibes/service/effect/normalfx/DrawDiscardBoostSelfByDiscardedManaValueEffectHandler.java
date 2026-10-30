@@ -25,8 +25,18 @@ public class DrawDiscardBoostSelfByDiscardedManaValueEffectHandler implements No
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        // Draw a card
-        drawService.resolveDrawCard(gameData, controllerId);
+        // The draw may open a replacement prompt (dredge): the effect is re-run once it is answered and
+        // continues with the discard, so the discard never competes with that prompt.
+        if (gameData.pendingDrawRevealDiscardDrawCounts.remove(controllerId) == null) {
+            gameData.pendingDrawRevealDiscardDrawCounts.put(controllerId, 0);
+            gameData.rerunCurrentEffectAfterInteraction = true;
+            drawService.resolveDrawCard(gameData, controllerId);
+            if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
+                return;
+            }
+            gameData.pendingDrawRevealDiscardDrawCounts.remove(controllerId);
+        }
+        gameData.rerunCurrentEffectAfterInteraction = false;
         // Set up the pending boost before the discard; applied once the player picks a card
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (sourcePermanentId != null) {

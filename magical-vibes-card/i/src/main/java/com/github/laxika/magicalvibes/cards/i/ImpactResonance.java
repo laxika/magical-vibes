@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 public class ImpactResonance extends Card {
 
     public ImpactResonance() {
-        addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(
+        addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreaturesAllowingNoTargets(
                 new GreatestDamageDealtBySourceThisTurn()));
     }
 }

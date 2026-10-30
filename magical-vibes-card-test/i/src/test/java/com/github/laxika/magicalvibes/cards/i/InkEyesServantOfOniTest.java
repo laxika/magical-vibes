@@ -98,16 +98,19 @@ class InkEyesServantOfOniTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0));
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
                 () -> gs.declareBlockers(gd, player2, List.of()));
+        harness.clearPriorityPassed();
 
         harness.setHand(player1, List.of(new InkEyesServantOfOni()));
         harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.activateHandAbility(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.activateHandAbility(player1, 0, attacker.getId());
+            harness.passBothPriorities();
+        });
 
         harness.assertInHand(player1, "Gnarled Mass");
         Permanent inkEyes = findPermanent(player1, "Ink-Eyes, Servant of Oni");
         assertThat(inkEyes.isTapped()).isTrue();
-        assertThat(inkEyes.isAttackedThisTurn()).isTrue();
+        assertThat(inkEyes.isAttacking()).isTrue();
     }
 
     @Test

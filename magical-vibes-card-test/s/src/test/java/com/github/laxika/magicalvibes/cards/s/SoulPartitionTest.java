@@ -163,6 +163,7 @@ class SoulPartitionTest extends BaseCardTest {
         ArgothSanctumOfNature argoth = new ArgothSanctumOfNature();
         harness.addToBattlefield(player2, titania);
         harness.addToBattlefield(player2, argoth);
+        harness.addToBattlefield(player2, new Forest());
         harness.setGraveyard(player2,
                 List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         advanceToUpkeep(player2);

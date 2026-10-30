@@ -141,7 +141,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
 
-                when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
+                when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(true);
 
                 copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
@@ -172,7 +172,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
 
-                when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
+                when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(true);
 
                 copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
@@ -206,7 +206,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
 
-                when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
+                when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(true);
 
                 copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
@@ -236,7 +236,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
 
-                when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
+                when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(true);
 
                 copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
@@ -269,7 +269,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
 
-                when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
+                when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(true);
 
                 copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
@@ -299,9 +299,9 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         "Precursor Golem trigger", List.of(effect));
 
                 // golem2 is targetable, shroudedGolem is NOT
-                when(validTargetService.canPermanentBeTargetedBySpell(gd, golem2, shockCard, player1Id))
+                when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), eq(golem2), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(true);
-                when(validTargetService.canPermanentBeTargetedBySpell(gd, shroudedGolem, shockCard, player1Id))
+                when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), eq(shroudedGolem), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(false);
 
                 copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
@@ -373,7 +373,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
 
-                when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
+                when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(true);
 
                 copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
@@ -403,7 +403,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
 
-                when(validTargetService.canPermanentBeTargetedBySpell(gd, opponentGolem, shockCard, player1Id))
+                when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), eq(opponentGolem), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(true);
 
                 copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);

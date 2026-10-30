@@ -113,6 +113,40 @@ agent-docs/ARCHITECTURE.md first.
 
 ---
 
+## 70. Snowfall's "may add" mana needs an optional choice inside a triggered mana ability
+
+**Status:** open · **Found:** 2026-10-30, O/P mixed card-test batch
+
+**Failing tests:**
+- `SnowfallTest` "The Island's controller may decline Snowfall's additional mana"
+
+**What the rules require.** Snowfall's Oracle text says that whenever an Island is tapped for mana, its
+controller *may* add an additional {U} (and another if the Island is snow). That is a triggered mana ability
+(CR 605.1b): it resolves immediately, without the stack, but the "may" is still a choice for the Island's
+controller. `LandTapTriggerCollectorService.handleAddRestrictedManaWhenSubtypeLandTapped` adds the mana with no
+choice at all.
+
+**Why it's large.** The engine has no way to ask a question in the middle of a mana ability, because mana
+abilities resolve synchronously inside cost payment and auto-tapping. It needs a pending optional-choice path
+for triggered mana abilities that also works while a cost is being paid. The other `SnowfallTest` tests
+(`opponentIslandAlsoBenefits`, `islandAddsRestrictedBlue`, `snowIslandAddsTwoRestrictedBlue`,
+`islandManaPaysCumulativeUpkeep`, `multipleSnowfallsAddSeparateSnowBonuses`, `insufficientManaSacrificesSnowfall`)
+assume the mana is added with no prompt. Once the prompt exists they have to answer it, or the engine has to
+add the mana by default and only ask when it matters.
+
+**Prompt to start it:**
+
+```
+In magical-vibes, support optional choices in triggered mana abilities (CR 605.1b), starting with Snowfall's
+"that player may add an additional {U}". LandTapTriggerCollectorService.handleAddRestrictedManaWhenSubtypeLandTapped
+currently adds the mana unconditionally. Design how a mana ability can ask its controller a yes/no question,
+including while mana is being tapped to pay a cost, then make SnowfallTest "The Island's controller may decline
+Snowfall's additional mana" pass and update the other SnowfallTest flows to answer the new prompt. Read
+agent-docs/ARCHITECTURE.md first and verify every CR number with the rules MCP.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

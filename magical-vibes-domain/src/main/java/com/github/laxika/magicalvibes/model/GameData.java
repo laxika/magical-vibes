@@ -198,6 +198,12 @@ public class GameData {
     /** Extra land plays granted this turn (e.g. Summer Bloom), on top of the normal one-per-turn. */
     public final Map<UUID, Integer> additionalLandsThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
+    /**
+     * While non-null, token creation puts its tokens onto the battlefield but queues the entry notifications here,
+     * so one effect that creates tokens for several players can run them all once every token is on the battlefield
+     * (CR 603.6a). Only touched while the game's mutation lock is held.
+     */
+    public List<Runnable> deferredTokenEntryNotifications;
     /** Permanents sacrificed by each player this turn, retaining last-known card characteristics. */
     public final Map<UUID, List<Card>> permanentsSacrificedThisTurn = new ConcurrentHashMap<>();
     /** Permanent card ids currently being sacrificed as an additional cost of a spell cast. */
@@ -216,6 +222,11 @@ public class GameData {
     public final Set<UUID> permanentsTurnedFaceUpThisTurn = ConcurrentHashMap.newKeySet();
     /** Snapshot of permanents that entered under each player's control during the immediately preceding turn. */
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldLastTurn = new ConcurrentHashMap<>();
+    /**
+     * For each player, the cards of permanents that entered the battlefield since that player's most recent turn
+     * ended (the list is cleared when the player's turn ends, so extra turns and consecutive turns are handled).
+     */
+    public final Map<UUID, Set<UUID>> permanentsEnteredSincePlayerLastTurnEnded = new ConcurrentHashMap<>();
     /** Players who cast a spell or put a nontoken permanent onto the battlefield during the active player's own turn. */
     public final Set<UUID> playersWhoActedDuringTheirTurn = ConcurrentHashMap.newKeySet();
     /** Players who took either Arboria action during their own most recently completed turn. */
@@ -1083,6 +1094,9 @@ public class GameData {
      * queue; their damage is dealt together once every prompt has been answered.
      */
     public final List<UUID> eachPlayerDamageUnlessPaysDeclined = new ArrayList<>();
+
+    /** True when declined damage is held until every prompt is answered (payers derived with repeats). */
+    public boolean eachPlayerDamageUnlessPaysBatched;
     /** Progress state for Whirlwind Denial's opponent-by-opponent pay-or-counter sequence. */
     public final WhirlwindDenialState whirlwindDenial = new WhirlwindDenialState();
     /**
@@ -1161,6 +1175,8 @@ public class GameData {
      * entering, so they all enter together once every step has chosen.
      */
     public boolean holdingHandBattlefieldPuts;
+    /** Whether held hand puts have already left the hand, to be returned to it just before they enter. */
+    public boolean heldHandBattlefieldPutsLeaveHand;
     public final List<BattlefieldEntryCard> heldHandBattlefieldPuts = new ArrayList<>();
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
@@ -1642,6 +1658,8 @@ public class GameData {
     /** Lifelink gains summed per source and player during the open damage event of a resolution;
      *  applied as one life-gain event each when that damage event ends. */
     public final List<PendingLifelinkGain> pendingLifelinkGains = new ArrayList<>();
+    /** Times each player is to proliferate for damage their proliferatelink sources dealt in the open damage event. */
+    public final Map<UUID, Integer> pendingProliferateLinks = new java.util.LinkedHashMap<>();
     /** The damage event the resolving spell or ability is in, or null outside a resolution. */
     public ResolutionDamageEvent openDamageEvent;
     public final Set<UUID> permanentsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
@@ -1996,6 +2014,8 @@ public class GameData {
     public Map<UUID, Integer> pendingEachPlayerDrawUpToInitialCounts;
     /** Hypergenesis-style put-from-hand process paused behind the prompt opened by the card just put. */
     public PendingEachPlayerPutContinuation pendingEachPlayerPutContinuation;
+    /** Primal Surge-style repeat step paused behind the prompt opened by the permanent just put onto the battlefield. */
+    public PendingExileTopCardRepeat pendingExileTopCardRepeat;
     /** Chosen count for the current optional draw instruction, retained across replacement choices. */
     public Integer pendingEachPlayerMayDrawChosenCount;
     /** APNAP-ordered players choosing for "each player may draw, then drawers gain life" effects. */
@@ -2323,6 +2343,14 @@ public class GameData {
      *  (Savage Summoning). Consumed as an as-enters replacement by {@code BattlefieldEntryService}
      *  and cleared at end of turn. */
     public final Map<UUID, Integer> spellAdditionalEnterCounters = new ConcurrentHashMap<>();
+
+    /** Additional +1/+1 counters a spell's permanent enters with whose number is counted as it enters
+     *  (Torgal, A Fine Hound), keyed by card id; each entry carries the controller to count for. */
+    public final Map<UUID, List<EnterCounterAmount>> spellAdditionalEnterCounterAmounts = new ConcurrentHashMap<>();
+
+    /** An as-enters +1/+1 counter count, evaluated for {@code controllerId} when the permanent enters. */
+    public record EnterCounterAmount(com.github.laxika.magicalvibes.model.amount.DynamicAmount amount, UUID controllerId) {
+    }
 
     /** Entry counters granted to a permanent spell by a cast permission. */
     public final Map<UUID, Map<CounterType, Integer>> spellEntryCounters = new ConcurrentHashMap<>();
@@ -2990,6 +3018,11 @@ public class GameData {
      * while a Krark's Thumb result may still stop it; the effect resolved again reads them back instead of flipping.
      */
     public final List<RecordedCoinFlip> recordedCoinFlips = new ArrayList<>();
+    /**
+     * The answer to Pokey, the Scallywagg's "you may instead roll a d20" question that stopped the resolving effect, kept
+     * until the effect resolved again reads it for that same flip; {@code null} when no such answer is waiting.
+     */
+    public Boolean pokeyReplacementAnswer;
     /** How many of {@link #recordedCoinFlips} the current run of the resolving effect has read back so far. */
     public int replayedCoinFlips;
     /**
@@ -4288,6 +4321,9 @@ public class GameData {
     public final Map<Integer, Map<UUID, Integer>> combatDamagePlayerAssignments = new HashMap<>();
     /** Damage source, prevention source, recipient, and the allocated prevention amount. */
     public final Map<UUID, Map<UUID, Map<UUID, Integer>>> combatSharedDamagePreventionAllocations = new HashMap<>();
+    /** The assignment mode each creature's controller chose for the combat damage step being dealt, by creature id. */
+    public final Map<UUID, com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentMode>
+            combatDamageAssignmentModeChoices = new HashMap<>();
     public final List<Integer> combatDamagePendingIndices = new ArrayList<>();
     /** CR 510.1d — the defending player's damage division for creatures blocking 2+ attackers
      *  (defending-battlefield index → attacker permanent id → damage). */
@@ -4535,7 +4571,7 @@ public class GameData {
                     "pendingEffectResolutionIndex", "resolvingMayEffectFromStack",
                     "resolvedMayAccepted", "resolvedMayTargetingEntry",
                     "rerunCurrentEffectAfterInteraction", "deathReplacementsCanRerunEffect", "stepDepartureEffect",
-                    "coinFlipChoicesCanRerunEffect", "recordedCoinFlips", "replayedCoinFlips",
+                    "coinFlipChoicesCanRerunEffect", "recordedCoinFlips", "replayedCoinFlips", "pokeyReplacementAnswer",
                     "coinFlipCheckpointEffect", "coinFlipResumePoint", "pendingCoinFlipChoiceReplay",
                     "chosenDeathReplacementsForRerun", "rerunMayLibraryChoices", "pendingDeathReplacementChoiceReplay",
                     "deferPlayerLossCheck",
@@ -6565,6 +6601,7 @@ public class GameData {
         // Per-spell entry grants belong to this cast object. Clear a stale grant when a countered
         // card is cast again before end-of-turn cleanup, then let current grants be recorded below.
         spellAdditionalEnterCounters.remove(card.getId());
+        spellAdditionalEnterCounterAmounts.remove(card.getId());
         spellsCastThisTurn.computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>())).add(card);
         if (spellTargetsCreaturePermanent(card, playerId)) {
             spellsCastTargetingCreatureThisTurn.computeIfAbsent(playerId, ignored -> ConcurrentHashMap.newKeySet())
@@ -8697,6 +8734,9 @@ public class GameData {
             exiledCardHitCounters.remove(cardId);
             lukkaExileCastPermissions.remove(cardId);
             suspendedSpellExiles.removeIf(pending -> cardId.equals(pending.cardId()));
+            expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
+                    && fe.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect grant
+                    && cardId.equals(grant.expirationCardId()));
         }
         return removed;
     }
@@ -9192,6 +9232,9 @@ public class GameData {
         copy.reflectDamageSourceIds = new ArrayList<>(source.reflectDamageSourceIds);
         copy.pendingOptionalDamageChoices = source.pendingOptionalDamageChoices;
         copy.awaitingOptionalDamageChoices = source.awaitingOptionalDamageChoices;
+        copy.proliferateLinksChecked = source.proliferateLinksChecked;
+        copy.parkedForProliferateLinks = source.parkedForProliferateLinks;
+        copy.pendingProliferateLinks.putAll(source.pendingProliferateLinks);
         copy.damageToDefendingPlayer = source.damageToDefendingPlayer;
         copy.poisonDamageToDefendingPlayer = source.poisonDamageToDefendingPlayer;
         copy.unpreventableDamageToDefendingPlayer = source.unpreventableDamageToDefendingPlayer;
@@ -9658,6 +9701,7 @@ public class GameData {
         copy.pendingEachPlayerDrawUpToInitialCounts = this.pendingEachPlayerDrawUpToInitialCounts == null
                 ? null : new LinkedHashMap<>(this.pendingEachPlayerDrawUpToInitialCounts);
         copy.pendingEachPlayerPutContinuation = this.pendingEachPlayerPutContinuation;
+        copy.pendingExileTopCardRepeat = this.pendingExileTopCardRepeat;
         copy.pendingEachPlayerMayDrawChosenCount = this.pendingEachPlayerMayDrawChosenCount;
         copy.pendingEachPlayerMayDrawThenGainLifeQueue.addAll(this.pendingEachPlayerMayDrawThenGainLifeQueue);
         copy.pendingEachPlayerMayDrawThenGainLifeDrawers.addAll(this.pendingEachPlayerMayDrawThenGainLifeDrawers);
@@ -9837,6 +9881,7 @@ public class GameData {
         this.pendingSourceDamageForReflection.forEach((sourceId, pending) ->
                 copy.pendingSourceDamageForReflection.put(sourceId, pending.copy()));
         copy.pendingLifelinkGains.addAll(this.pendingLifelinkGains);
+        copy.pendingProliferateLinks.putAll(this.pendingProliferateLinks);
         copy.openDamageEvent = this.openDamageEvent;
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
         copy.foretoldCardIds.addAll(this.foretoldCardIds);
@@ -9965,6 +10010,10 @@ public class GameData {
         copy.permanentsTurnedFaceUpThisTurn.addAll(this.permanentsTurnedFaceUpThisTurn);
         this.permanentsEnteredBattlefieldLastTurn.forEach((k, v) ->
                 copy.permanentsEnteredBattlefieldLastTurn.put(k, new ArrayList<>(v)));
+        this.permanentsEnteredSincePlayerLastTurnEnded.forEach((k, v) ->
+                copy.permanentsEnteredSincePlayerLastTurnEnded.put(k, ConcurrentHashMap.newKeySet()));
+        this.permanentsEnteredSincePlayerLastTurnEnded.forEach((k, v) ->
+                copy.permanentsEnteredSincePlayerLastTurnEnded.get(k).addAll(v));
         copy.playersWhoActedDuringTheirTurn.addAll(this.playersWhoActedDuringTheirTurn);
         copy.playersWhoActedDuringTheirLastTurn.addAll(this.playersWhoActedDuringTheirLastTurn);
         this.spellsCastThisTurn.forEach((k, v) ->
@@ -10494,6 +10543,7 @@ public class GameData {
         copy.anyPlayerMayPayManaRemainingPlayers.addAll(this.anyPlayerMayPayManaRemainingPlayers);
         copy.eachPlayerDamageUnlessPaysRemaining.addAll(this.eachPlayerDamageUnlessPaysRemaining);
         copy.eachPlayerDamageUnlessPaysDeclined.addAll(this.eachPlayerDamageUnlessPaysDeclined);
+        copy.eachPlayerDamageUnlessPaysBatched = this.eachPlayerDamageUnlessPaysBatched;
         copy.whirlwindDenial.copyFrom(this.whirlwindDenial);
         copy.revealHandDiscardUnlessPaysRemaining.addAll(this.revealHandDiscardUnlessPaysRemaining);
         copy.pendingCardDraws.addAll(this.pendingCardDraws);
@@ -10690,6 +10740,7 @@ public class GameData {
         this.pendingEntryCopyChoices.forEach(choice -> copy.pendingEntryCopyChoices.add(choice.deepCopy()));
         copy.pendingAnyNumberHandPutCardIds.addAll(this.pendingAnyNumberHandPutCardIds);
         copy.holdingHandBattlefieldPuts = this.holdingHandBattlefieldPuts;
+        copy.heldHandBattlefieldPutsLeaveHand = this.heldHandBattlefieldPutsLeaveHand;
         copy.heldHandBattlefieldPuts.addAll(this.heldHandBattlefieldPuts);
         copy.cloneOperation.physicalCard = this.cloneOperation.physicalCard;
         copy.cloneOperation.preparedPermanent = this.cloneOperation.preparedPermanent == null
@@ -10727,6 +10778,7 @@ public class GameData {
         copy.cloneOperation.graveyardCopyEffect = this.cloneOperation.graveyardCopyEffect;
         copy.cloneOperation.exileCopiedGraveyardCardAfterEntry =
                 this.cloneOperation.exileCopiedGraveyardCardAfterEntry;
+        copy.cloneOperation.graveyardCardToExileAfterEntry = this.cloneOperation.graveyardCardToExileAfterEntry;
         copy.cloneOperation.exileTwoAndAddOtherPowerCounters =
                 this.cloneOperation.exileTwoAndAddOtherPowerCounters;
         copy.cloneOperation.selectedGraveyardCopyCardIds = this.cloneOperation.selectedGraveyardCopyCardIds;
@@ -10747,6 +10799,7 @@ public class GameData {
         copy.cloneOperation.graveyardCopyEffect = this.cloneOperation.graveyardCopyEffect;
         copy.cloneOperation.exileCopiedGraveyardCardAfterEntry =
                 this.cloneOperation.exileCopiedGraveyardCardAfterEntry;
+        copy.cloneOperation.graveyardCardToExileAfterEntry = this.cloneOperation.graveyardCardToExileAfterEntry;
         copy.cloneOperation.exileTwoAndAddOtherPowerCounters =
                 this.cloneOperation.exileTwoAndAddOtherPowerCounters;
         copy.cloneOperation.selectedGraveyardCopyCardIds = this.cloneOperation.selectedGraveyardCopyCardIds;
@@ -10812,6 +10865,7 @@ public class GameData {
             preventionSources.forEach((preventionId, amounts) -> copiedSources.put(preventionId, new HashMap<>(amounts)));
             copy.combatSharedDamagePreventionAllocations.put(sourceId, copiedSources);
         });
+        copy.combatDamageAssignmentModeChoices.putAll(this.combatDamageAssignmentModeChoices);
         this.combatDamagePlayerAssignments.forEach((k, v) ->
                 copy.combatDamagePlayerAssignments.put(k, new HashMap<>(v)));
         copy.combatDamagePendingIndices.addAll(this.combatDamagePendingIndices);
@@ -11065,6 +11119,7 @@ public class GameData {
         copy.deathReplacementsCanRerunEffect = this.deathReplacementsCanRerunEffect;
         copy.coinFlipChoicesCanRerunEffect = this.coinFlipChoicesCanRerunEffect;
         copy.recordedCoinFlips.addAll(this.recordedCoinFlips);
+        copy.pokeyReplacementAnswer = this.pokeyReplacementAnswer;
         copy.replayedCoinFlips = this.replayedCoinFlips;
         copy.coinFlipCheckpointEffect = this.coinFlipCheckpointEffect;
         copy.coinFlipResumePoint = this.coinFlipResumePoint;
@@ -11248,6 +11303,7 @@ public class GameData {
         this.nextCreatureSpellEmpowerments.forEach((k, v) ->
                 copy.nextCreatureSpellEmpowerments.put(k, Collections.synchronizedList(new ArrayList<>(v))));
         copy.spellAdditionalEnterCounters.putAll(this.spellAdditionalEnterCounters);
+        copy.spellAdditionalEnterCounterAmounts.putAll(this.spellAdditionalEnterCounterAmounts);
         this.spellEntryCounters.forEach((cardId, counters) ->
                 copy.spellEntryCounters.put(cardId, new ConcurrentHashMap<>(counters)));
         this.spellGrantedSubtypesOnEntry.forEach((cardId, subtypes) -> {

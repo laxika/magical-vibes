@@ -751,7 +751,11 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
 
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.DrawCardsCost drawCost) {
             // "Cumulative upkeep — Draw a card" (Psychic Vortex): drawing from an empty library is
-            // still a legal payment, so this cost can never be unpayable.
+            // still a legal payment, but a prohibition on drawing makes the cost unpayable (CR 118.3).
+            if (drawService.isDrawPrevented(gameData, entry.getControllerId())) {
+                resolveUnpayableElseEffects(gameData, entry, e, deathReplacementRerunWindow);
+                return;
+            }
             if (e.optional()) {
                 gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
                         entry.getCard(), entry.getControllerId(), List.of(e),

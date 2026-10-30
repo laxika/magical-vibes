@@ -117,6 +117,11 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
         List<Card> returnedCards = new ArrayList<>();
+        boolean alreadyCollectingEntries = gameData.collectingSimultaneousCreatureEntryTriggers;
+        gameData.collectingSimultaneousCreatureEntryTriggers = true;
+        if (!alreadyCollectingEntries) {
+            gameData.simultaneousCreatureEntryTriggers.clear();
+        }
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (GraveyardCard graveyardCard : cardsToReturn) {
@@ -154,6 +159,10 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
             simultaneouslyEntered.forEach(permanent ->
                     gameData.permanentsEnteringSimultaneously.remove(permanent.getId()));
             graveyardService.endGraveyardLeaveBatch(gameData);
+            gameData.collectingSimultaneousCreatureEntryTriggers = alreadyCollectingEntries;
+            if (!alreadyCollectingEntries) {
+                gameData.simultaneousCreatureEntryTriggers.clear();
+            }
         }
 
         if (!returnedCards.isEmpty()) {
@@ -244,6 +253,11 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
         Permanent sourceHost = e.attachToSourceHost() ? sourceHost(gameData, entry) : null;
         List<Permanent> equipmentToAttach = new ArrayList<>();
         List<Card> returnedCards = new ArrayList<>();
+        boolean alreadyCollectingEntries = gameData.collectingSimultaneousCreatureEntryTriggers;
+        gameData.collectingSimultaneousCreatureEntryTriggers = true;
+        if (!alreadyCollectingEntries) {
+            gameData.simultaneousCreatureEntryTriggers.clear();
+        }
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (Card card : cardsToReturn) {
@@ -291,6 +305,10 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
             simultaneouslyEntered.forEach(permanent ->
                     gameData.permanentsEnteringSimultaneously.remove(permanent.getId()));
             graveyardService.endGraveyardLeaveBatch(gameData);
+            gameData.collectingSimultaneousCreatureEntryTriggers = alreadyCollectingEntries;
+            if (!alreadyCollectingEntries) {
+                gameData.simultaneousCreatureEntryTriggers.clear();
+            }
         }
 
         if (sourceHost != null) {
@@ -364,6 +382,11 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
         List<Card> returnedCards = new ArrayList<>();
+        boolean alreadyCollectingEntries = gameData.collectingSimultaneousCreatureEntryTriggers;
+        gameData.collectingSimultaneousCreatureEntryTriggers = true;
+        if (!alreadyCollectingEntries) {
+            gameData.simultaneousCreatureEntryTriggers.clear();
+        }
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (Card card : battlefieldCards) {
@@ -399,6 +422,10 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
             simultaneouslyEntered.forEach(permanent ->
                     gameData.permanentsEnteringSimultaneously.remove(permanent.getId()));
             graveyardService.endGraveyardLeaveBatch(gameData);
+            gameData.collectingSimultaneousCreatureEntryTriggers = alreadyCollectingEntries;
+            if (!alreadyCollectingEntries) {
+                gameData.simultaneousCreatureEntryTriggers.clear();
+            }
         }
 
         if (!returnedCards.isEmpty()) {

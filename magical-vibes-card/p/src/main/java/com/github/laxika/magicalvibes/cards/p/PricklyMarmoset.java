@@ -12,6 +12,5 @@ public class PricklyMarmoset extends Card {
     public PricklyMarmoset() {
         addEffect(EffectSlot.ON_CONTROLLER_DISCARDS,
                 new CyclingTriggerEffect(new BoostSelfEffect(2, 0)));
-        addCycling("{1}");
     }
 }

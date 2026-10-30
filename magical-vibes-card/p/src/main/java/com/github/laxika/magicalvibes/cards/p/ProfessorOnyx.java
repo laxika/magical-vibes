@@ -44,7 +44,7 @@ public class ProfessorOnyx extends Card {
                 +1,
                 List.of(
                         new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER),
-                        LookAtTopCardsEffect.chooseNToHandRestToGraveyard(3, 1)),
+                        LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 1)),
                 "+1: You lose 1 life. Look at the top three cards of your library. Put one of them "
                         + "into your hand and the rest into your graveyard."
         ));

@@ -733,6 +733,18 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /**
+     * An accepting player's pick of which creatures to sacrifice for an any-player "may sacrifice" ability
+     * (Prowling Pangolin). The pick is only recorded in {@code effect}'s accepted ids; nothing is sacrificed
+     * until every player has answered.
+     */
+    record AnyPlayerSacrificeCreaturesChoice(
+            Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.AnyPlayerMaySacrificeCreaturesThenSacrificeSourceEffect effect,
+            java.util.List<UUID> remainingPlayerIds)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** The controller chooses up to three matching Doctors before an optional creature exile. */
     record ChooseUpToNMatchingCreaturesThenMayExileRest(
             Card sourceCard, UUID controllerId, UUID sourcePermanentId)

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -114,6 +115,7 @@ class PygmyKavuTest extends BaseCardTest {
     void enteringWithoutCastingTriggersDraw() {
         addCreatureReady(player2, new PhyrexianScuta());
         stockLibraryWithAlphaKavus(5);
+        harness.setHand(player1, List.of());
 
         harness.enterBattlefieldAndReturn(player1, new PygmyKavu());
         harness.passBothPriorities();

@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.AnimateNonAuraEnchantmentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BasicLandsOfChosenTypesBecomeTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeEnchantmentUntilCreatureSpellCastEffect;
@@ -181,6 +182,12 @@ public class LayerSystemService {
 
     /** Planeswalker types represented in the {@code CardSubtype} enum. */
     private static final Set<CardSubtype> PLANESWALKER_SUBTYPES = Set.copyOf(CardSubtype.planeswalkerTypes());
+
+    /** Enchantment types represented in the {@code CardSubtype} enum (CR 205.3h). */
+    private static final Set<CardSubtype> ENCHANTMENT_SUBTYPES = EnumSet.of(
+            CardSubtype.AURA, CardSubtype.CARTOUCHE, CardSubtype.CASE, CardSubtype.CURSE, CardSubtype.PLAN,
+            CardSubtype.ROLE, CardSubtype.ROOM, CardSubtype.RUNE, CardSubtype.SAGA, CardSubtype.SHARD,
+            CardSubtype.SHRINE);
 
     private static final ThreadLocal<Pass> ACTIVE_PASS = new ThreadLocal<>();
 
@@ -837,6 +844,7 @@ public class LayerSystemService {
         h = mix(h, System.identityHashCode(p));
         h = mix(h, p.getId().hashCode());
         h = mix(h, p.getTimestamp());
+        h = mix(h, p.getChosenColorTimestamp());
         h = hashCard(h, p.getCard());
         h = mix(h, System.identityHashCode(p.getOriginalCard()));
         h = mix(h, p.getOriginalCard().getColorIdentity().hashCode());
@@ -1358,9 +1366,12 @@ public class LayerSystemService {
                 // the classification of the original stands.
                 CardEffect rewritten = TextChangeTransformer.transform(
                         effect, slot.permanent().getTextReplacements(), globalWordChange);
+                long effectTimestamp = effect instanceof BecomeChosenColorEffect
+                        ? Math.max(slot.permanent().getTimestamp(), slot.permanent().getChosenColorTimestamp())
+                        : slot.permanent().getTimestamp();
                 instances.add(new EffectInstance(slot, rewritten, effect, null,
                         classification.characteristicDefining() || isPrintedSelfColorDefinition(effect),
-                        slot.permanent().getTimestamp(), slot.position()));
+                        effectTimestamp, slot.position()));
             }
         }
         int graveyardPosition = slots.size();
@@ -2034,6 +2045,11 @@ public class LayerSystemService {
                         slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     state.removeCardType(remove.cardType());
+                    if (remove.cardType() == CardType.CREATURE && !state.hasCardType(CardType.CREATURE)
+                            && !state.hasCardType(CardType.KINDRED)) {
+                        // CR 205.1a: creature types stay only while the object has a type that uses them.
+                        state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
+                    }
                     List<CardType> retainedTypes = List.copyOf(state.getCardTypes());
                     state.overrideCardTypes(retainedTypes);
                     record(board, instance, target, new L4Contribution(
@@ -2243,6 +2259,7 @@ public class LayerSystemService {
                     state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
                     state.removeSubtypesIf(ARTIFACT_SUBTYPES::contains);
                     state.removeSubtypesIf(PLANESWALKER_SUBTYPES::contains);
+                    state.removeSubtypesIf(ENCHANTMENT_SUBTYPES::contains);
                     record(board, instance, target, new L4Contribution(
                             List.<CardSubtype>of(), false, false, CardType.LAND, null, true));
                 }

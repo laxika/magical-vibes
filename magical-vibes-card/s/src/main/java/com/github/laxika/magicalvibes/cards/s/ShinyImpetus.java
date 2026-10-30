@@ -21,6 +21,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ShinyImpetus extends Card {
 
     public ShinyImpetus() {
+        // "Whenever enchanted creature attacks" is the Aura's own ability, so the Treasure goes to the Aura's controller.
+        setAttackTriggerOwnedByAura(true);
+
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.STATIC,
                         new AttachedBoostEffect(new Fixed(2), new Fixed(2), GrantScope.ENCHANTED_CREATURE))

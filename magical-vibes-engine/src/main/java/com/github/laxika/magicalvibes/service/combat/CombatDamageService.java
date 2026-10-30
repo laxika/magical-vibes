@@ -173,6 +173,9 @@ public class CombatDamageService {
     private final com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService;
     private final com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport battleDefeatSupport;
     private final VisualCueService visualCueService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.ProliferateEffectHandler proliferateHandler;
 
     /**
      * Resolves combat damage for the current combat phase.
@@ -203,6 +206,10 @@ public class CombatDamageService {
         Map<Integer, List<Integer>> blockerMap = buildBlockerMap(atkBf, defBf, attackingIndices);
 
         // Check if any combat creature has firstest strike, first strike, or double strike.
+        if (askCombatDamageAssignmentModes(gameData, atkBf, defBf, attackingIndices, blockerMap)) {
+            return CombatResult.DONE;
+        }
+
         boolean anyFirstestStrike = gameQueryService.withQueryScope(gameData, () -> {
             for (int i : attackingIndices) {
                 if (hasFirstestStrike(gameData, atkBf.get(i))) return true;
@@ -326,6 +333,40 @@ public class CombatDamageService {
         return finishCombatDamageStep(gameData, state, atkBf, defBf, activeId, defenderId);
     }
 
+    /**
+     * Asks the controller of each attacking or blocking creature to which several combat damage assignment effects
+     * apply (Narod, the Beige Flower and Doran, the Siege Tower) which one applies to that creature, when they would
+     * assign different amounts (Gatherer ruling 2024-11-08 on Narod, the Beige Flower). Answered choices are kept for
+     * the damage step; the step starts again once every creature has one.
+     */
+    private boolean askCombatDamageAssignmentModes(GameData gameData, List<Permanent> attackers,
+                                                   List<Permanent> defenders, List<Integer> attackingIndices,
+                                                   Map<Integer, List<Integer>> blockerMap) {
+        List<Permanent> creatures = new ArrayList<>();
+        for (int i : attackingIndices) {
+            creatures.add(attackers.get(i));
+        }
+        for (List<Integer> blockers : blockerMap.values()) {
+            for (int i : blockers) {
+                if (!creatures.contains(defenders.get(i))) creatures.add(defenders.get(i));
+            }
+        }
+        for (Permanent creature : creatures) {
+            if (gameData.combatDamageAssignmentModeChoices.containsKey(creature.getId())
+                    || !gameQueryService.hasCompetingCombatDamageAssignmentEffects(gameData, creature)) continue;
+            UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    controllerId, null, null,
+                    new com.github.laxika.magicalvibes.model.ChoiceContext.CombatDamageAssignmentModeChoice(
+                            creature.getId(), controllerId),
+                    List.of(com.github.laxika.magicalvibes.model.ChoiceContext.CombatDamageAssignmentModeChoice.MANA_VALUE,
+                            com.github.laxika.magicalvibes.model.ChoiceContext.CombatDamageAssignmentModeChoice.TOUGHNESS),
+                    "Choose how " + creature.getCard().getName() + " assigns combat damage."));
+            return true;
+        }
+        return false;
+    }
+
     private boolean prepareSharedCombatPrevention(GameData gameData, List<Permanent> attackers,
                                                   List<Permanent> defenders) {
         for (var assignment : gameData.combatDamagePlayerAssignments.entrySet()) {
@@ -431,13 +472,65 @@ public class CombatDamageService {
 
     private boolean parkOptionalDamageChoices(GameData gameData, CombatDamageState state,
                                                 DamagePhase phase) {
-        if (state.pendingOptionalDamageChoices == 0) return false;
+        if (state.pendingOptionalDamageChoices == 0) return parkForProliferateLinks(gameData, state, phase);
         state.awaitingOptionalDamageChoices = true;
         gameData.pendingCombatDamageState = state;
         gameData.pendingCombatDamageFirstestStrikePhase = phase == DamagePhase.FIRSTEST_STRIKE;
         gameData.pendingCombatDamageFirstStrikePhase = phase == DamagePhase.FIRST_STRIKE;
         playerInputService.processNextMayAbility(gameData);
         return true;
+    }
+
+    /**
+     * Proliferatelink: the controller of each source with the keyword that dealt combat damage proliferates that
+     * many times before the damage is checked for lethality, so the step is parked until those prompts are answered.
+     * Returns {@code true} while a proliferate prompt waits.
+     */
+    private boolean parkForProliferateLinks(GameData gameData, CombatDamageState state, DamagePhase phase) {
+        if (state.proliferateLinksChecked || !state.collectedPortions.isEmpty()) return false;
+        state.proliferateLinksChecked = true;
+        state.combatDamageDealt.forEach((source, damage) -> {
+            if (damage <= 0 || !gameQueryService.hasKeyword(gameData, source, Keyword.PROLIFERATELINK)) return;
+            UUID controllerId = state.combatDamageDealerControllers.getOrDefault(source,
+                    gameQueryService.findPermanentController(gameData, source.getId()));
+            if (controllerId != null) state.pendingProliferateLinks.merge(controllerId, damage, Integer::sum);
+        });
+        gameData.pendingCombatDamageFirstestStrikePhase = phase == DamagePhase.FIRSTEST_STRIKE;
+        gameData.pendingCombatDamageFirstStrikePhase = phase == DamagePhase.FIRST_STRIKE;
+        boolean waiting = beginNextProliferateLink(gameData, state);
+        if (waiting) {
+            state.awaitingOptionalDamageChoices = true;
+            state.parkedForProliferateLinks = true;
+            gameData.pendingCombatDamageState = state;
+        }
+        return waiting;
+    }
+
+    private boolean beginNextProliferateLink(GameData gameData, CombatDamageState state) {
+        var iterator = state.pendingProliferateLinks.entrySet().iterator();
+        while (iterator.hasNext()) {
+            var next = iterator.next();
+            iterator.remove();
+            proliferateHandler.begin(gameData, next.getKey(), next.getValue());
+            if (gameData.interaction.isAwaitingInput()) return true;
+        }
+        return false;
+    }
+
+    /** Whether the parked combat damage step is waiting on proliferatelink proliferating. */
+    public boolean isParkedForProliferateLinks(GameData gameData) {
+        return gameData.pendingCombatDamageState != null && gameData.pendingCombatDamageState.parkedForProliferateLinks;
+    }
+
+    /**
+     * Called when a proliferate chain of the parked step ends: starts the next controller's proliferating, or, with
+     * none left, unparks the step. Returns {@code true} while another proliferate prompt waits.
+     */
+    public boolean continueAfterProliferateLink(GameData gameData) {
+        CombatDamageState state = gameData.pendingCombatDamageState;
+        if (beginNextProliferateLink(gameData, state)) return true;
+        state.parkedForProliferateLinks = false;
+        return false;
     }
 
     private boolean shouldPutCombatDamageOnStack(GameData gameData) {
@@ -601,6 +694,7 @@ public class CombatDamageService {
         updateMarkedDamageFromCombat(gameData, atkBf, defBf, state);
         List<DealtDamageTriggerData> dealtDamageTriggerData = collectDealtDamageTriggerData(gameData, state);
         gameData.combatSharedDamagePreventionAllocations.clear();
+        gameData.combatDamageAssignmentModeChoices.clear();
         applyPendingDralnuReplacements(gameData, state);
         applyPlaneswalkerDamage(gameData, state);
         // CR 510.2 — lifelink gains life as the simultaneous damage is dealt, so it can't change
@@ -1525,7 +1619,7 @@ public class CombatDamageService {
                 Permanent target = defBf.get(targetIndex);
                 int damage = assignments.getOrDefault(target.getId(), 0);
                 if (damage <= 0 || (damagePreventableFrom(gameData, snap.damagePreventable(), blocker)
-                        && gameQueryService.hasProtectionFromDamageSource(gameData, target, blocker))) continue;
+                        && protectionPreventsCombatDamage(gameData, target, blocker))) continue;
                 if (!applyCombatCreatureDamage(gameData, state, blocker, stats, target, damage)) {
                     state.combatDamageDealt.merge(blocker, damage, Integer::sum);
                     recordCombatDamageToCreature(gameData, state, blocker, defenderId, target, damage);
@@ -1627,10 +1721,10 @@ public class CombatDamageService {
                     if (!defenderStats.containsKey(blkIdx)) {
                         defenderStats.put(blkIdx, snapshotCombatant(gameData, blk));
                     }
-                    if (gameQueryService.hasProtectionFromDamageSource(gameData, atk, blk)) {
+                    if (protectionPreventsCombatDamage(gameData, atk, blk)) {
                         attackerProtectedFromBlocker.add(DamagePhaseSnapshot.pairKey(atkIdx, blkIdx));
                     }
-                    if (gameQueryService.hasProtectionFromDamageSource(gameData, blk, atk)) {
+                    if (protectionPreventsCombatDamage(gameData, blk, atk)) {
                         blockerProtectedFromAttacker.add(DamagePhaseSnapshot.pairKey(atkIdx, blkIdx));
                     }
                 }
@@ -1639,6 +1733,17 @@ public class CombatDamageService {
                     gameQueryService.isDamagePreventable(gameData, true),
                     attackerProtectedFromBlocker, blockerProtectedFromAttacker);
         });
+    }
+
+    /**
+     * Whether protection keeps combat damage from {@code source} from reaching {@code target} at all. A creature
+     * whose own damage prevention removes +1/+1 counters (Phantom Centaur) is not shielded up front: its controller
+     * chooses between that prevention and protection (CR 616.1), so the damage goes on to the prevention step.
+     */
+    private boolean protectionPreventsCombatDamage(GameData gameData, Permanent target, Permanent source) {
+        return gameQueryService.hasProtectionFromDamageSource(gameData, target, source)
+                && gameQueryService.getActiveStaticEffects(gameData, target).stream().noneMatch(
+                com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect.class::isInstance);
     }
 
     private CombatantStats snapshotCombatant(GameData gameData, Permanent creature) {
@@ -1733,7 +1838,7 @@ public class CombatDamageService {
                 }
                 if (targetIdx >= 0) {
                     Permanent blk = defBf.get(targetIdx);
-                    if (!(damagePreventable && gameQueryService.hasProtectionFromDamageSource(gameData, blk, atk))) {
+                    if (!(damagePreventable && protectionPreventsCombatDamage(gameData, blk, atk))) {
                         int actualDmg = dmg;
                         if (!applyCombatCreatureDamage(gameData, state, atk, atkStats, blk, actualDmg)) {
                             state.combatDamageDealt.merge(atk, actualDmg, Integer::sum);

@@ -90,8 +90,10 @@ class PufferExtractTest extends BaseCardTest {
         Permanent volunteers = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.activateAbility(player1, 0, 3, volunteers.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.activateAbility(player1, 0, 3, volunteers.getId());
+            harness.passBothPriorities();
+        });
 
         assertThat(gqs.getEffectivePower(gd, volunteers)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, volunteers)).isEqualTo(5);
