@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.Gristleback;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({NivMizzetTheFiremind.class, GhostWarden.class, Gristleback.class})
 class NivMizzetTheFiremindTest extends BaseCardTest {
+
+    /**
+     * The harness deals a random opening hand from a deck holding a Ghost Warden, the card these
+     * tests draw. Empty hands keep every "drawn" and "not drawn" assertion about it meaningful.
+     */
+    @BeforeEach
+    void emptyHands() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+    }
 
     @Test
     @DisplayName("{T}: Draw a card draws and triggers 1 damage to a chosen player")
