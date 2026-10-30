@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.r.RavagerOfTheFells;
 import com.github.laxika.magicalvibes.cards.s.SeethingSong;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -36,6 +37,7 @@ class OracleLoaderIntegrationTest {
 
     /** Excluded on CI ("scryfall-api" tag): CI must not depend on the Scryfall API. */
     @Test
+    @Disabled("Loads every set from the Scryfall API: run by hand when needed, to spare Scryfall")
     @Tag("scryfall-api")
     void scryfallLoadRegistersEveryPrintingAndSurvivesBackFaceCollision() {
         Card.clearOracleRegistry();

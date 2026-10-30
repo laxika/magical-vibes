@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.carddata.store.StoredPrinting;
 import com.github.laxika.magicalvibes.carddata.store.StoredSet;
 import com.github.laxika.magicalvibes.carddata.store.StoredSetOracleLoader;
 import com.github.laxika.magicalvibes.model.OracleData;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -33,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * differently. Each source stores into its own subdirectory of the shared test cache, so the sets
  * are downloaded once.
  */
+@Disabled("Fetches sets from the Scryfall API: run by hand when needed, to spare Scryfall")
 @Tag("scryfall")
 @Tag("scryfall-api")
 class ProviderParityTest {
