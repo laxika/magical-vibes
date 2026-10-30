@@ -789,6 +789,17 @@ protection pairs) once per damage step; the dealing loop then runs on that pre-d
 (CR 510.4 simultaneity), while casualty determination stays on live queries so it sees infect
 counters placed during the step. `GameQueryService.getEffectiveCombatDamage` also opens a scope
 internally to share one pass across its power/toughness/battlefield-scan reads.
+`TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers`
+detect every becomes-the-target trigger of one targeting event inside one scope (CR 603.2: they
+all trigger on the same event). Each target runs ~20 collectors that each scan the controller's
+battlefield, so unscoped this was targets × collectors × permanents fingerprints of an O(board)
+hash — a 100-target Fireball over 100 creatures spent ~20 s re-confirming an unchanged board.
+Detection writes inside the scope, but only state neither the board nor the assembly reads
+(triggered abilities on the stack, log lines, queued choices/may abilities, once-per-turn
+markers); the pending-target prompts it queues are started after the scope closes. Note that
+only `computeStaticBonus` and the `activeStateFor`-first queries (`hasLostPrintedAbilities`,
+`hasLostAllAbilities`, subtype/keyword reads) answer from the scope's board — a direct nested
+`beginPass` still fingerprints.
 
 ### Invalidation contract
 
@@ -800,8 +811,10 @@ is to **re-derive validity from the inputs themselves on every query**: the fing
 battlefield composition/order, player life totals, every pass-read `Permanent` field (tap state, attachments,
 counters, chosen values, P/T modifiers/overrides, animation state, granted/removed
 keywords/colors/subtypes/types, lose-all flags, text replacements, persistent granted
-activated abilities), the current `Card` identity (L1 copy swaps) plus printed values
-(insurance for `TestCards.mutableCard`), the floating effects, graveyard/exile contents (CDA
+activated abilities), the current `Card` identity (L1 copy swaps) plus, for unfrozen cards only,
+printed values and effect-slot sizes (insurance for `TestCards.mutableCard` and clone runtime
+copies; a frozen card's mutators throw, so identity covers it — and walking the ~500-constant
+`EffectSlot` `EnumMap` per card was a third of every fingerprint), the floating effects, graveyard/exile contents (CDA
 scan inputs) and hand sizes, and `timestampCounter`. **The canonical input list lives in the
 `computeBoardFingerprint` javadoc — extend it whenever the pass starts reading a new input.**
 A stale fingerprint can only produce a false MISS (safe recompute); a false HIT requires a
@@ -873,6 +886,10 @@ layered queries per permanent (96 external queries/sweep), time-boxed. 2026-07-1
 
 The mutating case still wins big because a sweep is 96 queries: before, every query recomputed
 the board; after, only the first query after the mutation does.
+
+2026-10-30, hashing frozen cards by identity only (no `EffectSlot` walk per card per
+fingerprint), same build otherwise: steady state 433.9 → 753.0 sweeps/s, one tap-toggle per sweep
+351.5 → 538.0 sweeps/s.
 
 ---
 

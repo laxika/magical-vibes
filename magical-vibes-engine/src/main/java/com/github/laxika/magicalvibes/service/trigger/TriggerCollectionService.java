@@ -5527,6 +5527,33 @@ public class TriggerCollectionService {
     }
 
     public void checkBecomesTargetOfSpellTriggers(GameData gameData, StackEntry spellEntry) {
+        gameQueryService.withQueryScope(gameData, () -> {
+            collectBecomesTargetOfSpellTriggers(gameData, spellEntry);
+            return null;
+        });
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class) && !gameData.interaction.isAwaitingInput()) {
+            processNextSpellTargetTrigger(gameData);
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            processNextETBTokenMultiTargetTrigger(gameData);
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
+        }
+    }
+
+    /**
+     * Detects every becomes-the-target trigger of one spell's targeting event. All of them trigger
+     * on the same event (CR 603.2) and only go on the stack afterwards (CR 603.3), so the caller runs
+     * this under one query scope: the collectors' per-permanent layered queries share a single board
+     * instead of each re-fingerprinting it, which would cost targets × collectors × battlefield size
+     * board hashes. What the collectors write — triggered abilities on the stack, log lines, queued
+     * choices and may abilities — is not read by the layered board or the static-bonus assembly.
+     */
+    private void collectBecomesTargetOfSpellTriggers(GameData gameData, StackEntry spellEntry) {
         if (spellEntry.getTargetZone() == Zone.STACK) {
             if (spellEntry.getTargetId() != null) {
                 StackEntry targetedEntry = findStackEntryByCardId(gameData, spellEntry.getTargetId());
@@ -5673,18 +5700,6 @@ public class TriggerCollectionService {
                 }
             }
         }
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class) && !gameData.interaction.isAwaitingInput()) {
-            processNextSpellTargetTrigger(gameData);
-        }
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)
-                && !gameData.interaction.isAwaitingInput()) {
-            processNextETBTokenMultiTargetTrigger(gameData);
-        }
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)
-                && !gameData.interaction.isAwaitingInput()) {
-            etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
-        }
     }
 
     private StackEntry findStackEntryByCardId(GameData gameData, UUID cardId) {
@@ -5722,6 +5737,22 @@ public class TriggerCollectionService {
      */
     public void checkBecomesTargetOfAbilityTriggers(GameData gameData, StackEntry abilityEntry) {
         if (abilityEntry == null) return;
+        gameQueryService.withQueryScope(gameData, () -> {
+            collectBecomesTargetOfAbilityTriggers(gameData, abilityEntry);
+            return null;
+        });
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            processNextSpellTargetTrigger(gameData);
+        }
+    }
+
+    /**
+     * The ability counterpart of {@link #collectBecomesTargetOfSpellTriggers}, run under one query
+     * scope for the same reason.
+     */
+    private void collectBecomesTargetOfAbilityTriggers(GameData gameData, StackEntry abilityEntry) {
         if (abilityEntry.getTargetZone() == Zone.STACK && !abilityEntry.isNonTargeting()) {
             if (abilityEntry.getTargetId() != null) {
                 StackEntry targetedEntry = findStackEntryByCardId(gameData, abilityEntry.getTargetId());
@@ -5852,11 +5883,6 @@ public class TriggerCollectionService {
                     }
                 }
             }
-        }
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)
-                && !gameData.interaction.isAwaitingInput()) {
-            processNextSpellTargetTrigger(gameData);
         }
     }
 

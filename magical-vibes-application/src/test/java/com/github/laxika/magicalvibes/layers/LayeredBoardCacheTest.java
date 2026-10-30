@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -93,6 +94,32 @@ class LayeredBoardCacheTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FORESTWALK)).isTrue();
+    }
+
+    @Test
+    void abilityAddedInPlaceToAnUnfrozenCardInvalidates() {
+        // Only an unfrozen card is hashed beyond its identity, so an ability baked into one in
+        // place (a clone's "except it has ..." runtime copy) must still invalidate the board.
+        Permanent bear = add(player1, new GrizzlyBears());
+        Card mutableBear = TestCards.mutableCard(bear);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
+
+        mutableBear.addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void swappingInAnotherFrozenCardInvalidates() {
+        // A frozen card is hashed by identity alone, which is exactly what an L1 copy swap changes.
+        Permanent bear = add(player1, new GrizzlyBears());
+        assertThat(gqs.hasEffectiveSubtype(gd, bear, CardSubtype.ELF)).isFalse();
+
+        Card champion = new ElvishChampion();
+        champion.freeze();
+        bear.setCard(champion);
+
+        assertThat(gqs.hasEffectiveSubtype(gd, bear, CardSubtype.ELF)).isTrue();
     }
 
     @Test

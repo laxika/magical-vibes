@@ -678,6 +678,11 @@ public class Card {
         this.frozen = true;
     }
 
+    /** Whether {@link #freeze()} has run, so nothing about this card can change any more. */
+    public boolean isFrozen() {
+        return frozen;
+    }
+
     /**
      * Remembers this card's whole split-card characteristics before one half's characteristics are
      * applied for casting, so the card can be restored when the spell leaves the stack (CR 709.4).
@@ -1547,9 +1552,10 @@ public class Card {
     }
 
     /**
-     * Visits, in slot order, every slot that has held registered effects with how many it holds now,
-     * without touching the hundreds of slots that never had any — the cheap structural view the layer
-     * board-cache fingerprint hashes.
+     * Visits, in slot order, every slot that has held registered effects with how many it holds now
+     * — the structural view the layer board-cache fingerprint hashes for an unfrozen card. Not cheap:
+     * iterating the {@code EnumMap} walks all ~500 {@link EffectSlot}s, even for a card with a single
+     * ability.
      */
     public void forEachEffectSlotSize(ObjIntConsumer<EffectSlot> visitor) {
         effectRegistrations.forEach((slot, registrations) -> visitor.accept(slot, registrations.size()));

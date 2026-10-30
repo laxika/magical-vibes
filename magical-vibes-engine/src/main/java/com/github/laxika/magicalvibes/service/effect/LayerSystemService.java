@@ -683,9 +683,10 @@ public class LayerSystemService {
      *     transient land-type override, lose-all flags, text replacements and persistent
      *     granted activated abilities;</li>
      * <li>commander designations, which are read by commander-filtered static effects;</li>
-     * <li>the permanent's current {@code Card} identity (L1 copy swaps) plus its printed
-     *     stats/types/keywords and relevant ability-slot counts as insurance for tests that mutate an
-     *     unfrozen card in place ({@code TestCards.mutableCard});</li>
+     * <li>the permanent's current {@code Card} identity (L1 copy swaps) plus, for an unfrozen
+     *     card, its printed stats/types/keywords and relevant ability-slot counts as insurance for
+     *     tests that mutate an unfrozen card in place ({@code TestCards.mutableCard}) — a frozen
+     *     card cannot change, so its identity covers it;</li>
      * <li>the floating continuous effects (immutable records — identity suffices);</li>
      * <li>recorded ownership of permanents that changed control, read by ownership filters;</li>
      * <li>graveyard and exile contents (CDA inputs: the Cairn Wanderer family scans
@@ -978,11 +979,17 @@ public class LayerSystemService {
     }
 
     /**
-     * The card identity (L1 copy swaps change the instance) plus the printed values the pass
-     * seeds from, as insurance for tests that mutate an unfrozen card in place.
+     * The card identity (L1 copy swaps change the instance) plus, for an unfrozen card only, the
+     * printed values the pass seeds from: a frozen card's mutators all throw, so its identity
+     * already covers its contents, while an unfrozen one (a clone's runtime copy card, a test's
+     * {@code TestCards.mutableCard}) can change in place behind the same identity. Skipping the
+     * frozen case matters: walking the effect slots costs ~500 steps per card per fingerprint.
      */
     private static long hashCard(long h, Card card) {
         h = mix(h, System.identityHashCode(card));
+        if (card.isFrozen()) {
+            return h;
+        }
         h = mix(h, card.getManaCost() == null ? 0 : card.getManaCost().hashCode());
         h = mix(h, card.getPower() == null ? -1 : card.getPower());
         h = mix(h, card.getToughness() == null ? -1 : card.getToughness());

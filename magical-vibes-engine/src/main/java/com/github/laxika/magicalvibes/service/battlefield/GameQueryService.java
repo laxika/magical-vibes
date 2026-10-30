@@ -6562,7 +6562,9 @@ public class GameQueryService {
      * when nested.
      *
      * <p>The queries must not mutate game state â€” the memoized bonuses would go stale. Same
-     * contract the nested-pass memo already relies on.
+     * contract the nested-pass memo already relies on. Writes that neither the layered board nor
+     * the static-bonus assembly reads are allowed: becomes-the-target trigger detection appends
+     * triggered abilities to the stack, log lines and queued choices inside its scope.
      */
     public <T> T withQueryScope(GameData gameData, Supplier<T> queries) {
         if (layerSystemService.activePass(gameData) != null) {
