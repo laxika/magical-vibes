@@ -45,7 +45,8 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                                       boolean grantsAdditionalPlusOneCounterToNonHuman,
                                       boolean tracksProducingSourceForSpellCastTriggers,
                                       boolean grantsAdditionalPlusOneCounterToCreature,
-                                      boolean manaColorChosenByRecipient) implements ManaProducingEffect {
+                                      boolean manaColorChosenByRecipient,
+                                      boolean abilitiesOfSourcesInAnyZone) implements ManaProducingEffect {
 
     public AwardAnyColorManaEffect {
         spellOnlySubtypes = spellOnlySubtypes == null ? Set.of() : Set.copyOf(spellOnlySubtypes);
@@ -73,7 +74,7 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                 anyColorCombination, grantsAdditionalPlusOneCounter, spellOnlySubtypes,
                 differentColors, allowedColors, grantsCommanderCounter,
                 grantsAdditionalPlusOneCounterToNonHuman, tracksProducingSourceForSpellCastTriggers,
-                false, false);
+                false, false, false);
     }
 
     public AwardAnyColorManaEffect(DynamicAmount amount, ManaSpendRestriction restriction,
@@ -91,7 +92,7 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                 anyColorCombination, grantsAdditionalPlusOneCounter, spellOnlySubtypes,
                 differentColors, allowedColors, grantsCommanderCounter,
                 grantsAdditionalPlusOneCounterToNonHuman, tracksProducingSourceForSpellCastTriggers,
-                grantsAdditionalPlusOneCounterToCreature, false);
+                grantsAdditionalPlusOneCounterToCreature, false, false);
     }
 
     public AwardAnyColorManaEffect(DynamicAmount amount, ManaSpendRestriction restriction,
@@ -106,7 +107,7 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                 targetsPlayer, manaRecipientIsTargetPlayer, markSourceAsHavingAddedManaThisTurn,
                 anyColorCombination, grantsAdditionalPlusOneCounter, spellOnlySubtypes,
                 differentColors, allowedColors, grantsCommanderCounter,
-                grantsAdditionalPlusOneCounterToNonHuman, false, false, false);
+                grantsAdditionalPlusOneCounterToNonHuman, false, false, false, false);
     }
 
     /** Compatibility constructor for unrestricted mana riders that predate the commander rider. */
@@ -275,7 +276,24 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                 anyColorCombination, grantsAdditionalPlusOneCounter, spellOnlySubtypes,
                 differentColors, allowedColors, grantsCommanderCounter,
                 grantsAdditionalPlusOneCounterToNonHuman, true,
-                grantsAdditionalPlusOneCounterToCreature, manaColorChosenByRecipient);
+                grantsAdditionalPlusOneCounterToCreature, manaColorChosenByRecipient,
+                abilitiesOfSourcesInAnyZone);
+    }
+
+    /**
+     * Marks the mana as also spendable on abilities that cards in hand or other non-battlefield zones
+     * activate, for wordings ruled to cover every "source of the chosen type" (Lorwyn Eclipsed:
+     * Flamebraider, Eclipsed Realms). Older wordings (Smokebraider, Primal Beyond) stay
+     * battlefield-only.
+     */
+    public AwardAnyColorManaEffect withAbilitiesOfSourcesInAnyZone() {
+        return new AwardAnyColorManaEffect(amount, restriction, subtype,
+                sourceBecomesProducedColorUntilEndOfTurn, targetsPlayer,
+                manaRecipientIsTargetPlayer, markSourceAsHavingAddedManaThisTurn,
+                anyColorCombination, grantsAdditionalPlusOneCounter, spellOnlySubtypes,
+                differentColors, allowedColors, grantsCommanderCounter,
+                grantsAdditionalPlusOneCounterToNonHuman, tracksProducingSourceForSpellCastTriggers,
+                grantsAdditionalPlusOneCounterToCreature, manaColorChosenByRecipient, true);
     }
 
     /** Makes the player receiving targeted mana choose its color. */
@@ -286,7 +304,7 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
                 anyColorCombination, grantsAdditionalPlusOneCounter, spellOnlySubtypes,
                 differentColors, allowedColors, grantsCommanderCounter,
                 grantsAdditionalPlusOneCounterToNonHuman, tracksProducingSourceForSpellCastTriggers,
-                grantsAdditionalPlusOneCounterToCreature, true);
+                grantsAdditionalPlusOneCounterToCreature, true, abilitiesOfSourcesInAnyZone);
     }
 
     /** "Add N mana in any combination of colors" with a spending restriction. */

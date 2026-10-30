@@ -173,6 +173,13 @@ public final class AnyColorManaChoiceSupport {
         if (choiceContext == null) {
             return false;
         }
+        if (effect.abilitiesOfSourcesInAnyZone()) {
+            Set<CardSubtype> subtypes = effect.spellOnlySubtypes().isEmpty()
+                    ? Set.of(chosenSubtype != null ? chosenSubtype : effect.subtype())
+                    : effect.spellOnlySubtypes();
+            gameData.playerManaPools.get(recipientPlayerId != null ? recipientPlayerId : playerId)
+                    .allowAbilitiesOfSourcesInAnyZone(subtypes);
+        }
         if (isNonTreasureArtifactSource(sourceCard)
                 && choiceContext instanceof ChoiceContext.ManaColorChoice manaColorChoice) {
             choiceContext = manaColorChoice.withArtifactSource(true);

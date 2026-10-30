@@ -482,6 +482,7 @@ void deathTriggerAfterWrathTargetsPlayer() {
 | `activateAbility` | `(Player, int permIdx, int abilityIdx, Integer xValue, UUID targetId)` | Activate Nth ability on a permanent |
 | `activateGraveyardAbility` | `(Player, int graveyardCardIndex)` | Activate first graveyard ability on a card in graveyard |
 | `activateGraveyardAbility` | `(Player, int graveyardCardIndex, int abilityIndex)` | Activate Nth graveyard ability on a card in graveyard |
+| `activateAbilityOfPermanent` | `(Player, Permanent source, int abilityIndex, Integer xValue, UUID targetId)` | Activate by source permanent instead of index — use for "any player may activate" abilities on another player's permanent (Flailing Soldier), where the index is ambiguous |
 | `sacrificePermanent` | `(Player, int permIdx, UUID targetId)` | Sacrifice a permanent (e.g. for Siege-Gang) |
 
 ### Player input handlers

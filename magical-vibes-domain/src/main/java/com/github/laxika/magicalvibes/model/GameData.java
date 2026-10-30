@@ -8736,6 +8736,8 @@ public class GameData {
             suspendedSpellExiles.removeIf(pending -> cardId.equals(pending.cardId()));
             expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
                     && fe.effect() instanceof com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect grant
+                    && grant.ability().getEffects().stream()
+                            .anyMatch(com.github.laxika.magicalvibes.model.effect.TeachCastCopyEffect.class::isInstance)
                     && cardId.equals(grant.expirationCardId()));
         }
         return removed;

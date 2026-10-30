@@ -79,36 +79,27 @@ regression tests one class at a time.
 
 ---
 
-## 69. Activating another player's "any player may activate" ability is index-ambiguous
+## 69. The frontend can't activate an "any player may activate" ability on another player's permanent
 
-**Status:** open · **Found:** 2026-10-28, F-card test batch
-
-**Failing tests:**
-- `FlailingSoldierTest` "An opponent can boost the Soldier even when their own permanent has an ability"
+**Status:** open (backend done 2026-10-30) · **Found:** 2026-10-28, F-card test batch
 
 **What the rules require.** Flailing Soldier and similar permanents (Oona's Prowler and others flagged
-`ActivatedAbility.isActivatableByAnyPlayer()`) let any player activate the ability. `ActivateAbilityRequest`
-identifies the source only by `permanentIndex`, and `AbilityActivationService.resolveActivationSource` first
-looks that index up on the activator's own battlefield. If the activator's own permanent at that index has an
-ability at the requested ability index, that permanent wins and the opponent's ability can't be reached. In
-the test, player2's Crenellated Wall at index 0 shadows player1's Flailing Soldier at index 0, so activation
-throws "Ability requires a target". Rewriting the test to use a different index would hide the bug.
+`ActivatedAbility.isActivatableByAnyPlayer()`) let any player activate the ability. The backend now accepts an
+optional `sourcePermanentId` on `ActivateAbilityRequest` (resolved through `GameService.activateAbility`'s
+source-ID overload), so the index ambiguity is gone server-side; the harness uses `activateAbilityOfPermanent`.
+The Angular app still only offers activations on the player's own battlefield (`targeting-choice.service.ts`
+reads `myBattlefieldFn()`), and the permanent view doesn't expose `activatableByAnyPlayer`.
 
-**Why it's large.** The fix is a protocol change: add an optional source `permanentId` to
-`ActivateAbilityRequest` (and the harness `activateAbility` helpers), resolve by ID when present, and send it
-from the Angular frontend for permanents the player doesn't control. Every activation entry point
-(`AbilityActivationService.activateAbilityInternal*`, the AI and simulation paths) has to stay compatible.
+**Why it's large.** The permanent view needs the flag, opponent permanents need click handling and an
+ability menu, and the request has to carry `sourcePermanentId`.
 
 **Prompt to start it:**
 
 ```
-In magical-vibes, let a player activate an "any player may activate" ability on another player's permanent
-unambiguously. Add an optional source permanent ID to ActivateAbilityRequest, resolve the activation source by
-that ID in AbilityActivationService.resolveActivationSource when it is present (keeping index-based lookup for
-the common case), add a harness overload that activates by permanent ID, and update the Angular frontend to send
-the ID when activating a permanent the player doesn't control. Then fix FlailingSoldierTest "An opponent can boost
-the Soldier even when their own permanent has an ability" to activate the Soldier by ID. Read
-agent-docs/ARCHITECTURE.md first.
+In magical-vibes, let the Angular frontend activate "any player may activate" abilities (ActivatedAbility
+.isActivatableByAnyPlayer()) on permanents the player doesn't control: expose the flag in the permanent view,
+offer those abilities when clicking an opponent's permanent, and send ActivateAbilityRequest.sourcePermanentId.
+Read agent-docs/ARCHITECTURE.md first (view immutability, networking).
 ```
 
 ---
@@ -117,7 +108,7 @@ agent-docs/ARCHITECTURE.md first.
 
 **Status:** open · **Found:** 2026-10-30, O/P mixed card-test batch
 
-**Failing tests:**
+**Disabled tests:**
 - `SnowfallTest` "The Island's controller may decline Snowfall's additional mana"
 
 **What the rules require.** Snowfall's Oracle text says that whenever an Island is tapped for mana, its
@@ -143,6 +134,33 @@ currently adds the mana unconditionally. Design how a mana ability can ask its c
 including while mana is being tapped to pay a cost, then make SnowfallTest "The Island's controller may decline
 Snowfall's additional mana" pass and update the other SnowfallTest flows to answer the new prompt. Read
 agent-docs/ARCHITECTURE.md first and verify every CR number with the rules MCP.
+```
+
+---
+
+## 71. Fluttershy's "creature with a tail" depends on card art
+
+**Status:** open · **Found:** 2026-10-30, mixed card-test batch
+
+**Disabled tests:**
+- `FluttershyTest` "Only creatures with tails receive counters"
+
+**What the rules require.** Fluttershy (`SLD` 1538) reads "Put a +1/+1 counter on each creature with a tail
+target player controls." Whether a creature has a tail is decided by looking at its art, as with the
+Unfinity-style physical-characteristic cards. Scryfall has no ruling and the card data has no field for it. The
+engine currently puts a counter on every creature the target player controls.
+
+**Why it's large.** It needs a way to answer art-based questions: either per-card data (a curated "has a
+tail" flag, a guess for thousands of cards) or a prompt that lets the players decide each creature. Neither
+exists.
+
+**Prompt to start it:**
+
+```
+In magical-vibes, decide how art-based characteristics such as Fluttershy's "creature with a tail" should be
+answered (curated per-card data or a player prompt), implement it, restrict Fluttershy's counter effect to
+creatures with a tail, and re-enable FluttershyTest "Only creatures with tails receive counters". Read
+agent-docs/ARCHITECTURE.md first.
 ```
 
 ---

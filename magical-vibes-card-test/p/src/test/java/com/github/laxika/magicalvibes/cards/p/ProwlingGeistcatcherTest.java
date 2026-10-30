@@ -79,8 +79,13 @@ class ProwlingGeistcatcherTest extends BaseCardTest {
         assertThat(geistcatcher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    /**
+     * Rest in Peace exiles the sacrificed creature instead of letting it reach the graveyard. The card in exile is a
+     * new object (CR 400.7) that the exile trigger can't find, so it isn't exiled with Prowling Geistcatcher and
+     * stays in exile when Geistcatcher leaves.
+     */
     @Test
-    void sacrificedCreatureExiledByReplacementIsStillLinkedToGeistcatcher() {
+    void sacrificedCreatureExiledByReplacementIsNotLinkedToGeistcatcher() {
         Permanent geistcatcher = harness.addToBattlefieldAndReturn(player1, new ProwlingGeistcatcher());
         Permanent vampire = harness.addToBattlefieldAndReturn(player1, new BloodthroneVampire());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -89,11 +94,11 @@ class ProwlingGeistcatcherTest extends BaseCardTest {
         sacrificeWithBloodthrone(vampire, bears);
 
         assertThat(gd.getCardsExiledByPermanent(geistcatcher.getId()))
-                .anyMatch(card -> card.getId().equals(bears.getCard().getId()));
+                .noneMatch(card -> card.getId().equals(bears.getCard().getId()));
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .removePermanentToHand(gd, geistcatcher));
         resolveAllTriggers();
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test

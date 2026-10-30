@@ -236,10 +236,15 @@ class PentagramOfTheAgesTest extends BaseCardTest {
         return addCreatureReady(player, new PentagramOfTheAges());
     }
 
+    /**
+     * The shield is used up by the next time the chosen source would deal damage to you, so the damage from a
+     * later activation of that source is dealt normally.
+     */
     @Test
     @DisplayName("Only the first damage event from the chosen source is prevented")
     void onlyFirstDamageEventIsPrevented() {
         harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
         addReadyPentagram(player1);
         Permanent artillery = addCreatureReady(player1, new OrcishArtillery());
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -248,10 +253,18 @@ class PentagramOfTheAgesTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, artillery.getId());
 
-        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+
+        artillery.untap();
+        harness.activateAbility(player1, 1, null, player2.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 17);
-        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+        harness.assertLife(player2, 16);
     }
 }

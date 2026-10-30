@@ -32,7 +32,8 @@ public class EclipsedRealms extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.CHOSEN_SUBTYPE_SPELL_OR_ABILITY)),
+                List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.CHOSEN_SUBTYPE_SPELL_OR_ABILITY)
+                        .withAbilitiesOfSourcesInAnyZone()),
                 "{T}: Add one mana of any color. Spend this mana only to cast a spell of the chosen type or activate an ability of a source of the chosen type."
         ));
     }

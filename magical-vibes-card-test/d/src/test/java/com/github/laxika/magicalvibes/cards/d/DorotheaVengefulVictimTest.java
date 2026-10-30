@@ -72,7 +72,7 @@ class DorotheaVengefulVictimTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.gameLog.stream().map(entry -> entry.plainText()).toList())
-                .contains("A 4/4 Spirit creature token enters the battlefield tapped and attacking.");
+                .contains("A 4/4 White Spirit creature token enters the battlefield tapped and attacking.");
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .noneMatch(permanent -> permanent.getCard().isToken()
                         && permanent.getCard().getName().equals("Spirit"))).isTrue();

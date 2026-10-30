@@ -17,7 +17,8 @@ public class Flamebraider extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardAnyColorManaEffect(2, ManaSpendRestriction.SUBTYPE_SPELL_OR_ABILITY, CardSubtype.ELEMENTAL)),
+                List.of(new AwardAnyColorManaEffect(2, ManaSpendRestriction.SUBTYPE_SPELL_OR_ABILITY, CardSubtype.ELEMENTAL)
+                        .withAbilitiesOfSourcesInAnyZone()),
                 "{T}: Add two mana in any combination of colors. Spend this mana only to cast Elemental spells or activate abilities of Elementals."
         ));
     }

@@ -2451,6 +2451,7 @@ public class DeathTriggerCollectorService {
     // ── ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD ───────
 
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_OWNER_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleOpponentArtifactGraveyardMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
@@ -2459,6 +2460,7 @@ public class DeathTriggerCollectorService {
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_OWNER_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleOpponentArtifactGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         match.gameData().stack.add(new StackEntry(

@@ -86,7 +86,7 @@ class FlailingSoldierTest extends BaseCardTest {
         Permanent wall = addCreatureReady(player2, new CrenellatedWall());
         harness.addMana(player2, ManaColor.WHITE, 1);
 
-        harness.activateAbility(player2, 0, null, null);
+        harness.activateAbilityOfPermanent(player2, soldier, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(soldier.getPowerModifier()).isEqualTo(1);

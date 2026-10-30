@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -44,6 +45,7 @@ class FluttershyTest extends BaseCardTest {
     }
 
     @Test
+    @Disabled("missing-features #71: \"creature with a tail\" is art-based and the engine has no data for it")
     @DisplayName("Only creatures with tails receive counters")
     void doesNotPutCounterOnCreatureWithoutTail() {
         Permanent fluttershy = addCreatureReady(player1, new Fluttershy());

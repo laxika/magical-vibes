@@ -2418,37 +2418,59 @@ public class GameService {
      *                      unknown or when the ability is not being activated to pay for something.
      */
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds, Map<UUID, Integer> damageAssignments, ManaPaymentIntent paymentIntent) {
+        activateAbility(gameData, player, permanentIndex, null, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments, paymentIntent);
+    }
+
+    /**
+     * @param sourcePermanentId when non-null, the permanent that owns the ability, looked up by ID instead of
+     *                          {@code permanentIndex}; lets a player activate another player's "any player may
+     *                          activate" ability unambiguously.
+     */
+    public void activateAbility(GameData gameData, Player player, int permanentIndex, UUID sourcePermanentId, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds, Map<UUID, Integer> damageAssignments, ManaPaymentIntent paymentIntent) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
-                () -> activateAbility(gameData, actionPlayer, permanentIndex, abilityIndex, xValue,
+                () -> activateAbility(gameData, actionPlayer, permanentIndex, sourcePermanentId, abilityIndex, xValue,
                         targetId, targetZone, targetIds, damageAssignments, paymentIntent))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            Permanent idSource = null;
+            if (sourcePermanentId != null) {
+                idSource = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                if (idSource == null) {
+                    throw new IllegalStateException("Invalid permanent");
+                }
+            }
             boolean normalPriorityActivation = !isAttackTaxManaPayment(gameData, player)
                     && !isBlockCostManaPayment(gameData, player) && !isMayCostManaPayment(gameData, player);
-            boolean manaActivation = abilityActivationService.isManaAbilityAt(
-                    gameData, player.getId(), permanentIndex, abilityIndex);
+            boolean manaActivation = idSource != null
+                    ? abilityActivationService.isManaAbilityOf(gameData, idSource, abilityIndex)
+                    : abilityActivationService.isManaAbilityAt(gameData, player.getId(), permanentIndex, abilityIndex);
             if (isAttackTaxManaPayment(gameData, player)) {
                 // CR 508.1i: only mana abilities allowed during attacker declaration
-                if (!abilityActivationService.isManaAbilityAt(gameData, player.getId(), permanentIndex, abilityIndex)) {
+                if (!manaActivation) {
                     throw new IllegalStateException("Only mana abilities can be activated during attacker declaration");
                 }
             } else if (isBlockCostManaPayment(gameData, player)) {
                 // CR 509.1e: only mana abilities allowed during blocker declaration
-                if (!abilityActivationService.isManaAbilityAt(gameData, player.getId(), permanentIndex, abilityIndex)) {
+                if (!manaActivation) {
                     throw new IllegalStateException("Only mana abilities can be activated during blocker declaration");
                 }
             } else if (isMayCostManaPayment(gameData, player)) {
-                if (!abilityActivationService.isManaAbilityAt(gameData, player.getId(), permanentIndex, abilityIndex)) {
+                if (!manaActivation) {
                     throw new IllegalStateException("Only mana abilities can be activated while paying a cost");
                 }
+                if (idSource != null) throw new IllegalStateException("Only mana abilities of lands you control may be activated");
                 requireWordOfCommandLandManaSource(gameData, player, permanentIndex);
             } else {
                 requirePriority(gameData, player);
             }
             Player activatingPlayer = player;
-            Runnable activation = () -> abilityActivationService.activateAbility(gameData, activatingPlayer,
-                    permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments);
+            Permanent activationSource = idSource;
+            Runnable activation = activationSource != null
+                    ? () -> abilityActivationService.activateAbility(gameData, activatingPlayer,
+                            activationSource, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments)
+                    : () -> abilityActivationService.activateAbility(gameData, activatingPlayer,
+                            permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments);
             int revertableBefore = gameData.revertableManaActivations.size();
             PendingManaActivation parkedBefore = gameData.pendingRevertableManaActivation;
             if (normalPriorityActivation) {

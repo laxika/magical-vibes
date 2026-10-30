@@ -363,6 +363,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkAnyEnchantmentPutIntoGraveyardFromBattlefieldTriggers}. */
     ON_ALLY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers whenever an artifact is put into a graveyard from the battlefield and that graveyard
+     *  belongs to an opponent of this permanent's controller (the artifact's owner, regardless of who
+     *  controlled it). Used by Viridian Revel. */
+    ON_ARTIFACT_PUT_INTO_OPPONENT_OWNER_GRAVEYARD_FROM_BATTLEFIELD,
     /** Triggers whenever a permanent (of any type) an opponent of the controller controls is put into
      *  a graveyard from the battlefield. Fires on permanents controlled by an opponent of the dying
      *  permanent's controller. Checked in {@code PermanentRemovalService.processGraveyardAndTriggers}

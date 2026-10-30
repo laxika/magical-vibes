@@ -12419,6 +12419,10 @@ public class TriggerCollectionService {
             if (!playerId.equals(artifactControllerId)) {
                 dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD, ctx);
             }
+            if (!playerId.equals(graveyardOwnerId)) {
+                dispatchSlot(gameData, perm, playerId,
+                        EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_OWNER_GRAVEYARD_FROM_BATTLEFIELD, ctx);
+            }
         });
 
         gameData.simultaneousDyingPermanents.forEach((permanentId, permanent) -> {
@@ -12429,6 +12433,10 @@ public class TriggerCollectionService {
             if (!controllerId.equals(artifactControllerId)) {
                 dispatchSlot(gameData, permanent, controllerId,
                         EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD, ctx);
+            }
+            if (!controllerId.equals(graveyardOwnerId)) {
+                dispatchSlot(gameData, permanent, controllerId,
+                        EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_OWNER_GRAVEYARD_FROM_BATTLEFIELD, ctx);
             }
         });
 

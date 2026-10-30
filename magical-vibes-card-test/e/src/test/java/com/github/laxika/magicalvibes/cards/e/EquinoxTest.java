@@ -226,11 +226,8 @@ class EquinoxTest extends BaseCardTest {
         harness.castSorcery(player2, 0, land.getId());
         harness.passPriority(player2);
         harness.activateAbility(player1, 0, 0, spell.getId());
-        harness.activateAbility(player1, 2, null, null);
+        harness.activateAbility(player1, 2, 1, land.getId());
         harness.passBothPriorities();
-        harness.handleListChoice(player1,
-                "The next time target land would be destroyed this turn, remove all damage marked on it instead.");
-        harness.handlePermanentChosen(player1, land.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);

@@ -248,7 +248,9 @@ class KrovikanHorrorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        // CR 603.5: the optional trigger still asks on resolution, but it can't find the new graveyard object.
+        harness.handleMayAbilityChosen(player1, true);
+
         harness.assertNotInHand(player1, "Krovikan Horror");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(horror.getId()));

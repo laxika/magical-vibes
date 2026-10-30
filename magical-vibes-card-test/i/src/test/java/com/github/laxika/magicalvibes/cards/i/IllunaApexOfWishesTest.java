@@ -129,6 +129,7 @@ class IllunaApexOfWishesTest extends BaseCardTest {
     void auraWithoutLegalAttachmentRemainsExiled() {
         Permanent illuna = addCreatureReady(player1, new IllunaApexOfWishes());
         Card pacifism = new Pacifism();
+        harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(pacifism));
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
                 gd, illuna, List.of(illuna.getCard()), player1.getId()));

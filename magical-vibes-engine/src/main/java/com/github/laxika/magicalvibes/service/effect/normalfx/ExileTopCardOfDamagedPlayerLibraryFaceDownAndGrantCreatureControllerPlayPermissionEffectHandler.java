@@ -45,6 +45,9 @@ public class ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControlle
             creatureControllerId = entry.getTriggeringPermanentControllerId() != null
                     ? entry.getTriggeringPermanentControllerId() : entry.getControllerId();
         }
+        if (exileEffect.grantToSourceController()) {
+            creatureControllerId = entry.getControllerId();
+        }
         if (damagedPlayerId == null || creatureControllerId == null) {
             return;
         }

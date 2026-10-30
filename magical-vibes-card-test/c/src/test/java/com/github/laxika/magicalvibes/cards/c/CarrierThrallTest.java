@@ -85,6 +85,7 @@ class CarrierThrallTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Carrier Thrall"));
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertNotOnBattlefield(player1, "Carrier Thrall");
         harness.assertNotInGraveyard(player1, "Carrier Thrall");

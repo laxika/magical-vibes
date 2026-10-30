@@ -290,7 +290,8 @@ whenever an enchantment is put into a graveyard from the battlefield — checked
 whenever a land is put into a graveyard from the battlefield — checked in `PermanentRemovalService`; the
 collector pre-sets the damage target to the land's controller; `TriggeringCardConditionalEffect`
 can filter the triggering land card and preserve its controller for resolution),
-`ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD`,
+`ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD` ("an artifact an opponent controls" — keyed on the artifact's controller),
+`ON_ARTIFACT_PUT_INTO_OPPONENT_OWNER_GRAVEYARD_FROM_BATTLEFIELD` (Viridian Revel "into an opponent's graveyard" — keyed on the graveyard owner, so it fires for your stolen-back opponent-owned artifact and not for your own artifact an opponent controls),
 `ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT` (Sacred Ground; fires only on permanents the
 graveyard owner controls, and only when `GameData.currentlyResolvingControllerId` — the controller of
 the resolving spell/ability — is an opponent of the graveyard owner; the collector stamps the dying

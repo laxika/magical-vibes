@@ -132,6 +132,7 @@ class MurkStriderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(exiledCard.getId())).isNotNull();

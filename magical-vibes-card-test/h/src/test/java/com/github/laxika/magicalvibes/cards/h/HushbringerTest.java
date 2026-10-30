@@ -220,8 +220,13 @@ class HushbringerTest extends BaseCardTest {
         harness.assertLife(player2, 20);
     }
 
+    /**
+     * Returning Cauldron Familiar to the battlefield is one zone change: the creature entering the battlefield. Like
+     * a "leaves the battlefield" trigger caused by a creature dying, Syr Konrad's "leaves your graveyard" trigger is
+     * caused by that entry, so Hushbringer stops it too; the sacrificed Food creature's death is suppressed as well.
+     */
     @Test
-    void suppressesEntryTriggersWhenACreatureReturnsFromGraveyardButLeavesGraveyardTriggersAlone() {
+    void suppressesGraveyardLeaveTriggersCausedByACreatureReturningToTheBattlefield() {
         harness.addToBattlefield(player1, new Hushbringer());
         harness.addToBattlefield(player1, new SyrKonradTheGrim());
         harness.addToBattlefield(player1, new Gingerbrute());
@@ -233,11 +238,8 @@ class HushbringerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Gingerbrute");
         harness.assertOnBattlefield(player1, "Cauldron Familiar");
         harness.assertNotInGraveyard(player1, "Cauldron Familiar");
-        assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
-
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player1, 20);
-        harness.assertLife(player2, 19);
+        harness.assertLife(player2, 20);
     }
 }

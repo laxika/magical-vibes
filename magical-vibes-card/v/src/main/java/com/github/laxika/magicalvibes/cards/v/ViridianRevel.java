@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class ViridianRevel extends Card {
 
     public ViridianRevel() {
-        addEffect(EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_OWNER_GRAVEYARD_FROM_BATTLEFIELD,
                 new MayEffect(new DrawCardEffect(), "Draw a card?"));
     }
 }

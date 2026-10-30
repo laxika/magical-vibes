@@ -110,7 +110,8 @@ class PalantirOfOrthancTest extends BaseCardTest {
 
     @Test
     void opponentUnableToDrawCanStillChooseForControllerToDraw() {
-        harness.addToBattlefield(player1, new NarsetParterOfVeils());
+        Permanent narset = harness.addToBattlefieldAndReturn(player1, new NarsetParterOfVeils());
+        narset.setCounterCount(CounterType.LOYALTY, 5);
         gd.cardsDrawnThisTurn.put(player2.getId(), 1);
         Card drawn = new SerraAngel();
         prepareTrigger(new GrizzlyBears(), new Shock(), drawn);
@@ -125,13 +126,14 @@ class PalantirOfOrthancTest extends BaseCardTest {
 
     @Test
     void controllerUnableToDrawMustMillAndOpponentLosesLife() {
-        harness.addToBattlefield(player2, new NarsetParterOfVeils());
+        Permanent narset = harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils());
+        narset.setCounterCount(CounterType.LOYALTY, 5);
         gd.cardsDrawnThisTurn.put(player1.getId(), 1);
         Card milled = new SerraAngel();
         prepareTrigger(new GrizzlyBears(), new Shock(), milled);
         finishScryPuttingCardsOnBottom();
 
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(milled);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }

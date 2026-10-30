@@ -1201,7 +1201,8 @@ public class SpellCastingService {
                                 SpellTarget spellTarget = card.target(chosen.targetFilters().get(t));
                                 // CR 115.3: only one instance of the word "target" ("two target creatures") needs
                                 // distinct objects; a mode with different target clauses may share them.
-                                if (scopeModeTargets && chosen.targetFilters().stream().distinct().count() == 1) {
+                                if (scopeModeTargets && (chosen.distinctTargets()
+                                        || chosen.targetFilters().stream().distinct().count() == 1)) {
                                     spellTarget.inDistinctScope(modeIndex);
                                 }
                                 if (t < targetingEffects.size() || targetingEffects.size() == 1) {

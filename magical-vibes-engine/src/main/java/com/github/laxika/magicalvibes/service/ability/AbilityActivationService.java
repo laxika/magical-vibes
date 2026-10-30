@@ -1293,6 +1293,22 @@ public class AbilityActivationService {
         activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetIds, damageAssignments, null, null);
     }
 
+    /**
+     * Activates an ability on an explicitly identified source permanent, bypassing the index lookup. Used when
+     * the client names the source by ID so an "any player may activate" permanent controlled by another
+     * player cannot be shadowed by the activator's own permanent at the same battlefield index.
+     */
+    public void activateAbility(GameData gameData, Player player, Permanent source, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
+        if (!player.getId().equals(gameQueryService.findPermanentController(gameData, source.getId()))) {
+            List<ActivatedAbility> abilities = getEffectiveActivatedAbilities(gameData, source);
+            int idx = abilityIndex != null ? abilityIndex : 0;
+            if (idx < 0 || idx >= abilities.size() || !abilities.get(idx).isActivatableByAnyPlayer()) {
+                throw new IllegalStateException("You cannot activate that ability");
+            }
+        }
+        activateAbilityInternal(gameData, player, -1, abilityIndex, xValue, targetId, targetZone, null, null, targetIds, damageAssignments, source, null);
+    }
+
     /** Activates an activated ability belonging to one of the activating player's emblems. */
     public void activateEmblemAbility(GameData gameData, Player player, int emblemIndex, Integer abilityIndex,
                                       Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds,
@@ -2560,9 +2576,12 @@ public class AbilityActivationService {
         ManaPool handManaPool = gameData.playerManaPools.get(playerId);
         int handTreasureManaBefore = handManaPool.getTreasureManaTotal();
         if (abilityCost != null || activationCostModifier > 0) {
-            // Mana restricted to abilities of a subtype (Primal Beyond) is not spent on abilities of a card in hand.
+            // Mana restricted to abilities of a subtype is not spent on abilities of a card in hand (Primal
+            // Beyond ruling), except mana whose wording covers sources in any zone (Flamebraider, Eclipsed Realms).
+            Set<CardSubtype> handSourceSubtypes = new HashSet<>(cardSourceSpellOrAbilitySubtypes(card));
+            handSourceSubtypes.retainAll(handManaPool.getAnyZoneAbilitySourceSubtypes());
             payManaCostForSourceCard(gameData, playerId, card, abilityCost == null ? "{0}" : abilityCost, effectiveXValue,
-                    false, false, activationCostModifier, Set.of());
+                    false, false, activationCostModifier, handSourceSubtypes);
         }
         gameData.abilityActivationUsedTreasureMana.put(card.getId(),
                 handTreasureManaBefore > handManaPool.getTreasureManaTotal());
@@ -11098,6 +11117,11 @@ public class AbilityActivationService {
      */
     private ManaColor getOverriddenLandManaColor(GameData gameData, Permanent permanent) {
         return gameQueryService.getOverriddenLandManaColor(gameData, permanent);
+    }
+
+    public boolean isManaAbilityOf(GameData gameData, Permanent perm, Integer abilityIndex) {
+        if (perm == null || getEffectiveActivatedAbilities(gameData, perm).isEmpty()) return false;
+        return isManaAbility(resolveAbility(gameData, perm, abilityIndex));
     }
 
     public boolean isManaAbilityAt(GameData gameData, UUID playerId, int permanentIndex, Integer abilityIndex) {

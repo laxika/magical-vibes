@@ -12,7 +12,7 @@ public class DreamThiefsBandana extends Card {
 
     public DreamThiefsBandana() {
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
-                new ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect());
+                ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect.forSourceController());
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

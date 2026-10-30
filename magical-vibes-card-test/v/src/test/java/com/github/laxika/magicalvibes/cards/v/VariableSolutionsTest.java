@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.CardPrinting;
+import com.github.laxika.magicalvibes.cards.c.CentaurCourser;
+import com.github.laxika.magicalvibes.cards.e.EarthElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -9,14 +13,57 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureRandomCreatureWithManaValueEffectHandler;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({VariableSolutions.class, Forest.class, MindStone.class, ThayanEvokers.class})
 class VariableSolutionsTest extends BaseCardTest {
+
+    private Map<Integer, List<CardPrinting>> conjureCandidates;
+    private final Map<Integer, List<CardPrinting>> previousCandidates = new HashMap<>();
+
+    /**
+     * The conjured creature is chosen at random from every creature with the right mana value, and a random
+     * creature can have enters-the-battlefield effects or toughness that interfere with the assertions, so each
+     * mana value is pinned to a vanilla creature.
+     */
+    @BeforeEach
+    @SuppressWarnings("unchecked")
+    void pinConjuredCreatures() {
+        var handler = GameTestEngineContext.get().getBean(ConjureRandomCreatureWithManaValueEffectHandler.class);
+        conjureCandidates = (Map<Integer, List<CardPrinting>>)
+                ReflectionTestUtils.getField(handler, "candidatesByManaValue");
+        pin(3, new CardPrinting("M19", "171", CentaurCourser.class.getName(), "CentaurCourser", false,
+                CentaurCourser::new));
+        pin(4, new CardPrinting("10E", "212", HillGiant.class.getName(), "HillGiant", false, HillGiant::new));
+        pin(5, new CardPrinting("10E", "199", EarthElemental.class.getName(), "EarthElemental", false,
+                EarthElemental::new));
+    }
+
+    @AfterEach
+    void restoreConjuredCreatures() {
+        previousCandidates.forEach((manaValue, previous) -> {
+            if (previous == null) {
+                conjureCandidates.remove(manaValue);
+            } else {
+                conjureCandidates.put(manaValue, previous);
+            }
+        });
+    }
+
+    private void pin(int manaValue, CardPrinting printing) {
+        previousCandidates.put(manaValue, conjureCandidates.put(manaValue, List.of(printing)));
+    }
 
     @Test
     void xOneSeeksBasicLandTapped() {

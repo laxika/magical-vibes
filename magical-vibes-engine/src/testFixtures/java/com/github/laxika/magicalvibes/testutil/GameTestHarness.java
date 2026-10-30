@@ -1945,6 +1945,11 @@ public class GameTestHarness {
         gameService.activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone);
     }
 
+    public void activateAbilityOfPermanent(Player player, Permanent source, int abilityIndex, Integer xValue, UUID targetId) {
+        ensurePriority(player);
+        gameService.activateAbility(gameData, player, -1, source.getId(), abilityIndex, xValue, targetId, null, null, null, null);
+    }
+
     public void activateEmblemAbility(Player player, int emblemIndex, int abilityIndex, Integer xValue, UUID targetId) {
         ensurePriority(player);
         gameService.activateEmblemAbility(gameData, player, emblemIndex, abilityIndex, xValue, targetId, null, null, null);

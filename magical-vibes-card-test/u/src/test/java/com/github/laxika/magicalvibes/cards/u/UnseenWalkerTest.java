@@ -148,7 +148,7 @@ class UnseenWalkerTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new ViashinoWarrior());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new ViashinoWarrior());
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 0, null, first.getId());
         harness.passBothPriorities();

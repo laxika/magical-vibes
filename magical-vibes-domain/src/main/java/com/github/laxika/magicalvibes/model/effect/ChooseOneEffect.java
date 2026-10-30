@@ -463,7 +463,15 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
     public record ChooseOneOption(String label, List<CardEffect> effects, TargetFilter targetFilter,
                                   List<TargetFilter> targetFilters, int minTargets, int maxTargets,
                                   boolean xScaledTargets, String manaCost,
-                                  Supplier<List<CardEffect>> effectFactory, boolean handOnly, CardType spellType) {
+                                  Supplier<List<CardEffect>> effectFactory, boolean handOnly, CardType spellType,
+                                  boolean distinctTargets) {
+        public ChooseOneOption(String label, List<CardEffect> effects, TargetFilter targetFilter,
+                               List<TargetFilter> targetFilters, int minTargets, int maxTargets,
+                               boolean xScaledTargets, String manaCost,
+                               Supplier<List<CardEffect>> effectFactory, boolean handOnly, CardType spellType) {
+            this(label, effects, targetFilter, targetFilters, minTargets, maxTargets,
+                    xScaledTargets, manaCost, effectFactory, handOnly, spellType, false);
+        }
         public ChooseOneOption(String label, List<CardEffect> effects, TargetFilter targetFilter,
                                List<TargetFilter> targetFilters, int minTargets, int maxTargets,
                                boolean xScaledTargets, String manaCost,
@@ -541,19 +549,28 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         /** This mode with its own total mana cost (split-card half / fuse mode). */
         public ChooseOneOption withManaCost(String manaCost) {
             return new ChooseOneOption(label, effects, targetFilter, targetFilters,
-                    minTargets, maxTargets, xScaledTargets, manaCost, effectFactory, handOnly, spellType);
+                    minTargets, maxTargets, xScaledTargets, manaCost, effectFactory, handOnly, spellType, distinctTargets);
         }
 
         /** Restricts this mode to casting the card from hand, as with fuse. */
         public ChooseOneOption onlyFromHand() {
             return new ChooseOneOption(label, effects, targetFilter, targetFilters,
-                    minTargets, maxTargets, xScaledTargets, manaCost, effectFactory, true, spellType);
+                    minTargets, maxTargets, xScaledTargets, manaCost, effectFactory, true, spellType, distinctTargets);
         }
 
         /** Sets the spell type of a split half on the stack. */
         public ChooseOneOption withSpellType(CardType spellType) {
             return new ChooseOneOption(label, effects, targetFilter, targetFilters,
-                    minTargets, maxTargets, xScaledTargets, manaCost, effectFactory, handOnly, spellType);
+                    minTargets, maxTargets, xScaledTargets, manaCost, effectFactory, handOnly, spellType, distinctTargets);
+        }
+
+        /**
+         * Marks this mode's targets as required to be different objects even when its target clauses
+         * use different filters, as with "deals damage to any other target" (Special Move's Foot Toss).
+         */
+        public ChooseOneOption withDistinctTargets() {
+            return new ChooseOneOption(label, effects, targetFilter, targetFilters,
+                    minTargets, maxTargets, xScaledTargets, manaCost, effectFactory, handOnly, spellType, true);
         }
 
         /** Returns fresh effects when this mode supports repeated selection. */

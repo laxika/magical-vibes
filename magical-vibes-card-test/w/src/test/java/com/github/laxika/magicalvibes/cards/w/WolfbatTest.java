@@ -134,7 +134,9 @@ class WolfbatTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        // CR 603.5: the optional trigger still asks on resolution, but it can't find the new graveyard object.
+        harness.handleMayAbilityChosen(player1, true);
+
         harness.assertNotOnBattlefield(player1, "Wolfbat");
         harness.assertInGraveyard(player1, "Wolfbat");
     }

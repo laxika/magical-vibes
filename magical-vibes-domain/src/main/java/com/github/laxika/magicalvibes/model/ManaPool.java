@@ -241,6 +241,13 @@ public class ManaPool {
      * {@link #subtypeCreatureMana}, which is spell-only.
      */
     private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeSpellOrAbilityMana = new HashMap<>();
+    /**
+     * Subtypes whose spell-or-ability mana in this pool was produced under wording whose "source of
+     * that type" also covers cards outside the battlefield (the Lorwyn Eclipsed rulings), so it may
+     * pay for an ability a card in hand activates (cycling). Older wordings (Smokebraider, Primal
+     * Beyond) are limited to sources on the battlefield and never add to this set.
+     */
+    private final Set<CardSubtype> anyZoneAbilitySourceSubtypes = EnumSet.noneOf(CardSubtype.class);
     /** Per-subtype-set, per-color mana spendable for any one of the listed subtypes. */
     private final Map<Set<CardSubtype>, EnumMap<ManaColor, Integer>> subtypeSetSpellOrAbilityMana = new HashMap<>();
     /** Per-color mana that can only be spent to cast spells with any of the matching subtypes. */
@@ -508,6 +515,7 @@ public class ManaPool {
         mergeTrackedMana(subtypeCreatureMana, source.subtypeCreatureMana);
         mergeTrackedMana(uncounterableSubtypeCreatureMana, source.uncounterableSubtypeCreatureMana);
         mergeTrackedMana(subtypeSpellOrAbilityMana, source.subtypeSpellOrAbilityMana);
+        anyZoneAbilitySourceSubtypes.addAll(source.anyZoneAbilitySourceSubtypes);
         mergeTrackedMana(subtypeSetSpellOrAbilityMana, source.subtypeSetSpellOrAbilityMana);
         mergeTrackedMana(subtypeSpellOnlyMana, source.subtypeSpellOnlyMana);
         mergeTrackedMana(instantSorceryOrSubtypeSpellOnlyMana, source.instantSorceryOrSubtypeSpellOnlyMana);
@@ -658,6 +666,8 @@ public class ManaPool {
         for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.subtypeSpellOrAbilityMana.entrySet()) {
             subtypeSpellOrAbilityMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
+        anyZoneAbilitySourceSubtypes.clear();
+        anyZoneAbilitySourceSubtypes.addAll(source.anyZoneAbilitySourceSubtypes);
         for (Map.Entry<Set<CardSubtype>, EnumMap<ManaColor, Integer>> entry
                 : source.subtypeSetSpellOrAbilityMana.entrySet()) {
             subtypeSetSpellOrAbilityMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
@@ -1281,6 +1291,7 @@ public class ManaPool {
         spentCopyGrantingMana.clear();
         subtypeSpellOrAbilityMana.clear();
         subtypeSetSpellOrAbilityMana.clear();
+        anyZoneAbilitySourceSubtypes.clear();
         subtypeSpellOnlyMana.clear();
         instantSorceryOrSubtypeSpellOnlyMana.clear();
         subtypeCreatureSourceSpellOrAbilityMana.clear();
@@ -3812,6 +3823,15 @@ public class ManaPool {
         boolean spent = spentUncounterableGrantingMana;
         spentUncounterableGrantingMana = false;
         return spent;
+    }
+
+    /** Marks {@code subtypes} as spendable on abilities of such cards in any zone (see the field's docs). */
+    public void allowAbilitiesOfSourcesInAnyZone(Set<CardSubtype> subtypes) {
+        anyZoneAbilitySourceSubtypes.addAll(subtypes);
+    }
+
+    public Set<CardSubtype> getAnyZoneAbilitySourceSubtypes() {
+        return Set.copyOf(anyZoneAbilitySourceSubtypes);
     }
 
     public void addSubtypeSpellOrAbilityMana(CardSubtype subtype, ManaColor color, int amount) {

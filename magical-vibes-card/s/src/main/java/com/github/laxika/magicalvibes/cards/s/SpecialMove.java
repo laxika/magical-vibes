@@ -65,7 +65,7 @@ public class SpecialMove extends Card {
                         List.<CardEffect>of(
                                 new TargetCreatureDealsPowerDamageToAnyTargetEffect(2, 1),
                                 new SacrificeTargetCreatureEffect(2)),
-                        List.of(anyTarget, controlledCreature))
+                        List.of(anyTarget, controlledCreature)).withDistinctTargets()
         ), 2));
     }
 }

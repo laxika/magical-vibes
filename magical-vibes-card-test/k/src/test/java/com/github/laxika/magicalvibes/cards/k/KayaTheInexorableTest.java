@@ -301,10 +301,15 @@ class KayaTheInexorableTest extends BaseCardTest {
         assertThat(gameLogContains("declines to cast Tyvar Kell")).isFalse();
     }
 
+    /**
+     * Gives player1 the emblem and empties hand and graveyard: the default opening hand is random and can hold a
+     * legendary card (Cho-Manno, Revolutionary), which would add a second candidate to the emblem's choice.
+     */
     private void createEmblem() {
         Permanent kaya = addReadyKaya(7);
         harness.activateAbility(player1, battlefieldIndex(kaya), 2, null, null);
         resolveAllTriggers();
+        harness.setHand(player1, List.of());
         harness.setGraveyard(player1, List.of());
     }
 

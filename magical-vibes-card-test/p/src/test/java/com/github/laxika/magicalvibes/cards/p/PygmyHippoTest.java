@@ -30,7 +30,13 @@ class PygmyHippoTest extends BaseCardTest {
         return addCreatureReady(player1, new PygmyHippo());
     }
 
+    /**
+     * Empties both random default hands first: a combat instant such as Condemn there stops auto-pass at
+     * declare attackers, and the trigger would not resolve within this helper.
+     */
     private void attackUnblocked(Permanent attacker) {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         if (gd.interaction.activeInteraction() instanceof PendingInteraction.BlockerDeclaration) {
             gs.declareBlockers(gd, player2, List.of());
