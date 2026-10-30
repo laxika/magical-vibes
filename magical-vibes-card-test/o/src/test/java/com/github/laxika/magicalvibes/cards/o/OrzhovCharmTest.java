@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,16 @@ class OrzhovCharmTest extends BaseCardTest {
 
     // Mode indices: 0 = bounce your creature + your Auras on it, 1 = destroy target creature and
     //               lose life equal to its toughness, 2 = reanimate a mana value 1 or less creature.
+
+    /**
+     * The harness deals a random opening hand from a deck holding Pacifism, which these tests
+     * bounce. Empty hands keep every "in hand" and "not in hand" assertion about it meaningful.
+     */
+    @BeforeEach
+    void emptyHands() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+    }
 
     private void addWB() {
         harness.addMana(player1, ManaColor.WHITE, 1);
