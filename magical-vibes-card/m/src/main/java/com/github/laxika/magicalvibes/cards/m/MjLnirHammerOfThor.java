@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -41,7 +42,7 @@ public class MjLnirHammerOfThor extends Card {
         addStaticEffect(new DoubleDamageFromEquippedCreatureEffect());
         addActivatedAbility(new EquipActivatedAbility("{1}", WORTHY_CREATURE,
                 "Target must be a worthy creature"));
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{2}{R}",
                 List.of(new MassDamageEffect(2)),

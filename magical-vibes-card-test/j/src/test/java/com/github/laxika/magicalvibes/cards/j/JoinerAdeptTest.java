@@ -51,9 +51,9 @@ class JoinerAdeptTest extends BaseCardTest {
     void landsDoNotHaveAbilityWithoutJoinerAdept() {
         harness.addToBattlefield(player1, new Forest());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 
     @Test
@@ -62,9 +62,9 @@ class JoinerAdeptTest extends BaseCardTest {
         harness.addToBattlefield(player1, new JoinerAdept());
         harness.addToBattlefield(player2, new Forest());
 
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 
     @Test
@@ -76,9 +76,9 @@ class JoinerAdeptTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Joiner Adept"));
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 
     @ParameterizedTest

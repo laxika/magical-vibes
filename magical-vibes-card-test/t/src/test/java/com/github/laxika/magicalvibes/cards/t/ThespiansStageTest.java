@@ -138,7 +138,7 @@ class ThespiansStageTest extends BaseCardTest {
         harness.passBothPriorities();
         stage.untap();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, forest.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Invalid ability index");
         harness.activateAbility(player1, 0, 0, null, forest.getId());

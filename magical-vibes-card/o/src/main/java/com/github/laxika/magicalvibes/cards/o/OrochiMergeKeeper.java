@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -16,7 +16,7 @@ import java.util.List;
 public class OrochiMergeKeeper extends Card {
 
     public OrochiMergeKeeper() {
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null,
                         List.of(new AwardManaEffect(ManaColor.GREEN, 2)),

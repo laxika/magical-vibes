@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -45,6 +45,6 @@ public class ManaVault extends Card {
                 new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)));
 
         // {T}: Add {C}{C}{C}.
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS, 3));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS, 3));
     }
 }

@@ -24,11 +24,11 @@ class CardGraveyardKeywordTest {
 
         card.addUnearth("{B}");
 
-        assertThat(card.getGraveyardActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities()).isEmpty();
-        assertThat(card.getHandActivatedAbilities()).isEmpty();
+        assertThat(card.getActivatedAbilities(Zone.GRAVEYARD)).hasSize(1);
+        assertThat(card.getActivatedAbilities(Zone.BATTLEFIELD)).isEmpty();
+        assertThat(card.getActivatedAbilities(Zone.HAND)).isEmpty();
 
-        ActivatedAbility ability = card.getGraveyardActivatedAbilities().getFirst();
+        ActivatedAbility ability = card.getActivatedAbilities(Zone.GRAVEYARD).getFirst();
         assertThat(ability.isRequiresTap()).isFalse();
         assertThat(ability.getManaCost()).isEqualTo("{B}");
         assertThat(ability.getDescription()).isEqualTo("Unearth {B}");
@@ -53,7 +53,7 @@ class CardGraveyardKeywordTest {
 
         card.addEmbalm("{3}{W}", "Human Cleric");
 
-        ActivatedAbility ability = card.getGraveyardActivatedAbilities().getFirst();
+        ActivatedAbility ability = card.getActivatedAbilities(Zone.GRAVEYARD).getFirst();
         assertThat(ability.getManaCost()).isEqualTo("{3}{W}");
         assertThat(ability.getEffects()).containsExactly(
                 new ExileSelfFromGraveyardCost(),
@@ -72,7 +72,7 @@ class CardGraveyardKeywordTest {
 
         card.addEternalize("{3}{W}{W}", "Cat");
 
-        ActivatedAbility ability = card.getGraveyardActivatedAbilities().getFirst();
+        ActivatedAbility ability = card.getActivatedAbilities(Zone.GRAVEYARD).getFirst();
         assertThat(ability.getManaCost()).isEqualTo("{3}{W}{W}");
         assertThat(ability.getEffects()).containsExactly(
                 new ExileSelfFromGraveyardCost(),

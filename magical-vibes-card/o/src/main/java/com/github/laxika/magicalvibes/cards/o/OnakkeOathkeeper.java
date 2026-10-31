@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -22,7 +23,7 @@ public class OnakkeOathkeeper extends Card {
 
         // {4}{W}{W}, Exile this card from your graveyard: Return target planeswalker card
         // from your graveyard to the battlefield.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{4}{W}{W}",
                 List.of(

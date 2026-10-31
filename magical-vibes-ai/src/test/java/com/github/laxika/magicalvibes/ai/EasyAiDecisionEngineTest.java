@@ -3169,7 +3169,7 @@ class EasyAiDecisionEngineTest {
         gd.playerHands.get(aiPlayer.getId()).add(creature);
 
         // Add an untapped Plains to the battlefield so AI needs to tap it for mana
-        Permanent land = new Permanent(new Plains());
+        Permanent land = new Permanent(plains());
         land.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(land);
 
@@ -3180,12 +3180,12 @@ class EasyAiDecisionEngineTest {
         Mockito.doAnswer(inv -> {
             gd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
             return null;
-        }).when(messageHandler).handleTapPermanent(any());
+        }).when(messageHandler).handleActivateAbility(any());
 
         createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
         // AI should have tapped the land but NOT cast the spell or passed priority
-        verify(messageHandler).handleTapPermanent(any());
+        verify(messageHandler).handleActivateAbility(any());
         verify(messageHandler, never()).handlePlayCard(any());
         verify(messageHandler, never()).handlePassPriority(any());
     }
@@ -3201,7 +3201,7 @@ class EasyAiDecisionEngineTest {
         creature.setToughness(2);
         gd.playerHands.get(aiPlayer.getId()).add(creature);
 
-        Permanent land = new Permanent(new Plains());
+        Permanent land = new Permanent(plains());
         land.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(land);
 
@@ -3210,11 +3210,11 @@ class EasyAiDecisionEngineTest {
             gd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature,
                     aiPlayer.getId(), "Test trigger", List.of()));
             return null;
-        }).when(messageHandler).handleTapPermanent(any());
+        }).when(messageHandler).handleActivateAbility(any());
 
         createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
-        verify(messageHandler).handleTapPermanent(any());
+        verify(messageHandler).handleActivateAbility(any());
         verify(messageHandler, never()).handlePlayCard(any());
         verify(messageHandler, never()).handlePassPriority(any());
     }
@@ -3236,7 +3236,7 @@ class EasyAiDecisionEngineTest {
         instant.setManaCost("{W}");
         gd.playerHands.get(aiPlayer.getId()).add(instant);
 
-        Permanent land = new Permanent(new Plains());
+        Permanent land = new Permanent(plains());
         land.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(land);
 
@@ -3245,11 +3245,11 @@ class EasyAiDecisionEngineTest {
         Mockito.doAnswer(inv -> {
             gd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
             return null;
-        }).when(messageHandler).handleTapPermanent(any());
+        }).when(messageHandler).handleActivateAbility(any());
 
         createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
-        verify(messageHandler).handleTapPermanent(any());
+        verify(messageHandler).handleActivateAbility(any());
         verify(messageHandler, never()).handlePlayCard(any());
         verify(messageHandler, never()).handlePassPriority(any());
     }
@@ -3294,7 +3294,7 @@ class EasyAiDecisionEngineTest {
 
         private void giveAiPlainsLocal(int count) {
             for (int i = 0; i < count; i++) {
-                Permanent plains = new Permanent(new Plains());
+                Permanent plains = new Permanent(plains());
                 plains.setSummoningSick(false);
                 testGd.playerBattlefields.get(aiTestPlayer.getId()).add(plains);
             }
@@ -3505,5 +3505,16 @@ class EasyAiDecisionEngineTest {
             assertThat(testGd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
             assertThat(testGd.playerManaPools.get(aiTestPlayer.getId()).getTotal()).isZero();
         }
+    }
+
+    /**
+     * A Plains whose land type is set here: these mock-wired tests load no oracle data, and a land's mana ability
+     * comes from its basic land type (CR 305.6).
+     */
+    private static Card plains() {
+        Card plains = new Plains();
+        plains.setType(CardType.LAND);
+        plains.setSubtypes(List.of(CardSubtype.PLAINS));
+        return plains;
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,7 +17,7 @@ public class PetrifiedPlating extends Card {
     public PetrifiedPlating() {
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{G}",
                 List.of(),

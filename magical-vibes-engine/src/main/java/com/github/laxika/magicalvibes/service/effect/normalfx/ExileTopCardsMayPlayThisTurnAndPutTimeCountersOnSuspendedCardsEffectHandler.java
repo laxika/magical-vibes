@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnAndPutTimeCountersOnSuspendedCardsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -48,7 +49,7 @@ public class ExileTopCardsMayPlayThisTurnAndPutTimeCountersOnSuspendedCardsEffec
 
             gameData.exilePlayPermissions.put(card.getId(), controllerId);
             gameData.exilePlayPermissionsExpireEndOfTurn.add(card.getId());
-            if (card.getHandActivatedAbilities().stream()
+            if (card.getActivatedAbilities(Zone.HAND).stream()
                     .anyMatch(ActivatedAbility::isSuspendsSourceFromHand)) {
                 gameData.exiledCardTimeCounters.put(card.getId(), exileEffect.timeCounters());
             }

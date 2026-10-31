@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -24,7 +25,7 @@ public class SuspendedSentence extends Card {
                 .addSpellEffect(new ExileSpellEffect(3));
 
         // Suspend follows the card's own timing (CR 702.62a), so an instant can be suspended at instant speed.
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{1}{B}",
                 List.of(),

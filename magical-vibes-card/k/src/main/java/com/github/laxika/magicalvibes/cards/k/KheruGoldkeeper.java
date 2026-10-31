@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -22,7 +23,7 @@ public class KheruGoldkeeper extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
                 new ConditionalEffect(new ControllerTurn(), CreateTokenEffect.ofTreasureToken(1)));
 
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{2}{B}{G}{U}",
                 List.of(

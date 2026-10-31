@@ -5,9 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
@@ -33,7 +32,6 @@ public class OranRiefTheVastwood extends Card {
 
     public OranRiefTheVastwood() {
         addStaticEffect(new EntersTappedEffect());
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
@@ -49,5 +47,6 @@ public class OranRiefTheVastwood extends Card {
                 )),
                 "{T}: Put a +1/+1 counter on each green creature that entered this turn."
         ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
     }
 }

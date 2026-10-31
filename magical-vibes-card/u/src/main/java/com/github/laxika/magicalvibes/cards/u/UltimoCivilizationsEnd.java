@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -17,7 +18,7 @@ public class UltimoCivilizationsEnd extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificePermanentsEffect(
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT));
 
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{2}{B}",
                 List.of(new SacrificePermanentsEffect(

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -19,7 +20,7 @@ public class SunfireBalm extends Card {
         // "When you cycle this card, you may prevent the next 1 damage that would be dealt to any
         // target this turn." The target is announced with the cycling ability and rides on the
         // separate self-cycle trigger, which resolves before the cycling draw.
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{1}{W}",
                 List.of(new DrawCardEffect(1)),

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -49,7 +50,7 @@ public class JaradGolgariLichLord extends Card {
         ));
 
         // Sacrifice a Swamp and a Forest: Return this card from your graveyard to your hand.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 null,
                 List.of(

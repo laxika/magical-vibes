@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -22,7 +23,7 @@ import java.util.List;
 public class EternalDragon extends Card {
 
     public EternalDragon() {
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{3}{W}{W}",
                 List.of(ReturnCardFromGraveyardEffect.builder()
@@ -34,7 +35,7 @@ public class EternalDragon extends Card {
                 ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP
         ));
 
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{2}",
                 List.of(new SearchLibraryEffect(

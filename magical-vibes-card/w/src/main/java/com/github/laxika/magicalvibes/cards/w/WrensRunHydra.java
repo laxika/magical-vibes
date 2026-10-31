@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -21,7 +22,7 @@ public class WrensRunHydra extends Card {
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
 
         // Reinforce X — {X}{G}{G} ({X}{G}{G}, Discard this card: Put X +1/+1 counters on target creature.)
-        addHandActivatedAbility(new ActivatedAbility(false, "{X}{G}{G}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{X}{G}{G}",
                 List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())),
                 "Reinforce X — {X}{G}{G} ({X}{G}{G}, Discard this card: Put X +1/+1 counters on target creature.)",
                 TargetFilters.creature()));

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -41,16 +41,13 @@ public class GainActivatedAbilitiesOfTargetCreatureUntilEndOfTurnEffectHandler i
         if (staticBonus.losesAllAbilities() || target.isLosesAllAbilitiesUntilEndOfTurn() || target.isFaceDown()) {
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         } else {
-            abilities.addAll(target.getCard().getActivatedAbilities());
+            abilities.addAll(target.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
             abilities.addAll(staticBonus.grantedActivatedAbilities());
-            List<CardEffect> onTapEffects = target.getCard().getEffects(EffectSlot.ON_TAP);
-            if (!onTapEffects.isEmpty()) {
-                abilities.add(new ActivatedAbility(true, null, onTapEffects, "{T}: Add mana."));
-            }
         }
         abilities.addAll(target.getPersistentGrantedActivatedAbilities());
         abilities.addAll(target.getTemporaryActivatedAbilities());
         abilities.addAll(target.getUntilNextTurnActivatedAbilities());
+        abilities.addAll(gameQueryService.missingIntrinsicManaAbilities(gameData, target, abilities));
         source.getTemporaryActivatedAbilities().addAll(abilities);
 
         gameLogService.append(gameData, GameLog.builder().card(source.getCard())

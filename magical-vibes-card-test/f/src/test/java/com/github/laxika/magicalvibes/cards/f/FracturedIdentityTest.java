@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -136,7 +137,7 @@ class FracturedIdentityTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, token, Keyword.TRAMPLE)).isFalse();
-        assertThat(token.getCard().getActivatedAbilities()).isEmpty();
+        assertThat(token.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).isEmpty();
     }
 
     @Test

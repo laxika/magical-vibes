@@ -45,7 +45,6 @@ public record CardView(
         Integer power,
         Integer toughness,
         Set<Keyword> keywords,
-        boolean hasTapAbility,
         String setCode,
         String collectorNumber,
         CardColor color,

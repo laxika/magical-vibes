@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +19,7 @@ public class DeepSeaKraken extends Card {
     public DeepSeaKraken() {
         addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new RemoveTimeCounterWhenOpponentCastsSpellEffect());
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{2}{U}",
                 List.of(),

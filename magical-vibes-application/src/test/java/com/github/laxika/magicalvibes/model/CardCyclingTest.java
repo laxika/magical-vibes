@@ -23,11 +23,11 @@ class CardCyclingTest {
 
         card.addCycling("{2}");
 
-        assertThat(card.getHandActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities()).isEmpty();
-        assertThat(card.getGraveyardActivatedAbilities()).isEmpty();
+        assertThat(card.getActivatedAbilities(Zone.HAND)).hasSize(1);
+        assertThat(card.getActivatedAbilities(Zone.BATTLEFIELD)).isEmpty();
+        assertThat(card.getActivatedAbilities(Zone.GRAVEYARD)).isEmpty();
 
-        ActivatedAbility ability = card.getHandActivatedAbilities().getFirst();
+        ActivatedAbility ability = card.getActivatedAbilities(Zone.HAND).getFirst();
         assertThat(ability.isRequiresTap()).isFalse();
         assertThat(ability.getManaCost()).isEqualTo("{2}");
         assertThat(ability.getEffects()).containsExactly(new DrawCardEffect(1));
@@ -42,7 +42,7 @@ class CardCyclingTest {
 
         card.addCycling(cost);
 
-        ActivatedAbility ability = card.getHandActivatedAbilities().getFirst();
+        ActivatedAbility ability = card.getActivatedAbilities(Zone.HAND).getFirst();
         assertThat(ability.getDescription())
                 .isEqualTo("Cycling " + cost + " (" + cost + ", Discard this card: Draw a card.)");
         assertThat(ability.isCyclingAbility()).isTrue();

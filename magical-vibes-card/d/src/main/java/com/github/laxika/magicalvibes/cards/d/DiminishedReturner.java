@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -21,7 +22,7 @@ public class DiminishedReturner extends Card {
 
         // {B}{B}: Diminished Returner perpetually gets -1/-1, then return it to the battlefield.
         // Activate only if Diminished Returner is in your graveyard and its toughness is 2 or greater.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{B}{B}",
                 List.of(

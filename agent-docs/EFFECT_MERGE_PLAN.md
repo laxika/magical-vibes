@@ -317,8 +317,8 @@ the enchanted-land-tap trigger.
   restricted-bucket activation must not be parked as revertable.
 - The virtual-pool contributions in `PotentialManaService` (`buildVirtualManaPool` /
   `buildLandOnlyVirtualManaPool`) also require `restriction == NONE`.
-- `hasOnTapManaEffects` now matches every restriction. Inert today — no card carries a restricted
-  any-colour producer in `EffectSlot.ON_TAP`; all eleven are activated abilities.
+- `hasOnTapManaEffects` is gone: since step 7 of the EffectSlot refactor every mana ability is an
+  activated ability, so the any-colour producers are all read through the activated-ability paths.
 
 ---
 

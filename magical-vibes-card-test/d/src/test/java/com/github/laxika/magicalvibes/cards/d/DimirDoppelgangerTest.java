@@ -62,7 +62,7 @@ class DimirDoppelgangerTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(secondTarget);
-        assertThat(doppelganger.getCard().getActivatedAbilities()).hasSize(1);
+        assertThat(doppelganger.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(1);
     }
 
     @Test
@@ -90,7 +90,7 @@ class DimirDoppelgangerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(doppelganger.getCard().getActivatedAbilities()).hasSize(1);
+        assertThat(doppelganger.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(1);
     }
 
     @Test

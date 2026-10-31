@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
@@ -20,7 +20,6 @@ import java.util.List;
 public class GleamingBastion extends Card {
 
     public GleamingBastion() {
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
 
         var basicLand = new PermanentAllOfPredicate(List.of(
                 new PermanentIsLandPredicate(),
@@ -43,5 +42,6 @@ public class GleamingBastion extends Card {
                 List.of(new AwardManaEffect(ManaColor.BLUE)),
                 "{T}: Add {U}."
         ).withActivationCondition(activationCondition, activationConditionDescription));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
     }
 }

@@ -58,7 +58,7 @@ class DetentionVortexTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Permanent has no activated ability");
+                .hasMessageContaining("can't be activated");
     }
 
     @Test

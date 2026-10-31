@@ -79,7 +79,7 @@ class RakishRevelersTest extends BaseCardTest {
 
         harness.castFromExile(player1, revelers.getId());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 

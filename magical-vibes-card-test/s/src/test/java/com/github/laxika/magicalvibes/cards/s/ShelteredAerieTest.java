@@ -91,9 +91,9 @@ class ShelteredAerieTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, aura.getId());
         harness.assertInGraveyard(player1, "Sheltered Aerie");
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Permanent has no activated ability");
+                .hasMessageContaining("Invalid ability index");
 
         harness.tapPermanent(player1, 0);
 

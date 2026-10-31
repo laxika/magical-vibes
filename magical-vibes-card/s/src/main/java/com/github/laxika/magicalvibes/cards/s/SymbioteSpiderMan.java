@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -26,7 +27,7 @@ public class SymbioteSpiderMan extends Card {
     public SymbioteSpiderMan() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, combatDamageAbility());
 
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{2}{U/B}",
                 List.of(

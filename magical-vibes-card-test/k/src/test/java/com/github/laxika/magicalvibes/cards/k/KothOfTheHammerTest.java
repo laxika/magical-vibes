@@ -288,7 +288,7 @@ class KothOfTheHammerTest extends BaseCardTest {
         Permanent mountain = addMountain(player1);
         harness.addToBattlefield(player1, new Forest());
         addMountain(player2);
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, player2.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
@@ -296,7 +296,7 @@ class KothOfTheHammerTest extends BaseCardTest {
         harness.assertLife(player2, 19);
 
         harness.forceActivePlayer(player2);
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, player1.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -60,7 +61,7 @@ public class BecomeCopyOfTargetCreatureCardInGraveyardEffectHandler implements N
         // The retained name and ability belong to the card this ability is on now: for a Clone copying
         // this card, that is the copied card rather than the Clone's original card.
         String retainedName = source.getCard().getName();
-        List<ActivatedAbility> retainedAbilities = source.getCard().getActivatedAbilities().stream()
+        List<ActivatedAbility> retainedAbilities = source.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                 .filter(ability -> ability.getEffects().contains(copyEffect))
                 .limit(1)
                 .toList();

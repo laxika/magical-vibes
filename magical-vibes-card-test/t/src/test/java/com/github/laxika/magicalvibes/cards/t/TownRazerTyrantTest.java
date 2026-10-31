@@ -28,7 +28,7 @@ class TownRazerTyrantTest extends BaseCardTest {
         assertThat(gqs.computeStaticBonus(gd, target).losesAllNonManaAbilities()).isTrue();
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.setGraveyard(player2, List.of(new Island()));
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.tapPermanent(player2, 0);
@@ -141,7 +141,7 @@ class TownRazerTyrantTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.setGraveyard(player2, List.of(new Island()));
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 

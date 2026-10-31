@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
@@ -41,7 +42,7 @@ public class AshBarrens extends Card {
 
         // Basic landcycling {1} ({1}, Discard this card: Search your library for a basic land card,
         // reveal it, put it into your hand, then shuffle.)
-        addHandActivatedAbility(new ActivatedAbility(false, "{1}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}",
                 List.of(new SearchLibraryEffect(CardPredicateUtils.basicLand())),
                 "Basic landcycling {1} ({1}, Discard this card: Search your library for a basic land card, "
                         + "reveal it, put it into your hand, then shuffle.)"));

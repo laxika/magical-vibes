@@ -127,7 +127,7 @@ class BarrierBreachTest extends BaseCardTest {
         addManaForSpell();
         harness.castInstant(player1, 0, List.of(anthem.getId(), aura.getId(), chorus.getId()));
 
-        harness.sacrificePermanent(player2, 0, anthem.getId());
+        harness.activateAbility(player2, 0, null, anthem.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -149,7 +149,7 @@ class BarrierBreachTest extends BaseCardTest {
         addManaForSpell();
         harness.castInstant(player1, 0, List.of(anthem.getId(), aura.getId()));
 
-        harness.sacrificePermanent(player2, 0, anthem.getId());
+        harness.activateAbility(player2, 0, null, anthem.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 

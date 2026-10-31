@@ -95,7 +95,7 @@ class ResonatingLuteTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Island());
         harness.forceActivePlayer(player2);
 
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerManaPools.get(player2.getId()).getInstantSorceryOnlyColored(ManaColor.BLUE)).isZero();
     }

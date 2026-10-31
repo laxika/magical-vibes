@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -30,13 +31,19 @@ public class AuraOfSilence extends Card {
                         new CardTypePredicate(CardType.ENCHANTMENT)
                 )),
                 2, CostModificationScope.OPPONENT));
-        target(new PermanentPredicateTargetFilter(
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsArtifactPredicate(),
-                        new PermanentIsEnchantmentPredicate()
-                )),
-                "Target must be an artifact or enchantment"
-        ))
-                .addEffect(EffectSlot.ON_SACRIFICE, new DestroyTargetPermanentEffect());
+        // Sacrifice Aura of Silence: Destroy target artifact or enchantment.
+        addActivatedAbility(new ActivatedAbility(
+                false,
+                null,
+                List.of(new SacrificeSelfCost(), new DestroyTargetPermanentEffect()),
+                "Sacrifice Aura of Silence: Destroy target artifact or enchantment.",
+                new PermanentPredicateTargetFilter(
+                        new PermanentAnyOfPredicate(List.of(
+                                new PermanentIsArtifactPredicate(),
+                                new PermanentIsEnchantmentPredicate()
+                        )),
+                        "Target must be an artifact or enchantment"
+                )
+        ));
     }
 }

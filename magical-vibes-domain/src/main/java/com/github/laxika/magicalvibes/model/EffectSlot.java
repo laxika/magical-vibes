@@ -5,7 +5,6 @@ public enum EffectSlot {
     PLANESWALK_FROM_TRIGGERED,
     CHAOS_TRIGGERED,
     ENCOUNTER_TRIGGERED,
-    ON_TAP,
     /** "Whenever you tap this permanent for mana, …" (Zhur-Taa Druid). Dispatched only from the
      *  mana-ability tap path in {@code AbilityActivationService}, so unlike
      *  {@link #ON_ALLY_PERMANENT_BECOMES_TAPPED} it does not fire when the permanent is tapped to
@@ -88,7 +87,6 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_CARD_EXILED,
     /** Triggers when the source controller's commander is put into the command zone. */
     ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE,
-    ON_SACRIFICE,
     ON_BLOCK,
     UPKEEP_TRIGGERED,
     /** Triggers at the beginning of its controller's upkeep while the source card is in the command zone. */

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromExileToBattlefieldEffect;
@@ -12,7 +13,7 @@ import java.util.List;
 public class MisterImmortal extends Card {
 
     public MisterImmortal() {
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{2}{G}",
                 List.of(new ReturnSourceCardFromGraveyardToBattlefieldEffect(true)),
@@ -21,6 +22,6 @@ public class MisterImmortal extends Card {
                 false,
                 "{2}{G}",
                 List.of(new ReturnSourceCardFromExileToBattlefieldEffect(true)),
-                "{2}{G}: Return this card from exile to the battlefield tapped.").withExileOnly());
+                "{2}{G}: Return this card from exile to the battlefield tapped.").withZones(AbilityZones.EXILE));
     }
 }

@@ -55,7 +55,6 @@ public enum GamePhase {
     }
 
     private static boolean hasManaAbility(Permanent perm) {
-        return perm.getCard().getEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_TAP).stream()
-                .anyMatch(com.github.laxika.magicalvibes.model.effect.ManaProducingEffect.class::isInstance);
+        return com.github.laxika.magicalvibes.service.cast.PotentialManaService.hasFreeTapManaAbility(perm.getCard());
     }
 }

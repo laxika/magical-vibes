@@ -4,7 +4,7 @@ import { ActivatedAbilityView, Card, Game, MessageType, Permanent, StackEntry, V
 
 const ME = 'me';
 
-/** Minimal untapped land Permanent — only the fields canTapPermanent reads. */
+/** Minimal untapped land Permanent with "{T}: Add {G}." — only the fields canTapPermanent reads. */
 function land(id: string): Permanent {
   return {
     id,
@@ -14,8 +14,9 @@ function land(id: string): Permanent {
       id,
       name: id,
       type: 'LAND',
-      hasTapAbility: true,
-      activatedAbilities: [],
+      activatedAbilities: [abilityView({
+        description: '{T}: Add {G}.', requiresTap: true, manaCost: null, isManaAbility: true,
+      })],
     } as unknown as Card,
   } as unknown as Permanent;
 }
@@ -116,7 +117,7 @@ function abilityView(overrides: Partial<ActivatedAbilityView> = {}): ActivatedAb
 }
 
 /** Minimal Permanent with the given activated abilities. */
-function abilitySource(id: string, abilities: ActivatedAbilityView[], hasTapAbility = false): Permanent {
+function abilitySource(id: string, abilities: ActivatedAbilityView[]): Permanent {
   return {
     id,
     tapped: false,
@@ -125,7 +126,6 @@ function abilitySource(id: string, abilities: ActivatedAbilityView[], hasTapAbil
       id,
       name: id,
       type: 'CREATURE',
-      hasTapAbility,
       activatedAbilities: abilities,
     } as unknown as Card,
   } as unknown as Permanent;
@@ -231,7 +231,10 @@ describe('TargetingChoiceService MTGO-style ability activation payment', () => {
 
   it('locks the held activation\'s own {T}-cost source against mana tapping', () => {
     // A source like Doubling Cube: "{3}, {T}: ..." that could also tap for mana.
-    const cube = abilitySource('cube', [abilityView({ manaCost: '{3}', requiresTap: true })], true);
+    const cube = abilitySource('cube', [
+      abilityView({ manaCost: '{3}', requiresTap: true }),
+      abilityView({ manaCost: null, requiresTap: true, isManaAbility: true }),
+    ]);
     const sent: any[] = [];
     const service = makePaymentService([cube, land('forest')], signal(gameWithPool({})), sent, { cube: [0] });
     service.activateAbilityAtIndex(0, 0, cube);
@@ -285,7 +288,7 @@ describe('TargetingChoiceService MTGO-style ability activation payment', () => {
     service.tapPermanent(1);
 
     expect(sent.length).toBe(1);
-    expect(sent[0].type).toBe(MessageType.TAP_PERMANENT);
+    expect(sent[0].type).toBe(MessageType.ACTIVATE_ABILITY);
     expect(sent[0].paymentIntent).toEqual({ abilityPermanentId: 'pumper', abilityIndex: 0 });
   });
 

@@ -124,7 +124,7 @@ class ActOfAuthorityTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, enchantment.getId());
-        harness.sacrificePermanent(player2, 0, artifact.getId());
+        harness.activateAbility(player2, 0, null, artifact.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 

@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -20,7 +19,6 @@ import java.util.List;
 public class BlinkmothWell extends Card {
 
     public BlinkmothWell() {
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
 
         PermanentAllOfPredicate noncreatureArtifact = new PermanentAllOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
@@ -33,5 +31,6 @@ public class BlinkmothWell extends Card {
                 "{2}, {T}: Tap target noncreature artifact.",
                 new PermanentPredicateTargetFilter(noncreatureArtifact, "Target must be a noncreature artifact")
         ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
     }
 }

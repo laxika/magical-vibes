@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -181,21 +183,6 @@ public class PotentialManaService {
                     if (isCreature) {
                         virtual.addCreatureMana(overriddenColor, 1);
                     }
-                } else if (hasLivePrintedTapMana(gameData, perm)) {
-                    // Basic lands and permanents with ON_TAP mana effects
-                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
-                        if (effect instanceof AwardManaEffect manaEffect) {
-                            int amount = estimateManaAmount(manaEffect.amount(), perm, gameData);
-                            addManaToVirtualPool(virtual, gameData, perm, manaEffect.color(), amount);
-                            if (isCreature) {
-                                virtual.addCreatureMana(manaEffect.color(), amount);
-                            }
-                        } else if (effect instanceof AwardAnyColorManaEffect anyColor
-                                && anyColor.restriction() == ManaSpendRestriction.NONE) {
-                            // A spend restriction keeps the mana out of the ordinary pool a cost draws from.
-                            addAnyColorManaToVirtualPool(virtual, estimateManaAmount(anyColor.amount(), perm, gameData), isCreature);
-                        }
-                    }
                 } else if (!gameQueryService.intrinsicBasicLandManaColors(gameData, perm).isEmpty()) {
                     addIntrinsicBasicLandManaToVirtualPool(virtual, gameData, perm, isCreature);
                 } else {
@@ -250,16 +237,6 @@ public class PotentialManaService {
                             isBasicLandSource(gameData, perm));
                 } else if (overriddenColor != null) {
                     addManaToVirtualPool(virtual, gameData, perm, overriddenColor, 1);
-                } else if (hasLivePrintedTapMana(gameData, perm)) {
-                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
-                        if (effect instanceof AwardManaEffect manaEffect) {
-                            addManaToVirtualPool(virtual, gameData, perm, manaEffect.color(),
-                                    estimateManaAmount(manaEffect.amount(), perm, gameData));
-                        } else if (effect instanceof AwardAnyColorManaEffect anyColor
-                                && anyColor.restriction() == ManaSpendRestriction.NONE) {
-                            addAnyColorManaToVirtualPool(virtual, estimateManaAmount(anyColor.amount(), perm, gameData), false);
-                        }
-                    }
                 } else if (!gameQueryService.intrinsicBasicLandManaColors(gameData, perm).isEmpty()) {
                     addIntrinsicBasicLandManaToVirtualPool(virtual, gameData, perm, false);
                 } else {
@@ -296,12 +273,7 @@ public class PotentialManaService {
             return false;
         }
 
-        Card card = permanent.getCard();
-        if (hasLivePrintedTapMana(gameData, permanent)) {
-            return card.getEffects(EffectSlot.ON_TAP).stream()
-                    .anyMatch(PotentialManaService::manaEffectOpensChoice);
-        }
-        return wouldManaAbilityTriggerChoice(activatedAbilitiesFor(gameData, permanent, card));
+        return wouldManaAbilityTriggerChoice(activatedAbilitiesFor(gameData, permanent, permanent.getCard()));
     }
 
     /**
@@ -323,8 +295,7 @@ public class PotentialManaService {
             baseColors.addAll(overriddenColors);
         } else {
             baseColors.addAll(gameQueryService.intrinsicBasicLandManaColors(gameData, land));
-            addProducedColors(land.getCard().getEffects(EffectSlot.ON_TAP), baseColors);
-            for (ActivatedAbility ability : land.getCard().getActivatedAbilities()) {
+            for (ActivatedAbility ability : land.getCard().getActivatedAbilities(Zone.BATTLEFIELD)) {
                 if (isFreeTapManaAbility(ability)) {
                     addProducedColors(ability.getEffects(), baseColors);
                 }
@@ -453,18 +424,6 @@ public class PotentialManaService {
                     }
                 } else if (overriddenColors.size() > 1) {
                     // Multi-type land override prompts for a color — skip in the safe pool.
-                } else if (hasLivePrintedTapMana(gameData, perm)) {
-                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
-                        if (effect instanceof AwardManaEffect manaEffect) {
-                            int amount = estimateManaAmount(manaEffect.amount(), perm, gameData);
-                            addManaToVirtualPool(virtual, gameData, perm, manaEffect.color(), amount);
-                            if (isCreature) {
-                                virtual.addCreatureMana(manaEffect.color(), amount);
-                            }
-                        }
-                        // An ON_TAP "add one mana of any color" prompts for the color just as the
-                        // activated-ability form does, so it is skipped here for the same reason.
-                    }
                 } else if (!gameQueryService.intrinsicBasicLandManaColors(gameData, perm).isEmpty()) {
                     addIntrinsicBasicLandManaToVirtualPool(virtual, gameData, perm, isCreature);
                 } else {
@@ -663,9 +622,8 @@ public class PotentialManaService {
     /**
      * Adds a "one mana of any color" producer to a virtual pool: every color is offered, and the
      * inflation of the total is recorded so the source still counts as the single mana one tap
-     * yields. Mirrors {@link #manaOptionsFor} for the slots that have no per-ability bookkeeping —
-     * the {@code ON_TAP} slot here, and {@code AiManaManager.addCardManaToPool}'s hypothetical
-     * land evaluation.
+     * yields. Mirrors {@link #manaOptionsFor} for {@code AiManaManager.addCardManaToPool}'s
+     * hypothetical land evaluation, which has no per-ability bookkeeping.
      */
     public static void addAnyColorManaToVirtualPool(ManaPool virtual, int amount, boolean isCreature) {
         addAnyColorManaToVirtualPool(virtual, amount, isCreature, false);
@@ -705,18 +663,6 @@ public class PotentialManaService {
         if (source != null && gameQueryService.hasEffectiveSupertype(gameData, source, CardSupertype.BASIC)) {
             virtual.addBasicLandManaTag(color, amount);
         }
-    }
-
-    /**
-     * Whether the permanent's printed {@code ON_TAP} mana is still there to be tapped for. Ability
-     * loss strips it even when a later-timestamp grant keeps a mana ability alive (Imprisoned in
-     * the Moon on a Forest), and {@code AbilityActivationService.tapPermanent} refuses outright in
-     * that state — so the granted ability has to be read through the activated-ability path instead
-     * of the printed colour being counted twice over.
-     */
-    public boolean hasLivePrintedTapMana(GameData gameData, Permanent permanent) {
-        return hasOnTapManaEffects(permanent.getCard())
-                && !gameQueryService.hasLostAllAbilities(gameData, permanent);
     }
 
     /**
@@ -761,7 +707,7 @@ public class PotentialManaService {
      */
     public List<ActivatedAbility> activatedAbilitiesFor(GameData gameData, Permanent permanent, Card card) {
         if (gameData == null || permanent == null) {
-            return card.getActivatedAbilities();
+            return ManaAbilities.withIntrinsic(card);
         }
         return abilityActivationService.getEffectiveActivatedAbilities(gameData, permanent);
     }
@@ -816,6 +762,14 @@ public class PotentialManaService {
      * Returns true if an activated ability is a free tap-based mana ability:
      * requires tap, has no mana cost, and produces mana.
      */
+    /**
+     * Whether the card has a "{T}: Add …" ability that costs no mana: a land's (printed or from its basic land types,
+     * CR 305.6), a mana creature's or a mana rock's.
+     */
+    public static boolean hasFreeTapManaAbility(Card card) {
+        return ManaAbilities.withIntrinsic(card).stream().anyMatch(PotentialManaService::isFreeTapManaAbility);
+    }
+
     public static boolean isFreeTapManaAbility(ActivatedAbility ability) {
         return ability.isRequiresTap()
                 && ability.getManaCost() == null
@@ -827,10 +781,9 @@ public class PotentialManaService {
      * color choice prompt (e.g. AwardAnyColorManaEffect on Birds of Paradise,
      * AwardManaOfColorsEffect with multiple colors, or AwardManaOfColorsLandsCouldProduceEffect on
      * Fellwar Stone).
-     * Cards with ON_TAP effects are always safe — they produce mana without choices.
      */
     public static boolean wouldManaAbilityTriggerChoice(Card card) {
-        return wouldManaAbilityTriggerChoice(card.getActivatedAbilities());
+        return wouldManaAbilityTriggerChoice(card.getActivatedAbilities(Zone.BATTLEFIELD));
     }
 
     private static boolean wouldManaAbilityTriggerChoice(List<ActivatedAbility> abilities) {
@@ -855,18 +808,11 @@ public class PotentialManaService {
         if (overriddenColor != null) {
             return 1;
         }
-        if (hasOnTapManaEffects(perm.getCard())) {
-            int total = 0;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
-                total += estimateModeledManaAmount(effect, perm, gameData);
-            }
-            return total;
-        }
         if (!gameQueryService.intrinsicBasicLandManaColors(gameData, perm).isEmpty()) {
             return 1;
         }
         int total = 0;
-        for (ActivatedAbility ability : perm.getCard().getActivatedAbilities()) {
+        for (ActivatedAbility ability : perm.getCard().getActivatedAbilities(Zone.BATTLEFIELD)) {
             if (!isFreeTapManaAbility(ability)) {
                 continue;
             }
@@ -977,11 +923,4 @@ public class PotentialManaService {
         }
     }
 
-    /**
-     * Returns true if the card has ON_TAP mana-producing effects (basic lands, mana creatures like Llanowar Elves).
-     */
-    public static boolean hasOnTapManaEffects(Card card) {
-        return card.getEffects(EffectSlot.ON_TAP).stream()
-                .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect);
-    }
 }

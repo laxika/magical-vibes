@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -1796,7 +1797,7 @@ class AiTargetSelectorTest {
             Permanent source = harness.addToBattlefieldAndReturn(aiPlayer, new MishrasBauble());
 
             UUID target = targetSelector.chooseAbilityTarget(
-                    gd, source.getCard().getActivatedAbilities().getFirst(), aiPlayer.getId(), source);
+                    gd, source.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst(), aiPlayer.getId(), source);
 
             assertThat(target).isEqualTo(human.getId());
         }

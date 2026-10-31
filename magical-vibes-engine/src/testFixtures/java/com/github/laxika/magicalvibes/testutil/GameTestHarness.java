@@ -1920,11 +1920,6 @@ public class GameTestHarness {
         gameService.payGuardianAngel(gameData, player, targetId);
     }
 
-    public void sacrificePermanent(Player player, int permanentIndex, UUID targetId) {
-        ensurePriority(player);
-        gameService.sacrificePermanent(gameData, player, permanentIndex, targetId);
-    }
-
     public void activateAbility(Player player, int permanentIndex, Integer xValue, UUID targetId) {
         ensurePriority(player);
         gameService.activateAbility(gameData, player, permanentIndex, 0, xValue, targetId, null);

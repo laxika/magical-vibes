@@ -99,10 +99,7 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
         if (retainedAbility != null || losesOtherAbilities) {
             boolean keepsStaticEffects = retainedAbility == null && auraStaticEffect == null;
             copy.removeAbilityEffectsIf((ability, effect) -> !keepsStaticEffects || !(ability instanceof StaticAbility));
-            copy.getActivatedAbilities().clear();
-            copy.getGraveyardActivatedAbilities().clear();
-            copy.getHandActivatedAbilities().clear();
-            copy.getStackActivatedAbilities().clear();
+            copy.clearActivatedAbilities();
             copy.setKeywords(Set.of());
             if (retainedAbility != null) {
                 copy.addActivatedAbility(retainedAbility);

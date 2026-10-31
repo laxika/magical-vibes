@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -29,7 +30,7 @@ public class SkeletonCrew extends Card {
                 new CreateTokenEffect("Skeleton Pirate", 2, 2, CardColor.BLACK,
                         List.of(CardSubtype.SKELETON, CardSubtype.PIRATE), Set.of(), Set.of()));
 
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{5}{B}",
                 List.of(ReturnCardFromGraveyardEffect.builder()

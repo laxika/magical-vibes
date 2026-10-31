@@ -2321,18 +2321,6 @@ public class GameService {
         }
     }
 
-    public void sacrificePermanent(GameData gameData, Player player, int permanentIndex, UUID targetId) {
-        Player actionPlayer = player;
-        if (runAsActionIfNeeded(gameData,
-                () -> sacrificePermanent(gameData, actionPlayer, permanentIndex, targetId))) return;
-        synchronized (gameData) {
-            player = resolveActingPlayer(gameData, player);
-            requirePriority(gameData, player);
-            requireCanActivateAbilities(gameData, player);
-            abilityActivationService.sacrificePermanent(gameData, player, permanentIndex, targetId);
-        }
-    }
-
     public void tapForeignLandForMana(GameData gameData, Player player, UUID permanentId) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,

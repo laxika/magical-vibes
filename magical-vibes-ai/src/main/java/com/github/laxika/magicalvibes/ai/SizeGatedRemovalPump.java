@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TargetGroup;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
@@ -95,7 +96,7 @@ public class SizeGatedRemovalPump {
             collectSizeGatesFromCard(handCard, gates);
         }
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of())) {
-            for (ActivatedAbility ability : permanent.getCard().getActivatedAbilities()) {
+            for (ActivatedAbility ability : permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD)) {
                 if (!abilityHasRemoval(ability)) {
                     continue;
                 }

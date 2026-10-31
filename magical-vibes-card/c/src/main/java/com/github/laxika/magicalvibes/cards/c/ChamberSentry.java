@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -33,7 +34,7 @@ public class ChamberSentry extends Card {
                 "{X}, {T}, Remove X +1/+1 counters from this creature: It deals X damage to any target."
         ));
 
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{W}{U}{B}{R}{G}",
                 List.of(ReturnCardFromGraveyardEffect.builder()

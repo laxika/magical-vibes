@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
@@ -21,7 +22,7 @@ public class TraumaticVisions extends Card {
 
         // Basic landcycling {1}{U} ({1}{U}, Discard this card: Search your library for a basic land
         // card, reveal it, put it into your hand, then shuffle.) — discard cost is intrinsic.
-        addHandActivatedAbility(new ActivatedAbility(false, "{1}{U}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}{U}",
                 List.of(new SearchLibraryEffect(CardPredicateUtils.basicLand())),
                 "Basic landcycling {1}{U} ({1}{U}, Discard this card: Search your library for a basic land card, reveal it, put it into your hand, then shuffle.)"));
     }

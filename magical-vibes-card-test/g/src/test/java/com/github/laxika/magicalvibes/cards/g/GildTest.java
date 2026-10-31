@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +44,7 @@ class GildTest extends BaseCardTest {
         assertThat(goldTokens).hasSize(1);
         assertThat(goldTokens.getFirst().getCard().isToken()).isTrue();
         assertThat(goldTokens.getFirst().getCard().getType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(goldTokens.getFirst().getCard().getActivatedAbilities()).hasSize(1);
+        assertThat(goldTokens.getFirst().getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(1);
     }
 
     @Test

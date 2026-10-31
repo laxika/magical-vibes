@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +19,7 @@ public class WheelOfFate extends Card {
     public WheelOfFate() {
         addSpellEffect(new DiscardHandEffect(DiscardRecipient.EACH_PLAYER));
         addSpellEffect(new EachPlayerDrawsCardEffect(7));
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{1}{R}",
                 List.of(),

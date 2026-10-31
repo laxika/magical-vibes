@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -23,7 +24,7 @@ public class HauntOfTheDeadMarshes extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(1));
 
         // {2}{B}: Return this card from your graveyard to the battlefield tapped. Activate only if you control a legendary creature.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{2}{B}",
                 List.of(ReturnCardFromGraveyardEffect.builder()

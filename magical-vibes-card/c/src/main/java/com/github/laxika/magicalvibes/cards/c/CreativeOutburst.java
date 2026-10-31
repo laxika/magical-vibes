@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -16,7 +17,7 @@ public class CreativeOutburst extends Card {
     public CreativeOutburst() {
         addSpellEffect(new DealDamageToAnyTargetEffect(5));
         addSpellEffect(LookAtTopCardsEffect.chooseNToHandRestOnBottomRandom(new Fixed(5), 1));
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{U/R}{U/R}",
                 List.of(CreateTokenEffect.ofTreasureToken(1)),

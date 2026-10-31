@@ -6,12 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -34,8 +34,6 @@ public class GreatHallOfTheBiblioplex extends Card {
             new CardTypePredicate(CardType.SORCERY)));
 
     public GreatHallOfTheBiblioplex() {
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
-
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
@@ -59,5 +57,6 @@ public class GreatHallOfTheBiblioplex extends Card {
                                 Set.of(), GrantScope.SELF, EffectDuration.PERMANENT))),
                 "{5}: If this land isn't a creature, it becomes a 2/4 Wizard creature with \"Whenever you cast an instant or sorcery spell, this creature gets +1/+0 until end of turn.\" It's still a land."
         ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
     }
 }

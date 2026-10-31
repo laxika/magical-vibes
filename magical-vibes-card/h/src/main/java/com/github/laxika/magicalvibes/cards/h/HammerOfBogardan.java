@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -22,7 +23,7 @@ public class HammerOfBogardan extends Card {
         addSpellEffect(new DealDamageToAnyTargetEffect(3));
 
         // {2}{R}{R}{R}: Return this card from your graveyard to your hand. Activate only during your upkeep.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{2}{R}{R}{R}",
                 List.of(ReturnCardFromGraveyardEffect.builder()

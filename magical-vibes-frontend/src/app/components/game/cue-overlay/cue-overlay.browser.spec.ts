@@ -19,7 +19,7 @@ const DESKTOP = { width: 1280, height: 900 };
 function card(id: string, name: string): Card {
   return {
     id, name, type: 'CREATURE', additionalTypes: [], supertypes: [], subtypes: [], cardText: null,
-    manaCost: '{1}{G}', power: 2, toughness: 2, keywords: [], hasTapAbility: false, setCode: null,
+    manaCost: '{1}{G}', power: 2, toughness: 2, keywords: [], setCode: null,
     collectorNumber: null, color: 'GREEN', colors: ['GREEN'], needsTarget: false, needsSpellTarget: false,
     activatedAbilities: [], loyalty: null, hasConvoke: false, hasPhyrexianMana: false, phyrexianManaCount: 0,
     token: false, watermark: null, hasAlternateCastingCost: false, alternateCostLifePayment: 0,

@@ -5,13 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -26,7 +25,6 @@ import java.util.Set;
 public class MobilizedDistrict extends Card {
 
     public MobilizedDistrict() {
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
 
         PermanentAllOfPredicate legendaryCreatureOrPlaneswalker = new PermanentAllOfPredicate(List.of(
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
@@ -45,5 +43,6 @@ public class MobilizedDistrict extends Card {
                 "{4}: This land becomes a 3/3 Citizen creature with vigilance until end of turn. It's still a land. "
                         + "This ability costs {1} less to activate for each legendary creature and planeswalker you control."
         ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
     }
 }

@@ -4,14 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -30,7 +28,6 @@ public class TheWorldTree extends Card {
 
     public TheWorldTree() {
         addStaticEffect(new EntersTappedEffect());
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
 
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(6, new PermanentIsLandPredicate()),
@@ -47,5 +44,6 @@ public class TheWorldTree extends Card {
                                 LibrarySearchDestination.BATTLEFIELD)),
                 "{W}{W}{U}{U}{B}{B}{R}{R}{G}{G}, {T}, Sacrifice this land: Search your library for any number of God cards, put them onto the battlefield, then shuffle."
         ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
     }
 }

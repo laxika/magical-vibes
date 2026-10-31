@@ -2,9 +2,8 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -20,8 +19,6 @@ import java.util.List;
 public class TempleOfAclazotz extends Card {
 
     public TempleOfAclazotz() {
-        // {T}: Add {B}.
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.BLACK));
 
         // {T}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness.
         addActivatedAbility(new ActivatedAbility(
@@ -29,5 +26,7 @@ public class TempleOfAclazotz extends Card {
                 List.of(new SacrificeCreatureCost(false, false, true), new GainLifeEffect(new XValue())),
                 "{T}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness."
         ));
+        // {T}: Add {B}.
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLACK));
     }
 }

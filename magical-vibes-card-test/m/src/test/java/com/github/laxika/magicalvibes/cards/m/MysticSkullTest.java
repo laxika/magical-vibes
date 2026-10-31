@@ -63,9 +63,9 @@ class MysticSkullTest extends BaseCardTest {
         addTransformedSkull(player1);
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
-        assertThatThrownBy(() -> harness.activateAbility(player2, indexOf(player2, forest), 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, indexOf(player2, forest), 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 
     @Test
@@ -148,9 +148,9 @@ class MysticSkullTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(skull);
         gd.playerGraveyards.get(player1.getId()).add(skull.getOriginalCard());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, forest), 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, forest), 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
         assertThat(forest.isTapped()).isFalse();
 
         harness.tapPermanent(player1, indexOf(player1, forest));

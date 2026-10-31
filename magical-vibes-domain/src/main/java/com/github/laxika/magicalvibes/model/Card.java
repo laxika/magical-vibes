@@ -66,6 +66,7 @@ import lombok.Getter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -365,12 +366,15 @@ public class Card {
      */
     @Getter(AccessLevel.NONE)
     private List<CostEffect> castingCosts = new ArrayList<>();
+    /**
+     * The card's activated abilities (CR 113.3b), mana abilities included (CR 605.1a), in the order they
+     * were added, whatever zones they function from; see {@link #getActivatedAbilities(Zone)}.
+     */
+    @Getter(AccessLevel.NONE)
     private List<ActivatedAbility> activatedAbilities = new ArrayList<>();
-    private List<ActivatedAbility> graveyardActivatedAbilities = new ArrayList<>();
-    /** Abilities activatable while this card is in its owner's hand (e.g. Reinforce). */
-    private List<ActivatedAbility> handActivatedAbilities = new ArrayList<>();
-    /** Abilities activatable while this card is a spell on the stack (e.g. Lightning Storm). */
-    private List<ActivatedAbility> stackActivatedAbilities = new ArrayList<>();
+    /** The per-zone views of {@link #activatedAbilities}, built on first use and dropped whenever they change. */
+    @Getter(AccessLevel.NONE)
+    private volatile Map<Zone, List<ActivatedAbility>> activatedAbilitiesByZone;
 
     public Card() {
         this.id = UUID.randomUUID();
@@ -514,9 +518,7 @@ public class Card {
         this.slotIndex = source.slotIndex;
         this.castingCosts = new ArrayList<>(source.castingCosts);
         this.activatedAbilities = new ArrayList<>(source.activatedAbilities);
-        this.graveyardActivatedAbilities = new ArrayList<>(source.graveyardActivatedAbilities);
-        this.handActivatedAbilities = new ArrayList<>(source.handActivatedAbilities);
-        this.stackActivatedAbilities = new ArrayList<>(source.stackActivatedAbilities);
+        this.activatedAbilitiesByZone = source.activatedAbilitiesByZone;
     }
 
     /**
@@ -568,9 +570,7 @@ public class Card {
         copy.copyTargetingFrom(textSource);
 
         copy.activatedAbilities = new ArrayList<>(textSource.activatedAbilities);
-        copy.graveyardActivatedAbilities = new ArrayList<>(textSource.graveyardActivatedAbilities);
-        copy.handActivatedAbilities = new ArrayList<>(textSource.handActivatedAbilities);
-        copy.stackActivatedAbilities = new ArrayList<>(textSource.stackActivatedAbilities);
+        copy.activatedAbilitiesByZone = textSource.activatedAbilitiesByZone;
         return copy;
     }
 
@@ -654,8 +654,7 @@ public class Card {
         this.slotIndex = face.slotIndex;
         this.castingCosts = new ArrayList<>(face.castingCosts);
         this.activatedAbilities = new ArrayList<>(face.activatedAbilities);
-        this.graveyardActivatedAbilities = new ArrayList<>(face.graveyardActivatedAbilities);
-        this.handActivatedAbilities = new ArrayList<>(face.handActivatedAbilities);
+        this.activatedAbilitiesByZone = face.activatedAbilitiesByZone;
     }
 
     // ── Freeze guard ─────────────────────────────────────────────────
@@ -886,9 +885,7 @@ public class Card {
         slotIndex = null;
         castingCosts.clear();
         activatedAbilities.clear();
-        graveyardActivatedAbilities.clear();
-        handActivatedAbilities.clear();
-        stackActivatedAbilities.clear();
+        activatedAbilitiesByZone = null;
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -909,9 +906,7 @@ public class Card {
         targetGroups.clear();
         effectTargetIndexMap.clear();
         activatedAbilities.clear();
-        graveyardActivatedAbilities.clear();
-        handActivatedAbilities.clear();
-        stackActivatedAbilities.clear();
+        activatedAbilitiesByZone = null;
     }
 
     /**
@@ -1519,7 +1514,7 @@ public class Card {
 
     /**
      * The card's spell, triggered and static abilities, in the order they were added. Activated
-     * abilities are still in the per-zone lists ({@link #getActivatedAbilities()} and the others).
+     * abilities are in their own list ({@link #getActivatedAbilities()}).
      *
      * <p>{@link #addSpellEffect} and {@link #addSimultaneousSpellEffects} build the one
      * {@link SpellAbility}, and {@link #addStaticEffect} adds a {@link StaticAbility} for each effect.
@@ -2316,24 +2311,59 @@ public class Card {
                 + " to hold its targets; add the chapter's effects before its targets");
     }
 
+    /**
+     * Every activated ability of this card in the order they were added, whatever zones they function
+     * from (CR 113.6). Most readers want {@link #getActivatedAbilities(Zone)}.
+     */
+    public List<ActivatedAbility> getActivatedAbilities() {
+        return Collections.unmodifiableList(activatedAbilities);
+    }
+
+    /**
+     * The activated abilities that function while this card is in {@code zone} (CR 113.6), in the order
+     * they were added: {@link Zone#BATTLEFIELD} for a permanent's abilities, mana abilities included,
+     * {@link Zone#HAND} for cycling and ninjutsu, {@link Zone#GRAVEYARD} for unearth and the like,
+     * {@link Zone#STACK} for a spell's and {@link Zone#EXILE} for an exiled card's.
+     */
+    public List<ActivatedAbility> getActivatedAbilities(Zone zone) {
+        Map<Zone, List<ActivatedAbility>> byZone = activatedAbilitiesByZone;
+        if (byZone == null) {
+            Map<Zone, List<ActivatedAbility>> built = new EnumMap<>(Zone.class);
+            for (ActivatedAbility ability : activatedAbilities) {
+                for (Zone abilityZone : ability.getZones().zones()) {
+                    built.computeIfAbsent(abilityZone, z -> new ArrayList<>()).add(ability);
+                }
+            }
+            built.replaceAll((z, abilities) -> List.copyOf(abilities));
+            byZone = Collections.unmodifiableMap(built);
+            activatedAbilitiesByZone = byZone;
+        }
+        return byZone.getOrDefault(zone, List.of());
+    }
+
+    /** Adds an activated ability that functions from the zones the ability names, the battlefield by default. */
     public void addActivatedAbility(ActivatedAbility ability) {
         assertMutable();
         activatedAbilities.add(ability);
+        activatedAbilitiesByZone = null;
     }
 
-    public void addGraveyardActivatedAbility(ActivatedAbility ability) {
-        assertMutable();
-        graveyardActivatedAbilities.add(ability);
+    /** Adds an activated ability that functions from {@code zones}, such as cycling from the hand. */
+    public void addActivatedAbility(AbilityZones zones, ActivatedAbility ability) {
+        addActivatedAbility(ability.withZones(zones));
     }
 
-    public void addHandActivatedAbility(ActivatedAbility ability) {
-        assertMutable();
-        handActivatedAbilities.add(ability);
+    /** Removes every activated ability, whatever zones it functions from. */
+    public void clearActivatedAbilities() {
+        removeActivatedAbilitiesIf(ability -> true);
     }
 
-    public void addStackActivatedAbility(ActivatedAbility ability) {
+    /** Removes every activated ability that matches {@code filter}, whatever zones it functions from. */
+    public void removeActivatedAbilitiesIf(Predicate<ActivatedAbility> filter) {
         assertMutable();
-        stackActivatedAbilities.add(ability);
+        if (activatedAbilities.removeIf(filter)) {
+            activatedAbilitiesByZone = null;
+        }
     }
 
     /**
@@ -2350,7 +2380,7 @@ public class Card {
      * than draws.
      */
     public void addCycling(String cost) {
-        addHandActivatedAbility(new ActivatedAbility(false, cost,
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, cost,
                 List.of(new DrawCardEffect(1)),
                 "Cycling " + cost + " (" + cost + ", Discard this card: Draw a card.)"));
     }
@@ -2366,7 +2396,7 @@ public class Card {
      * same defender the returned creature was attacking (CR 702.49c).
      */
     public void addNinjutsu(String cost) {
-        addHandActivatedAbility(ninjutsuAbility(cost));
+        addActivatedAbility(ninjutsuAbility(cost));
     }
 
     /** Builds a ninjutsu ability for a card in hand, including the engine's special activation flag. */
@@ -2375,7 +2405,8 @@ public class Card {
                 List.of(new NinjutsuEffect()),
                 "Ninjutsu " + cost + " (" + cost + ", Return an unblocked attacker you control to hand: "
                         + "Put this card onto the battlefield from your hand tapped and attacking.)")
-                .withNinjutsu();
+                .withNinjutsu()
+                .withZones(AbilityZones.HAND);
     }
 
     /** Adds Sneak for {@code cost}. */
@@ -2391,7 +2422,7 @@ public class Card {
      * <em>other</em> creatures and is a different effect entirely.
      */
     public void addUnearth(String cost) {
-        addGraveyardActivatedAbility(unearthAbility(cost));
+        addActivatedAbility(unearthAbility(cost));
     }
 
     /** Builds the unearth graveyard-activated ability for {@code cost}. */
@@ -2407,7 +2438,8 @@ public class Card {
                         .unearth(true)
                         .build()),
                 "Unearth " + cost,
-                ActivationTimingRestriction.SORCERY_SPEED);
+                ActivationTimingRestriction.SORCERY_SPEED)
+                .withZones(AbilityZones.GRAVEYARD);
     }
 
     /**
@@ -2419,7 +2451,7 @@ public class Card {
      *                      subtypes are loaded from Scryfall after the constructor runs.
      */
     public void addEmbalm(String cost, String creatureTypes) {
-        addGraveyardActivatedAbility(new ActivatedAbility(false, cost,
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(false, cost,
                 List.of(new ExileSelfFromGraveyardCost(),
                         new CreateTokenCopyOfSourceEffect(false, 1, CardColor.WHITE, CardSubtype.ZOMBIE, true)),
                 "Embalm " + cost + " (" + cost + ", Exile this card from your graveyard: Create a token "
@@ -2439,7 +2471,8 @@ public class Card {
                         new CreateTokenCopyOfSourceEffect(false, 1, CardColor.WHITE, CardSubtype.ZOMBIE, true)),
                 "Embalm " + cost + " (" + cost + ", Exile this card from your graveyard: Create a token "
                         + "that's a copy of it, except it's a white Zombie with no mana cost. Embalm only as a sorcery.)",
-                ActivationTimingRestriction.SORCERY_SPEED);
+                ActivationTimingRestriction.SORCERY_SPEED)
+                .withZones(AbilityZones.GRAVEYARD);
     }
 
     /**
@@ -2449,7 +2482,7 @@ public class Card {
      * @param creatureTypes the card's own creature types as they read in the reminder text
      */
     public void addEternalize(String cost, String creatureTypes) {
-        addGraveyardActivatedAbility(new ActivatedAbility(false, cost,
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(false, cost,
                 List.of(new ExileSelfFromGraveyardCost(),
                         new CreateTokenCopyOfSourceEffect(false, 1, CardColor.BLACK, CardSubtype.ZOMBIE, true, 4, 4)),
                 "Eternalize " + cost + " (" + cost + ", Exile this card from your graveyard: Create a token "
@@ -2468,7 +2501,7 @@ public class Card {
      * card itself.
      */
     public void addScavenge(String cost) {
-        addGraveyardActivatedAbility(scavengeAbility(cost));
+        addActivatedAbility(scavengeAbility(cost));
     }
 
     /**
@@ -2482,7 +2515,8 @@ public class Card {
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new SourceCardPower())),
                 "Scavenge " + cost + " (" + cost + ", Exile this card from your graveyard: Put a number of "
                         + "+1/+1 counters equal to this card's power on target creature. Scavenge only as a sorcery.)",
-                TargetFilters.creature(), null, null, ActivationTimingRestriction.SORCERY_SPEED);
+                TargetFilters.creature(), null, null, ActivationTimingRestriction.SORCERY_SPEED)
+                .withZones(AbilityZones.GRAVEYARD);
     }
 
     public String getBackFaceClassName() {

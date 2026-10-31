@@ -2,9 +2,8 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 @CardRegistration(set = "FIN", collectorNumber = "309")
 @CardRegistration(set = "EOC", collectorNumber = "191")
@@ -19,6 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 public class Wastes extends Card {
 
     public Wastes() {
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
     }
 }

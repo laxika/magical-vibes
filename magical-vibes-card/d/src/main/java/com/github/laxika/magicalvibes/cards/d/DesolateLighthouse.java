@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -31,8 +30,6 @@ import java.util.List;
 public class DesolateLighthouse extends Card {
 
     public DesolateLighthouse() {
-        // {T}: Add {C}.
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
 
         // {1}{U}{R}, {T}: Draw a card, then discard a card.
         addActivatedAbility(new ActivatedAbility(
@@ -40,5 +37,7 @@ public class DesolateLighthouse extends Card {
                 List.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
                 "{1}{U}{R}, {T}: Draw a card, then discard a card."
         ));
+        // {T}: Add {C}.
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
     }
 }

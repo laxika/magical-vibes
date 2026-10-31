@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -26,7 +27,7 @@ public class SoulOfZendikar extends Card {
         ));
 
         // {3}{G}{G}, Exile this card from your graveyard: Create a 3/3 green Beast creature token.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{3}{G}{G}",
                 List.of(new ExileSelfFromGraveyardCost(), beastToken()),

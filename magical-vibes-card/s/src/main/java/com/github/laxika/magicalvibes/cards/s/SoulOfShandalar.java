@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
@@ -37,7 +38,7 @@ public class SoulOfShandalar extends Card {
         // {3}{R}{R}, Exile this card from your graveyard: It deals 3 damage to target player or
         // planeswalker and 3 damage to up to one target creature that player or that planeswalker's
         // controller controls.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{3}{R}{R}",
                 List.of(new ExileSelfFromGraveyardCost(), damageEffect()),

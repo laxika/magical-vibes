@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastSpellWithSuspendCostFromHandEffect;
 import org.springframework.stereotype.Component;
@@ -33,7 +33,7 @@ public class MayCastSpellWithSuspendCostFromHandEffectHandler implements NormalE
         List<Card> eligible = hand.stream()
                 .filter(card -> !card.hasType(CardType.LAND))
                 .filter(card -> !card.isCastOnlyFromGraveyard())
-                .filter(card -> card.getHandActivatedAbilities().stream()
+                .filter(card -> card.getActivatedAbilities(Zone.HAND).stream()
                         .anyMatch(ability -> ability.isSuspendsSourceFromHand()
                                 && ability.getManaCost() != null))
                 .toList();

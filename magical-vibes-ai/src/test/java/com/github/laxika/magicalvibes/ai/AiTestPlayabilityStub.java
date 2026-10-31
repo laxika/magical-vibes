@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -109,7 +110,7 @@ final class AiTestPlayabilityStub {
      * engine and {@code GameSimulator} reads its mana model off in the constructor — an unstubbed
      * mock hands them a null model and the first planning call fails with an NPE. Activation
      * legality is the engine's answer, which these mock-wired suites do not stage, so allow every
-     * ability and index them as printed.
+     * ability and index them as printed, followed by the mana abilities of the card's basic land types (CR 305.6).
      *
      * <p>Separate from {@link #install} for the suites that stage their own
      * {@code isCardPlayable} answer and only need the mana model.
@@ -118,7 +119,7 @@ final class AiTestPlayabilityStub {
                                             GameQueryService gameQueryService) {
         AbilityActivationService abilityActivationService = Mockito.mock(AbilityActivationService.class);
         Mockito.lenient().when(abilityActivationService.getEffectiveActivatedAbilities(any(), any()))
-                .thenAnswer(inv -> ((Permanent) inv.getArgument(1)).getCard().getActivatedAbilities());
+                .thenAnswer(inv -> ManaAbilities.withIntrinsic(((Permanent) inv.getArgument(1)).getCard()));
         Mockito.lenient().when(abilityActivationService.canActivateAbility(
                         any(), any(), any(), anyInt(), any()))
                 .thenReturn(true);

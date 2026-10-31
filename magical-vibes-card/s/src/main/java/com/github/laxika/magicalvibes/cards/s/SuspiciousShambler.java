@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +16,7 @@ public class SuspiciousShambler extends Card {
     public SuspiciousShambler() {
         // {4}{B}{B}, Exile this card from your graveyard: Create two 2/2 black Zombie creature
         // tokens. Activate only as a sorcery.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{4}{B}{B}",
                 List.of(

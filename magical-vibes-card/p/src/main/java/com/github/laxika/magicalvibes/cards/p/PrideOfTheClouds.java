@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -31,7 +32,7 @@ public class PrideOfTheClouds extends Card {
                 true);
         addStaticEffect(new BoostSelfEffect(otherFlyingCreatures, otherFlyingCreatures));
 
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{2}{W}{U}",
                 List.of(new CreateTokenEffect(1, "Bird", 1, 1, CardColor.WHITE,

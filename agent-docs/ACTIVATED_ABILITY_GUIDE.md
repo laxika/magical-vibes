@@ -91,6 +91,30 @@ new ActivatedAbility(true, "{2}", List.of(new MillEffect(2, MillRecipient.TARGET
 
 Cards: `KamahlPitFighter`, `FurnaceWhelp`, `Millstone`, `ProdigalPyromancer`, `ArcanisTheOmnipotent`
 
+### 1a. "{T}: Add …" mana ability
+
+```java
+addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));         // {T}: Add {G}.
+addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS, 3));  // {T}: Add {C}{C}{C}.
+addActivatedAbility(ManaAbilities.tapForAnyColor());                // {T}: Add one mana of any color.
+```
+
+**Use when:** Any "{T}: Add …" ability of a nonbasic land, mana creature or mana rock (CR 605.1a). It is an
+ordinary activated ability in the card's activated ability list, so it takes an ability index like the
+others; the cards converted from the old tap-for-mana slot add it after their other abilities, so
+Mutavault's "{1}: … becomes a 2/2" is ability 0. One ability that adds several mana is one
+`ActivatedAbility` (Gyre Engineer's "{T}: Add {G}{U}." has two `AwardManaEffect`s). There is no
+tap-for-mana effect slot.
+
+A land with a basic land type doesn't print that type's ability: the type gives it "{T}: Add [mana]"
+(CR 305.6), so a basic land's constructor (Forest, Snow-Covered Forest, Dryad Arbor) adds nothing. The engine
+lists that intrinsic ability after the permanent's printed and granted abilities
+(`GameQueryService.missingIntrinsicManaAbilities`), follows the type when an effect changes it (CR 305.7), and
+`ManaAbilities.intrinsic(card)` / `withIntrinsic(card)` give it for a card that isn't on the battlefield.
+
+A "Sacrifice this: …" ability is an activated ability with `SacrificeSelfCost` in its effects (Seal of
+Cleansing, Aura of Silence), activated like any other.
+
 ---
 
 ### 2. Ability with target filter
@@ -646,13 +670,13 @@ Test harness: `activateAbilityWithMultiTargets(player, permanentIndex, abilityIn
 ### 12. Graveyard activated ability
 
 ```java
-addGraveyardActivatedAbility(new ActivatedAbility(requiresTap, manaCost, effects, description))
+addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(requiresTap, manaCost, effects, description))
 ```
 
 **Use when:** The card has an activated ability that can be used while it is in the graveyard (e.g. "{3}{R}{R}: Return ~ from your graveyard to your hand."). These are distinct from `GRAVEYARD_UPKEEP_TRIGGERED` triggered abilities — graveyard activated abilities can be activated at instant speed whenever the player has priority, not just during upkeep.
 
-- Uses `Card.addGraveyardActivatedAbility()` instead of `addActivatedAbility()`
-- The ability is exposed via `Card.getGraveyardActivatedAbilities()`
+- The `AbilityZones.GRAVEYARD` argument makes it function from the graveyard (CR 113.6); a card has one activated ability list, each ability with its zones
+- The ability is exposed via `Card.getActivatedAbilities(Zone.GRAVEYARD)`
 - Activated from graveyard via `AbilityActivationService.activateGraveyardAbility()`
 - Blocked by Pithing Needle (checks `ActivatedAbilitiesOfChosenNameCantBeActivatedEffect`)
 - Creates a `StackEntry` with `StackEntryType.ACTIVATED_ABILITY` using the Card reference (no source permanent)
@@ -661,7 +685,7 @@ addGraveyardActivatedAbility(new ActivatedAbility(requiresTap, manaCost, effects
 
 ```java
 // {3}{R}{R}: Return Magma Phoenix from your graveyard to your hand.
-addGraveyardActivatedAbility(new ActivatedAbility(
+addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
     false, "{3}{R}{R}",
     List.of(ReturnCardFromGraveyardEffect.builder()
         .destination(GraveyardChoiceDestination.HAND)
@@ -680,14 +704,16 @@ addActivatedAbility(new ActivatedAbility(
     false, "{3}{B/G}{B/G}",
     List.of(new ReturnSourceCardFromExileToBattlefieldEffect(true)),
     "{3}{B/G}{B/G}: Put this card from exile onto the battlefield tapped. Activate only as a sorcery.",
-    ActivationTimingRestriction.SORCERY_SPEED).withExileOnly());
+    ActivationTimingRestriction.SORCERY_SPEED).withZones(AbilityZones.EXILE));
 ```
 
+`addActivatedAbility(AbilityZones.EXILE, ability)` is the same thing.
+
 **Use when:** The card has an ability that functions while the card is in exile. These abilities use
-`ActivatedAbility.withExileOnly()` and are activated by card id, not an exile list index, because the
+`ActivatedAbility.withZones(AbilityZones.EXILE)` and are activated by card id, not an exile list index, because the
 exile zone is unified and can contain cards owned by different players.
 
-- The ability is stored in `Card.getActivatedAbilities()` and exposed through `CardView.exileActivatedAbilities`
+- The ability is read through `Card.getActivatedAbilities(Zone.EXILE)` and exposed through `CardView.exileActivatedAbilities`
 - Activation is routed through `AbilityActivationService.activateExiledAbility()` and the
   `ACTIVATE_EXILED_ABILITY` message
 - The source card remains in exile until the ability resolves, so the return effect does nothing if it
@@ -702,7 +728,7 @@ Card: `TorrentElemental`
 **Multi-target graveyard abilities** (Soul of Shandalar "{3}{R}{R}, Exile this card from your graveyard: It deals 3 damage to target player or planeswalker and 3 damage to up to one target creature that player … controls") declare `multiTargetFilters` + `minTargets`/`maxTargets` on the graveyard ability exactly as a battlefield ability would, `MultiTargetConstraint` included. `AbilityActivationService` detects them (`isMultiTarget() || maxTargets > 1`) and reuses the same id-list parameter for the announced targets: they go through `TargetLegalityService.validateMultiTargetAbility` before any cost is paid and land in the stack entry's flat `targetIds` (no `Zone.GRAVEYARD`), so ordinary multi-target handlers resolve them unchanged. Harness: `activateGraveyardAbilityWithTargets(player, graveyardCardIndex, abilityIndex, targetIds)`. Wire: the ids reuse `ActivateGraveyardAbilityRequest.graveyardCardIds`; the frontend enumerates each position via `ValidTargetsRequest.graveyardCardIndex` + `abilityIndex`.
 
 ```java
-addGraveyardActivatedAbility(new ActivatedAbility(
+addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
     false, "{3}{W}",
     List.of(new ReturnSourceFromGraveyardAttachedToTargetEffect()),
     "{3}{W}: Return this card … attached to target creature. Activate only as a sorcery.",
@@ -727,7 +753,7 @@ Underneath, both build the shape below — reach for it directly only when the a
 embalm/eternalize (an extra activation cost, a different token transformation):
 
 ```java
-addGraveyardActivatedAbility(new ActivatedAbility(
+addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
     false, "{5}{W}",
     List.of(
         new ExileSelfFromGraveyardCost(),
@@ -770,12 +796,12 @@ creature.` — self-return `ReturnCardFromGraveyardEffect` + `PutAuraFromHandOnt
 ### 13. Hand activated ability (Reinforce)
 
 ```java
-addHandActivatedAbility(new ActivatedAbility(false, manaCost, effects, description, targetFilter))
+addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, manaCost, effects, description, targetFilter))
 ```
 
 **Use when:** The card has an activated ability usable only while it is in the owner's hand. Currently this is the **Reinforce** keyword ("Reinforce N—{cost} ({cost}, Discard this card: Put N +1/+1 counters on target creature.)"). Discarding the source card is an intrinsic part of the cost — the engine handles it; do **not** add a discard cost effect.
 
-- Uses `Card.addHandActivatedAbility()` / exposed via `Card.getHandActivatedAbilities()`
+- Uses `Card.addActivatedAbility(AbilityZones.HAND, …)` / exposed via `Card.getActivatedAbilities(Zone.HAND)`
 - Activated via `AbilityActivationService.activateHandAbility()` (validates targets, pays mana, discards the source card to the graveyard — firing discard triggers — then pushes the ability onto the stack targeting the chosen permanent)
 - Targeting is a normal `TargetFilter` on the `ActivatedAbility` (e.g. `PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), ...)`)
 - Frontend sends `ACTIVATE_HAND_ABILITY` with `handCardIndex`, `abilityIndex`, `targetId`, `xValue`; `CardView.handActivatedAbilities` exposes it
@@ -785,13 +811,13 @@ addHandActivatedAbility(new ActivatedAbility(false, manaCost, effects, descripti
 
 ```java
 // Reinforce 2—{2}{W} ({2}{W}, Discard this card: Put two +1/+1 counters on target creature.)
-addHandActivatedAbility(new ActivatedAbility(false, "{2}{W}",
+addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}{W}",
     List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),
     "Reinforce 2—{2}{W} ({2}{W}, Discard this card: Put two +1/+1 counters on target creature.)",
     TargetFilters.creature()));
 
 // Reinforce X—{X}{W}{W} (Swell of Courage) — X counters via new XValue()
-addHandActivatedAbility(new ActivatedAbility(false, "{X}{W}{W}",
+addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{X}{W}{W}",
     List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue())),
     "Reinforce X—{X}{W}{W} (...)",
     TargetFilters.creature()));
@@ -817,7 +843,7 @@ description so it is still recognised:
 
 ```java
 // Renewed Faith: "Cycling {1}{W}. When you cycle this card, you may gain 2 life."
-addHandActivatedAbility(new ActivatedAbility(false, "{1}{W}",
+addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}{W}",
     List.of(new MayEffect(new GainLifeEffect(2), "Gain 2 life?"), new DrawCardEffect(1)),
     "Cycling {1}{W} ({1}{W}, Discard this card: Draw a card.)"));
 ```
@@ -865,12 +891,12 @@ Cards: `HigureTheStillWind`
 #### Hand ability targeting graveyard cards (Faerie Macabre)
 
 A "Discard this card: ..." hand ability whose effect targets cards in graveyards (not a battlefield
-permanent) uses the same `addHandActivatedAbility` registration with **no `TargetFilter`** — the
+permanent) uses the same `addActivatedAbility(AbilityZones.HAND, …)` registration with **no `TargetFilter`** — the
 graveyard targets are supplied at activation time as a list of card IDs.
 
 ```java
 // Discard this card: Exile up to two target cards from graveyards. (Faerie Macabre)
-addHandActivatedAbility(new ActivatedAbility(false, null,
+addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, null,
     List.of(new ExileCardsFromGraveyardEffect(2, 0)),
     "Discard this card: Exile up to two target cards from graveyards."));
 ```
@@ -1045,7 +1071,6 @@ to its spell ability, which resolves with the instant or sorcery. Additional cos
 | Slot | Fires when |
 |------|------------|
 | `ON_ENTER_BATTLEFIELD` | Permanent enters the battlefield (ETB) |
-| `ON_TAP` | Permanent is tapped for mana (lands) |
 | `MULLIGAN_ACTION` | Special action offered while deciding whether to mulligan |
 | `STATIC` | Continuous effect, always active while on battlefield |
 | `UPKEEP_TRIGGERED` | Controller's upkeep. Supports any-target routing (creature/planeswalker/battle/player) when an effect is true "any target" (`targetSpec()` admits both `Kind.PLAYER` and `Kind.PERMANENT`, e.g. Form of the Dragon via `UpkeepAnyTargetTrigger`), single-player targeting (e.g. Bloodgift Demon via `UpkeepPlayerTargetTrigger`), and multi-player targeting (e.g. Axis of Mortality via `UpkeepMultiPlayerTargetTrigger` when any effect has `targetSpec().playerTargetCount() >= 2`) |
@@ -1127,7 +1152,6 @@ to its spell ability, which resolves with the instant or sorcery. Additional cos
 | `ON_COMBAT_DAMAGE_TO_CREATURE` | This creature deals combat damage to a creature. Fires once per damaged creature; the damaged creature is baked as non-targeting `targetId` so effects like `DestroyTargetPermanentEffect` / `PutCounterOnTargetPermanentEffect` act on "that creature"; granted, temporary, and persistent abilities are captured before combat deaths, so they still trigger when the granting permanent dies in the same damage event |
 | `ON_DAMAGE_TO_PLAYER` | Any damage to a player (not just combat) |
 | `ON_DEATH` | This permanent dies |
-| `ON_SACRIFICE` | This permanent is sacrificed |
 | `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` | A creature (including tokens) enters battlefield under your control |
 | `ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD` | "Whenever this creature or another creature you control enters" — same scan as `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` minus the self-exclusion, so the source's own entry also fires it. The entering permanent rides along as the trigger's `triggeringPermanentId` (through `EntersTriggerTarget` for targeted effects), so "that creature" is resolvable. Gruul Ragebeast (`EnteringCreatureFightsTargetCreatureEffect`) |
 | `ON_SELF_OR_ALLY_CREATURES_ENTERS_BATTLEFIELD` | "Whenever one or more creatures you control enter" — batched like `ON_ALLY_CREATURES_ENTERS_BATTLEFIELD` (one trigger per entering batch), but the source's own entry also counts. Kotis, Sibsig Champion |

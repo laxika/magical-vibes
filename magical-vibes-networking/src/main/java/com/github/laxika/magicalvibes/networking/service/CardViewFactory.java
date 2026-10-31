@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
@@ -111,15 +112,11 @@ public class CardViewFactory {
     }
 
     public CardView create(Card card) {
-        boolean hasTapAbility = !card.getEffects(EffectSlot.ON_TAP).isEmpty();
-
-        List<ActivatedAbilityView> abilityViews = card.getActivatedAbilities().stream()
-                .filter(ability -> !ability.isExileOnly())
+        List<ActivatedAbilityView> abilityViews = card.getActivatedAbilities(Zone.BATTLEFIELD).stream()
                 .map(this::createAbilityView)
                 .toList();
 
-        List<ActivatedAbilityView> exileAbilityViews = card.getActivatedAbilities().stream()
-                .filter(ActivatedAbility::isExileOnly)
+        List<ActivatedAbilityView> exileAbilityViews = card.getActivatedAbilities(Zone.EXILE).stream()
                 .map(this::createAbilityView)
                 .toList();
 
@@ -131,11 +128,11 @@ public class CardViewFactory {
             phyrexianManaCount = cost.getPhyrexianManaCount();
         }
 
-        List<ActivatedAbilityView> graveyardAbilityViews = card.getGraveyardActivatedAbilities().stream()
+        List<ActivatedAbilityView> graveyardAbilityViews = card.getActivatedAbilities(Zone.GRAVEYARD).stream()
                 .map(this::createAbilityView)
                 .toList();
 
-        List<ActivatedAbilityView> handAbilityViews = card.getHandActivatedAbilities().stream()
+        List<ActivatedAbilityView> handAbilityViews = card.getActivatedAbilities(Zone.HAND).stream()
                 .map(this::createAbilityView)
                 .toList();
 
@@ -265,7 +262,6 @@ public class CardViewFactory {
                 card.getPower(),
                 card.getToughness(),
                 card.getKeywords(),
-                hasTapAbility,
                 card.getSetCode(),
                 card.getCollectorNumber(),
                 card.getColor(),
@@ -347,7 +343,6 @@ public class CardViewFactory {
         if (graveyardAbilitiesSuppressed) {
             return base.toBuilder()
                     .keywords(Set.of())
-                    .hasTapAbility(false)
                     .hasConvoke(false)
                     .hasHarmonize(false)
                     .activatedAbilities(List.of())

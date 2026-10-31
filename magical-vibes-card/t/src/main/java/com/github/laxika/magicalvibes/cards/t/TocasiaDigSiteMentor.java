@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -24,7 +25,7 @@ public class TocasiaDigSiteMentor extends Card {
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null, List.of(new SurveilEffect(1)), "{T}: Surveil 1."),
                 GrantScope.ALL_OWN_CREATURES));
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{2}{G}{G}{W}{W}{U}{U}",
                 List.of(

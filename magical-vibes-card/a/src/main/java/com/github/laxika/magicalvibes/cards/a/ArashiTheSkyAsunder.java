@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -33,7 +34,7 @@ public class ArashiTheSkyAsunder extends Card {
                 new PermanentPredicateTargetFilter(withFlying, "Target must be a creature with flying")
         ));
 
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{X}{G}{G}",
                 List.of(new MassDamageEffect(0, true, false, withFlying)),

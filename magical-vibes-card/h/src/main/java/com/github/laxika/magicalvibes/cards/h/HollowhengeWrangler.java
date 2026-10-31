@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -21,7 +22,7 @@ public class HollowhengeWrangler extends Card {
                 new SeekCardsToHandEffect(new Fixed(1), new CardTypePredicate(CardType.LAND)));
 
         addActivatedAbility(beastAbility());
-        addGraveyardActivatedAbility(beastAbility());
+        addActivatedAbility(AbilityZones.GRAVEYARD, beastAbility());
     }
 
     private static ActivatedAbility beastAbility() {

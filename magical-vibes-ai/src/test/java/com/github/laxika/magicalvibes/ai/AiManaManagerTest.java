@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -117,7 +119,7 @@ class AiManaManagerTest {
         // Activation legality is the engine's answer, not this unit's: default to "legal" and let
         // individual tests deny a specific source.
         lenient().when(abilityActivationService.getEffectiveActivatedAbilities(any(), any()))
-                .thenAnswer(call -> ((Permanent) call.getArgument(1)).getCard().getActivatedAbilities());
+                .thenAnswer(call -> ((Permanent) call.getArgument(1)).getCard().getActivatedAbilities(Zone.BATTLEFIELD));
         lenient().when(abilityActivationService.canActivateAbility(any(), any(), any(), anyInt(), any()))
                 .thenReturn(true);
         player1Id = UUID.randomUUID();
@@ -143,7 +145,7 @@ class AiManaManagerTest {
         Card card = new Card();
         card.setName(name);
         card.setType(CardType.LAND);
-        card.addEffect(EffectSlot.ON_TAP, new AwardManaEffect(color));
+        card.addActivatedAbility(ManaAbilities.tapFor(color));
         return card;
     }
 
@@ -160,7 +162,7 @@ class AiManaManagerTest {
 
     private static Card createManaCreature(String name, ManaColor manaColor) {
         Card card = createCreature(name, 1, 1, CardColor.GREEN);
-        card.addEffect(EffectSlot.ON_TAP, new AwardManaEffect(manaColor));
+        card.addActivatedAbility(ManaAbilities.tapFor(manaColor));
         return card;
     }
 
@@ -195,7 +197,7 @@ class AiManaManagerTest {
         Card card = new Card();
         card.setName(name);
         card.setType(CardType.LAND);
-        card.addEffect(EffectSlot.ON_TAP, new AwardAnyColorManaEffect());
+        card.addActivatedAbility(ManaAbilities.tapForAnyColor());
         return card;
     }
 
@@ -613,7 +615,7 @@ class AiManaManagerTest {
             Card card = new Card();
             card.setName("Pillar of Origins");
             card.setType(CardType.ARTIFACT);
-            card.addEffect(EffectSlot.ON_TAP, new AwardAnyColorManaEffect(1, ManaSpendRestriction.CHOSEN_SUBTYPE_CREATURE));
+            card.addActivatedAbility(new ActivatedAbility(true, null, List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.CHOSEN_SUBTYPE_CREATURE)), "{T}: Add one mana of any color."));
             Permanent perm = new Permanent(card);
             perm.setSummoningSick(false);
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -776,7 +778,7 @@ class AiManaManagerTest {
         @DisplayName("AwardAnyColorManaEffect on creature tracks creature mana")
         void anyColorOnCreatureTracksCreatureMana() {
             Card card = createCreature("Exotic Bird", 0, 1, CardColor.GREEN);
-            card.addEffect(EffectSlot.ON_TAP, new AwardAnyColorManaEffect());
+            card.addActivatedAbility(ManaAbilities.tapForAnyColor());
             Permanent perm = new Permanent(card);
             perm.setSummoningSick(false);
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -1097,12 +1099,11 @@ class AiManaManagerTest {
 
         /**
          * The safe pool exists to plan attacks without opening a mana-color prompt during attacker
-         * declaration, so every source that would ask for a color is left out — whether it asks
-         * through an activated ability or a printed ON_TAP effect.
+         * declaration, so every source that would ask for a color is left out.
          */
         @Test
-        @DisplayName("excludes an ON_TAP any-color source, which would prompt for a color")
-        void excludesOnTapAnyColorSource() {
+        @DisplayName("excludes an any-color land, which would prompt for a color")
+        void excludesAnyColorLand() {
             Card card = createAnyColorLand("City of Brass");
             Permanent perm = new Permanent(card);
             perm.setSummoningSick(false);
@@ -1275,7 +1276,7 @@ class AiManaManagerTest {
                 AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
                 manager.tapLandsForCost(gd, player1Id, "{U}", 0, action);
 
-                verify(action).tap(1, null);
+                verify(action).tap(1, 0);
                 verify(action, never()).tap(eq(0), any());
             }
 
@@ -1310,7 +1311,7 @@ class AiManaManagerTest {
                 AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
                 manager.tapLandsForCost(gd, player1Id, "{B}", 0, action);
 
-                verify(action).tap(0, null);
+                verify(action).tap(0, 0);
                 verify(action, never()).tap(eq(1), any());
             }
 
@@ -1337,7 +1338,7 @@ class AiManaManagerTest {
                 AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
                 manager.tapLandsForCost(gd, player1Id, "{W}", 0, action);
 
-                verify(action).tap(1, null);
+                verify(action).tap(1, 0);
                 verify(action, never()).tap(eq(0), any());
             }
 
@@ -1387,7 +1388,7 @@ class AiManaManagerTest {
             AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
             manager.tapLandsForCost(gd, player1Id, "{4}{B}", 0, action);
 
-            verify(action).tap(0, null);
+            verify(action).tap(0, 0);
             verify(action, never()).tap(eq(1), any());
         }
 
@@ -1513,8 +1514,8 @@ class AiManaManagerTest {
         }
 
         @Test
-        @DisplayName("uses null abilityIndex for ON_TAP mana effects")
-        void usesNullAbilityIndexForOnTapEffects() {
+        @DisplayName("taps a basic land through the index of its mana ability")
+        void tapsBasicLandThroughItsManaAbilityIndex() {
             addUntappedLand("Forest", ManaColor.GREEN);
 
             AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
@@ -1522,11 +1523,11 @@ class AiManaManagerTest {
             lenient().doAnswer(invocation -> {
                 gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
                 return null;
-            }).when(action).tap(eq(0), eq(null));
+            }).when(action).tap(eq(0), eq(0));
 
             manager.tapLandsForCost(gd, player1Id, "{G}", 0, action);
 
-            verify(action).tap(0, null);
+            verify(action).tap(0, 0);
         }
 
         @Test
@@ -1627,7 +1628,7 @@ class AiManaManagerTest {
 
             var ordered = inOrder(action);
             ordered.verify(action).tap(
-                    gd.playerBattlefields.get(player1Id).indexOf(painlessPermanent), null);
+                    gd.playerBattlefields.get(player1Id).indexOf(painlessPermanent), 0);
             ordered.verify(action).tap(
                     gd.playerBattlefields.get(player1Id).indexOf(concretePainPermanent), 0);
             ordered.verify(action).tap(
@@ -1879,13 +1880,13 @@ class AiManaManagerTest {
             lenient().doAnswer(invocation -> {
                 gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
                 return null;
-            }).when(action).tap(eq(1), eq(null));
+            }).when(action).tap(eq(1), eq(0));
 
             manager.tapLandsForCost(gd, player1Id, "{1}", 0, action);
 
             // Sphere at index 0 should be skipped, Forest at index 1 tapped
             verify(action, never()).tap(eq(0), any());
-            verify(action).tap(1, null);
+            verify(action).tap(1, 0);
         }
 
         @Test
@@ -1898,13 +1899,13 @@ class AiManaManagerTest {
             lenient().doAnswer(invocation -> {
                 gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
                 return null;
-            }).when(action).tap(eq(1), eq(null));
+            }).when(action).tap(eq(1), eq(0));
 
             manager.tapLandsForCost(gd, player1Id, "{1}", 0, action);
 
             // Mox Opal at index 0 should be skipped, Forest at index 1 tapped
             verify(action, never()).tap(eq(0), any());
-            verify(action).tap(1, null);
+            verify(action).tap(1, 0);
         }
 
         @Test
@@ -1937,7 +1938,7 @@ class AiManaManagerTest {
             lenient().doAnswer(invocation -> {
                 gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
                 return null;
-            }).when(action).tap(eq(1), eq(null));
+            }).when(action).tap(eq(1), eq(0));
 
             // When Shrine is activated, it sacrifices itself and adds 1 colorless mana
             lenient().doAnswer(invocation -> {
@@ -1952,7 +1953,7 @@ class AiManaManagerTest {
             // Color-aware order: Forest tapped first (matches unmet G), then Shrine for generic.
             // Shrine sacrificing itself between iterations doesn't break the loop since each
             // iteration re-scans the (now-shorter) battlefield.
-            verify(action).tap(1, null);
+            verify(action).tap(1, 0);
             verify(action).tap(0, 0);
         }
 
@@ -2024,11 +2025,11 @@ class AiManaManagerTest {
             lenient().doAnswer(invocation -> {
                 gd.playerManaPools.get(player1Id).add(ManaColor.RED, 1);
                 return null;
-            }).when(action).tap(eq(1), eq(null));
+            }).when(action).tap(eq(1), eq(0));
 
             manager.tapLandsForCost(gd, player1Id, "{R}", 0, action);
 
-            verify(action).tap(1, null);
+            verify(action).tap(1, 0);
             verify(action, never()).tap(eq(0), any());
         }
 
@@ -2050,13 +2051,13 @@ class AiManaManagerTest {
                 ManaColor color = perm.getCard().getName().startsWith("Mountain") ? ManaColor.RED : ManaColor.BLUE;
                 gd.playerManaPools.get(player1Id).add(color, 1);
                 return null;
-            }).when(action).tap(any(int.class), eq(null));
+            }).when(action).tap(any(int.class), eq(0));
 
             manager.tapLandsForCost(gd, player1Id, "{1}{R}{R}", 0, action);
 
             // Both Mountains must be tapped for the RR requirement
-            verify(action).tap(2, null);
-            verify(action).tap(3, null);
+            verify(action).tap(2, 0);
+            verify(action).tap(3, 0);
             // And exactly one Island covers the generic 1
             ManaPool pool = gd.playerManaPools.get(player1Id);
             assertThat(pool.get(ManaColor.RED)).isEqualTo(2);
@@ -2075,11 +2076,11 @@ class AiManaManagerTest {
             lenient().doAnswer(invocation -> {
                 gd.playerManaPools.get(player1Id).add(ManaColor.RED, 1);
                 return null;
-            }).when(action).tap(eq(1), eq(null));
+            }).when(action).tap(eq(1), eq(0));
 
             manager.tapLandsForCost(gd, player1Id, "{R}", 0, action);
 
-            verify(action).tap(1, null);
+            verify(action).tap(1, 0);
             verify(action, never()).tap(eq(0), any());
         }
 
@@ -2110,13 +2111,13 @@ class AiManaManagerTest {
                 ManaColor color = index == 1 ? ManaColor.GREEN : ManaColor.BLUE;
                 gd.playerManaPools.get(player1Id).add(color);
                 return null;
-            }).when(action).tap(any(int.class), eq(null));
+            }).when(action).tap(any(int.class), eq(0));
 
             manager.tapLandsForCost(gd, player1Id, "{1}{G}", 0, action);
 
             verify(action, never()).tap(eq(0), any());
-            verify(action).tap(1, null);
-            verify(action).tap(2, null);
+            verify(action).tap(1, 0);
+            verify(action).tap(2, 0);
         }
 
         /**
@@ -2155,8 +2156,8 @@ class AiManaManagerTest {
                 AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
                 manager.tapLandsForCost(gd, player1Id, "{2}", 0, action);
 
-                verify(action).tap(1, null);
-                verify(action).tap(2, null);
+                verify(action).tap(1, 0);
+                verify(action).tap(2, 0);
                 verify(action, never()).tap(eq(0), any());
             }
 
@@ -2196,12 +2197,12 @@ class AiManaManagerTest {
                 gd.playerManaPools.get(player1Id).addCreatureMana(ManaColor.GREEN, 1);
                 gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
                 return null;
-            }).when(action).tap(eq(1), eq(null));
+            }).when(action).tap(eq(1), eq(0));
 
             manager.tapCreaturesForCost(gd, player1Id, "{G}", 0, action);
 
             // Index 1 because the land is at index 0
-            verify(action).tap(1, null);
+            verify(action).tap(1, 0);
         }
 
         @Test
@@ -2347,13 +2348,13 @@ class AiManaManagerTest {
             lenient().doAnswer(invocation -> {
                 gd.playerManaPools.get(player1Id).add(ManaColor.RED, 1);
                 return null;
-            }).when(action).tap(any(int.class), eq(null));
+            }).when(action).tap(any(int.class), eq(0));
 
             // xValue=1, so total cost is {1}{R} = 2 mana
             manager.tapLandsForXSpell(gd, player1Id, xSpell, 1, 0, action);
 
-            verify(action).tap(0, null);
-            verify(action).tap(1, null);
+            verify(action).tap(0, 0);
+            verify(action).tap(1, 0);
         }
 
         @Test
@@ -2371,14 +2372,14 @@ class AiManaManagerTest {
             lenient().doAnswer(invocation -> {
                 gd.playerManaPools.get(player1Id).add(ManaColor.RED, 1);
                 return null;
-            }).when(action).tap(any(int.class), eq(null));
+            }).when(action).tap(any(int.class), eq(0));
 
             manager.tapLandsForXSpell(gd, player1Id, xSpell, 2, -1, action);
 
-            verify(action).tap(0, null);
-            verify(action).tap(1, null);
-            verify(action).tap(2, null);
-            verify(action).tap(3, null);
+            verify(action).tap(0, 0);
+            verify(action).tap(1, 0);
+            verify(action).tap(2, 0);
+            verify(action).tap(3, 0);
         }
 
         @Test
@@ -2394,11 +2395,11 @@ class AiManaManagerTest {
             lenient().doAnswer(invocation -> {
                 gd.playerManaPools.get(player1Id).add(ManaColor.RED, 1);
                 return null;
-            }).when(action).tap(eq(0), eq(null));
+            }).when(action).tap(eq(0), eq(0));
 
             manager.tapLandsForXSpell(gd, player1Id, xSpell, 1, 0, action);
 
-            verify(action).tap(0, null);
+            verify(action).tap(0, 0);
         }
 
         @Test
@@ -2477,13 +2478,13 @@ class AiManaManagerTest {
             lenient().doAnswer(invocation -> {
                 gd.playerManaPools.get(player1Id).add(ManaColor.RED, 1);
                 return null;
-            }).when(action).tap(eq(1), eq(null));
+            }).when(action).tap(eq(1), eq(0));
 
             manager.tapLandsForXSpell(gd, player1Id, xSpell, 0, 0, action);
 
             // Sphere at index 0 skipped, Mountain at index 1 tapped
             verify(action, never()).tap(eq(0), any());
-            verify(action).tap(1, null);
+            verify(action).tap(1, 0);
         }
 
         @Test
@@ -2510,13 +2511,13 @@ class AiManaManagerTest {
             lenient().doAnswer(invocation -> {
                 gd.playerManaPools.get(player1Id).add(ManaColor.BLACK, 1);
                 return null;
-            }).when(action).tap(any(int.class), eq(null));
+            }).when(action).tap(any(int.class), eq(0));
 
             manager.tapLandsForXSpell(gd, player1Id, xSpell, 1, 0, action);
 
             verify(action, never()).tap(eq(0), any());
-            verify(action).tap(1, null);
-            verify(action).tap(2, null);
+            verify(action).tap(1, 0);
+            verify(action).tap(2, 0);
         }
 
         @Test
@@ -2532,13 +2533,13 @@ class AiManaManagerTest {
             lenient().doAnswer(invocation -> {
                 gd.playerManaPools.get(player1Id).add(ManaColor.RED, 1);
                 return null;
-            }).when(action).tap(eq(1), eq(null));
+            }).when(action).tap(eq(1), eq(0));
 
             manager.tapLandsForXSpell(gd, player1Id, xSpell, 0, 0, action);
 
             // Mox Opal at index 0 skipped, Mountain at index 1 tapped
             verify(action, never()).tap(eq(0), any());
-            verify(action).tap(1, null);
+            verify(action).tap(1, 0);
         }
     }
 
@@ -2846,8 +2847,8 @@ class AiManaManagerTest {
     class AddCardManaToPool {
 
         @Test
-        @DisplayName("adds ON_TAP mana effect to pool")
-        void addsOnTapMana() {
+        @DisplayName("adds a basic land's mana to the pool")
+        void addsBasicLandMana() {
             Card card = createLand("Forest", ManaColor.GREEN);
             ManaPool pool = new ManaPool();
 
@@ -2862,7 +2863,7 @@ class AiManaManagerTest {
          * hand of colored spells rated it below a basic of the wrong color.
          */
         @Test
-        @DisplayName("offers every color for an any-color ON_TAP land, worth one mana in total")
+        @DisplayName("offers every color for an any-color land, worth one mana in total")
         void addsAnyColorAsEveryColor() {
             Card card = createAnyColorLand("City of Brass");
             VirtualManaPool pool = new VirtualManaPool();
@@ -2887,7 +2888,7 @@ class AiManaManagerTest {
         }
 
         @Test
-        @DisplayName("adds activated mana abilities for lands without ON_TAP effects")
+        @DisplayName("adds every mana ability of a land with several")
         void addsActivatedAbilities() {
             Card card = createDualLand("Rootbound Crag", ManaColor.RED, ManaColor.GREEN);
             VirtualManaPool pool = new VirtualManaPool();
@@ -2905,7 +2906,7 @@ class AiManaManagerTest {
             Card card = new Card();
             card.setName("Pillar of Origins");
             card.setType(CardType.ARTIFACT);
-            card.addEffect(EffectSlot.ON_TAP, new AwardAnyColorManaEffect(1, ManaSpendRestriction.CHOSEN_SUBTYPE_CREATURE));
+            card.addActivatedAbility(new ActivatedAbility(true, null, List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.CHOSEN_SUBTYPE_CREATURE)), "{T}: Add one mana of any color."));
             ManaPool pool = new ManaPool();
 
             manager.addCardManaToPool(card, pool);
@@ -3007,13 +3008,12 @@ class AiManaManagerTest {
         }
 
         @Test
-        @DisplayName("combines ON_TAP and activated ability colors")
-        void combinesOnTapAndActivated() {
+        @DisplayName("combines the colors of every mana ability")
+        void combinesColorsOfEveryManaAbility() {
             Card card = new Card();
             card.setName("Special Land");
             card.setType(CardType.LAND);
-            card.addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.WHITE));
-            // This land also has an activated ability (unusual but testable)
+            card.addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));
             card.addActivatedAbility(new ActivatedAbility(
                     true, null, List.of(new AwardManaEffect(ManaColor.BLUE)), "Add U"));
 

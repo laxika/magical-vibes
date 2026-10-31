@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfChosenPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -44,23 +44,18 @@ public class GainActivatedAbilitiesOfChosenPermanentSelfEffectHandler implements
         if (staticBonus.losesAllAbilities() || chosen.isLosesAllAbilitiesUntilEndOfTurn()) {
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         } else if (staticBonus.losesAllNonManaAbilities()) {
-            abilities.addAll(chosen.getCard().getActivatedAbilities().stream()
+            abilities.addAll(chosen.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                     .filter(ActivatedAbility::isManaAbility)
                     .toList());
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         } else {
-            abilities.addAll(chosen.getCard().getActivatedAbilities());
+            abilities.addAll(chosen.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         }
         abilities.addAll(chosen.getPersistentGrantedActivatedAbilities());
         abilities.addAll(chosen.getTemporaryActivatedAbilities());
         abilities.addAll(chosen.getUntilNextTurnActivatedAbilities());
-        if (!staticBonus.losesAllAbilities() && !chosen.isLosesAllAbilitiesUntilEndOfTurn()) {
-            List<CardEffect> onTapEffects = chosen.getCard().getEffects(EffectSlot.ON_TAP);
-            if (!onTapEffects.isEmpty()) {
-                abilities.add(new ActivatedAbility(true, null, onTapEffects, "{T}: Add mana."));
-            }
-        }
+        abilities.addAll(gameQueryService.missingIntrinsicManaAbilities(gameData, chosen, abilities));
         abilities.stream()
                 .filter(ability -> ability.getLoyaltyCost() == null)
                 .forEach(accumulator::addActivatedAbility);

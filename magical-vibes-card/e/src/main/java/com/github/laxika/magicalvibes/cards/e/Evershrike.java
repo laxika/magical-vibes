@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -24,7 +25,7 @@ public class Evershrike extends Card {
         // {X}{W/B}{W/B}: Return this card from your graveyard to the battlefield. You may put an Aura
         // card with mana value X or less from your hand onto the battlefield attached to it. If you
         // don't, exile this creature.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{X}{W/B}{W/B}",
                 List.of(

@@ -77,11 +77,6 @@ public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHand
             var indices = new java.util.ArrayList<Integer>();
             var abilities = abilityActivationService.getEffectiveActivatedAbilities(gameData, land);
             var options = new java.util.ArrayList<String>();
-            if (com.github.laxika.magicalvibes.service.cast.PotentialManaService.hasOnTapManaEffects(land.getCard())
-                    && !gameQueryService.hasLostPrintedAbilities(gameData, land)) {
-                indices.add(-1);
-                options.add("Tap for mana");
-            }
             for (int index = 0; index < abilities.size(); index++) {
                 var ability = abilities.get(index);
                 if (ability.isRequiresTap()
@@ -150,8 +145,7 @@ public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHand
         gameData.pendingInteractions.addLast(continuation);
         var player = new com.github.laxika.magicalvibes.model.Player(playerId,
                 gameData.playerIdToName.get(playerId));
-        if (abilityIndex == -1) abilityActivationService.tapPermanent(gameData, player, permanentIndex);
-        else abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, null, null, null);
+        abilityActivationService.activateAbility(gameData, player, permanentIndex, abilityIndex, null, null, null);
         if (!gameData.interaction.isAwaitingInput()) {
             gameData.pendingInteractions.remove(continuation);
             continueDrain(gameData, entry, remainingLandIds, delayedColorless);

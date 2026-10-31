@@ -13,7 +13,6 @@ function makeCard(overrides: Partial<Card>): Card {
     power: null,
     toughness: null,
     keywords: [],
-    hasTapAbility: false,
     setCode: null,
     collectorNumber: null,
     color: null,
@@ -98,7 +97,6 @@ const forestCard = makeCard({
   colors: [],
   setCode: 'ISD',
   collectorNumber: '264',
-  hasTapAbility: true,
   activatedAbilities: [{
     description: '{T}: Add {G}.',
     requiresTap: true,
@@ -123,7 +121,6 @@ const plainsCard = makeCard({
   colors: [],
   setCode: 'ISD',
   collectorNumber: '250',
-  hasTapAbility: true,
   activatedAbilities: [{
     description: '{T}: Add {W}.',
     requiresTap: true,
@@ -148,7 +145,6 @@ const islandCard = makeCard({
   colors: [],
   setCode: 'ISD',
   collectorNumber: '253',
-  hasTapAbility: true,
   activatedAbilities: [{
     description: '{T}: Add {U}.',
     requiresTap: true,
@@ -173,7 +169,6 @@ const swampCard = makeCard({
   colors: [],
   setCode: 'ISD',
   collectorNumber: '258',
-  hasTapAbility: true,
   activatedAbilities: [{
     description: '{T}: Add {B}.',
     requiresTap: true,
@@ -201,7 +196,6 @@ const avacynsPilgrimCard = makeCard({
   setCode: 'ISD',
   collectorNumber: '170',
   cardText: '{T}: Add {W}.',
-  hasTapAbility: true,
   activatedAbilities: [{
     description: '{T}: Add {W}.',
     requiresTap: true,

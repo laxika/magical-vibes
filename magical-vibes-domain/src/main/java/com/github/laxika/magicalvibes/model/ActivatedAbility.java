@@ -17,6 +17,7 @@ import lombok.Getter;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -233,8 +234,11 @@ public non-sealed class ActivatedAbility implements Ability {
      * that prevent activated abilities from being activated. Set via {@link #withSpecialAction()}.
      */
     private boolean specialAction;
-    /** Whether this ability can be activated only while its source card is in exile. */
-    private boolean exileOnly;
+    /**
+     * The zones this ability functions from (CR 113.6): the battlefield unless set otherwise, the hand for
+     * cycling, the graveyard for unearth, the stack for Lightning Storm, exile for a card in exile.
+     */
+    private AbilityZones zones = AbilityZones.BATTLEFIELD;
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
     }
@@ -414,7 +418,7 @@ public non-sealed class ActivatedAbility implements Ability {
                 ? null
                 : EnumSet.copyOf(this.xColorRestrictions);
         copy.sourceChosenColorManaOnly = this.sourceChosenColorManaOnly;
-        copy.exileOnly = this.exileOnly;
+        copy.zones = this.zones;
         return copy;
     }
 
@@ -568,10 +572,15 @@ public non-sealed class ActivatedAbility implements Ability {
         return this;
     }
 
-    /** Marks this ability as activatable only while its source card is in exile. */
-    public ActivatedAbility withExileOnly() {
-        this.exileOnly = true;
+    /** Sets the zones this ability functions from (CR 113.6) and returns this ability. */
+    public ActivatedAbility withZones(AbilityZones zones) {
+        this.zones = Objects.requireNonNull(zones, "zones");
         return this;
+    }
+
+    /** Whether this ability functions while its source is in {@code zone}. */
+    public boolean functionsIn(Zone zone) {
+        return zones.functionsIn(zone);
     }
 
     /**

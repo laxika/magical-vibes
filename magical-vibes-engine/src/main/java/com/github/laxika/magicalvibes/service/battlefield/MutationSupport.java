@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -141,7 +142,7 @@ public class MutationSupport {
         var keywords = new HashSet<Keyword>(top.getKeywords());
         keywords.addAll(underlying.getKeywords());
         merged.setKeywords(keywords);
-        for (var ability : underlying.getActivatedAbilities()) {
+        for (var ability : underlying.getActivatedAbilities(Zone.BATTLEFIELD)) {
             merged.addActivatedAbility(ability);
         }
         List<CardEffect> inheritedEffects = new ArrayList<>(underlying.getCastingCostsAndSpellEffects());

@@ -52,9 +52,9 @@ class ChromaticLanternTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ChromaticLantern());
         harness.addToBattlefield(player2, new Forest());
 
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Permanent has no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 
     @ParameterizedTest
@@ -112,9 +112,9 @@ class ChromaticLanternTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Chromatic Lantern"));
 
         harness.assertInGraveyard(player1, "Chromatic Lantern");
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Permanent has no activated ability");
+                .hasMessageContaining("Invalid ability index");
         harness.tapPermanent(player1, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }

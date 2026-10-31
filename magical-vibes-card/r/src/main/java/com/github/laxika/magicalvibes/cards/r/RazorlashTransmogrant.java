@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -28,7 +29,7 @@ public class RazorlashTransmogrant extends Card {
         var nonbasicLand = new PermanentAllOfPredicate(List.of(
                 new PermanentIsLandPredicate(),
                 new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))));
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{4}{B}{B}",
                 List.of(

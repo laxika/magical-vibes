@@ -143,7 +143,7 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AngelicChorus());
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.sacrificePermanent(player1, 0, targetId);
+        harness.activateAbility(player1, 0, null, targetId);
 
         harness.assertNotOnBattlefield(player1, "Aura of Silence");
         harness.assertInGraveyard(player1, "Aura of Silence");
@@ -156,7 +156,7 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AngelicChorus());
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.sacrificePermanent(player1, 0, targetId);
+        harness.activateAbility(player1, 0, null, targetId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -174,7 +174,7 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AngelicChorus());
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.sacrificePermanent(player1, 0, targetId);
+        harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -190,7 +190,7 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AngelicChorus());
 
         UUID targetId = harness.getPermanentId(player1, "Angelic Chorus");
-        harness.sacrificePermanent(player1, 0, targetId);
+        harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Angelic Chorus");
@@ -204,7 +204,7 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AngelicChorus());
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.sacrificePermanent(player1, 0, targetId);
+        harness.activateAbility(player1, 0, null, targetId);
 
         // Remove target before resolution
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
@@ -224,7 +224,7 @@ class AuraOfSilenceTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
 
-        assertThatThrownBy(() -> harness.sacrificePermanent(player1, 0, bearId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artifact or enchantment");
     }
@@ -237,7 +237,7 @@ class AuraOfSilenceTest extends BaseCardTest {
 
         UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
 
-        assertThatThrownBy(() -> harness.sacrificePermanent(player1, 0, bearId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artifact or enchantment");
 
@@ -251,22 +251,22 @@ class AuraOfSilenceTest extends BaseCardTest {
     void cannotSacrificeWithoutTarget() {
         harness.addToBattlefield(player1, new AuraOfSilence());
 
-        assertThatThrownBy(() -> harness.sacrificePermanent(player1, 0, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("requires a target");
     }
 
     @Test
-    @DisplayName("Cannot sacrifice a permanent that has no sacrifice abilities")
+    @DisplayName("A permanent without Aura of Silence's ability can't be sacrificed for it")
     void cannotSacrificePermanentWithoutAbility() {
         harness.addToBattlefield(player1, new AngelicChorus());
         harness.addToBattlefield(player2, new AngelicChorus());
 
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
 
-        assertThatThrownBy(() -> harness.sacrificePermanent(player1, 0, targetId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no sacrifice abilities");
+                .hasMessageContaining("no activated ability");
     }
 
     @Test
@@ -277,7 +277,7 @@ class AuraOfSilenceTest extends BaseCardTest {
 
         // Sacrifice the Aura
         UUID targetId = harness.getPermanentId(player2, "Angelic Chorus");
-        harness.sacrificePermanent(player1, 0, targetId);
+        harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
         // Now player2 should be able to cast enchantments at normal cost
@@ -369,7 +369,7 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AngelsFeather());
 
         UUID targetId = harness.getPermanentId(player2, "Angel's Feather");
-        harness.sacrificePermanent(player1, 0, targetId);
+        harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -386,7 +386,7 @@ class AuraOfSilenceTest extends BaseCardTest {
         Permanent cloak = harness.addToBattlefieldAndReturn(player2, new WhispersilkCloak());
         cloak.setAttachedTo(juggernaut.getId());
 
-        assertThatThrownBy(() -> harness.sacrificePermanent(player1, 0, juggernaut.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, juggernaut.getId()))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.assertOnBattlefield(player1, "Aura of Silence");
@@ -400,7 +400,7 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AuraOfSilence());
         UUID auraId = harness.getPermanentId(player1, "Aura of Silence");
 
-        harness.sacrificePermanent(player1, 0, auraId);
+        harness.activateAbility(player1, 0, null, auraId);
 
         harness.assertInGraveyard(player1, "Aura of Silence");
         assertThat(harness.getGameData().stack).hasSize(1);
@@ -417,7 +417,7 @@ class AuraOfSilenceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AuraOfSilence());
         harness.addToBattlefield(player2, new Juggernaut());
 
-        harness.sacrificePermanent(player1, 0, harness.getPermanentId(player2, "Juggernaut"));
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Juggernaut"));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Juggernaut");

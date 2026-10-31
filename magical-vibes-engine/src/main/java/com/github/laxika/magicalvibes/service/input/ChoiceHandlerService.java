@@ -3242,7 +3242,7 @@ public class ChoiceHandlerService {
      * tagging as well, so the id alone must not recolor the source.
      */
     private static boolean sourceBecomesProducedColor(Permanent source) {
-        return source.getCard().getActivatedAbilities().stream()
+        return source.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                 .flatMap(ability -> ability.getEffects().stream())
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect anyColor
                         && anyColor.sourceBecomesProducedColorUntilEndOfTurn());

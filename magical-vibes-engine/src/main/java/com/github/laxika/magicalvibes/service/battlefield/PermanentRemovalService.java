@@ -3804,7 +3804,7 @@ public class PermanentRemovalService {
                         || effect instanceof com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect);
         // Parallax Wave style: the exile is paid for by an activated ability, and the return is the
         // source's leaves-the-battlefield triggered ability, so it goes on the stack.
-        boolean returnsThroughActivatedAbilityLeavesTrigger = removedPermanent.getCard().getActivatedAbilities().stream()
+        boolean returnsThroughActivatedAbilityLeavesTrigger = removedPermanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                 .flatMap(ability -> ability.getEffects().stream())
                 .anyMatch(effect -> (effect instanceof MayEffect may ? may.wrapped() : effect)
                         instanceof ExileTargetPermanentUntilSourceLeavesEffect leaveTriggerExile

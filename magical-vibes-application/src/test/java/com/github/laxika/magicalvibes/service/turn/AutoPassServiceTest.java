@@ -885,7 +885,7 @@ class AutoPassServiceTest {
 
     private static Card createCardWithAbility(ActivatedAbility ability) {
         Card card = new Card();
-        card.getActivatedAbilities().add(ability);
+        card.addActivatedAbility(ability);
         return card;
     }
 

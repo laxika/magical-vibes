@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -18,7 +19,7 @@ public class WorldWeary extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(-4, -4, GrantScope.ENCHANTED_CREATURE));
 
-        addHandActivatedAbility(new ActivatedAbility(false, "{1}{B}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}{B}",
                 List.of(new SearchLibraryEffect(CardPredicateUtils.basicLand())),
                 "Basic landcycling {1}{B} ({1}{B}, Discard this card: Search your library for a basic land card, "
                         + "reveal it, put it into your hand, then shuffle.)"));

@@ -5,10 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.OracleData;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 import java.util.List;
@@ -41,7 +38,7 @@ public class Gobland extends Card {
     }
 
     public Gobland() {
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.RED));
+        // {T}: Add {R} comes from its basic land type (CR 305.6).
         addStaticEffect(new CantBlockEffect());
     }
 }

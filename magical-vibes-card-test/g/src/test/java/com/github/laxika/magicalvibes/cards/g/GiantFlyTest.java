@@ -22,7 +22,7 @@ class GiantFlyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AuraOfSilence());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AngelsFeather());
 
-        harness.sacrificePermanent(player1, 1, artifact.getId());
+        harness.activateAbility(player1, 1, null, artifact.getId());
         resolveAllTriggers();
 
         assertThat(harness.getGameQueryService().getEffectivePower(gd, giantFly)).isEqualTo(3);
@@ -36,7 +36,7 @@ class GiantFlyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AuraOfSilence());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AngelsFeather());
 
-        harness.sacrificePermanent(player1, 1, artifact.getId());
+        harness.activateAbility(player1, 1, null, artifact.getId());
         resolveAllTriggers();
 
         assertThat(harness.getGameQueryService().getEffectivePower(gd, giantFly)).isEqualTo(3);
@@ -55,7 +55,7 @@ class GiantFlyTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AuraOfSilence());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AngelsFeather());
 
-        harness.sacrificePermanent(player2, 0, artifact.getId());
+        harness.activateAbility(player2, 0, null, artifact.getId());
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, giantFly)).isEqualTo(2);
@@ -71,9 +71,9 @@ class GiantFlyTest extends BaseCardTest {
         Permanent firstArtifact = harness.addToBattlefieldAndReturn(player1, new AngelsFeather());
         Permanent secondArtifact = harness.addToBattlefieldAndReturn(player1, new AngelsFeather());
 
-        harness.sacrificePermanent(player1, 1, firstArtifact.getId());
+        harness.activateAbility(player1, 1, null, firstArtifact.getId());
         resolveAllTriggers();
-        harness.sacrificePermanent(player1, 1, secondArtifact.getId());
+        harness.activateAbility(player1, 1, null, secondArtifact.getId());
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, giantFly)).isEqualTo(4);

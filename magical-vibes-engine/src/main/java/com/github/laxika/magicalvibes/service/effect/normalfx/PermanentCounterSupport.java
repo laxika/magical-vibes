@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -1354,7 +1355,7 @@ public class PermanentCounterSupport {
      * threshold for this trigger slot.
      */
     private void fireSelfReachesLevelThreeTriggers(GameData gameData, Permanent permanent, int previousLevel) {
-        int levelThreeThreshold = permanent.getCard().getActivatedAbilities().stream()
+        int levelThreeThreshold = permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                 .filter(ActivatedAbility::isLevelUpAbility)
                 .count() > 1 ? 2 : 3;
         if (previousLevel >= levelThreeThreshold

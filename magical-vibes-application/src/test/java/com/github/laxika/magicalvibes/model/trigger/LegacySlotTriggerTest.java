@@ -30,7 +30,6 @@ class LegacySlotTriggerTest {
     @ParameterizedTest
     @CsvSource({
             "ON_DEATH, BATTLEFIELD",
-            "ON_TAP, BATTLEFIELD",
             "GRAVEYARD_UPKEEP_TRIGGERED, GRAVEYARD",
             "GRAVEYARD_DRAW_REPLACEMENT, GRAVEYARD",
             "COMMAND_ZONE_UPKEEP_TRIGGERED, COMMAND",

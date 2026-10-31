@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
@@ -64,7 +66,7 @@ public class AiManaManager {
 
     /**
      * Callback for tapping a permanent for mana. When abilityIndex is null,
-     * uses the basic tapPermanent path (for ON_TAP effects). When non-null,
+     * uses the basic tapPermanent path (for a land whose land types an effect set). When non-null,
      * activates the specific activated ability at that index.
      */
     @FunctionalInterface
@@ -817,7 +819,6 @@ public class AiManaManager {
         }
         Card card = permanent.getCard();
         Set<ManaColor> replacementColors = effectiveLandManaColors(gameData, permanent);
-        boolean printedTapMana = potentialManaService.hasLivePrintedTapMana(gameData, permanent);
         int triggerCost = attachedTapTriggerCost(gameData, permanent);
         List<ManaColor> overriddenLandColors = card.hasType(CardType.LAND)
                 ? gameQueryService.getOverriddenLandManaColors(gameData, permanent)
@@ -833,11 +834,6 @@ public class AiManaManager {
                 options.add(new ManaOption(activation, Map.of(color, 1), optionCost));
             }
             return options;
-        }
-        if (printedTapMana) {
-            return applyLandManaReplacement(replacementColors, manaOptionsForEffects(permanent.getId(), null,
-                    card.getEffects(EffectSlot.ON_TAP), triggerCost, versatilityCost, false,
-                    permanent, gameData, playerId));
         }
         List<ManaOption> options = new ArrayList<>();
         List<ActivatedAbility> abilities = potentialManaService.activatedAbilitiesFor(gameData, permanent, card);
@@ -1007,10 +1003,6 @@ public class AiManaManager {
                                  int index, ManaCost cost, ManaPool currentPool, ManaTapAction action) {
         Permanent perm = battlefield.get(index);
         Card card = perm.getCard();
-        if (potentialManaService.hasLivePrintedTapMana(gameData, perm)) {
-            action.tap(index, null);
-            return true;
-        }
         Integer abilityIndex = chooseBestManaAbilityIndex(card, cost, currentPool, perm, gameData, aiPlayerId);
         if (abilityIndex == null) {
             return false;
@@ -1056,12 +1048,8 @@ public class AiManaManager {
             if (skipChoiceSources && potentialManaService.wouldTapForManaOpenChoice(gameData, perm)) {
                 continue;
             }
-            boolean hasOnTap = potentialManaService.hasLivePrintedTapMana(gameData, perm);
-            if (!hasOnTap) {
-                Integer abilityIndex = chooseBestManaAbilityIndex(card, cost, currentPool, perm, gameData, aiPlayerId);
-                if (abilityIndex == null) {
-                    continue;
-                }
+            if (chooseBestManaAbilityIndex(card, cost, currentPool, perm, gameData, aiPlayerId) == null) {
+                continue;
             }
 
             int score = scoreTapCandidate(gameData, perm, cost, currentPool);
@@ -1127,7 +1115,7 @@ public class AiManaManager {
      * controller-damage side effect (pain lands).
      */
     private static boolean hasManaAbilityWithDamageCost(Card card) {
-        for (ActivatedAbility ability : card.getActivatedAbilities()) {
+        for (ActivatedAbility ability : card.getActivatedAbilities(Zone.BATTLEFIELD)) {
             if (!isFreeTapManaAbility(ability)) {
                 continue;
             }
@@ -1208,25 +1196,18 @@ public class AiManaManager {
     public void addCardManaToPool(Card card, ManaPool pool) {
         boolean basicLandSource = card.hasType(CardType.LAND)
                 && card.getSupertypes().contains(CardSupertype.BASIC);
-        if (hasOnTapManaEffects(card)) {
-            for (CardEffect effect : card.getEffects(EffectSlot.ON_TAP)) {
-                if (effect instanceof ManaProducingEffect mp) {
-                    if (mp.estimatedManaColor() != null) {
-                        int amount = potentialManaService.estimateManaAmount(mp.estimatedManaAmount(), null, null);
-                        pool.add(mp.estimatedManaColor(), amount);
-                        if (basicLandSource) {
-                            pool.addBasicLandManaTag(mp.estimatedManaColor(), amount);
-                        }
-                    } else if (mp.estimatedCountsAllColors()) {
-                        // Every color, not colorless: the point of comparing land plays is which
-                        // colored costs each one unlocks, and colorless unlocks none of them.
-                        PotentialManaService.addAnyColorManaToVirtualPool(
-                                pool, Math.max(1, mp.estimatedWildcardMana()), false, basicLandSource);
-                    }
+        Map<ManaColor, Integer> before = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            before.put(color, pool.get(color));
+        }
+        potentialManaService.addActivatedManaAbilitiesToVirtualPool(card, pool, false, null, null, null);
+        if (basicLandSource) {
+            for (ManaColor color : ManaColor.values()) {
+                int added = pool.get(color) - before.get(color);
+                if (added > 0) {
+                    pool.addBasicLandManaTag(color, added);
                 }
             }
-        } else {
-            potentialManaService.addActivatedManaAbilitiesToVirtualPool(card, pool, false, null, null, null);
         }
     }
 
@@ -1237,10 +1218,7 @@ public class AiManaManager {
      */
     public Set<ManaColor> getProducedColors(Card card) {
         Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
-        for (CardEffect effect : card.getEffects(EffectSlot.ON_TAP)) {
-            addEstimatedColors(effect, colors);
-        }
-        for (ActivatedAbility ability : card.getActivatedAbilities()) {
+        for (ActivatedAbility ability : ManaAbilities.withIntrinsic(card)) {
             if (isFreeTapManaAbility(ability)) {
                 for (CardEffect effect : ability.getEffects()) {
                     addEstimatedColors(effect, colors);
@@ -1275,13 +1253,6 @@ public class AiManaManager {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────
-
-    /**
-     * Returns true if the card has ON_TAP mana-producing effects (basic lands, mana creatures like Llanowar Elves).
-     */
-    private static boolean hasOnTapManaEffects(Card card) {
-        return PotentialManaService.hasOnTapManaEffects(card);
-    }
 
     /**
      * Chooses the best activated mana ability index for a permanent, prioritizing

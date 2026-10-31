@@ -83,7 +83,7 @@ All paths relative to `cards/`.
 | Land (restricted chosen-type spells or abilities) | `e/EclipsedRealms.java` | ON_ENTER_BATTLEFIELD `ChooseSubtypeOnEnterEffect(allowedTypes)` + `ManaAbilities.tapFor(COLORLESS)` + `AwardAnyColorManaEffect(1, CHOSEN_SUBTYPE_SPELL_OR_ABILITY).withAbilitiesOfSourcesInAnyZone()` (wording covers abilities of matching cards in hand/graveyard too, e.g. cycling; omit it for Primal Beyond-style wording, which only pays abilities of permanents) |
 | Mana dork (tap for N any color, creature spells only) | `s/SomberwaldSage.java` | `(true, null, AwardAnyColorManaEffect(3, CREATURE_SPELL_ONLY), false)` |
 | Land (tap for any color restricted to multicolored spells) | `p/PillarOfTheParuns.java` | `(true, null, AwardAnyColorManaEffect(1, MULTICOLORED_SPELLS), false)` |
-| Mana dork (ON_TAP) | `l/LlanowarElves.java` | addEffect(ON_TAP, AwardManaEffect) |
+| Mana dork | `l/LlanowarElves.java` | `addActivatedAbility(ManaAbilities.tapFor(color))` |
 | Mana dork (G or U + conditional Nissa life) | `a/AvidReclaimer.java` | two `{T}` abilities: AwardManaEffect(GREEN\|BLUE) + ConditionalEffect(ControlsPermanent(NISSA), GainLifeEffect(2)) — conditional rider resolved inline on mana abilities |
 | Animate self (X/X) | `c/ChimericStaff.java` | AnimatePermanentsEffect(XValue, XValue, subtypes, …, SELF, UEOT) |
 | Sorcery-speed ability | `t/ThrullSurgeon.java` | ActivationTimingRestriction.SORCERY_SPEED |

@@ -122,7 +122,7 @@ class SachiDaughterOfSeshiroTest extends BaseCardTest {
         Permanent shaman = addCreatureReady(player1, new OrochiSustainer());
         addSachi(player1);
 
-        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(shaman.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);

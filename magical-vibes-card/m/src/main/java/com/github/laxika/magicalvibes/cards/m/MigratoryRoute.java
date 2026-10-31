@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -26,7 +27,7 @@ public class MigratoryRoute extends Card {
                 4, "Bird", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()));
 
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{2}",
                 List.of(new SearchLibraryEffect(CardPredicateUtils.basicLand())),

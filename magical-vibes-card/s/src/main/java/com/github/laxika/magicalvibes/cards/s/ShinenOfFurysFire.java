@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -14,7 +15,7 @@ import java.util.List;
 public class ShinenOfFurysFire extends Card {
 
     public ShinenOfFurysFire() {
-        addHandActivatedAbility(new ActivatedAbility(false, "{R}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{R}",
                 List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
                 "Channel — {R}, Discard this card: Target creature gains haste until end of turn.",
                 TargetFilters.creature()));

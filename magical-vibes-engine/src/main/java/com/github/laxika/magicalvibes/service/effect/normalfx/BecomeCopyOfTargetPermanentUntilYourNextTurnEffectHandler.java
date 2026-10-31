@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetPermanentUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -65,7 +66,7 @@ public class BecomeCopyOfTargetPermanentUntilYourNextTurnEffectHandler implement
         String originalName = source.getCard().getName();
         String targetName = target.getCard().getName();
         List<ActivatedAbility> retainedAbilities = copyEffect.retainSourceActivatedAbilities()
-                ? List.copyOf(source.getOriginalCard().getActivatedAbilities())
+                ? List.copyOf(source.getOriginalCard().getActivatedAbilities(Zone.BATTLEFIELD))
                 : List.of();
         List<EffectRegistration> retainedTriggers = copyEffect.retainedAbilitySlot() == null ? List.of()
                 : List.copyOf(source.getCard().getEffectRegistrations(copyEffect.retainedAbilitySlot()));

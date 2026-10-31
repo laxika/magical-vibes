@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -77,7 +78,7 @@ class RasaadMonkOfSelNeTest extends BaseCardTest {
         assertThat(modified.getPower()).isEqualTo(1);
         assertThat(modified.getToughness()).isEqualTo(1);
         assertThat(modified.getCardText()).isEmpty();
-        assertThat(modified.getActivatedAbilities()).isEmpty();
+        assertThat(modified.getActivatedAbilities(Zone.BATTLEFIELD)).isEmpty();
         assertThat(modified.getKeywords()).doesNotContain(Keyword.LIFELINK);
     }
 

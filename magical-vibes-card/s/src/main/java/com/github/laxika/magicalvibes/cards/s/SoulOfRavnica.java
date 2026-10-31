@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -38,7 +39,7 @@ public class SoulOfRavnica extends Card {
         graveyardAbilityEffects.add(new ExileSelfFromGraveyardCost());
         graveyardAbilityEffects.addAll(drawForEachColor);
 
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{5}{U}{U}",
                 graveyardAbilityEffects,

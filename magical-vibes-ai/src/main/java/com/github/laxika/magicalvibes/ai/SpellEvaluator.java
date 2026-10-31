@@ -7,11 +7,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayMatchingCardsFromGraveyardThisTurnEffect;
@@ -60,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -858,7 +861,7 @@ public class SpellEvaluator {
 
         // Check activated abilities for sacrifice costs (a chosen creature, or the source itself)
         if (!hasSacCost) {
-            for (ActivatedAbility ability : card.getActivatedAbilities()) {
+            for (ActivatedAbility ability : card.getActivatedAbilities(Zone.BATTLEFIELD)) {
                 for (CardEffect effect : ability.getEffects()) {
                     if (effect instanceof CostEffect cost
                             && (cost.sacrificesChosenCreature() || cost.consumesSourcePermanent())) {
@@ -1017,7 +1020,7 @@ public class SpellEvaluator {
      * indicating it's a sacrifice outlet.
      */
     private boolean hasSacrificeAbility(Card card) {
-        for (ActivatedAbility ability : card.getActivatedAbilities()) {
+        for (ActivatedAbility ability : card.getActivatedAbilities(Zone.BATTLEFIELD)) {
             for (CardEffect effect : ability.getEffects()) {
                 if (effect instanceof CostEffect cost && cost.sacrificesChosenCreature()) {
                     return true;
@@ -1372,7 +1375,13 @@ public class SpellEvaluator {
             if (perm.isTapped()) continue;
             if (gameQueryService.isCreature(gameData, perm) && perm.isSummoningSick()
                     && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
-            for (CardEffect manaEffect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
+            // One tap: the first "{T}: Add …" ability that costs no mana.
+            List<CardEffect> tapManaEffects = ManaAbilities.withIntrinsic(perm.getCard()).stream()
+                    .filter(PotentialManaService::isFreeTapManaAbility)
+                    .findFirst()
+                    .map(ActivatedAbility::getEffects)
+                    .orElse(List.of());
+            for (CardEffect manaEffect : tapManaEffects) {
                 if (manaEffect instanceof ManaProducingEffect mp && mp.modeledByManaEstimator()) {
                     ManaColor color = mp.estimatedManaColor();
                     if (color != null) {
@@ -1563,8 +1572,7 @@ public class SpellEvaluator {
     }
 
     private boolean hasOnTapManaEffects(Card card) {
-        return card.getEffects(EffectSlot.ON_TAP).stream()
-                .anyMatch(ManaProducingEffect.class::isInstance);
+        return PotentialManaService.hasFreeTapManaAbility(card);
     }
 
     private double lifeGainMultiplier(GameData gameData, UUID aiPlayerId, UUID opponentId) {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -20,7 +21,7 @@ public class MagmaPhoenix extends Card {
         addEffect(EffectSlot.ON_DEATH, new MassDamageEffect(3, true));
 
         // {3}{R}{R}: Return Magma Phoenix from your graveyard to your hand.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{3}{R}{R}",
                 List.of(ReturnCardFromGraveyardEffect.builder()

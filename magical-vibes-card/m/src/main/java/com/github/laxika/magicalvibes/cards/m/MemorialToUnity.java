@@ -4,9 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -19,7 +18,6 @@ public class MemorialToUnity extends Card {
 
     public MemorialToUnity() {
         addStaticEffect(new EntersTappedEffect());
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
         // {2}{G}, {T}, Sacrifice Memorial to Unity: Look at the top five cards of your library.
         // You may reveal a creature card from among them and put it into your hand.
         // Put the rest on the bottom of your library in a random order.
@@ -30,5 +28,6 @@ public class MemorialToUnity extends Card {
                         LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(5, new CardTypePredicate(CardType.CREATURE))),
                 "{2}{G}, {T}, Sacrifice Memorial to Unity: Look at the top five cards of your library. You may reveal a creature card from among them and put it into your hand. Put the rest on the bottom of your library in a random order."
         ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
     }
 }

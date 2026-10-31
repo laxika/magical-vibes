@@ -50,7 +50,7 @@ class TheWorldTreeTest extends BaseCardTest {
             harness.addToBattlefield(player1, new Forest());
         }
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
         Permanent fifthLand = harness.addToBattlefieldAndReturn(player1, new Forest());
@@ -61,7 +61,7 @@ class TheWorldTreeTest extends BaseCardTest {
 
         assertThat(fifthLand.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(opposingLand.isTapped()).isFalse();
     }
@@ -99,7 +99,7 @@ class TheWorldTreeTest extends BaseCardTest {
             harness.addToBattlefield(player1, new Forest());
         }
 
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 2, null, null);
         harness.handleListChoice(player1, "WHITE");
 
         assertThat(tree.isTapped()).isTrue();
@@ -118,7 +118,7 @@ class TheWorldTreeTest extends BaseCardTest {
 
         gd.playerBattlefields.get(player1.getId()).remove(5);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 2, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 2, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         harness.tapPermanent(player1, 2);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);

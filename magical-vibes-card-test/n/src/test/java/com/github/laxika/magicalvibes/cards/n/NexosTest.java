@@ -98,7 +98,7 @@ class NexosTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Nexos());
         harness.addToBattlefield(player2, new Forest());
 
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerManaPools.get(player2.getId()).getXCostOnlyColorless()).isZero();
         harness.tapPermanent(player2, 0);
@@ -146,7 +146,7 @@ class NexosTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard() instanceof Nexos);
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         harness.tapPermanent(player1, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);

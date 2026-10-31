@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -31,7 +32,7 @@ public class MoonsnarePrototype extends Card {
                 "{T}, Tap an untapped artifact or creature you control: Add {C}."
         ));
 
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{4}{U}",
                 List.of(new PutTargetPermanentIntoLibraryNFromTopOrBottomEffect(0)),

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.layer.ModifierLine;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -113,10 +114,9 @@ public class PermanentViewFactory {
         }
         cardView = applyGrantedActivatedAbilities(cardView, grantedActivatedAbilities);
         cardView = applyStaticGrantedColors(cardView, p, staticGrantedColors, colorOverriding);
-        // When creature loses all abilities, strip its own activated abilities and intrinsic tap
+        // When creature loses all abilities, strip its own activated abilities, mana abilities included
         if (losesAllAbilities) {
             cardView = stripCardActivatedAbilities(cardView);
-            cardView = clearHasTapAbility(cardView);
         } else if (losesAllNonManaAbilities) {
             cardView = stripCardNonManaActivatedAbilities(cardView, p.getCard());
         }
@@ -166,7 +166,6 @@ public class PermanentViewFactory {
                 .power(permanent.getFaceDownPower())
                 .toughness(permanent.getFaceDownToughness())
                 .keywords(Set.of())
-                .hasTapAbility(false)
                 .setCode(null)
                 .collectorNumber(null)
                 .color(null)
@@ -386,15 +385,13 @@ public class PermanentViewFactory {
      * Removes printed activated abilities the permanent has lost individually ("then this creature
      * loses this ability"), so the client's ability list matches the engine's effective ability list.
      * Must run before granted abilities are appended, while the view's abilities still map one-to-one
-     * onto the card's non-exile-only printed abilities.
+     * onto the card's printed battlefield abilities.
      */
     private CardView stripLostActivatedAbilities(CardView cardView, Permanent p) {
         if (!p.hasLostAnyCurrentActivatedAbility()) {
             return cardView;
         }
-        List<ActivatedAbility> printed = p.getCard().getActivatedAbilities().stream()
-                .filter(ability -> !ability.isExileOnly())
-                .toList();
+        List<ActivatedAbility> printed = p.getCard().getActivatedAbilities(Zone.BATTLEFIELD);
         List<ActivatedAbilityView> views = cardView.activatedAbilities();
         List<ActivatedAbilityView> retained = new ArrayList<>();
         for (int i = 0; i < views.size(); i++) {
@@ -407,7 +404,7 @@ public class PermanentViewFactory {
 
     private CardView stripCardNonManaActivatedAbilities(CardView cardView, Card card) {
         List<ActivatedAbilityView> retained = new ArrayList<>();
-        List<ActivatedAbility> printed = card.getActivatedAbilities();
+        List<ActivatedAbility> printed = card.getActivatedAbilities(Zone.BATTLEFIELD);
         List<ActivatedAbilityView> views = cardView.activatedAbilities();
         int printedCount = Math.min(printed.size(), views.size());
         for (int i = 0; i < printedCount; i++) {
@@ -461,12 +458,5 @@ public class PermanentViewFactory {
                 .color(effectiveColor)
                 .colors(List.copyOf(effectiveColors))
                 .build();
-    }
-
-    private CardView clearHasTapAbility(CardView cardView) {
-        if (!cardView.hasTapAbility()) {
-            return cardView;
-        }
-        return cardView.toBuilder().hasTapAbility(false).build();
     }
 }

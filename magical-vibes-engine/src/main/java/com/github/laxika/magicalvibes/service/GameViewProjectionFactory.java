@@ -243,6 +243,10 @@ public class GameViewProjectionFactory {
                     allGrantedAbilities.addAll(p.getPersistentGrantedActivatedAbilities());
                     allGrantedAbilities.addAll(p.getTemporaryActivatedAbilities());
                     allGrantedAbilities.addAll(p.getUntilNextTurnActivatedAbilities());
+                    // A basic land type's mana ability (CR 305.6) comes last, as in the engine's ability list.
+                    List<ActivatedAbility> present = new ArrayList<>(p.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
+                    present.addAll(allGrantedAbilities);
+                    allGrantedAbilities.addAll(gameQueryService.missingIntrinsicManaAbilities(data, p, present));
                     List<Card> faceUpExiledWith = new ArrayList<>();
                     int faceDownExiledCount = 0;
                     for (ExiledCardEntry exiledWith : data.getExiledWithPermanentEntries(p.getId(), p.getCard().getId())) {
@@ -311,7 +315,7 @@ public class GameViewProjectionFactory {
                                                     p.getCard().getStaticEffects().stream()),
                                             java.util.Arrays.stream(EffectSlot.values())
                                                     .flatMap(slot -> p.getCard().getEffects(slot).stream())),
-                                    p.getCard().getActivatedAbilities().stream()
+                                    p.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                                             .flatMap(ability -> ability.getEffects().stream()))
                             .filter(com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect.class::isInstance)
                             .map(com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect.class::cast)
@@ -828,7 +832,7 @@ public class GameViewProjectionFactory {
             Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
             boolean hasSuspendedExileAbility = timeCounters != null && timeCounters > 0
                     && !gameData.exiledCardsWithNonSuspendTimeCounters.contains(card.getId())
-                    && card.getActivatedAbilities().stream().anyMatch(ActivatedAbility::isExileOnly);
+                    && !card.getActivatedAbilities(Zone.EXILE).isEmpty();
             if (hasSuspendedExileAbility) {
                 playable.add(cardViewFactory.create(card));
                 continue;
@@ -841,8 +845,7 @@ public class GameViewProjectionFactory {
                     ? card.getCastingOption(FlashforwardCast.class).orElse(null) : null;
             boolean hasFlashforward = flashforwardCast != null;
             boolean hasExileCast = card.getCastingOption(ExileCast.class).isPresent() || hasFlashforward;
-            boolean hasExileAbility = card.getActivatedAbilities().stream()
-                    .anyMatch(ActivatedAbility::isExileOnly);
+            boolean hasExileAbility = !card.getActivatedAbilities(Zone.EXILE).isEmpty();
             if (hasExileAbility && !hasPermission && !hasExileCast) {
                 if (canActivateExileAbilityNow(gameData, playerId, card, pool, isActivePlayer, isMainPhase, stackEmpty)) {
                     playable.add(exileCardView(gameData, playerId, card));
@@ -963,9 +966,7 @@ public class GameViewProjectionFactory {
 
     private boolean canActivateExileAbilityNow(GameData gameData, UUID playerId, Card card, ManaPool pool,
                                                 boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty) {
-        for (ActivatedAbility ability : card.getActivatedAbilities().stream()
-                .filter(ActivatedAbility::isExileOnly)
-                .toList()) {
+        for (ActivatedAbility ability : card.getActivatedAbilities(Zone.EXILE)) {
             if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED
                     && (!isActivePlayer || !isMainPhase || !stackEmpty)) {
                 continue;

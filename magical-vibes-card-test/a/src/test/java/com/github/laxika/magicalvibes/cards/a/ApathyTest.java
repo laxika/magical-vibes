@@ -110,7 +110,7 @@ class ApathyTest extends BaseCardTest {
         harness.addToBattlefield(player2, new AuraOfSilence());
 
         advanceToUpkeep(player2);
-        harness.sacrificePermanent(player2, 1, findPermanent(player1, "Apathy").getId());
+        harness.activateAbility(player2, 1, null, findPermanent(player1, "Apathy").getId());
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Apathy");
         harness.passBothPriorities();

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -68,7 +69,7 @@ class ForcemageAdvocateTest extends BaseCardTest {
         Card returnedCard = new KrosanReclamation();
         harness.setGraveyard(player2, List.of(returnedCard));
 
-        var ability = advocate.getCard().getActivatedAbilities().getFirst();
+        var ability = advocate.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst();
         ValidTargetsResponse firstTargets = harness.getValidTargetService().computeValidTargetsForAbility(
                 gd, advocate.getCard(), ability, player1.getId(), index(advocate));
         assertThat(firstTargets.validGraveyardCardIds()).containsExactly(returnedCard.getId());

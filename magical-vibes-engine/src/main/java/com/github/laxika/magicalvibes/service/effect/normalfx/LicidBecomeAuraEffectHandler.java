@@ -85,14 +85,17 @@ public class LicidBecomeAuraEffectHandler implements NormalEffectHandlerBean {
         copy.setSubtypes(List.of(CardSubtype.AURA));
         copy.setPower(null);
         copy.setToughness(null);
-        copy.getActivatedAbilities().removeIf(ability -> ability.getEffects().stream()
-                .anyMatch(LicidBecomeAuraEffect.class::isInstance));
-        copy.getActivatedAbilities().addFirst(new ActivatedAbility(
+        List<ActivatedAbility> kept = copy.getActivatedAbilities().stream()
+                .filter(ability -> ability.getEffects().stream().noneMatch(LicidBecomeAuraEffect.class::isInstance))
+                .toList();
+        copy.clearActivatedAbilities();
+        copy.addActivatedAbility(new ActivatedAbility(
                 false,
                 endCost,
                 List.of(new LicidEndEffect()),
                 endCost + ": End this effect."
         ).withActivatableOnlyByGrantingPlayer().withGrantingPlayer(effectControllerId));
+        kept.forEach(copy::addActivatedAbility);
         copy.target(TargetFilters.creature());
         copy.freeze();
         return copy;

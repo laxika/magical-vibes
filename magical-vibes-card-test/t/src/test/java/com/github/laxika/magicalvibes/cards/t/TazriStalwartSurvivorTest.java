@@ -29,7 +29,7 @@ class TazriStalwartSurvivorTest extends BaseCardTest {
         addCreatureReady(player1, new TazriStalwartSurvivor());
         Permanent elves = addCreatureReady(player1, new LlanowarElves());
 
-        harness.activateAbility(player1, 1, 0, null, null);
+        harness.activateAbility(player1, 1, 1, null, null);
 
         assertThat(elves.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId())

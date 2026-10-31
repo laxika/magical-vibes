@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -259,7 +260,7 @@ class SunkenPalaceTest extends BaseCardTest {
 
     private int copyManaAbilityIndex() {
         List<com.github.laxika.magicalvibes.model.ActivatedAbility> abilities =
-                findPermanent(player1, "Sunken Palace").getCard().getActivatedAbilities();
+                findPermanent(player1, "Sunken Palace").getCard().getActivatedAbilities(Zone.BATTLEFIELD);
         for (int i = 0; i < abilities.size(); i++) {
             if (abilities.get(i).getManaCost() != null) {
                 return i;

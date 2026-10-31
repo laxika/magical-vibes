@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -137,7 +138,7 @@ class CarrionBeetlesTest extends BaseCardTest {
         var response = harness.getValidTargetService().computeValidTargetsForAbility(
                 gd,
                 beetles.getCard(),
-                beetles.getCard().getActivatedAbilities().getFirst(),
+                beetles.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst(),
                 player1.getId(),
                 index(beetles));
 

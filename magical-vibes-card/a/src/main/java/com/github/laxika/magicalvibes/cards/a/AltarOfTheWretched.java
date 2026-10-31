@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.w.WretchedBonemass;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -57,7 +58,7 @@ public class AltarOfTheWretched extends Card {
                         + "as a sorcery.",
                 com.github.laxika.magicalvibes.model.ActivationTimingRestriction.SORCERY_SPEED));
 
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{2}{B}",
                 List.of(ReturnCardFromGraveyardEffect.builder()

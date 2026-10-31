@@ -2,10 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -24,8 +23,6 @@ import java.util.List;
 public class ConquerorsFoothold extends Card {
 
     public ConquerorsFoothold() {
-        // {T}: Add {C}.
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
 
         // {2}, {T}: Draw a card, then discard a card.
         addActivatedAbility(new ActivatedAbility(
@@ -50,5 +47,7 @@ public class ConquerorsFoothold extends Card {
                         .build()),
                 "{6}, {T}: Return target card from your graveyard to your hand."
         ));
+        // {T}: Add {C}.
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
     }
 }

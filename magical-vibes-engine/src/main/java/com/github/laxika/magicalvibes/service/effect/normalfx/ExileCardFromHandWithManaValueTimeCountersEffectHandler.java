@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandWithManaValueTimeCountersEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -51,7 +52,7 @@ public class ExileCardFromHandWithManaValueTimeCountersEffectHandler implements 
         int manaValue = chosenEntry.card().getManaValue();
         if (!alaundoEffect.gainsSuspend()) {
             gameData.exiledCardsWithAlaundoCastAbility.add(chosenCardId);
-            if (chosenEntry.card().getHandActivatedAbilities().stream()
+            if (chosenEntry.card().getActivatedAbilities(Zone.HAND).stream()
                     .noneMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand)) {
                 gameData.exiledCardsWithNonSuspendTimeCounters.add(chosenCardId);
             }

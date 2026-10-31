@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +20,7 @@ public class KuldothaPhoenix extends Card {
 
         // Metalcraft — {4}: Return this card from your graveyard to the battlefield. Activate only during
         // your upkeep and only if you control three or more artifacts.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{4}",
                 List.of(ReturnCardFromGraveyardEffect.builder()

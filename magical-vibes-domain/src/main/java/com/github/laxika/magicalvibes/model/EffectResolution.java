@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -513,7 +512,7 @@ public final class EffectResolution {
      */
     public static boolean needsDamageDistribution(Card card) {
         boolean inSpell = needsDamageDistribution(card.getCastingCostsAndSpellEffects());
-        boolean inAbility = card.getActivatedAbilities().stream()
+        boolean inAbility = card.getActivatedAbilities(Zone.BATTLEFIELD).stream()
                 .flatMap(a -> a.getEffects().stream())
                 .anyMatch(EffectResolution::isChosenDivision);
         return inSpell || inAbility;

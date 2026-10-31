@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureCardFromHandAndConjureDuplicateIntoHandEffect;
@@ -11,7 +12,7 @@ import java.util.List;
 public class HolographicDouble extends Card {
 
     public HolographicDouble() {
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{U}",
                 List.of(new ChooseCreatureCardFromHandAndConjureDuplicateIntoHandEffect()),

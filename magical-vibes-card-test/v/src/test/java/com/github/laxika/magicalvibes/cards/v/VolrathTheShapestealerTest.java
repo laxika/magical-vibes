@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -47,7 +48,7 @@ class VolrathTheShapestealerTest extends BaseCardTest {
         assertThat(volrath.getCard().getName()).isEqualTo("Burnished Hart");
         assertThat(volrath.getCard().getPower()).isEqualTo(7);
         assertThat(volrath.getCard().getToughness()).isEqualTo(5);
-        assertThat(volrath.getCard().getActivatedAbilities()).hasSize(2);
+        assertThat(volrath.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(2);
     }
 
     @Test

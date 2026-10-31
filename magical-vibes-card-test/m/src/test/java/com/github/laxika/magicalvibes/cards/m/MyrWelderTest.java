@@ -99,7 +99,7 @@ class MyrWelderTest extends BaseCardTest {
         harness.setGraveyard(player2, new ArrayList<>(List.of(opponentRod)));
 
         ValidTargetsResponse response = harness.getValidTargetService().computeValidTargetsForAbility(
-                gd, welder.getCard(), welder.getCard().getActivatedAbilities().getFirst(),
+                gd, welder.getCard(), welder.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst(),
                 player1.getId(), 0);
 
         assertThat(response.validGraveyardCardIds())

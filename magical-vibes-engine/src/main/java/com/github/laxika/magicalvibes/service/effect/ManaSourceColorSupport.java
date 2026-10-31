@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -54,15 +54,13 @@ public class ManaSourceColorSupport {
             return Set.of();
         }
 
-        List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(EffectSlot.ON_TAP));
-        List<ActivatedAbility> abilities = new ArrayList<>(source.getCard().getActivatedAbilities());
+        List<ActivatedAbility> abilities = new ArrayList<>(source.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
         abilities.addAll(staticBonus.grantedActivatedAbilities());
         abilities.addAll(source.getPersistentGrantedActivatedAbilities());
         abilities.addAll(source.getTemporaryActivatedAbilities());
         abilities.addAll(source.getUntilNextTurnActivatedAbilities());
 
         Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
-        addColors(effects, source, colors);
         for (ActivatedAbility ability : abilities) {
             addColors(ability.getEffects(), source, colors);
         }

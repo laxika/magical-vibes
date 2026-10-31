@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -19,7 +20,7 @@ import java.util.List;
 public class ZarethSanTheTrickster extends Card {
 
     public ZarethSanTheTrickster() {
-        addHandActivatedAbility(new ActivatedAbility(false, "{2}{U}{B}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}{U}{B}",
                 List.of(new NinjutsuEffect()),
                 "{2}{U}{B}, Return an unblocked attacking Rogue you control to its owner's hand: "
                         + "Put this card from your hand onto the battlefield tapped and attacking.")

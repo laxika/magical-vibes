@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
@@ -35,8 +36,8 @@ public class GreaterGargadon extends Card {
                 "Sacrifice an artifact, creature, or land: Remove a time counter from this card. Activate only if this card is suspended.")
                 .withActivationCondition(new SourceCardSuspended(),
                         "Activate only if this card is suspended")
-                .withExileOnly());
-        addHandActivatedAbility(new ActivatedAbility(
+                .withZones(AbilityZones.EXILE));
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{R}",
                 List.of(),

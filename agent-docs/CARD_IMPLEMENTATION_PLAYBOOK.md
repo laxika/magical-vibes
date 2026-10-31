@@ -112,7 +112,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/w/src/main/java/com/github/laxika/magicalvibes/cards/w/WhispersilkCloak.java`
 
 - Creature land (manland) — enters tapped, taps for mana, animates:
-  - `addStaticEffect(new EntersTappedEffect())` + `addEffect(EffectSlot.ON_TAP, new AwardManaEffect(...))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new AnimatePermanentsEffect(power, toughness, subtypes, keywords, color)), description))`
+  - `addStaticEffect(new EntersTappedEffect())` + `addActivatedAbility(ManaAbilities.tapFor(...))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new AnimatePermanentsEffect(power, toughness, subtypes, keywords, color)), description))`
   - Example: `magical-vibes-card/f/src/main/java/com/github/laxika/magicalvibes/cards/f/FaerieConclave.java`
 
 - Kindred Enchantment with ETB token creation + activated token ability:
@@ -214,7 +214,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/SqueeTheImmortal.java`
 
 - Graveyard activated ability (pay mana from graveyard zone):
-  - `addGraveyardActivatedAbility(new ActivatedAbility(false, cost, List.of(effect), description))` — activated ability usable while card is in graveyard
+  - `addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(false, cost, List.of(effect), description))` — activated ability usable while card is in graveyard
   - Distinct from `GRAVEYARD_UPKEEP_TRIGGERED` which is a triggered ability firing on upkeep
   - Blocked by Pithing Needle. Mana is paid on activation. Puts ACTIVATED_ABILITY on stack.
   - Example: `magical-vibes-card/m/src/main/java/com/github/laxika/magicalvibes/cards/m/MagmaPhoenix.java`

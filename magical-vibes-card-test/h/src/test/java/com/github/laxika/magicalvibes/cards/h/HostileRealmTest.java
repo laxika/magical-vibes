@@ -32,7 +32,7 @@ class HostileRealmTest extends BaseCardTest {
         Permanent warrior = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
 
         // Mutavault's own ability is index 0; Hostile Realm's granted ability is index 1.
-        harness.activateAbility(player1, 0, 1, null, warrior.getId());
+        harness.activateAbility(player1, 0, 2, null, warrior.getId());
         harness.passBothPriorities();
 
         assertThat(warrior.isCantBlockThisTurn()).isTrue();
@@ -44,7 +44,7 @@ class HostileRealmTest extends BaseCardTest {
         Permanent mutavault = setUpEnchantedMutavault();
         Permanent warrior = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
 
-        harness.activateAbility(player1, 0, 1, null, warrior.getId());
+        harness.activateAbility(player1, 0, 2, null, warrior.getId());
 
         assertThat(mutavault.isTapped()).isTrue();
     }
@@ -92,7 +92,7 @@ class HostileRealmTest extends BaseCardTest {
     void grantedAbilityCannotTargetLand() {
         Permanent mutavault = setUpEnchantedMutavault();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, mutavault.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, mutavault.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
         assertThat(mutavault.isTapped()).isFalse();
@@ -108,7 +108,7 @@ class HostileRealmTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0, mutavault.getId());
         harness.passBothPriorities();
-        harness.activateAbility(player2, 0, 1, null, warrior.getId());
+        harness.activateAbility(player2, 0, 2, null, warrior.getId());
         harness.passBothPriorities();
 
         assertThat(mutavault.isTapped()).isTrue();
@@ -121,7 +121,7 @@ class HostileRealmTest extends BaseCardTest {
         setUpEnchantedMutavault();
         Permanent warrior = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
 
-        harness.activateAbility(player1, 0, 1, null, warrior.getId());
+        harness.activateAbility(player1, 0, 2, null, warrior.getId());
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard() instanceof HostileRealm);
         harness.passBothPriorities();
@@ -134,7 +134,7 @@ class HostileRealmTest extends BaseCardTest {
     void blockingRestrictionExpires() {
         setUpEnchantedMutavault();
         Permanent warrior = harness.addToBattlefieldAndReturn(player2, new ElvishWarrior());
-        harness.activateAbility(player1, 0, 1, null, warrior.getId());
+        harness.activateAbility(player1, 0, 2, null, warrior.getId());
         harness.passBothPriorities();
         assertThat(warrior.isCantBlockThisTurn()).isTrue();
 
@@ -150,7 +150,7 @@ class HostileRealmTest extends BaseCardTest {
         setUpEnchantedMutavault();
         Permanent warrior = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
 
-        harness.activateAbility(player1, 0, 1, null, warrior.getId());
+        harness.activateAbility(player1, 0, 2, null, warrior.getId());
         harness.passBothPriorities();
 
         assertThat(warrior.isCantBlockThisTurn()).isTrue();

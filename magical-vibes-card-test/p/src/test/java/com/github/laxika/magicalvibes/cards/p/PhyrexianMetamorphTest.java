@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -82,7 +83,7 @@ class PhyrexianMetamorphTest extends BaseCardTest {
         assertThat(metamorphPerm.getCard().getType()).isEqualTo(CardType.ARTIFACT);
         // Per rules: copying a noncreature artifact means Metamorph is NOT a creature
         assertThat(metamorphPerm.getCard().getAdditionalTypes()).doesNotContain(CardType.CREATURE);
-        assertThat(metamorphPerm.getCard().getActivatedAbilities()).hasSize(1);
+        assertThat(metamorphPerm.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(1);
     }
 
 

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -49,7 +50,7 @@ class TheMycosynthGardensTest extends BaseCardTest {
 
         Permanent gardens = gd.playerBattlefields.get(player1.getId()).get(0);
         assertThat(gardens.getCard().getName()).isEqualTo("Rod of Ruin");
-        assertThat(gardens.getCard().getActivatedAbilities()).hasSize(1);
+        assertThat(gardens.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(1);
     }
 
     @Test

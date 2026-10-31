@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -105,7 +106,7 @@ class BlightedBurgeoningTest extends BaseCardTest {
         assertThat(gqs.isArtifact(gd, incubator)).isTrue();
         assertThat(gqs.getEffectivePower(gd, incubator)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, incubator)).isEqualTo(2);
-        assertThat(incubator.getCard().getActivatedAbilities()).isEmpty();
+        assertThat(incubator.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).isEmpty();
     }
 
     @Test

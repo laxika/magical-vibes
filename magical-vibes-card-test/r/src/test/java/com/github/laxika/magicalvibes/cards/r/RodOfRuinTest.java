@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.UUID;
@@ -199,7 +200,7 @@ class RodOfRuinTest extends BaseCardTest {
         UUID plainsId = harness.getPermanentId(player2, "Plains");
 
         var response = harness.getValidTargetService().computeValidTargetsForAbility(
-                gd, rod.getCard(), rod.getCard().getActivatedAbilities().getFirst(),
+                gd, rod.getCard(), rod.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst(),
                 player1.getId(), 0);
 
         // "Any target" is a creature, planeswalker, battle, or player — the land and the Rod itself

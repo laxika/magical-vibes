@@ -61,7 +61,7 @@ class HanaKamiTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentBreath));
 
         ValidTargetsResponse response = harness.getValidTargetService().computeValidTargetsForAbility(
-                gd, kami.getCard(), kami.getCard().getActivatedAbilities().getFirst(),
+                gd, kami.getCard(), kami.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst(),
                 player1.getId(), gd.playerBattlefields.get(player1.getId()).indexOf(kami));
 
         assertThat(response.validGraveyardCardIds()).containsExactly(ownBreath.getId());

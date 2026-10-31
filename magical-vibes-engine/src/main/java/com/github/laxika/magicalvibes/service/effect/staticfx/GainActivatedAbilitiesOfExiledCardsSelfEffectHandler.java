@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
@@ -48,7 +48,7 @@ public class GainActivatedAbilitiesOfExiledCardsSelfEffectHandler implements Sta
                     exiledEntry != null ? exiledEntry.ownerId() : null)) {
                 continue;
             }
-            for (var ability : card.getActivatedAbilities()) {
+            for (var ability : ManaAbilities.withIntrinsic(card)) {
                 // "X is the mana value of the exiled card" refers to a card exiled by the ability's own
                 // source, so a borrowed copy has no such card (Prototype Portal) and can never be activated.
                 if (ability.getEffects().stream().anyMatch(e -> e instanceof ImprintedCardXCostEffect imprinted
@@ -65,14 +65,6 @@ public class GainActivatedAbilitiesOfExiledCardsSelfEffectHandler implements Sta
                 accumulator.addActivatedAbility(gainEffect.oncePerTurn()
                         ? gainedAbility.withMaxActivationsPerTurn(1)
                         : gainedAbility);
-            }
-            List<CardEffect> onTapEffects = card.getEffects(EffectSlot.ON_TAP);
-            if (!onTapEffects.isEmpty()) {
-                ActivatedAbility manaAbility = new ActivatedAbility(
-                        true, null, onTapEffects, "{T}: Add mana.");
-                accumulator.addActivatedAbility(gainEffect.oncePerTurn()
-                        ? manaAbility.withMaxActivationsPerTurn(1)
-                        : manaAbility);
             }
         }
     }

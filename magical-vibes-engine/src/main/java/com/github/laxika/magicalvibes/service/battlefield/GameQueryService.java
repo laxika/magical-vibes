@@ -14,10 +14,12 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.DamageBonusGrant;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.SaturatingMath;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MaxSpeedFreeFirstUnearthEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -338,6 +340,7 @@ import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectCondit
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import java.util.*;
+import java.util.ArrayList;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -1412,6 +1415,29 @@ public class GameQueryService {
         return colors;
     }
 
+    /**
+     * The intrinsic "{T}: Add [mana]" abilities of the permanent's basic land types (CR 305.6) that
+     * {@code present} doesn't already include, in color order. A face-down permanent has none. These come last in
+     * a permanent's activated ability list, after its printed and granted abilities.
+     */
+    public List<ActivatedAbility> missingIntrinsicManaAbilities(GameData gameData, Permanent permanent,
+                                                                List<ActivatedAbility> present) {
+        if (permanent.isFaceDown()) {
+            return List.of();
+        }
+        List<ActivatedAbility> missing = new ArrayList<>();
+        for (ManaColor color : intrinsicBasicLandManaColors(gameData, permanent)) {
+            boolean alreadyPresent = present.stream().anyMatch(ability -> ability.isRequiresTap()
+                    && ability.getEffects().size() == 1
+                    && ability.getEffects().getFirst() instanceof AwardManaEffect mana
+                    && mana.color() == color);
+            if (!alreadyPresent) {
+                missing.add(ManaAbilities.intrinsic(color));
+            }
+        }
+        return missing;
+    }
+
     public Set<CardSubtype> landTypesOf(Card card) {
         Set<CardSubtype> result = EnumSet.noneOf(CardSubtype.class);
         addLandTypes(result, card.getSubtypes());
@@ -1685,7 +1711,7 @@ public class GameQueryService {
     /** Whether the card currently has native or granted unearth. */
     public boolean cardHasUnearthAbility(GameData gameData, UUID ownerId, Card card) {
         if (card == null) return false;
-        if (card.getGraveyardActivatedAbilities().stream().anyMatch(ActivatedAbility::isUnearthAbility)) {
+        if (card.getActivatedAbilities(Zone.GRAVEYARD).stream().anyMatch(ActivatedAbility::isUnearthAbility)) {
             return true;
         }
         if (gameData != null && gameData.cardsGrantedPerpetualUnearth.contains(card.getId())
@@ -2912,7 +2938,7 @@ public class GameQueryService {
      * permanent (Scheming Fence). Abilities granted to the source by other effects, such as an Aura, are not.
      */
     private boolean isAbilityOfSourceOrChosenPermanent(GameData gameData, Permanent source, ActivatedAbility ability) {
-        if (source.getCard().getActivatedAbilities().stream().anyMatch(candidate -> candidate == ability)) {
+        if (source.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream().anyMatch(candidate -> candidate == ability)) {
             return true;
         }
         Permanent chosen = source.getChosenPermanentId() == null
@@ -2920,7 +2946,7 @@ public class GameQueryService {
         if (chosen == null) {
             return false;
         }
-        return chosen.getCard().getActivatedAbilities().stream().anyMatch(candidate -> candidate == ability)
+        return chosen.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream().anyMatch(candidate -> candidate == ability)
                 || chosen.getPersistentGrantedActivatedAbilities().stream().anyMatch(candidate -> candidate == ability)
                 || chosen.getTemporaryActivatedAbilities().stream().anyMatch(candidate -> candidate == ability)
                 || chosen.getUntilNextTurnActivatedAbilities().stream().anyMatch(candidate -> candidate == ability)
@@ -5940,7 +5966,7 @@ public class GameQueryService {
         List<ActivatedAbility> abilities = new ArrayList<>(
                 computeStaticBonus(gameData, permanent).grantedActivatedAbilities());
         if (!permanent.isFaceDown() && !hasLostPrintedAbilities(gameData, permanent)) {
-            abilities.addAll(permanent.getCard().getActivatedAbilities());
+            abilities.addAll(permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
         }
         abilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
         abilities.addAll(permanent.getTemporaryActivatedAbilities());
@@ -13682,7 +13708,7 @@ public class GameQueryService {
     /**
      * Returns {@code true} if the permanent has lost its printed abilities, whether continuously
      * (Imprisoned in the Moon, Song of the Dryads) or until end of turn (Merfolk Trickster). Its
-     * printed {@code ON_TAP} mana is gone even when a later-timestamp grant leaves it with a mana
+     * printed mana abilities are gone even when a later-timestamp grant leaves it with a mana
      * ability of its own â€” {@code tapPermanent} refuses outright in that state, so a planner must
      * read the granted ability instead of the printed one.
      */

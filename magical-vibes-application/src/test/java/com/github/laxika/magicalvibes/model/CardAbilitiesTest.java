@@ -406,4 +406,72 @@ class CardAbilitiesTest {
     private static TriggeredAbility legacy(EffectSlot slot, EffectRegistration... effects) {
         return new TriggeredAbility(new LegacySlotTrigger(slot), TriggerOptions.DEFAULT, List.of(effects));
     }
+
+    @Test
+    void activatedAbilitiesAreOneListReadByZone() {
+        ActivatedAbility mana = ManaAbilities.tapFor(ManaColor.GREEN);
+        ActivatedAbility cycling = new ActivatedAbility(false, "{2}", List.of(DRAW_ONE), "Cycling {2}");
+        ActivatedAbility unearth = Card.unearthAbility("{B}");
+        ActivatedAbility fromExile = new ActivatedAbility(false, "{3}", List.of(DRAW_ONE), "From exile")
+                .withZones(AbilityZones.EXILE);
+        card.addActivatedAbility(mana);
+        card.addActivatedAbility(AbilityZones.HAND, cycling);
+        card.addActivatedAbility(unearth);
+        card.addActivatedAbility(fromExile);
+
+        assertThat(card.getActivatedAbilities()).containsExactly(mana, cycling, unearth, fromExile);
+        assertThat(card.getActivatedAbilities(Zone.BATTLEFIELD)).containsExactly(mana);
+        assertThat(card.getActivatedAbilities(Zone.HAND)).containsExactly(cycling);
+        assertThat(card.getActivatedAbilities(Zone.GRAVEYARD)).containsExactly(unearth);
+        assertThat(card.getActivatedAbilities(Zone.EXILE)).containsExactly(fromExile);
+        assertThat(card.getActivatedAbilities(Zone.STACK)).isEmpty();
+    }
+
+    @Test
+    void anActivatedAbilityCanFunctionFromSeveralZones() {
+        ActivatedAbility both = new ActivatedAbility(false, "{1}", List.of(DRAW_ONE), "Both")
+                .withZones(AbilityZones.of(Zone.BATTLEFIELD, Zone.GRAVEYARD));
+        card.addActivatedAbility(both);
+
+        assertThat(card.getActivatedAbilities(Zone.BATTLEFIELD)).containsExactly(both);
+        assertThat(card.getActivatedAbilities(Zone.GRAVEYARD)).containsExactly(both);
+    }
+
+    @Test
+    void activatedAbilityViewsFollowChangesAndCantBeChangedFromOutside() {
+        ActivatedAbility first = ManaAbilities.tapFor(ManaColor.RED);
+        card.addActivatedAbility(first);
+        List<ActivatedAbility> before = card.getActivatedAbilities(Zone.BATTLEFIELD);
+
+        ActivatedAbility second = ManaAbilities.tapFor(ManaColor.BLUE);
+        card.addActivatedAbility(second);
+        assertThat(card.getActivatedAbilities(Zone.BATTLEFIELD)).containsExactly(first, second);
+        assertThat(before).containsExactly(first);
+
+        card.removeActivatedAbilitiesIf(ability -> ability == first);
+        assertThat(card.getActivatedAbilities(Zone.BATTLEFIELD)).containsExactly(second);
+
+        card.clearActivatedAbilities();
+        assertThat(card.getActivatedAbilities()).isEmpty();
+        assertThatThrownBy(() -> card.getActivatedAbilities().add(first))
+                .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> card.getActivatedAbilities(Zone.BATTLEFIELD).add(first))
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void activatedAbilitiesAreCopiedWithTheirZonesAndTheCopyChangesAlone() {
+        ActivatedAbility mana = ManaAbilities.tapFor(ManaColor.GREEN);
+        ActivatedAbility cycling = new ActivatedAbility(false, "{2}", List.of(DRAW_ONE), "Cycling {2}");
+        card.addActivatedAbility(mana);
+        card.addActivatedAbility(AbilityZones.HAND, cycling);
+        card.getActivatedAbilities(Zone.BATTLEFIELD);
+
+        Card copy = new Card(card);
+        copy.addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));
+
+        assertThat(copy.getActivatedAbilities(Zone.HAND)).containsExactly(cycling);
+        assertThat(copy.getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(2);
+        assertThat(card.getActivatedAbilities(Zone.BATTLEFIELD)).containsExactly(mana);
+    }
 }

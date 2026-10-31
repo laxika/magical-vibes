@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -21,8 +21,6 @@ import java.util.Set;
 public class FrostwalkBastion extends Card {
 
     public FrostwalkBastion() {
-        // {T}: Add {C}.
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
 
         // {1}{S}: Until end of turn, this land becomes a 2/3 Construct artifact creature. It's still a land.
         addActivatedAbility(new ActivatedAbility(
@@ -33,6 +31,8 @@ public class FrostwalkBastion extends Card {
                 )),
                 "{1}{S}: Until end of turn, this land becomes a 2/3 Construct artifact creature. It's still a land."
         ));
+        // {T}: Add {C}.
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
 
         // Whenever this land deals combat damage to a creature, tap that creature and it doesn't untap during
         // its controller's next untap step.

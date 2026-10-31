@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.networking.message.ActivateExiledAbilityRe
 import com.github.laxika.magicalvibes.networking.message.RevealSecretMissionRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateHandAbilityRequest;
-import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
 import com.github.laxika.magicalvibes.networking.message.InteractionAnswerRequest;
@@ -71,8 +70,6 @@ public interface MessageHandler {
     void handlePlayCard(Connection connection, PlayCardRequest request) throws Exception;
 
     void handleTapPermanent(Connection connection, TapPermanentRequest request) throws Exception;
-
-    void handleSacrificePermanent(Connection connection, SacrificePermanentRequest request) throws Exception;
 
     void handleActivateAbility(Connection connection, ActivateAbilityRequest request) throws Exception;
 

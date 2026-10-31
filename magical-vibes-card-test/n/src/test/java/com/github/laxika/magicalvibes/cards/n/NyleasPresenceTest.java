@@ -114,7 +114,7 @@ class NyleasPresenceTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.FOREST);
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         harness.tapPermanent(player1, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);

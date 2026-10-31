@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -26,7 +27,7 @@ public class BrighthearthBanneret extends Card {
                 )), 1, CostModificationScope.SELF));
 
         // Reinforce 1—{1}{R} ({1}{R}, Discard this card: Put a +1/+1 counter on target creature.)
-        addHandActivatedAbility(new ActivatedAbility(false, "{1}{R}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}{R}",
                 List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
                 "Reinforce 1—{1}{R} ({1}{R}, Discard this card: Put a +1/+1 counter on target creature.)",
                 TargetFilters.creature()));

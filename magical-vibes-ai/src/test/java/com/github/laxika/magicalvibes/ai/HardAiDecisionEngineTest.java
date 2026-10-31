@@ -10,28 +10,20 @@ import com.github.laxika.magicalvibes.cards.t.Tromokratis;
 import com.github.laxika.magicalvibes.cards.t.TolarianScholar;
 import com.github.laxika.magicalvibes.cards.t.ToralfGodOfFury;
 import com.github.laxika.magicalvibes.cards.t.TorgaarFamineIncarnate;
-import com.github.laxika.magicalvibes.cards.t.TragedyFeaster;
-import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.a.AbandonHope;
 import com.github.laxika.magicalvibes.cards.a.AlphaAuthority;
 import com.github.laxika.magicalvibes.cards.a.ArchangelOfTithes;
 import com.github.laxika.magicalvibes.cards.a.AjanisResponse;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
 import com.github.laxika.magicalvibes.cards.b.BasalThrull;
-import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.b.Blight;
 import com.github.laxika.magicalvibes.cards.b.BlindingBeam;
-import com.github.laxika.magicalvibes.cards.b.BogWraith;
-import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
-import com.github.laxika.magicalvibes.cards.s.SeveredLegion;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfThePath;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.CallerOfTheHunt;
 import com.github.laxika.magicalvibes.cards.c.CradleClearcutter;
-import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.c.CrypticCommand;
 import com.github.laxika.magicalvibes.cards.c.CostlyPlunder;
 import com.github.laxika.magicalvibes.cards.c.CurseOfEchoes;
@@ -39,28 +31,19 @@ import com.github.laxika.magicalvibes.cards.c.Crawlspace;
 import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.d.DauthiMercenary;
 import com.github.laxika.magicalvibes.cards.d.Derelor;
-import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.d.Drought;
 import com.github.laxika.magicalvibes.cards.d.DreamHalls;
-import com.github.laxika.magicalvibes.cards.d.DoomBlade;
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
-import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
-import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.Evangelize;
-import com.github.laxika.magicalvibes.cards.e.Eviscerate;
 import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
 import com.github.laxika.magicalvibes.cards.f.FaithOfTheDevoted;
 import com.github.laxika.magicalvibes.cards.f.FinaleOfPromise;
 import com.github.laxika.magicalvibes.cards.f.FitOfRage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HootingMandrills;
-import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
-import com.github.laxika.magicalvibes.cards.g.GoblinChieftain;
-import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.Hipparion;
@@ -70,24 +53,16 @@ import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.m.Mindslaver;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.l.LivingInferno;
-import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.r.RatsFeast;
-import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.cards.b.BogardanFirefiend;
-import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
-import com.github.laxika.magicalvibes.cards.i.IronStar;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranRoyalGuard;
-import com.github.laxika.magicalvibes.cards.k.KillerBees;
-import com.github.laxika.magicalvibes.cards.v.VigilForTheLost;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.Lure;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.n.Negate;
 import com.github.laxika.magicalvibes.cards.n.Nekrataal;
 import com.github.laxika.magicalvibes.cards.o.OrcishConscripts;
 import com.github.laxika.magicalvibes.cards.o.Okk;
@@ -159,7 +134,6 @@ import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -179,7 +153,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.UUID;
-import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -1177,7 +1150,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
-        Permanent blightedPlains = new Permanent(new Plains());
+        Permanent blightedPlains = new Permanent(plains());
         Permanent forest = new Permanent(new Forest());
         Permanent island = new Permanent(new Island());
         blightedPlains.setSummoningSick(false);
@@ -2255,7 +2228,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
             mockGd.playerHands.get(mockAiPlayer.getId()).add(creature);
 
             // Add an untapped Plains so AI needs to tap it for mana
-            Permanent land = new Permanent(new Plains());
+            Permanent land = new Permanent(plains());
             land.setSummoningSick(false);
             mockGd.playerBattlefields.get(mockAiPlayer.getId()).add(land);
 
@@ -2266,12 +2239,12 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
             Mockito.doAnswer(inv -> {
                 mockGd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
                 return null;
-            }).when(mockMessageHandler).handleTapPermanent(any());
+            }).when(mockMessageHandler).handleActivateAbility(any());
 
             createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
             // AI should have tapped but NOT cast the spell or passed priority
-            verify(mockMessageHandler).handleTapPermanent(any());
+            verify(mockMessageHandler).handleActivateAbility(any());
             verify(mockMessageHandler, never()).handlePlayCard(any());
             verify(mockMessageHandler, never()).handlePassPriority(any());
         }
@@ -2287,7 +2260,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
             creature.setToughness(2);
             mockGd.playerHands.get(mockAiPlayer.getId()).add(creature);
 
-            Permanent land = new Permanent(new Plains());
+            Permanent land = new Permanent(plains());
             land.setSummoningSick(false);
             mockGd.playerBattlefields.get(mockAiPlayer.getId()).add(land);
 
@@ -2296,11 +2269,11 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
                 mockGd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature,
                         mockAiPlayer.getId(), "Test trigger", List.of()));
                 return null;
-            }).when(mockMessageHandler).handleTapPermanent(any());
+            }).when(mockMessageHandler).handleActivateAbility(any());
 
             createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
-            verify(mockMessageHandler).handleTapPermanent(any());
+            verify(mockMessageHandler).handleActivateAbility(any());
             verify(mockMessageHandler, never()).handlePlayCard(any());
             verify(mockMessageHandler, never()).handlePassPriority(any());
         }
@@ -2444,7 +2417,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(player2.getId());
-        Permanent plains = new Permanent(new Plains());
+        Permanent plains = new Permanent(plains());
         plains.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(plains);
 
@@ -2544,7 +2517,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         for (int i = 0; i < 2; i++) {
-            Permanent plains = new Permanent(new Plains());
+            Permanent plains = new Permanent(plains());
             plains.setSummoningSick(false);
             gd.playerBattlefields.get(player1.getId()).add(plains);
         }
@@ -2615,7 +2588,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         giveAiPriority(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         givePlayerMountains(player1, 1);
-        Permanent plains = new Permanent(new Plains());
+        Permanent plains = new Permanent(plains());
         plains.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(plains);
         Permanent ordinaryPermanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -2653,7 +2626,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         gd.priorityPassedBy.add(player2.getId());
 
         for (int i = 0; i < 3; i++) {
-            Permanent plains = new Permanent(new Plains());
+            Permanent plains = new Permanent(plains());
             plains.setSummoningSick(false);
             gd.playerBattlefields.get(player1.getId()).add(plains);
         }
@@ -2681,7 +2654,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         gd.stack.clear();
         gd.priorityPassedBy.add(player2.getId());
 
-        Permanent plains = new Permanent(new Plains());
+        Permanent plains = new Permanent(plains());
         plains.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(plains);
         givePlayerIslands(player1, 2);
@@ -2714,7 +2687,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         gd.stack.clear();
 
         for (int i = 0; i < 2; i++) {
-            Permanent plains = new Permanent(new Plains());
+            Permanent plains = new Permanent(plains());
             plains.setSummoningSick(false);
             gd.playerBattlefields.get(player1.getId()).add(plains);
         }
@@ -2778,7 +2751,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         gd.priorityPassedBy.add(player2.getId());
 
         for (int i = 0; i < 3; i++) {
-            Permanent plains = new Permanent(new Plains());
+            Permanent plains = new Permanent(plains());
             plains.setSummoningSick(false);
             gd.playerBattlefields.get(player1.getId()).add(plains);
         }
@@ -3100,7 +3073,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
         gd.playerBattlefields.get(player2.getId()).add(baird);
 
         // AI (player1) has 3 creatures and only 1 Plains
-        Permanent plains = new Permanent(new Plains());
+        Permanent plains = new Permanent(plains());
         plains.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(plains);
         for (int i = 0; i < 3; i++) {
@@ -3245,4 +3218,15 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
                 .containsExactly("Holy Day", "Holy Day");
     }
 
+
+    /**
+     * A Plains whose land type is set here: these mock-wired tests load no oracle data, and a land's mana ability
+     * comes from its basic land type (CR 305.6).
+     */
+    private static Card plains() {
+        Card plains = new Plains();
+        plains.setType(CardType.LAND);
+        plains.setSubtypes(List.of(CardSubtype.PLAINS));
+        return plains;
+    }
 }

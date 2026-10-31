@@ -1336,7 +1336,7 @@ public class Permanent {
     /** Whether any printed activated ability of the card this permanent currently shows has been lost. */
     public boolean hasLostAnyCurrentActivatedAbility() {
         return !lostPrintedActivatedAbilities.isEmpty()
-                && card.getActivatedAbilities().stream().anyMatch(lostPrintedActivatedAbilities::contains);
+                && card.getActivatedAbilities(Zone.BATTLEFIELD).stream().anyMatch(lostPrintedActivatedAbilities::contains);
     }
 
     public Card getOriginalCard() {

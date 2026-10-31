@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -21,7 +22,7 @@ public class WinterSoldierIcyAssassin extends Card {
     public WinterSoldierIcyAssassin() {
         addStaticEffect(new BoostSelfEffect(new Scaled(new AttachmentsOnSource(false, true), 2), new Fixed(0)));
 
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{3}{W}{B}",
                 List.of(

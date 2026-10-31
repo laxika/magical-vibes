@@ -5,10 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 import java.util.List;
@@ -21,12 +20,12 @@ public class ForbiddingWatchtower extends Card {
 
     public ForbiddingWatchtower() {
         addStaticEffect(new EntersTappedEffect());
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.WHITE));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{W}",
                 List.of(new AnimatePermanentsEffect(1, 5, List.of(CardSubtype.SOLDIER), Set.of(), CardColor.WHITE)),
                 "{1}{W}: Forbidding Watchtower becomes a 1/5 white Soldier creature until end of turn. It's still a land."
         ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));
     }
 }

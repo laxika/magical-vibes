@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -26,7 +27,7 @@ public class SummonTheSchool extends Card {
                 Set.of(), Set.of()));
 
         // Tap four untapped Merfolk you control: Return this card from your graveyard to your hand.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false, null,
                 List.of(
                         new TapMultiplePermanentsCost(4, new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)),

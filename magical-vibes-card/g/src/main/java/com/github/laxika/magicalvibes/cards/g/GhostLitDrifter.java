@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -35,7 +36,7 @@ public class GhostLitDrifter extends Card {
         ));
 
         // Channel — {X}{U}, Discard this card: X target creatures gain flying until end of turn.
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{X}{U}",
                 List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),

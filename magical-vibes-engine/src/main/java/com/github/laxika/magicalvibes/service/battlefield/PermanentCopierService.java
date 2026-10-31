@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PrimalClayForm;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -111,7 +112,7 @@ public class PermanentCopierService {
             withoutGrantedKeywords.setKeywords(keywords);
             original = withoutGrantedKeywords;
         }
-        if (original.getActivatedAbilities().stream().anyMatch(ability -> ability.getEffects().stream()
+        if (original.getActivatedAbilities(Zone.BATTLEFIELD).stream().anyMatch(ability -> ability.getEffects().stream()
                 .anyMatch(LicidEndEffect.class::isInstance))) {
             // A Licid that became an Aura: that is the effect of its ability, not a copiable value, so a
             // copy sees the printed creature form (CR 707.2).
@@ -233,7 +234,7 @@ public class PermanentCopierService {
                 copy.addEffect(slot, reg.effect(), reg.triggerMode());
             }
         }
-        for (ActivatedAbility ability : target.getActivatedAbilities()) {
+        for (ActivatedAbility ability : target.getActivatedAbilities(Zone.BATTLEFIELD)) {
             copy.addActivatedAbility(ability);
         }
         for (ActivatedAbility ability : retainedAbilities) {

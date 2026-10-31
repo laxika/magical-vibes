@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.RingState;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -324,7 +325,7 @@ public class CreatureControlService {
         if (creaturePositioningSupport != null) {
             creaturePositioningSupport.onControlChange(gameData, derived, permanent);
         }
-        boolean retainsFaceDownExileAccess = permanent.getCard().getActivatedAbilities().stream()
+        boolean retainsFaceDownExileAccess = permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                 .flatMap(ability -> ability.getEffects().stream())
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect
                         .ExileCardFromHandFaceDownWithSourceEffect exile && !exile.toGraveyardOnControlLoss());

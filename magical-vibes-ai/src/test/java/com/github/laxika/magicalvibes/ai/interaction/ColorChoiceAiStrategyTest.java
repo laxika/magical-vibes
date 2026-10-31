@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.LandManaEvent;
@@ -236,7 +237,7 @@ class ColorChoiceAiStrategyTest {
         gameData.orderedPlayerIds.add(opponentId);
         gameData.playerBattlefields.put(opponentId, List.of(opponentPermanent));
         when(opponentPermanent.getCard()).thenReturn(opponentCard);
-        when(opponentCard.getActivatedAbilities()).thenReturn(List.of(opponentAbility));
+        when(opponentCard.getActivatedAbilities(Zone.BATTLEFIELD)).thenReturn(List.of(opponentAbility));
         when(opponentCard.getName()).thenReturn("Plains");
 
         PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(

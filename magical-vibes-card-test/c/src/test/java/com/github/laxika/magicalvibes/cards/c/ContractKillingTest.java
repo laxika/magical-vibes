@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -48,7 +49,7 @@ class ContractKillingTest extends BaseCardTest {
             assertThat(treasure.getCard().isToken()).isTrue();
             assertThat(treasure.getCard().getType()).isEqualTo(CardType.ARTIFACT);
             assertThat(treasure.getCard().getSubtypes()).containsExactly(CardSubtype.TREASURE);
-            assertThat(treasure.getCard().getActivatedAbilities()).hasSize(1);
+            assertThat(treasure.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(1);
         }
     }
 

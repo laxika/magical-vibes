@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -183,9 +184,20 @@ class LandTapTriggerCollectorServiceTest {
         return card;
     }
 
+    /**
+     * A land that taps for {@code color}: a basic land type gives a colored one its mana ability (CR 305.6), and a
+     * colorless one prints "{T}: Add {C}." like Wastes.
+     */
     private static Card createLandCardWithMana(String name, ManaColor color) {
         Card card = createLandCard(name);
-        card.addEffect(EffectSlot.ON_TAP, new AwardManaEffect(color));
+        switch (color) {
+            case WHITE -> card.setSubtypes(List.of(CardSubtype.PLAINS));
+            case BLUE -> card.setSubtypes(List.of(CardSubtype.ISLAND));
+            case BLACK -> card.setSubtypes(List.of(CardSubtype.SWAMP));
+            case RED -> card.setSubtypes(List.of(CardSubtype.MOUNTAIN));
+            case GREEN -> card.setSubtypes(List.of(CardSubtype.FOREST));
+            default -> card.addActivatedAbility(ManaAbilities.tapFor(color));
+        }
         return card;
     }
 
@@ -838,7 +850,7 @@ class LandTapTriggerCollectorServiceTest {
             Permanent triggerPerm = createPermanent("Ultima, Origin of Oblivion");
             Permanent land = createLandPermanent("Wastes", ManaColor.COLORLESS);
             var effect = new AddManaWhenLandOfColorTappedForManaEffect(ManaColor.COLORLESS);
-            var ctx = new TriggerContext.LandTap(player1Id, land.getId());
+            var ctx = new TriggerContext.LandTap(player1Id, land.getId(), Set.of(ManaColor.COLORLESS));
 
             when(gameQueryService.findPermanentById(gd, land.getId())).thenReturn(land);
 

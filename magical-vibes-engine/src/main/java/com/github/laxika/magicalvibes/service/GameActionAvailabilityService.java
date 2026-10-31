@@ -224,7 +224,7 @@ public class GameActionAvailabilityService {
             if (perm.isFaceDown()) {
                 continue;
             }
-            List<ActivatedAbility> abilities = perm.getCard().getActivatedAbilities();
+            List<ActivatedAbility> abilities = perm.getCard().getActivatedAbilities(Zone.BATTLEFIELD);
             List<Integer> payable = new ArrayList<>();
             VirtualManaPool poolWithoutSource = null;
             VirtualManaPool specialActionPool = null;

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -18,7 +19,7 @@ public class LlanowarGreenwidow extends Card {
         // {7}{G}: Return this card from your graveyard to the battlefield tapped. It gains an
         // exile-if-it-leaves replacement effect. The ability costs {1} less for each basic land
         // type among lands you control.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{7}{G}",
                 List.of(

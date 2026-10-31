@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -36,7 +37,7 @@ public class IceFlan extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new PutCounterOnTargetPermanentEffect(CounterType.STUN));
 
-        addHandActivatedAbility(new ActivatedAbility(false, "{2}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}",
                 List.of(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.ISLAND))),
                 "Islandcycling {2} ({2}, Discard this card: Search your library for an Island card, "
                         + "reveal it, put it into your hand, then shuffle.)"));

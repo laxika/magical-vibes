@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -27,7 +28,7 @@ public class SoulOfInnistrad extends Card {
 
         // {3}{B}{B}, Exile this card from your graveyard: Return up to three target creature cards
         // from your graveyard to your hand.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{3}{B}{B}",
                 List.of(new ExileSelfFromGraveyardCost(), returnUpToThreeCreatureCards()),

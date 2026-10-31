@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -30,7 +31,7 @@ class MercurialPretenderTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(pretender.getOriginalCard().getName()).isEqualTo("Mercurial Pretender");
         assertThat(pretender.getCard().getName()).isEqualTo("Runeclaw Bear");
-        assertThat(pretender.getCard().getActivatedAbilities()).hasSize(1);
+        assertThat(pretender.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(1);
     }
 
     @Test

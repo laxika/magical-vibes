@@ -32,7 +32,7 @@ public final class LegacyWordSupport {
             return false;
         }
         if (CYCLING.equals(normalizedChoice)
-                && card.getHandActivatedAbilities().stream().anyMatch(ActivatedAbility::isCyclingAbility)) {
+                && card.getActivatedAbilities(Zone.HAND).stream().anyMatch(ActivatedAbility::isCyclingAbility)) {
             return true;
         }
         if (card.getKeywords().stream()

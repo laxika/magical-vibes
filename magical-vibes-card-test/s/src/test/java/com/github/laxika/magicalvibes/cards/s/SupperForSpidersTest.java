@@ -63,7 +63,7 @@ class SupperForSpidersTest extends BaseCardTest {
 
         returned.untap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(returned), 0, null, null);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(returned), 1, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);

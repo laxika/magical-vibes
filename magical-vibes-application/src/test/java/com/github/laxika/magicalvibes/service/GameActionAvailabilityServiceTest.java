@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -492,13 +492,16 @@ class GameActionAvailabilityServiceTest {
     @DisplayName("getPlayableGraveyardLandIndices")
     class GetPotentialPayableAbilityIndicesTests {
 
+        /** A land with one basic land type, which taps for that type's mana (CR 305.6). */
         private Permanent manaLand(com.github.laxika.magicalvibes.model.ManaColor color) {
             Card card = new Card();
             card.setName(color + " land");
             card.setType(CardType.LAND);
-            card.addEffect(EffectSlot.ON_TAP,
-                    new com.github.laxika.magicalvibes.model.effect.AwardManaEffect(color));
-            return new Permanent(card);
+            card.addActivatedAbility(ManaAbilities.tapFor(color));
+            Permanent land = new Permanent(card);
+            lenient().when(gameQueryService.intrinsicBasicLandManaColors(same(gd), same(land)))
+                    .thenReturn(Set.of(color));
+            return land;
         }
 
         private Permanent abilitySource(String name, com.github.laxika.magicalvibes.model.ActivatedAbility ability) {
@@ -552,9 +555,7 @@ class GameActionAvailabilityServiceTest {
             Card port = new Card();
             port.setName("Rishadan Port");
             port.setType(CardType.LAND);
-            port.addEffect(EffectSlot.ON_TAP,
-                    new com.github.laxika.magicalvibes.model.effect.AwardManaEffect(
-                            com.github.laxika.magicalvibes.model.ManaColor.COLORLESS));
+            port.addActivatedAbility(ManaAbilities.tapFor(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS));
             port.addActivatedAbility(new com.github.laxika.magicalvibes.model.ActivatedAbility(
                     true, "{1}", List.of(), "tap target land"));
             Permanent portPerm = new Permanent(port);
@@ -566,7 +567,7 @@ class GameActionAvailabilityServiceTest {
             // A second mana source makes the ability payable
             gd.playerBattlefields.get(player1Id).add(manaLand(com.github.laxika.magicalvibes.model.ManaColor.GREEN));
             assertThat(svc.getPotentialPayableAbilityIndices(gd, player1Id))
-                    .containsExactly(java.util.Map.entry(portPerm.getId(), List.of(0)));
+                    .containsExactly(java.util.Map.entry(portPerm.getId(), List.of(1)));
         }
 
         @Test

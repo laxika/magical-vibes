@@ -77,7 +77,7 @@ class GlamorousOutlawTest extends BaseCardTest {
 
         harness.castFromExile(player1, outlaw.getId());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 

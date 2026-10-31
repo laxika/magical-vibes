@@ -2501,7 +2501,7 @@ public class MayCastHandlerService {
         Card cardToCast = ability.sourceCard();
         List<Card> hand = gameData.playerHands.get(player.getId());
         int cardIndex = hand == null ? -1 : indexOfCard(hand, cardToCast.getId());
-        ActivatedAbility suspendAbility = cardToCast.getHandActivatedAbilities().stream()
+        ActivatedAbility suspendAbility = cardToCast.getActivatedAbilities(Zone.HAND).stream()
                 .filter(ActivatedAbility::isSuspendsSourceFromHand)
                 .filter(suspend -> suspend.getManaCost() != null)
                 .findFirst()

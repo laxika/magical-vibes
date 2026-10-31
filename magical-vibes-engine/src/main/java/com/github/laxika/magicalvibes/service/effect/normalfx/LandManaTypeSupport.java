@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
@@ -68,11 +68,9 @@ public class LandManaTypeSupport {
         if (!visited.add(land.getId())) return Set.of();
 
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, land);
-        List<CardEffect> printedTapEffects = staticBonus.losesAllAbilities() || land.isLosesAllAbilitiesUntilEndOfTurn()
-                || land.isFaceDown() ? List.of() : land.getCard().getEffects(EffectSlot.ON_TAP);
         List<ActivatedAbility> abilities = new ArrayList<>();
         if (!staticBonus.losesAllAbilities() && !land.isLosesAllAbilitiesUntilEndOfTurn() && !land.isFaceDown()) {
-            abilities.addAll(land.getCard().getActivatedAbilities());
+            abilities.addAll(land.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
         }
         abilities.addAll(staticBonus.grantedActivatedAbilities());
         abilities.addAll(land.getPersistentGrantedActivatedAbilities());
@@ -81,8 +79,8 @@ public class LandManaTypeSupport {
         Set<CardSubtype> basicLandTypes = gameQueryService.effectiveBasicLandTypes(gameData, land);
         List<ManaColor> overriddenColors = gameQueryService.getOverriddenLandManaColors(gameData, land);
 
-        boolean hasManaAbility = printedTapEffects.stream().anyMatch(this::isManaEffect)
-                || abilities.stream().anyMatch(ability -> ability.getEffects().stream().anyMatch(this::isManaEffect));
+        boolean hasManaAbility = abilities.stream()
+                .anyMatch(ability -> ability.getEffects().stream().anyMatch(this::isManaEffect));
         if (!hasManaAbility && basicLandTypes.isEmpty() && overriddenColors.isEmpty()) {
             return Set.of();
         }
@@ -95,8 +93,6 @@ public class LandManaTypeSupport {
             for (CardSubtype subtype : basicLandTypes) {
                 types.add(EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(subtype));
             }
-            addManaTypesFromEffects(gameData, printedTapEffects, land, types, visited);
-            amount = Math.max(amount, fixedManaAmount(printedTapEffects));
             for (ActivatedAbility ability : abilities) {
                 addManaTypesFromEffects(gameData, ability.getEffects(), land, types, visited);
                 amount = Math.max(amount, fixedManaAmount(ability.getEffects()));

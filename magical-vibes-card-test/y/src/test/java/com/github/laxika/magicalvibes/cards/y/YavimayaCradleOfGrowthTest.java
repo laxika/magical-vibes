@@ -99,7 +99,7 @@ class YavimayaCradleOfGrowthTest extends BaseCardTest {
         harness.addToBattlefield(player1, new YavimayaCradleOfGrowth());
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
 
-        harness.activateAbility(player1, 1, 0, null, null);
+        harness.activateAbility(player1, 1, 1, null, null);
 
         assertThat(swamp.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);

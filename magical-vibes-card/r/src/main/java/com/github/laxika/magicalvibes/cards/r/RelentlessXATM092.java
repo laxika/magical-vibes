@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -17,7 +18,7 @@ public class RelentlessXATM092 extends Card {
     public RelentlessXATM092() {
         addStaticEffect(new CantBeBlockedByFewerThanNCreaturesEffect(3));
 
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{8}",
                 List.of(ReturnCardFromGraveyardEffect.builder()

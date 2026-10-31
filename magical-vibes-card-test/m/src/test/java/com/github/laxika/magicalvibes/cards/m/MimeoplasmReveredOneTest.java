@@ -86,7 +86,7 @@ class MimeoplasmReveredOneTest extends BaseCardTest {
 
         assertThat(mimeoplasm.getCard().getPower()).isZero();
         assertThat(mimeoplasm.getCard().getToughness()).isZero();
-        assertThat(mimeoplasm.getCard().getActivatedAbilities()).hasSize(1);
+        assertThat(mimeoplasm.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(1);
         assertThat(mimeoplasm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, mimeoplasm)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, mimeoplasm)).isEqualTo(3);

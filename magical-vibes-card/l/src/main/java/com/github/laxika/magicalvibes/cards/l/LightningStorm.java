@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -23,7 +24,7 @@ public class LightningStorm extends Card {
     public LightningStorm() {
         addSpellEffect(new DealDamageToAnyTargetEffect(
                 new Sum(new Fixed(3), new CountersOnStackEntryCard(CounterType.CHARGE))));
-        addStackActivatedAbility(new ActivatedAbility(false, null, List.of(
+        addActivatedAbility(AbilityZones.STACK, new ActivatedAbility(false, null, List.of(
                 new DiscardCardTypeCost(new CardTypePredicate(CardType.LAND), "land"),
                 new PutCountersOnStackEntryCardEffect(CounterType.CHARGE, 2),
                 new MayEffect(new ChooseNewTargetsForTargetSpellEffect(), "Choose new targets?")),

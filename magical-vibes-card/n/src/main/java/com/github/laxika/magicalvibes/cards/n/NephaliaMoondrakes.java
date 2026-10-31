@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -20,7 +21,7 @@ public class NephaliaMoondrakes extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
 
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{4}{U}{U}",
                 List.of(

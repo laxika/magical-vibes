@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknown
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimalMagnetismEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DawnbreakReclaimerEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DemonstrateEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfChosenCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler;
@@ -332,8 +331,6 @@ public class PermanentChoiceHandlerService {
             case GameData.ActivationCostReplay activationReplay -> payAgainAfterDeathReplacements(gameData,
                     () -> activatedAbilityExecutionServiceProvider.getObject()
                             .completeActivationAfterCostSacrificeAnswers(gameData, activationReplay));
-            case GameData.SacrificeAbilityReplay sacrificeReplay -> payAgainAfterDeathReplacements(gameData,
-                    () -> abilityActivationService.sacrificePermanentAfterCostSacrificeAnswer(gameData, sacrificeReplay));
             case GameData.GraveyardAbilityCostReplay graveyardReplay -> payAgainAfterDeathReplacements(gameData,
                     () -> abilityActivationService.completeGraveyardAbilityAfterCostSacrificeAnswers(
                             gameData, graveyardReplay));

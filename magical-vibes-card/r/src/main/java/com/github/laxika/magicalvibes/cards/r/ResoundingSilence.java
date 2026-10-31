@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -22,7 +23,7 @@ public class ResoundingSilence extends Card {
         // "When you cycle this card, exile up to two target attacking creatures." The targets are
         // announced with the cycling ability and ride on the self-cycle trigger, which resolves
         // before the cycling draw.
-        addHandActivatedAbility(new ActivatedAbility(false, "{5}{G}{W}{U}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{5}{G}{W}{U}",
                 List.of(new DrawCardEffect(1)),
                 "Cycling {5}{G}{W}{U} ({5}{G}{W}{U}, Discard this card: Draw a card.)",
                 TargetFilters.attackingCreature(),

@@ -3075,7 +3075,7 @@ public class GameData {
     /** A player's answer to complete again once the death replacements it asked about are chosen. */
     public sealed interface DeathReplacementChoiceReplay
             permits PermanentChoiceReplay, MultiPermanentChoiceReplay, MayAnswerReplay, ListChoiceReplay,
-                    PileChoiceReplay, ActivationCostReplay, SacrificeAbilityReplay, SpellCastReplay,
+                    PileChoiceReplay, ActivationCostReplay, SpellCastReplay,
                     GraveyardCastReplay, LibraryTopCastReplay, TurnFaceUpReplay,
                     GraveyardAbilityCostReplay, HandAbilityCostReplay, InteractionAnswerReplay,
                     HandAbilityActivationReplay, AttackDeclarationReplay, BlockDeclarationReplay,
@@ -3302,14 +3302,6 @@ public class GameData {
                                        java.util.List<UUID> chosenCostPermanentIds, java.util.List<UUID> sacrificedCardIds,
                                        Card discardedCardSnapshot, Card exiledCostCardSnapshot,
                                        java.util.List<UUID> exiledCardIds)
-            implements DeathReplacementChoiceReplay {
-    }
-
-    /**
-     * A "sacrifice this permanent" ability (an {@code ON_SACRIFICE} ability) stopped before its sacrifice so that its
-     * death replacement could be chosen first (CR 616.1): who activated it, the permanent and the ability's target.
-     */
-    public record SacrificeAbilityReplay(Player player, UUID permanentId, UUID targetId)
             implements DeathReplacementChoiceReplay {
     }
 

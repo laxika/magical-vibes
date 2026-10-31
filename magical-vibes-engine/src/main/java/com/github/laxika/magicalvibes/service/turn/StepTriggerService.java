@@ -2068,7 +2068,7 @@ public class StepTriggerService {
             List<Card> exiledCards = gameData.getPlayerExiledCards(activePlayerId);
             for (Card card : new ArrayList<>(exiledCards)) {
                 if (gameData.exiledCardsWithNonSuspendTimeCounters.contains(card.getId())
-                        && card.getHandActivatedAbilities().stream()
+                        && card.getActivatedAbilities(Zone.HAND).stream()
                         .noneMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand)) {
                     continue;
                 }
@@ -2154,7 +2154,7 @@ public class StepTriggerService {
         for (var exiledEntry : new ArrayList<>(gameData.exiledCards)) {
             Card card = exiledEntry.card();
             if (gameData.exiledCardsWithNonSuspendTimeCounters.contains(card.getId())
-                    && card.getHandActivatedAbilities().stream()
+                    && card.getActivatedAbilities(Zone.HAND).stream()
                     .noneMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand)) {
                 continue;
             }

@@ -2094,7 +2094,7 @@ public class CardChoiceHandlerService {
             } else {
                 exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId);
             }
-            if (source != null && source.getCard().getActivatedAbilities().stream()
+            if (source != null && source.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                     .flatMap(ability -> ability.getEffects().stream())
                     .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect
                             .ExileCardFromHandFaceDownWithSourceEffect exile && !exile.toGraveyardOnControlLoss())) {

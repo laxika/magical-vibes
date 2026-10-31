@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -26,7 +27,7 @@ public class HobbitHole extends Card {
                 "{T}, Sacrifice Hobbit Hole: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle."
         ));
 
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{4}",
                 List.of(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.HALFLING))),

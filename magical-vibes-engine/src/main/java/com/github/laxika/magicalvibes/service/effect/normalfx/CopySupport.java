@@ -450,7 +450,7 @@ public class CopySupport {
         if (original.isCastOnlyFromGraveyard()) {
             original.getCastingOption(GraveyardCast.class).ifPresent(copy::addCastingOption);
         }
-        for (var ability : original.getActivatedAbilities()) {
+        for (var ability : original.getActivatedAbilities(Zone.BATTLEFIELD)) {
             copy.addActivatedAbility(ability);
         }
 

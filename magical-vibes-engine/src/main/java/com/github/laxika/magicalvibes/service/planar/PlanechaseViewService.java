@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.planar;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.networking.model.PlanechaseView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import org.springframework.stereotype.Service;
@@ -29,9 +30,9 @@ public class PlanechaseViewService {
         boolean canRoll = actorId != null && planechase.canOfferRoll(game, actorId);
         return new PlanechaseView(state.faceUp.stream().map(object ->
                 new PlanechaseView.PlanarCardView(object.getId(), cards.create(object.getCard()),
-                        Map.copyOf(object.getCounters()), java.util.stream.IntStream.range(0, object.getCard().getActivatedAbilities().size())
+                        Map.copyOf(object.getCounters()), java.util.stream.IntStream.range(0, object.getCard().getActivatedAbilities(Zone.BATTLEFIELD).size())
                                 .filter(index -> actorId != null && abilities.available(game, actorId, object,
-                                        object.getCard().getActivatedAbilities().get(index)))
+                                        object.getCard().getActivatedAbilities(Zone.BATTLEFIELD).get(index)))
                                 .boxed().toList())).toList(),
                 state.controllerId, state.deck.size(), state.rollCost(game.activePlayerId, game.turnNumber),
                 canRoll, canRoll && planechase.canRoll(game, actorId, game.playerManaPools.get(actorId)),

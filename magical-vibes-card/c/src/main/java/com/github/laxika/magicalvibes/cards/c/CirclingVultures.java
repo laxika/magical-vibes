@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,7 +19,7 @@ public class CirclingVultures extends Card {
         // "You may discard this card any time you could cast an instant." A free hand ability whose
         // only cost is the intrinsic discard the engine already pays — hence no mana cost and no
         // resolution effects.
-        addHandActivatedAbility(new ActivatedAbility(false, null, List.of(),
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, null, List.of(),
                 "You may discard this card any time you could cast an instant.").withDiscardSourceAsSpecialAction());
 
         // "At the beginning of your upkeep, sacrifice this creature unless you exile the top

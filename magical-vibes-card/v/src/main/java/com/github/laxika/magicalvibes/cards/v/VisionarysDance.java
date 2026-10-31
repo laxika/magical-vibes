@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -20,7 +21,7 @@ public class VisionarysDance extends Card {
                 CardColor.BLUE, Set.of(CardColor.BLUE, CardColor.RED),
                 List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.FLYING), Set.of()));
 
-        addHandActivatedAbility(new ActivatedAbility(false, "{2}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}",
                 List.of(LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(2, 1)),
                 "Discard this card: Look at the top two cards of your library. Put one of them into your hand and the other into your graveyard."));
     }

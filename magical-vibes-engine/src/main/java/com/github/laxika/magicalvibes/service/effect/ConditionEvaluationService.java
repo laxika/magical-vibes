@@ -1850,7 +1850,7 @@ public class ConditionEvaluationService {
                 int counterCount = source == null
                         ? -1
                         : c.counterType() == CounterType.LEVEL
-                                && source.getCard().getActivatedAbilities().stream()
+                                && source.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                                 .flatMap(ability -> ability.getEffects().stream())
                                 .anyMatch(com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect.class::isInstance)
                                 ? source.getClassLevel() - 1

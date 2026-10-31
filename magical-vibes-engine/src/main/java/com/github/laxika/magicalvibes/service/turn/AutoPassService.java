@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaActivation;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
@@ -556,7 +557,7 @@ public class AutoPassService {
         if (battlefield == null) return false;
 
         for (Permanent perm : battlefield) {
-            for (ActivatedAbility ability : perm.getCard().getActivatedAbilities()) {
+            for (ActivatedAbility ability : perm.getCard().getActivatedAbilities(Zone.BATTLEFIELD)) {
                 // Skip sorcery-speed and upkeep-only abilities
                 if ((ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED
                         && !gameQueryService.canActivateAbilityAtInstantSpeed(gameData, playerId, ability))

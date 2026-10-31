@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +34,7 @@ class KingMacarTheGoldCursedTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Gold")).hasSize(1);
         Permanent gold = findPermanent(player1, "Gold");
         assertThat(gold.getCard().getType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(gold.getCard().getActivatedAbilities()).hasSize(1);
+        assertThat(gold.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(1);
     }
 
     @Test

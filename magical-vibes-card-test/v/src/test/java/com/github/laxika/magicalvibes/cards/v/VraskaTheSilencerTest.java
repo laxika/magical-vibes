@@ -59,7 +59,7 @@ class VraskaTheSilencerTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Llanowar Elves");
         returned.untap();
-        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(returned), 0, null, null);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(returned), 1, null, null);
         harness.handleListChoice(player1, "GREEN");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);

@@ -141,7 +141,7 @@ class TrappedInTheScreenTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.sacrificePermanent(player2, 0, source.getId());
+        harness.activateAbility(player2, 0, null, source.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Aura of Silence");

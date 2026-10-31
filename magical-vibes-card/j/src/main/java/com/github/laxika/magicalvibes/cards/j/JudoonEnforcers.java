@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +16,7 @@ public class JudoonEnforcers extends Card {
 
     public JudoonEnforcers() {
         addStaticEffect(new MaximumCombatCreaturesEffect(1, Integer.MAX_VALUE, CombatAttackTargetScope.CONTROLLER));
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{1}{R}{W}",
                 List.of(),

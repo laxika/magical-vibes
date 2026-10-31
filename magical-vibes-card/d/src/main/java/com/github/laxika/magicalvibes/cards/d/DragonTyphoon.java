@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -40,7 +41,7 @@ public class DragonTyphoon extends Card {
                                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))),
                         List.of(DraftCardFromSpellbookEffect.toBattlefield(SPELLBOOK, null))));
 
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{2}{R}{R}",
                 List.of(new CreateTokenEffect(

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreatureCardsExiledWithSourceEffect;
@@ -41,13 +41,8 @@ public class GainActivatedAbilitiesOfCreatureCardsExiledWithSourceEffectHandler
             if (!card.hasType(CardType.CREATURE)) {
                 continue;
             }
-            for (ActivatedAbility ability : card.getActivatedAbilities()) {
+            for (ActivatedAbility ability : ManaAbilities.withIntrinsic(card)) {
                 accumulator.addActivatedAbility(ability);
-            }
-            List<CardEffect> onTapEffects = card.getEffects(EffectSlot.ON_TAP);
-            if (!onTapEffects.isEmpty()) {
-                accumulator.addActivatedAbility(new ActivatedAbility(
-                        true, null, onTapEffects, "{T}: Add mana."));
             }
         }
     }

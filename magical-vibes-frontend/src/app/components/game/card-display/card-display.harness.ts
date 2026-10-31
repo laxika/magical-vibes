@@ -156,7 +156,6 @@ const BASE_CARD: Card = {
   power: null,
   toughness: null,
   keywords: [],
-  hasTapAbility: false,
   setCode: 'SOS',
   collectorNumber: '1',
   color: 'WHITE',

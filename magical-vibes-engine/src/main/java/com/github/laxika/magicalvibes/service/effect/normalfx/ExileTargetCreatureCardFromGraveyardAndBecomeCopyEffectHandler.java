@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -64,7 +65,7 @@ public class ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffectHandler
             // (printed, or copied from a Doppelganger), and drops abilities from earlier copies. Read
             // from the current card before the copy replaces it.
             Card retainedSource = source.getCard();
-            var retainedAbilities = retainedSource.getActivatedAbilities().stream()
+            var retainedAbilities = retainedSource.getActivatedAbilities(Zone.BATTLEFIELD).stream()
                     .filter(ability -> ability.getEffects().stream().anyMatch(
                             ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect.class::isInstance))
                     .toList();

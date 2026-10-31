@@ -116,7 +116,7 @@ class SlumberingKeepguardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.sacrificePermanent(player1, 1, aura.getId());
+        harness.activateAbility(player1, 1, null, aura.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
@@ -141,7 +141,7 @@ class SlumberingKeepguardTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, keepguard)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, keepguard)).isEqualTo(3);
 
-        harness.sacrificePermanent(player1, 1, aura.getId());
+        harness.activateAbility(player1, 1, null, aura.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);

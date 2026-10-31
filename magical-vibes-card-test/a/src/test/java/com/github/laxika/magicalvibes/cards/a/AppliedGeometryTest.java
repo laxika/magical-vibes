@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -70,7 +71,7 @@ class AppliedGeometryTest extends BaseCardTest {
         assertThat(token.getCard().getAdditionalTypes()).contains(CardType.CREATURE);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.FRACTAL);
         assertThat(token.getPlusOnePlusOneCounters()).isEqualTo(6);
-        assertThat(token.getCard().getActivatedAbilities()).isNotEmpty();
+        assertThat(token.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).isNotEmpty();
     }
 
     @Test

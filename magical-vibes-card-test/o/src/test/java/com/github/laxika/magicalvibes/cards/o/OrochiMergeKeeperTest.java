@@ -32,7 +32,7 @@ class OrochiMergeKeeperTest extends BaseCardTest {
         Permanent keeper = addReadyKeeper();
         keeper.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
     }
@@ -42,7 +42,7 @@ class OrochiMergeKeeperTest extends BaseCardTest {
     void additionalManaAbilityIsUnavailableWhileUnmodified() {
         addReadyKeeper();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -67,7 +67,7 @@ class OrochiMergeKeeperTest extends BaseCardTest {
         Permanent keeper = addReadyKeeper();
         keeper.setCounterCount(CounterType.CHARGE, 1);
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
         assertThat(keeper.isTapped()).isTrue();
@@ -78,11 +78,11 @@ class OrochiMergeKeeperTest extends BaseCardTest {
     void losingLastCounterRemovesAdditionalAbility() {
         Permanent keeper = addReadyKeeper();
         keeper.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
         keeper.untap();
         keeper.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(keeper.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
@@ -94,7 +94,7 @@ class OrochiMergeKeeperTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new ShortCircuit());
         aura.setAttachedTo(keeper.getId());
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
     }
@@ -105,7 +105,7 @@ class OrochiMergeKeeperTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new ShortCircuit());
         aura.setAttachedTo(keeper.getId());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         harness.tapPermanent(player1, 0);
 
@@ -118,7 +118,7 @@ class OrochiMergeKeeperTest extends BaseCardTest {
         Permanent equipment = harness.addToBattlefieldAndReturn(player2, new BronzeCudgels());
         equipment.setAttachedTo(keeper.getId());
 
-        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
     }

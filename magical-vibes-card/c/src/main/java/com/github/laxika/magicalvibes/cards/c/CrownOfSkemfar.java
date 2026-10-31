@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -30,7 +31,7 @@ public class CrownOfSkemfar extends Card {
                         elvesYouControl, elvesYouControl, GrantScope.ENCHANTED_CREATURE))
                 .addStaticEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.ENCHANTED_CREATURE));
 
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{2}{G}",
                 List.of(ReturnCardFromGraveyardEffect.builder()

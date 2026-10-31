@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AmbushViper;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -94,8 +95,8 @@ class EvilTwinTest extends BaseCardTest {
         assertThat(evilTwinPerm.getCard().getPower()).isEqualTo(2);
         assertThat(evilTwinPerm.getCard().getToughness()).isEqualTo(2);
         // Should have the extra activated ability from Evil Twin
-        assertThat(evilTwinPerm.getCard().getActivatedAbilities()).isNotEmpty();
-        assertThat(evilTwinPerm.getCard().getActivatedAbilities()).anyMatch(a ->
+        assertThat(evilTwinPerm.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).isNotEmpty();
+        assertThat(evilTwinPerm.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).anyMatch(a ->
                 a.getDescription().contains("Destroy target creature with the same name"));
     }
 
@@ -129,8 +130,8 @@ class EvilTwinTest extends BaseCardTest {
 
         // Find the ability index (it may be the only ability or may follow copied abilities)
         int destroyAbilityIndex = -1;
-        for (int i = 0; i < evilTwinPerm.getCard().getActivatedAbilities().size(); i++) {
-            if (evilTwinPerm.getCard().getActivatedAbilities().get(i).getDescription().contains("Destroy target creature with the same name")) {
+        for (int i = 0; i < evilTwinPerm.getCard().getActivatedAbilities(Zone.BATTLEFIELD).size(); i++) {
+            if (evilTwinPerm.getCard().getActivatedAbilities(Zone.BATTLEFIELD).get(i).getDescription().contains("Destroy target creature with the same name")) {
                 destroyAbilityIndex = i;
                 break;
             }
@@ -184,8 +185,8 @@ class EvilTwinTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         int destroyAbilityIndex = -1;
-        for (int i = 0; i < evilTwinPerm.getCard().getActivatedAbilities().size(); i++) {
-            if (evilTwinPerm.getCard().getActivatedAbilities().get(i).getDescription().contains("Destroy target creature with the same name")) {
+        for (int i = 0; i < evilTwinPerm.getCard().getActivatedAbilities(Zone.BATTLEFIELD).size(); i++) {
+            if (evilTwinPerm.getCard().getActivatedAbilities(Zone.BATTLEFIELD).get(i).getDescription().contains("Destroy target creature with the same name")) {
                 destroyAbilityIndex = i;
                 break;
             }

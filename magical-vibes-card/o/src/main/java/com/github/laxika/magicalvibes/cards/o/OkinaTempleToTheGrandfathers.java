@@ -4,9 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -19,8 +18,6 @@ import java.util.List;
 public class OkinaTempleToTheGrandfathers extends Card {
 
     public OkinaTempleToTheGrandfathers() {
-        // {T}: Add {G}.
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
 
         // {G}, {T}: Target legendary creature gets +1/+1 until end of turn.
         addActivatedAbility(new ActivatedAbility(
@@ -36,5 +33,7 @@ public class OkinaTempleToTheGrandfathers extends Card {
                         "Target must be a legendary creature"
                 )
         ));
+        // {T}: Add {G}.
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
     }
 }

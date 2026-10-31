@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
@@ -24,7 +25,7 @@ public class SalvageTitan extends Card {
                 new SacrificePermanentsCost(3, new PermanentIsArtifactPredicate()))));
 
         // Exile three artifact cards from your graveyard: Return this card from your graveyard to your hand.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 null,
                 List.of(new ExileNCardsFromGraveyardCost(3, CardType.ARTIFACT),

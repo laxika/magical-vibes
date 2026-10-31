@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler;
@@ -66,7 +67,7 @@ public class RemoveTimeCounterFromPermanentOrSuspendedCardCostHandler {
      */
     private static boolean hasSuspendTimeCounters(GameData gameData, ExiledCardEntry entry) {
         return !gameData.exiledCardsWithNonSuspendTimeCounters.contains(entry.card().getId())
-                || entry.card().getHandActivatedAbilities().stream()
+                || entry.card().getActivatedAbilities(Zone.HAND).stream()
                 .anyMatch(ActivatedAbility::isSuspendsSourceFromHand);
     }
 

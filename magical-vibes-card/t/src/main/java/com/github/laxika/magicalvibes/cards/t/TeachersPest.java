@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -19,7 +20,7 @@ public class TeachersPest extends Card {
         addEffect(EffectSlot.ON_ATTACK, new GainLifeEffect(1));
 
         // {B}{G}: Return this card from your graveyard to the battlefield tapped.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{B}{G}",
                 List.of(ReturnCardFromGraveyardEffect.builder()

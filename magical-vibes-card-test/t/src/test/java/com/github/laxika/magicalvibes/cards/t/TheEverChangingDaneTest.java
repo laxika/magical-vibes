@@ -90,7 +90,7 @@ class TheEverChangingDaneTest extends BaseCardTest {
         assertThat(copy.getCard().getName()).isEqualTo("Llanowar Elves");
 
         addCreatureReady(player1, new GrizzlyBears());
-        harness.activateAbility(player1, battlefieldIndex(copy), null, null);
+        harness.activateAbility(player1, battlefieldIndex(copy), 1, null, null);
         harness.passBothPriorities();
         assertThat(copy.getCard().getName()).isEqualTo("Grizzly Bears");
     }

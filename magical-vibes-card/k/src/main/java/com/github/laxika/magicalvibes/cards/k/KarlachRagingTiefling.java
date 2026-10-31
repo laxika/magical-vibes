@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -57,7 +58,7 @@ public class KarlachRagingTiefling extends Card {
 
     private void addSpecializeAbility(CardColor color, CardSubtype basicLandType) {
         addActivatedAbility(createSpecializeAbility(color, basicLandType));
-        addGraveyardActivatedAbility(createSpecializeAbility(color, basicLandType));
+        addActivatedAbility(AbilityZones.GRAVEYARD, createSpecializeAbility(color, basicLandType));
     }
 
     private static ActivatedAbility createSpecializeAbility(CardColor color, CardSubtype basicLandType) {

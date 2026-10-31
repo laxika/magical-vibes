@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.l.LivingLands;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -121,7 +122,7 @@ class GauntletsOfChaosTest extends BaseCardTest {
         Permanent nonMatching = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         ValidTargetsResponse response = harness.getValidTargetService().computeValidTargetsForAbility(
-                gd, gauntlets.getCard(), gauntlets.getCard().getActivatedAbilities().getFirst(),
+                gd, gauntlets.getCard(), gauntlets.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst(),
                 player1.getId(), 0, List.of(own.getId()));
 
         assertThat(response.validPermanentIds())

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -26,7 +27,7 @@ public class ReassemblingSkeleton extends Card {
 
     public ReassemblingSkeleton() {
         // {1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{1}{B}",
                 List.of(ReturnCardFromGraveyardEffect.builder()

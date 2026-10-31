@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -24,7 +25,7 @@ public class AncestralVision extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         )).addSpellEffect(new DrawCardForTargetPlayerEffect(3, false, true));
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{U}",
                 List.of(),

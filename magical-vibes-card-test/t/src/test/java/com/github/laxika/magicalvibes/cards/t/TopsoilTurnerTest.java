@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IronrootTreefolk;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -69,9 +70,11 @@ class TopsoilTurnerTest extends BaseCardTest {
         Permanent unaffected = harness.enterBattlefieldAndReturn(player1, departed);
         Permanent opponentPermanent = harness.enterBattlefieldAndReturn(player2, opponent);
 
-        assertThat(gs.getEffectiveActivatedAbilities(gd, existing)).isEmpty();
-        assertThat(gs.getEffectiveActivatedAbilities(gd, unaffected)).isEmpty();
-        assertThat(gs.getEffectiveActivatedAbilities(gd, opponentPermanent)).isEmpty();
+        // Only each Forest's own mana ability (CR 305.6).
+        assertThat(gs.getEffectiveActivatedAbilities(gd, existing)).containsExactly(ManaAbilities.intrinsic(ManaColor.GREEN));
+        assertThat(gs.getEffectiveActivatedAbilities(gd, unaffected)).containsExactly(ManaAbilities.intrinsic(ManaColor.GREEN));
+        assertThat(gs.getEffectiveActivatedAbilities(gd, opponentPermanent))
+                .containsExactly(ManaAbilities.intrinsic(ManaColor.GREEN));
         harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(affected), null, null);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
@@ -132,7 +135,7 @@ class TopsoilTurnerTest extends BaseCardTest {
         harness.playLand(player1, 0);
         Permanent permanent = gd.playerBattlefields.get(player1.getId()).getLast();
 
-        assertThat(gs.getEffectiveActivatedAbilities(gd, permanent)).isEmpty();
+        assertThat(gs.getEffectiveActivatedAbilities(gd, permanent)).containsExactly(ManaAbilities.intrinsic(ManaColor.GREEN));
         harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(permanent));
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }

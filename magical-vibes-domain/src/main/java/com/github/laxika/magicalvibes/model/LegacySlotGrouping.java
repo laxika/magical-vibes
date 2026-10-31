@@ -23,11 +23,9 @@ enum LegacySlotGrouping {
     ALL_BUT_INDEPENDENT;
 
     private static final Set<EffectSlot> ALL_SLOTS = EnumSet.of(
-            EffectSlot.ON_TAP,
             EffectSlot.ON_SELF_TAPPED_FOR_MANA,
             EffectSlot.ON_ENCHANTED_PLAYER_CREATURE_ENTERS_BATTLEFIELD,
             EffectSlot.ON_ENCHANTED_PLAYER_LAND_ENTERS_BATTLEFIELD,
-            EffectSlot.ON_SACRIFICE,
             EffectSlot.ON_BLOCK,
             EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,
             EffectSlot.ON_SELF_CYCLED,

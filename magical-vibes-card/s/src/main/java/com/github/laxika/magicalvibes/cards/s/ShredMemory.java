@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +19,7 @@ public class ShredMemory extends Card {
     public ShredMemory() {
         addSpellEffect(new ExileCardsFromGraveyardEffect(4, 0, true));
 
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{1}{B}{B}",
                 List.of(new SearchLibraryEffect(null, LibrarySearchDestination.HAND,

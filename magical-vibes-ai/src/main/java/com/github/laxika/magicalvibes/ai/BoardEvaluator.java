@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.RemovalKind;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -399,7 +400,7 @@ public class BoardEvaluator {
      */
     private double activatedAbilityThreat(GameData gameData, Permanent perm, UUID controllerId) {
         double bonus = 0;
-        for (ActivatedAbility ability : perm.getCard().getActivatedAbilities()) {
+        for (ActivatedAbility ability : perm.getCard().getActivatedAbilities(Zone.BATTLEFIELD)) {
             for (CardEffect effect : ability.getEffects()) {
                 if (effect instanceof CostEffect) continue;
                 if (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures()) {
@@ -659,8 +660,7 @@ public class BoardEvaluator {
         if (perm.getCard().hasType(CardType.LAND)) {
             return true;
         }
-        return perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                .anyMatch(ManaProducingEffect.class::isInstance);
+        return PotentialManaService.hasFreeTapManaAbility(perm.getCard());
     }
 
     /**

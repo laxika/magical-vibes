@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetArtifactUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -54,7 +55,7 @@ public class BecomeCopyOfTargetArtifactUntilEndOfTurnEffectHandler implements No
         BecomeCopyOfTargetArtifactUntilEndOfTurnEffect copyEffect =
                 (BecomeCopyOfTargetArtifactUntilEndOfTurnEffect) effect;
         List<ActivatedAbility> retainedAbilities = copyEffect.retainsAbility()
-                ? source.getOriginalCard().getActivatedAbilities().stream()
+                ? source.getOriginalCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                 .filter(ability -> ability.getEffects().stream()
                         .anyMatch(candidate -> candidate instanceof BecomeCopyOfTargetArtifactUntilEndOfTurnEffect retained
                                 && retained.retainsAbility()))

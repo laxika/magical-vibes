@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +29,7 @@ class MasterworkOfIngenuityTest extends BaseCardTest {
 
         Permanent copy = findCopy(source);
         assertThat(copy.getCard().getName()).isEqualTo("Bonesplitter");
-        assertThat(copy.getCard().getActivatedAbilities()).hasSize(1);
+        assertThat(copy.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(1);
 
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -52,7 +53,7 @@ class MasterworkOfIngenuityTest extends BaseCardTest {
 
         Permanent entered = findCopy(source);
         assertThat(entered.getCard().getName()).isEqualTo("Masterwork of Ingenuity");
-        assertThat(entered.getCard().getActivatedAbilities()).isEmpty();
+        assertThat(entered.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).isEmpty();
     }
 
     @Test

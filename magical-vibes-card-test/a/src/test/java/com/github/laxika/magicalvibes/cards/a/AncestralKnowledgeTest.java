@@ -134,7 +134,7 @@ class AncestralKnowledgeTest extends BaseCardTest {
         Permanent knowledge = harness.addToBattlefieldAndReturn(player1, new AncestralKnowledge());
 
         harness.addToBattlefield(player2, new AuraOfSilence());
-        harness.sacrificePermanent(player2, 0, knowledge.getId());
+        harness.activateAbility(player2, 0, null, knowledge.getId());
         harness.passBothPriorities(); // Aura of Silence's ability
         harness.passBothPriorities(); // leaves-the-battlefield shuffle trigger
 
@@ -275,7 +275,7 @@ class AncestralKnowledgeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.addToBattlefield(player1, new AuraOfSilence());
 
-        harness.sacrificePermanent(player1, 1,
+        harness.activateAbility(player1, 1, null,
                 harness.getPermanentId(player1, "Ancestral Knowledge"));
         harness.passBothPriorities();
         harness.passBothPriorities();

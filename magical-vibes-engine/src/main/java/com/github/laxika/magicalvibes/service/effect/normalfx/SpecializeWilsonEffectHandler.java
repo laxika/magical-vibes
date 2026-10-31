@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.cards.w.WilsonBearComrade;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -49,7 +50,7 @@ public class SpecializeWilsonEffectHandler implements NormalEffectHandlerBean {
         if (specialize.color() == CardColor.BLUE) {
             specialized.addStaticEffect(new CantBeBlockedEffect());
         }
-        specialized.addGraveyardActivatedAbility(
+        specialized.addActivatedAbility(AbilityZones.GRAVEYARD,
                 WilsonBearComrade.graveyardAbility(specialize.color()));
         source.exchangeCard(specialized);
     }

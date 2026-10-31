@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -26,7 +27,7 @@ public class RusticClachan extends Card {
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));
 
         // Reinforce 1—{1}{W} ({1}{W}, Discard this card: Put a +1/+1 counter on target creature.)
-        addHandActivatedAbility(new ActivatedAbility(false, "{1}{W}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}{W}",
                 List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
                 "Reinforce 1—{1}{W} ({1}{W}, Discard this card: Put a +1/+1 counter on target creature.)",
                 TargetFilters.creature()));

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -21,7 +22,7 @@ public class KamiOfBambooGroves extends Card {
                 new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.LAND), "land", true),
                 "Put a land card from your hand onto the battlefield tapped?"));
 
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{2}{G}",
                 List.of(SequenceEffect.of(

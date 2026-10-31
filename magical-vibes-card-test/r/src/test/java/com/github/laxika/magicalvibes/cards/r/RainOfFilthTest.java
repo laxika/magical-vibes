@@ -54,7 +54,7 @@ class RainOfFilthTest extends BaseCardTest {
         harness.castFromHand(player1, new RainOfFilth(), "{B}");
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -79,7 +79,7 @@ class RainOfFilthTest extends BaseCardTest {
         Permanent laterForest = harness.addToBattlefieldAndReturn(player1, new Forest());
         int laterForestIndex = gd.playerBattlefields.get(player1.getId()).indexOf(laterForest);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, laterForestIndex, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, laterForestIndex, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.activateAbility(player1, 0, 0, null, null);
@@ -148,7 +148,7 @@ class RainOfFilthTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Forest");
         harness.assertNotInGraveyard(player1, "Forest");

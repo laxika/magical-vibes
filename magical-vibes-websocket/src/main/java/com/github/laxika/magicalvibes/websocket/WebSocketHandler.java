@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.networking.message.ActivateExiledAbilityRe
 import com.github.laxika.magicalvibes.networking.message.RevealSecretMissionRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateHandAbilityRequest;
-import com.github.laxika.magicalvibes.networking.message.SacrificePermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.SetAutoStopsRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
@@ -110,7 +109,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 case BOTTOM_CARDS -> messageHandler.handleBottomCards(connection, objectMapper.treeToValue(jsonNode, BottomCardsRequest.class));
                 case PLAY_CARD -> messageHandler.handlePlayCard(connection, objectMapper.treeToValue(jsonNode, PlayCardRequest.class));
                 case TAP_PERMANENT -> messageHandler.handleTapPermanent(connection, objectMapper.treeToValue(jsonNode, TapPermanentRequest.class));
-                case SACRIFICE_PERMANENT -> messageHandler.handleSacrificePermanent(connection, objectMapper.treeToValue(jsonNode, SacrificePermanentRequest.class));
                 case ACTIVATE_ABILITY -> messageHandler.handleActivateAbility(connection, objectMapper.treeToValue(jsonNode, ActivateAbilityRequest.class));
                 case ACTIVATE_EXILED_ABILITY -> messageHandler.handleActivateExiledAbility(connection, objectMapper.treeToValue(jsonNode, ActivateExiledAbilityRequest.class));
                 case ACTIVATE_GRAVEYARD_ABILITY -> messageHandler.handleActivateGraveyardAbility(connection, objectMapper.treeToValue(jsonNode, ActivateGraveyardAbilityRequest.class));

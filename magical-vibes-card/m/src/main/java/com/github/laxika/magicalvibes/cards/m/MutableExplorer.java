@@ -6,10 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
@@ -33,13 +32,13 @@ public class MutableExplorer extends Card {
                 Set.of(),
                 false,
                 true,
-                List.of(LegacySlots.triggered(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS))),
+                List.of(),
                 List.of(new ActivatedAbility(
                         false,
                         "{1}",
                         List.of(new AnimatePermanentsEffect(2, 2, List.of(), Set.of(Keyword.CHANGELING))),
                         "{1}: This token becomes a 2/2 creature with all creature types until end of turn. It's still a land."
-                )),
+                ), ManaAbilities.tapFor(ManaColor.COLORLESS)),
                 false,
                 false,
                 false,

@@ -174,9 +174,6 @@ public class EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEf
             }
         }
         original.getActivatedAbilities().forEach(copy::addActivatedAbility);
-        original.getGraveyardActivatedAbilities().forEach(copy::addGraveyardActivatedAbility);
-        original.getHandActivatedAbilities().forEach(copy::addHandActivatedAbility);
-        original.getStackActivatedAbilities().forEach(copy::addStackActivatedAbility);
         copy.copyTargetingFrom(original);
         return copy;
     }

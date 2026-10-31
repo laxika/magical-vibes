@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -69,7 +70,7 @@ class EyesOfGitaxiasTest extends BaseCardTest {
         assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, incubator)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, incubator)).isEqualTo(3);
-        assertThat(incubator.getCard().getActivatedAbilities()).isEmpty();
+        assertThat(incubator.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(incubator);
     }
 }

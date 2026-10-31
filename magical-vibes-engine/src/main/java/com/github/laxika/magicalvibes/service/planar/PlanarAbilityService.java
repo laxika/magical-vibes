@@ -59,7 +59,7 @@ public class PlanarAbilityService {
     }
 
     public ActivatedAbility ability(PlanarObject source, int index) {
-        List<ActivatedAbility> abilities = source.getCard().getActivatedAbilities();
+        List<ActivatedAbility> abilities = source.getCard().getActivatedAbilities(Zone.BATTLEFIELD);
         if (index < 0 || index >= abilities.size()) throw new IllegalArgumentException("Invalid ability index");
         return abilities.get(index);
     }

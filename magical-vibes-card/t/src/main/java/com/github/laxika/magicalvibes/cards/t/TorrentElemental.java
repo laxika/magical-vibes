@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -24,6 +25,6 @@ public class TorrentElemental extends Card {
                 "{3}{B/G}{B/G}",
                 List.of(new ReturnSourceCardFromExileToBattlefieldEffect(true)),
                 "{3}{B/G}{B/G}: Put this card from exile onto the battlefield tapped. Activate only as a sorcery.",
-                ActivationTimingRestriction.SORCERY_SPEED).withExileOnly());
+                ActivationTimingRestriction.SORCERY_SPEED).withZones(AbilityZones.EXILE));
     }
 }

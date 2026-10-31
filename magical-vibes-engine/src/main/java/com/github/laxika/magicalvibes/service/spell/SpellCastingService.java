@@ -16622,7 +16622,7 @@ public class SpellCastingService {
                     playerId,
                     sourceCard.getName() + "'s ability",
                     List.of(new GrantSourceActivatedAbilitiesUntilEndOfTurnEffect(
-                            new ArrayList<>(castCard.getActivatedAbilities()),
+                            new ArrayList<>(castCard.getActivatedAbilities(Zone.BATTLEFIELD)),
                             castCard.getName())),
                     0,
                     null,

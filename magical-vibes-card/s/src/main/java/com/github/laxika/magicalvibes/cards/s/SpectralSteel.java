@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -33,7 +34,7 @@ public class SpectralSteel extends Card {
                         new CardSubtypePredicate(CardSubtype.AURA),
                         new CardSubtypePredicate(CardSubtype.EQUIPMENT))),
                 new CardNotPredicate(new CardIsSelfPredicate())));
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{1}{W}",
                 List.of(

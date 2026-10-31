@@ -84,7 +84,7 @@ class BurningAngerTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new BurningAnger());
         aura.setAttachedTo(elves.getId());
 
-        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);

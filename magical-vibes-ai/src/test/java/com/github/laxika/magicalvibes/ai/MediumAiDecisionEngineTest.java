@@ -161,7 +161,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -202,7 +201,7 @@ class MediumAiDecisionEngineTest {
 
     private void giveAiPlains(int count) {
         for (int i = 0; i < count; i++) {
-            Permanent plains = new Permanent(new Plains());
+            Permanent plains = new Permanent(plains());
             plains.setSummoningSick(false);
             gd.playerBattlefields.get(aiPlayer.getId()).add(plains);
         }
@@ -1797,7 +1796,7 @@ class MediumAiDecisionEngineTest {
             mockGd.playerHands.get(mockAiPlayer.getId()).add(creature);
 
             // Add an untapped Plains so AI needs to tap it for mana
-            Permanent land = new Permanent(new Plains());
+            Permanent land = new Permanent(plains());
             land.setSummoningSick(false);
             mockGd.playerBattlefields.get(mockAiPlayer.getId()).add(land);
 
@@ -1808,12 +1807,12 @@ class MediumAiDecisionEngineTest {
             Mockito.doAnswer(inv -> {
                 mockGd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
                 return null;
-            }).when(mockMessageHandler).handleTapPermanent(any());
+            }).when(mockMessageHandler).handleActivateAbility(any());
 
             createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
             // AI should have tapped but NOT cast the spell or passed priority
-            verify(mockMessageHandler).handleTapPermanent(any());
+            verify(mockMessageHandler).handleActivateAbility(any());
             verify(mockMessageHandler, never()).handlePlayCard(any());
             verify(mockMessageHandler, never()).handlePassPriority(any());
         }
@@ -1829,7 +1828,7 @@ class MediumAiDecisionEngineTest {
             creature.setToughness(2);
             mockGd.playerHands.get(mockAiPlayer.getId()).add(creature);
 
-            Permanent land = new Permanent(new Plains());
+            Permanent land = new Permanent(plains());
             land.setSummoningSick(false);
             mockGd.playerBattlefields.get(mockAiPlayer.getId()).add(land);
 
@@ -1838,11 +1837,11 @@ class MediumAiDecisionEngineTest {
                 mockGd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature,
                         mockAiPlayer.getId(), "Test trigger", List.of()));
                 return null;
-            }).when(mockMessageHandler).handleTapPermanent(any());
+            }).when(mockMessageHandler).handleActivateAbility(any());
 
             createEngine().handleEvent(AiDecisionKind.GAME_STATE);
 
-            verify(mockMessageHandler).handleTapPermanent(any());
+            verify(mockMessageHandler).handleActivateAbility(any());
             verify(mockMessageHandler, never()).handlePlayCard(any());
             verify(mockMessageHandler, never()).handlePassPriority(any());
         }
@@ -2812,4 +2811,15 @@ class MediumAiDecisionEngineTest {
         assertThat(gd.stack).isEmpty();
     }
 
+
+    /**
+     * A Plains whose land type is set here: these mock-wired tests load no oracle data, and a land's mana ability
+     * comes from its basic land type (CR 305.6).
+     */
+    private static Card plains() {
+        Card plains = new Plains();
+        plains.setType(CardType.LAND);
+        plains.setSubtypes(List.of(CardSubtype.PLAINS));
+        return plains;
+    }
 }

@@ -5,10 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -34,8 +33,6 @@ import java.util.Set;
 public class MishrasFactory extends Card {
 
     public MishrasFactory() {
-        // {T}: Add {C}.
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
         // {1}: This land becomes a 2/2 Assembly-Worker artifact creature until end of turn. It's still a land.
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -61,5 +58,7 @@ public class MishrasFactory extends Card {
                         "Target must be an Assembly-Worker creature"
                 )
         ));
+        // {T}: Add {C}.
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
     }
 }

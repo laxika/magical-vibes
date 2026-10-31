@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -23,7 +24,7 @@ public class DespoilerOfSouls extends Card {
 
         // {B}{B}, Exile two other creature cards from your graveyard: Return this card from your
         // graveyard to the battlefield.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{B}{B}",
                 List.of(new ExileNCardsFromGraveyardCost(2, CardType.CREATURE,

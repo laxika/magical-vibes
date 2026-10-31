@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainAbilitiesOfLastChosenExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -20,7 +21,6 @@ import java.util.Set;
 public class GainAbilitiesOfLastChosenExiledCardSelfEffectHandler implements StaticEffectHandlerBean {
 
     private static final Set<EffectSlot> NON_ABILITY_SLOTS = EnumSet.of(
-            EffectSlot.ON_TAP,
             EffectSlot.MAY_SKIP_DRAW_STEP_DRAW,
             EffectSlot.GRAVEYARD_DRAW_REPLACEMENT,
             EffectSlot.MULLIGAN_ACTION,
@@ -46,15 +46,9 @@ public class GainAbilitiesOfLastChosenExiledCardSelfEffectHandler implements Sta
         }
 
         String link = "gained:" + chosenCard.getId();
-        for (ActivatedAbility ability : chosenCard.getActivatedAbilities()) {
+        for (ActivatedAbility ability : ManaAbilities.withIntrinsic(chosenCard)) {
             accumulator.addActivatedAbility(ability.withEffects(ability.getEffects().stream()
                     .map(gainedEffect -> linkGainedEffect(gainedEffect, link)).toList()));
-        }
-
-        var onTapEffects = chosenCard.getEffects(EffectSlot.ON_TAP);
-        if (!onTapEffects.isEmpty()) {
-            accumulator.addActivatedAbility(new ActivatedAbility(
-                    true, null, onTapEffects, "{T}: Add mana."));
         }
 
         for (EffectSlot slot : EffectSlot.values()) {

@@ -27,7 +27,6 @@ export enum MessageType {
   BOTTOM_CARDS = 'BOTTOM_CARDS',
   PLAY_CARD = 'PLAY_CARD',
   TAP_PERMANENT = 'TAP_PERMANENT',
-  SACRIFICE_PERMANENT = 'SACRIFICE_PERMANENT',
   SET_AUTO_STOPS = 'SET_AUTO_STOPS',
   DECLARE_ATTACKERS = 'DECLARE_ATTACKERS',
   DECLARE_BLOCKERS = 'DECLARE_BLOCKERS',
@@ -171,7 +170,6 @@ export interface Card {
   power: number | null;
   toughness: number | null;
   keywords: string[];
-  hasTapAbility: boolean;
   setCode: string | null;
   collectorNumber: string | null;
   color: string | null;

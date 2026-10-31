@@ -17,7 +17,6 @@ export function browseInfoToCard(info: BrowseCardInfo): Card {
     power: powerNum,
     toughness: toughnessNum,
     keywords: info.keywords ?? [],
-    hasTapAbility: false,
     setCode: info.setCode,
     collectorNumber: info.collectorNumber,
     color: info.color,

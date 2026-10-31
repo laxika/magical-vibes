@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
@@ -122,7 +123,7 @@ class LodestoneBaubleTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentIsland));
 
         ValidTargetsResponse response = harness.getValidTargetService().computeValidTargetsForAbility(
-                gd, bauble.getCard(), bauble.getCard().getActivatedAbilities().getFirst(),
+                gd, bauble.getCard(), bauble.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst(),
                 player1.getId(), baubleIndex(bauble));
 
         assertThat(response.validGraveyardCardIds())
@@ -137,7 +138,7 @@ class LodestoneBaubleTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(forest));
 
         ValidTargetsResponse response = harness.getValidTargetService().computeValidTargetsForAbility(
-                gd, bauble.getCard(), bauble.getCard().getActivatedAbilities().getFirst(),
+                gd, bauble.getCard(), bauble.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst(),
                 player1.getId(), baubleIndex(bauble));
 
         SoftAssertions softly = new SoftAssertions();

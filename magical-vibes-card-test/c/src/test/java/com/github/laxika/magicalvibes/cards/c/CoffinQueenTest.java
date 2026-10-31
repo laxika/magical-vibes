@@ -125,7 +125,7 @@ class CoffinQueenTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentFanatic));
 
         ValidTargetsResponse response = harness.getValidTargetService().computeValidTargetsForAbility(
-                gd, queen.getCard(), queen.getCard().getActivatedAbilities().getFirst(),
+                gd, queen.getCard(), queen.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst(),
                 player1.getId(), gd.playerBattlefields.get(player1.getId()).indexOf(queen));
 
         assertThat(response.validGraveyardCardIds())

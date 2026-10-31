@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -19,8 +18,6 @@ public class MemorialToWar extends Card {
     public MemorialToWar() {
         // Memorial to War enters the battlefield tapped.
         addStaticEffect(new EntersTappedEffect());
-        // {T}: Add {R}.
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.RED));
         // {4}{R}, {T}, Sacrifice Memorial to War: Destroy target land.
         addActivatedAbility(new ActivatedAbility(
                 true,
@@ -29,5 +26,7 @@ public class MemorialToWar extends Card {
                 "{4}{R}, {T}, Sacrifice Memorial to War: Destroy target land.",
                 TargetFilters.land()
         ));
+        // {T}: Add {R}.
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));
     }
 }

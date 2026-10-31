@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Ability;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.HeadlessSimulationContext;
@@ -37,7 +38,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalKind;
@@ -3363,8 +3363,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
         long manaSourceCount = aiBattlefield.stream()
                 .filter(p -> p.getCard().hasType(CardType.LAND)
-                        || p.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                                .anyMatch(e -> e instanceof ManaProducingEffect))
+                        || PotentialManaService.hasFreeTapManaAbility(p.getCard()))
                 .count();
 
         List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());

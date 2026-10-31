@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -41,7 +42,7 @@ public class CreateTokenCardsInGraveyardEffectHandler implements NormalEffectHan
             tokenCard.setOwnerId(entry.getControllerId());
             tokenCard.setTokenCard(true);
             for (var ability : create.graveyardActivatedAbilities()) {
-                tokenCard.addGraveyardActivatedAbility(ability);
+                tokenCard.addActivatedAbility(AbilityZones.GRAVEYARD, ability);
             }
             tokenCard.freeze();
             graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), tokenCard);

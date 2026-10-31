@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -117,7 +118,7 @@ class JinnieFayJetmirsSecondTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
         assertThat(findPermanents(player1, "Dog")).hasSize(2).allSatisfy(dog -> {
-            assertThat(dog.getCard().getActivatedAbilities()).isEmpty();
+            assertThat(dog.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).isEmpty();
             assertThat(dog.getCard().hasType(CardType.ARTIFACT)).isFalse();
         });
     }

@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -148,12 +149,12 @@ class PermanentViewFactoryTest {
     }
 
     @Test
-    @DisplayName("Losing all abilities removes the card's own keywords, activated abilities and tap ability")
+    @DisplayName("Losing all abilities removes the card's own keywords and activated abilities, mana abilities included")
     void losesAllAbilitiesStripsPrintedAbilities() {
         Card printed = card("Llanowar Elves", CardType.CREATURE);
         printed.setKeywords(Set.of(Keyword.FLYING));
-        printed.addEffect(EffectSlot.ON_TAP, new DrawCardEffect());
-        printed.getActivatedAbilities().add(
+        printed.addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
+        printed.addActivatedAbility(
                 new ActivatedAbility(true, "{0}", List.of(new DrawCardEffect()), "{T}: Draw a card."));
         Permanent creature = new Permanent(printed);
 
@@ -162,7 +163,6 @@ class PermanentViewFactoryTest {
 
         assertThat(view.removedKeywords()).contains(Keyword.FLYING);
         assertThat(view.card().activatedAbilities()).isEmpty();
-        assertThat(view.card().hasTapAbility()).isFalse();
     }
 
     @Test
@@ -170,8 +170,8 @@ class PermanentViewFactoryTest {
     void lostActivatedAbilityIsNotListed() {
         Card printed = card("Great Fang Chroniclers", CardType.CREATURE);
         ActivatedAbility conjure = new ActivatedAbility(false, "{3}{G}", List.of(new DrawCardEffect()), "Conjure.");
-        printed.getActivatedAbilities().add(conjure);
-        printed.getActivatedAbilities().add(
+        printed.addActivatedAbility(conjure);
+        printed.addActivatedAbility(
                 new ActivatedAbility(true, "{0}", List.of(new DrawCardEffect()), "{T}: Draw a card."));
         Permanent creature = new Permanent(printed);
         creature.loseActivatedAbility(conjure);
@@ -189,11 +189,11 @@ class PermanentViewFactoryTest {
     void lostActivatedAbilityDoesNotHideCopiedCardsAbility() {
         Card printed = card("Great Fang Chroniclers", CardType.CREATURE);
         ActivatedAbility conjure = new ActivatedAbility(false, "{3}{G}", List.of(new DrawCardEffect()), "Conjure.");
-        printed.getActivatedAbilities().add(conjure);
+        printed.addActivatedAbility(conjure);
         Permanent creature = new Permanent(printed);
         creature.loseActivatedAbility(conjure);
         Card copied = card("Prodigal Pyromancer", CardType.CREATURE);
-        copied.getActivatedAbilities().add(
+        copied.addActivatedAbility(
                 new ActivatedAbility(true, null, List.of(new DrawCardEffect()), "{T}: Ping."));
 
         creature.setCard(copied);

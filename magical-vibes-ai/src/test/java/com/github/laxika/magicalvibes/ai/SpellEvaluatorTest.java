@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayMatchingCardsFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -1508,7 +1509,7 @@ class SpellEvaluatorTest {
         gd.playerBattlefields.get(player2.getId()).add(elves);
 
         double value = spellEvaluator.evaluateActivatedAbility(
-                gd, rod.getCard().getActivatedAbilities().getFirst(), rod, player1.getId());
+                gd, rod.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst(), rod, player1.getId());
 
         assertThat(value).isGreaterThan(0.0);
     }
@@ -1525,9 +1526,9 @@ class SpellEvaluatorTest {
         gd.playerBattlefields.get(player2.getId()).add(elemental);
 
         double withSacrifice = spellEvaluator.evaluateActivatedAbility(
-                gd, fanatic.getCard().getActivatedAbilities().getFirst(), fanatic, player1.getId());
+                gd, fanatic.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst(), fanatic, player1.getId());
         double effectsAlone = spellEvaluator.evaluateAbilityEffects(
-                gd, fanatic.getCard().getActivatedAbilities().getFirst().getEffects(), player1.getId());
+                gd, fanatic.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst().getEffects(), player1.getId());
 
         // The sacrifice cost is what turns a mildly positive ping into a bad deal.
         assertThat(withSacrifice).isLessThan(effectsAlone);
@@ -1540,7 +1541,7 @@ class SpellEvaluatorTest {
         Permanent vampire = new Permanent(new BloodthroneVampire());
         vampire.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(vampire);
-        ActivatedAbility ability = vampire.getCard().getActivatedAbilities().getFirst();
+        ActivatedAbility ability = vampire.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst();
 
         assertThat(spellEvaluator.sacrificeCostConsumesOnlyBeneficiary(gd, ability, vampire, player1.getId()))
                 .isTrue();
@@ -1554,7 +1555,7 @@ class SpellEvaluatorTest {
         Permanent vampire = new Permanent(new BloodthroneVampire());
         vampire.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(vampire);
-        ActivatedAbility ability = vampire.getCard().getActivatedAbilities().getFirst();
+        ActivatedAbility ability = vampire.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst();
 
         // Worth more than the Vampire, but the AI sacrifices it rather than the outlet itself
         Permanent angel = new Permanent(new SerraAngel());

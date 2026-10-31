@@ -108,9 +108,9 @@ class UnbridledGrowthTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Unbridled Growth");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.stack).hasSize(1);
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Permanent has no activated ability");
+                .hasMessageContaining("Invalid ability index");
 
         harness.tapPermanent(player1, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);

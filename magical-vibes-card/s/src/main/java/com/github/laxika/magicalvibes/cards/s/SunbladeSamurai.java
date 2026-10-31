@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -20,7 +21,7 @@ import java.util.List;
 public class SunbladeSamurai extends Card {
 
     public SunbladeSamurai() {
-        addHandActivatedAbility(new ActivatedAbility(false, "{2}", List.of(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}", List.of(
                 new SearchLibraryEffect(new CardAllOfPredicate(List.of(
                         new CardSupertypePredicate(CardSupertype.BASIC),
                         new CardTypePredicate(CardType.LAND),

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -19,7 +20,7 @@ public class SkarrgGoliath extends Card {
         // Bloodrush — {5}{G}{G}, Discard this card: Target attacking creature gets
         // +9/+9 and gains trample until end of turn. Discard cost is intrinsic to the
         // hand ability; the engine pays it.
-        addHandActivatedAbility(new ActivatedAbility(false, "{5}{G}{G}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{5}{G}{G}",
                 List.of(new BoostTargetCreatureEffect(9, 9),
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)),
                 "Bloodrush — {5}{G}{G}, Discard this card: Target attacking creature gets +9/+9 and gains trample until end of turn.",

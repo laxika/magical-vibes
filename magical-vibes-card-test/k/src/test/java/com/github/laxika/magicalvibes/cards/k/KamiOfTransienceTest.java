@@ -46,7 +46,7 @@ class KamiOfTransienceTest extends BaseCardTest {
         Permanent kami = harness.addToBattlefieldAndReturn(player1, new KamiOfTransience());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
 
-        harness.sacrificePermanent(player1, 0, artifact.getId());
+        harness.activateAbility(player1, 0, null, artifact.getId());
         harness.passBothPriorities();
 
         harness.setHand(player1, List.of(new Murder()));
@@ -85,7 +85,7 @@ class KamiOfTransienceTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new KamiOfTransience()));
         harness.addToBattlefield(player1, new AuraOfSilence());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
-        harness.sacrificePermanent(player1, 0, artifact.getId());
+        harness.activateAbility(player1, 0, null, artifact.getId());
         harness.passBothPriorities();
 
         advanceToEndStep(player1);
@@ -102,7 +102,7 @@ class KamiOfTransienceTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new KamiOfTransience()));
         harness.addToBattlefield(player2, new AuraOfSilence());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new MindStone());
-        harness.sacrificePermanent(player2, 0, artifact.getId());
+        harness.activateAbility(player2, 0, null, artifact.getId());
         harness.passBothPriorities();
 
         advanceToEndStep(player1);
@@ -152,7 +152,7 @@ class KamiOfTransienceTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(kami));
         harness.addToBattlefield(player1, new AuraOfSilence());
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
-        harness.sacrificePermanent(player1, 0, artifact.getId());
+        harness.activateAbility(player1, 0, null, artifact.getId());
         harness.passBothPriorities();
         advanceToEndStep(player1);
         assertThat(gd.stack).hasSize(1);

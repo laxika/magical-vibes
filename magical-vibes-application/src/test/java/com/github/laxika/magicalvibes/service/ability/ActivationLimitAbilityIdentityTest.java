@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -124,7 +125,7 @@ class ActivationLimitAbilityIdentityTest extends BaseCardTest {
         card.setToughness(1);
         card.addActivatedAbility(new ActivatedAbility(false, null,
                 List.of(new ReturnSourceCardFromExileToBattlefieldEffect(true, false)),
-                "Return this card from exile to the battlefield tapped.").withExileOnly());
+                "Return this card from exile to the battlefield tapped.").withZones(AbilityZones.EXILE));
         card.addActivatedAbility(new ActivatedAbility(false, null,
                 List.of(new GainLifeEffect(2)), "Gain 2 life."));
         Permanent permanent = addCreatureReady(player1, card);

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -37,7 +38,7 @@ public class DinosaursOnASpaceship extends Card {
                         Set.of(Keyword.FLYING, Keyword.HASTE), Set.of(), false, false,
                         List.of(), List.of(), false, false, false, 0, Set.of()));
 
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{3}{R}{W}",
                 List.of(),

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSacrificedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -43,11 +44,11 @@ public class BecomeCopyOfSacrificedPermanentEffectHandler implements NormalEffec
 
         // "except it has this ability" is part of the copiable values once the source has copied something
         // (a Clone of the Dane keeps it), so the retained ability is read from the source's current card.
-        boolean copiedAbilityAlreadyPresent = sacrificed.getCard().getActivatedAbilities().stream()
+        boolean copiedAbilityAlreadyPresent = sacrificed.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                 .anyMatch(BecomeCopyOfSacrificedPermanentEffectHandler::isBecomeCopyAbility);
         List<ActivatedAbility> retainedAbilities = copiedAbilityAlreadyPresent
                 ? List.of()
-                : source.getCard().getActivatedAbilities().stream()
+                : source.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                         .filter(BecomeCopyOfSacrificedPermanentEffectHandler::isBecomeCopyAbility)
                         .toList();
         String originalName = source.getCard().getName();

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -20,7 +21,7 @@ public class DeathlessAncient extends Card {
 
         // Tap three untapped Vampires you control: Return Deathless Ancient
         // from your graveyard to your hand.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false, null,
                 List.of(
                         new TapMultiplePermanentsCost(3, new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)),

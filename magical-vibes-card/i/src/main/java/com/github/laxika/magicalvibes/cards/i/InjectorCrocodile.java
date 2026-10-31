@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -20,7 +21,7 @@ public class InjectorCrocodile extends Card {
     public InjectorCrocodile() {
         addEffect(EffectSlot.ON_DEATH, incubator(3));
 
-        addHandActivatedAbility(new ActivatedAbility(false, "{2}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}",
                 List.of(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.SWAMP))),
                 "Swampcycling {2} ({2}, Discard this card: Search your library for a Swamp card, "
                         + "reveal it, put it into your hand, then shuffle.)"));

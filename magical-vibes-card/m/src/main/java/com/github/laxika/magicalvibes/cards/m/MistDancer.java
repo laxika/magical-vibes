@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -23,7 +24,7 @@ public class MistDancer extends Card {
         addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.FLYING), GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)));
 
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{5}{U}{U}",
                 List.of(

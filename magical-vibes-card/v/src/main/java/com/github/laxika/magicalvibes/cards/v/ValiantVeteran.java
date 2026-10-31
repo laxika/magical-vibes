@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -22,7 +23,7 @@ public class ValiantVeteran extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.SOLDIER)));
 
         // {3}{W}{W}, Exile this card from your graveyard: Put a +1/+1 counter on each Soldier you control.
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{3}{W}{W}",
                 List.of(

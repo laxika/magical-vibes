@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTri
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
 import com.github.laxika.magicalvibes.model.amount.CountersOnGrantingPermanent;
-import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.condition.ActivationCount;
 import com.github.laxika.magicalvibes.model.effect.ActivationCostCardReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.AddNotedManaEffect;
@@ -102,7 +101,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceToHandAtNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAnyNumberOfCardsFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeGrantingPermanentAndControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -1086,9 +1084,9 @@ public class ActivatedAbilityExecutionService {
             }
             // The land-tap watchers of a mana ability that adds its mana only after resolution-time
             // choices (Rhystic Cave) run when that mana is actually added, not when it is activated.
-            // A land whose mana ability is written as an ActivatedAbility (Forbidden Orchard,
-            // Undiscovered Paradise, Cavern of Souls) is still "tapped for mana", so the land-tap
-            // watchers must see it exactly as they see a printed ON_TAP land.
+            // A land whose mana ability is activated (Forbidden Orchard, Undiscovered Paradise,
+            // Cavern of Souls) is "tapped for mana", so the land-tap watchers see it exactly as they
+            // see a land tapped for the mana of its basic land types.
             boolean manaAddedAtResolution = snapshotEffects.stream().anyMatch(
                     com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect.class::isInstance);
             if (!manaTypeChoicePending && !manaAddedAtResolution && ability.isRequiresTap()
@@ -1465,6 +1463,8 @@ public class ActivatedAbilityExecutionService {
                 gameData, permanent, new PermanentHasSubtypePredicate(CardSubtype.DESERT));
         boolean nonTreasureArtifactSource = gameQueryService.isArtifact(gameData, permanent)
                 && !GameQueryService.permanentHasSubtype(permanent, CardSubtype.TREASURE);
+        boolean basicLandSource = permanent.getCard().hasType(CardType.LAND)
+                && gameQueryService.hasEffectiveSupertype(gameData, permanent, CardSupertype.BASIC);
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
         Map<ManaColor, Integer> artifactManaBefore = nonTreasureArtifactSource
                 ? regularManaTotals(manaPool) : null;
@@ -1492,6 +1492,7 @@ public class ActivatedAbilityExecutionService {
                             .withSnowSource(snowSource)
                             .withCaveSource(caveSource)
                             .withDesertSource(desertSource)
+                            .withBasicLandSource(basicLandSource)
                             .withArtifactSource(nonTreasureArtifactSource),
                     false, sharedManaRestriction(snapshotEffects), manaCopyRiders(snapshotEffects));
             landManaReplaced = !(resolution instanceof LandManaReplacementService.Resolution.Unchanged);
@@ -1565,6 +1566,9 @@ public class ActivatedAbilityExecutionService {
                     }
                     if (desertSource) {
                         pool.addDesertManaTag(effectiveColor, amount);
+                    }
+                    if (basicLandSource) {
+                        pool.addBasicLandManaTag(effectiveColor, amount);
                     }
                     if (award.tracksProducingSourceForSpellCastTriggers()
                             || gameQueryService.isArtifact(gameData, permanent)) {

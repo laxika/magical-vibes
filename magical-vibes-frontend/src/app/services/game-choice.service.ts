@@ -596,9 +596,7 @@ export class GameChoiceService {
     const allowTap = this.awaitingXValueChoice || (this.awaitingMayAbility && this.mayAbilityManaCost != null);
     if (!allowTap || perm.tapped) return false;
     if (perm.summoningSick && isPermanentCreature(perm)) return false;
-    // Has ON_TAP mana effects (lands, mana rocks)
-    if (perm.card.hasTapAbility) return true;
-    // Has mana-producing activated ability (e.g., Birds of Paradise)
+    // Has a mana ability (lands, mana creatures, mana rocks)
     return perm.card.activatedAbilities.some(a => a.isManaAbility);
   }
 

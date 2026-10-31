@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -26,7 +27,7 @@ public class WebstrikeElite extends Card {
                         new PermanentIsEnchantmentPredicate())),
                 new PermanentManaValueEqualsXPredicate()));
 
-        addHandActivatedAbility(new ActivatedAbility(false, "{X}{G}{G}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{X}{G}{G}",
                 List.of(new DrawCardEffect(1)),
                 "Cycling {X}{G}{G} ({X}{G}{G}, Discard this card: Draw a card.)",
                 new PermanentPredicateTargetFilter(artifactOrEnchantmentWithManaValueX,

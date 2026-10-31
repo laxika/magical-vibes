@@ -3,11 +3,10 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -22,8 +21,6 @@ import java.util.Set;
 public class Mutavault extends Card {
 
     public Mutavault() {
-        // {T}: Add {C}.
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
         // {1}: This land becomes a 2/2 creature with all creature types until end of turn. It's still a land.
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -31,5 +28,7 @@ public class Mutavault extends Card {
                 List.of(new AnimatePermanentsEffect(2, 2, CardSubtype.creatureTypes(), Set.of())),
                 "{1}: This land becomes a 2/2 creature with all creature types until end of turn. It's still a land."
         ));
+        // {T}: Add {C}.
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
     }
 }

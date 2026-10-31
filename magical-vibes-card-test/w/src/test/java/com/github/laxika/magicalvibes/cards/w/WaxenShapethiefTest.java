@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -72,7 +73,7 @@ class WaxenShapethiefTest extends BaseCardTest {
 
         assertThat(copy).isNotNull();
         assertThat(copy.getCard().getName()).isEqualTo("Jayemdae Tome");
-        assertThat(copy.getCard().getActivatedAbilities()).hasSize(1);
+        assertThat(copy.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(1);
     }
 
     @Test

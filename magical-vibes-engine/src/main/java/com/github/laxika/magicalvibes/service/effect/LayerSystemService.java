@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypesToSelfEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -644,8 +645,8 @@ public class LayerSystemService {
                 }
             }
         }
-        for (var ability : original.getActivatedAbilities()) {
-            boolean alreadyPresent = copy.getActivatedAbilities().stream()
+        for (var ability : original.getActivatedAbilities(Zone.BATTLEFIELD)) {
+            boolean alreadyPresent = copy.getActivatedAbilities(Zone.BATTLEFIELD).stream()
                     .anyMatch(existing -> java.util.Objects.equals(existing.getManaCost(), ability.getManaCost())
                             && java.util.Objects.equals(existing.getDescription(), ability.getDescription())
                             && existing.getEffects().equals(ability.getEffects()));
@@ -1015,10 +1016,10 @@ public class LayerSystemService {
         for (Ability ability : card.getAbilities()) {
             h = mix(h, System.identityHashCode(ability));
         }
-        h = mix(h, card.getActivatedAbilities().size());
-        h = mix(h, card.getGraveyardActivatedAbilities().size());
-        h = mix(h, card.getHandActivatedAbilities().size());
-        h = mix(h, card.getStackActivatedAbilities().size());
+        h = mix(h, card.getActivatedAbilities(Zone.BATTLEFIELD).size());
+        h = mix(h, card.getActivatedAbilities(Zone.GRAVEYARD).size());
+        h = mix(h, card.getActivatedAbilities(Zone.HAND).size());
+        h = mix(h, card.getActivatedAbilities(Zone.STACK).size());
         return h;
     }
 
@@ -3127,7 +3128,7 @@ public class LayerSystemService {
                 continue;
             }
             List<ActivatedAbility> abilities = new ArrayList<>();
-            for (ActivatedAbility ability : source.permanent().getCard().getActivatedAbilities()) {
+            for (ActivatedAbility ability : source.permanent().getCard().getActivatedAbilities(Zone.BATTLEFIELD)) {
                 if (ability.getLoyaltyCost() != null || ability.isVariableLoyaltyCost()) {
                     abilities.add(ability);
                 }

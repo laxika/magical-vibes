@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsExiledWithCageCountersEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -41,13 +41,8 @@ public class GainActivatedAbilitiesOfCardsExiledWithCageCountersSelfEffectHandle
         }
 
         for (Card card : cards) {
-            for (ActivatedAbility ability : card.getActivatedAbilities()) {
+            for (ActivatedAbility ability : ManaAbilities.withIntrinsic(card)) {
                 accumulator.addActivatedAbility(ability.withMaxActivationsPerTurn(1));
-            }
-            List<CardEffect> onTapEffects = card.getEffects(EffectSlot.ON_TAP);
-            if (!onTapEffects.isEmpty()) {
-                accumulator.addActivatedAbility(new ActivatedAbility(
-                        true, null, onTapEffects, "{T}: Add mana.").withMaxActivationsPerTurn(1));
             }
         }
     }

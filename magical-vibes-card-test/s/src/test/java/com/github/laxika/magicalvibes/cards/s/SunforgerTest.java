@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -321,7 +322,7 @@ class SunforgerTest extends BaseCardTest {
 
     private void activateSearch(Player player, int permanentIndex) {
         Permanent source = gd.playerBattlefields.get(player.getId()).get(permanentIndex);
-        var abilities = source.getCard().getActivatedAbilities();
+        var abilities = source.getCard().getActivatedAbilities(Zone.BATTLEFIELD);
         int abilityIndex = java.util.stream.IntStream.range(0, abilities.size())
                 .filter(index -> "{R}{W}".equals(abilities.get(index).getManaCost()))
                 .findFirst().orElse(0);

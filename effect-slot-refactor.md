@@ -20,7 +20,7 @@ re-check them with a grep before acting on them.
 | 4 | Granted, temporary and delayed triggers store abilities | done |
 | 5 | Spell abilities leave the enum | done |
 | 6 | Static abilities leave the enum | done |
-| 7 | Activated and mana abilities in one list | open |
+| 7 | Activated and mana abilities in one list | done |
 | 8 | Replacement effects, special actions and markers leave the enum | open |
 | 9 | Rules events for zone changes, and shadow mode | open |
 | 10 | Trigger index and the generic trigger pipeline | open |
@@ -1617,6 +1617,203 @@ collectors were registered on `STATIC`. They have a new legacy slot,
   - 300 random other converted cards;
   - the converted card tests.
 - The whole build, every card module and every test source compiles. The full card suite was not run here.
+
+### Step 7
+
+`EffectSlot.ON_TAP` and `EffectSlot.ON_SACRIFICE` are gone, and `Card` has one activated ability list. Five
+decisions went beyond the step text:
+
+- the cards' tap-for-mana abilities go through the ordinary mana-ability path, with no marker that keeps the old
+  tap path alive;
+- a land's basic land type gives it its mana ability (CR 305.6, checked), so the basics print none;
+- a converted mana ability is listed after the card's other abilities, which keeps every ability index;
+- the dedicated "sacrifice this" action is deleted;
+- exile-only abilities got a zone too.
+
+**One list, with zones.**
+
+- `ActivatedAbility` has `AbilityZones zones` (CR 113.6, 113.6b, checked), the battlefield by default, with
+  `withZones(AbilityZones)` (fluent, like the other construction-time setters, and copied by `copyWith`) and
+  `functionsIn(Zone)`. `exileOnly` and `withExileOnly()` became `AbilityZones.EXILE`.
+- `Card.activatedAbilities` is one list in the order abilities were added, hidden from Lombok:
+  - `getActivatedAbilities()`: every ability, read-only;
+  - `getActivatedAbilities(Zone)`: those that function in that zone, from a per-zone index built on first use,
+    held in a `volatile` field, dropped by every mutator and shared by copies, like step 3's `SlotIndex`;
+  - `addActivatedAbility(ability)`, `addActivatedAbility(AbilityZones, ability)`, `removeActivatedAbilitiesIf`,
+    `clearActivatedAbilities`.
+- `addGraveyardActivatedAbility`, `addHandActivatedAbility`, `addStackActivatedAbility` and the three getters are
+  gone. The keyword helpers build their abilities with their zone: `unearthAbility`, `embalmAbility` and
+  `scavengeAbility` the graveyard, `ninjutsuAbility` and `addCycling` the hand, so a granted one carries it too.
+- `CardFreezeTest`: 80 → 78 fields (four lists became a list and its index).
+- Three engine handlers edited the old lists through their getters (`ReturnSourceAsAuraEffectHandler`,
+  `LicidBecomeAuraEffectHandler`, the emblem activation in `AbilityActivationService`); they use the mutators.
+
+**Readers.** `scripts/step7-activated-abilities.py --readers` rewrote every reader in the engine, AI, networking,
+application tests and card tests: `getActivatedAbilities()` → `getActivatedAbilities(Zone.BATTLEFIELD)` (what the
+old list held) and the zone getters → `getActivatedAbilities(Zone.X)`. By hand:
+
+- the exile readers (`GameViewProjectionFactory`, `CardViewFactory`, `PermanentViewFactory`, the two exile
+  activations) read `Zone.EXILE`. `AbilityActivationService.getEffectiveActivatedAbilities` reads the battlefield
+  abilities, plus the exile ones while the card is in exile (`printedActivatedAbilities`), the same list and
+  indices as before;
+- the "does it have abilities" scans in `PredicateEvaluationService` that unioned the four lists read the whole
+  list, and `otherZoneActivatedAbilityCount` counts every ability that doesn't function on the battlefield. Both
+  now see exile-only abilities, which the old union missed;
+- `EachOpponentChooses…TokenCopy…` copies the whole list. The other copy paths (`CopySupport`,
+  `TokenCopySupport`, `PermanentCopierService`, `MutationSupport`) copied only the battlefield list and still do;
+  CR 707.2 (checked) would have them copy every ability, which no current card notices.
+
+**Mana abilities (CR 605.1a, checked).** Of the 121 `ON_TAP` cards:
+
+- 107 became `addActivatedAbility(ManaAbilities.tapFor(color))` or the new `tapFor(color, amount)`, the form
+  Tundra and Birds of Paradise already used. `scripts/step7-mana-ability-last.py` then moved the statement after
+  the card's other battlefield abilities in the 62 cards where it came first. The old engine kept `ON_TAP` out of
+  the ability list (and the grant handlers appended it last), so Mutavault's animation is still ability 0 and no
+  index that tests, the AI or the client use moved. Ability order is not a rules concept. A first attempt that
+  kept the printed order broke about 540 tests across the suite for nothing but the index.
+- The twelve whose only tap mana is their basic land type's (the ten basics and snow basics, Dryad Arbor,
+  Gobland; checked against their Scryfall type lines) print no mana ability: the type gives them "{T}: Add
+  [mana]" (CR 305.6, checked). `AbilityActivationService.getEffectiveActivatedAbilities` already added that
+  ability for land types a permanent didn't print; it now adds it for every basic land type, after the printed and
+  granted abilities, unless an equal ability is there (`GameQueryService.missingIntrinsicManaAbilities`, one shared
+  instance per color from `ManaAbilities.intrinsic(color)`). So a Forest's granted abilities keep index 0, and the
+  client sees its mana ability: `GameViewProjectionFactory` appends the same list to the permanent view.
+  `ManaAbilities.intrinsic(card)` and `withIntrinsic(card)` give it for a card off the battlefield (the AI's land
+  evaluation, "has a mana ability" predicates, craft materials, and the handlers that copy the abilities of cards
+  in a graveyard, in exile or on top of the library).
+- Gyre Engineer's two registrations are one ability, "{T}: Add {G}{U}.", and Mutable Explorer's token lists its
+  mana ability after the animation; both by hand.
+
+Every engine, AI and networking reader of `ON_TAP` was deleted or folded into the activated-ability path:
+
+- `AbilityActivationService.tapPermanent` keeps one special path, for a land whose mana comes from its land types:
+  set by an effect (CR 305.7, checked) or its basic land types (CR 305.6, checked). Anything else activates its
+  first plain "{T}: Add …" ability (no other cost, condition or rider), else its first {T} mana ability, so Great
+  Hall of the Biblioplex and Rootrider Faun still tap for their plain mana rather than a costed or filtered one. A Forest therefore taps for {G} through its type, as before. The single-type branch now
+  produces through the same code the `ON_TAP` loop used (snow, cave, desert, artifact and effective-color tags),
+  so a nonbasic land with one basic land type and no `ON_TAP` (Murmuring Bosk) gets those tags too.
+- `tapForeignLandForMana` (Piracy) treats basic land types like set ones. A Tundra under Piracy now offers {W} or
+  {U}; before, it activated its first mana ability.
+- `ActivatedAbilityExecutionService.doResolveManaAbility` tags mana from a basic land as basic land mana and passes
+  the flag to the land-mana replacements, as the `ON_TAP` path did. Wastes and Snow-Covered Wastes, which have no
+  basic land type, use this path now.
+- `PotentialManaService`: the `ON_TAP` branches, `hasLivePrintedTapMana` and `hasOnTapManaEffects` are gone; the
+  intrinsic and activated branches produce the same pools. `hasFreeTapManaAbility(Card)` is new, for the AI.
+- `LandTapTriggerCollectorService`: the fallbacks for a tap that reports no colors read the land card's basic land
+  types (`intrinsicManaColors`), which is what `ON_TAP` held for the cards that ever reached them. One handler used
+  to union the produced colors with the land's `ON_TAP` colors; it now falls back only when none were reported.
+  Reading every printed {T} mana ability there was tried and gave Gaea's Cradle, tapped for nothing,
+  Overabundance's bonus mana, and gave Ultima, Origin of Oblivion's {C} bonus to a land tapped for colored mana.
+- The seventeen "gains the activated abilities of …" handlers no longer synthesize a "{T}: Add mana." ability from
+  `ON_TAP`. The card-based ones read `ManaAbilities.withIntrinsic(card)`, the permanent-based ones add
+  `missingIntrinsicManaAbilities`. A gained mana ability keeps its card's description.
+- `DrainTargetPlayersLandManaEffectHandler` lists each land's mana abilities; the "Tap for mana" option is gone.
+- AI: `AiManaManager` taps every source through an ability index, and the mana-source heuristics in `GamePhase`,
+  `BoardEvaluator`, `HardAiDecisionEngine` and `SpellEvaluator` count any card with a free {T} mana ability, so
+  Birds of Paradise and Tundra count now too. `GameSimulator` lost its `tapPermanent` shortcut.
+- `CardView.hasTapAbility` is gone, and the client taps every permanent through its listed mana abilities. A Forest
+  with one ability is activated directly; Mutavault shows its two abilities, as it showed "tap for mana" plus its
+  ability before.
+
+Activated-ability indices moved in two places, both rules-correct:
+
+- A basic land now has its mana ability in the list, after any granted ones. "Activate ability 0" on a Forest
+  with no grants taps it for {G} instead of failing, so tests that proved a grant was gone by expecting ability 0
+  to fail now expect ability 1 to fail.
+- A permanent that keeps a converted card's printed abilities and gains another (Llanowar Elves given Supper for
+  Spiders' Food ability or turned into a Treasure by Vraska, the Silencer; Tazri's grant; a Clone of the Dane that
+  copies Llanowar Elves) has its mana ability at 0 and the new one at 1.
+
+**"Sacrifice this".** Aura of Silence was the only `ON_SACRIFICE` card. It is an activated ability with
+`SacrificeSelfCost`, like Seal of Cleansing, so the normal activation path does its checks: Pithing Needle, Arrest,
+the activation locks and the death-replacement question before payment. `AbilityActivationService.sacrificePermanent`,
+`GameService.sacrificePermanent`, `GameData.SacrificeAbilityReplay`, the `SACRIFICE_PERMANENT` message and request
+(server and client) and `GameTestHarness.sacrificePermanent` are deleted. Nothing in the client sent that message.
+
+**Cards and tests, by script.**
+
+- `scripts/step7-activated-abilities.py`, run per letter module, changed 623 card classes: 119 `ON_TAP`
+  registrations (12 of them left as a comment that the land type gives the ability), 215 graveyard, 295 hand and
+  one stack ability, and 3 exile-only abilities. With `--readers` it also rewrote the engine, AI, networking and
+  application sources, and 47 card test classes. Ten of those used `harness.sacrificePermanent` and now call
+  `harness.activateAbility(player, index, null, target)`.
+- `scripts/step7-mana-ability-last.py` moved the converted mana ability after the other abilities in 62 cards.
+- `scripts/step7-shift-ability-indices.py` shifts ability indices in a test; it was used for the first, abandoned
+  ordering and then on single lines for the basic-land cases below.
+- By hand: Gyre Engineer, Mutable Explorer, Aura of Silence; `EachOpponentChooses…TokenCopy…` (method references
+  the script didn't match); the `ON_TAP` readers above.
+- `scripts/strip-unused-imports.py` then cleaned the changed files. In a few touched files it also removed imports
+  that were already unused.
+- `scripts/step7-docs.py` rewrote the agent-docs snippets; the prose that named `ON_TAP` or `ON_SACRIFICE` was
+  edited by hand. `ACTIVATED_ABILITY_GUIDE.md` has a new section 1a on mana abilities and "sacrifice this".
+
+**For later steps.**
+
+- Activated abilities are not in `Card.getAbilities()`: the step text asked for one activated list, and a separate
+  list kept `LegacySlots`, `addAbility` and the layer hash untouched. Moving them into the ability list is a small
+  follow-up whenever something needs all four kinds in one place.
+- `ActivatedAbility` is still a mutable class with fluent setters. `withZones` follows that style; a card must
+  set an ability's zones before adding it, or the card's zone index goes stale.
+- A nonbasic land whose type an effect set still shows its printed abilities in the client (the permanent view
+  doesn't apply CR 305.7, checked), while the engine's list has the new type's mana ability instead. This was so
+  before too. Basics are fine: they print no ability and the view lists the mana of their current types.
+- Copy paths copy only battlefield abilities (above).
+
+**Tests changed.**
+
+- `CardFreezeTest`: 80 → 78.
+- `AbilityActivationServiceTest`: the `sacrificePermanent` nest is deleted (the action is gone; Aura of Silence's
+  card tests cover the ability). The land fixtures have a mana ability, and the tests that tap them stub the
+  land's basic land type, since that is the path `tapPermanent` takes for an Island. The replaced-land test hands
+  the type's mana to the replacement service. "Non-summoning-sick creature with tap-for-mana can be tapped" is
+  deleted: Llanowar Elves now goes through `activateAbilityInternal`, which this mock-based class can't run;
+  `LlanowarElvesTest` covers it through the engine.
+- `GameActionAvailabilityServiceTest`: the mana-land fixture is a land with a basic land type; Rishadan Port's
+  ability is index 1.
+- `LandTapTriggerCollectorServiceTest`: a colored fixture land has the matching basic land type instead of a
+  printed ability, a colorless one prints `ManaAbilities.tapFor(COLORLESS)`, and the Ultima test passes the produced
+  {C} the engine always reports.
+- `PermanentViewFactoryTest`: the fixture uses `ManaAbilities.tapFor`; the `hasTapAbility` assertion is removed.
+  `LegacySlotTriggerTest` lost the `ON_TAP` row.
+- `AiManaManagerTest`: fixtures use mana abilities, and the 38 expectations of a `null` ability index (the old tap
+  path) expect index 0. Six display names that described `ON_TAP` were renamed.
+- `EasyAiDecisionEngineTest` (3), `MediumAiDecisionEngineTest` (2), `HardAiDecisionEngineTest` (2): the AI taps a
+  Plains through `handleActivateAbility`, not `handleTapPermanent`. These mock-wired classes load no oracle data,
+  so a `new Plains()` had no type; it only worked through the printed `ON_TAP`. A `plains()` helper sets its type.
+- `AiTestPlayabilityStub` lists a permanent's abilities with `ManaAbilities.withIntrinsic`, as the engine does.
+- New tests: `CardAbilitiesTest` (the zone views, an ability in several zones, read-only views that follow
+  changes, copies) and `ManaAbilitiesTest` (`tapFor(color, amount)`, the shared intrinsic abilities, `intrinsic(card)`
+  and `withIntrinsic(card)`).
+- Card tests, all by hand, each for one of the index changes above or a message:
+  - a basic land with no grant has its mana ability at 0, so "the grant is gone" checks expect ability 1 to fail
+    (or "Invalid ability index"): Chromatic Lantern, Glamorous Outlaw, Joiner Adept, Koth of the Hammer, Masked
+    Bandits, Mystic Skull, Nexos, Nylea's Presence, Overlaid Terrain, Prismatic Omen, Rain of Filth, Rakish
+    Revelers, Realmwright, Resonating Lute, Sheltered Aerie, Shattered Seraph, Spara's Adjudicators, Thespian's
+    Stage, The World Tree, Ultima, Unbridled Growth; Aquitect's Will and Topsoil Turner assert the Forest's or
+    Mountain's own ability instead of an empty list; Yavimaya, Cradle of Growth's Swamp lists {B} before {G};
+  - a converted permanent that loses its non-mana abilities (Blood Sun, Town-Razer Tyrant on Hostile Desert)
+    still has its mana ability at 0;
+  - a granted ability comes after a converted card's mana ability: Burning Anger, Hostile Realm, Orochi Merge-Keeper,
+    Riftstone Portal, Sachi, Supper for Spiders, Tazri, The Ever-Changing 'Dane, Tyvar Kell, Vraska, the Silencer;
+  - Detention Vortex: Llanowar Elves now has an ability, and the Aura's "can't be activated" is the error;
+  - Aura of Silence: activation goes through `activateAbility`, and the ability-less permanent's error changed.
+- Frontend: `targeting-choice.service.spec.ts` fixtures give lands a mana ability instead of `hasTapAbility`, and a
+  land tapped during a payment sends `ACTIVATE_ABILITY` with the payment intent; mock data lost the field.
+
+**Test runs.**
+
+- Application, against HEAD (the same classes in a HEAD worktree): 26 classes covering the changed services. The
+  failures equal HEAD's (mostly mock wiring in service tests), minus HEAD's three `sacrificePermanent` failures,
+  whose tests are deleted. The new tests pass.
+- AI: the whole module (1,619 tests). Its 12 failures all fail at HEAD too: two kicker casts in
+  `RandomAiDecisionEngineTest`, two in `TargetPolarityGuardTest`, and Wear // Tear and Reign of Chaos in the Easy,
+  Medium and Hard engine tests.
+- Frontend: `tsc` on the app and spec projects, and `ng test`: 21 files, 195 tests, all passing.
+- Card: 1,856 classes, 17,157 tests, all passing: every converted card and every card whose source changed, the
+  cards on the changed mana, grant, copy and land-type paths, every test that taps a permanent, and every test that
+  creates a converted non-basic card and activates an ability.
+- Everything compiles except `CardBrowserServiceTest` in `magical-vibes-webservice`, which fails to compile at
+  HEAD too (`CardCatalog.findLoadedPrintingByName`). The full card suite was not run here.
 
 ## Prompt
 

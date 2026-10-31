@@ -50,7 +50,7 @@ public class BecomeCopyOfTargetExiledCreatureCardEffectHandler implements Normal
 
         // "Has this ability" keeps the activated ability that is resolving, which the source may have
         // only by copying another permanent (Altered Ego copying Mimeoplasm) or by an earlier use.
-        List<ActivatedAbility> retainedAbilities = source.getCard().getActivatedAbilities().stream()
+        List<ActivatedAbility> retainedAbilities = source.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                 .filter(ability -> ability.getEffects().stream()
                         .anyMatch(BecomeCopyOfTargetExiledCreatureCardEffect.class::isInstance))
                 .toList();

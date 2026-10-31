@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseThisActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -32,7 +33,7 @@ public class LoseThisActivatedAbilityEffectHandler implements NormalEffectHandle
         if (source == null) {
             return;
         }
-        for (ActivatedAbility ability : source.getCard().getActivatedAbilities()) {
+        for (ActivatedAbility ability : source.getCard().getActivatedAbilities(Zone.BATTLEFIELD)) {
             if (ability.getEffects().contains(effect)) {
                 source.loseActivatedAbility(ability);
             }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -27,7 +28,7 @@ public class TChakaVenerableKing extends Card {
                                 new CardTypePredicate(CardType.ARTIFACT),
                                 new CardTypePredicate(CardType.LAND)))));
 
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{3}",
                 List.of(new ExileSelfFromGraveyardCost(), new BecomeMonarchEffect()),

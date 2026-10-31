@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -22,7 +23,7 @@ import java.util.List;
 public class ElvishSpiritGuide extends Card {
 
     public ElvishSpiritGuide() {
-        addHandActivatedAbility(new ActivatedAbility(false, null,
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, null,
                 List.of(new AwardManaEffect(ManaColor.GREEN)),
                 "Exile this creature from your hand: Add {G}.")
                 .withExilesSourceFromHand());

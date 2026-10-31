@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -38,7 +39,7 @@ public class GainLoyaltyAbilitiesOfOtherPlaneswalkersSelfEffectHandler implement
                         || !support.matchesStaticFilter(context, permanent, new PermanentIsPlaneswalkerPredicate())) {
                     continue;
                 }
-                for (var ability : permanent.getCard().getActivatedAbilities()) {
+                for (var ability : permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD)) {
                     if (ability.getLoyaltyCost() != null) {
                         accumulator.addActivatedAbility(ability.withGrantSource(context.sourceId()));
                     }

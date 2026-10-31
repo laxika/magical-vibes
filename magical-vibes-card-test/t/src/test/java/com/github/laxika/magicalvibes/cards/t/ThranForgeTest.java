@@ -151,7 +151,7 @@ class ThranForgeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.sacrificePermanent(player2, 1, forge.getId());
+        harness.activateAbility(player2, 1, null, forge.getId());
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Thran Forge");
         harness.passBothPriorities();

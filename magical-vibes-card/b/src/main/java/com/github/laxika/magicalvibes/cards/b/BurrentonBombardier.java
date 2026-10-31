@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -16,7 +17,7 @@ public class BurrentonBombardier extends Card {
     public BurrentonBombardier() {
         // Flying is auto-loaded from Scryfall.
         // Reinforce 2—{2}{W} ({2}{W}, Discard this card: Put two +1/+1 counters on target creature.)
-        addHandActivatedAbility(new ActivatedAbility(false, "{2}{W}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}{W}",
                 List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),
                 "Reinforce 2—{2}{W} ({2}{W}, Discard this card: Put two +1/+1 counters on target creature.)",
                 TargetFilters.creature()));

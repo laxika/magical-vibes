@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.n.NeurokTransmuter;
 import com.github.laxika.magicalvibes.cards.o.OasisGardener;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -163,10 +164,10 @@ class BoomBoxTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         var first = harness.getValidTargetService().computeValidTargetsForAbility(
-                gd, boomBox.getCard(), boomBox.getCard().getActivatedAbilities().getFirst(),
+                gd, boomBox.getCard(), boomBox.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst(),
                 player1.getId(), 0, List.of());
         var second = harness.getValidTargetService().computeValidTargetsForAbility(
-                gd, boomBox.getCard(), boomBox.getCard().getActivatedAbilities().getFirst(),
+                gd, boomBox.getCard(), boomBox.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst(),
                 player1.getId(), 0, List.of(creature.getId()));
 
         assertThat(first.validPermanentIds()).contains(artifact.getId(), creature.getId(), land.getId());

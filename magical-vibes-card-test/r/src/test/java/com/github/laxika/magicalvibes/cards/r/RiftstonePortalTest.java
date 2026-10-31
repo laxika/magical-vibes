@@ -80,13 +80,13 @@ class RiftstonePortalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new NantukoMonastery());
         harness.addToBattlefield(player2, new NantukoMonastery());
 
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 2, null, null);
         harness.handleListChoice(player1, "GREEN");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
 
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 2, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -96,7 +96,7 @@ class RiftstonePortalTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new RiftstonePortal()));
         harness.addToBattlefield(player1, new NantukoMonastery());
 
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 2, null, null);
         harness.handleListChoice(player1, "WHITE");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
@@ -110,7 +110,7 @@ class RiftstonePortalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new NantukoMonastery());
         harness.addToBattlefield(player1, new NantukoMonastery());
 
-        harness.activateAbility(player1, 1, 1, null, null);
+        harness.activateAbility(player1, 1, 2, null, null);
         harness.handleListChoice(player1, "GREEN");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
@@ -122,7 +122,7 @@ class RiftstonePortalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new RiftstonePortal());
         harness.addToBattlefield(player1, new NantukoMonastery());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 2, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -134,7 +134,7 @@ class RiftstonePortalTest extends BaseCardTest {
 
         harness.setGraveyard(player1, List.of());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 

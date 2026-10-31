@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -46,7 +47,7 @@ public class BecomeCopyOfTargetLandEffectHandler implements NormalEffectHandlerB
 
         // Snapshot the granting ability before the copy replaces the source's card.
         List<ActivatedAbility> retained = new ArrayList<>();
-        for (ActivatedAbility ability : source.getCard().getActivatedAbilities()) {
+        for (ActivatedAbility ability : source.getCard().getActivatedAbilities(Zone.BATTLEFIELD)) {
             if (ability.getEffects().stream().anyMatch(e -> e instanceof BecomeCopyOfTargetLandEffect)) {
                 retained.add(ability);
             }
@@ -58,7 +59,7 @@ public class BecomeCopyOfTargetLandEffectHandler implements NormalEffectHandlerB
         Card copiedCard = source.getCard();
         // Copying a land that already has this ability (including another Thespian's Stage, or this
         // permanent itself) must not leave the ability on it twice.
-        boolean alreadyHasAbility = copiedCard.getActivatedAbilities().stream()
+        boolean alreadyHasAbility = copiedCard.getActivatedAbilities(Zone.BATTLEFIELD).stream()
                 .anyMatch(ability -> ability.getEffects().stream()
                         .anyMatch(e -> e instanceof BecomeCopyOfTargetLandEffect));
         if (!alreadyHasAbility) {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -46,7 +47,7 @@ class SculptingSteelTest extends BaseCardTest {
         Permanent steelPerm = findSculptingSteel();
         assertThat(steelPerm.getCard().getName()).isEqualTo("Icy Manipulator");
         assertThat(steelPerm.getCard().getType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(steelPerm.getCard().getActivatedAbilities()).hasSize(1);
+        assertThat(steelPerm.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1,
@@ -73,7 +74,7 @@ class SculptingSteelTest extends BaseCardTest {
         assertThat(steelPerm.getCard().getName()).isEqualTo("Cobalt Golem");
         assertThat(steelPerm.getCard().getPower()).isEqualTo(2);
         assertThat(steelPerm.getCard().getToughness()).isEqualTo(3);
-        assertThat(steelPerm.getCard().getActivatedAbilities()).hasSize(1);
+        assertThat(steelPerm.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).hasSize(1);
     }
 
     @Test

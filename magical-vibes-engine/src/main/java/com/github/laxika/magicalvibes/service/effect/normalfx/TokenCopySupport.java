@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -1121,7 +1122,7 @@ public class TokenCopySupport {
                         com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT));
             }
         }
-        for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
+        for (ActivatedAbility ability : sourceCard.getActivatedAbilities(Zone.BATTLEFIELD)) {
             tokenCard.addActivatedAbility(ability);
         }
         tokenCard.copyTargetingFrom(sourceCard);

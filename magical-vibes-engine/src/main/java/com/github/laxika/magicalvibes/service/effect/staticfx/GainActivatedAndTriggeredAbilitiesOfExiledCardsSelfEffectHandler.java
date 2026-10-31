@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAndTriggeredAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -20,7 +21,6 @@ public class GainActivatedAndTriggeredAbilitiesOfExiledCardsSelfEffectHandler
         implements StaticEffectHandlerBean {
 
     private static final Set<EffectSlot> NON_ABILITY_SLOTS = EnumSet.of(
-            EffectSlot.ON_TAP,
             EffectSlot.MAY_SKIP_DRAW_STEP_DRAW,
             EffectSlot.GRAVEYARD_DRAW_REPLACEMENT,
             EffectSlot.MULLIGAN_ACTION,
@@ -40,14 +40,8 @@ public class GainActivatedAndTriggeredAbilitiesOfExiledCardsSelfEffectHandler
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         List<Card> exiledCards = context.gameData().getCardsExiledByPermanent(context.sourceId());
         for (Card card : exiledCards) {
-            for (ActivatedAbility ability : card.getActivatedAbilities()) {
+            for (ActivatedAbility ability : ManaAbilities.withIntrinsic(card)) {
                 accumulator.addActivatedAbility(ability);
-            }
-
-            List<CardEffect> onTapEffects = card.getEffects(EffectSlot.ON_TAP);
-            if (!onTapEffects.isEmpty()) {
-                accumulator.addActivatedAbility(new ActivatedAbility(
-                        true, null, onTapEffects, "{T}: Add mana."));
             }
 
             for (EffectSlot slot : EffectSlot.values()) {

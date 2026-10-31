@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -38,7 +39,7 @@ public class VizierOfTumblingSands extends Card {
         // untap target permanent." The untap target is chosen at activation and is optional (0 to 1),
         // so cycling stays available with no legal target; the reflexive trigger then never goes on the
         // stack, and the trigger resolves above the cycling draw.
-        addHandActivatedAbility(new ActivatedAbility(false, "{1}{U}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}{U}",
                 List.of(new DrawCardEffect(1)),
                 "Cycling {1}{U} ({1}{U}, Discard this card: Draw a card.)",
                 TargetFilters.permanent(), null, null, null, List.of(), 0, 1).withCyclingTriggerTargets());

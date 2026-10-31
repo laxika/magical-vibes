@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -19,7 +20,7 @@ public class HarvesterOfMisery extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostAllCreaturesEffect(-2, -2,
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
 
-        addHandActivatedAbility(new ActivatedAbility(false, "{1}{B}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}{B}",
                 List.of(new BoostTargetCreatureEffect(-2, -2)),
                 "{1}{B}, Discard this card: Target creature gets -2/-2 until end of turn.",
                 TargetFilters.creature()));

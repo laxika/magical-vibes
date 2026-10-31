@@ -66,7 +66,7 @@ class RealmwrightTest extends BaseCardTest {
 
         assertThat(gqs.effectiveBasicLandTypes(gd, opponentForest))
                 .containsExactly(CardSubtype.FOREST);
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 

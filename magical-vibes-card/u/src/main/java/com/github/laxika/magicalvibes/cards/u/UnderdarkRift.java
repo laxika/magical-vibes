@@ -4,10 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD10Effect;
@@ -23,7 +22,6 @@ import java.util.List;
 public class UnderdarkRift extends Card {
 
     public UnderdarkRift() {
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
 
         var artifactCreatureOrPlaneswalker = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
@@ -45,5 +43,6 @@ public class UnderdarkRift extends Card {
                 null,
                 null,
                 ActivationTimingRestriction.SORCERY_SPEED));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
     }
 }

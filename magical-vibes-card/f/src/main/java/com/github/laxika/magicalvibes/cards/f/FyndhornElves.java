@@ -2,9 +2,8 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 @CardRegistration(set = "ICE", collectorNumber = "244")
 @CardRegistration(set = "DKM", collectorNumber = "26")
@@ -15,6 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 public class FyndhornElves extends Card {
 
     public FyndhornElves() {
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
     }
 }

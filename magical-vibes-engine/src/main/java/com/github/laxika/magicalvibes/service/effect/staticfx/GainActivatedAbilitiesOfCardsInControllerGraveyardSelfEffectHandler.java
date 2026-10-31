@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsInControllerGraveyardEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -48,17 +47,8 @@ public class GainActivatedAbilitiesOfCardsInControllerGraveyardSelfEffectHandler
                     card, gainEffect.filter(), null, gameData, controllerId)) {
                 continue;
             }
-            for (var ability : card.getActivatedAbilities()) {
+            for (var ability : ManaAbilities.withIntrinsic(card)) {
                 accumulator.addActivatedAbility(ability);
-            }
-            List<CardEffect> onTapEffects = card.getEffects(EffectSlot.ON_TAP);
-            if (!onTapEffects.isEmpty()) {
-                accumulator.addActivatedAbility(new ActivatedAbility(
-                        true,
-                        null,
-                        onTapEffects,
-                        "{T}: Add mana."
-                ));
             }
         }
     }

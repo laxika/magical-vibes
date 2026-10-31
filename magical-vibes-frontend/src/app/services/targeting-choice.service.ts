@@ -1979,15 +1979,6 @@ export class TargetingChoiceService {
     return undefined;
   }
 
-  /** Sends a TAP_PERMANENT, tagged with the payment it is serving when one is in progress. */
-  private sendTapPermanent(permanentIndex: number): void {
-    this.sendMessage({
-      type: MessageType.TAP_PERMANENT,
-      permanentIndex,
-      paymentIntent: this.paymentIntent()
-    });
-  }
-
   /** Cancel button / Esc while paying: drop the pending cast and untap the mana
       sources tapped for it (the server reverts the recorded mana activations). */
   cancelPendingCast(): void {
@@ -3426,9 +3417,6 @@ export class TargetingChoiceService {
 
   // ========== Tap / ability activation ==========
 
-  /** Sentinel ability index for the intrinsic ON_TAP mana option in the ability picker. */
-  static readonly INTRINSIC_TAP_INDEX = -1;
-
   tapPermanent(index: number): void {
     const g = this.gameSignal();
     if (g && this.canTapPermanent(index)) {
@@ -3436,17 +3424,6 @@ export class TargetingChoiceService {
       if (!perm) return;
 
       const abilities = perm.card.activatedAbilities;
-      if (abilities.length === 0) {
-        // No activated abilities — just tap for mana (ON_TAP)
-        this.sendTapPermanent(index);
-        return;
-      }
-
-      // Intrinsic ON_TAP mana (e.g. a basic land's own mana) — must stay reachable even
-      // when the permanent also has activated abilities (e.g. a Plains that gained
-      // "{T}: Add {U}" can still produce white)
-      const canIntrinsicTap = perm.card.hasTapAbility && !perm.tapped
-        && !(perm.summoningSick && isPermanentCreature(perm));
 
       // While paying for a held-back cast/activation only mana production is actionable —
       // starting another non-mana activation would clobber the held message.
@@ -3455,15 +3432,11 @@ export class TargetingChoiceService {
       // Filter to usable abilities
       const usable = abilities.filter(a => this.abilityUsableNow(perm, a, paying));
       if (usable.length === 0) {
-        // Has abilities but none usable — fall back to tap for mana if ON_TAP
-        if (canIntrinsicTap) {
-          this.sendTapPermanent(index);
-        }
         return;
       }
 
-      if (usable.length === 1 && !canIntrinsicTap) {
-        // Single usable ability and no intrinsic tap — activate directly
+      if (usable.length === 1) {
+        // Single usable ability — activate directly
         const abilityIndex = abilities.indexOf(usable[0]);
         this.activateAbilityAtIndex(index, abilityIndex, perm);
       } else {
@@ -3471,35 +3444,8 @@ export class TargetingChoiceService {
         this.choosingAbility = true;
         this.abilityChoicePermanentIndex = index;
         this.abilityChoices = abilities.map((a, i) => ({ ability: a, index: i, usable: this.abilityUsableNow(perm, a, paying) }));
-        if (canIntrinsicTap) {
-          this.abilityChoices.unshift({
-            ability: this.intrinsicTapAbilityView(perm),
-            index: TargetingChoiceService.INTRINSIC_TAP_INDEX,
-            usable: true
-          });
-        }
       }
     }
-  }
-
-  private intrinsicTapAbilityView(perm: Permanent): ActivatedAbilityView {
-    // Show the land's own printed mana line when derivable (e.g. Plains: "({T}: Add {W}.)")
-    const printed = perm.card.cardText?.match(/\{T\}: Add [^)\n]+/);
-    return {
-      description: printed ? printed[0] : '{T}: Tap for mana.',
-      requiresTap: true,
-      needsTarget: false,
-      needsSpellTarget: false,
-      manaCost: null,
-      loyaltyCost: null,
-      minTargets: 0,
-      maxTargets: 0,
-      isManaAbility: true,
-      variableLoyaltyCost: false,
-      variableCounterCostType: null,
-      requiresXValue: false,
-      xValueFromControlledCreatureCounters: false
-    };
   }
 
   /** Whether the ability is a legal click right now: any usable ability normally, but only
@@ -3737,11 +3683,7 @@ export class TargetingChoiceService {
     if (!choice.usable) return;
     const perm = this.myBattlefieldFn()[this.abilityChoicePermanentIndex];
     if (!perm) return;
-    if (choice.index === TargetingChoiceService.INTRINSIC_TAP_INDEX) {
-      this.sendTapPermanent(this.abilityChoicePermanentIndex);
-    } else {
-      this.activateAbilityAtIndex(this.abilityChoicePermanentIndex, choice.index, perm);
-    }
+    this.activateAbilityAtIndex(this.abilityChoicePermanentIndex, choice.index, perm);
     this.choosingAbility = false;
     this.abilityChoicePermanentIndex = -1;
     this.abilityChoices = [];
@@ -3765,13 +3707,8 @@ export class TargetingChoiceService {
     if (this.payingForAbility && this.pendingActivationRequiresTap
         && perm.id === this.pendingActivationPermanentId) return false;
     const abilities = perm.card.activatedAbilities;
-    // Check if any activated ability can be used right now
+    // Check if any activated ability can be used right now, mana abilities included
     const paying = this.payingForCast || this.payingForAbility;
-    if (abilities.some(a => this.abilityUsableNow(perm, a, paying))) return true;
-    // Can tap for mana (ON_TAP mana effects)
-    if (perm.tapped) return false;
-    if (!perm.card.hasTapAbility) return false;
-    if (perm.summoningSick && isPermanentCreature(perm)) return false;
-    return true;
+    return abilities.some(a => this.abilityUsableNow(perm, a, paying));
   }
 }

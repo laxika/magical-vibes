@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -135,7 +136,7 @@ public class ManaChoiceNarrowingService {
         if (gameQueryService.isLand(gameData, source)) {
             pool.promoteLandAbilityOnlyMana();
         }
-        List<ActivatedAbility> abilities = source.getCard().getActivatedAbilities();
+        List<ActivatedAbility> abilities = source.getCard().getActivatedAbilities(Zone.BATTLEFIELD);
         int index = intent.abilityIndex();
         if (index < 0 || index >= abilities.size()) {
             return null;

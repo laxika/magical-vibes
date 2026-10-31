@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
@@ -120,7 +121,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             UUID opponentId = getOpponentId(gameData, aiPlayerId);
             List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
             String chosenName = opponentField.stream()
-                    .filter(p -> !p.getCard().getActivatedAbilities().isEmpty())
+                    .filter(p -> !p.getCard().getActivatedAbilities(Zone.BATTLEFIELD).isEmpty())
                     .map(p -> p.getCard().getName())
                     .filter(interaction.options()::contains)
                     .findFirst()

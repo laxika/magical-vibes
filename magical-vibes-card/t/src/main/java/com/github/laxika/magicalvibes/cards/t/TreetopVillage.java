@@ -5,11 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 import java.util.List;
@@ -27,7 +26,6 @@ public class TreetopVillage extends Card {
 
     public TreetopVillage() {
         addStaticEffect(new EntersTappedEffect());
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
         // {1}{G}: Treetop Village becomes a 3/3 green Ape creature with trample until end of turn. It's still a land.
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -35,5 +33,6 @@ public class TreetopVillage extends Card {
                 List.of(new AnimatePermanentsEffect(3, 3, List.of(CardSubtype.APE), Set.of(Keyword.TRAMPLE), CardColor.GREEN)),
                 "{1}{G}: Treetop Village becomes a 3/3 green Ape creature with trample until end of turn. It's still a land."
         ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
     }
 }

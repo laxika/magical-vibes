@@ -1551,13 +1551,7 @@ public class GameSimulator {
      * Returns true if the permanent was tapped, false if it has no mana production.
      */
     private boolean tapOrActivateMana(GameData gd, Player player, Permanent perm, int index, ManaCost cost, ManaPool currentPool) {
-        boolean hasOnTapMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                .anyMatch(e -> e instanceof ManaProducingEffect mp && mp.modeledByManaEstimator());
-        if (hasOnTapMana) {
-            gameService.tapPermanent(gd, player, index, ManaPaymentIntent.unspecified());
-            return true;
-        }
-        // Check activated mana abilities (dual lands, pain lands, etc.)
+        // Check activated mana abilities (basic lands, dual lands, pain lands, etc.)
         var abilities = manaManager.activatedAbilitiesFor(gd, perm);
         Integer bestIndex = null;
         int bestScore = -1;

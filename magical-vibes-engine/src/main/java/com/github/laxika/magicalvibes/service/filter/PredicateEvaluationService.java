@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.service.filter;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AdventureCast;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenSnowLandTappedEffect;
@@ -428,7 +430,6 @@ import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.CreatureCountSupport;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import lombok.RequiredArgsConstructor;
@@ -444,7 +445,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 /**
  * The single evaluation point for the predicate and target-filter hierarchies
@@ -787,7 +787,7 @@ public class PredicateEvaluationService {
                             || card.hasType(CardType.BATTLE)
                             || card.getKeywords().contains(Keyword.TRANSFORM)
                             || card.getKeywords().contains(Keyword.DISTURB)
-                            || card.getActivatedAbilities().stream().flatMap(ability -> ability.getEffects().stream())
+                            || card.getActivatedAbilities(Zone.BATTLEFIELD).stream().flatMap(ability -> ability.getEffects().stream())
                                     .anyMatch(CraftMaterialCost.class::isInstance));
             case PhyrexianManaPredicate ignored ->
                     card.getManaCost() != null && new ManaCost(card.getManaCost()).hasPhyrexianMana();
@@ -809,10 +809,10 @@ public class PredicateEvaluationService {
             case CardHasDisturbPredicate ignored ->
                     card.getCastingOption(DisturbCast.class).isPresent();
             case CardHasCyclingPredicate ignored ->
-                    card.getHandActivatedAbilities().stream()
+                    card.getActivatedAbilities(Zone.HAND).stream()
                             .anyMatch(ActivatedAbility::isCyclingAbility);
             case CardHasEmbalmOrEternalizePredicate ignored ->
-                    card.getGraveyardActivatedAbilities().stream()
+                    card.getActivatedAbilities(Zone.GRAVEYARD).stream()
                             .anyMatch(ActivatedAbility::isEmbalmOrEternalize);
             case CardHasForetellPredicate ignored ->
                     card.getCastingOption(ForetellCast.class).isPresent();
@@ -823,16 +823,13 @@ public class PredicateEvaluationService {
                             .map(RepeatableAdditionalManaCost.class::cast)
                             .anyMatch(RepeatableAdditionalManaCost::multikicker);
             case CardHasManaAbilityPredicate ignored ->
-                    PotentialManaService.hasOnTapManaEffects(card)
-                            || hasTriggeredManaAbility(card)
-                            || card.getActivatedAbilities().stream()
+                    hasTriggeredManaAbility(card)
+                            || ManaAbilities.withIntrinsic(card).stream()
                             .anyMatch(AbilityActivationService::isManaAbility)
-                            || card.getGraveyardActivatedAbilities().stream()
+                            || card.getActivatedAbilities(Zone.GRAVEYARD).stream()
                             .anyMatch(AbilityActivationService::isManaAbility);
             case CardHasNonManaActivatedAbilityPredicate ignored ->
-                    Stream.of(card.getActivatedAbilities(), card.getHandActivatedAbilities(),
-                                    card.getGraveyardActivatedAbilities(), card.getStackActivatedAbilities())
-                            .flatMap(List::stream)
+                    card.getActivatedAbilities().stream()
                             .anyMatch(ability -> !AbilityActivationService.isManaAbility(ability));
             case CardHasNoAbilitiesPredicate ignored ->
                     card.hasKeyword(Keyword.DEWORDED)
@@ -1575,7 +1572,7 @@ public class PredicateEvaluationService {
                             || permanent.getOriginalCard().hasType(CardType.BATTLE)
                             || permanent.getOriginalCard().getKeywords().contains(Keyword.TRANSFORM)
                             || permanent.getOriginalCard().getKeywords().contains(Keyword.DISTURB)
-                            || permanent.getOriginalCard().getActivatedAbilities().stream()
+                            || permanent.getOriginalCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                                     .flatMap(ability -> ability.getEffects().stream())
                                     .anyMatch(CraftMaterialCost.class::isInstance));
             case PermanentIsHistoricPredicate ignored -> {
@@ -4461,7 +4458,7 @@ public class PredicateEvaluationService {
             if (state.isLosesAllAbilities() || state.isPrintedAbilitiesRemoved()) {
                 return false;
             }
-            return permanent.getCard().getActivatedAbilities().stream()
+            return permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                     .filter(ability -> !state.isLosesAllNonManaAbilities()
                             || AbilityActivationService.isManaAbility(ability))
                     .anyMatch(ActivatedAbility::isExhaustAbility);
@@ -4473,7 +4470,7 @@ public class PredicateEvaluationService {
                     .anyMatch(ActivatedAbility::isExhaustAbility)
                     || permanent.getUntilNextTurnActivatedAbilities().stream()
                     .anyMatch(ActivatedAbility::isExhaustAbility)
-                    || permanent.getCard().getActivatedAbilities().stream()
+                    || permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                     .anyMatch(ActivatedAbility::isExhaustAbility);
         }
         return hasExhaustActivatedAbility(context == null ? null : context.gameData(), permanent);
@@ -4516,10 +4513,12 @@ public class PredicateEvaluationService {
 
     private boolean hasManaAbility(GameData gameData, Permanent permanent) {
         return ((gameData == null || !gameQueryService.hasLostAllAbilities(gameData, permanent))
-                && (PotentialManaService.hasOnTapManaEffects(permanent.getCard())
-                || hasTriggeredManaAbility(permanent.getCard())))
+                && hasTriggeredManaAbility(permanent.getCard()))
                 || effectiveActivatedAbilities(gameData, permanent).stream()
-                .anyMatch(AbilityActivationService::isManaAbility);
+                .anyMatch(AbilityActivationService::isManaAbility)
+                // A basic land type's mana ability (CR 305.6).
+                || (gameData == null ? !ManaAbilities.intrinsic(permanent.getCard()).isEmpty()
+                        : !gameQueryService.intrinsicBasicLandManaColors(gameData, permanent).isEmpty());
     }
 
     private boolean hasAnyEffectiveAbility(GameData gameData, Permanent permanent) {
@@ -4712,13 +4711,11 @@ public class PredicateEvaluationService {
      */
     private static boolean hasAnyRemainingPrintedAbilityIgnoringKeywords(Permanent permanent) {
         Card card = permanent.getCard();
-        List<ActivatedAbility> printed = card.getActivatedAbilities();
+        List<ActivatedAbility> printed = card.getActivatedAbilities(Zone.BATTLEFIELD);
         if (printed.stream().anyMatch(ability -> !permanent.hasLostActivatedAbility(ability))) {
             return true;
         }
-        if (!card.getGraveyardActivatedAbilities().isEmpty()
-                || !card.getHandActivatedAbilities().isEmpty()
-                || !card.getStackActivatedAbilities().isEmpty()) {
+        if (card.getActivatedAbilities().stream().anyMatch(ability -> !ability.functionsIn(Zone.BATTLEFIELD))) {
             return true;
         }
         return !card.getStaticEffects().isEmpty() || java.util.Arrays.stream(EffectSlot.values())
@@ -4731,10 +4728,7 @@ public class PredicateEvaluationService {
 
     private static boolean hasAnyPrintedAbility(Card card) {
         if (card.getCardText() != null || !card.getKeywords().isEmpty()
-                || !card.getActivatedAbilities().isEmpty()
-                || !card.getGraveyardActivatedAbilities().isEmpty()
-                || !card.getHandActivatedAbilities().isEmpty()
-                || !card.getStackActivatedAbilities().isEmpty()) {
+                || !card.getActivatedAbilities().isEmpty()) {
             return true;
         }
         return !card.getStaticEffects().isEmpty() || java.util.Arrays.stream(EffectSlot.values())
@@ -4743,10 +4737,7 @@ public class PredicateEvaluationService {
 
     private static boolean hasAnyPrintedNonKeywordAbility(Card card) {
         if (hasPrintedNonKeywordText(card)
-                || !card.getActivatedAbilities().isEmpty()
-                || !card.getGraveyardActivatedAbilities().isEmpty()
-                || !card.getHandActivatedAbilities().isEmpty()
-                || !card.getStackActivatedAbilities().isEmpty()) {
+                || !card.getActivatedAbilities().isEmpty()) {
             return true;
         }
         return !card.getStaticEffects().isEmpty() || java.util.Arrays.stream(EffectSlot.values())
@@ -4806,9 +4797,8 @@ public class PredicateEvaluationService {
     }
 
     private static boolean hasPrintedManaAbility(Card card) {
-        return PotentialManaService.hasOnTapManaEffects(card)
-                || hasTriggeredManaAbility(card)
-                || card.getActivatedAbilities().stream()
+        return hasTriggeredManaAbility(card)
+                || ManaAbilities.withIntrinsic(card).stream()
                 .anyMatch(AbilityActivationService::isManaAbility);
     }
 
@@ -4824,16 +4814,16 @@ public class PredicateEvaluationService {
     private List<ActivatedAbility> effectiveActivatedAbilities(GameData gameData, Permanent permanent) {
         List<ActivatedAbility> abilities = new ArrayList<>();
         if (gameData == null) {
-            abilities.addAll(permanent.getCard().getActivatedAbilities());
+            abilities.addAll(permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
         } else {
             GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
             if (!staticBonus.losesAllAbilities() && !permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
                 if (staticBonus.losesAllNonManaAbilities()) {
-                    abilities.addAll(permanent.getCard().getActivatedAbilities().stream()
+                    abilities.addAll(permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                             .filter(AbilityActivationService::isManaAbility)
                             .toList());
                 } else {
-                    abilities.addAll(permanent.getCard().getActivatedAbilities());
+                    abilities.addAll(permanent.getCard().getActivatedAbilities(Zone.BATTLEFIELD));
                 }
             }
             abilities.addAll(staticBonus.grantedActivatedAbilities());

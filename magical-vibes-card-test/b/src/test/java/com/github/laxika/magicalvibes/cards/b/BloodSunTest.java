@@ -49,7 +49,7 @@ class BloodSunTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new EvolvingWilds()));
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(hostileDesert);
 
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
 
         harness.tapPermanent(player2, 0);

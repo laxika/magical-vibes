@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -84,7 +85,7 @@ class HulkingMetamorphTest extends BaseCardTest {
         assertThat(copy.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(copy.getCard().getPower()).isEqualTo(3);
         assertThat(copy.getCard().getToughness()).isEqualTo(3);
-        assertThat(copy.getCard().getActivatedAbilities()).isNotEmpty();
+        assertThat(copy.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).isNotEmpty();
     }
 
     @Test

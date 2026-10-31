@@ -2,9 +2,8 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 @CardRegistration(set = "UDS", collectorNumber = "139")
 @CardRegistration(set = "V13", collectorNumber = "7")
@@ -22,6 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 public class ThranDynamo extends Card {
 
     public ThranDynamo() {
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS, 3));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS, 3));
     }
 }

@@ -1565,17 +1565,12 @@ export class GameComponent implements OnInit, OnDestroy {
   canTapPermanentForMana(perm: Permanent): boolean {
     if (perm.tapped) return false;
     if (perm.summoningSick && isPermanentCreature(perm)) return false;
-    if (perm.card.hasTapAbility) return true;
     return perm.card.activatedAbilities.some(a => a.isManaAbility);
   }
 
   private tapPermanentForMana(index: number, perm: Permanent): void {
-    // Prefer the intrinsic ON_TAP mana (a basic land's own color) over granted/activated
-    // mana abilities so e.g. a Plains that also gained "{T}: Add {U}" still pays white
-    if (perm.card.hasTapAbility && !perm.tapped) {
-      this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
-      return;
-    }
+    // The first mana ability is the printed one, so e.g. a Plains that also gained
+    // "{T}: Add {U}" still pays white
     const manaAbilityIndex = perm.card.activatedAbilities.findIndex(a => a.isManaAbility);
     if (manaAbilityIndex >= 0) {
       this.websocketService.send({ type: MessageType.ACTIVATE_ABILITY, permanentIndex: index, abilityIndex: manaAbilityIndex });

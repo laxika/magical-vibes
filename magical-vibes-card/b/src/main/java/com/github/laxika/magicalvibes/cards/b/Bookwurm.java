@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -17,7 +18,7 @@ public class Bookwurm extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
 
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{2}{G}",
                 List.of(new PutSourceCardFromGraveyardIntoLibraryNFromTopEffect(2)),

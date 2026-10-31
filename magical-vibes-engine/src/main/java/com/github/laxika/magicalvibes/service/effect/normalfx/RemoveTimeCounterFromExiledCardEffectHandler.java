@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -71,7 +72,7 @@ public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffec
 
         boolean hasAlaundoCastAbility = gameData.exiledCardsWithAlaundoCastAbility.contains(cardId);
         boolean hasSuspend = !gameData.exiledCardsWithNonSuspendTimeCounters.contains(cardId)
-                || exiledEntry.card().getHandActivatedAbilities().stream()
+                || exiledEntry.card().getActivatedAbilities(Zone.HAND).stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand);
         gameData.exiledCardTimeCounters.remove(cardId);
         triggerCollectionService.checkTimeCounterRemovedFromExiledCardTriggers(
@@ -98,7 +99,7 @@ public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffec
         UUID cardId = exiled.card().getId();
         Integer counters = gameData.exiledCardTimeCounters.get(cardId);
         boolean hasSuspend = !gameData.exiledCardsWithNonSuspendTimeCounters.contains(cardId)
-                || exiled.card().getHandActivatedAbilities().stream()
+                || exiled.card().getActivatedAbilities(Zone.HAND).stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand);
         return (counters != null && counters > 0 && hasSuspend)
                 || gameData.suspendedSpellExiles.stream().anyMatch(

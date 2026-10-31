@@ -62,7 +62,7 @@ class UltimaOriginOfOblivionTest extends BaseCardTest {
 
         forest.setCounterCount(CounterType.BLIGHT, 0);
         forest.untap();
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 

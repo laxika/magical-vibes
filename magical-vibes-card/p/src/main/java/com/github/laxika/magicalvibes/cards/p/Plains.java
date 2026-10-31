@@ -1,9 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "CMA", collectorNumber = "289")
@@ -592,6 +589,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Plains extends Card {
 
     public Plains() {
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.WHITE));
+        // {T}: Add {W} comes from its basic land type (CR 305.6).
     }
 }

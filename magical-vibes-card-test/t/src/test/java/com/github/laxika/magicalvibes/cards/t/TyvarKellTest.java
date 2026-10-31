@@ -35,7 +35,7 @@ class TyvarKellTest extends BaseCardTest {
         Permanent elf = addCreatureReady(player1, new LlanowarElves());
 
         int elfIndex = gd.playerBattlefields.get(player1.getId()).indexOf(elf);
-        harness.activateAbility(player1, elfIndex, null, null);
+        harness.activateAbility(player1, elfIndex, 1, null, null);
 
         assertThat(elf.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);

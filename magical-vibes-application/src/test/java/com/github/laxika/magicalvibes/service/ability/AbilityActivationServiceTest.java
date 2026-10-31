@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.ability;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.Ability;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -12,8 +13,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,14 +24,12 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
@@ -41,7 +40,6 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeep
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
@@ -96,11 +94,6 @@ class AbilityActivationServiceTest {
 
     private static final GameQueryService.StaticBonus EMPTY_BONUS = new GameQueryService.StaticBonus(
             0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(), false, false, false, false, Set.of(), false, 0, 0, false, false);
-
-    private record ModeledManaEffect(
-            ManaColor estimatedManaColor,
-            DynamicAmount estimatedManaAmount
-    ) implements ManaProducingEffect {}
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
@@ -228,6 +221,7 @@ class AbilityActivationServiceTest {
             Permanent perm = addReadyPermanent(player1Id, island);
             when(gameQueryService.isLand(gameData, perm)).thenReturn(true);
 
+            when(gameQueryService.intrinsicBasicLandManaColors(gameData, perm)).thenReturn(Set.of(ManaColor.BLUE));
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
@@ -246,15 +240,12 @@ class AbilityActivationServiceTest {
         }
 
         @Test
-        @DisplayName("A replaced land hands its modeled mana to the replacement service instead of adding it")
+        @DisplayName("A replaced land hands the mana of its basic land type to the replacement service instead of adding it")
         void replacedLandManaIsProducedByTheReplacementService() {
-            Card land = new Card();
-            land.setName("Modeled Mana Land");
-            land.setType(CardType.LAND);
-            land.addEffect(EffectSlot.ON_TAP,
-                    new ModeledManaEffect(ManaColor.RED, new Fixed(2)));
+            Card land = createLandWithManaAbility("Mountain", ManaColor.RED);
             Permanent perm = addReadyPermanent(player1Id, land);
             when(gameQueryService.isLand(gameData, perm)).thenReturn(true);
+            when(gameQueryService.intrinsicBasicLandManaColors(gameData, perm)).thenReturn(Set.of(ManaColor.RED));
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
@@ -262,7 +253,7 @@ class AbilityActivationServiceTest {
                     eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
             when(landManaReplacementService.produce(eq(gameData), eq(player1Id), eq(perm),
-                    eq(Set.of(ManaColor.RED)), eq(2), any()))
+                    eq(Set.of(ManaColor.RED)), eq(1), any()))
                     .thenReturn(new LandManaReplacementService.Resolution.Prompted());
 
             service.tapPermanent(gameData, player1, 0);
@@ -314,25 +305,6 @@ class AbilityActivationServiceTest {
         }
 
         @Test
-        @DisplayName("Non-summoning-sick creature with tap-for-mana can be tapped")
-        void nonSummoningSickCreatureCanTap() {
-            Card elves = createCreatureWithTapAbility("Llanowar Elves", ManaColor.GREEN);
-            Permanent perm = addReadyPermanent(player1Id, elves);
-
-            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
-            when(gameQueryService.isCreature(gameData, perm)).thenReturn(true);
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
-
-            ManaPool pool = gameData.playerManaPools.get(player1Id);
-            int greenBefore = pool.get(ManaColor.GREEN);
-
-            service.tapPermanent(gameData, player1, 0);
-
-            assertThat(pool.get(ManaColor.GREEN)).isEqualTo(greenBefore + 1);
-        }
-
-        @Test
         @DisplayName("Summoning sick land can be tapped (lands are not creatures)")
         void summoningSickLandCanBeTapped() {
             Card island = createLandWithManaAbility("Island", ManaColor.BLUE);
@@ -340,6 +312,7 @@ class AbilityActivationServiceTest {
             // summoningSick is true by default for all permanents, but lands should still be tappable
             gameData.playerBattlefields.get(player1Id).add(perm);
 
+            when(gameQueryService.intrinsicBasicLandManaColors(gameData, perm)).thenReturn(Set.of(ManaColor.BLUE));
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
@@ -382,6 +355,7 @@ class AbilityActivationServiceTest {
             Card island = createLandWithManaAbility("Island", ManaColor.BLUE);
             Permanent perm = addReadyPermanent(player1Id, island);
 
+            when(gameQueryService.intrinsicBasicLandManaColors(gameData, perm)).thenReturn(Set.of(ManaColor.BLUE));
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
@@ -390,98 +364,6 @@ class AbilityActivationServiceTest {
             service.tapPermanent(gameData, player1, 0);
 
             verify(gameLogService).append(eq(gameData), eq(GameLog.playerTaps("Player1", island)));
-        }
-    }
-
-    // =========================================================================
-    // sacrificePermanent
-    // =========================================================================
-
-    @Nested
-    @DisplayName("sacrificePermanent")
-    class SacrificePermanent {
-
-        @Test
-        @DisplayName("Sacrificing puts ability on the stack and removes permanent")
-        void sacrificePutsAbilityOnStack() {
-            Card aura = createCardWithSacrificeAbility("Aura of Silence");
-            Permanent perm = addReadyPermanent(player1Id, aura);
-
-            Card targetCard = createGenericArtifact("Lux Cannon");
-            Permanent target = addReadyPermanent(player2Id, targetCard);
-            UUID targetId = target.getId();
-
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
-            when(gameQueryService.findPermanentById(gameData, targetId)).thenReturn(target);
-            when(gameQueryService.getEffectiveColors(gameData, perm)).thenReturn(Set.of(CardColor.WHITE));
-            when(gameQueryService.hasProtectionFrom(eq(gameData), eq(target), any())).thenReturn(false);
-            when(gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, perm)).thenReturn(false);
-            when(gameQueryService.hasProtectionFromSourceSubtypes(gameData, target, perm)).thenReturn(false);
-
-            service.sacrificePermanent(gameData, player1, 0, targetId);
-
-            verify(permanentRemovalService).sacrificePermanentToGraveyard(gameData, perm);
-            verify(triggerCollectionService).checkAllyPermanentSacrificedTriggers(gameData, player1Id, perm.getCard());
-            verify(permanentRemovalService).removeOrphanedAuras(gameData);
-            assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        }
-
-        @Test
-        @DisplayName("Cannot sacrifice permanent with no ON_SACRIFICE effects")
-        void cannotSacrificeWithoutEffects() {
-            Card card = createCreatureCard("Grizzly Bears", 2, 2);
-            Permanent perm = addReadyPermanent(player1Id, card);
-
-            assertThatThrownBy(() -> service.sacrificePermanent(gameData, player1, 0, null))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("no sacrifice abilities");
-        }
-
-        @Test
-        @DisplayName("Pithing Needle blocks sacrifice abilities")
-        void pithingNeedleBlocksSacrifice() {
-            Card aura = createCardWithSacrificeAbility("Aura of Silence");
-            Permanent perm = addReadyPermanent(player1Id, aura);
-
-            addPithingNeedle(player2Id, "Aura of Silence");
-
-            assertThatThrownBy(() -> service.sacrificePermanent(gameData, player1, 0, null))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("can't be activated")
-                    .hasMessageContaining("Pithing Needle");
-        }
-
-        @Test
-        @DisplayName("Invalid permanent index throws")
-        void invalidIndexThrows() {
-            assertThatThrownBy(() -> service.sacrificePermanent(gameData, player1, 999, null))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Invalid permanent index");
-        }
-
-        @Test
-        @DisplayName("Sacrifice logs the action")
-        void sacrificeLogsAction() {
-            Card aura = createCardWithSacrificeAbility("Aura of Silence");
-            Permanent perm = addReadyPermanent(player1Id, aura);
-
-            Card targetCard = createGenericArtifact("Lux Cannon");
-            Permanent target = addReadyPermanent(player2Id, targetCard);
-            UUID targetId = target.getId();
-
-            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
-                    .thenReturn(false);
-            when(gameQueryService.findPermanentById(gameData, targetId)).thenReturn(target);
-            when(gameQueryService.getEffectiveColors(gameData, perm)).thenReturn(Set.of(CardColor.WHITE));
-            when(gameQueryService.hasProtectionFrom(eq(gameData), eq(target), any())).thenReturn(false);
-            when(gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, perm)).thenReturn(false);
-            when(gameQueryService.hasProtectionFromSourceSubtypes(gameData, target, perm)).thenReturn(false);
-
-            service.sacrificePermanent(gameData, player1, 0, targetId);
-
-            verify(gameLogService).append(eq(gameData), argThat((GameLogEntry e) -> e.plainText().equals("Player1 sacrifices Aura of Silence.")));
         }
     }
 
@@ -706,7 +588,7 @@ class AbilityActivationServiceTest {
         @DisplayName("Graveyard activation cost modifier lowers the generic mana requirement")
         void graveyardActivationCostReductionLowersManaRequirement() {
             Card card = createGenericArtifact("Graveyard Cost Reducer");
-            card.addGraveyardActivatedAbility(new ActivatedAbility(
+            card.addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                     false,
                     "{3}{B}",
                     List.of(new ReduceActivationCostEffect(new Fixed(2)), new DrawCardEffect()),
@@ -1095,7 +977,7 @@ class AbilityActivationServiceTest {
         void appliesDynamicCostReduction() {
             Card source = new Card();
             source.setName("Graveyard Target Hand Ability");
-            source.addHandActivatedAbility(new ActivatedAbility(
+            source.addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                     false,
                     "{3}{B}",
                     List.of(new ReduceActivationCostEffect(new Fixed(2)), new DrawCardEffect()),
@@ -1122,7 +1004,7 @@ class AbilityActivationServiceTest {
         @DisplayName("ONLY_DURING_YOUR_UPKEEP: wrong step throws")
         void upkeepOnlyWrongStepThrows() {
             Card card = createGenericArtifact("Test Hand Artifact");
-            card.addHandActivatedAbility(new ActivatedAbility(
+            card.addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                     false, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
                     "Test hand ability", ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP));
             gameData.playerHands.get(player1Id).add(card);
@@ -1139,7 +1021,7 @@ class AbilityActivationServiceTest {
         @DisplayName("ONLY_DURING_YOUR_UPKEEP: opponent's upkeep throws")
         void upkeepOnlyOpponentTurnThrows() {
             Card card = createGenericArtifact("Test Hand Artifact");
-            card.addHandActivatedAbility(new ActivatedAbility(
+            card.addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                     false, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
                     "Test hand ability", ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP));
             gameData.playerHands.get(player1Id).add(card);
@@ -1357,6 +1239,7 @@ class AbilityActivationServiceTest {
 
             addPithingNeedle(player2Id, "Island");
 
+            when(gameQueryService.intrinsicBasicLandManaColors(gameData, perm)).thenReturn(Set.of(ManaColor.BLUE));
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.isCreature(gameData, perm)).thenReturn(false);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
@@ -1559,7 +1442,7 @@ class AbilityActivationServiceTest {
     @DisplayName("Graveyard ability: single instant-or-sorcery exile cost prompts and resumes activation")
     void graveyardAbilitySingleExileCostPromptsAndResumes() {
         Card source = createCard("Test Professor", CardType.CREATURE);
-        source.addGraveyardActivatedAbility(new ActivatedAbility(
+        source.addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{1}{B}",
                 List.of(new ExileCardFromGraveyardCost(CardType.INSTANT, CardType.SORCERY), new DrawCardEffect()),
@@ -1801,7 +1684,7 @@ class AbilityActivationServiceTest {
         void validatesAndRecordsStackSpellTarget() {
             Card source = new Card();
             source.setName("Graveyard Copier");
-            source.addGraveyardActivatedAbility(new ActivatedAbility(
+            source.addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                     false,
                     "{U}",
                     List.of(new ExileSelfFromGraveyardCost(), new CopySpellEffect()),
@@ -2248,7 +2131,7 @@ class AbilityActivationServiceTest {
         Card card = new Card();
         card.setName(name);
         card.setType(CardType.LAND);
-        card.addEffect(EffectSlot.ON_TAP, new AwardManaEffect(color, 1));
+        card.addActivatedAbility(ManaAbilities.tapFor(color));
         return card;
     }
 
@@ -2260,7 +2143,7 @@ class AbilityActivationServiceTest {
         card.setColor(CardColor.GREEN);
         card.setPower(1);
         card.setToughness(1);
-        card.addEffect(EffectSlot.ON_TAP, new AwardManaEffect(color, 1));
+        card.addActivatedAbility(ManaAbilities.tapFor(color));
         return card;
     }
 
@@ -2281,16 +2164,6 @@ class AbilityActivationServiceTest {
         card.setType(CardType.ARTIFACT);
         card.setManaCost("{0}");
         card.setColor(null);
-        return card;
-    }
-
-    private Card createCardWithSacrificeAbility(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.ENCHANTMENT);
-        card.setManaCost("{1}{W}{W}");
-        card.setColor(CardColor.WHITE);
-        card.addEffect(EffectSlot.ON_SACRIFICE, new DestroyTargetPermanentEffect());
         return card;
     }
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -26,7 +27,7 @@ public class SunscourgeChampion extends Card {
         // Eternalize—{2}{W}{W}, Discard a card. ({2}{W}{W}, Discard a card, Exile this card from your
         // graveyard: Create a token that's a copy of it, except it's a 4/4 black Zombie Human Wizard with
         // no mana cost. Eternalize only as a sorcery.)
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{2}{W}{W}",
                 List.of(

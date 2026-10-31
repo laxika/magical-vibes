@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -72,7 +73,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -468,11 +468,10 @@ public class LandTapTriggerCollectorService {
                         match.gameData(), tappedLand, trigger.landFilter())) return false;
 
         ManaColor chosenManaColor = ManaColor.valueOf(chosenColor.name());
-        // A land's activated mana ability reports the colors it actually added; a plain tap
-        // reports none, so fall back to the land's printed tap mana.
+        // A tap reports the colors it actually added; one that reports none falls back to the land's
+        // basic land types.
         boolean producesChosenColor = lt.producedColors().isEmpty()
-                ? tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                        .anyMatch(e -> e instanceof AwardManaEffect award && award.color() == chosenManaColor)
+                ? intrinsicManaColors(tappedLand).contains(chosenManaColor)
                 : lt.producedColors().contains(chosenManaColor);
         if (!producesChosenColor) return false;
 
@@ -533,11 +532,7 @@ public class LandTapTriggerCollectorService {
                     ManaColor.RED, ManaColor.GREEN));
         }
         if (producedColors.isEmpty() && tappedLand != null) {
-            tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                    .filter(AwardManaEffect.class::isInstance)
-                    .map(AwardManaEffect.class::cast)
-                    .map(AwardManaEffect::color)
-                    .forEach(producedColors::add);
+            producedColors.addAll(intrinsicManaColors(tappedLand));
         }
         if (producedColors.isEmpty()) return false;
 
@@ -603,11 +598,9 @@ public class LandTapTriggerCollectorService {
         }
 
         Set<ManaColor> producedColors = new java.util.LinkedHashSet<>(lt.producedColors());
-        tappedLand.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                .filter(AwardManaEffect.class::isInstance)
-                .map(AwardManaEffect.class::cast)
-                .map(AwardManaEffect::color)
-                .forEach(producedColors::add);
+        if (producedColors.isEmpty()) {
+            producedColors.addAll(intrinsicManaColors(tappedLand));
+        }
         if (producedColors.isEmpty()) return false;
 
         if (producedColors.size() == 1) {
@@ -652,12 +645,7 @@ public class LandTapTriggerCollectorService {
         if (lt.producedColors().size() == 1) {
             producedColor = lt.producedColors().iterator().next();
         } else {
-            for (CardEffect tapEffect : tappedLand.getCard().getEffects(EffectSlot.ON_TAP)) {
-                if (tapEffect instanceof AwardManaEffect awardMana) {
-                    producedColor = awardMana.color();
-                    break;
-                }
-            }
+            producedColor = intrinsicManaColors(tappedLand).stream().findFirst().orElse(null);
         }
         if (producedColor == null) return false;
 
@@ -698,21 +686,7 @@ public class LandTapTriggerCollectorService {
         if (lt.producedColors().size() == 1) {
             producedColor = lt.producedColors().iterator().next();
         } else {
-            for (CardEffect tapEffect : tappedLand.getCard().getEffects(EffectSlot.ON_TAP)) {
-                if (tapEffect instanceof AwardManaEffect awardMana) {
-                    producedColor = awardMana.color();
-                    break;
-                }
-            }
-        }
-        if (producedColor == null) {
-            producedColor = tappedLand.getCard().getActivatedAbilities().stream()
-                    .flatMap(ability -> ability.getEffects().stream())
-                    .filter(AwardManaEffect.class::isInstance)
-                    .map(AwardManaEffect.class::cast)
-                    .map(AwardManaEffect::color)
-                    .findFirst()
-                    .orElse(null);
+            producedColor = intrinsicManaColors(tappedLand).stream().findFirst().orElse(null);
         }
         if (producedColor == null) return false;
 
@@ -840,13 +814,13 @@ public class LandTapTriggerCollectorService {
 
     private boolean landProducesManaColor(com.github.laxika.magicalvibes.model.GameData gameData,
                                            Permanent land, ManaColor color) {
-        boolean printedAbilityProducesColor = land.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                .filter(ManaProducingEffect.class::isInstance)
-                .map(ManaProducingEffect.class::cast)
-                .anyMatch(mana -> mana.estimatedManaColor() == color);
-        if (printedAbilityProducesColor) return true;
+        return tapManaAbilityProducesColor(ManaAbilities.intrinsic(land.getCard()), color)
+                || tapManaAbilityProducesColor(
+                        gameQueryService.computeStaticBonus(gameData, land).grantedActivatedAbilities(), color);
+    }
 
-        return gameQueryService.computeStaticBonus(gameData, land).grantedActivatedAbilities().stream()
+    private static boolean tapManaAbilityProducesColor(List<ActivatedAbility> abilities, ManaColor color) {
+        return abilities.stream()
                 .filter(ActivatedAbility::isRequiresTap)
                 .filter(ActivatedAbility::isManaAbility)
                 .flatMap(ability -> ability.getEffects().stream())
@@ -1068,5 +1042,15 @@ public class LandTapTriggerCollectorService {
         log.info("Game {} - {} triggers on opponent land tap", match.gameData().id,
                 match.permanent().getCard().getName());
         return true;
+    }
+
+    /** The colors the land card's basic land types make it add (CR 305.6), for a tap that reported none. */
+    private static List<ManaColor> intrinsicManaColors(Permanent land) {
+        return ManaAbilities.intrinsic(land.getCard()).stream()
+                .filter(ActivatedAbility::isRequiresTap)
+                .flatMap(ability -> ability.getEffects().stream())
+                .filter(AwardManaEffect.class::isInstance)
+                .map(effect -> ((AwardManaEffect) effect).color())
+                .toList();
     }
 }

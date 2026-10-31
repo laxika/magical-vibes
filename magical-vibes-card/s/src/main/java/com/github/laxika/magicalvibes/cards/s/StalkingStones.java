@@ -5,10 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
@@ -22,7 +21,6 @@ import java.util.Set;
 public class StalkingStones extends Card {
 
     public StalkingStones() {
-        addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
         // The animation lasts indefinitely (PERMANENT duration), so the artifact type is granted
         // persistently alongside the 3/3 body. It stays a land — no types are removed.
         addActivatedAbility(new ActivatedAbility(
@@ -37,5 +35,6 @@ public class StalkingStones extends Card {
                 )),
                 "{6}: Stalking Stones becomes a 3/3 Elemental artifact creature that's still a land."
         ));
+        addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
     }
 }

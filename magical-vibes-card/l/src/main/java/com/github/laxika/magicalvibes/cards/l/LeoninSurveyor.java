@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -21,7 +22,7 @@ public class LeoninSurveyor extends Card {
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
 
-        addGraveyardActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{3}",
                 List.of(new ExileSelfFromGraveyardCost(), new DrawCardEffect(1)),

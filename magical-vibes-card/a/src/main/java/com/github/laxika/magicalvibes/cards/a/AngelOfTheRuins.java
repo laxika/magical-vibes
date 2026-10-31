@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -40,7 +41,7 @@ public class AngelOfTheRuins extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ExileTargetPermanentEffect(artifactOrEnchantment));
 
-        addHandActivatedAbility(new ActivatedAbility(
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{2}",
                 List.of(new SearchLibraryEffect(

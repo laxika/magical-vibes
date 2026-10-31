@@ -5,9 +5,11 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -82,7 +84,7 @@ class AquitectsWillTest extends BaseCardTest {
 
         Permanent mountain = gqs.findPermanentById(gd, mountainId);
         // The Card object is shared with AI simulation copies and must stay unmodified.
-        assertThat(mountain.getCard().getActivatedAbilities()).isEmpty();
+        assertThat(mountain.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).isEmpty();
         assertThat(mountain.getCounterCount(CounterType.FLOOD)).isEqualTo(1);
     }
 
@@ -102,8 +104,10 @@ class AquitectsWillTest extends BaseCardTest {
         assertThat(simMountain.getPersistentGrantedActivatedAbilities()).hasSize(1);
         assertThat(realMountain.getPersistentGrantedActivatedAbilities()).isEmpty();
         assertThat(realMountain.getGrantedSubtypes()).doesNotContain(CardSubtype.ISLAND);
-        assertThat(realMountain.getCard().getActivatedAbilities()).isEmpty();
-        assertThat(gs.getEffectiveActivatedAbilities(gd, realMountain)).isEmpty();
+        assertThat(realMountain.getCard().getActivatedAbilities(Zone.BATTLEFIELD)).isEmpty();
+        // Only the Mountain's own mana ability (CR 305.6); no Island ability leaked from the copy.
+        assertThat(gs.getEffectiveActivatedAbilities(gd, realMountain))
+                .containsExactly(ManaAbilities.intrinsic(ManaColor.RED));
     }
 
     @Test

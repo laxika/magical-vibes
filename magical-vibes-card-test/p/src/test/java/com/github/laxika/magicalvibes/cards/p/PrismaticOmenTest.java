@@ -49,7 +49,7 @@ class PrismaticOmenTest extends BaseCardTest {
 
         assertThat(bonus.grantedSubtypes()).doesNotContain(CardSubtype.PLAINS, CardSubtype.ISLAND,
                 CardSubtype.SWAMP, CardSubtype.MOUNTAIN);
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -110,7 +110,7 @@ class PrismaticOmenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         gd.playerBattlefields.get(player1.getId()).removeFirst();
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         harness.tapPermanent(player1, 0);
 

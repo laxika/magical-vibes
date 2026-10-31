@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -23,7 +24,7 @@ public class GleamOfResistance extends Card {
 
         // Basic landcycling {1}{W} ({1}{W}, Discard this card: Search your library for a basic land
         // card, reveal it, put it into your hand, then shuffle.) — discard cost is intrinsic.
-        addHandActivatedAbility(new ActivatedAbility(false, "{1}{W}",
+        addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}{W}",
                 List.of(new SearchLibraryEffect(CardPredicateUtils.basicLand())),
                 "Basic landcycling {1}{W} ({1}{W}, Discard this card: Search your library for a basic land card, reveal it, put it into your hand, then shuffle.)"));
     }
