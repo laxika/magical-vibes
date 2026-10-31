@@ -17,8 +17,7 @@ public class Polygoyf extends Card {
     public Polygoyf() {
         CardTypesAmongCardsInGraveyard cardTypes =
                 new CardTypesAmongCardsInGraveyard(CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(cardTypes, new Sum(cardTypes, new Fixed(1))));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(cardTypes, new Sum(cardTypes, new Fixed(1))));
 
         // Myriad
         addEffect(EffectSlot.ON_ATTACK,

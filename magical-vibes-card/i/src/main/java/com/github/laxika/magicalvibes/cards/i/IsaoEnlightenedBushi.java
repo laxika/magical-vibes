@@ -18,7 +18,7 @@ import java.util.List;
 public class IsaoEnlightenedBushi extends Card {
 
     public IsaoEnlightenedBushi() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(2), TriggerMode.ONCE_PER_BLOCK);
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(2));
         addActivatedAbility(new ActivatedAbility(

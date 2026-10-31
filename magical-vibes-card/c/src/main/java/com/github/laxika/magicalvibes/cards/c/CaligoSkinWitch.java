@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class CaligoSkinWitch extends Card {
 
     public CaligoSkinWitch() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}{B}"));
+        addStaticEffect(new KickerEffect("{3}{B}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(), new DiscardEffect(2, DiscardRecipient.EACH_OPPONENT)));
     }
 }

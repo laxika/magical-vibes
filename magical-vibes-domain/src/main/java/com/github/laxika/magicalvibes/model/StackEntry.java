@@ -274,7 +274,7 @@ public class StackEntry {
 
     /** Whether this spell paid a kicker or multikicker cost. */
     public boolean wasKicked() {
-        if (kicked && card.getEffects(EffectSlot.STATIC).stream()
+        if (kicked && card.getStaticEffects().stream()
                 .filter(com.github.laxika.magicalvibes.model.effect.KickerEffect.class::isInstance)
                 .map(com.github.laxika.magicalvibes.model.effect.KickerEffect.class::cast)
                 .findFirst().map(com.github.laxika.magicalvibes.model.effect.KickerEffect::countsAsKicker)

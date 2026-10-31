@@ -14,7 +14,7 @@ public class IllusionaryArmor extends Card {
     public IllusionaryArmor() {
         target(TargetFilters.creature())
                 // Enchanted creature gets +4/+4.
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(4, 4, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(4, 4, GrantScope.ENCHANTED_CREATURE))
                 // When enchanted creature becomes the target of a spell or ability, sacrifice this Aura.
                 .addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY, new SacrificeSelfEffect());
     }

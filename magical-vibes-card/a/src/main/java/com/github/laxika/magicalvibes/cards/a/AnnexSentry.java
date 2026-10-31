@@ -21,7 +21,7 @@ import java.util.List;
 public class AnnexSentry extends Card {
 
     public AnnexSentry() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
+        addStaticEffect(new ToxicEffect(1));
         PermanentPredicate targetPredicate = new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),

@@ -14,11 +14,11 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 public class MonstrousWarLeech extends Card {
 
     public MonstrousWarLeech() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{U}"));
+        addStaticEffect(new KickerEffect("{U}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillAsEntersEffect(4, true));
 
         var greatestManaValue = new GreatestManaValueAmongCardsInGraveyard(
                 new CardTruePredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(greatestManaValue, greatestManaValue));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(greatestManaValue, greatestManaValue));
     }
 }

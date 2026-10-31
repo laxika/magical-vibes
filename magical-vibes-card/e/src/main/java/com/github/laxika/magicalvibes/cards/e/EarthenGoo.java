@@ -14,7 +14,7 @@ public class EarthenGoo extends Card {
 
     public EarthenGoo() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{R/G}"));
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 new CountersOnSource(CounterType.AGE),
                 new CountersOnSource(CounterType.AGE),
                 GrantScope.SELF));

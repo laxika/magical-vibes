@@ -14,7 +14,7 @@ import java.util.Set;
 public class DrossHarvester extends Card {
 
     public DrossHarvester() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new LoseLifeEffect(4));
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new GainLifeEffect(2));
         addEffect(EffectSlot.ON_DEATH, new GainLifeEffect(2));

@@ -25,7 +25,7 @@ import java.util.Set;
 public class ErebosBleakHearted extends Card {
 
     public ErebosBleakHearted() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorAtLeast(ManaColor.BLACK, 5)),
                 new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new MayPayLifeEffect(

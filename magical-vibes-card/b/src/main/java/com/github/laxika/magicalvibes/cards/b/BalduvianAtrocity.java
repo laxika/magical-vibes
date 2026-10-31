@@ -19,7 +19,7 @@ import java.util.List;
 public class BalduvianAtrocity extends Card {
 
     public BalduvianAtrocity() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{R}"));
+        addStaticEffect(new KickerEffect("{R}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)

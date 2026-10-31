@@ -22,9 +22,9 @@ public class HeliodsPunishment extends Card {
 
     public HeliodsPunishment() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
-                .addEffect(EffectSlot.STATIC, new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
+                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 true,
                                 null,

@@ -13,7 +13,6 @@ public class WinterMisanthropicGuide extends Card {
     public WinterMisanthropicGuide() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new EachPlayerDrawsCardEffect(2));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.STATIC,
-                new SetOpponentMaximumHandSizeToSevenMinusCardTypesInGraveyardEffect());
+        addStaticEffect(new SetOpponentMaximumHandSizeToSevenMinusCardTypesInGraveyardEffect());
     }
 }

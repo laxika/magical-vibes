@@ -18,7 +18,7 @@ public class IsiluCarrierOfTwilight extends Card {
 
     public IsiluCarrierOfTwilight() {
         // Each other nontoken creature you control has persist.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.PERSIST,
                 GrantScope.OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(

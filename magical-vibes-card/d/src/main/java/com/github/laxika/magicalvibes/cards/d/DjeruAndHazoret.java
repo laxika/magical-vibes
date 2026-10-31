@@ -23,7 +23,7 @@ import java.util.Set;
 public class DjeruAndHazoret extends Card {
 
     public DjeruAndHazoret() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new CardsInHandAtMost(1),
                 new StaticBoostEffect(0, 0, Set.of(Keyword.VIGILANCE, Keyword.HASTE), GrantScope.SELF)));
 

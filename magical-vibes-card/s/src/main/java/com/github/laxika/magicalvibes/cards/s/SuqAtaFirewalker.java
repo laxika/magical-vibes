@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 
@@ -15,7 +14,7 @@ import java.util.Set;
 public class SuqAtaFirewalker extends Card {
 
     public SuqAtaFirewalker() {
-        addEffect(EffectSlot.STATIC, TargetingRestrictionEffect.fromSourceColors(Set.of(CardColor.RED)));
+        addStaticEffect(TargetingRestrictionEffect.fromSourceColors(Set.of(CardColor.RED)));
         addActivatedAbility(new ActivatedAbility(true, null, List.of(new DealDamageToAnyTargetEffect(1)), "{T}: Suq'Ata Firewalker deals 1 damage to any target."));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -24,7 +23,7 @@ import java.util.List;
 public class ElvenRiders extends Card {
 
     public ElvenRiders() {
-        addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(
+        addStaticEffect(new CanBeBlockedOnlyByFilterEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentHasKeywordPredicate(Keyword.FLYING),
                         new PermanentHasSubtypePredicate(CardSubtype.WALL)

@@ -18,6 +18,6 @@ public class IrenicussVileDuplication extends Card {
         target(TargetFilters.creatureYouControl()).addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(), Set.of(), null, null, Map.of(),
                         false, false, false, false, false, false, null, Set.of(Keyword.FLYING),
-                        false, Map.of(), List.of(), false, true, new Fixed(1), false, Set.of(), false));
+                        false, List.of(), List.of(), false, true, new Fixed(1), false, Set.of(), false));
     }
 }

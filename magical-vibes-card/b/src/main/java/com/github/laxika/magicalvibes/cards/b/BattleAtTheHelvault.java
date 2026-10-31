@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "719")
@@ -47,6 +46,6 @@ public class BattleAtTheHelvault extends Card {
                 CardType.CREATURE, 1, "Avacyn", 8, 8, CardColor.WHITE, null,
                 List.of(CardSubtype.ANGEL),
                 Set.of(Keyword.FLYING, Keyword.VIGILANCE, Keyword.INDESTRUCTIBLE), Set.of(),
-                false, false, Map.of(), List.of(), false, false, true, 0, Set.of()));
+                false, false, List.of(), List.of(), false, false, true, 0, Set.of()));
     }
 }

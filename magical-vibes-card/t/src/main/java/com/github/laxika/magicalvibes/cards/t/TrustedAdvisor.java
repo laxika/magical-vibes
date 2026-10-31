@@ -18,7 +18,7 @@ import java.util.Set;
 public class TrustedAdvisor extends Card {
 
     public TrustedAdvisor() {
-        addEffect(EffectSlot.STATIC, new IncreaseControllerMaxHandSizeEffect(2));
+        addStaticEffect(new IncreaseControllerMaxHandSizeEffect(2));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new BouncePermanentOnUpkeepEffect(
                 BouncePermanentOnUpkeepEffect.Scope.SOURCE_CONTROLLER,
                 Set.of(new ControlledPermanentPredicateTargetFilter(

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PerpetuallyGiveLandExtraManaE
 public class VigorousFarming extends Card {
 
     public VigorousFarming() {
-        addEffect(EffectSlot.STATIC, new ControlledLandsEnterUntappedEffect());
+        addStaticEffect(new ControlledLandsEnterUntappedEffect());
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new PerpetuallyGiveLandExtraManaEffect(ManaColor.GREEN));
     }

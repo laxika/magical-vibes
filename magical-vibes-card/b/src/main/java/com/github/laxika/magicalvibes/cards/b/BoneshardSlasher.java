@@ -14,10 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class BoneshardSlasher extends Card {
 
     public BoneshardSlasher() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
                 new StaticBoostEffect(2, 2, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
                 new GrantTriggeredAbilityEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
                         new SacrificeSelfEffect(), GrantScope.SELF)));

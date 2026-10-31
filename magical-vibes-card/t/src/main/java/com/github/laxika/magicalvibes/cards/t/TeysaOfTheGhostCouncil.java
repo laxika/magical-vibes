@@ -29,7 +29,7 @@ public class TeysaOfTheGhostCouncil extends Card {
                         Set.of(Keyword.FLYING), Set.of()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new IntensifySourceCardEffect(1));
 
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 new SourceIntensity(), new Fixed(0), GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)));
 

@@ -13,7 +13,7 @@ public class SergeantAtArms extends Card {
 
     public SergeantAtArms() {
         // Kicker {2}{W}
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{W}"));
+        addStaticEffect(new KickerEffect("{2}{W}"));
         // When this creature enters, if it was kicked, create two 1/1 white Soldier creature tokens.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(), 
                 CreateTokenEffect.whiteSoldier(2)

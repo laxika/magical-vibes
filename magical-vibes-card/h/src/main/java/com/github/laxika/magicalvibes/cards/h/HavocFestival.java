@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 public class HavocFestival extends Card {
 
     public HavocFestival() {
-        addEffect(EffectSlot.STATIC, new PlayersCantGainLifeEffect());
+        addStaticEffect(new PlayersCantGainLifeEffect());
 
         // EACH_UPKEEP_TRIGGERED sets the active player as targetId — "that player loses half their life, rounded up".
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,

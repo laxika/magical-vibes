@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -14,7 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 
 import java.util.List;
-import java.util.Map;
 
 @CardRegistration(set = "FIN", collectorNumber = "137")
 @CardRegistration(set = "FIN", collectorNumber = "386")
@@ -23,12 +23,12 @@ import java.util.Map;
 public class FirionWildRoseWarrior extends Card {
 
     public FirionWildRoseWarrior() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE, GrantScope.ALL_OWN_CREATURES, new PermanentIsEquippedPredicate()));
         addEffect(EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardNotPredicate(new CardIsTokenPredicate()),
                         CreateTokenCopyOfTargetPermanentEffect.withAdditionalEffects(
-                                true, Map.of(EffectSlot.STATIC, List.of(ReduceEquipCostEffect.ofThisEquipmentOnly(2))))));
+                                true, List.of(StaticAbility.of(List.of(ReduceEquipCostEffect.ofThisEquipmentOnly(2)))))));
     }
 }

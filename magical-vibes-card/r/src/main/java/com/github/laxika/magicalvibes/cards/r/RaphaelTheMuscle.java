@@ -21,8 +21,7 @@ import java.util.List;
 public class RaphaelTheMuscle extends Card {
 
     public RaphaelTheMuscle() {
-        addEffect(EffectSlot.STATIC,
-                new DoubleDamageFromCreaturesEffect(new PermanentHasCountersPredicate(CounterType.ANY)));
+        addStaticEffect(new DoubleDamageFromCreaturesEffect(new PermanentHasCountersPredicate(CounterType.ANY)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, mutagenToken());
     }
 

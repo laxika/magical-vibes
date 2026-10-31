@@ -15,7 +15,7 @@ import java.util.Set;
 public class KnightOfInfamy extends Card {
 
     public KnightOfInfamy() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
         // Exalted: ON_ALLY_CREATURE_ATTACKS fires per attacking ally and records the attacker as the
         // trigger's (non-targeting) target; AttacksAlone restricts it to lone attackers.
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,

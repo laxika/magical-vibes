@@ -13,7 +13,7 @@ public class ForsakenCity extends Card {
 
     public ForsakenCity() {
         // This land doesn't untap during your untap step.
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // At the beginning of your upkeep, you may exile a card from your hand. If you do, untap this land.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(

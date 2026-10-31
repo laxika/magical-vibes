@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -43,8 +42,7 @@ public class PerpetuallyBoostSourceAndEnteringCreatureEffectHandler implements N
         }
 
         Card modifiedCard = permanent.getCard().createRuntimeCopy();
-        modifiedCard.addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(boost.powerBoost(), boost.toughnessBoost(), GrantScope.SELF));
+        modifiedCard.addStaticEffect(new StaticBoostEffect(boost.powerBoost(), boost.toughnessBoost(), GrantScope.SELF));
         modifiedCard.freeze();
         permanent.exchangeCard(modifiedCard);
     }

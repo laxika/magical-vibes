@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
@@ -28,13 +27,13 @@ import java.util.Set;
 public class ArvinoxTheMindFlail extends Card {
 
     public ArvinoxTheMindFlail() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new ControlsPermanentCount(3, new PermanentNotPredicate(
                         new PermanentOwnedBySourceControllerPredicate()))),
                 new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ExileBottomCardsToSourceEffect(1, true, LibraryScope.EACH_OPPONENT));
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 true,
                 new CardAllOfPredicate(List.of(
                         new CardIsPermanentPredicate(),

@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class KitesailCleric extends Card {
 
     public KitesailCleric() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{W}"));
+        addStaticEffect(new KickerEffect("{2}{W}"));
 
         targetWhenKicked(TargetFilters.creature(), 0, 0, 0, 2)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

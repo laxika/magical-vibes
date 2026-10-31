@@ -17,7 +17,7 @@ public class OpalineBracers extends Card {
     public OpalineBracers() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 new CountersOnSource(CounterType.CHARGE),
                 new CountersOnSource(CounterType.CHARGE),
                 GrantScope.EQUIPPED_CREATURE));

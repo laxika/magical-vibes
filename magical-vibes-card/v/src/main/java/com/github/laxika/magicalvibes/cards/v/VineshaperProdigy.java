@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class VineshaperProdigy extends Card {
 
     public VineshaperProdigy() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{U}"));
+        addStaticEffect(new KickerEffect("{1}{U}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new Kicked(),
                         LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(3))));

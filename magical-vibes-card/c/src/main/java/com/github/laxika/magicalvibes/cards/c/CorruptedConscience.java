@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -14,7 +13,7 @@ public class CorruptedConscience extends Card {
 
     public CorruptedConscience() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect())
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.INFECT, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new ControlEnchantedCreatureEffect())
+                .addStaticEffect(new GrantKeywordEffect(Keyword.INFECT, GrantScope.ENCHANTED_CREATURE));
     }
 }

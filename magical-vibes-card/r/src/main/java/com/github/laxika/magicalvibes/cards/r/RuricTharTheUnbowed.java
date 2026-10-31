@@ -24,7 +24,7 @@ public class RuricTharTheUnbowed extends Card {
         // Vigilance and reach are auto-loaded as keywords from Scryfall.
 
         // Ruric Thar attacks each combat if able.
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
 
         // Whenever a player casts a noncreature spell, Ruric Thar deals 6 damage to that player.
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new SpellCastTriggerEffect(

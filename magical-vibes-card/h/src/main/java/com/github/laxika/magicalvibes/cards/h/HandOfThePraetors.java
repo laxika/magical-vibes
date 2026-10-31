@@ -21,7 +21,7 @@ public class HandOfThePraetors extends Card {
 
     public HandOfThePraetors() {
         // Other creatures you control with infect get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasKeywordPredicate(Keyword.INFECT)));
 
         // Whenever you cast a creature spell with infect, target player gets a poison counter.

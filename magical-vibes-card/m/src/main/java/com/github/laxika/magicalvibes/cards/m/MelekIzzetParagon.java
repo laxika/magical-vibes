@@ -21,9 +21,8 @@ import java.util.Set;
 public class MelekIzzetParagon extends Card {
 
     public MelekIzzetParagon() {
-        addEffect(EffectSlot.STATIC, new PlayWithTopCardRevealedEffect());
-        addEffect(EffectSlot.STATIC,
-                new AllowCastFromTopOfLibraryEffect(Set.of(CardType.INSTANT, CardType.SORCERY)));
+        addStaticEffect(new PlayWithTopCardRevealedEffect());
+        addStaticEffect(new AllowCastFromTopOfLibraryEffect(Set.of(CardType.INSTANT, CardType.SORCERY)));
 
         // The copy is mandatory (no cost, no MayEffect wrapper); only the "new targets for the copy"
         // choice is optional, and CopyControllerCastSpellEffect already offers it.

@@ -14,15 +14,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class LegacySlotTriggerTest {
 
     @ParameterizedTest
-    @EnumSource(value = EffectSlot.class, names = {"STATIC", "COMMAND_ZONE_STATIC"})
-    void slotsOfStaticAbilitiesAreNotTriggers(EffectSlot slot) {
-        assertThatThrownBy(() -> new LegacySlotTrigger(slot)).isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @ParameterizedTest
-    @EnumSource(value = EffectSlot.class, mode = EnumSource.Mode.EXCLUDE,
-            names = {"STATIC", "COMMAND_ZONE_STATIC"})
-    void everyOtherSlotIsALegacyTrigger(EffectSlot slot) {
+    @EnumSource(EffectSlot.class)
+    void everySlotIsALegacyTrigger(EffectSlot slot) {
         LegacySlotTrigger trigger = new LegacySlotTrigger(slot);
 
         assertThat(trigger.slot()).isEqualTo(slot);

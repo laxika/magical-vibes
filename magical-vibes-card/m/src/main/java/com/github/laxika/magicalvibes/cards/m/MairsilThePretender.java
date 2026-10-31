@@ -12,6 +12,6 @@ public class MairsilThePretender extends Card {
     public MairsilThePretender() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileArtifactOrCreatureCardFromHandOrGraveyardWithCageCounterEffect());
-        addEffect(EffectSlot.STATIC, new GainActivatedAbilitiesOfCardsExiledWithCageCountersEffect());
+        addStaticEffect(new GainActivatedAbilitiesOfCardsExiledWithCageCountersEffect());
     }
 }

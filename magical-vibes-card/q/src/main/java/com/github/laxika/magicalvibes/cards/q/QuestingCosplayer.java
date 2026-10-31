@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
@@ -27,7 +28,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MB2", collectorNumber = "345")
@@ -77,7 +77,8 @@ public class QuestingCosplayer extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(EffectSlot.STATIC, SequenceEffect.of(
+                List.of(
+                        StaticAbility.of(SequenceEffect.of(
                         new GrantKeywordEffect(
                                 Set.of(Keyword.VIGILANCE, Keyword.DEATHTOUCH, Keyword.HASTE),
                                 GrantScope.ENCHANTED_CREATURE),
@@ -95,7 +96,7 @@ public class QuestingCosplayer extends Card {
                                         new PermanentAllOfPredicate(List.of(
                                                 new PermanentIsPlaneswalkerPredicate(),
                                                 new PermanentControlledByDefendingPlayerPredicate()))),
-                                GrantScope.ENCHANTED_CREATURE))),
+                                GrantScope.ENCHANTED_CREATURE)))),
                 List.of(),
                 false,
                 false,

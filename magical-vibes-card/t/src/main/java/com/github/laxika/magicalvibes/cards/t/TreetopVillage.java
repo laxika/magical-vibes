@@ -26,7 +26,7 @@ import java.util.Set;
 public class TreetopVillage extends Card {
 
     public TreetopVillage() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
         // {1}{G}: Treetop Village becomes a 3/3 green Ape creature with trample until end of turn. It's still a land.
         addActivatedAbility(new ActivatedAbility(

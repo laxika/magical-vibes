@@ -19,8 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class NickValentinePrivateEye extends Card {
 
     public NickValentinePrivateEye() {
-        addEffect(EffectSlot.STATIC,
-                new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate())));
 
         MayEffect investigate = new MayEffect(CreateTokenEffect.ofClueToken(1), "Investigate?");

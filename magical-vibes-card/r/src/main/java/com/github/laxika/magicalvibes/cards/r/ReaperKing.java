@@ -17,7 +17,7 @@ public class ReaperKing extends Card {
 
     public ReaperKing() {
         // Other Scarecrow creatures you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SCARECROW)));
 
         // Whenever another Scarecrow you control enters, destroy target permanent.

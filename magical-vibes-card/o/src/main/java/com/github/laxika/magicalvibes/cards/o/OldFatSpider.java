@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 public class OldFatSpider extends Card {
 
     public OldFatSpider() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtMostPredicate(2)));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new DrawCardEffect());
     }

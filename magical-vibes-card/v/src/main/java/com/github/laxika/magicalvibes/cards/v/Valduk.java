@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "148")
@@ -39,7 +38,7 @@ public class Valduk extends Card {
                 Set.of(),
                 false,  // tappedAndAttacking
                 false,  // tapped
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,  // exileAtEndOfCombat
                 true,   // exileAtEndStep

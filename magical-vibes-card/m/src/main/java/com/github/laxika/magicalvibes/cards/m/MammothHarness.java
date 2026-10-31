@@ -18,7 +18,7 @@ public class MammothHarness extends Card {
         target(TargetFilters.creature());
 
         // Enchanted creature loses flying.
-        addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
 
         // Whenever enchanted creature blocks or becomes blocked by a creature,
         // the other creature gains first strike until end of turn.

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -18,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "236")
@@ -35,10 +36,9 @@ public class VraskaSwarmsEminence extends Card {
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH), putCounterOnDealer));
 
-        Map<EffectSlot, CardEffect> assassinTokenEffects = Map.of(
-                EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER,
-                new TriggeringPermanentConditionalEffect(
-                        new PermanentIsSourcePermanentPredicate(), new DestroyTargetPermanentEffect()));
+        List<Ability> assassinTokenEffects = List.of(
+                LegacySlots.triggered(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER, new TriggeringPermanentConditionalEffect(
+                        new PermanentIsSourcePermanentPredicate(), new DestroyTargetPermanentEffect())));
         addActivatedAbility(new ActivatedAbility(
                 -2,
                 List.of(new CreateTokenEffect(

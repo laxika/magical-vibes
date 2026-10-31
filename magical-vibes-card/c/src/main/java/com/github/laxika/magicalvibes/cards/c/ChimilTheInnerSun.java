@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
 public class ChimilTheInnerSun extends Card {
 
     public ChimilTheInnerSun() {
-        addEffect(EffectSlot.STATIC, new ControllerSpellsCantBeCounteredEffect());
+        addStaticEffect(new ControllerSpellsCantBeCounteredEffect());
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new DiscoverEffect(5));
     }
 }

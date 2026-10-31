@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -18,7 +17,7 @@ public class SoramaroFirstToDream extends Card {
 
     public SoramaroFirstToDream() {
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

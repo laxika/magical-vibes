@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class HollowhengeHuntmaster extends Card {
 
     public HollowhengeHuntmaster() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS));
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 2, new PermanentIsCreaturePredicate()));

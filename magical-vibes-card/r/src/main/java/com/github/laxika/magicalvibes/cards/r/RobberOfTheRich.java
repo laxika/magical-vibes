@@ -22,7 +22,7 @@ public class RobberOfTheRich extends Card {
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
                 new DefendingPlayerHasMoreCardsInHandThanController(),
                 new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_OPPONENT)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AttackedWithCreaturesOfSubtypeThisTurn(1, CardSubtype.ROGUE),
                 new AllowCastFromCardsExiledWithSourceEffect(
                         true, new CardNotPredicate(new CardTypePredicate(CardType.LAND)), false, false, 0, null,

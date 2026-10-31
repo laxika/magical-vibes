@@ -20,12 +20,12 @@ public class NehebTheWorthy extends Card {
 
     public NehebTheWorthy() {
         // Other Minotaurs you control have first strike. (OWN_CREATURES excludes this source = "other".)
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.MINOTAUR)));
 
         // As long as you have one or fewer cards in hand, Minotaurs you control get +2/+0.
         // ALL_OWN_CREATURES because this creature is itself a Minotaur and qualifies.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new CardsInHandAtMost(1),
+        addStaticEffect(new ConditionalEffect(new CardsInHandAtMost(1),
                 new StaticBoostEffect(2, 0, GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.MINOTAUR))));
 

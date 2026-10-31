@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -24,7 +23,7 @@ import java.util.Set;
 public class DragonkinBerserker extends Card {
 
     public DragonkinBerserker() {
-        addEffect(EffectSlot.STATIC, new ReduceBoastActivationCostEffect(
+        addStaticEffect(new ReduceBoastActivationCostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.DRAGON), CountScope.CONTROLLER)));
 
         addActivatedAbility(new ActivatedAbility(

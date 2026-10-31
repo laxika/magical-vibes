@@ -27,7 +27,7 @@ public class HYDRADisintegrator extends Card {
                                 List.of(CardSubtype.VILLAIN), Set.of(Keyword.MENACE), Set.of()),
                         new AttachMatchingEquipmentToCreatedPermanentEffect(
                                 new PermanentIsSourcePermanentPredicate())));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }
 }

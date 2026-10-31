@@ -11,7 +11,7 @@ public class AmarantCoral extends Card {
 
     public AmarantCoral() {
         // Amarant Coral attacks each combat if able.
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
 
         // Whenever Amarant Coral deals combat damage to an opponent, it deals that much damage to
         // each other opponent.

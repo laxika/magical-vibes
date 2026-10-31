@@ -11,6 +11,6 @@ public class LashknifeBarrier extends Card {
 
     public LashknifeBarrier() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
-        addEffect(EffectSlot.STATIC, new ReduceDamageToControlledCreaturesEffect(1));
+        addStaticEffect(new ReduceDamageToControlledCreaturesEffect(1));
     }
 }

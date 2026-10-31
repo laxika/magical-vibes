@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class CavernHoardDragon extends Card {
 
     public CavernHoardDragon() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new GreatestPermanentCountAmongOpponents(new PermanentIsArtifactPredicate())));
 
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,

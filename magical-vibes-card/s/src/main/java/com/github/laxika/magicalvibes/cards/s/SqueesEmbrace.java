@@ -13,7 +13,7 @@ public class SqueesEmbrace extends Card {
 
     public SqueesEmbrace() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
 
         addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
                 new ReturnEnchantedCreatureToOwnerHandOnDeathEffect());

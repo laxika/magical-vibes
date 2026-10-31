@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 public class ElegantParlor extends Card {
 
     public ElegantParlor() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SurveilEffect(1));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));

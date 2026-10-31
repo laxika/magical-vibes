@@ -56,7 +56,7 @@ public class CaretakersTalent extends Card {
                 "Target must be a token you control")).addEffect(
                 EffectSlot.ON_SELF_REACHES_LEVEL_TWO, new CreateTokenCopyOfTargetPermanentEffect());
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),
                 new StaticBoostEffect(
                         2,

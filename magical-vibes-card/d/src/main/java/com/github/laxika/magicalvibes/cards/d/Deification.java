@@ -16,7 +16,7 @@ public class Deification extends Card {
 
     public Deification() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChoosePlaneswalkerTypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new GrantHexproofToChosenPlaneswalkerTypeEffect());
-        addEffect(EffectSlot.STATIC, new PreserveOneLoyaltyCounterForChosenPlaneswalkerTypeEffect());
+        addStaticEffect(new GrantHexproofToChosenPlaneswalkerTypeEffect());
+        addStaticEffect(new PreserveOneLoyaltyCounterForChosenPlaneswalkerTypeEffect());
     }
 }

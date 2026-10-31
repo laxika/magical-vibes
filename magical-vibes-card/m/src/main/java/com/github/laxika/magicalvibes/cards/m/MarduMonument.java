@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TDM", collectorNumber = "245")
@@ -46,7 +45,7 @@ public class MarduMonument extends Card {
                         new CreateTokenEffect(
                                 CardType.CREATURE, 3, "Warrior", 1, 1, CardColor.RED, null,
                                 List.of(CardSubtype.WARRIOR), Set.of(), Set.of(), false, false,
-                                Map.of(), List.of(), false, false, false, 0,
+                                List.of(), List.of(), false, false, false, 0,
                                 Set.of(Keyword.MENACE, Keyword.HASTE))),
                 "{2}{R}{W}{B}, {T}, Sacrifice this artifact: Create three 1/1 red Warrior creature tokens. "
                         + "They gain menace and haste until end of turn. Activate only as a sorcery.",

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -26,7 +25,7 @@ public class ResonatingLute extends Card {
                 List.of(new AwardAnyColorManaEffect(2, ManaSpendRestriction.INSTANT_SORCERY_ONLY)),
                 "{T}: Add two mana of any one color. Spend this mana only to cast instant and sorcery spells."
         );
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 landManaAbility, GrantScope.OWN_PERMANENTS, new PermanentIsLandPredicate()));
 
         // {T}: Draw a card. Activate only if you have seven or more cards in your hand.

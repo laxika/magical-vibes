@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
  * requirement lives as a transient flag on the {@code Permanent} and is cleared at end of turn via
  * {@code resetModifiers()}.
  *
- * <p>These are the one-shot counterparts of the static abilities that read off {@code EffectSlot.STATIC}
+ * <p>These are the one-shot counterparts of the static abilities
  * ({@link MustBeBlockedIfAbleEffect}, {@link MustBeBlockedByAllCreaturesEffect}, {@link MustAttackEffect}):
  * same requirement, but granted temporarily by a resolving spell or ability rather than printed on the
  * creature.

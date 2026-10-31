@@ -18,8 +18,8 @@ public class TrickstersTalisman extends Card {
         // Invoke Duplicity — Equipped creature gets +1/+1 and has "Whenever this creature deals combat
         // damage to a player, you may sacrifice Trickster's Talisman. If you do, create a token that's a
         // copy of this creature." The granted ability is controlled by the creature's controller.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new MayEffect(
                         new SacrificeGrantingEquipmentThenEffect(new CreateTokenCopyOfSourceEffect(false, 1)),

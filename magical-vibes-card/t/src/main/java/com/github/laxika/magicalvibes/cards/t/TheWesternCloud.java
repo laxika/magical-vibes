@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class TheWesternCloud extends Card {
 
     public TheWesternCloud() {
-        addEffect(EffectSlot.STATIC, new PreventAllDamageToCreaturesYouControlEffect(null));
-        addEffect(EffectSlot.STATIC, new PreventFixedDamageToPlaneswalkersYouControlEffect(Integer.MAX_VALUE));
+        addStaticEffect(new PreventAllDamageToCreaturesYouControlEffect(null));
+        addStaticEffect(new PreventFixedDamageToPlaneswalkersYouControlEffect(Integer.MAX_VALUE));
 
         addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
                 CreateTokenEffect.ofTappedTreasureToken(3),

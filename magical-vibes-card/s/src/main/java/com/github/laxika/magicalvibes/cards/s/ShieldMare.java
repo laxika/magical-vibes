@@ -15,7 +15,7 @@ public class ShieldMare extends Card {
 
     public ShieldMare() {
         // This creature can't be blocked by red creatures.
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentColorInPredicate(Set.of(CardColor.RED))));
 
         // When this creature enters or becomes the target of a spell or ability an opponent

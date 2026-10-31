@@ -16,7 +16,7 @@ import java.util.List;
 public class ZimoneInfiniteAnalyst extends Card {
 
     public ZimoneInfiniteAnalyst() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForFirstMatchingSpellEachTurnEffect(
+        addStaticEffect(new ReduceCastCostForFirstMatchingSpellEachTurnEffect(
                 new CardHasXInManaCostPredicate(),
                 new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)));
 

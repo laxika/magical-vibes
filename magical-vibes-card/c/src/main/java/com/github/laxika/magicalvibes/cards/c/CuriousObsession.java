@@ -19,8 +19,8 @@ public class CuriousObsession extends Card {
 
     public CuriousObsession() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                         new MayEffect(new DrawCardEffect(1), "Draw a card?"),
                         GrantScope.ENCHANTED_CREATURE));

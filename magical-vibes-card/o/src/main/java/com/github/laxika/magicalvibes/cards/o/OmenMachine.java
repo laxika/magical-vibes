@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 public class OmenMachine extends Card {
 
     public OmenMachine() {
-        addEffect(EffectSlot.STATIC, new PlayersCannotDrawCardsEffect());
+        addStaticEffect(new PlayersCannotDrawCardsEffect());
         addEffect(EffectSlot.EACH_DRAW_TRIGGERED, new OmenMachineDrawStepEffect());
     }
 }

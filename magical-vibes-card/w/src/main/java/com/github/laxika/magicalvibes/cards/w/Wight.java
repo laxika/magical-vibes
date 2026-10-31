@@ -17,7 +17,7 @@ import java.util.Set;
 public class Wight extends Card {
 
     public Wight() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_DAMAGED_CREATURE_DIES,
                 SequenceEffect.of(
                         new CreateTokenEffect(1, "Zombie", 2, 2, CardColor.BLACK,

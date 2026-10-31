@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "32")
@@ -53,7 +52,7 @@ public class ProgenitorExarch extends Card {
         );
         return new CreateTokenEffect(
                 CardType.ARTIFACT, new Fixed(1), "Incubator", 0, 0, null, null,
-                List.of(), Set.of(), Set.of(), false, false, Map.of(), List.of(transform),
+                List.of(), Set.of(), Set.of(), false, false, List.of(), List.of(transform),
                 false, false, false, 3, Set.of()
         );
     }

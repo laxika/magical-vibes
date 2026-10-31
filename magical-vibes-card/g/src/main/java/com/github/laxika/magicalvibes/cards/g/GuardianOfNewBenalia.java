@@ -18,7 +18,7 @@ import java.util.List;
 public class GuardianOfNewBenalia extends Card {
 
     public GuardianOfNewBenalia() {
-        addEffect(EffectSlot.STATIC, new ScryWhenThisCreatureEnlistsEffect());
+        addEffect(EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS, new ScryWhenThisCreatureEnlistsEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

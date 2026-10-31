@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class PortRazer extends Card {
 
     public PortRazer() {
-        addEffect(EffectSlot.STATIC, new CantAttackPlayerAlreadyAttackedThisTurnEffect());
+        addStaticEffect(new CantAttackPlayerAlreadyAttackedThisTurnEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, SequenceEffect.of(
                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()),
                 new AdditionalCombatPhaseEffect(1)));

@@ -26,7 +26,7 @@ import java.util.List;
 public class ThrivingIsle extends Card {
 
     public ThrivingIsle() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseColorOnEnterEffect(CardColor.WHITE, CardColor.BLACK, CardColor.RED, CardColor.GREEN));
 

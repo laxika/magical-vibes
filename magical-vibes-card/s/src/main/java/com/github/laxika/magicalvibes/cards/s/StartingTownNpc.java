@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterWithAdditionalCountersEffect;
@@ -44,8 +43,8 @@ public class StartingTownNpc extends Card {
     }
 
     public StartingTownNpc() {
-        addEffect(EffectSlot.STATIC, new GrantAdventureToCreatureCardsInHandEffect());
-        addEffect(EffectSlot.STATIC, new ControlledPermanentsEnterWithAdditionalCountersEffect(
+        addStaticEffect(new GrantAdventureToCreatureCardsInHandEffect());
+        addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentCastFromZonePredicate(Zone.EXILE))),

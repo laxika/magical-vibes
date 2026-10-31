@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -29,12 +28,12 @@ import java.util.Set;
 public class TheRealityChip extends Card {
 
     public TheRealityChip() {
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF,
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF,
                 EffectDuration.WHILE_ATTACHED));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceIsAttached(),
+        addStaticEffect(new ConditionalEffect(new SourceIsAttached(),
                 new PlayLandsFromTopOfLibraryEffect()));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceIsAttached(),
+        addStaticEffect(new ConditionalEffect(new SourceIsAttached(),
                 new AllowCastFromTopOfLibraryEffect(Set.of(
                         CardType.CREATURE,
                         CardType.ENCHANTMENT,

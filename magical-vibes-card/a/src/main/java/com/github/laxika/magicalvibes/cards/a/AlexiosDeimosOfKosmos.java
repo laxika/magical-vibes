@@ -21,9 +21,9 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 public class AlexiosDeimosOfKosmos extends Card {
 
     public AlexiosDeimosOfKosmos() {
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
-        addEffect(EffectSlot.STATIC, new CantBeSacrificedEffect());
-        addEffect(EffectSlot.STATIC, new CantAttackCardOwnerEffect(false));
+        addStaticEffect(new MustAttackEffect());
+        addStaticEffect(new CantBeSacrificedEffect());
+        addStaticEffect(new CantAttackCardOwnerEffect(false));
 
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, SequenceEffect.of(
                 TargetPlayerGainsControlOfSourceCreatureEffect.triggeringPlayer(),

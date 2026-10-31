@@ -22,8 +22,7 @@ import java.util.Set;
 public class IronManTonyStark extends Card {
 
     public IronManTonyStark() {
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
                         new PermanentIsAttackingPredicate()));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(

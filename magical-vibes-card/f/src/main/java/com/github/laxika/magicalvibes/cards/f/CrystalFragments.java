@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.s.SummonAlexander;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -20,7 +19,7 @@ public class CrystalFragments extends Card {
     public CrystalFragments() {
         setBackFaceCard(new SummonAlexander());
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

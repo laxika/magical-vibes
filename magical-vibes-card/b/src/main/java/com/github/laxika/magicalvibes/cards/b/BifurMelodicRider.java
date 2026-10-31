@@ -17,8 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class BifurMelodicRider extends Card {
 
     public BifurMelodicRider() {
-        addEffect(EffectSlot.STATIC, new StoriedEffect());
-        addEffect(EffectSlot.STATIC, new AdditionalTriggeredAbilityEffect(
+        addStaticEffect(new StoriedEffect());
+        addStaticEffect(new AdditionalTriggeredAbilityEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.DWARF),
                 new ControllerHasEnduringStory(), true, false));
 

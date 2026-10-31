@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 public class LegolasGreenleaf extends Card {
 
     public LegolasGreenleaf() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtMostPredicate(2)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(

@@ -25,7 +25,7 @@ import java.util.List;
 public class ThrivingHeath extends Card {
 
     public ThrivingHeath() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseColorOnEnterEffect(CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN));
 

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect;
 
@@ -10,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageToO
 public class HawkeyeYoungAvenger extends Card {
 
     public HawkeyeYoungAvenger() {
-        addEffect(EffectSlot.STATIC,
-                new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(new SourcePower(true), true));
+        addStaticEffect(new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(new SourcePower(true), true));
     }
 }

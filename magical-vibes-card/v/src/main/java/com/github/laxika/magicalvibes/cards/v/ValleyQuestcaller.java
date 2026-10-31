@@ -18,7 +18,7 @@ public class ValleyQuestcaller extends Card {
     public ValleyQuestcaller() {
         Set<CardSubtype> valleyCreatures = Set.of(
                 CardSubtype.RABBIT, CardSubtype.BAT, CardSubtype.BIRD, CardSubtype.MOUSE);
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(valleyCreatures)));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(

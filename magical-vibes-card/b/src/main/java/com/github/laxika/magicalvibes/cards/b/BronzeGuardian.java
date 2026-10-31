@@ -29,7 +29,7 @@ public class BronzeGuardian extends Card {
         PermanentPredicate otherArtifact = new PermanentAllOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(2),
                 GrantScope.OWN_PERMANENTS,
@@ -37,6 +37,6 @@ public class BronzeGuardian extends Card {
 
         PermanentCount artifactsYouControl = new PermanentCount(
                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(artifactsYouControl, new Fixed(5)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(artifactsYouControl, new Fixed(5)));
     }
 }

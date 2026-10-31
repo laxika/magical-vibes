@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentsSacrificedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -30,8 +29,8 @@ public class DargoTheShipwrecker extends Card {
                 new CardTypePredicate(CardType.ARTIFACT),
                 new CardTypePredicate(CardType.CREATURE)));
 
-        addEffect(EffectSlot.STATIC, new SacrificeCreaturesForCostReductionEffect(2, artifactOrCreature));
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new Scaled(
+        addStaticEffect(new SacrificeCreaturesForCostReductionEffect(2, artifactOrCreature));
+        addStaticEffect(new ReduceOwnCastCostEffect(new Scaled(
                 new PermanentsSacrificedThisTurn(artifactOrCreatureCard, CountScope.CONTROLLER, true), 2)));
     }
 }

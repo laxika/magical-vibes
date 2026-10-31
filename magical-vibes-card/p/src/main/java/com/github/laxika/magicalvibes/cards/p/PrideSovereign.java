@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -27,7 +26,7 @@ public class PrideSovereign extends Card {
         PermanentCount otherCats = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.CAT),
                 CountScope.CONTROLLER, true);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(otherCats, otherCats));
+        addStaticEffect(new BoostSelfEffect(otherCats, otherCats));
 
         // {W}, {T}, Exert this creature: Create two 1/1 white Cat creature tokens with lifelink.
         addActivatedAbility(new ActivatedAbility(

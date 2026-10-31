@@ -20,7 +20,7 @@ public class TheBlueSpirit extends Card {
 
     public TheBlueSpirit() {
         CardPredicate creatureSpell = new CardTypePredicate(CardType.CREATURE);
-        addEffect(EffectSlot.STATIC, new GrantFlashToFirstMatchingSpellEachTurnEffect(creatureSpell));
+        addStaticEffect(new GrantFlashToFirstMatchingSpellEachTurnEffect(creatureSpell));
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardNotPredicate(new CardIsTokenPredicate()),
                         new ConditionalEffect(new DuringCombat(), new DrawCardEffect())));

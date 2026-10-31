@@ -20,8 +20,7 @@ public class MythweaverPoq extends Card {
     public MythweaverPoq() {
         PermanentCount landsYouControl = new PermanentCount(
                 new PermanentIsLandPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl));
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardNotPredicate(new CardIsTokenPredicate()),

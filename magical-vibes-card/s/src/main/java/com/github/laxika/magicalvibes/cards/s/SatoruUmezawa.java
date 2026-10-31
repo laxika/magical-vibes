@@ -20,7 +20,7 @@ public class SatoruUmezawa extends Card {
                 new TriggeringNinjutsuAbilityConditionalEffect(
                         new OncePerTurnTriggerEffect(
                                 LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(3)))));
-        addEffect(EffectSlot.STATIC, new GrantHandActivatedAbilityToCardsEffect(
+        addStaticEffect(new GrantHandActivatedAbilityToCardsEffect(
                 Card.ninjutsuAbility("{2}{U}{B}"), new CardTypePredicate(CardType.CREATURE), true));
     }
 }

@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MB1", collectorNumber = "102")
@@ -49,7 +48,7 @@ public class SlivdraziMonstrosity extends Card {
             Set.of(),
             false,
             false,
-            Map.of(),
+            List.of(),
             List.of(new ActivatedAbility(
                     false,
                     null,
@@ -63,17 +62,17 @@ public class SlivdraziMonstrosity extends Card {
             Set.of());
 
     public SlivdraziMonstrosity() {
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(
+        addStaticEffect(new GrantSubtypeEffect(
                 CardSubtype.SLIVER, GrantScope.OWN_PERMANENTS, false, ELDRAZI));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.DEVOID, GrantScope.ALL_OWN_CREATURES, SLIVER));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.DEVOID, GrantScope.OWN_PERMANENTS,
                 new PermanentAllOfPredicate(List.of(
                         SLIVER, new PermanentNotPredicate(new PermanentIsCreaturePredicate())))));
-        addEffect(EffectSlot.STATIC, new BecomeColorlessEffect(
+        addStaticEffect(new BecomeColorlessEffect(
                 GrantScope.ALL_OWN_CREATURES, SLIVER));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 new SacrificePermanentsEffect(
                         1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER),

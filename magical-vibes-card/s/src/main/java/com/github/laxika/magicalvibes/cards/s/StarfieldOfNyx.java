@@ -27,6 +27,6 @@ public class StarfieldOfNyx extends Card {
                 .chooseAuraAttachment(true)
                 .build(), "Return the targeted enchantment card to the battlefield?"));
 
-        addEffect(EffectSlot.STATIC, new AnimateControlledEnchantmentsEffect(5));
+        addStaticEffect(new AnimateControlledEnchantmentsEffect(5));
     }
 }

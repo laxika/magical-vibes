@@ -17,6 +17,6 @@ public class KotoseTheSilentSpider extends Card {
                 new ExileTargetGraveyardCardAndSameNameFromZonesEffect(
                         GraveyardSearchScope.OPPONENT_GRAVEYARD,
                         new CardNotPredicate(CardPredicateUtils.basicLand()), true));
-        addEffect(EffectSlot.STATIC, AllowCastFromCardsExiledWithSourceEffect.oneCardWithAnyMana());
+        addStaticEffect(AllowCastFromCardsExiledWithSourceEffect.oneCardWithAnyMana());
     }
 }

@@ -27,7 +27,7 @@ public class HeliodsEmissary extends Card {
         setAttackTriggerOwnedByAura(true);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_ATTACK, new TapPermanentsEffect(
                         TapUntapScope.TARGET,
                         new PermanentAllOfPredicate(List.of(

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -25,7 +24,7 @@ public class GoblinBarrage extends Card {
 
     public GoblinBarrage() {
         // Kicker—Sacrifice an artifact or Goblin.
-        addEffect(EffectSlot.STATIC, new KickerEffect(
+        addStaticEffect(new KickerEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)

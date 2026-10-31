@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseNameRevealRandomCardsFromTargetHandDiscardMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -34,12 +33,12 @@ public class DementiaSliver extends Card {
                 ActivationTimingRestriction.ONLY_DURING_YOUR_TURN);
         PermanentHasSubtypePredicate sliver = new PermanentHasSubtypePredicate(CardSubtype.SLIVER);
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 dementiaAbility,
                 GrantScope.ALL_CREATURES,
                 sliver
         ));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 dementiaAbility,
                 GrantScope.SELF,
                 sliver

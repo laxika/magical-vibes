@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Crystallization extends Card {
 
     public Crystallization() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
+        target(TargetFilters.creature()).addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
           .addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY, new ExileEnchantedCreatureEffect());
     }
 }

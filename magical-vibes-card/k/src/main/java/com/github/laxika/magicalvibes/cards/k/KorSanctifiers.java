@@ -21,7 +21,7 @@ import java.util.List;
 public class KorSanctifiers extends Card {
 
     public KorSanctifiers() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{W}"));
+        addStaticEffect(new KickerEffect("{W}"));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),

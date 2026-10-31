@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
@@ -47,21 +46,21 @@ public class ExplorationBroodship extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.CHARGE),
                 new PlaysAdditionalLandEachTurnEffect(1)));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.CHARGE),
                 new AnimatePermanentsEffect(
                         (DynamicAmount) null, (DynamicAmount) null, List.of(), Set.of(), null,
                         Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.CONTINUOUS, null
                 )));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.CHARGE),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
-        addEffect(EffectSlot.STATIC, new CastSpellFromGraveyardOncePerYourTurnEffect(
+        addStaticEffect(new CastSpellFromGraveyardOncePerYourTurnEffect(
                 new CardAllOfPredicate(List.of(
                         new CardIsPermanentPredicate(),
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)))),

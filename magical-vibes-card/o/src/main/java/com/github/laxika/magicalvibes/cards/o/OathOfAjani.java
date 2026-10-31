@@ -18,7 +18,7 @@ public class OathOfAjani extends Card {
     public OathOfAjani() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTypePredicate(CardType.PLANESWALKER), 1, CostModificationScope.SELF));
     }
 }

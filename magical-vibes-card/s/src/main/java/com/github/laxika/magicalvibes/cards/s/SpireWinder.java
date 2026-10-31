@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.effect.AscendEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -13,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class SpireWinder extends Card {
 
     public SpireWinder() {
-        addEffect(EffectSlot.STATIC, new AscendEffect());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerHasCityBlessing(),
+        addStaticEffect(new AscendEffect());
+        addStaticEffect(new ConditionalEffect(new ControllerHasCityBlessing(),
                 new StaticBoostEffect(1, 1, GrantScope.SELF)));
     }
 }

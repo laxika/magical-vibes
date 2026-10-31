@@ -22,7 +22,7 @@ public class SurgeMare extends Card {
 
     public SurgeMare() {
         // "This creature can't be blocked by green creatures."
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN))));
 
         // "Whenever this creature deals damage to an opponent, you may draw a card. If you do, discard a card."

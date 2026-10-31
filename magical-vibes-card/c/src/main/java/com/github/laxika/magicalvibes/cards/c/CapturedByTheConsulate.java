@@ -16,7 +16,7 @@ public class CapturedByTheConsulate extends Card {
 
     public CapturedByTheConsulate() {
         target(TargetFilters.creatureAnOpponentControls())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect(true, false));
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect(true, false));
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL,
                 new SpellCastTriggerEffect(
                         null,

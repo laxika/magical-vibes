@@ -28,7 +28,7 @@ public class BardsCompany extends Card {
 
     public BardsCompany() {
         setFlashCastCondition(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
 
         CardEffect recruit = SequenceEffect.of(
                 new DrawCardEffect(1),

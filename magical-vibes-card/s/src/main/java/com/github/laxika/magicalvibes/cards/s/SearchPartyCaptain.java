@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 public class SearchPartyCaptain extends Card {
 
     public SearchPartyCaptain() {
-        addEffect(EffectSlot.STATIC,
-                new ReduceOwnCastCostEffect(new CreaturesAttackedThisTurn(CountScope.CONTROLLER)));
+        addStaticEffect(new ReduceOwnCastCostEffect(new CreaturesAttackedThisTurn(CountScope.CONTROLLER)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
     }
 }

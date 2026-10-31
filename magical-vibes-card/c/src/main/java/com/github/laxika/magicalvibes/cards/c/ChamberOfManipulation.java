@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -19,7 +18,7 @@ public class ChamberOfManipulation extends Card {
     public ChamberOfManipulation() {
         // Enchant land — grants "{T}, Discard a card: Gain control of target creature until end of turn."
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 true,
                                 null,

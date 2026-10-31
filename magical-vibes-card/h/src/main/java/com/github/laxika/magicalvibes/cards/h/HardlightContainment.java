@@ -20,7 +20,7 @@ public class HardlightContainment extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ExileTargetPermanentUntilSourceLeavesEffect());
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(1),
                 GrantScope.ENCHANTED_PERMANENT));

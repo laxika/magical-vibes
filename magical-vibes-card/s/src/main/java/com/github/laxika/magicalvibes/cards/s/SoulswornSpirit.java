@@ -13,7 +13,7 @@ public class SoulswornSpirit extends Card {
 
     public SoulswornSpirit() {
         // This creature can't be blocked.
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
 
         // When this creature enters, detain target creature an opponent controls.
         target(TargetFilters.creatureAnOpponentControls())

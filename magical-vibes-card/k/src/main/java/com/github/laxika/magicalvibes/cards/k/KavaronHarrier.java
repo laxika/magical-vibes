@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtE
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "EOE", collectorNumber = "139")
@@ -35,7 +34,7 @@ public class KavaronHarrier extends Card {
                                 Set.of(CardType.ARTIFACT),
                                 false,
                                 true,
-                                Map.of(),
+                                List.of(),
                                 List.of(),
                                 false,
                                 false,

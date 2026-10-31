@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.outcome;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ReplaceControllerLossWithExileAndLifeTotalEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -49,7 +48,7 @@ public class FixedLifeTotalLossReplacer implements LossReplacer {
 
         String playerName = gameData.playerIdToName.get(losingPlayerId);
         String sourceName = source.getCard().getName();
-        int lifeTotal = source.getCard().getEffects(EffectSlot.STATIC).stream()
+        int lifeTotal = source.getCard().getStaticEffects().stream()
                 .filter(ReplaceControllerLossWithExileAndLifeTotalEffect.class::isInstance)
                 .map(ReplaceControllerLossWithExileAndLifeTotalEffect.class::cast)
                 .mapToInt(ReplaceControllerLossWithExileAndLifeTotalEffect::lifeTotal)

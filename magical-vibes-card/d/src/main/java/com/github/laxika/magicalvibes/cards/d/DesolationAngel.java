@@ -19,7 +19,7 @@ import java.util.List;
 public class DesolationAngel extends Card {
 
     public DesolationAngel() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{W}{W}"));
+        addStaticEffect(new KickerEffect("{W}{W}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new NotKicked(),
                 new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),

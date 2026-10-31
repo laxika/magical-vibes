@@ -20,7 +20,7 @@ public class RegalSliver extends Card {
 
     public RegalSliver() {
         PermanentHasSubtypePredicate sliver = new PermanentHasSubtypePredicate(CardSubtype.SLIVER);
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 SequenceEffect.of(
                         ConditionalEffect.unless(new ControllerIsMonarch(),

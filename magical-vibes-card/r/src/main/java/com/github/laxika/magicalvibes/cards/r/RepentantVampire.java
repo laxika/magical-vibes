@@ -27,9 +27,9 @@ public class RepentantVampire extends Card {
         addEffect(EffectSlot.ON_DAMAGED_CREATURE_DIES, new PutCountersOnSourceEffect(1, 1, 1));
 
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new GrantColorEffect(CardColor.WHITE, GrantScope.SELF, true)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 true,

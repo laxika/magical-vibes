@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -19,9 +18,9 @@ public class CracklingEmergence extends Card {
 
     public CracklingEmergence() {
         target(TargetFilters.landYouControl())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesCreatureEffect(
+                .addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(
                         3, 3, CardColor.RED, List.of(CardSubtype.SPIRIT)))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_PERMANENT))
-                .addEffect(EffectSlot.STATIC, new SacrificeAuraAndGrantIndestructibleEffect());
+                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new SacrificeAuraAndGrantIndestructibleEffect());
     }
 }

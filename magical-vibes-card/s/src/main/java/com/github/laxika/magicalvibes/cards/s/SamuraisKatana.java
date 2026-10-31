@@ -22,11 +22,9 @@ public class SamuraisKatana extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new LivingWeaponEffect(new CreateTokenEffect("Hero", 1, 1, null,
                         List.of(CardSubtype.HERO), Set.of(), Set.of())));
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(2, 2, Set.of(Keyword.TRAMPLE, Keyword.HASTE),
+        addStaticEffect(new StaticBoostEffect(2, 2, Set.of(Keyword.TRAMPLE, Keyword.HASTE),
                         GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantSubtypeEffect(CardSubtype.SAMURAI, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.SAMURAI, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{5}"));
     }
 }

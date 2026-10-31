@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
@@ -19,7 +18,7 @@ import java.util.List;
 public class OrazcaRelic extends Card {
 
     public OrazcaRelic() {
-        addEffect(EffectSlot.STATIC, new AscendEffect());
+        addStaticEffect(new AscendEffect());
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
         addActivatedAbility(new ActivatedAbility(
                 true,

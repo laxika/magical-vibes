@@ -44,7 +44,7 @@ public class RionyaFireDancer extends Card {
         )).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                 new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(), Set.of(), null, null, Map.of(), true, true,
-                        false, false, false, false, null, Set.of(), false, Map.of(),
+                        false, false, false, false, null, Set.of(), false, List.of(),
                         List.of(), false, false, tokenCount, false, Set.of(), false));
     }
 }

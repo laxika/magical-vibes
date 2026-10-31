@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardAsEntersOrGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -17,7 +16,7 @@ import java.util.List;
 public class MoxDiamond extends Card {
 
     public MoxDiamond() {
-        addEffect(EffectSlot.STATIC, new DiscardCardAsEntersOrGraveyardEffect(
+        addStaticEffect(new DiscardCardAsEntersOrGraveyardEffect(
                 new CardTypePredicate(CardType.LAND), "a land card"));
 
         addActivatedAbility(new ActivatedAbility(

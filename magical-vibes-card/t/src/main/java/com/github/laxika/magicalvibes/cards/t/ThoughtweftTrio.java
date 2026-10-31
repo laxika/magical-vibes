@@ -12,6 +12,6 @@ public class ThoughtweftTrio extends Card {
 
     public ThoughtweftTrio() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChampionCreatureEffect(CardSubtype.KITHKIN));
-        addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        addStaticEffect(new CanBlockAnyNumberOfCreaturesEffect());
     }
 }

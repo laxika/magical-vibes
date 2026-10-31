@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class StarfieldMystic extends Card {
 
     public StarfieldMystic() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTypePredicate(CardType.ENCHANTMENT), 1, CostModificationScope.SELF));
         addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                 new PutCountersOnSourceEffect(1, 1, 1));

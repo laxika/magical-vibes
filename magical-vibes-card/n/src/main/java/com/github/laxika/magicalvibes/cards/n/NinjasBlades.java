@@ -30,9 +30,9 @@ public class NinjasBlades extends Card {
                 new LivingWeaponEffect(new CreateTokenEffect("Hero", 1, 1, null,
                         List.of(CardSubtype.HERO), Set.of(), Set.of())));
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.NINJA, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.NINJA, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 SequenceEffect.of(
                         new DrawCardEffect(1),

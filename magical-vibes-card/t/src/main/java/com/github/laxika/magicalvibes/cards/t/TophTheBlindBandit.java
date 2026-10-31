@@ -19,7 +19,7 @@ public class TophTheBlindBandit extends Card {
         target(TargetFilters.landYouControl())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EarthbendTargetLandEffect(2));
 
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new PermanentCounterSum(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         new PermanentIsLandPredicate(),

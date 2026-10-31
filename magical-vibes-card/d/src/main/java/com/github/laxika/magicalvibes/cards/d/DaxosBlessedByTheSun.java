@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 public class DaxosBlessedByTheSun extends Card {
 
     public DaxosBlessedByTheSun() {
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new Fixed(2), new ColorManaSymbolsAmongControlledPermanents(ManaColor.WHITE)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new GainLifeEffect(1));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new GainLifeEffect(1));

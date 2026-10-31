@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterOrSacrificeSelfE
 public class SkyshroudBehemoth extends Card {
 
     public SkyshroudBehemoth() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.FADE, new Fixed(2)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,

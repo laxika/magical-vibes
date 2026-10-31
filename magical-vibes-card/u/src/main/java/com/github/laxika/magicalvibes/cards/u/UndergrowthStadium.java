@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasAtLeastOpponents;
@@ -18,7 +17,7 @@ public class UndergrowthStadium extends Card {
 
     public UndergrowthStadium() {
         // This land enters tapped unless you have two or more opponents.
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new NotCondition(new ControllerHasAtLeastOpponents(2)),
                 new EntersTappedEffect()));
 

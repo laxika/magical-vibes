@@ -36,7 +36,7 @@ import java.util.List;
 public class GolgariRotFarm extends Card {
 
     public GolgariRotFarm() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ReturnPermanentControlledByPlayerToHandEffect(
                         new PermanentIsLandPredicate(), "land"));

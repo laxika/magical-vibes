@@ -21,6 +21,6 @@ public class LeylineOfTheVoid extends Card {
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with Leyline of the Void on the battlefield?"
         ));
-        addEffect(EffectSlot.STATIC, new ExileOpponentCardsInsteadOfGraveyardEffect());
+        addStaticEffect(new ExileOpponentCardsInsteadOfGraveyardEffect());
     }
 }

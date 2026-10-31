@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class RottenmouthViper extends Card {
 
     public RottenmouthViper() {
-        addEffect(EffectSlot.STATIC, new SacrificeCreaturesForCostReductionEffect(
+        addStaticEffect(new SacrificeCreaturesForCostReductionEffect(
                 1, new PermanentNotPredicate(new PermanentIsLandPredicate())));
 
         SequenceEffect blightTrigger = SequenceEffect.of(

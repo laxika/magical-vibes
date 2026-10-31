@@ -16,7 +16,7 @@ import java.util.List;
 public class CelestineReef extends Card {
 
     public CelestineReef() {
-        addEffect(EffectSlot.STATIC, new CreaturesCantAttackUnlessPredicateEffect(
+        addStaticEffect(new CreaturesCantAttackUnlessPredicateEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentHasKeywordPredicate(Keyword.FLYING),
                         new PermanentHasKeywordPredicate(Keyword.ISLANDWALK)

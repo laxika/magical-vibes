@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -27,7 +26,7 @@ public class EnduringSliver extends Card {
         );
 
         addActivatedAbility(outlastAbility);
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 outlastAbility,
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)

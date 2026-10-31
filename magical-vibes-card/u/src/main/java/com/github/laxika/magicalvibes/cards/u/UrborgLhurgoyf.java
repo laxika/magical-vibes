@@ -31,7 +31,7 @@ public class UrborgLhurgoyf extends Card {
 
         CardsInGraveyard creatureCards = new CardsInGraveyard(
                 new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 creatureCards, new Sum(creatureCards, new Fixed(1))));
     }
 }

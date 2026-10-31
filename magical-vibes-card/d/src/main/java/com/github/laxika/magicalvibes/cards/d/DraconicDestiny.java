@@ -22,10 +22,10 @@ public class DraconicDestiny extends Card {
 
     public DraconicDestiny() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+                .addStaticEffect(new StaticBoostEffect(
                         1, 1, Set.of(Keyword.FLYING, Keyword.HASTE), GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.DRAGON, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.DRAGON, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 false,
                                 "{1}",

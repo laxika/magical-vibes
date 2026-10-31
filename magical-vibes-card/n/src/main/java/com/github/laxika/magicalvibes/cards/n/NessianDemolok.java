@@ -17,7 +17,7 @@ public class NessianDemolok extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()),
                 "Target must be a noncreature permanent"))
-                .addEffect(EffectSlot.STATIC, new TributeEffect(3))
+                .addStaticEffect(new TributeEffect(3))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new TributeNotPaidEffect(new DestroyTargetPermanentEffect()));
     }

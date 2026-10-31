@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -21,13 +20,13 @@ public class IceOut extends Card {
 
     public IceOut() {
         addSpellEffect(new CounterSpellEffect());
-        addEffect(EffectSlot.STATIC, new KickerEffect(
+        addStaticEffect(new KickerEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate(),
                         new PermanentIsTokenPredicate())),
                 "an artifact, enchantment, or token"));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new Kicked(), new ReduceOwnCastCostEffect(new Fixed(1))));
     }
 }

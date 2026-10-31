@@ -15,7 +15,6 @@ public class MagmaPummeler extends Card {
     public MagmaPummeler() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
-        addEffect(EffectSlot.STATIC,
-                PreventDamageAndRemovePlusOnePlusOneCountersEffect.withReflexiveDamageTrigger());
+        addStaticEffect(PreventDamageAndRemovePlusOnePlusOneCountersEffect.withReflexiveDamageTrigger());
     }
 }

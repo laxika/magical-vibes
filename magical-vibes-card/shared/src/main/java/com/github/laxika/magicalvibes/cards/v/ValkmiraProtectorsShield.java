@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSour
 public class ValkmiraProtectorsShield extends Card {
 
     public ValkmiraProtectorsShield() {
-        addEffect(EffectSlot.STATIC, new PreventDamageFromOpponentSourcesEffect(1, true));
+        addStaticEffect(new PreventDamageFromOpponentSourcesEffect(1, true));
         addEffect(EffectSlot.ON_CONTROLLER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
                 new CounterUnlessPaysEffect(1));
         addEffect(EffectSlot.ON_ANOTHER_ALLY_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,

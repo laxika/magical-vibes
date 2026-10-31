@@ -25,7 +25,7 @@ public class OketrasMonument extends Card {
 
     public OketrasMonument() {
         // White creature spells you cast cost {1} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardAllOfPredicate(List.of(
                         new CardColorPredicate(CardColor.WHITE),
                         new CardTypePredicate(CardType.CREATURE)

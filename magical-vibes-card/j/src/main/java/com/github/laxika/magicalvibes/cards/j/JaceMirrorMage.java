@@ -18,7 +18,7 @@ import java.util.List;
 public class JaceMirrorMage extends Card {
 
     public JaceMirrorMage() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
+        addStaticEffect(new KickerEffect("{2}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 CreateTokenCopyOfSourceEffect.withStartingLoyalty(true, 1, 1)));
 

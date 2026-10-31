@@ -26,7 +26,7 @@ public class Dragonologist extends Card {
                         new CardTypePredicate(CardType.SORCERY),
                         new CardSubtypePredicate(CardSubtype.DRAGON)
                 ))));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_UNTAPPED_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_UNTAPPED_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.DRAGON)));
     }
 }

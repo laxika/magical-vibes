@@ -15,7 +15,7 @@ public class SteelfinWhale extends Card {
 
     public SteelfinWhale() {
         // Affinity for artifacts.
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
 
         // Whenever an artifact you control enters, untap this creature.

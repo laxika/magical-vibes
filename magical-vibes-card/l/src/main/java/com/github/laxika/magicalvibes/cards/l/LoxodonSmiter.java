@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffe
 public class LoxodonSmiter extends Card {
 
     public LoxodonSmiter() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         addEffect(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT, new EnterBattlefieldOnDiscardEffect());
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -17,8 +16,7 @@ import java.util.List;
 public class DrivnodCarnageDominus extends Card {
 
     public DrivnodCarnageDominus() {
-        addEffect(EffectSlot.STATIC,
-                new AdditionalCreatureDeathTriggerEffect(new PermanentTruePredicate()));
+        addStaticEffect(new AdditionalCreatureDeathTriggerEffect(new PermanentTruePredicate()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

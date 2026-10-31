@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
@@ -30,7 +29,7 @@ public class WrennAndRealmbreaker extends Card {
             "You may play lands and cast permanent spells from your graveyard.";
 
     public WrennAndRealmbreaker() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null, List.of(new AwardAnyColorManaEffect()),
                         "{T}: Add one mana of any color."),
                 GrantScope.OWN_LANDS));

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -20,7 +19,7 @@ import java.util.List;
 public class SeersVision extends Card {
 
     public SeersVision() {
-        addEffect(EffectSlot.STATIC, new RevealOpponentHandsEffect());
+        addStaticEffect(new RevealOpponentHandsEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

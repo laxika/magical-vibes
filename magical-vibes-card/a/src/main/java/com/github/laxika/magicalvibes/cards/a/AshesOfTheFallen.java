@@ -11,6 +11,6 @@ public class AshesOfTheFallen extends Card {
 
     public AshesOfTheFallen() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new GrantChosenSubtypeToOwnGraveyardCreatureCardsEffect());
+        addStaticEffect(new GrantChosenSubtypeToOwnGraveyardCreatureCardsEffect());
     }
 }

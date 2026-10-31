@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OTJ", collectorNumber = "99")
@@ -29,7 +28,7 @@ public class RakishCrew extends Card {
     public RakishCrew() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 CardType.CREATURE, 1, "Mercenary", 1, 1, CardColor.RED, null,
-                List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, Map.of(),
+                List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, List.of(),
                 List.of(new ActivatedAbility(
                         true,
                         null,

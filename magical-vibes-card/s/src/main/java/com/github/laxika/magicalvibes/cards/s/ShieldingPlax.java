@@ -15,7 +15,6 @@ public class ShieldingPlax extends Card {
     public ShieldingPlax() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC,
-                        new EnchantedPermanentCantBeTargetedByOpponentsEffect());
+                .addStaticEffect(new EnchantedPermanentCantBeTargetedByOpponentsEffect());
     }
 }

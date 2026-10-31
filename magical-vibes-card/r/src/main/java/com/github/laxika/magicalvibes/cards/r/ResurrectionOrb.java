@@ -14,7 +14,7 @@ public class ResurrectionOrb extends Card {
 
     public ResurrectionOrb() {
         // Equipped creature has lifelink.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature dies, return that card under its owner's control at the
         // beginning of the next end step.

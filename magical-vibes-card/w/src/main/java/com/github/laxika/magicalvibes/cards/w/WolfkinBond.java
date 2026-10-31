@@ -23,6 +23,6 @@ public class WolfkinBond extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                         "Wolf", 2, 2, CardColor.GREEN,
                         List.of(CardSubtype.WOLF), Set.of(), Set.of()))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
     }
 }

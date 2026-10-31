@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasHybridManaPredicate;
 public class ProvidenceOfNight extends Card {
 
     public ProvidenceOfNight() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromMonocoloredEffect());
+        addStaticEffect(new ProtectionFromMonocoloredEffect());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new CopyControllerCastSpellOnSpellCastEffect(
                         new CardHasHybridManaPredicate(), null, null));

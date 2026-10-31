@@ -15,7 +15,7 @@ public class DemonicVigor extends Card {
         // Enchant creature
         target(TargetFilters.creature())
         // Enchanted creature gets +1/+1.
-        .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+        .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
 
         // When enchanted creature dies, return that card to its owner's hand.
         addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new ReturnEnchantedCreatureToOwnerHandOnDeathEffect());

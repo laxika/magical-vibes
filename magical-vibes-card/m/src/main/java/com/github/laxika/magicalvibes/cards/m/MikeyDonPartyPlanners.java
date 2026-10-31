@@ -25,9 +25,9 @@ public class MikeyDonPartyPlanners extends Card {
                 new CardSubtypePredicate(CardSubtype.TURTLE)));
         // Ward {2}.
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, new PlayLandsFromTopOfLibraryEffect());
-        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new PlayLandsFromTopOfLibraryEffect());
+        addStaticEffect(new AllowCastFromTopOfLibraryEffect(
                 java.util.Set.of(), false, partySubtype, false, List.of(), 1));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -20,7 +19,7 @@ import java.util.List;
 public class TetsuoUmezawa extends Card {
 
     public TetsuoUmezawa() {
-        addEffect(EffectSlot.STATIC, new CantBeEnchantedByOtherAurasEffect(true));
+        addStaticEffect(new CantBeEnchantedByOtherAurasEffect(true));
 
         var targetPredicate = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

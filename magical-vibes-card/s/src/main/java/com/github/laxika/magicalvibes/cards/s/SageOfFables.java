@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
@@ -18,7 +17,7 @@ public class SageOfFables extends Card {
 
     public SageOfFables() {
         // Each other Wizard creature you control enters with an additional +1/+1 counter on it.
-        addEffect(EffectSlot.STATIC, new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WIZARD, 1));
+        addStaticEffect(new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WIZARD, 1));
 
         // {2}, Remove a +1/+1 counter from a creature you control: Draw a card.
         addActivatedAbility(new ActivatedAbility(

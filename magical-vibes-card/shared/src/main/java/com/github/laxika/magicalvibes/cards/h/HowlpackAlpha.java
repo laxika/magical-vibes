@@ -26,8 +26,7 @@ public class HowlpackAlpha extends Card {
 
     public HowlpackAlpha() {
         // Each other creature you control that's a Werewolf or a Wolf gets +1/+1.
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.WEREWOLF, CardSubtype.WOLF))));
 
         // At the beginning of your end step, create a 2/2 green Wolf creature token.

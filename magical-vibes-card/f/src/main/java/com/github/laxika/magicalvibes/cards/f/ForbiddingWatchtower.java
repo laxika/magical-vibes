@@ -20,7 +20,7 @@ import java.util.Set;
 public class ForbiddingWatchtower extends Card {
 
     public ForbiddingWatchtower() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.WHITE));
         addActivatedAbility(new ActivatedAbility(
                 false,

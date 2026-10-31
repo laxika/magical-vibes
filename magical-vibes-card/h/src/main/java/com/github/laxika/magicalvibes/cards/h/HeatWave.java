@@ -21,14 +21,14 @@ public class HeatWave extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{R}"));
 
         // Blue creatures can't block creatures you control.
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesCantBlockMatchingCreaturesEffect(
+        addStaticEffect(new MatchingCreaturesCantBlockMatchingCreaturesEffect(
                 new PermanentColorInPredicate(Set.of(CardColor.BLUE)),
                 new PermanentControlledBySourceControllerPredicate(),
                 "Blue creatures can't block creatures you control"));
 
         // Nonblue creatures can't block creatures you control unless their controller pays 1 life
         // for each blocking creature they control.
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesCantBlockMatchingCreaturesUnlessPaysLifeEffect(
+        addStaticEffect(new MatchingCreaturesCantBlockMatchingCreaturesUnlessPaysLifeEffect(
                 new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLUE))),
                 new PermanentControlledBySourceControllerPredicate(),
                 1,

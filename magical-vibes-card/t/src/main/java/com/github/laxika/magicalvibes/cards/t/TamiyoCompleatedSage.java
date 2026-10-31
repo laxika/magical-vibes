@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -30,7 +29,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NEO", collectorNumber = "238")
@@ -63,9 +61,9 @@ public class TamiyoCompleatedSage extends Card {
                 "\u2212X: Exile target nonland permanent card with mana value X from your graveyard. Create a token that's a copy of that card.",
                 null));
 
-        Map<EffectSlot, CardEffect> notebookEffects = Map.of(
-                EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
-                        new CardTruePredicate(), 2, CostModificationScope.SELF));
+        List<Ability> notebookEffects = List.of(
+                StaticAbility.of(new ReduceCastCostForMatchingSpellsEffect(
+                        new CardTruePredicate(), 2, CostModificationScope.SELF)));
         CreateTokenEffect notebook = new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Tamiyo's Notebook", 0, 0,
                 null, null, List.of(CardSubtype.BOOK), Set.of(), Set.of(),

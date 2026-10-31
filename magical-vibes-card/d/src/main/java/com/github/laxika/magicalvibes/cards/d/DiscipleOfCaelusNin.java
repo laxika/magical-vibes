@@ -13,6 +13,6 @@ public class DiscipleOfCaelusNin extends Card {
     public DiscipleOfCaelusNin() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EachPlayerChoosesPermanentsThenPhaseOutRestEffect(5));
-        addEffect(EffectSlot.STATIC, new PermanentsCantPhaseInEffect());
+        addStaticEffect(new PermanentsCantPhaseInEffect());
     }
 }

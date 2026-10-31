@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -18,7 +17,7 @@ import java.util.List;
 public class IronLadDivergingDestiny extends Card {
 
     public IronLadDivergingDestiny() {
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

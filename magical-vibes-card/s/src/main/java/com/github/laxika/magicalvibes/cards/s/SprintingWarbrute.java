@@ -16,6 +16,6 @@ public class SprintingWarbrute extends Card {
     public SprintingWarbrute() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{R}"))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnSelfToHandIfDashCostPaidEffect());
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
     }
 }

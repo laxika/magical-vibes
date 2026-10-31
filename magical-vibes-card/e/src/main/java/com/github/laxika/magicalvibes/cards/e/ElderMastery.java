@@ -21,7 +21,7 @@ public class ElderMastery extends Card {
         target(TargetFilters.creature());
 
         // Enchanted creature gets +3/+3 and has flying.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, Set.of(Keyword.FLYING), GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 3, Set.of(Keyword.FLYING), GrantScope.ENCHANTED_CREATURE));
 
         // Whenever enchanted creature deals damage to a player, that player discards two cards.
         // (The damaged player is supplied as the effect's target by CombatDamageService.)

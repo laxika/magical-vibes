@@ -16,7 +16,7 @@ public class HaakonStromgaldScourge extends Card {
 
     public HaakonStromgaldScourge() {
         addCastingOption(GraveyardCast.castOnlyFromGraveyard());
-        addEffect(EffectSlot.STATIC, new CastSpellsFromGraveyardEffect(
+        addStaticEffect(new CastSpellsFromGraveyardEffect(
                 new CardSubtypePredicate(CardSubtype.KNIGHT)));
         addEffect(EffectSlot.ON_DEATH, new LoseLifeEffect(2));
     }

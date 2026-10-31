@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 public class FamishedPaladin extends Card {
 
     public FamishedPaladin() {
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
                 new UntapPermanentsEffect(TapUntapScope.SELF));
     }

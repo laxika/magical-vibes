@@ -27,7 +27,7 @@ public class GreenhouseRicketyGazebo extends Card {
                         .withManaCost("{3}{G}")
         )));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(0),
                 new GrantActivatedAbilityEffect(
                         ManaAbilities.tapForAnyColor(), GrantScope.OWN_LANDS)));

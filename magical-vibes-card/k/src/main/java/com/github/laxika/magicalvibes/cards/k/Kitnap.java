@@ -20,12 +20,12 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Kitnap extends Card {
 
     public Kitnap() {
-        addEffect(EffectSlot.STATIC, new GiftEffect());
+        addStaticEffect(new GiftEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new GiftPromised(), new EachOtherPlayerDrawsCardEffect(1)),
                 TriggerMode.INDEPENDENT);
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect())
+                .addStaticEffect(new ControlEnchantedCreatureEffect())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new TapPermanentsEffect(TapUntapScope.TARGET))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerDraw
 public class NessianBoar extends Card {
 
     public NessianBoar() {
-        addEffect(EffectSlot.STATIC, new MustBeBlockedByAllCreaturesEffect());
+        addStaticEffect(new MustBeBlockedByAllCreaturesEffect());
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new TargetPermanentControllerDrawsCardEffect(), TriggerMode.PER_BLOCKER);
     }
 }

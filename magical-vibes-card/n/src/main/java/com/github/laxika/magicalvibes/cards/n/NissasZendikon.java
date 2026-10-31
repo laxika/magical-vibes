@@ -19,9 +19,9 @@ public class NissasZendikon extends Card {
 
     public NissasZendikon() {
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesCreatureEffect(
+                .addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(
                         4, 4, null, List.of(CardSubtype.ELEMENTAL)))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+                .addStaticEffect(new GrantKeywordEffect(
                         Set.of(Keyword.REACH, Keyword.HASTE), GrantScope.ENCHANTED_PERMANENT));
 
         addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -18,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class RealityHeist extends Card {
 
     public RealityHeist() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
         addSpellEffect(new LookAtTopCardsEffect(
                 new Fixed(7), new Fixed(2), new CardTypePredicate(CardType.ARTIFACT),

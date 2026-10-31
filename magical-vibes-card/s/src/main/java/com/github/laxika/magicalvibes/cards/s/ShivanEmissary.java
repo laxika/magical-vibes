@@ -21,7 +21,7 @@ import java.util.Set;
 public class ShivanEmissary extends Card {
 
     public ShivanEmissary() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{B}"));
+        addStaticEffect(new KickerEffect("{1}{B}"));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

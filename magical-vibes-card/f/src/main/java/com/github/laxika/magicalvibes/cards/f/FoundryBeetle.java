@@ -28,9 +28,8 @@ import java.util.Set;
 public class FoundryBeetle extends Card {
 
     public FoundryBeetle() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
+        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
                 EffectDuration.WHILE_ATTACHED));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new PerpetuallyReduceRandomMatchingHandCardCostEffect(

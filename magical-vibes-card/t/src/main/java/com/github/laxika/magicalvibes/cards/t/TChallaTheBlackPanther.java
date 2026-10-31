@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MSC", collectorNumber = "7")
@@ -37,7 +36,7 @@ public class TChallaTheBlackPanther extends Card {
             Set.of(),
             false,
             true,
-            Map.of(),
+            List.of(),
             List.of(new ActivatedAbility(
                     true,
                     null,

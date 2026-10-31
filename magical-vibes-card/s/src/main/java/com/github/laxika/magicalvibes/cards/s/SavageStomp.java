@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -24,7 +23,7 @@ public class SavageStomp extends Card {
 
     public SavageStomp() {
         // This spell costs {2} less to cast if it targets a Dinosaur you control.
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(
+        addStaticEffect(new ReduceOwnCastCostIfTargetingPermanentEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR), 2, true));
 
         // Put a +1/+1 counter on target creature you control.

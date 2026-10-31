@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -17,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class JointExploration extends Card {
 
     public JointExploration() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{G}"));
+        addStaticEffect(new KickerEffect("{G}"));
         addSpellEffect(new ScryEffect(2));
         addSpellEffect(new DrawCardEffect(1));
         addSpellEffect(new ConditionalEffect(

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -21,7 +20,7 @@ import java.util.List;
 public class FiresOfVictory extends Card {
 
     public FiresOfVictory() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{U}"));
+        addStaticEffect(new KickerEffect("{2}{U}"));
         addSpellEffect(new ConditionalEffect(new Kicked(), new DrawCardEffect()));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(

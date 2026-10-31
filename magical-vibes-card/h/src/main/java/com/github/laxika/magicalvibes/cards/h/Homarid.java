@@ -30,12 +30,12 @@ public class Homarid extends Card {
                 new EnterWithCountersEffect(CounterType.TIDE, new Fixed(1)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.TIDE));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.TIDE),
                         new NotCondition(new SourceCounterThreshold(2, CounterType.TIDE)))),
                 new StaticBoostEffect(-1, -1, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(3, CounterType.TIDE),
                         new NotCondition(new SourceCounterThreshold(4, CounterType.TIDE)))),

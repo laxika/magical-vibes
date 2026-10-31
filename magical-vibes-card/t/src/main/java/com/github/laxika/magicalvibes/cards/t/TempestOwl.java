@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class TempestOwl extends Card {
 
     public TempestOwl() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{4}{U}"));
+        addStaticEffect(new KickerEffect("{4}{U}"));
         target(TargetFilters.permanent(), 0, 3)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ConditionalEffect(new Kicked(), new TapPermanentsEffect(TapUntapScope.TARGET)));

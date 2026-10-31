@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ACR", collectorNumber = "38")
@@ -25,7 +24,7 @@ public class TheSpearOfLeonidas extends Card {
         CreateTokenEffect phobos = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Phobos", 3, 2, CardColor.RED, null,
                 List.of(CardSubtype.HORSE), Set.of(), Set.of(), false, false,
-                Map.of(), List.of(), false, false, true, 0, Set.of());
+                List.of(), List.of(), false, false, true, 0, Set.of());
 
         addEffect(EffectSlot.ON_ATTACK, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

@@ -15,8 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 public class Lavaleaper extends Card {
 
     public Lavaleaper() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_CREATURES_INCLUDING_SELF));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_CREATURES_INCLUDING_SELF));
         addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
                 new AddOneOfEachManaTypeProducedByLandEffect(false,
                         new PermanentHasSupertypePredicate(CardSupertype.BASIC)));

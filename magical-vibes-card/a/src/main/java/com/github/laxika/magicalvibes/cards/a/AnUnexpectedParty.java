@@ -15,7 +15,7 @@ public class AnUnexpectedParty extends Card {
         addCastingOption(new AdventureCast("{X}{2}{W}"));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenSubtypeEffect(2, 2));
+        addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(2, 2));
     }
 
     @Override

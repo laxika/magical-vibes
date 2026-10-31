@@ -1,26 +1,26 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "AFC", collectorNumber = "4")
 public class VrondissRageOfAncients extends Card {
 
     public VrondissRageOfAncients() {
-        Map<EffectSlot, CardEffect> dragonSpiritTokenEffects =
-                Map.of(EffectSlot.ON_SELF_DEALS_DAMAGE, new SacrificeSelfEffect());
+        List<Ability> dragonSpiritTokenEffects =
+                List.of(LegacySlots.triggered(EffectSlot.ON_SELF_DEALS_DAMAGE, new SacrificeSelfEffect()));
         CreateTokenEffect dragonSpiritToken = new CreateTokenEffect(
                 1, "Dragon Spirit", 5, 4, CardColor.RED, Set.of(CardColor.RED, CardColor.GREEN),
                 List.of(CardSubtype.DRAGON, CardSubtype.SPIRIT))

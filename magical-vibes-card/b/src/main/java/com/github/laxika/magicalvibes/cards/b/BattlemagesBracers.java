@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class BattlemagesBracers extends Card {
 
     public BattlemagesBracers() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever an ability of equipped creature is activated, if it isn't a mana ability, you may pay {1}.
         // If you do, copy that ability. You may choose new targets for the copy.

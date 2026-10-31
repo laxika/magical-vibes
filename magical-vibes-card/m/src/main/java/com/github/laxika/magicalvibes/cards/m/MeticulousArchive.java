@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 public class MeticulousArchive extends Card {
 
     public MeticulousArchive() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SurveilEffect(1));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));

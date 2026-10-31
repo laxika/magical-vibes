@@ -16,7 +16,7 @@ import java.util.Set;
 public class PhyresisRoach extends Card {
 
     public PhyresisRoach() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
+        addStaticEffect(new ToxicEffect(1));
         CardSubtypePredicate insectCard = new CardSubtypePredicate(CardSubtype.INSECT);
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new PerpetuallyGrantKeywordToMatchingCardsEffect(

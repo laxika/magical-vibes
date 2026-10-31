@@ -20,7 +20,7 @@ import java.util.List;
 public class CryptAngel extends Card {
 
     public CryptAngel() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardAllOfPredicate(List.of(

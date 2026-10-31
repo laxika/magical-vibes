@@ -21,7 +21,7 @@ public class TuvasaTheSunlit extends Card {
     public TuvasaTheSunlit() {
         PermanentCount enchantmentsYouControl =
                 new PermanentCount(new PermanentIsEnchantmentPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(enchantmentsYouControl, enchantmentsYouControl));
+        addStaticEffect(new BoostSelfEffect(enchantmentsYouControl, enchantmentsYouControl));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new FirstMatchingSpellCastTriggerEffect(
                 new CardTypePredicate(CardType.ENCHANTMENT), List.of(new DrawCardEffect())));
     }

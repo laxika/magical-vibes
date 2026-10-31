@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class Kessig extends Card {
 
     public Kessig() {
-        addEffect(EffectSlot.STATIC, new PreventAllCombatDamageByCreaturesExceptEffect(
+        addStaticEffect(new PreventAllCombatDamageByCreaturesExceptEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.WEREWOLF)));
 
         addEffect(EffectSlot.CHAOS_TRIGGERED, new BoostAllOwnCreaturesEffect(2, 2));

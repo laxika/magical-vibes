@@ -17,7 +17,7 @@ public class SetessanTraining extends Card {
     public SetessanTraining() {
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE));
     }
 }

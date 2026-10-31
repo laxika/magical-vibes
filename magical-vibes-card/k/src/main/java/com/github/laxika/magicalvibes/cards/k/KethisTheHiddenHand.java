@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayMatchingCardsFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -19,7 +18,7 @@ public class KethisTheHiddenHand extends Card {
     public KethisTheHiddenHand() {
         CardSupertypePredicate legendary = new CardSupertypePredicate(CardSupertype.LEGENDARY);
 
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 legendary, 1, CostModificationScope.SELF));
         addActivatedAbility(new ActivatedAbility(
                 false,

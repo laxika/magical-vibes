@@ -25,7 +25,7 @@ import java.util.List;
 public class GiantShark extends Card {
 
     public GiantShark() {
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new DefendingPlayerControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 "an Island"
         ));

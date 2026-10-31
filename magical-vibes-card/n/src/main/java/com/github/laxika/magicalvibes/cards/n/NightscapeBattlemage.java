@@ -28,7 +28,7 @@ import java.util.Set;
 public class NightscapeBattlemage extends Card {
 
     public NightscapeBattlemage() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{R}"));
+        addStaticEffect(new KickerEffect("{2}{R}"));
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}{U}"), true, 1));
 
         targetWhenKicked(new PermanentPredicateTargetFilter(

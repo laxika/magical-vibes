@@ -14,8 +14,7 @@ public class WitheringHex extends Card {
 
     public WitheringHex() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(-1, -1, GrantScope.ENCHANTED_CREATURE, CounterType.PLAGUE));
+                .addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.ENCHANTED_CREATURE, CounterType.PLAGUE));
         addEffect(EffectSlot.ON_ANY_PLAYER_CYCLES, new PutCountersOnSelfEffect(CounterType.PLAGUE));
     }
 }

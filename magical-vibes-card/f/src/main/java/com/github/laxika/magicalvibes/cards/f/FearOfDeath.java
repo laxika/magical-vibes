@@ -21,7 +21,7 @@ public class FearOfDeath extends Card {
         CardsInGraveyard controllerGraveyard = new CardsInGraveyard(null, CountScope.CONTROLLER);
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(2, MillRecipient.CONTROLLER))
-                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                .addStaticEffect(new AttachedBoostEffect(
                         new Scaled(controllerGraveyard, -1),
                         new Fixed(0),
                         GrantScope.ENCHANTED_CREATURE));

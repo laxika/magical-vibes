@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * Continuously grants a triggered ability to the permanents selected by {@code scope} (and,
- * for the multi-permanent scopes, {@code filter}). Belongs on {@link EffectSlot#STATIC}.
+ * for the multi-permanent scopes, {@code filter}). Added as a static ability.
  *
  * <p>{@code slot} is the trigger condition of the granted ability and {@code grantedEffect}
  * is what it does on resolution — e.g. {@code (ON_DAMAGE_TO_PLAYER, new DrawCardEffect(1),
@@ -32,6 +32,11 @@ public record GrantTriggeredAbilityEffect(Ability grantedAbility,
 
     public GrantTriggeredAbilityEffect(EffectSlot slot, CardEffect grantedEffect, GrantScope scope) {
         this(slot, grantedEffect, scope, null);
+    }
+
+    /** The grant of {@code grantedAbility}, such as a static ability, which has no slot. */
+    public GrantTriggeredAbilityEffect(Ability grantedAbility, GrantScope scope) {
+        this(grantedAbility, scope, null);
     }
 
     /** The slot of {@link #grantedAbility}, or {@code null} when there is none. */

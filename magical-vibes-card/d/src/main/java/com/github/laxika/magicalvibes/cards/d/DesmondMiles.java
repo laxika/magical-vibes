@@ -29,7 +29,7 @@ public class DesmondMiles extends Card {
                 new CardSubtypePredicate(CardSubtype.ASSASSIN),
                 CountScope.CONTROLLER
         );
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(
+        addStaticEffect(new BoostSelfEffect(
                 new Sum(otherAssassinsYouControl, assassinCardsInYourGraveyard),
                 new Fixed(0)
         ));

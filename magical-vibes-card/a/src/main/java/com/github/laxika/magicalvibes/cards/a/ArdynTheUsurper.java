@@ -24,7 +24,7 @@ import java.util.Set;
 public class ArdynTheUsurper extends Card {
 
     public ArdynTheUsurper() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.MENACE, Keyword.LIFELINK, Keyword.HASTE),
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.DEMON)));

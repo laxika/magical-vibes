@@ -16,7 +16,6 @@ public class Lightform extends Card {
 
     public Lightform() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeAuraManifestTopCardEffect());
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), GrantScope.ENCHANTED_CREATURE));
     }
 }

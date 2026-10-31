@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
@@ -16,7 +15,7 @@ import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 public class DawnsTruce extends Card {
 
     public DawnsTruce() {
-        addEffect(EffectSlot.STATIC, new GiftEffect());
+        addStaticEffect(new GiftEffect());
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new EachOtherPlayerDrawsCardEffect(1)));
         addSpellEffect(new GrantControllerKeywordUntilEndOfTurnEffect(Keyword.HEXPROOF));

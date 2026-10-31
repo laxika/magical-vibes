@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
@@ -18,8 +17,8 @@ import java.util.Set;
 public class LongLostLances extends Card {
 
     public LongLostLances() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE), GrantScope.ALL_OWN_CREATURES,
                         new PermanentIsEquippedPredicate())));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

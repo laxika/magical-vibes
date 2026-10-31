@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OTJ", collectorNumber = "115")
@@ -28,7 +27,7 @@ public class BrimstoneRoundup extends Card {
                 2,
                 List.of(new CreateTokenEffect(
                         CardType.CREATURE, 1, "Mercenary", 1, 1, CardColor.RED, null,
-                        List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, Map.of(),
+                        List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, List.of(),
                         List.of(new ActivatedAbility(
                                 true,
                                 null,

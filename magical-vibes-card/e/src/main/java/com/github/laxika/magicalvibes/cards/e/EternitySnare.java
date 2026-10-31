@@ -14,6 +14,6 @@ public class EternitySnare extends Card {
     public EternitySnare() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+                .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

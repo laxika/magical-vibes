@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class DarettiRocketeerEngineer extends Card {
 
     public DarettiRocketeerEngineer() {
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new GreatestManaValueAmongControlled(new PermanentIsArtifactPredicate()), new Fixed(5)));
 
         ReturnCardFromGraveyardEffect returnArtifact = ReturnCardFromGraveyardEffect.builder()

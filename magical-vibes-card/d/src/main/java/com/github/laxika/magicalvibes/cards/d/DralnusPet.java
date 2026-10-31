@@ -19,9 +19,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class DralnusPet extends Card {
 
     public DralnusPet() {
-        addEffect(EffectSlot.STATIC, KickerEffect.discarding("{2}{B}",
+        addStaticEffect(KickerEffect.discarding("{2}{B}",
                 new CardTypePredicate(CardType.CREATURE), "creature"));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Kicked(),
+        addStaticEffect(new ConditionalEffect(new Kicked(),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new LastDiscardedCardManaValue())));

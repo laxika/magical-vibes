@@ -26,6 +26,6 @@ public class VigorsporeWurm extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET));
 
-        addEffect(EffectSlot.STATIC, new CanBeBlockedByAtMostNCreaturesEffect(1));
+        addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));
     }
 }

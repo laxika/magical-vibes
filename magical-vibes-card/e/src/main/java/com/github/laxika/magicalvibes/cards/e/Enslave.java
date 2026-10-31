@@ -16,7 +16,7 @@ public class Enslave extends Card {
 
     public Enslave() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect())
+                .addStaticEffect(new ControlEnchantedCreatureEffect())
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED, new EnchantedCreatureDealsDamageToItsOwnerEffect(1));
     }
 }

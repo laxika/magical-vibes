@@ -28,6 +28,6 @@ public class GarnaTheBloodflame extends Card {
                 .build());
 
         // Other creatures you control have haste.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
     }
 }

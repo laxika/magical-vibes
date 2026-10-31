@@ -18,6 +18,6 @@ public class ExclusionRitual extends Card {
                 "Target must be a nonland permanent"
         ))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentAndImprintEffect())
-                .addEffect(EffectSlot.STATIC, new CantCastSpellsWithSameNameAsExiledCardEffect());
+                .addStaticEffect(new CantCastSpellsWithSameNameAsExiledCardEffect());
     }
 }

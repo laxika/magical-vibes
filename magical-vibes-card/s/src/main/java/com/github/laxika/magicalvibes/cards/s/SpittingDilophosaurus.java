@@ -28,7 +28,7 @@ public class SpittingDilophosaurus extends Card {
                         new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
 
         // Creatures your opponents control with -1/-1 counters on them can't block.
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesCantBlockMatchingCreaturesEffect(
+        addStaticEffect(new MatchingCreaturesCantBlockMatchingCreaturesEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),

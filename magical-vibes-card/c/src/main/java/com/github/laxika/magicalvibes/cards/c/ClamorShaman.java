@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ClamorShaman extends Card {
 
     public ClamorShaman() {
-        addEffect(EffectSlot.STATIC, new RiotEffect());
+        addStaticEffect(new RiotEffect());
 
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ATTACK, new CantBlockThisTurnEffect(TapUntapScope.TARGET));

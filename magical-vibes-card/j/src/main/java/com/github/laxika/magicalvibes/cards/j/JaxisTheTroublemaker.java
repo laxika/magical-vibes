@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -35,7 +35,7 @@ public class JaxisTheTroublemaker extends Card {
     public JaxisTheTroublemaker() {
         addCastingOption(AlternateHandCast.blitz("{1}{R}"));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new CastForAlternateCost(), new SacrificeSelfAtEndStepEffect()));
@@ -58,7 +58,7 @@ public class JaxisTheTroublemaker extends Card {
                                 List.of(), Set.of(), null, null, Map.of(),
                                 true, false, true, false,
                                 false, false, null, Set.of(),
-                                false, Map.of(EffectSlot.ON_DEATH, List.<CardEffect>of(new DrawCardEffect()))
+                                false, List.of(LegacySlots.triggered(EffectSlot.ON_DEATH, List.<CardEffect>of(new DrawCardEffect())))
                         )
                 ),
                 "{R}, {T}, Discard a card: Create a token that's a copy of another target creature you control. "

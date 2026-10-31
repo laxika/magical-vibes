@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class DeadeyeBrawler extends Card {
 
     public DeadeyeBrawler() {
-        addEffect(EffectSlot.STATIC, new AscendEffect());
+        addStaticEffect(new AscendEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new ConditionalEffect(
                 new ControllerHasCityBlessing(), new DrawCardEffect()));
     }

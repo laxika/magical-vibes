@@ -29,7 +29,7 @@ public class CharredFoyerWarpedSpace extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, ConditionalEffect.atTriggerTime(
                 new SourceRoomDoorUnlocked(0),
                 new ExileTopCardMayPlayThisTurnEffect(false)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
                 new AlternativeCostForSpellsEffect(
                         "{0}", null, null, true, false, false, false, false,

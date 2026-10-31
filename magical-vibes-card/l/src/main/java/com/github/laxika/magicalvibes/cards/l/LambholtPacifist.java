@@ -20,7 +20,7 @@ public class LambholtPacifist extends Card {
     public LambholtPacifist() {
         setBackFaceCard(new LambholtButcher());
 
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtLeastPredicate(4)

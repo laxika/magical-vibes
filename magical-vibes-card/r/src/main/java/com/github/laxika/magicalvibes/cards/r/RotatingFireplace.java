@@ -23,7 +23,7 @@ import java.util.List;
 public class RotatingFireplace extends Card {
 
     public RotatingFireplace() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.TIME, new Fixed(1)));
 

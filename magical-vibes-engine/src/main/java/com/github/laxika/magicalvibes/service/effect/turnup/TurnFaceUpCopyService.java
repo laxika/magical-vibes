@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.turnup;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessFormChoiceEffect;
@@ -255,11 +258,18 @@ public class TurnFaceUpCopyService {
         if (!copiedCard.getEffects(EffectSlot.ON_TURNED_FACE_UP).contains(effect)) {
             copiedCard.addEffect(EffectSlot.ON_TURNED_FACE_UP, effect);
         }
-        effect.additionalSlotEffects().forEach((slot, effects) -> effects.forEach(additional -> {
-            if (!copiedCard.getEffects(slot).contains(additional)) {
-                copiedCard.addEffect(slot, additional);
+        for (Ability ability : effect.additionalAbilities()) {
+            if (ability instanceof StaticAbility statik) {
+                statik.effects().stream()
+                        .filter(additional -> !copiedCard.getStaticEffects().contains(additional))
+                        .forEach(additional -> copiedCard.addStaticEffect(statik.zones(), additional));
+                continue;
             }
-        }));
+            EffectSlot slot = LegacySlots.slotOf(ability);
+            LegacySlots.effectsOf(ability).stream()
+                    .filter(additional -> !copiedCard.getEffects(slot).contains(additional))
+                    .forEach(additional -> copiedCard.addEffect(slot, additional));
+        }
     }
 
     private TurnFaceUpCopyEffect findCopyEffect(Card card) {

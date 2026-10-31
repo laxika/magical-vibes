@@ -16,6 +16,6 @@ public class BatteringWurm extends Card {
     public BatteringWurm() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new OpponentDealtDamageThisTurn(1),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesWithLessPowerEffect());
+        addStaticEffect(new CantBeBlockedByCreaturesWithLessPowerEffect());
     }
 }

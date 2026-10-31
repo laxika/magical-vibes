@@ -18,8 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class VodalianSerpent extends Card {
 
     public VodalianSerpent() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new KickerEffect("{2}"));
+        addStaticEffect(new CantAttackUnlessEffect(
                 new DefendingPlayerControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 "an Island"
         ));

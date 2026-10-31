@@ -18,7 +18,7 @@ public class BoardedWindow extends Card {
 
     public BoardedWindow() {
         // Creatures attacking you get -1/-0.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, 0, GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(-1, 0, GrantScope.ALL_CREATURES,
                 new PermanentIsAttackingSourceControllerPredicate()));
 
         // At the beginning of each end step, if you were dealt 4 or more damage this turn,

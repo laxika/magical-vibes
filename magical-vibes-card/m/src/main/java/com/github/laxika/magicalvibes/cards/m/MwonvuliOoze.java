@@ -23,7 +23,6 @@ public class MwonvuliOoze extends Card {
         DynamicAmount onePlusTwiceAgeCounters = new Sum(
                 new Fixed(1),
                 new Scaled(new CountersOnSource(CounterType.AGE), 2));
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(onePlusTwiceAgeCounters, onePlusTwiceAgeCounters));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(onePlusTwiceAgeCounters, onePlusTwiceAgeCounters));
     }
 }

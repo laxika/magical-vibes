@@ -24,7 +24,7 @@ import java.util.List;
 public class VodalianKnights extends Card {
 
     public VodalianKnights() {
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new DefendingPlayerControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 "an Island"
         ));

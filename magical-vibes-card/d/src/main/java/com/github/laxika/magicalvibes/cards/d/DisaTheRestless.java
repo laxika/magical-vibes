@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -20,7 +21,6 @@ import com.github.laxika.magicalvibes.model.filter.CardPutIntoGraveyardFromNonBa
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "M3C", collectorNumber = "1")
@@ -52,8 +52,9 @@ public class DisaTheRestless extends Card {
                 List.of(CardSubtype.LHURGOYF),
                 Set.of(),
                 Set.of(),
-                Map.of(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
-                        cardTypes, new Sum(cardTypes, new Fixed(1)))));
+                List.of(
+                        StaticAbility.of(new SetPowerToughnessToAmountEffect(
+                        cardTypes, new Sum(cardTypes, new Fixed(1))))));
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(null, tarmogoyfToken, false, true));
     }

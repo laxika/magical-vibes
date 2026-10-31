@@ -36,9 +36,9 @@ public class TsaganRaiderWarlord extends Card {
         addEffect(EffectSlot.ON_ATTACK, new BoostAllOwnCreaturesEffect(
                 new PermanentCount(CREATURE_WITH_FIRST_OR_DOUBLE_STRIKE, CountScope.CONTROLLER),
                 new Fixed(0)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new MaxSpeed(),
+        addStaticEffect(new ConditionalEffect(new MaxSpeed(),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new MaxSpeed(),
+        addStaticEffect(new ConditionalEffect(new MaxSpeed(),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES)));
     }
 }

@@ -17,7 +17,7 @@ public class VastwoodZendikon extends Card {
 
     public VastwoodZendikon() {
         // Enchant land. Enchanted land is a 6/4 green Elemental creature. It's still a land.
-        target(TargetFilters.land()).addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesCreatureEffect(
+        target(TargetFilters.land()).addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(
                 6, 4, CardColor.GREEN, List.of(CardSubtype.ELEMENTAL)));
 
         // When enchanted land dies, return that card to its owner's hand.

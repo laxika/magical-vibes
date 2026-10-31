@@ -16,6 +16,6 @@ public class LuminousPhantom extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_LEAVES_BATTLEFIELD, new GainLifeEffect(1));
 
         // If Luminous Phantom would be put into a graveyard from anywhere, exile it instead.
-        addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect());
+        addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 }

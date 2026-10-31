@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastThreeOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
@@ -16,7 +16,7 @@ import java.util.List;
 public class MarchesasSurpriseParty extends Card {
 
     public MarchesasSurpriseParty() {
-        addEffect(EffectSlot.COMMAND_ZONE_STATIC, new SecretMissionEffect(List.of(
+        addStaticEffect(AbilityZones.COMMAND, new SecretMissionEffect(List.of(
                 new SecretMissionEffect.Mission("You've cast three or more spells this turn.",
                         new ControllerCastThreeOrMoreSpellsThisTurn(null)),
                 new SecretMissionEffect.Mission("An opponent lost 6 or more life this turn.",

@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "PIP", collectorNumber = "1")
@@ -57,7 +56,7 @@ public class CaesarLegionsEmperor extends Card {
                                 CardType.CREATURE, 2, "Soldier", 1, 1,
                                 CardColor.RED, Set.of(CardColor.RED, CardColor.WHITE),
                                 List.of(CardSubtype.SOLDIER), Set.of(Keyword.HASTE), Set.of(),
-                                true, false, Map.of(), List.of(), false, false, false, 0, Set.of()
+                                true, false, List.of(), List.of(), false, false, false, 0, Set.of()
                         )
                 ),
                 new ChooseOneEffect.ChooseOneOption(

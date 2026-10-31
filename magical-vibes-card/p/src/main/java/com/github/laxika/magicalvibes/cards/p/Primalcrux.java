@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
@@ -15,6 +14,6 @@ public class Primalcrux extends Card {
         // mana costs of permanents you control (Primalcrux itself included). Trample is auto-loaded.
         ColorManaSymbolsAmongControlledPermanents greenSymbols =
                 new ColorManaSymbolsAmongControlledPermanents(ManaColor.GREEN, false);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(greenSymbols, greenSymbols));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(greenSymbols, greenSymbols));
     }
 }

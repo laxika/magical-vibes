@@ -16,8 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class WeatheredSentinels extends Card {
 
     public WeatheredSentinels() {
-        addEffect(EffectSlot.STATIC,
-                new CanAttackPlayersWhoAttackedControllerLastTurnAsThoughNoDefenderEffect());
+        addStaticEffect(new CanAttackPlayersWhoAttackedControllerLastTurnAsThoughNoDefenderEffect());
         addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
                 new BoostSelfEffect(3, 3),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));

@@ -22,6 +22,6 @@ public class GrolnokTheOmnivore extends Card {
                         new MillEffect(3, MillRecipient.CONTROLLER)));
         addEffect(EffectSlot.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
                 new ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect());
-        addEffect(EffectSlot.STATIC, new AllowPlayAndCastCardsExiledWithCroakCountersEffect());
+        addStaticEffect(new AllowPlayAndCastCardsExiledWithCroakCountersEffect());
     }
 }

@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class SaiOfTheShinobi extends Card {
 
     public SaiOfTheShinobi() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new AttachSourceEquipmentToEnteringCreatureEffect());
         addActivatedAbility(new EquipActivatedAbility("{2}"));

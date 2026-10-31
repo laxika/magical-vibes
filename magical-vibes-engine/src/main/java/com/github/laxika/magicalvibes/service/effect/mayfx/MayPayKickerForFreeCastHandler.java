@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.FreeCastKickerOffer;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -46,7 +45,7 @@ public class MayPayKickerForFreeCastHandler implements MayEffectHandlerBean {
 
         gameData.freeCastKickerDecidedIds.add(cardId);
         if (accepted) {
-            KickerEffect kicker = exiled.card().getEffects(EffectSlot.STATIC).stream()
+            KickerEffect kicker = exiled.card().getStaticEffects().stream()
                     .filter(KickerEffect.class::isInstance)
                     .map(KickerEffect.class::cast)
                     .findFirst()

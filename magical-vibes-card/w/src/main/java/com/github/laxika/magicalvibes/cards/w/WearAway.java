@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -25,6 +24,6 @@ public class WearAway extends Card {
                 )),
                 "Target must be an artifact or enchantment."
         )).addSpellEffect(new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{3}{G}"));
+        addStaticEffect(new SpliceEffect(CardSubtype.ARCANE, "{3}{G}"));
     }
 }

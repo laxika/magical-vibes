@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class IronManMasterOfMachines extends Card {
 
     public IronManMasterOfMachines() {
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(
+        addStaticEffect(new BoostSelfEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER, true),
                 new Fixed(0)));
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
@@ -24,7 +23,7 @@ public class NightmareLash extends Card {
         // Equipped creature gets +1/+1 for each Swamp you control.
         PermanentCount swampsYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 swampsYouControl, swampsYouControl, GrantScope.EQUIPPED_CREATURE));
 
         // Equip—Pay 3 life.

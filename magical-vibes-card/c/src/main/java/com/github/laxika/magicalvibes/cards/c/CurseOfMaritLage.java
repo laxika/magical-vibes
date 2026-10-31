@@ -20,6 +20,6 @@ public class CurseOfMaritLage extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, island));
 
         // Islands don't untap during their controllers' untap steps.
-        addEffect(EffectSlot.STATIC, new MatchingPermanentsDoesntUntapEffect(island));
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(island));
     }
 }

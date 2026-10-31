@@ -41,8 +41,7 @@ public class CaseOfTheGorgonsKiss extends Card {
                         new NotCondition(new SourceIsSolved())
                 )), new SolveSourceEffect()));
 
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new SourceIsSolved(),
+        addStaticEffect(new ConditionalEffect(new SourceIsSolved(),
                         new AnimatePermanentsEffect(4, 4,
                                 List.of(CardSubtype.GORGON),
                                 Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK),

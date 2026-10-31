@@ -34,7 +34,7 @@ import java.util.List;
 public class PaladinClass extends Card {
 
     public PaladinClass() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new IncreaseSpellCostEffect(new CardTruePredicate(), 1, CostModificationScope.OPPONENT)));
 
         addActivatedAbility(new ActivatedAbility(
@@ -44,7 +44,7 @@ public class PaladinClass extends Card {
                 new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
                 "this Class is level 1"));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
                 new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES)));
 

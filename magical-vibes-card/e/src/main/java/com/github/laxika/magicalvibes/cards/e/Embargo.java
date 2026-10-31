@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class Embargo extends Card {
 
     public Embargo() {
-        addEffect(EffectSlot.STATIC, new MatchingPermanentsDoesntUntapEffect(
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(
                 new PermanentNotPredicate(new PermanentIsLandPredicate())));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new LoseLifeEffect(2));
     }

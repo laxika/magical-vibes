@@ -21,9 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class ArmMountedAnchor extends Card {
 
     public ArmMountedAnchor() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(2));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new DiscardTwoUnlessCardPredicateEffect(new CardSubtypePredicate(CardSubtype.PIRATE)));

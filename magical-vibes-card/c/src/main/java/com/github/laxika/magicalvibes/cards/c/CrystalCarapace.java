@@ -14,8 +14,8 @@ public class CrystalCarapace extends Card {
 
     public CrystalCarapace() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                         new CounterUnlessPaysEffect(2),
                         GrantScope.ENCHANTED_CREATURE));

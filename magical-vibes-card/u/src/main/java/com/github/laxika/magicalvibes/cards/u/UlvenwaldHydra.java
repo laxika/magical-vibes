@@ -20,7 +20,7 @@ public class UlvenwaldHydra extends Card {
 
     public UlvenwaldHydra() {
         PermanentCount landsYouControl = new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new SearchLibraryEffect(new CardTypePredicate(CardType.LAND),
                         LibrarySearchDestination.BATTLEFIELD_TAPPED),

@@ -24,7 +24,7 @@ public class GiantOyster extends Card {
 
     public GiantOyster() {
         // "You may choose not to untap this creature during your untap step."
-        addEffect(EffectSlot.STATIC, new MayNotUntapDuringUntapStepEffect());
+        addStaticEffect(new MayNotUntapDuringUntapStepEffect());
 
         // "{T}: For as long as this creature remains tapped, target tapped creature doesn't untap
         // during its controller's untap step ..." — same untap lock as Rust Tick. The companion
@@ -51,7 +51,6 @@ public class GiantOyster extends Card {
 
         // "When this creature leaves the battlefield or becomes untapped, remove all -1/-1 counters
         // from the creature."
-        addEffect(EffectSlot.STATIC,
-                new RemoveCountersWhenUntapLockEndsEffect(CounterType.MINUS_ONE_MINUS_ONE));
+        addStaticEffect(new RemoveCountersWhenUntapLockEndsEffect(CounterType.MINUS_ONE_MINUS_ONE));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -27,7 +26,7 @@ import java.util.Set;
 public class MindSpiral extends Card {
 
     public MindSpiral() {
-        addEffect(EffectSlot.STATIC, new GiftEffect(1));
+        addStaticEffect(new GiftEffect(1));
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 TargetOpponentCreatesTokenEffect.gift(fishToken())));
 

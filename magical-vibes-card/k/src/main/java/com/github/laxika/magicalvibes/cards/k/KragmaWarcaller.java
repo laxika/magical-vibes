@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class KragmaWarcaller extends Card {
 
     public KragmaWarcaller() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.MINOTAUR)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new TriggeringPermanentConditionalEffect(new PermanentHasSubtypePredicate(CardSubtype.MINOTAUR),

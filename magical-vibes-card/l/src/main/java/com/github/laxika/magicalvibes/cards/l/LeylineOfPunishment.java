@@ -16,7 +16,7 @@ public class LeylineOfPunishment extends Card {
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with Leyline of Punishment on the battlefield?"
         ));
-        addEffect(EffectSlot.STATIC, new PlayersCantGainLifeEffect());
-        addEffect(EffectSlot.STATIC, new DamageCantBePreventedEffect());
+        addStaticEffect(new PlayersCantGainLifeEffect());
+        addStaticEffect(new DamageCantBePreventedEffect());
     }
 }

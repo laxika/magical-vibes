@@ -14,7 +14,7 @@ public class WardSliver extends Card {
 
     public WardSliver() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new GrantProtectionFromChosenColorToPermanentsEffect(
+        addStaticEffect(new GrantProtectionFromChosenColorToPermanentsEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
     }
 }

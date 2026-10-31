@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "JOU", collectorNumber = "128")
@@ -42,7 +41,7 @@ public class HydraBroodmaster extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

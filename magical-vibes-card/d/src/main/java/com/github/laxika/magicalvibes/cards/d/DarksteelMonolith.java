@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 
@@ -14,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 public class DarksteelMonolith extends Card {
 
     public DarksteelMonolith() {
-        addEffect(EffectSlot.STATIC, new AlternativeCostForSpellsEffect(
+        addStaticEffect(new AlternativeCostForSpellsEffect(
                 "{0}", new CardIsColorlessPredicate(), null, true, true));
     }
 }

@@ -21,7 +21,7 @@ import java.util.Set;
 public class RestlessAnchorage extends Card {
 
     public RestlessAnchorage() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
         addActivatedAbility(new ActivatedAbility(

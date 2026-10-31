@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "706")
@@ -63,7 +62,7 @@ public class CommodoreGuff extends Card {
                         Set.of(),
                         false,
                         false,
-                        Map.of(),
+                        List.of(),
                         List.of(new ActivatedAbility(
                                 true,
                                 null,

@@ -18,9 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 public class RoshanHiddenMagister extends Card {
 
     public RoshanHiddenMagister() {
-        addEffect(EffectSlot.STATIC,
-                new GrantSubtypeToOwnCreaturesInAllZonesEffect(CardSubtype.ASSASSIN));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantSubtypeToOwnCreaturesInAllZonesEffect(CardSubtype.ASSASSIN));
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.MENACE, GrantScope.OWN_CREATURES, new PermanentIsFaceDownPredicate()));
         addEffect(EffectSlot.ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP,
                 SequenceEffect.of(new DrawCardEffect(), new LoseLifeEffect(1)));

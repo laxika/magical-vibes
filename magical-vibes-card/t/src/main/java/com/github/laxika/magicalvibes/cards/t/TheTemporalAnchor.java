@@ -14,7 +14,7 @@ public class TheTemporalAnchor extends Card {
     public TheTemporalAnchor() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ScryEffect(2));
         addEffect(EffectSlot.ON_CONTROLLER_SCRIES, new ExileBottomCardsToSourceEffect(new EventValue()));
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, null, false, true, 0, null, false, false, false));
     }
 }

@@ -20,7 +20,7 @@ public class AlpharaelDreamingAcolyte extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(2));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DiscardEffect(2, DiscardRecipient.CONTROLLER, CardType.ARTIFACT));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
     }
 }

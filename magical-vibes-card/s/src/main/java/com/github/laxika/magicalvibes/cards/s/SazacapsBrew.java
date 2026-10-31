@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -25,7 +24,7 @@ import java.util.Set;
 public class SazacapsBrew extends Card {
 
     public SazacapsBrew() {
-        addEffect(EffectSlot.STATIC, new GiftEffect(1));
+        addStaticEffect(new GiftEffect(1));
         addCastingCost(new DiscardCardTypeCost(null, null));
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 TargetOpponentCreatesTokenEffect.gift(fishToken())));

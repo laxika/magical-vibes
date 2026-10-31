@@ -28,7 +28,7 @@ public class TeferisTalent extends Card {
                 "Target must be a planeswalker"
         ));
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         -12,
                         List.of(new CreateEmblemEffect(

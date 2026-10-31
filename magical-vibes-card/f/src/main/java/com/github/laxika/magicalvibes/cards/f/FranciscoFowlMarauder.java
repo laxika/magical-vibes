@@ -15,7 +15,7 @@ public class FranciscoFowlMarauder extends Card {
 
     public FranciscoFowlMarauder() {
         // This creature can't block.
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
 
         // Whenever one or more Pirates you control deal damage to a player, Francisco explores.
         addEffect(EffectSlot.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER,

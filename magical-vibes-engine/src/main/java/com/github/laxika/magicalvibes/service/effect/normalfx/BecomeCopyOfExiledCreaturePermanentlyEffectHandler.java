@@ -51,8 +51,7 @@ public class BecomeCopyOfExiledCreaturePermanentlyEffectHandler implements Norma
         permanentCopierService.applyCloneCopy(source, exiledCard, null, null, Set.of());
         BecomeCopyOfExiledCreaturePermanentlyEffect copyEffect =
                 (BecomeCopyOfExiledCreaturePermanentlyEffect) effect;
-        copyEffect.additionalSlotEffects().forEach((slot, effects) ->
-                effects.forEach(cardEffect -> source.getCard().addEffect(slot, cardEffect)));
+        copyEffect.additionalAbilities().forEach(source.getCard()::addAbility);
 
         log.info("Game {} - {} becomes a copy of {} permanently", gameData.id,
                 originalName, exiledCard.getName());

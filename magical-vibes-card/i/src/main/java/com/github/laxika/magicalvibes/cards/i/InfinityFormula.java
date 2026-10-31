@@ -20,8 +20,8 @@ public class InfinityFormula extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AttachSourceEquipmentToTargetCreatureEffect());
 
         // Equipped creature gets +1/+2 and has "Whenever this creature attacks, you gain 2 life."
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK, new GainLifeEffect(2), GrantScope.EQUIPPED_CREATURE));
 
         // Equip {2}

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ApplyLudevicCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
@@ -963,7 +962,7 @@ public class AnimationSupport {
         gameLogService.append(gameData, GameLog.cardTextCard(source.getCard(), " is attached to ", target.getCard(), "."));
         log.info("Game {} - {} attached to {}", gameData.id, source.getCard().getName(), target.getCard().getName());
 
-        boolean hasControlEffect = source.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean hasControlEffect = source.getCard().getStaticEffects().stream()
                 .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
         if (hasControlEffect) {
             creatureControlService.applyControlEffect(gameData, controllerId, target,

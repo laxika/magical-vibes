@@ -18,7 +18,7 @@ public class SerraAvatar extends Card {
     public SerraAvatar() {
         // Serra Avatar's power and toughness are each equal to your life total.
         ControllerLifeTotal life = new ControllerLifeTotal();
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(life, life));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(life, life));
         // When Serra Avatar is put into a graveyard from anywhere, shuffle it into its owner's library.
         addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, new ShuffleSelfFromGraveyardIntoLibraryEffect());
     }

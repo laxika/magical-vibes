@@ -28,7 +28,7 @@ public class Everglades extends Card {
 
     public Everglades() {
         // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // When this land enters, sacrifice it unless you return an untapped Swamp you control to
         // its owner's hand.

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -24,7 +23,7 @@ public class PresenceOfGond extends Card {
     public PresenceOfGond() {
         // Enchant creature.
         // Enchanted creature has "{T}: Create a 1/1 green Elf Warrior creature token."
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        target(TargetFilters.creature()).addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,

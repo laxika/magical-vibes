@@ -31,7 +31,7 @@ public class LokiTheDeceiver extends Card {
                 .addEffect(EffectSlot.ON_ATTACK, new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(CardSubtype.ILLUSION), Set.of(), null, null, Map.of(),
                         false, false, true, true,
-                        false, false, null, Set.of(), false, Map.of(), List.of(), false, true,
+                        false, false, null, Set.of(), false, List.of(), List.of(), false, true,
                         new Fixed(1), false, Set.of(), true));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,

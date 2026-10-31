@@ -22,7 +22,7 @@ public class Barrowgoyf extends Card {
     public Barrowgoyf() {
         CardTypesAmongCardsInGraveyard cardTypes =
                 new CardTypesAmongCardsInGraveyard(CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 cardTypes, new Sum(cardTypes, new Fixed(1))));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(
                 new MillControllerAndMayReturnMilledPermanentToHandEffect(

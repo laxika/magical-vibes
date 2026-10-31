@@ -18,7 +18,7 @@ public class HowlingChorus extends Card {
 
     public HowlingChorus() {
         // Creatures with power less than this creature's power can't block it.
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesWithLessPowerEffect());
+        addStaticEffect(new CantBeBlockedByCreaturesWithLessPowerEffect());
 
         // Whenever this creature deals combat damage to a player, create a 3/2 colorless Eldrazi Horror
         // creature token.

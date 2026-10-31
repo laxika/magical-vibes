@@ -20,7 +20,7 @@ public class RedGhostIntangibleGenius extends Card {
     public RedGhostIntangibleGenius() {
         // Ward {2}.
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD,
                 new CreateTokenEffect("Ape", 3, 3, CardColor.RED,
                         List.of(CardSubtype.APE, CardSubtype.VILLAIN), Set.of(Keyword.HASTE), Set.of()));

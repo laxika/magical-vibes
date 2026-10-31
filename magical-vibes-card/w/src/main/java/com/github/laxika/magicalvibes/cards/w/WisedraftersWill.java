@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
@@ -16,7 +15,7 @@ import java.util.List;
 public class WisedraftersWill extends Card {
 
     public WisedraftersWill() {
-        addEffect(EffectSlot.STATIC, new RevealOpponentHandsEffect());
+        addStaticEffect(new RevealOpponentHandsEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

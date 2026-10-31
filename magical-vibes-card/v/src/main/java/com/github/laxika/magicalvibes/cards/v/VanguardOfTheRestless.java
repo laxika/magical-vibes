@@ -23,7 +23,7 @@ public class VanguardOfTheRestless extends Card {
 
     public VanguardOfTheRestless() {
         var commanderCasts = new CommanderCastsFromCommandZoneThisGame();
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 commanderCasts, commanderCasts, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SPIRIT))));
 

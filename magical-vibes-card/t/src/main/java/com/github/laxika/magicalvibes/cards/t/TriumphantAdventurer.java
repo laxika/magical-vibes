@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 public class TriumphantAdventurer extends Card {
 
     public TriumphantAdventurer() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ATTACK, new VentureIntoDungeonEffect());
     }

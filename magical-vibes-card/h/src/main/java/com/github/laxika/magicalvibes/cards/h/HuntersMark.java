@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
@@ -30,8 +29,8 @@ public class HuntersMark extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.BLUE)),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(
+        addStaticEffect(new CantBeCounteredEffect());
+        addStaticEffect(new ReduceOwnCastCostIfTargetingPermanentEffect(
                 opponentBluePermanent, 3, false, 1));
 
         target(TargetFilters.creatureYouControl())

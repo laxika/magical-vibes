@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -18,7 +17,7 @@ public class SlagStrider extends Card {
 
     public SlagStrider() {
         // Affinity for artifacts.
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
 
         // {1}, Sacrifice an artifact: This creature deals 1 damage to any target.

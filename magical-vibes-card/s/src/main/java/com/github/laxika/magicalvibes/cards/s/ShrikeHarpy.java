@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class ShrikeHarpy extends Card {
 
     public ShrikeHarpy() {
-        addEffect(EffectSlot.STATIC, new TributeEffect(2));
+        addStaticEffect(new TributeEffect(2));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"

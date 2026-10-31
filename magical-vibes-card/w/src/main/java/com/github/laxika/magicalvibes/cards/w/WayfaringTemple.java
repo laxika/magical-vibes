@@ -17,7 +17,7 @@ public class WayfaringTemple extends Card {
     public WayfaringTemple() {
         PermanentCount creaturesControlled =
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(creaturesControlled, creaturesControlled));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(creaturesControlled, creaturesControlled));
 
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new PopulateEffect());
     }

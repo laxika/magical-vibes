@@ -25,10 +25,8 @@ public class ShinyImpetus extends Card {
         setAttackTriggerOwnedByAura(true);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new AttachedBoostEffect(new Fixed(2), new Fixed(2), GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GoadCreaturesUntilNextTurnEffect(new PermanentIsHostOfSourceAuraPredicate()))
+                .addStaticEffect(new AttachedBoostEffect(new Fixed(2), new Fixed(2), GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GoadCreaturesUntilNextTurnEffect(new PermanentIsHostOfSourceAuraPredicate()))
                 .addEffect(EffectSlot.ON_ATTACK, CreateTokenEffect.ofTreasureToken(1));
     }
 }

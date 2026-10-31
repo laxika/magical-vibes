@@ -20,7 +20,6 @@ public class CarthTheLion extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_OR_PLANESWALKER_DIES,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsPlaneswalkerPredicate(), search));
-        addEffect(EffectSlot.STATIC,
-                new IncreaseLoyaltyAbilityCostEffect(new PermanentIsPlaneswalkerPredicate(), 1));
+        addStaticEffect(new IncreaseLoyaltyAbilityCostEffect(new PermanentIsPlaneswalkerPredicate(), 1));
     }
 }

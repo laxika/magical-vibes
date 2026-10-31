@@ -19,7 +19,7 @@ import java.util.Set;
 public class BruseTarlRovingRancher extends Card {
 
     public BruseTarlRovingRancher() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.DOUBLE_STRIKE,
+        addStaticEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE,
                 GrantScope.ALL_OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.OX)));
 
         var topCardEffect = new ExileTopCardCreateTokenIfLandOrMayCastUntilNextTurnEffect(

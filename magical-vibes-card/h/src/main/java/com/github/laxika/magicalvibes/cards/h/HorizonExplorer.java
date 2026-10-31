@@ -35,7 +35,7 @@ public class HorizonExplorer extends Card {
     );
 
     public HorizonExplorer() {
-        addEffect(EffectSlot.STATIC, new ControlledLandsEnterUntappedEffect());
+        addStaticEffect(new ControlledLandsEnterUntappedEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER, LANDER);
     }
 }

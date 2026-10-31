@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -30,7 +29,7 @@ public class BlackbladeReforged extends Card {
 
     public BlackbladeReforged() {
         // Equipped creature gets +1/+1 for each land you control
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER),
                 new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER),
                 GrantScope.EQUIPPED_CREATURE));

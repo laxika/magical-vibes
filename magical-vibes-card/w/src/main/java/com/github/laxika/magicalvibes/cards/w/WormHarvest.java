@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "131")
@@ -29,7 +28,7 @@ public class WormHarvest extends Card {
                 "Worm", 1, 1, CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN), List.of(CardSubtype.WORM),
                 Set.of(), Set.of(),
                 false, false,
-                Map.of(), List.of(), false, false, false, 0, Set.of()
+                List.of(), List.of(), false, false, false, 0, Set.of()
         ));
 
         // Retrace (You may cast this card from your graveyard by discarding a land card in

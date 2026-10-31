@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongOwnedCommanders;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -24,7 +23,7 @@ import java.util.Set;
 public class CactusPreserve extends Card {
 
     public CactusPreserve() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

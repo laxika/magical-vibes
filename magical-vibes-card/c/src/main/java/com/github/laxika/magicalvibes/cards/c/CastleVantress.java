@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
@@ -23,7 +22,7 @@ import java.util.Set;
 public class CastleVantress extends Card {
 
     public CastleVantress() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCountAtMost(0,
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ISLAND))),
                 new EntersTappedEffect()));

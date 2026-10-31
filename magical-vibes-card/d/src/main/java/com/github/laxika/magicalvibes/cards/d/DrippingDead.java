@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureEffect;
 public class DrippingDead extends Card {
 
     public DrippingDead() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
                 new DestroyDamagedCreatureEffect(true, true));
     }

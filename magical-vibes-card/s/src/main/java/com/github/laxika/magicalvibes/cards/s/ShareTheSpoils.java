@@ -16,8 +16,7 @@ public class ShareTheSpoils extends Card {
                 new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.EACH_PLAYER));
         addEffect(EffectSlot.ON_PLAYER_LOSES_GAME,
                 new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.EACH_PLAYER));
-        addEffect(EffectSlot.STATIC,
-                AllowCastFromCardsExiledWithSourceEffect.activePlayerOneCardPerTurnWithAnyMana());
+        addStaticEffect(AllowCastFromCardsExiledWithSourceEffect.activePlayerOneCardPerTurnWithAnyMana());
 
         PlayedCardExiledWithSourceTriggerEffect exileTopCard = new PlayedCardExiledWithSourceTriggerEffect(
                 new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_PLAYER));

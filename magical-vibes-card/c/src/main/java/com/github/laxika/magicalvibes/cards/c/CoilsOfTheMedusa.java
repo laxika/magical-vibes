@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -22,7 +21,7 @@ import java.util.List;
 public class CoilsOfTheMedusa extends Card {
 
     public CoilsOfTheMedusa() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, -1, GrantScope.ENCHANTED_CREATURE));
+        target(TargetFilters.creature()).addStaticEffect(new StaticBoostEffect(1, -1, GrantScope.ENCHANTED_CREATURE));
 
         // On this Aura, PermanentBlockingSourcePredicate resolves against the enchanted creature.
         // The sacrifice cost is paid first, so the check falls back to the Aura's last known

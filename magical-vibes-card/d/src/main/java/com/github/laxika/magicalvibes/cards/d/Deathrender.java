@@ -16,7 +16,7 @@ public class Deathrender extends Card {
 
     public Deathrender() {
         // Equipped creature gets +2/+2
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature dies, you may put a creature card from your hand onto the
         // battlefield and attach this Equipment to it. The card choice is declinable ("you may").

@@ -16,7 +16,7 @@ public class GlintingCreeper extends Card {
     public GlintingCreeper() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new Scaled(new XValue(), 2)));
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtMostPredicate(2)));
     }
 }

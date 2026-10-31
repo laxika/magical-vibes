@@ -19,7 +19,7 @@ public class KodamaOfTheCenterTree extends Card {
     public KodamaOfTheCenterTree() {
         PermanentCount spirits = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(spirits, spirits));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(spirits, spirits));
 
         addEffect(EffectSlot.ON_DEATH, new MayEffect(ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)

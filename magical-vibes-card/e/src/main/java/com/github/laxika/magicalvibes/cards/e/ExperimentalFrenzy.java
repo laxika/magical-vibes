@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantCastSpellsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsFromHandEffect;
@@ -20,9 +19,9 @@ import java.util.Set;
 public class ExperimentalFrenzy extends Card {
 
     public ExperimentalFrenzy() {
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, new PlayLandsFromTopOfLibraryEffect());
-        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(Set.of(
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new PlayLandsFromTopOfLibraryEffect());
+        addStaticEffect(new AllowCastFromTopOfLibraryEffect(Set.of(
                 CardType.CREATURE,
                 CardType.ENCHANTMENT,
                 CardType.SORCERY,
@@ -31,8 +30,8 @@ public class ExperimentalFrenzy extends Card {
                 CardType.PLANESWALKER,
                 CardType.BATTLE,
                 CardType.KINDRED)));
-        addEffect(EffectSlot.STATIC, new ControllerCantPlayLandsFromHandEffect());
-        addEffect(EffectSlot.STATIC, new ControllerCantCastSpellsFromHandEffect());
+        addStaticEffect(new ControllerCantPlayLandsFromHandEffect());
+        addStaticEffect(new ControllerCantCastSpellsFromHandEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{R}",

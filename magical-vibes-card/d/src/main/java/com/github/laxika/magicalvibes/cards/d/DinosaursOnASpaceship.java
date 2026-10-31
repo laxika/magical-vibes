@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "122")
@@ -26,7 +25,7 @@ public class DinosaursOnASpaceship extends Card {
 
     public DinosaursOnASpaceship() {
         // Other Dinosaurs you control get +1/+1 and have vigilance and trample.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1,
+        addStaticEffect(new StaticBoostEffect(1, 1,
                 Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE), GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)));
 
@@ -36,7 +35,7 @@ public class DinosaursOnASpaceship extends Card {
                 new CreateTokenEffect(CardType.CREATURE, 1, "Dinosaur", 2, 2, CardColor.RED,
                         Set.of(CardColor.RED, CardColor.WHITE), List.of(CardSubtype.DINOSAUR),
                         Set.of(Keyword.FLYING, Keyword.HASTE), Set.of(), false, false,
-                        Map.of(), List.of(), false, false, false, 0, Set.of()));
+                        List.of(), List.of(), false, false, false, 0, Set.of()));
 
         addHandActivatedAbility(new ActivatedAbility(
                 false,

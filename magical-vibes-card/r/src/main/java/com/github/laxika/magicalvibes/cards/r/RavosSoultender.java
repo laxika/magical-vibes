@@ -17,7 +17,7 @@ public class RavosSoultender extends Card {
 
     public RavosSoultender() {
         // Other creatures you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
 
         // At the beginning of your upkeep, you may return target creature card from your graveyard to your hand.
         CardTypePredicate creatureCard = new CardTypePredicate(CardType.CREATURE);

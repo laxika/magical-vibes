@@ -19,7 +19,7 @@ public class StoneTongueBasilisk extends Card {
 
         // Threshold — As long as there are seven or more cards in your graveyard, all creatures able
         // to block this creature do so.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new GraveyardCardThreshold(7, null),
+        addStaticEffect(new ConditionalEffect(new GraveyardCardThreshold(7, null),
                 new MustBeBlockedByAllCreaturesEffect()));
     }
 }

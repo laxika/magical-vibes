@@ -12,6 +12,6 @@ public class KheruMindEater extends Card {
     public KheruMindEater() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 TargetPlayerExilesFromHandEffect.faceDown(1));
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(false));
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(false));
     }
 }

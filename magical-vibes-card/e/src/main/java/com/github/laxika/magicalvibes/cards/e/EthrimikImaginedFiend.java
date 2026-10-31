@@ -16,9 +16,9 @@ public class EthrimikImaginedFiend extends Card {
 
     public EthrimikImaginedFiend() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ManifestDreadEffect.forController());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
         // Ethrimik can't attack or block as long as you control another creature.
-        addEffect(EffectSlot.STATIC, new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(new CantAttackOrBlockUnlessEffect(
                 new NotCondition(new ControlsAnotherPermanent(new PermanentIsCreaturePredicate())),
                 "you control no other creatures"));
     }

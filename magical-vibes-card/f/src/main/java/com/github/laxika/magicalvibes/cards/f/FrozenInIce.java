@@ -17,8 +17,8 @@ public class FrozenInIce extends Card {
     public FrozenInIce() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.STATIC, new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted())
-                .addEffect(EffectSlot.STATIC, new CantBecomeUntappedEffect(GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(DoesntUntapEffect.enchanted())
+                .addStaticEffect(new CantBecomeUntappedEffect(GrantScope.ENCHANTED_CREATURE));
     }
 }

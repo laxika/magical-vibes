@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
@@ -87,7 +86,7 @@ class CastingPermissionServiceTest {
     @Test
     void topLibraryPermissionAttachesEntryCountersToCreatureSpell() {
         Card source = new Card();
-        source.addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(
+        source.addStaticEffect(new AllowCastFromTopOfLibraryEffect(
                 Set.of(CardType.CREATURE), false, null, false, List.of(), 1));
         gd.playerBattlefields.put(player1Id, new ArrayList<>(List.of(new Permanent(source))));
         Card creature = new Card();
@@ -124,7 +123,7 @@ class CastingPermissionServiceTest {
     void filteredTopLibraryLandPermission() {
         Card source = new Card();
         CardIsHistoricPredicate filter = new CardIsHistoricPredicate();
-        source.addEffect(EffectSlot.STATIC, new PlayLandsFromTopOfLibraryEffect(filter));
+        source.addStaticEffect(new PlayLandsFromTopOfLibraryEffect(filter));
         gd.playerBattlefields.get(player1Id).add(new Permanent(source));
         when(gameQueryService.getMaxLandsThisTurn(gd, player1Id)).thenReturn(1);
 
@@ -150,8 +149,7 @@ class CastingPermissionServiceTest {
     void conditionalGraveyardLandPermission() {
         Card siege = new Card();
         SourceHasChosenMode sultai = new SourceHasChosenMode("Sultai");
-        siege.addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(sultai, new PlayLandsFromGraveyardEffect()));
+        siege.addStaticEffect(new ConditionalEffect(sultai, new PlayLandsFromGraveyardEffect()));
         gd.playerBattlefields.get(player1Id).add(new Permanent(siege));
 
         when(conditionEvaluationService.isMet(eq(gd), eq(sultai), any())).thenReturn(false);
@@ -164,7 +162,7 @@ class CastingPermissionServiceTest {
     @Test
     void graveyardLandPermissionIsDisabledWhenSourceLosesAbilities() {
         Card source = new Card();
-        source.addEffect(EffectSlot.STATIC, new PlayLandsFromGraveyardEffect());
+        source.addStaticEffect(new PlayLandsFromGraveyardEffect());
         Permanent permanent = new Permanent(source);
         gd.playerBattlefields.get(player1Id).add(permanent);
 
@@ -180,7 +178,7 @@ class CastingPermissionServiceTest {
     void filteredGraveyardLandPermission() {
         Card source = new Card();
         CardSubtypePredicate filter = new CardSubtypePredicate(CardSubtype.FOREST);
-        source.addEffect(EffectSlot.STATIC, new PlayLandsFromGraveyardEffect(filter));
+        source.addStaticEffect(new PlayLandsFromGraveyardEffect(filter));
         gd.playerBattlefields.get(player1Id).add(new Permanent(source));
 
         Card forest = new Card();
@@ -205,8 +203,7 @@ class CastingPermissionServiceTest {
     void conditionalGraveyardSpellPermission() {
         Card source = new Card();
         ControllerTurn controllerTurn = new ControllerTurn();
-        source.addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(controllerTurn,
+        source.addStaticEffect(new ConditionalEffect(controllerTurn,
                         new CastSpellsFromGraveyardEffect(new CardTruePredicate())));
         gd.playerBattlefields.get(player1Id).add(new Permanent(source));
 
@@ -241,7 +238,7 @@ class CastingPermissionServiceTest {
     void planarControllerGetsFilteredGraveyardSpellPermission() {
         Card plane = new Card();
         CardPredicate filter = new CardTypePredicate(CardType.CREATURE);
-        plane.addEffect(EffectSlot.STATIC, new GrantEscapeToGraveyardCardsEffect(filter));
+        plane.addStaticEffect(new GrantEscapeToGraveyardCardsEffect(filter));
         gd.planechase = new PlanechaseState();
         gd.planechase.controllerId = player1Id;
         PlanarObject planar = new PlanarObject(plane, gd.nextTimestamp());
@@ -266,8 +263,7 @@ class CastingPermissionServiceTest {
     @DisplayName("controller-turn graveyard-spell permission does not apply on another player's turn")
     void controllerTurnGraveyardSpellPermission() {
         Card source = new Card();
-        source.addEffect(EffectSlot.STATIC,
-                new CastSpellsFromGraveyardEffect(new CardTruePredicate(), List.of(), true));
+        source.addStaticEffect(new CastSpellsFromGraveyardEffect(new CardTruePredicate(), List.of(), true));
         gd.playerBattlefields.get(player1Id).add(new Permanent(source));
 
         Card spell = new Card();
@@ -288,10 +284,8 @@ class CastingPermissionServiceTest {
     void conditionalTopLibraryPermissions() {
         Card whale = new Card();
         SourceAttackedThisTurn attacked = new SourceAttackedThisTurn();
-        whale.addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(attacked, new PlayLandsFromTopOfLibraryEffect()));
-        whale.addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(attacked,
+        whale.addStaticEffect(new ConditionalEffect(attacked, new PlayLandsFromTopOfLibraryEffect()));
+        whale.addStaticEffect(new ConditionalEffect(attacked,
                         new AllowCastFromTopOfLibraryEffect(Set.of(CardType.CREATURE))));
         gd.playerBattlefields.get(player1Id).add(new Permanent(whale));
 
@@ -334,8 +328,7 @@ class CastingPermissionServiceTest {
         @DisplayName("allows matching artifact and colorless spells")
         void allowsMatchingArtifactAndColorlessSpells() {
             Card forge = new Card();
-            forge.addEffect(EffectSlot.STATIC,
-                    new AllowCastFromTopOfLibraryEffect(Set.of(CardType.ARTIFACT), true));
+            forge.addStaticEffect(new AllowCastFromTopOfLibraryEffect(Set.of(CardType.ARTIFACT), true));
             gd.playerBattlefields.get(player1Id).add(new Permanent(forge));
 
             Card coloredArtifact = new Card();
@@ -352,8 +345,7 @@ class CastingPermissionServiceTest {
         @DisplayName("does not treat colored or land cards as colorless spells")
         void rejectsColoredAndLandCardsAsColorlessSpells() {
             Card forge = new Card();
-            forge.addEffect(EffectSlot.STATIC,
-                    new AllowCastFromTopOfLibraryEffect(Set.of(CardType.ARTIFACT), true));
+            forge.addStaticEffect(new AllowCastFromTopOfLibraryEffect(Set.of(CardType.ARTIFACT), true));
             gd.playerBattlefields.get(player1Id).add(new Permanent(forge));
 
             Card coloredInstant = new Card();
@@ -370,8 +362,7 @@ class CastingPermissionServiceTest {
         @DisplayName("allows cards matching a predicate filter")
         void allowsPredicateMatchingCard() {
             Card snoop = new Card();
-            snoop.addEffect(EffectSlot.STATIC,
-                    new AllowCastFromTopOfLibraryEffect(new CardSubtypePredicate(CardSubtype.GOBLIN)));
+            snoop.addStaticEffect(new AllowCastFromTopOfLibraryEffect(new CardSubtypePredicate(CardSubtype.GOBLIN)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(snoop));
 
             Card goblin = new Card();
@@ -387,8 +378,7 @@ class CastingPermissionServiceTest {
         @DisplayName("once-each-turn top-library permission is consumed per source")
         void consumesOnceEachTurnPermissionPerSource() {
             Card illuminator = new Card();
-            illuminator.addEffect(EffectSlot.STATIC,
-                    new AllowCastFromTopOfLibraryEffect(Set.of(CardType.CREATURE), false, null, true));
+            illuminator.addStaticEffect(new AllowCastFromTopOfLibraryEffect(Set.of(CardType.CREATURE), false, null, true));
             Permanent source = new Permanent(illuminator);
             gd.playerBattlefields.get(player1Id).add(source);
 
@@ -408,8 +398,7 @@ class CastingPermissionServiceTest {
         void consumesOnceEachTurnFilteredPermission() {
             Card assemble = new Card();
             CardSubtypePredicate filter = new CardSubtypePredicate(CardSubtype.GOBLIN);
-            assemble.addEffect(EffectSlot.STATIC,
-                    new AllowCastFromTopOfLibraryEffect(filter, true));
+            assemble.addStaticEffect(new AllowCastFromTopOfLibraryEffect(filter, true));
             Permanent source = new Permanent(assemble);
             gd.playerBattlefields.get(player1Id).add(source);
 
@@ -448,7 +437,7 @@ class CastingPermissionServiceTest {
         void conditionalTopLibraryPermission() {
             Card augur = new Card();
             SourceHasChosenMode coven = new SourceHasChosenMode("Coven");
-            augur.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+            augur.addStaticEffect(new ConditionalEffect(
                     coven, new AllowCastFromTopOfLibraryEffect(Set.of(CardType.CREATURE))));
             gd.playerBattlefields.get(player1Id).add(new Permanent(augur));
 
@@ -466,8 +455,7 @@ class CastingPermissionServiceTest {
         @DisplayName("allows nonland spells through the mana-value life alternative")
         void allowsManaValueLifeAlternative() {
             Card citadel = new Card();
-            citadel.addEffect(EffectSlot.STATIC,
-                    new AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect());
+            citadel.addStaticEffect(new AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect());
             gd.playerBattlefields.get(player1Id).add(new Permanent(citadel));
 
             Card spell = new Card();
@@ -484,8 +472,7 @@ class CastingPermissionServiceTest {
         @DisplayName("tracks a once-each-turn top-library permission per source permanent")
         void tracksOnceEachTurnPermissionPerSource() {
             Card sourceCard = new Card();
-            sourceCard.addEffect(EffectSlot.STATIC,
-                    AllowCastFromTopOfLibraryEffect.onceEachTurn(Set.of(CardType.INSTANT)));
+            sourceCard.addStaticEffect(AllowCastFromTopOfLibraryEffect.onceEachTurn(Set.of(CardType.INSTANT)));
             Permanent source = new Permanent(sourceCard);
             gd.playerBattlefields.get(player1Id).add(source);
 
@@ -505,8 +492,7 @@ class CastingPermissionServiceTest {
     @DisplayName("stash counters grant turn-limited any-mana exile casting without source tracking")
     void stashCountersGrantExileCastingPermission() {
         Card tinybones = new Card();
-        tinybones.addEffect(EffectSlot.STATIC,
-                AllowCastFromCardsExiledWithSourceEffect.forStashCounters(true));
+        tinybones.addStaticEffect(AllowCastFromCardsExiledWithSourceEffect.forStashCounters(true));
         gd.playerBattlefields.get(player1Id).add(new Permanent(tinybones));
 
         Card stashed = new Card();
@@ -541,8 +527,7 @@ class CastingPermissionServiceTest {
     @DisplayName("collection counters grant one controller-only any-mana exile cast each turn")
     void collectionCountersGrantExileCastingPermission() {
         Card evelyn = new Card();
-        evelyn.addEffect(EffectSlot.STATIC,
-                AllowCastFromCardsExiledWithSourceEffect.forCollectionCounters(true));
+        evelyn.addStaticEffect(AllowCastFromCardsExiledWithSourceEffect.forCollectionCounters(true));
         gd.playerBattlefields.get(player1Id).add(new Permanent(evelyn));
 
         Card collected = new Card();
@@ -647,7 +632,7 @@ class CastingPermissionServiceTest {
         @Test
         void removedSpellLimitAbilityAllowsAnotherSpell() {
             Card ruleOfLaw = new Card();
-            ruleOfLaw.addEffect(EffectSlot.STATIC, new LimitSpellsPerTurnEffect(1, SpellLimitScope.EACH_PLAYER));
+            ruleOfLaw.addStaticEffect(new LimitSpellsPerTurnEffect(1, SpellLimitScope.EACH_PLAYER));
             Permanent source = new Permanent(ruleOfLaw);
             gd.playerBattlefields.get(player2Id).add(source);
             Card spell = new Card();
@@ -666,7 +651,7 @@ class CastingPermissionServiceTest {
             Card ruleOfLaw = new Card();
             ruleOfLaw.setName("Rule of Law");
             ruleOfLaw.setType(CardType.ENCHANTMENT);
-            ruleOfLaw.addEffect(EffectSlot.STATIC, new LimitSpellsPerTurnEffect(1, SpellLimitScope.EACH_PLAYER));
+            ruleOfLaw.addStaticEffect(new LimitSpellsPerTurnEffect(1, SpellLimitScope.EACH_PLAYER));
             gd.playerBattlefields.get(player2Id).add(new Permanent(ruleOfLaw));
 
             Card dummy = new Card();
@@ -706,7 +691,7 @@ class CastingPermissionServiceTest {
             Card restrictor = new Card();
             restrictor.setName("Restrictor");
             restrictor.setType(CardType.ENCHANTMENT);
-            restrictor.addEffect(EffectSlot.STATIC, new CantCastSpellTypeEffect(Set.of(CardType.CREATURE)));
+            restrictor.addStaticEffect(new CantCastSpellTypeEffect(Set.of(CardType.CREATURE)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(restrictor));
 
             Card creature = new Card();
@@ -723,7 +708,7 @@ class CastingPermissionServiceTest {
             Card restrictor = new Card();
             restrictor.setName("Steel Golem");
             restrictor.setType(CardType.ARTIFACT);
-            restrictor.addEffect(EffectSlot.STATIC, new CantCastSpellTypeEffect(Set.of(CardType.CREATURE)));
+            restrictor.addStaticEffect(new CantCastSpellTypeEffect(Set.of(CardType.CREATURE)));
             gd.playerBattlefields.get(player2Id).add(new Permanent(restrictor));
 
             Card creature = new Card();
@@ -740,7 +725,7 @@ class CastingPermissionServiceTest {
             Card restrictor = new Card();
             restrictor.setName("Aether Storm");
             restrictor.setType(CardType.ENCHANTMENT);
-            restrictor.addEffect(EffectSlot.STATIC, new CantCastSpellTypeEffect(Set.of(CardType.CREATURE), true));
+            restrictor.addStaticEffect(new CantCastSpellTypeEffect(Set.of(CardType.CREATURE), true));
             gd.playerBattlefields.get(player2Id).add(new Permanent(restrictor));
 
             Card creature = new Card();
@@ -755,8 +740,7 @@ class CastingPermissionServiceTest {
         @DisplayName("Controller-only noncreature restriction does not affect an opponent")
         void controllerOnlyNoncreatureRestriction() {
             Card nullhide = new Card();
-            nullhide.addEffect(EffectSlot.STATIC,
-                    new NoncreatureSpellsCantBeCastEffect(0, false, false));
+            nullhide.addStaticEffect(new NoncreatureSpellsCantBeCastEffect(0, false, false));
             gd.playerBattlefields.get(player1Id).add(new Permanent(nullhide));
 
             Card shock = new Card();
@@ -773,7 +757,7 @@ class CastingPermissionServiceTest {
             Card iona = new Card();
             iona.setName("Iona, Shield of Emeria");
             iona.setType(CardType.CREATURE);
-            iona.addEffect(EffectSlot.STATIC, new OpponentsCantCastSpellsOfChosenColorEffect());
+            iona.addStaticEffect(new OpponentsCantCastSpellsOfChosenColorEffect());
             Permanent ionaPerm = new Permanent(iona);
             ionaPerm.setChosenColor(CardColor.RED);
             gd.playerBattlefields.get(player1Id).add(ionaPerm);
@@ -793,7 +777,7 @@ class CastingPermissionServiceTest {
             Card iona = new Card();
             iona.setName("Iona, Shield of Emeria");
             iona.setType(CardType.CREATURE);
-            iona.addEffect(EffectSlot.STATIC, new OpponentsCantCastSpellsOfChosenColorEffect());
+            iona.addStaticEffect(new OpponentsCantCastSpellsOfChosenColorEffect());
             Permanent ionaPerm = new Permanent(iona);
             ionaPerm.setChosenColor(CardColor.RED);
             gd.playerBattlefields.get(player1Id).add(ionaPerm);
@@ -813,7 +797,7 @@ class CastingPermissionServiceTest {
             Card iona = new Card();
             iona.setName("Iona, Shield of Emeria");
             iona.setType(CardType.CREATURE);
-            iona.addEffect(EffectSlot.STATIC, new OpponentsCantCastSpellsOfChosenColorEffect());
+            iona.addStaticEffect(new OpponentsCantCastSpellsOfChosenColorEffect());
             Permanent ionaPerm = new Permanent(iona);
             ionaPerm.setChosenColor(CardColor.RED);
             gd.playerBattlefields.get(player1Id).add(ionaPerm);
@@ -831,8 +815,7 @@ class CastingPermissionServiceTest {
         @DisplayName("Rejects an opponent's spell matching a permanent's predicate")
         void rejectsOpponentSpellMatchingPredicate() {
             Card llawan = new Card();
-            llawan.addEffect(EffectSlot.STATIC,
-                    new OpponentsCantCastSpellsMatchingPredicateEffect(new CardTypePredicate(CardType.CREATURE)));
+            llawan.addStaticEffect(new OpponentsCantCastSpellsMatchingPredicateEffect(new CardTypePredicate(CardType.CREATURE)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(llawan));
 
             Card creature = new Card();
@@ -850,8 +833,7 @@ class CastingPermissionServiceTest {
         @DisplayName("Does not apply a matching-predicate restriction to its controller")
         void matchingPredicateRestrictionDoesNotAffectSourceController() {
             Card llawan = new Card();
-            llawan.addEffect(EffectSlot.STATIC,
-                    new OpponentsCantCastSpellsMatchingPredicateEffect(new CardTypePredicate(CardType.CREATURE)));
+            llawan.addStaticEffect(new OpponentsCantCastSpellsMatchingPredicateEffect(new CardTypePredicate(CardType.CREATURE)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(llawan));
 
             Card creature = new Card();
@@ -866,7 +848,7 @@ class CastingPermissionServiceTest {
             Card namer = new Card();
             namer.setName("Meddling Mage");
             namer.setType(CardType.CREATURE);
-            namer.addEffect(EffectSlot.STATIC, new SpellsWithChosenNameCantBeCastEffect());
+            namer.addStaticEffect(new SpellsWithChosenNameCantBeCastEffect());
             Permanent namerPerm = new Permanent(namer);
             namerPerm.setChosenName("Lightning Bolt");
             gd.playerBattlefields.get(player2Id).add(namerPerm);
@@ -884,8 +866,7 @@ class CastingPermissionServiceTest {
         void rejectsOpponentSpellNamedLikeTrackedExile() {
             Card godsend = new Card();
             godsend.setName("Godsend");
-            godsend.addEffect(EffectSlot.STATIC,
-                    new CantCastSpellsWithSameNameAsExiledCardEffect(true));
+            godsend.addStaticEffect(new CantCastSpellsWithSameNameAsExiledCardEffect(true));
             Permanent godsendPermanent = new Permanent(godsend);
             gd.playerBattlefields.get(player1Id).add(godsendPermanent);
 

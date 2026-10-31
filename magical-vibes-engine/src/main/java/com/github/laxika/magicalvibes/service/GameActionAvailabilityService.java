@@ -874,7 +874,7 @@ public class GameActionAvailabilityService {
 
     private boolean canAffordKickerCost(GameData gameData, UUID playerId, Card card,
                                         ManaPool pool, int additionalGenericCost) {
-        KickerEffect kicker = card.getEffects(EffectSlot.STATIC).stream()
+        KickerEffect kicker = card.getStaticEffects().stream()
                 .filter(KickerEffect.class::isInstance)
                 .map(KickerEffect.class::cast)
                 .findFirst()
@@ -1203,7 +1203,7 @@ public class GameActionAvailabilityService {
         boolean hasRestrictedRedContext = isArtifact
                 || card.hasType(CardType.CREATURE);
         boolean hasKicker = false;
-        for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect e : card.getStaticEffects()) {
             if (e instanceof KickerEffect) { hasKicker = true; break; }
         }
         boolean kickedOnlyGreen = hasKicker && pool.getKickedOnlyManaTotal() > 0;
@@ -1357,7 +1357,7 @@ public class GameActionAvailabilityService {
 
         // Check if castable with sacrifice-for-cost-reduction (e.g. Torgaar)
         SacrificeCreaturesForCostReductionEffect sacReduce = null;
-        for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect e : card.getStaticEffects()) {
             if (e instanceof SacrificeCreaturesForCostReductionEffect s) { sacReduce = s; break; }
         }
         if (sacReduce != null) {
@@ -1387,7 +1387,7 @@ public class GameActionAvailabilityService {
         ReduceOwnCastCostIfTargetingPermanentEffect targetReduce = null;
         GraveyardCardTargetCostReductionEffect graveyardTargetReduce = null;
         ReduceOwnCastCostIfTargetingStackEntryEffect stackTargetReduce = null;
-        for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect e : card.getStaticEffects()) {
             if (e instanceof ReduceOwnCastCostIfTargetingPermanentEffect r) {
                 targetReduce = r;
             } else if (e instanceof GraveyardCardTargetCostReductionEffect r) {

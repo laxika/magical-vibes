@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -25,7 +24,7 @@ import java.util.List;
 public class InscriptionOfAbundance extends Card {
 
     public InscriptionOfAbundance() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{G}"));
+        addStaticEffect(new KickerEffect("{2}{G}"));
         setAllowSharedTargets(true);
 
         var anyPlayer = new PlayerPredicateTargetFilter(

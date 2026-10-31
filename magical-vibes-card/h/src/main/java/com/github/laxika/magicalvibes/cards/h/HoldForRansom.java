@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -18,8 +17,8 @@ public class HoldForRansom extends Card {
 
     public HoldForRansom() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 false,
                                 "{7}",

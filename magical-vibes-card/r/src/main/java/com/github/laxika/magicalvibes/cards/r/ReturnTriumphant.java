@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -24,7 +25,6 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "26")
@@ -58,12 +58,13 @@ public class ReturnTriumphant extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                List.of(
+                        StaticAbility.of(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ATTACK,
                         new ConditionalEffect(
                                 new NotCondition(new SourceToughnessAtLeast(4)),
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
-                        GrantScope.ENCHANTED_CREATURE)),
+                        GrantScope.ENCHANTED_CREATURE))),
                 List.of(),
                 false,
                 false,

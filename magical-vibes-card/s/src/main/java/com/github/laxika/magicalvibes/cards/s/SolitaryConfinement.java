@@ -15,8 +15,8 @@ public class SolitaryConfinement extends Card {
 
     public SolitaryConfinement() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificeUnlessDiscardCardTypeEffect(null));
-        addEffect(EffectSlot.STATIC, new SkipDrawStepEffect());
-        addEffect(EffectSlot.STATIC, new GrantControllerKeywordEffect(Keyword.SHROUD));
-        addEffect(EffectSlot.STATIC, new PreventAllDamageToControllerEffect());
+        addStaticEffect(new SkipDrawStepEffect());
+        addStaticEffect(new GrantControllerKeywordEffect(Keyword.SHROUD));
+        addStaticEffect(new PreventAllDamageToControllerEffect());
     }
 }

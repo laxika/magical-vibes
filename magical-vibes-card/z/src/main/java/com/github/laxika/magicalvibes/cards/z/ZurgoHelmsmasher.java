@@ -18,11 +18,10 @@ public class ZurgoHelmsmasher extends Card {
 
     public ZurgoHelmsmasher() {
         // Zurgo attacks each combat if able.
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
 
         // During your turn, Zurgo has indestructible.
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
 
         // Whenever a creature dealt damage by Zurgo this turn dies, put a +1/+1 counter on Zurgo.

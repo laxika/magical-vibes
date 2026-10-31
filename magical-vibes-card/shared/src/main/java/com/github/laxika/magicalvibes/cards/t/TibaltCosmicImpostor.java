@@ -27,7 +27,7 @@ public class TibaltCosmicImpostor extends Card {
                 new AllowCastFromCardsExiledWithSourceEffect(
                         true, null, false, false, 0, null,
                         false, false, false, true);
-        addEffect(EffectSlot.STATIC, permission);
+        addStaticEffect(permission);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateEmblemAsEntersEffect(new CreateEmblemEffect(
                 List.of(permission),
                 "You may play cards exiled with Tibalt, Cosmic Impostor, and you may spend mana as though it were mana of any color to cast those spells."

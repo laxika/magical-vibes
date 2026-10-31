@@ -17,6 +17,6 @@ public class Treachery extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new UntapPermanentsEffect(TapUntapScope.ALL_PERMANENTS,
                                 new PermanentIsLandPredicate(), 5));
-        addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+        addStaticEffect(new ControlEnchantedCreatureEffect());
     }
 }

@@ -24,8 +24,8 @@ import java.util.Set;
 public class SwordOfFireAndIce extends Card {
 
     public SwordOfFireAndIce() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new ProtectionFromColorsEffect(
                 Set.of(CardColor.RED, CardColor.BLUE), GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER, SequenceEffect.of(
                 new DealDamageToAnyTargetEffect(2),

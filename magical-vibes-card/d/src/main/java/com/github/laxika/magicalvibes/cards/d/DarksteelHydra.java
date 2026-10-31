@@ -21,8 +21,7 @@ public class DarksteelHydra extends Card {
 
         CountersOnSource oilCounters = new CountersOnSource(CounterType.OIL);
         Scaled twiceOilCounters = new Scaled(oilCounters, 2);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(twiceOilCounters, twiceOilCounters));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(twiceOilCounters, twiceOilCounters));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 new ConjureCardToHandEffect("DST", "112"),

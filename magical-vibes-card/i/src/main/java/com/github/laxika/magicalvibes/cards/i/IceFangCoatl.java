@@ -23,7 +23,7 @@ public class IceFangCoatl extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
 
         // This creature has deathtouch as long as you control at least three other snow permanents.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsOtherPermanentCount(3, new PermanentHasSupertypePredicate(CardSupertype.SNOW)),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)
         ));

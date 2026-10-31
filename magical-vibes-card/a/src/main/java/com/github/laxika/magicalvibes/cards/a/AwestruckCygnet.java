@@ -39,11 +39,11 @@ public class AwestruckCygnet extends Card {
                         new ConditionalEffect(new SourceMatchesPermanentPredicate(new PermanentNamedPredicate(CARD_NAME)),
                                 new IntensifyNamedCardsEffect(CARD_NAME))));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(TRANSFORM_THRESHOLD,
+        addStaticEffect(new ConditionalEffect(TRANSFORM_THRESHOLD,
                 new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(TRANSFORM_THRESHOLD,
+        addStaticEffect(new ConditionalEffect(TRANSFORM_THRESHOLD,
                 new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE), GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(TRANSFORM_THRESHOLD,
+        addStaticEffect(new ConditionalEffect(TRANSFORM_THRESHOLD,
                 new SetNameEffect("Radiant Swan", GrantScope.SELF)));
     }
 }

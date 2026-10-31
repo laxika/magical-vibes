@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class LakeSilencio extends Card {
 
     public LakeSilencio() {
-        addEffect(EffectSlot.STATIC, GrantSpellCastingAbilityToSpellsEffect.allPlayers(
+        addStaticEffect(GrantSpellCastingAbilityToSpellsEffect.allPlayers(
                 Keyword.SPLIT_SECOND, new CardTruePredicate()));
 
         target(TargetFilters.creatureAnOpponentControls())

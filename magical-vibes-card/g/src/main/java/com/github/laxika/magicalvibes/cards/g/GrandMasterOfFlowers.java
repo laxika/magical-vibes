@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -43,10 +42,10 @@ public class GrandMasterOfFlowers extends Card {
                     "Target must be a creature without first strike, double strike, or vigilance");
 
     public GrandMasterOfFlowers() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(SEVEN_LOYALTY,
+        addStaticEffect(new ConditionalEffect(SEVEN_LOYALTY,
                 new AnimatePermanentsEffect(7, 7, List.of(CardSubtype.DRAGON, CardSubtype.GOD),
                         Set.of(Keyword.FLYING, Keyword.INDESTRUCTIBLE))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(SEVEN_LOYALTY,
+        addStaticEffect(new ConditionalEffect(SEVEN_LOYALTY,
                 new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.SELF)));
 
         addActivatedAbility(new ActivatedAbility(

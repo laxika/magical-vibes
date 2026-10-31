@@ -23,8 +23,8 @@ import java.util.Set;
 public class MasterOfWaves extends Card {
 
     public MasterOfWaves() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.RED)));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.RED)));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELEMENTAL))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 new ColorManaSymbolsAmongControlledPermanents(ManaColor.BLUE),

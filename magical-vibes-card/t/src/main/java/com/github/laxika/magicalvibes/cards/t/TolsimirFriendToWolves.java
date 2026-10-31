@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "224")
@@ -26,7 +25,7 @@ public class TolsimirFriendToWolves extends Card {
                 CardType.CREATURE, 1, "Voja, Friend to Elves", 3, 3,
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.WHITE),
                 List.of(CardSubtype.WOLF), Set.of(), Set.of(), false, false,
-                Map.of(), List.of(), false, false, true, 0, Set.of()));
+                List.of(), List.of(), false, false, true, 0, Set.of()));
 
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
                 .addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,

@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class LeylineBinding extends Card {
 
     public LeylineBinding() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new BasicLandTypesAmongControlledLands()));
 
         target(TargetFilters.nonlandPermanentAnOpponentControls())

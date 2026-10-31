@@ -14,7 +14,7 @@ public class WildWasteland extends Card {
 
     public WildWasteland() {
         // Skip your draw step.
-        addEffect(EffectSlot.STATIC, new SkipDrawStepEffect());
+        addStaticEffect(new SkipDrawStepEffect());
         // At the beginning of your upkeep, exile the top two cards of your library. You may play
         // those cards this turn.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ExileTopCardMayPlayThisTurnEffect(2, false));

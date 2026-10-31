@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class HarriedDash extends Card {
@@ -27,7 +26,7 @@ public class HarriedDash extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

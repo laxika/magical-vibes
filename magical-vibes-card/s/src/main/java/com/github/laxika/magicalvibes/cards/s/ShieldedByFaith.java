@@ -17,8 +17,7 @@ public class ShieldedByFaith extends Card {
 
     public ShieldedByFaith() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_CREATURE));
 
         // Whenever a creature enters, you may attach this Aura to that creature.
         addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,

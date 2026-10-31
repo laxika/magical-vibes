@@ -22,7 +22,7 @@ import java.util.Set;
 public class KeranosGodOfStorms extends Card {
 
     public KeranosGodOfStorms() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorsAtLeast(
                         Set.of(ManaColor.BLUE, ManaColor.RED), 7)),
                 new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));

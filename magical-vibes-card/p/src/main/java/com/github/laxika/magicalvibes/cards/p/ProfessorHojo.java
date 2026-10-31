@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceFirstActivatedAbilityCo
 public class ProfessorHojo extends Card {
 
     public ProfessorHojo() {
-        addEffect(EffectSlot.STATIC, new ReduceFirstActivatedAbilityCostForControlledCreatureEffect(2));
+        addStaticEffect(new ReduceFirstActivatedAbilityCostForControlledCreatureEffect(2));
         addEffect(EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_ACTIVATED_ABILITY,
                 new OncePerTurnTriggerEffect(new DrawCardEffect()));
     }

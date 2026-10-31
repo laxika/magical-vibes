@@ -32,7 +32,7 @@ public class DiscreetRetreat extends Card {
 
     public DiscreetRetreat() {
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 true,
                                 null,

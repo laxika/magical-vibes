@@ -15,7 +15,7 @@ public class RecumbentBliss extends Card {
     public RecumbentBliss() {
         // Enchant creature. Enchanted creature can't attack or block.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect());
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect());
 
         // At the beginning of your upkeep, you may gain 1 life.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,

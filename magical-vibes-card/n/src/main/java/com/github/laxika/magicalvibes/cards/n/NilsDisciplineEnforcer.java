@@ -18,6 +18,6 @@ public class NilsDisciplineEnforcer extends Card {
         target(TargetFilters.creature(), 0, 99)
                 .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        addEffect(EffectSlot.STATIC, new CreaturesWithCountersCantAttackControllerUnlessPaysEffect());
+        addStaticEffect(new CreaturesWithCountersCantAttackControllerUnlessPaysEffect());
     }
 }

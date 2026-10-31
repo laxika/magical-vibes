@@ -14,7 +14,7 @@ import java.util.List;
 public class Moderation extends Card {
 
     public Moderation() {
-        addEffect(EffectSlot.STATIC, new LimitSpellsPerTurnEffect(1, SpellLimitScope.CONTROLLER));
+        addStaticEffect(new LimitSpellsPerTurnEffect(1, SpellLimitScope.CONTROLLER));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(null, List.of(new DrawCardEffect())));
     }

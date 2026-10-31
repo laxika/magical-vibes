@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToExileFaceDownAndMayCastOrPutIntoHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -17,7 +16,7 @@ import java.util.List;
 public class BeseechTheMirror extends Card {
 
     public BeseechTheMirror() {
-        addEffect(EffectSlot.STATIC, new KickerEffect(
+        addStaticEffect(new KickerEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate(),

@@ -181,8 +181,8 @@ public class CardChoiceHandlerService {
 
         Card modifiedCard = hand.get(cardIndex).createRuntimeCopy();
         com.github.laxika.magicalvibes.model.condition.Condition offspringPaid;
-        if (modifiedCard.getEffects(EffectSlot.STATIC).stream().noneMatch(KickerEffect.class::isInstance)) {
-            modifiedCard.addEffect(EffectSlot.STATIC, new KickerEffect(choice.offspringCost(), false));
+        if (modifiedCard.getStaticEffects().stream().noneMatch(KickerEffect.class::isInstance)) {
+            modifiedCard.addStaticEffect(new KickerEffect(choice.offspringCost(), false));
             offspringPaid = new Kicked();
         } else {
             int paymentOrdinal = 1 + (int) modifiedCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
@@ -453,7 +453,7 @@ public class CardChoiceHandlerService {
 
             gameData.interaction.clearAwaitingInput();
             Card copy = selectedCard.createRuntimeCopy();
-            copy.addEffect(EffectSlot.STATIC, choice.staticEffect());
+            copy.addStaticEffect(choice.staticEffect());
             copy.freeze();
             hand.set(cardIndex, copy);
             gameLogService.append(gameData,

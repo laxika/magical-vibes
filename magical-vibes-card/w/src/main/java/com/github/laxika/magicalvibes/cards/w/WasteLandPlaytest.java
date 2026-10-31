@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MB1", collectorNumber = "121")
@@ -43,7 +42,7 @@ public class WasteLandPlaytest extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(ManaAbilities.tapFor(ManaColor.COLORLESS)),
                 false,
                 false,

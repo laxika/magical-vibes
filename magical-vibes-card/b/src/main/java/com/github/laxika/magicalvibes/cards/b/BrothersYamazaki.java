@@ -19,10 +19,10 @@ public class BrothersYamazaki extends Card {
     public BrothersYamazaki() {
         addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(1));
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(1));
-        addEffect(EffectSlot.STATIC, new IgnoreLegendRuleWhenExactlyTwoSameNameEffect());
+        addStaticEffect(new IgnoreLegendRuleWhenExactlyTwoSameNameEffect());
         // "Each OTHER creature named Brothers Yamazaki" — any controller, so ALL_CREATURES
         // (which already excludes the source) narrowed by the name.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, Set.of(Keyword.HASTE),
+        addStaticEffect(new StaticBoostEffect(2, 2, Set.of(Keyword.HASTE),
                 GrantScope.ALL_CREATURES, new PermanentNamedPredicate("Brothers Yamazaki")));
     }
 }

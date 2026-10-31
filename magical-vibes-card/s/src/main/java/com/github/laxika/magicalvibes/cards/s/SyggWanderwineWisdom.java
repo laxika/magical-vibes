@@ -17,7 +17,7 @@ public class SyggWanderwineWisdom extends Card {
     public SyggWanderwineWisdom() {
         setBackFaceCard(new SyggWanderbrineShield());
 
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
 
         GrantEffectToTargetUntilEndOfTurnEffect combatDamageDraw =
                 new GrantEffectToTargetUntilEndOfTurnEffect(

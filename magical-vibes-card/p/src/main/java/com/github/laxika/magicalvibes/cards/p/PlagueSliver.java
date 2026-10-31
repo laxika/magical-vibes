@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class PlagueSliver extends Card {
 
     public PlagueSliver() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.UPKEEP_TRIGGERED,
                 new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER),
                 GrantScope.ALL_CREATURES_INCLUDING_SELF,

@@ -12,14 +12,13 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
-import java.util.List;
 
 /** Back face of {@link DireFlail}. */
 public class DireBlunderbuss extends Card {
 
     public DireBlunderbuss() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new StaticBoostEffect(3, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 new MayEffect(
                         new SacrificePermanentThenEffect(

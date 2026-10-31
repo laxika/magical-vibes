@@ -14,7 +14,7 @@ import java.util.List;
 public class ValgavothsLair extends Card {
 
     public ValgavothsLair() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,

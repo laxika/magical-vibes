@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -71,7 +70,7 @@ public class LandEquilibriumSupport {
                 continue;
             }
             for (Permanent permanent : entry.getValue()) {
-                replacementCount += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                replacementCount += (int) permanent.getCard().getStaticEffects().stream()
                         .filter(LandEquilibriumEffect.class::isInstance)
                         .count();
             }

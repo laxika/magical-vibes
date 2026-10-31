@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class HollowMarauder extends Card {
 
     public HollowMarauder() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER)));
 
         target(new PlayerPredicateTargetFilter(

@@ -17,9 +17,9 @@ public class CrescendoOfWar extends Card {
     public CrescendoOfWar() {
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.STRIFE));
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1, 0, GrantScope.ALL_CREATURES_INCLUDING_SELF, new PermanentIsAttackingPredicate(), CounterType.STRIFE, false));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1, 0, GrantScope.ALL_OWN_CREATURES, new PermanentIsBlockingPredicate(), CounterType.STRIFE, false));
     }
 }

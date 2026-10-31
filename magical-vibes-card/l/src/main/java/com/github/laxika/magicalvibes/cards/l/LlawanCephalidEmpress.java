@@ -28,7 +28,6 @@ public class LlawanCephalidEmpress extends Card {
         CardPredicate blueCreatureSpell = new CardAllOfPredicate(List.of(
                 new CardColorPredicate(CardColor.BLUE),
                 new CardTypePredicate(CardType.CREATURE)));
-        addEffect(EffectSlot.STATIC,
-                new OpponentsCantCastSpellsMatchingPredicateEffect(blueCreatureSpell));
+        addStaticEffect(new OpponentsCantCastSpellsMatchingPredicateEffect(blueCreatureSpell));
     }
 }

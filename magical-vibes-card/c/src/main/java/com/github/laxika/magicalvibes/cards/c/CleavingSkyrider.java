@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 public class CleavingSkyrider extends Card {
 
     public CleavingSkyrider() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{R}"));
+        addStaticEffect(new KickerEffect("{2}{R}"));
 
         targetWhenKicked(null, 0, 0, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new Kicked(), new DealDamageToAnyTargetEffect(

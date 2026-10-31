@@ -25,10 +25,10 @@ public class SwordOfWarAndPeace extends Card {
 
     public SwordOfWarAndPeace() {
         // Static: equipped creature gets +2/+2
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
 
         // Static: equipped creature has protection from red and from white
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.RED, CardColor.WHITE), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.RED, CardColor.WHITE), GrantScope.EQUIPPED_CREATURE));
 
         // Triggered: whenever equipped creature deals combat damage to a player,
         // Sword of War and Peace deals damage to that player equal to the number of cards in their hand

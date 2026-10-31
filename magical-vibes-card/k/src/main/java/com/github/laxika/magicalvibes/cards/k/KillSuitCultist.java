@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureInsteadOfNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -15,7 +14,7 @@ import java.util.List;
 public class KillSuitCultist extends Card {
 
     public KillSuitCultist() {
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}",

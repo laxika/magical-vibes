@@ -38,10 +38,8 @@ public class PreWarFormalwear extends Card {
                         .targetGraveyard(true)
                         .build(),
                 new AttachSourceEquipmentToReturnedPermanentEffect()));
-        addEffect(EffectSlot.STATIC,
-                new AttachedBoostEffect(new Fixed(2), new Fixed(2), GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new AttachedBoostEffect(new Fixed(2), new Fixed(2), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryMatchesPredicate;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -22,10 +21,10 @@ public class OuraTheImitator extends Card {
     public OuraTheImitator() {
         CardSubtypePredicate faerie = new CardSubtypePredicate(CardSubtype.FAERIE);
         CardAnyOfPredicate faerieOrInstant = new CardAnyOfPredicate(List.of(faerie, new CardTypePredicate(CardType.INSTANT)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new TopCardOfLibraryMatchesPredicate(faerieOrInstant),
                 new LookAtTopCardOfOwnLibraryEffect()));
-        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(faerieOrInstant));
-        addEffect(EffectSlot.STATIC, new GrantFlashToCardTypeEffect(faerie));
+        addStaticEffect(new AllowCastFromTopOfLibraryEffect(faerieOrInstant));
+        addStaticEffect(new GrantFlashToCardTypeEffect(faerie));
     }
 }

@@ -17,6 +17,6 @@ public class WarsToll extends Card {
                 TapUntapScope.TARGET_PLAYERS_PERMANENTS, new PermanentIsLandPredicate()));
 
         // If a creature an opponent controls attacks, all creatures that opponent controls attack if able.
-        addEffect(EffectSlot.STATIC, new OpponentCreaturesAttackTogetherEffect());
+        addStaticEffect(new OpponentCreaturesAttackTogetherEffect());
     }
 }

@@ -18,9 +18,8 @@ public class DragonShadow extends Card {
 
     public DragonShadow() {
         target(TargetFilters.creature());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.FEAR, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FEAR, GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardMinManaValuePredicate(6),

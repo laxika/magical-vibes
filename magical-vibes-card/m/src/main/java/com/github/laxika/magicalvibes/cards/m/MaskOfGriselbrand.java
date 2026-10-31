@@ -17,8 +17,7 @@ import java.util.Set;
 public class MaskOfGriselbrand extends Card {
 
     public MaskOfGriselbrand() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new MayPayLifeAndDrawEqualToDyingPowerEffect());
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

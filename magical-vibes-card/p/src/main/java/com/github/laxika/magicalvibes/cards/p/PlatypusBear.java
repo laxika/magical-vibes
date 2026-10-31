@@ -16,7 +16,7 @@ public class PlatypusBear extends Card {
 
     public PlatypusBear() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(2, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.LESSON)),
                 new CanAttackAsThoughNoDefenderEffect()));
     }

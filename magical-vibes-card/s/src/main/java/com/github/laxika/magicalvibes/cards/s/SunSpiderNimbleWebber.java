@@ -23,7 +23,7 @@ public class SunSpiderNimbleWebber extends Card {
 
     public SunSpiderNimbleWebber() {
         // During your turn, Sun-Spider has flying.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
         // When Sun-Spider enters, search your library for an Aura or Equipment card, reveal it,

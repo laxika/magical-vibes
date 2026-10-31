@@ -17,7 +17,7 @@ public class ShadesForm extends Card {
 
     public ShadesForm() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 false,
                                 "{B}",

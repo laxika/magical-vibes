@@ -14,8 +14,8 @@ public class ImpendingDoom extends Card {
 
     public ImpendingDoom() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new MustAttackEffect())
+                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new MustAttackEffect())
                 .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
                         new DealDamageToEnchantedPermanentControllerEffect(3));
     }

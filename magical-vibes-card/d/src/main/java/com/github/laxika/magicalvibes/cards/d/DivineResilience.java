@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -15,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class DivineResilience extends Card {
 
     public DivineResilience() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{W}"));
+        addStaticEffect(new KickerEffect("{2}{W}"));
         targetWhenKicked(TargetFilters.creatureYouControl(), 1, 1, 0, Integer.MAX_VALUE)
                 .addSpellEffect(new ConditionalReplacementEffect(
                         new Kicked(),

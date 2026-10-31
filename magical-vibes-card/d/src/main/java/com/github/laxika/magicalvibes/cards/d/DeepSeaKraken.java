@@ -16,7 +16,7 @@ import java.util.List;
 public class DeepSeaKraken extends Card {
 
     public DeepSeaKraken() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new RemoveTimeCounterWhenOpponentCastsSpellEffect());
         addHandActivatedAbility(new ActivatedAbility(
                 false,

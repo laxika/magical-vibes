@@ -41,12 +41,9 @@ public class CaseOfTheLostWitness extends Card {
                         new NotCondition(new SourceIsSolved())
                 )), new SolveSourceEffect()));
 
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new SourceIsSolved(), new LookAtTopCardOfOwnLibraryEffect()));
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new SourceIsSolved(), new PlayLandsFromTopOfLibraryEffect()));
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new SourceIsSolved(), new AllowCastFromTopOfLibraryEffect(Set.of(
+        addStaticEffect(new ConditionalEffect(new SourceIsSolved(), new LookAtTopCardOfOwnLibraryEffect()));
+        addStaticEffect(new ConditionalEffect(new SourceIsSolved(), new PlayLandsFromTopOfLibraryEffect()));
+        addStaticEffect(new ConditionalEffect(new SourceIsSolved(), new AllowCastFromTopOfLibraryEffect(Set.of(
                         CardType.CREATURE,
                         CardType.ENCHANTMENT,
                         CardType.SORCERY,

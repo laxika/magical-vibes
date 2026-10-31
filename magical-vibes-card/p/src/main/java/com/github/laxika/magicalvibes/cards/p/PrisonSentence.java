@@ -14,7 +14,7 @@ public class PrisonSentence extends Card {
     public PrisonSentence() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(2))
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateAbilitiesEffect());
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
+                .addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect());
     }
 }

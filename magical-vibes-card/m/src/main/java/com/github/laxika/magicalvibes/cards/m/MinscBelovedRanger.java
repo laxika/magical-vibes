@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.SetTargetBasePowerToughnessTo
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "AFR", collectorNumber = "227")
@@ -27,7 +26,7 @@ public class MinscBelovedRanger extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new CreateTokenEffect(CardType.CREATURE, 1, "Boo", 1, 1, CardColor.RED, null,
                         List.of(CardSubtype.HAMSTER), Set.of(Keyword.TRAMPLE, Keyword.HASTE), Set.of(),
-                        false, false, Map.of(), List.of(), false, false, true, 0, Set.of()));
+                        false, false, List.of(), List.of(), false, false, true, 0, Set.of()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

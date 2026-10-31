@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -18,7 +17,7 @@ import java.util.List;
 public class Technodrome extends Card {
 
     public Technodrome() {
-        addEffect(EffectSlot.STATIC, new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(new CantAttackOrBlockUnlessEffect(
                 new SourcePowerAtLeast(6),
                 "its power is 6 or greater"));
 

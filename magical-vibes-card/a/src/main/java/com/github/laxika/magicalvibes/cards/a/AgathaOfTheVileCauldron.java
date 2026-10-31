@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -27,7 +26,7 @@ public class AgathaOfTheVileCauldron extends Card {
     public AgathaOfTheVileCauldron() {
         PermanentPredicate otherCreature = new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate());
 
-        addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+        addStaticEffect(new ReduceActivatedAbilityCostEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledBySourceControllerPredicate())), new SourcePower(), true, true, false));

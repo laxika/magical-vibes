@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardsAndSeparateEffe
 public class CuratorOfDestinies extends Card {
 
     public CuratorOfDestinies() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new RevealTopCardsAndSeparateEffect(5, CardPileDisposition.HAND_WITH_FACE_DOWN_PILE, true));
     }

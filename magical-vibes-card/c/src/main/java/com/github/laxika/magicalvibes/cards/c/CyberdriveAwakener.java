@@ -29,7 +29,7 @@ public class CyberdriveAwakener extends Card {
         PermanentPredicate artifactCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.FLYING, GrantScope.OWN_CREATURES, artifactCreature));
 
         PermanentPredicate noncreatureArtifact = new PermanentAllOfPredicate(List.of(

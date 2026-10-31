@@ -27,7 +27,7 @@ public class HullbreakerHorror extends Card {
     public HullbreakerHorror() {
         // Flash — keyword from Scryfall.
         // This spell can't be countered.
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         // Whenever you cast a spell, choose up to one —
         // • Return target spell you don't control to its owner's hand.
         // • Return target nonland permanent to its owner's hand.

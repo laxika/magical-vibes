@@ -25,6 +25,6 @@ public class ArenaOfTheAncients extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new TapPermanentsEffect(TapUntapScope.ALL_CREATURES, legendaryCreature));
-        addEffect(EffectSlot.STATIC, new MatchingPermanentsDoesntUntapEffect(legendaryCreature));
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(legendaryCreature));
     }
 }

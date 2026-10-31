@@ -13,6 +13,6 @@ public class SolidGround extends Card {
     public SolidGround() {
         target(TargetFilters.landYouControl())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EarthbendTargetLandEffect(3));
-        addEffect(EffectSlot.STATIC, new AddOnePlusOneCountersToPermanentsEffect());
+        addStaticEffect(new AddOnePlusOneCountersToPermanentsEffect());
     }
 }

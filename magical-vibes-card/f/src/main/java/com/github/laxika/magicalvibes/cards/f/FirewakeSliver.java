@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -29,7 +28,7 @@ public class FirewakeSliver extends Card {
                 sliver
         ));
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE,
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE,
                 GrantScope.ALL_CREATURES_INCLUDING_SELF, sliver));
 
         ActivatedAbility boostAbility = new ActivatedAbility(
@@ -39,12 +38,12 @@ public class FirewakeSliver extends Card {
                 "{1}, Sacrifice this permanent: Target Sliver creature gets +2/+2 until end of turn.",
                 new PermanentPredicateTargetFilter(sliverCreature, "Target must be a Sliver creature")
         );
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 boostAbility,
                 GrantScope.ALL_CREATURES,
                 sliver
         ));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 boostAbility,
                 GrantScope.SELF,
                 sliver

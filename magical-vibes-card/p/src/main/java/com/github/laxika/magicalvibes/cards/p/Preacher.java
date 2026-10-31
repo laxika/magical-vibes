@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureOfChosenPlayerEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class Preacher extends Card {
 
     public Preacher() {
-        addEffect(EffectSlot.STATIC, new MayNotUntapDuringUntapStepEffect());
+        addStaticEffect(new MayNotUntapDuringUntapStepEffect());
 
         ActivatedAbility ability = new ActivatedAbility(
                 true,

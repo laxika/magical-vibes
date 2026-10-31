@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 public class ForsakenMiner extends Card {
 
     public ForsakenMiner() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME,
                 new MayPayManaEffect("{B}",
                         new ReturnSourceCardFromGraveyardToBattlefieldEffect(false),

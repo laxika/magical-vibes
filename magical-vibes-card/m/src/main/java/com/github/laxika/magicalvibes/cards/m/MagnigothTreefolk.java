@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -31,7 +30,7 @@ public class MagnigothTreefolk extends Card {
                 new PermanentIsLandPredicate(),
                 new PermanentHasSubtypePredicate(landType)
         ));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(landOfType),
                 new GrantEffectEffect(
                         new CantBeBlockedIfDefenderControlsMatchingPermanentEffect(landOfType, true),

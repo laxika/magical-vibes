@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.l.LocusOfEnlightenment;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
@@ -23,7 +22,7 @@ public class TheEnigmaJewel extends Card {
     public TheEnigmaJewel() {
         setBackFaceCard(new LocusOfEnlightenment());
 
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

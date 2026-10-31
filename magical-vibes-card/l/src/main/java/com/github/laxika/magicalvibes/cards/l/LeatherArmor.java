@@ -18,8 +18,8 @@ import java.util.List;
 public class LeatherArmor extends Card {
 
     public LeatherArmor() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 1, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new StaticBoostEffect(0, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(1),
                 GrantScope.EQUIPPED_CREATURE));

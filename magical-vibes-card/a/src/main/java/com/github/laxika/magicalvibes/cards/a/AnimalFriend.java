@@ -22,7 +22,7 @@ import java.util.Set;
 public class AnimalFriend extends Card {
 
     public AnimalFriend() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        target(TargetFilters.creature()).addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 new CreateTokenWithAttachedCountCountersEffect(
                         new CreateTokenEffect("Squirrel", 1, 1, CardColor.GREEN,

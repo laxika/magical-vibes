@@ -14,7 +14,7 @@ import java.util.Set;
 public class Otaria extends Card {
 
     public Otaria() {
-        addEffect(EffectSlot.STATIC, new GrantFlashbackToGraveyardCardsEffect(
+        addStaticEffect(new GrantFlashbackToGraveyardCardsEffect(
                 Set.of(CardType.INSTANT, CardType.SORCERY), true));
         addEffect(EffectSlot.CHAOS_TRIGGERED, new ControllerExtraTurnEffect(1));
     }

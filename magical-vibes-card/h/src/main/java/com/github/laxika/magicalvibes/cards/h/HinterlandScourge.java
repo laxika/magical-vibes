@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 public class HinterlandScourge extends Card {
 
     public HinterlandScourge() {
-        addEffect(EffectSlot.STATIC, new MustBeBlockedIfAbleEffect());
+        addStaticEffect(new MustBeBlockedIfAbleEffect());
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), new TransformSelfEffect()));
     }

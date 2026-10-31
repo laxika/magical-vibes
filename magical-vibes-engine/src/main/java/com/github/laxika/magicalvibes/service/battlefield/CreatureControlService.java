@@ -329,7 +329,8 @@ public class CreatureControlService {
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect
                         .ExileCardFromHandFaceDownWithSourceEffect exile && !exile.toGraveyardOnControlLoss());
         retainsFaceDownExileAccess |= java.util.stream.Stream.concat(
-                        permanent.getCard().getCastingCostsAndSpellEffects().stream(),
+                        java.util.stream.Stream.concat(permanent.getCard().getCastingCostsAndSpellEffects().stream(),
+                                permanent.getCard().getStaticEffects().stream()),
                         java.util.Arrays.stream(EffectSlot.values())
                                 .flatMap(slot -> permanent.getCard().getEffects(slot).stream()))
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect
@@ -355,7 +356,7 @@ public class CreatureControlService {
                 && gameData.getDelayedActions(EchoAtNextUpkeep.class).stream()
                 .noneMatch(action -> action.permanentId().equals(permanent.getId()))) {
             for (var effect : java.util.stream.Stream.concat(
-                    permanent.getCard().getEffects(EffectSlot.STATIC).stream(),
+                    permanent.getCard().getStaticEffects().stream(),
                     permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()).toList()) {
                 if (effect instanceof RegisterEchoAtNextUpkeepEffect echo) {
                     gameData.queueDelayedAction(new EchoAtNextUpkeep(permanent.getId(),
@@ -574,7 +575,7 @@ public class CreatureControlService {
         List<Permanent> controlAuras = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
             if (p.isAttached()
-                    && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                    && p.getCard().getStaticEffects().stream()
                             .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect)) {
                 controlAuras.add(p);
             }
@@ -582,7 +583,7 @@ public class CreatureControlService {
         for (Permanent aura : controlAuras) {
             Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
             if (enchanted == null) continue;
-            CardEffect controlEffect = aura.getCard().getEffects(EffectSlot.STATIC).stream()
+            CardEffect controlEffect = aura.getCard().getStaticEffects().stream()
                     .filter(e -> e instanceof ControlEnchantedCreatureEffect)
                     .findFirst()
                     .orElseThrow();

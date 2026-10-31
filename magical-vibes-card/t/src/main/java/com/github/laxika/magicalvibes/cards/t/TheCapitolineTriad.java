@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
@@ -24,7 +23,7 @@ public class TheCapitolineTriad extends Card {
     private static final String EMBLEM_TEXT = "Creatures you control have base power and toughness 9/9.";
 
     public TheCapitolineTriad() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new CardsInGraveyard(HISTORIC, CountScope.CONTROLLER)));
 
         addActivatedAbility(new ActivatedAbility(

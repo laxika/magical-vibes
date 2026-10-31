@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 
 /**
@@ -11,6 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 public class GhastlyHaunting extends Card {
 
     public GhastlyHaunting() {
-        addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+        addStaticEffect(new ControlEnchantedCreatureEffect());
     }
 }

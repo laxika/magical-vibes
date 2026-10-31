@@ -29,10 +29,9 @@ import java.util.Set;
 public class KomainuBattleArmor extends Card {
 
     public KomainuBattleArmor() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
                 EffectDuration.WHILE_ATTACHED));
 
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,

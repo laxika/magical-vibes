@@ -23,8 +23,7 @@ public class WindcragSiege extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseModeOnEnterEffect(List.of("Mardu", "Jeskai")));
 
-        addEffect(EffectSlot.STATIC,
-                AdditionalTriggeredAbilityEffect.forAttackTriggers(
+        addStaticEffect(AdditionalTriggeredAbilityEffect.forAttackTriggers(
                         new PermanentTruePredicate(), new SourceHasChosenMode("Mardu")));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(

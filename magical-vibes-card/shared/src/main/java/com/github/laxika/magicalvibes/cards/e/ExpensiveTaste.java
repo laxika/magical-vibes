@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
@@ -16,7 +15,7 @@ public class ExpensiveTaste extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addSpellEffect(new ExileTopCardsToSourceEffect(2, true, false, LibraryScope.TARGET_OPPONENT, true));
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, null, false, false, 0, null, false, false, false, true));
     }
 }

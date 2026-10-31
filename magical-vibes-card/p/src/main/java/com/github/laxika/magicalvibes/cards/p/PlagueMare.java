@@ -17,7 +17,7 @@ public class PlagueMare extends Card {
 
     public PlagueMare() {
         // This creature can't be blocked by white creatures.
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))));
 
         // When this creature enters, creatures your opponents control get -1/-1 until end of turn.

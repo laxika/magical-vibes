@@ -17,7 +17,7 @@ import java.util.Set;
 public class SukiCourageousRescuer extends Card {
 
     public SukiCourageousRescuer() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
         addEffect(EffectSlot.ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD_DURING_CONTROLLER_TURN,
                 new OncePerTurnTriggerEffect(new CreateTokenEffect(
                         "Ally", 1, 1, CardColor.WHITE, List.of(CardSubtype.ALLY), Set.of(), Set.of())));

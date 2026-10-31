@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SOC", collectorNumber = "8")
@@ -36,6 +35,6 @@ public class RoothaMasteringTheMoment extends Card {
                         CardType.CREATURE, new Fixed(1), "Elemental", greatestManaValue, greatestManaValue,
                         CardColor.BLUE, Set.of(CardColor.BLUE, CardColor.RED),
                         List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.FLYING, Keyword.HASTE), Set.of(),
-                        false, false, Map.of(), List.of(), false, false, false, 0, Set.of())));
+                        false, false, List.of(), List.of(), false, false, false, 0, Set.of())));
     }
 }

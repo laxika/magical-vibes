@@ -26,6 +26,6 @@ public class AngelOfInvention extends Card {
                 "Put two +1/+1 counters on Angel of Invention?",
                 new CreateTokenEffect(2, "Servo", 1, 1, null,
                         List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT))));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
     }
 }

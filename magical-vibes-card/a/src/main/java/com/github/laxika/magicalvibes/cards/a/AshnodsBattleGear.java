@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureWhileSourceTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -19,7 +18,7 @@ public class AshnodsBattleGear extends Card {
 
     public AshnodsBattleGear() {
         // Static: "You may choose not to untap this artifact during your untap step."
-        addEffect(EffectSlot.STATIC, new MayNotUntapDuringUntapStepEffect());
+        addStaticEffect(new MayNotUntapDuringUntapStepEffect());
 
         // {2}, {T}: Target creature you control gets +2/-2 for as long as this artifact remains tapped.
         addActivatedAbility(new ActivatedAbility(

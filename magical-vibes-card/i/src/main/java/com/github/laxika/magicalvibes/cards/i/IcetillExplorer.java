@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEf
 public class IcetillExplorer extends Card {
 
     public IcetillExplorer() {
-        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect(1));
-        addEffect(EffectSlot.STATIC, new PlayLandsFromGraveyardEffect());
+        addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
+        addStaticEffect(new PlayLandsFromGraveyardEffect());
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
                 new MillEffect(1, MillRecipient.CONTROLLER));
     }

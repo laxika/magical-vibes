@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSpellCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
@@ -19,7 +18,7 @@ import java.util.Set;
 public class TwinningStaff extends Card {
 
     public TwinningStaff() {
-        addEffect(EffectSlot.STATIC, new AdditionalSpellCopyEffect());
+        addStaticEffect(new AdditionalSpellCopyEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

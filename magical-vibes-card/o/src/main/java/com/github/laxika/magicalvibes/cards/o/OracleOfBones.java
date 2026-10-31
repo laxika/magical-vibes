@@ -16,7 +16,7 @@ import java.util.List;
 public class OracleOfBones extends Card {
 
     public OracleOfBones() {
-        addEffect(EffectSlot.STATIC, new TributeEffect(2));
+        addStaticEffect(new TributeEffect(2));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TributeNotPaidEffect(
                 new MayCastAnySpellFromHandWithoutPayingManaCostEffect(
                         new CardAnyOfPredicate(List.of(

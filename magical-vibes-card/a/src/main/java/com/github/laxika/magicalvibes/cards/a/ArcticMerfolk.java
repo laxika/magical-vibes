@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class ArcticMerfolk extends Card {
 
     public ArcticMerfolk() {
-        addEffect(EffectSlot.STATIC, KickerEffect.returning(new PermanentIsCreaturePredicate(), "a creature"));
+        addStaticEffect(KickerEffect.returning(new PermanentIsCreaturePredicate(), "a creature"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
     }

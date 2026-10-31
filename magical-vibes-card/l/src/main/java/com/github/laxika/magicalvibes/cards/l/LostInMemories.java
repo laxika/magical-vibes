@@ -18,8 +18,8 @@ public class LostInMemories extends Card {
 
     public LostInMemories() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                         new GrantFlashbackToTargetGraveyardCardEffect(Set.of(CardType.INSTANT, CardType.SORCERY)),
                         GrantScope.ENCHANTED_CREATURE));

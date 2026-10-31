@@ -26,15 +26,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 public class TesakJudithsHellhound extends Card {
 
     public TesakJudithsHellhound() {
-        addEffect(EffectSlot.STATIC, new UnleashEffect());
-        addEffect(EffectSlot.STATIC, cantBlockUnlessHasNoPlusOnePlusOneCounter());
+        addStaticEffect(new UnleashEffect());
+        addStaticEffect(cantBlockUnlessHasNoPlusOnePlusOneCounter());
 
         PermanentHasSubtypePredicate dogs = new PermanentHasSubtypePredicate(CardSubtype.DOG);
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new GrantEffectEffect(
                 new UnleashEffect(), GrantScope.OWN_CREATURES, dogs));
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new GrantEffectEffect(
                 cantBlockUnlessHasNoPlusOnePlusOneCounter(), GrantScope.OWN_CREATURES, dogs));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasCountersPredicate(CounterType.ANY)));
 

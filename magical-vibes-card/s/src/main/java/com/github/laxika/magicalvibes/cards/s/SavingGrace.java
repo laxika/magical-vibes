@@ -18,6 +18,6 @@ public class SavingGrace extends Card {
         // permanents you control is dealt to enchanted creature instead.
         .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RedirectYourDamageToEnchantedCreatureThisTurnEffect())
         // Enchanted creature gets +0/+3.
-        .addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 3, GrantScope.ENCHANTED_CREATURE));
+        .addStaticEffect(new StaticBoostEffect(0, 3, GrantScope.ENCHANTED_CREATURE));
     }
 }

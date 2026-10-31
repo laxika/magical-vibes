@@ -11,6 +11,6 @@ public class NullChamber extends Card {
 
     public NullChamber() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new YouAndOpponentChooseCardNamesOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new SpellsAndLandsWithChosenNamesCantBePlayedEffect());
+        addStaticEffect(new SpellsAndLandsWithChosenNamesCantBePlayedEffect());
     }
 }

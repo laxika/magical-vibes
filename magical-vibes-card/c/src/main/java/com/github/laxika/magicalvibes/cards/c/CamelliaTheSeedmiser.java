@@ -27,7 +27,7 @@ import java.util.Set;
 public class CamelliaTheSeedmiser extends Card {
 
     public CamelliaTheSeedmiser() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.MENACE,
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL)));

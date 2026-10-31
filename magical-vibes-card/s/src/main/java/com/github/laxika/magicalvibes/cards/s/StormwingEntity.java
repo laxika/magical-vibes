@@ -19,7 +19,7 @@ public class StormwingEntity extends Card {
 
     public StormwingEntity() {
         // This spell costs {2}{U} less to cast if you've cast an instant or sorcery spell this turn.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerCastSpellThisTurn(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)))),

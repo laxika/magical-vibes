@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
@@ -31,7 +30,7 @@ import java.util.Set;
 public class CommenceTheEndgame extends Card {
 
     public CommenceTheEndgame() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         addSpellEffect(new DrawCardEffect(2));
 
         PermanentPredicate army = new PermanentAllOfPredicate(List.of(
@@ -50,7 +49,7 @@ public class CommenceTheEndgame extends Card {
                                 new CreateTokenEffect(
                                         CardType.CREATURE, 1, "Zombie Army", 0, 0, CardColor.BLACK, null,
                                         List.of(CardSubtype.ZOMBIE, CardSubtype.ARMY), Set.of(), Set.of(),
-                                        false, false, java.util.Map.of(), List.of(), false, false, false, 0, Set.of()),
+                                        false, false, List.of(), List.of(), false, false, false, 0, Set.of()),
                                 new PutCounterOnChosenOwnPermanentEffect(
                                         CounterType.PLUS_ONE_PLUS_ONE, handSize, army))));
     }

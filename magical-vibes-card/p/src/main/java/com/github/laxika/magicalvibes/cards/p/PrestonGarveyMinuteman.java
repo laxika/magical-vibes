@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "PIP", collectorNumber = "8")
@@ -50,8 +50,9 @@ public class PrestonGarveyMinuteman extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                        ManaAbilities.tapForAnyColor(), GrantScope.ENCHANTED_PERMANENT)),
+                List.of(
+                        StaticAbility.of(new GrantActivatedAbilityEffect(
+                        ManaAbilities.tapForAnyColor(), GrantScope.ENCHANTED_PERMANENT))),
                 List.of(),
                 false,
                 false,

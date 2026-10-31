@@ -25,7 +25,7 @@ import java.util.List;
 public class HaviTheAllFather extends Card {
 
     public HaviTheAllFather() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(4, new CardIsHistoricPredicate()),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
 

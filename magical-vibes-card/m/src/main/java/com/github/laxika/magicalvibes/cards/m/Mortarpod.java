@@ -25,10 +25,10 @@ public class Mortarpod extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LivingWeaponEffect());
 
         // Equipped creature gets +0/+1
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(0, 1, GrantScope.EQUIPPED_CREATURE));
 
         // Equipped creature has "Sacrifice this creature: This creature deals 1 damage to any target."
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
                         null,

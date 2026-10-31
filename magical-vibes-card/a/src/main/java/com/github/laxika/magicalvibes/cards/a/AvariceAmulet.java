@@ -22,9 +22,9 @@ public class AvariceAmulet extends Card {
         // Equipped creature gets +2/+0 and has vigilance and "At the beginning of your upkeep, draw a card."
         // The draw ability is granted to the creature, so its controller draws — even if an opponent
         // has since taken the Equipment.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.UPKEEP_TRIGGERED, new DrawCardEffect(1), GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature dies, target opponent gains control of this Equipment.

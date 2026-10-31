@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 public class NahiriForgedInFury extends Card {
 
     public NahiriForgedInFury() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT), CountScope.CONTROLLER)));
 
         addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS, new TriggeringPermanentControllerConditionalEffect(

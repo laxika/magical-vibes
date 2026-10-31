@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
@@ -17,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "116")
@@ -42,11 +42,11 @@ public class Blink extends Card {
                 List.of(CardSubtype.ALIEN, CardSubtype.ANGEL),
                 Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE),
                 Set.of(CardType.ARTIFACT),
-                Map.of(EffectSlot.ON_OPPONENT_CASTS_SPELL,
-                        new SpellCastTriggerEffect(
+                List.of(
+                        LegacySlots.triggered(EffectSlot.ON_OPPONENT_CASTS_SPELL, new SpellCastTriggerEffect(
                                 new CardTypePredicate(CardType.CREATURE),
                                 List.of(new RemoveCardTypeFromTargetPermanentEffect(
-                                        CardType.CREATURE, GrantScope.SELF)))));
+                                        CardType.CREATURE, GrantScope.SELF))))));
         addEffect(EffectSlot.SAGA_CHAPTER_II, alienAngel);
         addEffect(EffectSlot.SAGA_CHAPTER_IV, alienAngel);
     }

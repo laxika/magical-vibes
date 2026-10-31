@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MH1", collectorNumber = "56")
@@ -49,7 +48,7 @@ public class MaritLagesSlumber extends Card {
                         Set.of(),
                         false,
                         false,
-                        Map.of(),
+                        List.of(),
                         List.of(),
                         false,
                         false,

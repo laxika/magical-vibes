@@ -23,6 +23,6 @@ public class WitchbaneOrb extends Card {
                         new PermanentAttachedToSourceControllerPredicate()
                 ))
         ));
-        addEffect(EffectSlot.STATIC, new GrantControllerKeywordEffect(Keyword.HEXPROOF));
+        addStaticEffect(new GrantControllerKeywordEffect(Keyword.HEXPROOF));
     }
 }

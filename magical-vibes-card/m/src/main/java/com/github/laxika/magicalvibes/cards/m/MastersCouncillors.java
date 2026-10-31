@@ -17,7 +17,7 @@ public class MastersCouncillors extends Card {
 
     public MastersCouncillors() {
         GraveyardsAtLeast sevenCardGraveyards = new GraveyardsAtLeast(7);
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 new Scaled(sevenCardGraveyards, 2), new Fixed(0), GrantScope.SELF));
 
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS,

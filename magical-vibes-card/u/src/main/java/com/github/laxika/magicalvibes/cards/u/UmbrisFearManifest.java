@@ -27,8 +27,7 @@ public class UmbrisFearManifest extends Card {
 
     public UmbrisFearManifest() {
         CardsInExile opponentCardsInExile = new CardsInExile(null, CountScope.OPPONENTS);
-        addEffect(EffectSlot.STATIC,
-                new DynamicStaticBoostEffect(opponentCardsInExile, opponentCardsInExile, GrantScope.SELF));
+        addStaticEffect(new DynamicStaticBoostEffect(opponentCardsInExile, opponentCardsInExile, GrantScope.SELF));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

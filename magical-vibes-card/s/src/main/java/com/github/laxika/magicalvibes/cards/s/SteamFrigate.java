@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -12,7 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class SteamFrigate extends Card {
 
     public SteamFrigate() {
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new DefendingPlayerControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 "an Island"
         ));

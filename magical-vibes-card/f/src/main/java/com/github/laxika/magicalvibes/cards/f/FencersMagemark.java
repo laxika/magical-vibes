@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -15,11 +14,9 @@ public class FencersMagemark extends Card {
 
     public FencersMagemark() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                                 new PermanentIsEnchantedPredicate()))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES,
+                .addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES,
                                 new PermanentIsEnchantedPredicate()));
     }
 }

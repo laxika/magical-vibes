@@ -16,7 +16,7 @@ import java.util.List;
 public class TokkaRahzarTerribleTwos extends Card {
 
     public TokkaRahzarTerribleTwos() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
                 new SpellCastTriggerEffect(
                         null,

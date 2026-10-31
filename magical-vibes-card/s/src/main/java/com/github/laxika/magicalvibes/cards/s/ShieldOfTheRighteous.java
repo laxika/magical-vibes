@@ -16,8 +16,8 @@ public class ShieldOfTheRighteous extends Card {
 
     public ShieldOfTheRighteous() {
         // Equipped creature gets +0/+2 and has vigilance.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(0, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature blocks a creature, that creature doesn't untap during its
         // controller's next untap step. SkipNextUntapEffect is a CombatOpponentReferencingEffect, so

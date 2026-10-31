@@ -17,7 +17,7 @@ public class TsabosWeb extends Card {
 
     public TsabosWeb() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
-        addEffect(EffectSlot.STATIC, new MatchingPermanentsDoesntUntapEffect(
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentHasNonManaActivatedAbilityPredicate()))));

@@ -43,7 +43,7 @@ public class SpecializeImoenEffectHandler implements NormalEffectHandlerBean {
         ImoenTricksterFriend.setSpecializedBaseCharacteristics(specialized);
         specialized.setPower(3);
         specialized.setToughness(2);
-        specialized.addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        specialized.addStaticEffect(new CantBeBlockedEffect());
 
         switch (specialize.color()) {
             case WHITE -> {

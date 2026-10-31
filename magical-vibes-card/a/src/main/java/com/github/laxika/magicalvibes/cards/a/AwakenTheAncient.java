@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -21,8 +20,8 @@ public class AwakenTheAncient extends Card {
         // Enchant Mountain. Enchanted Mountain is a 7/7 red Giant creature with haste. It's still a land.
         target(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), "Target must be a Mountain"))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesCreatureEffect(
+                .addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(
                         7, 7, CardColor.RED, List.of(CardSubtype.GIANT)))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_PERMANENT));
+                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_PERMANENT));
     }
 }

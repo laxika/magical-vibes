@@ -1522,14 +1522,12 @@ public class Card {
      * abilities are still in the per-zone lists ({@link #getActivatedAbilities()} and the others).
      *
      * <p>{@link #addSpellEffect} and {@link #addSimultaneousSpellEffects} build the one
-     * {@link SpellAbility}. Until each other family leaves {@link EffectSlot}, the rest are built from
-     * slot registrations by {@link #addEffect(EffectSlot, CardEffect, TriggerMode)} and
-     * {@link #addSimultaneousEffects}: each {@code STATIC} or {@code COMMAND_ZONE_STATIC} effect is a
-     * {@link StaticAbility} of the battlefield or the command zone, and every other slot's effects form
-     * {@link TriggeredAbility}s with a
-     * {@link LegacySlotTrigger}, grouped as that slot's collectors group them
-     * ({@link LegacySlotGrouping}). The collectors still read the slot views, so the grouping changes
-     * nothing yet.
+     * {@link SpellAbility}, and {@link #addStaticEffect} adds a {@link StaticAbility} for each effect.
+     * Until each other family leaves {@link EffectSlot}, the rest are built from slot registrations by
+     * {@link #addEffect(EffectSlot, CardEffect, TriggerMode)} and {@link #addSimultaneousEffects}: a
+     * slot's effects form {@link TriggeredAbility}s with a {@link LegacySlotTrigger}, grouped as that
+     * slot's collectors group them ({@link LegacySlotGrouping}). The collectors still read the slot
+     * views, so the grouping changes nothing yet.
      */
     public List<Ability> getAbilities() {
         return Collections.unmodifiableList(abilities);
@@ -1616,6 +1614,69 @@ public class Card {
         addSpellRegistrations(simultaneousGroup(effects, TriggerMode.NORMAL, null));
     }
 
+    /**
+     * Adds a static ability made of {@code effect} (CR 113.3d). It functions from the zones the effect
+     * names ({@link CardEffect#staticAbilityZones()}): the battlefield (CR 113.6), unless its rule says
+     * otherwise, as for kicker.
+     */
+    public void addStaticEffect(CardEffect effect) {
+        addStaticEffect(effect.staticAbilityZones(), effect);
+    }
+
+    /**
+     * Adds a static ability made of {@code effect} that functions from {@code zones}, such as an
+     * Eminence ability that functions in the command zone and on the battlefield (CR 113.6b).
+     */
+    public void addStaticEffect(AbilityZones zones, CardEffect effect) {
+        assertMutable();
+        abilities.add(new StaticAbility(List.of(effect), zones));
+        slotIndex = null;
+    }
+
+    /** The card's static abilities, in the order they were added; each holds one effect. */
+    public List<StaticAbility> getStaticAbilities() {
+        return slotIndex().staticAbilities();
+    }
+
+    /**
+     * The effects of every static ability of the card, in the order they were added, whatever zones
+     * they function from. The engine knows where it looks at a card and which effects it looks for,
+     * so most readers use this; {@link #getStaticEffects(Zone)} filters by zone.
+     */
+    public List<CardEffect> getStaticEffects() {
+        return slotIndex().staticEffects();
+    }
+
+    /** The effects of the static abilities that function while the card is in {@code zone}, in order. */
+    public List<CardEffect> getStaticEffects(Zone zone) {
+        List<StaticAbility> statics = getStaticAbilities();
+        if (statics.isEmpty()) {
+            return List.of();
+        }
+        List<CardEffect> effects = new ArrayList<>();
+        for (StaticAbility ability : statics) {
+            if (ability.zones().functionsIn(zone)) {
+                effects.addAll(ability.effects());
+            }
+        }
+        return effects.isEmpty() ? List.of() : Collections.unmodifiableList(effects);
+    }
+
+    /**
+     * Adds the static abilities of {@code source} whose effect {@code keep} accepts, with their zones,
+     * as the engine's copy paths copy every slot's effects.
+     */
+    public void addStaticAbilitiesFrom(Card source, Predicate<CardEffect> keep) {
+        assertMutable();
+        for (StaticAbility ability : source.getStaticAbilities()) {
+            for (CardEffect effect : ability.effects()) {
+                if (keep.test(effect)) {
+                    addStaticEffect(ability.zones(), effect);
+                }
+            }
+        }
+    }
+
     /** The effects of every ability in {@code slot}, in the order they were added. */
     public List<CardEffect> getEffects(EffectSlot slot) {
         SlotView view = slotIndex().find(slot);
@@ -1644,12 +1705,21 @@ public class Card {
 
     /**
      * Removes every registered effect for which {@code filter} holds, given the effect's slot, which is
-     * {@code null} for a spell effect or a casting cost. An ability left without effects is removed; an
-     * effect that was simultaneous with a removed one becomes the first of its ability, so it is no
-     * longer marked simultaneous.
+     * {@code null} for a spell effect, a static effect or a casting cost. An ability left without effects
+     * is removed; an effect that was simultaneous with a removed one becomes the first of its ability,
+     * so it is no longer marked simultaneous.
      */
 
     public void removeSlotEffectsIf(BiPredicate<EffectSlot, CardEffect> filter) {
+        removeAbilityEffectsIf((ability, effect) -> filter.test(ability == null ? null : slotOf(ability), effect));
+    }
+
+    /**
+     * Removes every registered effect for which {@code filter} holds, given the ability that holds the
+     * effect, which is {@code null} for a casting cost. An ability left without effects is removed, as
+     * for {@link #removeSlotEffectsIf}.
+     */
+    public void removeAbilityEffectsIf(BiPredicate<Ability, CardEffect> filter) {
         assertMutable();
         List<Ability> kept = new ArrayList<>(abilities.size());
         for (Ability ability : abilities) {
@@ -1711,12 +1781,17 @@ public class Card {
      */
     public void addAbility(Ability ability) {
         assertMutable();
+        if (ability instanceof StaticAbility statik) {
+            // Each effect is a static ability of its own, as addStaticEffect adds it.
+            statik.effects().forEach(effect -> addStaticEffect(statik.zones(), effect));
+            return;
+        }
         EffectSlot slot = slotOf(ability);
         List<EffectRegistration> registrations = switch (ability) {
             // Its target groups are this card's first groups, so they follow from this card's own.
             case SpellAbility spell -> spell.effects();
             case TriggeredAbility triggered -> triggered.effects();
-            case StaticAbility statik -> statik.effects().stream().map(EffectRegistration::new).toList();
+            case StaticAbility statik -> throw new IllegalStateException("Added above");
             case ActivatedAbility activated -> throw new IllegalArgumentException(
                     "Activated abilities are added with addActivatedAbility");
         };
@@ -1766,31 +1841,18 @@ public class Card {
      */
     private void addRegistrations(EffectSlot slot, List<EffectRegistration> group) {
         EffectRegistration first = group.getFirst();
-        switch (slot) {
-            case STATIC, COMMAND_ZONE_STATIC -> {
-                // A static ability doesn't trigger, so a trigger mode means nothing here (token copies add
-                // their "except it has" effects as INDEPENDENT in every slot), and each effect stays its
-                // own static ability.
-                for (EffectRegistration registration : group) {
-                    abilities.add(new StaticAbility(List.of(registration.effect()),
-                            slot == EffectSlot.STATIC ? AbilityZones.BATTLEFIELD : AbilityZones.COMMAND));
-                }
-            }
-            default -> {
-                int index = switch (LegacySlotGrouping.of(slot)) {
-                    case EACH -> -1;
-                    case ALL -> indexOfFirstAbility(slot);
-                    case ALL_BUT_INDEPENDENT -> first.triggerMode() == TriggerMode.INDEPENDENT
-                            ? -1
-                            : indexOfSharedAbility(slot);
-                };
-                if (index < 0) {
-                    abilities.add(new TriggeredAbility(new LegacySlotTrigger(slot), TriggerOptions.DEFAULT, group));
-                } else {
-                    TriggeredAbility ability = (TriggeredAbility) abilities.get(index);
-                    abilities.set(index, ability.withEffects(concat(ability.effects(), group)));
-                }
-            }
+        int index = switch (LegacySlotGrouping.of(slot)) {
+            case EACH -> -1;
+            case ALL -> indexOfFirstAbility(slot);
+            case ALL_BUT_INDEPENDENT -> first.triggerMode() == TriggerMode.INDEPENDENT
+                    ? -1
+                    : indexOfSharedAbility(slot);
+        };
+        if (index < 0) {
+            abilities.add(new TriggeredAbility(new LegacySlotTrigger(slot), TriggerOptions.DEFAULT, group));
+        } else {
+            TriggeredAbility ability = (TriggeredAbility) abilities.get(index);
+            abilities.set(index, ability.withEffects(concat(ability.effects(), group)));
         }
         slotIndex = null;
     }
@@ -1892,20 +1954,19 @@ public class Card {
     }
 
     /** {@code ability} without the effects {@code filter} removes, itself if none, or null if it has none left. */
-    private static Ability withoutEffects(Ability ability, BiPredicate<EffectSlot, CardEffect> filter) {
-        EffectSlot slot = slotOf(ability);
+    private static Ability withoutEffects(Ability ability, BiPredicate<Ability, CardEffect> filter) {
         return switch (ability) {
             case SpellAbility spell -> {
-                List<EffectRegistration> kept = keptRegistrations(spell.effects(), slot, filter);
+                List<EffectRegistration> kept = keptRegistrations(spell, spell.effects(), filter);
                 yield kept == spell.effects() ? spell : kept.isEmpty() ? null : spell.withEffects(kept);
             }
             case TriggeredAbility triggered -> {
-                List<EffectRegistration> kept = keptRegistrations(triggered.effects(), slot, filter);
+                List<EffectRegistration> kept = keptRegistrations(triggered, triggered.effects(), filter);
                 yield kept == triggered.effects() ? triggered : kept.isEmpty() ? null : triggered.withEffects(kept);
             }
             case StaticAbility statik -> {
                 List<CardEffect> kept = statik.effects().stream()
-                        .filter(effect -> !filter.test(slot, effect))
+                        .filter(effect -> !filter.test(statik, effect))
                         .toList();
                 yield kept.size() == statik.effects().size() ? statik
                         : kept.isEmpty() ? null : new StaticAbility(kept, statik.zones());
@@ -1915,15 +1976,15 @@ public class Card {
     }
 
     /**
-     * {@code registrations} without those {@code filter} removes, the same list if it removes none.
-     * The first one left is no longer marked simultaneous, since the effect before it is gone.
+     * The registrations of {@code ability} without those {@code filter} removes, the same list if it
+     * removes none. The first one left is no longer marked simultaneous, since the effect before it is gone.
      */
-    private static List<EffectRegistration> keptRegistrations(List<EffectRegistration> registrations,
-                                                              EffectSlot slot,
-                                                              BiPredicate<EffectSlot, CardEffect> filter) {
+    private static List<EffectRegistration> keptRegistrations(Ability ability,
+                                                              List<EffectRegistration> registrations,
+                                                              BiPredicate<Ability, CardEffect> filter) {
         List<EffectRegistration> kept = new ArrayList<>(registrations.size());
         for (EffectRegistration reg : registrations) {
-            if (!filter.test(slot, reg.effect())) {
+            if (!filter.test(ability, reg.effect())) {
                 kept.add(reg);
             }
         }
@@ -1959,44 +2020,35 @@ public class Card {
     }
 
     /**
-     * The views of every slot that holds abilities, in slot order. It is immutable and refers to no
-     * card, so frozen cards and their copies can share it across threads; two threads that both
-     * build it build the same index.
+     * The views of every slot that holds abilities, in slot order, and the static abilities and their
+     * effects in the order they were added. It is immutable and refers to no card, so frozen cards and
+     * their copies can share it across threads; two threads that both build it build the same index.
      */
-    private record SlotIndex(List<SlotView> views) {
+    private record SlotIndex(List<SlotView> views, List<StaticAbility> staticAbilities,
+                             List<CardEffect> staticEffects) {
 
         static SlotIndex of(List<Ability> abilities) {
-            Map<EffectSlot, List<Ability>> bySlot = new TreeMap<>();
+            Map<EffectSlot, List<TriggeredAbility>> bySlot = new TreeMap<>();
+            List<StaticAbility> statics = new ArrayList<>();
+            List<CardEffect> staticEffects = new ArrayList<>();
             for (Ability ability : abilities) {
-                EffectSlot abilitySlot = slotOf(ability);
-                if (abilitySlot != null) {
-                    bySlot.computeIfAbsent(abilitySlot, slot -> new ArrayList<>()).add(ability);
+                if (ability instanceof StaticAbility statik) {
+                    statics.add(statik);
+                    staticEffects.addAll(statik.effects());
+                } else if (ability instanceof TriggeredAbility triggered) {
+                    bySlot.computeIfAbsent(slotOf(triggered), slot -> new ArrayList<>()).add(triggered);
                 }
             }
             List<SlotView> views = new ArrayList<>(bySlot.size());
             bySlot.forEach((slot, slotAbilities) -> {
                 List<EffectRegistration> registrations = new ArrayList<>();
-                TriggeredAbility firstTriggered = null;
-                for (Ability ability : slotAbilities) {
-                    switch (ability) {
-                        case SpellAbility spell -> {
-                        }
-                        case TriggeredAbility triggered -> {
-                            registrations.addAll(triggered.effects());
-                            if (firstTriggered == null) {
-                                firstTriggered = triggered;
-                            }
-                        }
-                        case StaticAbility statik -> statik.effects()
-                                .forEach(effect -> registrations.add(new EffectRegistration(effect)));
-                        case ActivatedAbility activated -> {
-                        }
-                    }
+                for (TriggeredAbility triggered : slotAbilities) {
+                    registrations.addAll(triggered.effects());
                 }
                 views.add(new SlotView(slot, List.copyOf(registrations),
-                        registrations.stream().map(EffectRegistration::effect).toList(), firstTriggered));
+                        registrations.stream().map(EffectRegistration::effect).toList(), slotAbilities.getFirst()));
             });
-            return new SlotIndex(List.copyOf(views));
+            return new SlotIndex(List.copyOf(views), List.copyOf(statics), List.copyOf(staticEffects));
         }
 
         SlotView find(EffectSlot slot) {
@@ -2482,13 +2534,13 @@ public class Card {
 
     public boolean hasKeyword(Keyword keyword) {
         return keywords.contains(keyword)
-                || (keyword == Keyword.CHANGELING && getEffects(EffectSlot.STATIC).stream()
+                || (keyword == Keyword.CHANGELING && getStaticEffects().stream()
                 .anyMatch(effect -> effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
                         && grant.scope() == GrantScope.SELF));
     }
 
     public boolean hasAllCardNames() {
-        return getEffects(EffectSlot.STATIC).stream().anyMatch(AllCardNamesEffect.class::isInstance);
+        return getStaticEffects().stream().anyMatch(AllCardNamesEffect.class::isInstance);
     }
 
     /**

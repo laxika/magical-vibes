@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class FurtiveCourier extends Card {
 
     public FurtiveCourier() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerSacrificedArtifactThisTurn(),
                 new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
         addEffect(EffectSlot.ON_ATTACK, new DrawCardEffect());

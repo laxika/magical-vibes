@@ -21,14 +21,12 @@ public class LifecraftEngine extends Card {
 
     public LifecraftEngine() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC,
-                GrantChosenSubtypeToOwnCreaturesEffect.ownCreaturesMatching(
+        addStaticEffect(GrantChosenSubtypeToOwnCreaturesEffect.ownCreaturesMatching(
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
-        addEffect(EffectSlot.STATIC,
-                GrantChosenSubtypeToOwnCreaturesEffect.toSelfMatching(new PermanentAllOfPredicate(List.of(
+        addStaticEffect(GrantChosenSubtypeToOwnCreaturesEffect.toSelfMatching(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)))));
-        addEffect(EffectSlot.STATIC, BoostCreaturesOfChosenSubtypeEffect.otherOwnCreatures(1, 1));
+        addStaticEffect(BoostCreaturesOfChosenSubtypeEffect.otherOwnCreatures(1, 1));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

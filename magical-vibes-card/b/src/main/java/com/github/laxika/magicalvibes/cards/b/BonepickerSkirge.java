@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -15,8 +14,7 @@ import java.util.Set;
 public class BonepickerSkirge extends Card {
 
     public BonepickerSkirge() {
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new OpponentPoisoned(3),
+        addStaticEffect(new ConditionalEffect(new OpponentPoisoned(3),
                         new GrantKeywordEffect(Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK), GrantScope.SELF)));
     }
 }

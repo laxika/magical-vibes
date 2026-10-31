@@ -25,7 +25,7 @@ public class WoodenCane extends Card {
                         List.of(CardSubtype.MUTANT), Set.of(), Set.of()),
                 new AttachMatchingEquipmentToCreatedPermanentEffect(
                         new PermanentIsSourcePermanentPredicate())));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

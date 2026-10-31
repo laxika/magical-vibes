@@ -26,11 +26,10 @@ public class ClawingTorment extends Card {
                         new PermanentIsCreaturePredicate()
                 )),
                 "Target must be an artifact or creature"))
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(-1, -1, GrantScope.ENCHANTED_PERMANENT,
+                .addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.ENCHANTED_PERMANENT,
                                 new PermanentIsCreaturePredicate()))
-                .addEffect(EffectSlot.STATIC, new CantBlockEffect())
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new CantBlockEffect())
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.UPKEEP_TRIGGERED,
                         new LoseLifeEffect(1, LoseLifeRecipient.CONTROLLER),
                         GrantScope.ENCHANTED_PERMANENT));

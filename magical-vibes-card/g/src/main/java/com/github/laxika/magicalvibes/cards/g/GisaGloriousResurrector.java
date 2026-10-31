@@ -16,8 +16,7 @@ import java.util.Set;
 public class GisaGloriousResurrector extends Card {
 
     public GisaGloriousResurrector() {
-        addEffect(EffectSlot.STATIC,
-                ExileOpponentCreaturesInsteadOfDyingEffect.withSourceTracking());
+        addStaticEffect(ExileOpponentCreaturesInsteadOfDyingEffect.withSourceTracking());
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ReturnAllCardsExiledWithSourceEffect(true,
                         new CardTypePredicate(CardType.CREATURE), false, Set.of(Keyword.DECAYED)));

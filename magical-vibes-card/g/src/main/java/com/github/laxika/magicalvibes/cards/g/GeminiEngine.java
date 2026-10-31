@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatedPermanentsAttackin
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndOfCombatEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DST", collectorNumber = "121")
@@ -33,7 +32,7 @@ public class GeminiEngine extends Card {
                 Set.of(CardType.ARTIFACT),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

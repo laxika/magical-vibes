@@ -16,7 +16,7 @@ public class StitchedMangler extends Card {
 
     public StitchedMangler() {
         // This creature enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // When this creature enters, tap target creature an opponent controls.
         // That creature doesn't untap during its controller's next untap step.

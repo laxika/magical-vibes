@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -24,6 +23,6 @@ public class PrimalWhisperer extends Card {
                 new PermanentIsFaceDownPredicate()));
         PermanentCount faceDownCreatureCount = new PermanentCount(faceDownCreature, CountScope.ANY_PLAYER);
         Scaled boost = new Scaled(faceDownCreatureCount, 2);
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(boost, boost, GrantScope.SELF));
+        addStaticEffect(new DynamicStaticBoostEffect(boost, boost, GrantScope.SELF));
     }
 }

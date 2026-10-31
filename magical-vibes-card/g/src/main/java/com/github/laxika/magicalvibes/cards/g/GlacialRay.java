@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -27,6 +26,6 @@ public class GlacialRay extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"))
                 .addSpellEffect(new DealDamageToAnyTargetEffect(2));
-        addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{1}{R}"));
+        addStaticEffect(new SpliceEffect(CardSubtype.ARCANE, "{1}{R}"));
     }
 }

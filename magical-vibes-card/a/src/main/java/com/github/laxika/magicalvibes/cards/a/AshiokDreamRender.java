@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -18,7 +17,7 @@ import java.util.List;
 public class AshiokDreamRender extends Card {
 
     public AshiokDreamRender() {
-        addEffect(EffectSlot.STATIC, new OpponentsCantSearchLibrariesEffect());
+        addStaticEffect(new OpponentsCantSearchLibrariesEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 -1,

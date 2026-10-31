@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -32,13 +31,13 @@ public class GoddricCloakedReveler extends Card {
 
         ConditionalEffect becomesDragon = new ConditionalEffect(
                 celebration, new GrantSubtypeEffect(CardSubtype.DRAGON, GrantScope.SELF, true));
-        addEffect(EffectSlot.STATIC, becomesDragon);
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(becomesDragon);
+        addStaticEffect(new ConditionalEffect(
                 celebration, new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)
                         .partOfSameAbilityAs(becomesDragon)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 celebration, new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 celebration,
                 new GrantActivatedAbilityEffect(
                         new ActivatedAbility(

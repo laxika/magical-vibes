@@ -19,7 +19,7 @@ import java.util.List;
 public class WojekBodyguard extends Card {
 
     public WojekBodyguard() {
-        addEffect(EffectSlot.STATIC, new CantAttackOrBlockAloneEffect());
+        addStaticEffect(new CantAttackOrBlockAloneEffect());
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

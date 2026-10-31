@@ -17,8 +17,8 @@ public class PilloryOfTheSleepless extends Card {
 
     public PilloryOfTheSleepless() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.UPKEEP_TRIGGERED,
                         new LoseLifeEffect(1),
                         GrantScope.ENCHANTED_CREATURE));

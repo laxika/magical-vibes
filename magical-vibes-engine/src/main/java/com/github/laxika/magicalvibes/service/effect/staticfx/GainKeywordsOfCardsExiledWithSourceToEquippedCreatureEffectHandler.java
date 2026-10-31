@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCardsExiledWithSourceToEquippedCreatureEffect;
@@ -35,7 +34,7 @@ public class GainKeywordsOfCardsExiledWithSourceToEquippedCreatureEffectHandler
                 }
             }
 
-            for (CardEffect staticEffect : card.getEffects(EffectSlot.STATIC)) {
+            for (CardEffect staticEffect : card.getStaticEffects()) {
                 if (staticEffect instanceof ProtectionGrantingEffect protection
                         && protection.protectionScope() == null) {
                     accumulator.addGrantedEffect(staticEffect);

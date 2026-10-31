@@ -21,7 +21,7 @@ import java.util.Set;
 public class VesuvanDrifter extends Card {
 
     public VesuvanDrifter() {
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
         addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED, new MayEffect(
                 SequenceEffect.of(
                         new RevealTopCardOfLibraryEffect(LibraryOwner.CONTROLLER),

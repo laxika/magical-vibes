@@ -21,7 +21,7 @@ import java.util.Set;
 public class RisingChicane extends Card {
 
     public RisingChicane() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new NotCondition(new ControllerIsNotStartingPlayer()), new EntersTappedEffect()));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));

@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 public class BlackVise extends Card {
 
     public BlackVise() {
-        addEffect(EffectSlot.STATIC, new ChooseOpponentOnEnterEffect());
+        addStaticEffect(new ChooseOpponentOnEnterEffect());
         addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED,
                 new DealDamageToPlayersEffect(
                         new Sum(new CardsInHand(CountScope.TARGET_PLAYER), new Fixed(-4)),

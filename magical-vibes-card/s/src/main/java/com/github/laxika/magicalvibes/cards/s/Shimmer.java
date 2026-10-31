@@ -16,7 +16,7 @@ public class Shimmer extends Card {
     public Shimmer() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseBasicLandTypeOnEnterEffect(CardSubtype.landTypes()));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.PHASING, GrantScope.ALL_LANDS, new PermanentHasSourceChosenSubtypePredicate()));
     }
 }

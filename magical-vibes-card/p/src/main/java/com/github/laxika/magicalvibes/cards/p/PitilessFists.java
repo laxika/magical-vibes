@@ -25,7 +25,7 @@ public class PitilessFists extends Card {
                 )),
                 "Target must be a creature you control"
         ))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
 
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnchantedCreatureFightsTargetCreatureEffect());

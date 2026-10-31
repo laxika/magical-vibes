@@ -16,7 +16,7 @@ import java.util.List;
 public class TarnationVista extends Card {
 
     public TarnationVista() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
 
         addActivatedAbility(new ActivatedAbility(

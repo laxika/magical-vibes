@@ -27,9 +27,8 @@ public class DissectionTools extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 ManifestDreadEffect.forController(),
                 new AttachSourceEquipmentToChosenPermanentEffect()));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK), GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

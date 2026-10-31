@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CastingCost;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -49,7 +48,6 @@ import com.github.laxika.magicalvibes.model.effect.ControllerTurnRestrictionEffe
 import com.github.laxika.magicalvibes.model.effect.DampingEngineEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerCantCastSpellsWhileAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemGrantsCastingOptionEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentControllerCantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstMatchingSpellFlashGrant;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
@@ -68,7 +66,6 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsOfChos
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueAtMostEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueGreaterThanEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantPlayLandsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardPermission;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandOrCastSpellFromTopOfLibraryOncePerTurnEffect;
@@ -77,7 +74,6 @@ import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsAndAttackWithCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsUnlessSpellOrAbilityOnStackEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingTimingRestrictionEffect;
@@ -206,7 +202,7 @@ public class CastingPermissionService {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     continue;
                 }
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (!(effect instanceof LimitSpellsPerTurnEffect spellLimit)) continue;
                     if (spellLimit.spellFilter() != null) continue;
                     boolean applies = switch (spellLimit.scope()) {
@@ -243,7 +239,7 @@ public class CastingPermissionService {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     continue;
                 }
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (!(effect instanceof LimitSpellsPerTurnEffect spellLimit)) continue;
                     boolean applies = switch (spellLimit.scope()) {
                         case EACH_PLAYER -> true;
@@ -303,7 +299,7 @@ public class CastingPermissionService {
                 if (!permanent.isAttacking()
                         || permanent.isFaceDown()
                         || gameQueryService.hasLostAllAbilities(gameData, permanent)
-                        || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        || permanent.getCard().getStaticEffects().stream()
                         .noneMatch(DefendingPlayerCantCastSpellsWhileAttackingEffect.class::isInstance)) {
                     continue;
                 }
@@ -325,7 +321,7 @@ public class CastingPermissionService {
         if (ownBattlefield != null) {
             for (Permanent permanent : ownBattlefield) {
                 if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                if (permanent.getCard().getStaticEffects().stream()
                         .anyMatch(effect -> effect instanceof ControllerTurnRestrictionEffect restriction
                                 && restriction.preventsCastingAfterAttack())) {
                     return true;
@@ -334,7 +330,7 @@ public class CastingPermissionService {
         }
         if (gameData.planechase != null && playerId.equals(gameData.planechase.controllerId)) {
             for (var planar : gameData.planechase.faceUp) {
-                if (planar.getCard().getEffects(EffectSlot.STATIC).stream()
+                if (planar.getCard().getStaticEffects().stream()
                         .anyMatch(effect -> effect instanceof ControllerTurnRestrictionEffect restriction
                                 && restriction.preventsCastingAfterAttack())) {
                     return true;
@@ -350,7 +346,7 @@ public class CastingPermissionService {
                 if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     continue;
                 }
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (effect instanceof OpponentsCantCastSpellsIfAttackedThisTurnEffect restriction
                             && (!restriction.onlyIfAttackedControllerOrPlaneswalker()
                             || gameData.playersWhoAttackedPlayerOrPlaneswalkerThisTurn
@@ -413,7 +409,7 @@ public class CastingPermissionService {
                 if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     continue;
                 }
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (effect instanceof CantCastSpellTypeEffect cantCast
                             && (cantCast.appliesToAllPlayers() || pid.equals(playerId))) {
                         restricted.addAll(cantCast.restrictedTypes());
@@ -440,7 +436,7 @@ public class CastingPermissionService {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (permanent.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                if (permanent.getCard().getStaticEffects().stream()
                         .anyMatch(effectType::isInstance)) {
                     return true;
                 }
@@ -516,7 +512,7 @@ public class CastingPermissionService {
             for (Permanent permanent : battlefield) {
                 if (permanent.isDampingEngineEffectIgnoredThisTurn(playerId)) continue;
                 if (permanent.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                if (permanent.getCard().getStaticEffects().stream()
                         .anyMatch(DampingEngineEffect.class::isInstance)) {
                     return true;
                 }
@@ -547,7 +543,7 @@ public class CastingPermissionService {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     if (effect instanceof GlobalLandPlayRestrictionEffect restriction
                             && countMatchingPermanents(gameData, restriction.filter())
                             >= restriction.minimumCount()) {
@@ -576,7 +572,7 @@ public class CastingPermissionService {
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return false;
         return bf.stream().filter(perm -> !gameQueryService.hasLostAllAbilities(gameData, perm))
-                .anyMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(perm -> perm.getCard().getStaticEffects().stream()
                 .map(effect -> staticEffectConditionResolver.resolve(gameData, perm, playerId, effect))
                 .anyMatch(effectType::isInstance));
     }
@@ -607,7 +603,7 @@ public class CastingPermissionService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (!(effect instanceof NoncreatureSpellsCantBeCastEffect restriction)
                             || (!restriction.appliesToAllPlayers() && !pid.equals(playerId))) continue;
                     if (manaValue >= restriction.minManaValue()) return true;
@@ -701,7 +697,7 @@ public class CastingPermissionService {
                 if (perm.getChosenColor() != null
                         && !perm.isFaceDown() && !gameQueryService.hasLostAllAbilities(gameData, perm)
                         && card.getColors().contains(perm.getChosenColor())
-                        && perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        && perm.getCard().getStaticEffects().stream()
                                 .anyMatch(OpponentsCantCastSpellsOfChosenColorEffect.class::isInstance)) {
                     return true;
                 }
@@ -729,7 +725,7 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (!gameQueryService.hasLostAllAbilities(gameData, perm)
                             && effect instanceof PlayersCantCastSpellsMatchingPredicateEffect restriction
                             && predicateEvaluationService.matchesCardPredicate(
@@ -797,7 +793,7 @@ public class CastingPermissionService {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (!gameQueryService.hasLostAllAbilities(gameData, permanent)
-                        && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        && permanent.getCard().getStaticEffects().stream()
                         .anyMatch(LimitNonPhyrexianSpellsPerTurnEffect.class::isInstance)) return true;
             }
         }
@@ -818,7 +814,7 @@ public class CastingPermissionService {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     continue;
                 }
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (effect instanceof com.github.laxika.magicalvibes.model.effect.CantCastSpellsSharingColorWithMostRecentSpellEffect) {
                         if (mostRecentSpell != null && card != null
                                 && colorsWhenCast(gameData, mostRecentSpell).stream()
@@ -871,7 +867,7 @@ public class CastingPermissionService {
         }
 
         for (var planar : gameData.planechase.faceUp) {
-            for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : planar.getCard().getStaticEffects()) {
                 if (!(effect instanceof SpellCastingRestrictionEffect restriction)) {
                     continue;
                 }
@@ -891,7 +887,7 @@ public class CastingPermissionService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (effect instanceof CantCastAdditionalNonartifactSpellsEffect) return true;
                 }
             }
@@ -909,7 +905,7 @@ public class CastingPermissionService {
                 if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     continue;
                 }
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (effect instanceof CantCastSpellsWithSameNameAsExiledCardEffect cantCast) {
                         // If opponentsOnly, skip if the casting player is the controller
                         if (cantCast.opponentsOnly() && pid.equals(castingPlayerId)) {
@@ -1173,7 +1169,7 @@ public class CastingPermissionService {
                         || staticBonus.losesAllNonManaAbilities()) {
                     continue;
                 }
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     if (effect instanceof SpellCastingTimingRestrictionEffect restriction
                             && restriction.appliesTo(sourceControllerId, playerId)) {
                         return true;
@@ -1199,7 +1195,7 @@ public class CastingPermissionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (resolved instanceof AllowCastFromTopOfLibraryEffect allow
                         && allow.grantsFlash()
@@ -1266,7 +1262,7 @@ public class CastingPermissionService {
      * (sacrifice at the next cleanup step) is applied when the permanent enters.
      */
     private boolean grantsItselfFlashTiming(Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .anyMatch(FlashCastWithCleanupSacrificeEffect.class::isInstance);
     }
 
@@ -1459,7 +1455,7 @@ public class CastingPermissionService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(ownerId);
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, ownerId, effect);
                     if (resolved instanceof FirstMatchingSpellFlashGrant grant
                             && !gameQueryService.hasLostAllAbilities(gameData, perm)
@@ -1485,7 +1481,7 @@ public class CastingPermissionService {
         if (gameData.planechase != null) {
             UUID planarControllerId = gameData.planechase.controllerId;
             for (var planar : gameData.planechase.faceUp) {
-                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     if (effect instanceof GrantFlashToCardTypeEffect grant
                             && (includeAlternativeCostFlash || !grant.alternativeCostOnly())
                             && (grant.appliesToAllPlayers() || Objects.equals(planarControllerId, playerId))
@@ -1566,7 +1562,7 @@ public class CastingPermissionService {
         Optional<GraveyardLandPermission> limitedPermission = Optional.empty();
         for (Permanent perm : battlefield == null ? List.<Permanent>of() : battlefield) {
             if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (!(resolved instanceof PlayLandsFromGraveyardPermission permission)) {
                     continue;
@@ -1644,7 +1640,7 @@ public class CastingPermissionService {
                         || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()) {
                     continue;
                 }
-                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                if (permanent.getCard().getStaticEffects().stream()
                         .anyMatch(OpponentsCantPlayLandsFromGraveyardEffect.class::isInstance)) {
                     return true;
                 }
@@ -1665,7 +1661,7 @@ public class CastingPermissionService {
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
             if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (resolved instanceof PlayLandsFromTopOfLibraryEffect
                         || resolved instanceof PlayLandOrCastSpellFromTopOfLibraryOncePerTurnEffect permission
@@ -1688,7 +1684,7 @@ public class CastingPermissionService {
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 if (effect instanceof PlotNonlandCardsFromTopOfLibraryEffect) {
                     return true;
                 }
@@ -1754,7 +1750,7 @@ public class CastingPermissionService {
         if (battlefield == null) return false;
         for (Permanent permanent : battlefield) {
             if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) continue;
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, permanent, playerId, effect);
                 if (resolved instanceof PlayLandsFromTopOfLibraryEffect permission
                         && predicateEvaluationService.matchesCardPredicate(
@@ -1783,7 +1779,7 @@ public class CastingPermissionService {
         for (Permanent perm : battlefield) {
             if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
             if (gameData.oncePerTurnLibraryPlayPermissionsUsedThisTurn.contains(perm.getId())) continue;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (resolved instanceof PlayLandOrCastSpellFromTopOfLibraryOncePerTurnEffect permission
                         && predicateEvaluationService.matchesCardPredicate(
@@ -1834,7 +1830,7 @@ public class CastingPermissionService {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     continue;
                 }
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                     if (!(resolved instanceof CastSpellsFromGraveyardPermission permission)
                             || !predicateEvaluationService.matchesCardPredicate(
@@ -1861,7 +1857,7 @@ public class CastingPermissionService {
 
         if (gameData.planechase != null && Objects.equals(gameData.planechase.controllerId, playerId)) {
             for (var planar : gameData.planechase.faceUp) {
-                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     if (effect instanceof CastSpellsFromGraveyardPermission permission
                             && predicateEvaluationService.matchesCardPredicate(
                             card, permission.filter(), null, gameData, playerId)
@@ -1947,7 +1943,7 @@ public class CastingPermissionService {
                     .findFirst();
             if (source.isPresent()) {
                 Permanent perm = source.get();
-                List<GraveyardPlayPermission> permissions = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                List<GraveyardPlayPermission> permissions = perm.getCard().getStaticEffects().stream()
                         .map(effect -> staticEffectConditionResolver.resolve(gameData, perm, playerId, effect))
                         .filter(GraveyardPlayPermission.class::isInstance)
                         .map(GraveyardPlayPermission.class::cast)
@@ -1959,7 +1955,7 @@ public class CastingPermissionService {
         if (gameData.planechase != null && Objects.equals(gameData.planechase.controllerId, playerId)) {
             List<GraveyardPlayPermission> permissions = gameData.planechase.faceUp.stream()
                     .filter(planar -> planar.getId().equals(permanentId))
-                    .flatMap(planar -> planar.getCard().getEffects(EffectSlot.STATIC).stream())
+                    .flatMap(planar -> planar.getCard().getStaticEffects().stream())
                     .filter(GraveyardPlayPermission.class::isInstance)
                     .map(GraveyardPlayPermission.class::cast)
                     .toList();
@@ -2009,7 +2005,7 @@ public class CastingPermissionService {
         if (battlefield == null) return Optional.empty();
         for (Permanent perm : battlefield) {
             if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 if (effect instanceof CastPermanentSpellsFromGraveyardEffect
                         && hasUnusedPermanentTypeSlot(card,
                         gameData.permanentTypesCastFromGraveyardThisTurn.getOrDefault(perm.getId(), Set.of()))) {
@@ -2214,7 +2210,7 @@ public class CastingPermissionService {
             if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
                 continue;
             }
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof GrantMayhemToGraveyardCardsEffect mayhem
                         && predicateEvaluationService.matchesCardPredicate(card, mayhem.filter(), null)) {
                     return Optional.of(new GraveyardCast(
@@ -2254,7 +2250,7 @@ public class CastingPermissionService {
                 if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
                     continue;
                 }
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     CardEffect resolved = staticEffectConditionResolver.resolve(
                             gameData, permanent, sourceControllerId, effect);
                     if (resolved instanceof GrantFlashbackToGraveyardCardsEffect grant
@@ -2270,7 +2266,7 @@ public class CastingPermissionService {
         if (gameData.planechase != null) {
             UUID sourceControllerId = gameData.planechase.controllerId;
             for (var planar : gameData.planechase.faceUp) {
-                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     if (effect instanceof GrantFlashbackToGraveyardCardsEffect grant
                             && (grant.allGraveyards() || playerId.equals(sourceControllerId))
                             && predicateEvaluationService.matchesCardPredicate(
@@ -2381,7 +2377,7 @@ public class CastingPermissionService {
         if (battlefield == null) return castableTypes;
         for (Permanent perm : battlefield) {
             if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (resolved instanceof AllowCastFromTopOfLibraryEffect allow
                         && (!allow.oncePerTurn()
@@ -2518,7 +2514,7 @@ public class CastingPermissionService {
             return false;
         }
         return gameData.planechase.faceUp.stream()
-                .flatMap(planar -> planar.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(planar -> planar.getCard().getStaticEffects().stream())
                 .anyMatch(AllowPlayFromAnyLibraryTopEffect.class::isInstance);
     }
 
@@ -2613,7 +2609,7 @@ public class CastingPermissionService {
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
             if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 if (effect instanceof AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect) {
                     return true;
                 }
@@ -2638,7 +2634,7 @@ public class CastingPermissionService {
         List<Card> deck = gameData.playerDecks.get(playerId);
         return deck != null && !deck.isEmpty()
                 && deck.getFirst().getId().equals(card.getId())
-                && card.getEffects(EffectSlot.STATIC).stream()
+                && card.getStaticEffects().stream()
                 .anyMatch(TopLibraryCardCastPermissionEffect.class::isInstance);
     }
 
@@ -2683,7 +2679,7 @@ public class CastingPermissionService {
         TopLibraryCastPermissionSource unlimitedFallback = null;
         for (Permanent perm : battlefield) {
             if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (resolved instanceof PlayLandOrCastSpellFromTopOfLibraryOncePerTurnEffect permission
                         && !gameData.oncePerTurnLibraryPlayPermissionsUsedThisTurn.contains(perm.getId())
@@ -2743,7 +2739,7 @@ public class CastingPermissionService {
         OptionalInt lowestCounterCost = OptionalInt.empty();
         for (Permanent perm : battlefield) {
             if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (!(resolved instanceof AllowCastFromTopOfLibraryEffect allow)
                         || !matchesTopLibraryPermission(gameData, playerId, perm, card, allow)
@@ -2801,7 +2797,7 @@ public class CastingPermissionService {
         if (battlefield == null) return List.of();
         for (Permanent perm : battlefield) {
             if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (!(resolved instanceof AllowCastFromTopOfLibraryEffect allow)
                         || !matchesTopLibraryPermission(gameData, playerId, perm, card, allow)
@@ -2862,7 +2858,7 @@ public class CastingPermissionService {
 
     /** Returns whether the card itself carries a perpetual any-color casting permission. */
     public boolean canSpendAnyManaTypeFromCard(Card card) {
-        return card != null && card.getEffects(EffectSlot.STATIC).stream()
+        return card != null && card.getStaticEffects().stream()
                 .anyMatch(PerpetualAnyManaTypeToCastSelfEffect.class::isInstance);
     }
 
@@ -2871,7 +2867,7 @@ public class CastingPermissionService {
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
             if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(gameData, perm, playerId, effect);
                 if (resolved instanceof AnyManaTypeCastEffect anyMana
                         && ((!anyMana.appliesToNonOwnedSpellsOnly()
@@ -3021,7 +3017,7 @@ public class CastingPermissionService {
             for (Permanent permanent : battlefield) {
                 if (sourcePermanentId.equals(permanent.getId())) {
                     return !permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                            && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                            && permanent.getCard().getStaticEffects().stream()
                             .anyMatch(effect -> effect instanceof UbaMaskDrawReplacementEffect);
                 }
             }
@@ -3102,7 +3098,7 @@ public class CastingPermissionService {
         }
         return gameData.planechase.faceUp.stream()
                 .filter(planar -> planar.getId().equals(entry.sourcePermanentId()))
-                .flatMap(planar -> planar.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(planar -> planar.getCard().getStaticEffects().stream())
                 .anyMatch(AllowPlayCardsExiledWithPlanarSourceEffect.class::isInstance);
     }
 
@@ -3479,7 +3475,7 @@ public class CastingPermissionService {
         if (source.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, source)) {
             return Stream.empty();
         }
-        return source.getCard().getEffects(EffectSlot.STATIC).stream()
+        return source.getCard().getStaticEffects().stream()
                 .flatMap(effect -> activeExileCastPermissions(
                         gameData, source, sourceControllerId, effect));
     }
@@ -3639,7 +3635,7 @@ public class CastingPermissionService {
         if (battlefield == null) return false;
         return battlefield.stream()
                 .filter(source -> !gameQueryService.hasLostAllAbilities(gameData, source))
-                .anyMatch(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(source -> source.getCard().getStaticEffects().stream()
                         .filter(AllowCastFromCardsExiledWithIceCountersEffect.class::isInstance)
                         .map(AllowCastFromCardsExiledWithIceCountersEffect.class::cast)
                         .anyMatch(permission -> !anyManaTypeRequired || permission.anyManaType()));

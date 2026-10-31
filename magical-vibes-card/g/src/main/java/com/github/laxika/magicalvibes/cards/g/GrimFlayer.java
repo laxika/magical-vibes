@@ -17,7 +17,7 @@ public class GrimFlayer extends Card {
 
     public GrimFlayer() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new SurveilEffect(3));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new Delirium(), new StaticBoostEffect(2, 2, GrantScope.SELF)));
     }
 }

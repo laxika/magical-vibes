@@ -15,7 +15,7 @@ public class InevitableEnd extends Card {
 
     public InevitableEnd() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.UPKEEP_TRIGGERED,
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
                                 SacrificeRecipient.CONTROLLER),

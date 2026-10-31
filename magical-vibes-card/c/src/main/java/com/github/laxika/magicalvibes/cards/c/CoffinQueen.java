@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
@@ -21,7 +20,7 @@ public class CoffinQueen extends Card {
 
     public CoffinQueen() {
         // "You may choose not to untap this creature during your untap step."
-        addEffect(EffectSlot.STATIC, new MayNotUntapDuringUntapStepEffect());
+        addStaticEffect(new MayNotUntapDuringUntapStepEffect());
 
         // "{2}{B}, {T}: Put target creature card from a graveyard onto the battlefield under your
         // control." The reanimated creature is linked to Coffin Queen so the delayed exile trigger

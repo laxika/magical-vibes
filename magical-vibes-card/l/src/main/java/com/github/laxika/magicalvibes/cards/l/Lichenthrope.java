@@ -12,7 +12,7 @@ public class Lichenthrope extends Card {
 
     public Lichenthrope() {
         // If damage would be dealt to this creature, put that many -1/-1 counters on it instead.
-        addEffect(EffectSlot.STATIC, new ReplaceDamageWithMinusOneCountersEffect());
+        addStaticEffect(new ReplaceDamageWithMinusOneCountersEffect());
 
         // At the beginning of your upkeep, remove a -1/-1 counter from this creature.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,

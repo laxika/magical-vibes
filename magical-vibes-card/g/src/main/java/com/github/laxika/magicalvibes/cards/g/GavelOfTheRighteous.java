@@ -32,9 +32,8 @@ public class GavelOfTheRighteous extends Card {
                 new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         CountersOnSource counters = new CountersOnSource(CounterType.ANY);
-        addEffect(EffectSlot.STATIC,
-                new AttachedBoostEffect(counters, counters, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new AttachedBoostEffect(counters, counters, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.ANY),
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.EQUIPPED_CREATURE)));
 

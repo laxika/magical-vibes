@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -16,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "PIP", collectorNumber = "22")
@@ -29,9 +29,10 @@ public class ThePrydwenSteelFlagship extends Card {
         CreateTokenEffect humanKnight = new CreateTokenEffect(
                 1, "Human Knight", 2, 2, CardColor.WHITE,
                 List.of(CardSubtype.HUMAN, CardSubtype.KNIGHT), Set.of(), Set.of(),
-                Map.of(EffectSlot.STATIC, new ConditionalEffect(
+                List.of(
+                        StaticAbility.of(new ConditionalEffect(
                         new PermanentEnteredThisTurn(new CardTypePredicate(CardType.ARTIFACT), 1),
-                        new BoostSelfEffect(2, 2))));
+                        new BoostSelfEffect(2, 2)))));
 
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD, humanKnight);
 

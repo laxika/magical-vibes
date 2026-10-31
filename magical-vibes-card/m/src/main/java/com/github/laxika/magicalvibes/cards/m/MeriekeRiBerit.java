@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDestroyTargetWhenSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
@@ -19,7 +18,7 @@ public class MeriekeRiBerit extends Card {
 
     public MeriekeRiBerit() {
         // "Merieke Ri Berit doesn't untap during your untap step."
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // "{T}: Gain control of target creature for as long as you control Merieke Ri Berit. When Merieke
         // Ri Berit leaves the battlefield or becomes untapped, destroy that creature. It can't be

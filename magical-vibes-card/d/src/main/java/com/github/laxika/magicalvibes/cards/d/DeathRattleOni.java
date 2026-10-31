@@ -23,7 +23,7 @@ import java.util.List;
 public class DeathRattleOni extends Card {
 
     public DeathRattleOni() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new Scaled(new CreatureDeathsThisTurn(CountScope.ANY_PLAYER), 2)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyAllPermanentsEffect(
                 new PermanentAllOfPredicate(List.of(

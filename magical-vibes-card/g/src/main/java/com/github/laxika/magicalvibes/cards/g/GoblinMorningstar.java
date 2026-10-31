@@ -26,8 +26,8 @@ public class GoblinMorningstar extends Card {
         CreateTokenEffect goblin = new CreateTokenEffect(
                 "Goblin", 1, 1, CardColor.RED, List.of(CardSubtype.GOBLIN), Set.of(), Set.of());
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RollD20Effect(
                 goblin,
                 SequenceEffect.of(goblin,

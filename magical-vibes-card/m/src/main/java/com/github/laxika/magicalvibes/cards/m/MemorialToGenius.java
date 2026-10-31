@@ -18,7 +18,7 @@ public class MemorialToGenius extends Card {
 
     public MemorialToGenius() {
         // Memorial to Genius enters the battlefield tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         // {T}: Add {U}.
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.BLUE));
         // {4}{U}, {T}, Sacrifice Memorial to Genius: Draw two cards.

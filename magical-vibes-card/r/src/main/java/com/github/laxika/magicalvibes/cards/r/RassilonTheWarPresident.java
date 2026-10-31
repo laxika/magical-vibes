@@ -26,7 +26,7 @@ public class RassilonTheWarPresident extends Card {
                 new LoseLifeEffect(2), new ExileTopCardMayPlayWhileExiledEffect()));
 
         // Each noncreature spell you cast from exile has conspire.
-        addEffect(EffectSlot.STATIC, GrantSpellCastingAbilityToSpellsEffect.fromZone(
+        addStaticEffect(GrantSpellCastingAbilityToSpellsEffect.fromZone(
                 Keyword.CONSPIRE,
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 Zone.EXILE));

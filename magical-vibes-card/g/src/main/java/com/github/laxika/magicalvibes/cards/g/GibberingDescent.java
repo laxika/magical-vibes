@@ -16,7 +16,7 @@ public class GibberingDescent extends Card {
 
     public GibberingDescent() {
         addCastingOption(new MadnessCast("{2}{B}{B}"));
-        addEffect(EffectSlot.STATIC, PlayersSkipUpkeepStepEffect.controllerWithEmptyHand());
+        addStaticEffect(PlayersSkipUpkeepStepEffect.controllerWithEmptyHand());
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, SequenceEffect.of(
                 new LoseLifeEffect(1, LoseLifeRecipient.ACTIVE_PLAYER),
                 new DiscardEffect(1, DiscardRecipient.ACTIVE_PLAYER)));

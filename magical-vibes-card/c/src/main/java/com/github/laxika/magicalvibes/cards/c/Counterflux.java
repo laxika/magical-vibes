@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
@@ -36,7 +35,7 @@ public class Counterflux extends Card {
         StackEntryPredicate spellYouDontControl =
                 new StackEntryNotPredicate(new StackEntryControlledByPredicate());
 
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{U}{U}{R}"))));
         target(new StackEntryPredicateTargetFilter(
                 spellYouDontControl,

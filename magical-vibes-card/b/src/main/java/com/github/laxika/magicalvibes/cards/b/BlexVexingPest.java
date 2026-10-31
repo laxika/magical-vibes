@@ -22,7 +22,7 @@ public class BlexVexingPest extends Card {
         setBackFaceCard(backFace);
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(
                         CardSubtype.PEST, CardSubtype.BAT, CardSubtype.INSECT,
                         CardSubtype.SNAKE, CardSubtype.SPIDER))));

@@ -24,7 +24,7 @@ public class DragonlordKolaghan extends Card {
 
     public DragonlordKolaghan() {
         // Other creatures you control have haste.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
 
         // Whenever an opponent casts a creature or planeswalker spell with the same name as a card in
         // their graveyard, that player loses 10 life.

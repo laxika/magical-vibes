@@ -29,6 +29,6 @@ public class OathOfTeferi extends Card {
 
         // You may activate the loyalty abilities of planeswalkers you control twice each turn
         // rather than only once.
-        addEffect(EffectSlot.STATIC, new AllowExtraLoyaltyActivationEffect());
+        addStaticEffect(new AllowExtraLoyaltyActivationEffect());
     }
 }

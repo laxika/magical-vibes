@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -21,7 +20,7 @@ import java.util.List;
 public class BoomScholar extends Card {
 
     public BoomScholar() {
-        addEffect(EffectSlot.STATIC, new ReduceExhaustAbilityCostEffect(2));
+        addStaticEffect(new ReduceExhaustAbilityCostEffect(2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

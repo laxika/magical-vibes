@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
@@ -25,11 +24,11 @@ import java.util.Set;
 public class IroasGodOfVictory extends Card {
 
     public IroasGodOfVictory() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorsAtLeast(
                         Set.of(ManaColor.RED, ManaColor.WHITE), 7)),
                 new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES));
-        addEffect(EffectSlot.STATIC, PreventDamageToCreaturesEffect.youControl(false, new PermanentIsAttackingPredicate()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(PreventDamageToCreaturesEffect.youControl(false, new PermanentIsAttackingPredicate()));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.d.DynamicSoar;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.OmenCast;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -21,7 +20,7 @@ public class WhirlwingStormbrood extends Card {
     public WhirlwingStormbrood() {
         setBackFaceCard(new DynamicSoar());
         addCastingOption(new OmenCast());
-        addEffect(EffectSlot.STATIC, new GrantFlashToCardTypeEffect(new CardAnyOfPredicate(List.of(
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.SORCERY),
                 new CardSubtypePredicate(CardSubtype.DRAGON)
         ))));

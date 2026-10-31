@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -23,7 +22,7 @@ import java.util.Set;
 public class TheBlackstaffOfWaterdeep extends Card {
 
     public TheBlackstaffOfWaterdeep() {
-        addEffect(EffectSlot.STATIC, new MayNotUntapDuringUntapStepEffect());
+        addStaticEffect(new MayNotUntapDuringUntapStepEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

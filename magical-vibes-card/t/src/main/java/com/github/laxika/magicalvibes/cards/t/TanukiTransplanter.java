@@ -37,7 +37,7 @@ public class TanukiTransplanter extends Card {
                                 new PermanentIsSourcePermanentPredicate(),
                                 new PermanentIsHostOfSourceAuraPredicate())),
                         new AwardPersistentManaEffect(ManaColor.GREEN, new TargetPower())));
-        addEffect(EffectSlot.STATIC, new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF,
+        addStaticEffect(new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF,
                 EffectDuration.WHILE_ATTACHED));
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(

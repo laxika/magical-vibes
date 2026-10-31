@@ -35,7 +35,7 @@ import java.util.Set;
 public class BraidssFrightfulReturn extends Card {
 
     public BraidssFrightfulReturn() {
-        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
+        addStaticEffect(new ReadAheadEffect(false));
         addEffect(EffectSlot.SAGA_CHAPTER_I, new MayEffect(
                 new SacrificePermanentThenEffect(
                         new PermanentIsCreaturePredicate(),

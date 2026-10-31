@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerDiscardedCardThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -16,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DMU", collectorNumber = "103")
@@ -46,7 +46,7 @@ public class TheRavenMan extends Card {
                 List.of(CardSubtype.BIRD),
                 Set.of(Keyword.FLYING),
                 Set.of(),
-                Map.of(EffectSlot.STATIC, new CantBlockEffect())
+                List.of(StaticAbility.of(new CantBlockEffect()))
         );
     }
 }

@@ -15,7 +15,7 @@ public class TheLionTurtle extends Card {
 
     public TheLionTurtle() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3));
-        addEffect(EffectSlot.STATIC, new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(new CantAttackOrBlockUnlessEffect(
                 new GraveyardCardThreshold(3, new CardSubtypePredicate(CardSubtype.LESSON)),
                 "there are three or more Lesson cards in your graveyard"
         ));

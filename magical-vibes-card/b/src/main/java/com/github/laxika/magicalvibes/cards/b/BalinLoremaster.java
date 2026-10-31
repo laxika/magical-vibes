@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class BalinLoremaster extends Card {
 
     public BalinLoremaster() {
-        addEffect(EffectSlot.STATIC, new StoriedEffect());
+        addStaticEffect(new StoriedEffect());
         MayEffect ability = new MayEffect(
                 new DiscardOwnHandThenDrawThatManyAndDealDamageEffect(new ControllerHasEnduringStory()),
                 "Discard your hand and draw that many cards?");

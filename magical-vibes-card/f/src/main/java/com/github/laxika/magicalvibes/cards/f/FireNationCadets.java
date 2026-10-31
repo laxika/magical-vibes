@@ -22,7 +22,7 @@ public class FireNationCadets extends Card {
     public FireNationCadets() {
         // Firebending 2 as long as there's a Lesson card in your graveyard. The condition gates only
         // the granted attack trigger, so the mana is still produced if the Lesson leaves before it resolves.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.LESSON)),
                 new GrantTriggeredAbilityEffect(EffectSlot.ON_ATTACK,
                         new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 2), GrantScope.SELF)));

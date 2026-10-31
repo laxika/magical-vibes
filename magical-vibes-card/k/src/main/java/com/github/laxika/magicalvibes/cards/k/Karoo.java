@@ -28,7 +28,7 @@ public class Karoo extends Card {
 
     public Karoo() {
         // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // When this land enters, sacrifice it unless you return an untapped Plains you control to
         // its owner's hand.

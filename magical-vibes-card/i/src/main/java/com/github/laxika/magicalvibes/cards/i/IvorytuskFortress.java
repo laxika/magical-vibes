@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -16,7 +15,7 @@ import java.util.List;
 public class IvorytuskFortress extends Card {
 
     public IvorytuskFortress() {
-        addEffect(EffectSlot.STATIC, new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
+        addStaticEffect(new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
                 TurnStep.UNTAP,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

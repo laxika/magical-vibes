@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class UrborgEmissary extends Card {
 
     public UrborgEmissary() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{U}"));
+        addStaticEffect(new KickerEffect("{1}{U}"));
         target(TargetFilters.permanent())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ConditionalEffect(new Kicked(), ReturnToHandEffect.target()));

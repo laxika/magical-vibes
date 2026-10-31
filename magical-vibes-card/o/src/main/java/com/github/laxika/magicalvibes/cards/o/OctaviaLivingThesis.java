@@ -28,7 +28,7 @@ public class OctaviaLivingThesis extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(8, instantOrSorcery),
                 new ReduceOwnCastCostEffect(new Fixed(8))));
 

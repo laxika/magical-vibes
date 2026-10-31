@@ -20,7 +20,7 @@ public class SpinalGraft extends Card {
         // When enchanted creature becomes the target of a spell or ability, destroy that creature.
         // It can't be regenerated.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
                         new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED, true));
     }

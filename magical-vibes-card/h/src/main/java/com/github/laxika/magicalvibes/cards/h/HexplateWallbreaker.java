@@ -30,8 +30,7 @@ public class HexplateWallbreaker extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new LivingWeaponEffect(new CreateTokenEffect("Rebel", 2, 2, CardColor.RED,
                         List.of(CardSubtype.REBEL), Set.of(), Set.of())));
-        addEffect(EffectSlot.STATIC,
-                new AttachedBoostEffect(new Fixed(2), new Fixed(2), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new AttachedBoostEffect(new Fixed(2), new Fixed(2), GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK,
                 new ConditionalEffect(new FirstCombatPhase(), SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.ALL_CREATURES,

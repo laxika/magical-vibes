@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
@@ -19,8 +18,8 @@ public class GelidShackles extends Card {
 
     public GelidShackles() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new CantBlockEffect())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateAbilitiesEffect());
+                .addStaticEffect(new CantBlockEffect())
+                .addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

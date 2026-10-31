@@ -17,7 +17,7 @@ public class ConductiveMachete extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 ManifestDreadEffect.forController(),
                 new AttachSourceEquipmentToChosenPermanentEffect()));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }
 }

@@ -20,7 +20,7 @@ import java.util.Set;
 public class GalliaOfTheEndlessDance extends Card {
 
     public GalliaOfTheEndlessDance() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, Set.of(Keyword.HASTE), GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.HASTE), GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SATYR))));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
                 new MinimumAttackers(3),

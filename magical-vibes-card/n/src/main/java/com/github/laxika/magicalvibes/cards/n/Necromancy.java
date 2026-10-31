@@ -15,7 +15,7 @@ public class Necromancy extends Card {
     public Necromancy() {
         // Mirage flash clause: cast as though it had flash; sacrificed at next cleanup if cast
         // when a sorcery couldn't have been cast.
-        addEffect(EffectSlot.STATIC, new FlashCastWithCleanupSacrificeEffect());
+        addStaticEffect(new FlashCastWithCleanupSacrificeEffect());
         // ETB: become an Aura, put target creature card from a graveyard onto the battlefield
         // under your control, and attach this to it (intervening-if: still on the battlefield).
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeAuraReanimateFromGraveyardEffect());

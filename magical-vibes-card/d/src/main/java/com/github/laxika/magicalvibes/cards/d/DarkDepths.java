@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "CSP", collectorNumber = "145")
@@ -56,7 +55,7 @@ public class DarkDepths extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

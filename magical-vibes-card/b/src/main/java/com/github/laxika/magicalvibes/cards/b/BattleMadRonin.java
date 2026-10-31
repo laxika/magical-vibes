@@ -12,6 +12,6 @@ public class BattleMadRonin extends Card {
     public BattleMadRonin() {
         addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(2));
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(2));
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
     }
 }

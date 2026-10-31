@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -24,7 +23,6 @@ public class Enchantmentize extends Card {
                         new PermanentIsEnchantmentPredicate()
                 )),
                 "Target must be a creature or enchantment"
-        )).addEffect(EffectSlot.STATIC,
-                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.ENCHANTED_PERMANENT));
+        )).addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.ENCHANTED_PERMANENT));
     }
 }

@@ -16,7 +16,7 @@ public class UneshCriosphinxSovereign extends Card {
 
     public UneshCriosphinxSovereign() {
         // Sphinx spells you cast cost {2} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.SPHINX), 2, CostModificationScope.SELF));
 
         // Whenever Unesh or another Sphinx you control enters, reveal the top four cards of your

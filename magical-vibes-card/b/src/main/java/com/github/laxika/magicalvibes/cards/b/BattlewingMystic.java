@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class BattlewingMystic extends Card {
 
     public BattlewingMystic() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{R}"));
+        addStaticEffect(new KickerEffect("{R}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new DiscardOwnHandThenDrawEffect(new Fixed(2))));
     }

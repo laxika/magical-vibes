@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -19,7 +18,7 @@ import java.util.List;
 public class JubilantSkybonder extends Card {
 
     public JubilantSkybonder() {
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new GrantEffectEffect(
                 new IncreaseOpponentCostForTargetingControlledPermanentEffect(
                         new PermanentIsSourcePermanentPredicate(), 2, false),
                 GrantScope.ALL_OWN_CREATURES,

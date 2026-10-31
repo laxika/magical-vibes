@@ -27,28 +27,27 @@ public class Planeswalkerificate extends Card {
     public Planeswalkerificate() {
         target(TargetFilters.creatureYouControl());
 
-        addEffect(EffectSlot.STATIC,
-                new GrantCardTypeEffect(CardType.PLANESWALKER, GrantScope.ENCHANTED_PERMANENT));
-        addEffect(EffectSlot.STATIC, new EnchantedPermanentToughnessBecomesLoyaltyEffect());
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new GrantCardTypeEffect(CardType.PLANESWALKER, GrantScope.ENCHANTED_PERMANENT));
+        addStaticEffect(new EnchantedPermanentToughnessBecomesLoyaltyEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new InitializeEnchantedPermanentToughnessAsLoyaltyEffect());
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         +1,
                         List.of(new AwardManaEffect(ManaColor.RED, 2)),
                         "+1: Add {R}{R}."
                 ).withToughnessAsLoyalty(),
                 GrantScope.ENCHANTED_PERMANENT));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         -1,
                         List.of(new ExileTopCardMayPlayThisTurnEffect(false)),
                         "−1: Exile the top card of your library. You may play it this turn."
                 ).withToughnessAsLoyalty(),
                 GrantScope.ENCHANTED_PERMANENT));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 ActivatedAbility.variableLoyaltyAbility(
                         List.of(new DealDamageToAnyTargetEffect(new XValue())),
                         "−X: This planeswalker deals X damage to any target.",

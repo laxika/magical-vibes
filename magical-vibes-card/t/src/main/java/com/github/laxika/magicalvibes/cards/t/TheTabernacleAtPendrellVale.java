@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsUpkeepSacrificeUnlessPayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -12,7 +11,6 @@ public class TheTabernacleAtPendrellVale extends Card {
 
     public TheTabernacleAtPendrellVale() {
         // All creatures have "At the beginning of your upkeep, destroy this creature unless you pay {1}."
-        addEffect(EffectSlot.STATIC,
-                AllPermanentsUpkeepSacrificeUnlessPayEffect.destroy(new PermanentIsCreaturePredicate(), "{1}"));
+        addStaticEffect(AllPermanentsUpkeepSacrificeUnlessPayEffect.destroy(new PermanentIsCreaturePredicate(), "{1}"));
     }
 }

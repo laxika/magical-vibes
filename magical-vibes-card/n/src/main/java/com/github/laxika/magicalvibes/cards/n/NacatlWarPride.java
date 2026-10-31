@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class NacatlWarPride extends Card {
 
     public NacatlWarPride() {
-        addEffect(EffectSlot.STATIC, new MustBeBlockedIfAbleEffect());
-        addEffect(EffectSlot.STATIC, new CanBeBlockedByAtMostNCreaturesEffect(1));
+        addStaticEffect(new MustBeBlockedIfAbleEffect());
+        addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));
         PermanentCount defendingPlayerCreatures =
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.DEFENDING_PLAYER);
         addEffect(EffectSlot.ON_ATTACK,

@@ -13,6 +13,6 @@ public class OutlandColossus extends Card {
         // Renown 6
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new RenownEffect(6));
         // This creature can't be blocked by more than one creature.
-        addEffect(EffectSlot.STATIC, new CanBeBlockedByAtMostNCreaturesEffect(1));
+        addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));
     }
 }

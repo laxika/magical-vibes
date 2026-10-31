@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentsGraveyardsAndCreateArtifactTokenCopyEffect;
@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -97,8 +96,9 @@ public class ExileOpponentsGraveyardsAndCreateArtifactTokenCopyEffectHandler
         CreateTokenCopyOfTargetPermanentEffect copyEffect =
                 CreateTokenCopyOfTargetPermanentEffect.withAdditionalEffects(
                         false,
-                        Map.of(EffectSlot.STATIC, List.of(
-                                new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF))));
+                        List.of(
+                                StaticAbility.of(List.of(
+                                new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF)))));
         tokenCopySupport.createTokenCopies(gameData, entry, List.of(exiled.card()), null, copyEffect);
     }
 }

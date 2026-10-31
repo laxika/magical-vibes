@@ -32,7 +32,7 @@ public class GoldspanDragon extends Card {
                 List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect(2)),
                 "{T}, Sacrifice this artifact: Add two mana of any one color."
         );
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 treasureManaAbility,
                 GrantScope.OWN_PERMANENTS,
                 new PermanentHasSubtypePredicate(CardSubtype.TREASURE)

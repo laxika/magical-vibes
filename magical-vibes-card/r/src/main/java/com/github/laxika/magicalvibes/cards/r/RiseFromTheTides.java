@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "INR", collectorNumber = "82")
@@ -37,7 +36,7 @@ public class RiseFromTheTides extends Card {
                 List.of(CardSubtype.ZOMBIE),
                 Set.of(), Set.of(),
                 false, true,
-                Map.of(), List.of(),
+                List.of(), List.of(),
                 false, false, false, 0, Set.of()));
     }
 }

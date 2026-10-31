@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 public class EmberethSkyblazer extends Card {
 
     public EmberethSkyblazer() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
         addEffect(EffectSlot.ON_ATTACK, new MayPayManaEffect("{2}{R}",

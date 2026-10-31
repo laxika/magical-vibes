@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class IgneousElemental extends Card {
 
     public IgneousElemental() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(1, new CardTypePredicate(CardType.LAND)),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
 

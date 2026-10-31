@@ -31,7 +31,7 @@ import java.util.Set;
 public class KomaCosmosSerpent extends Card {
 
     public KomaCosmosSerpent() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
 
         // At the beginning of each upkeep, create a 3/3 blue Serpent creature token named Koma's Coil.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new CreateTokenEffect(

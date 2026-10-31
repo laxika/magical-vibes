@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "44")
@@ -35,7 +34,7 @@ public class TillerOfFlesh extends Card {
         );
         return new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Incubator", 0, 0, null, null,
-                List.of(), Set.of(), Set.of(), false, false, Map.of(), List.of(transform),
+                List.of(), Set.of(), Set.of(), false, false, List.of(), List.of(transform),
                 false, false, false, 2, Set.of()
         );
     }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.c.ClapSnap;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -18,7 +17,7 @@ public class GreatUglyLookingGoblin extends Card {
         setBackFaceCard(new ClapSnap());
         addCastingOption(new AdventureCast("{1}{B}"));
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.MENACE,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)

@@ -18,7 +18,7 @@ import java.util.List;
 public class HarbingerOfSpring extends Card {
 
     public HarbingerOfSpring() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromNonSubtypeCreaturesEffect(CardSubtype.SPIRIT));
+        addStaticEffect(new ProtectionFromNonSubtypeCreaturesEffect(CardSubtype.SPIRIT));
         // Soulshift 4: "When this creature dies, you may return target Spirit card with mana value 4
         // or less from your graveyard to your hand." The graveyard target is chosen as the trigger
         // goes on the stack; the return is optional when the trigger resolves.

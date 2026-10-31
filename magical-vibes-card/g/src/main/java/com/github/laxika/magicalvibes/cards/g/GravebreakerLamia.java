@@ -17,6 +17,6 @@ public class GravebreakerLamia extends Card {
     public GravebreakerLamia() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new SearchLibraryEffect(null, LibrarySearchDestination.GRAVEYARD));
-        addEffect(EffectSlot.STATIC, new ReduceGraveyardSpellCastCostEffect(1));
+        addStaticEffect(new ReduceGraveyardSpellCastCostEffect(1));
     }
 }

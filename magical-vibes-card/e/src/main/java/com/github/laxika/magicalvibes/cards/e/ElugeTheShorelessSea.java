@@ -44,7 +44,7 @@ public class ElugeTheShorelessSea extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.ISLAND), CountScope.CONTROLLER);
         DynamicAmount floodedLands = new PermanentCount(FLOODED_LAND, CountScope.CONTROLLER);
 
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(islands, islands));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(islands, islands));
 
         target(TargetFilters.land())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
@@ -57,7 +57,7 @@ public class ElugeTheShorelessSea extends Card {
                 .addEffect(EffectSlot.ON_ATTACK,
                         new GrantSubtypeToTargetWhileHasCounterEffect(CardSubtype.ISLAND, CounterType.FLOOD));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new ControllerCastSpellThisTurn(INSTANT_OR_SORCERY)),
                 new ReduceColoredCastCostForMatchingSpellsByAmountEffect(
                         INSTANT_OR_SORCERY, ManaColor.BLUE, floodedLands,

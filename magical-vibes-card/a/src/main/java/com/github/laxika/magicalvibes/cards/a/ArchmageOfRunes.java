@@ -25,7 +25,7 @@ public class ArchmageOfRunes extends Card {
 
     public ArchmageOfRunes() {
         // Instant and sorcery spells you cast cost {1} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 INSTANT_OR_SORCERY, 1, CostModificationScope.SELF));
 
         // Whenever you cast an instant or sorcery spell, draw a card.

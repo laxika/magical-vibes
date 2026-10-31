@@ -17,8 +17,7 @@ public class VampiricEmbrace extends Card {
 
     public VampiricEmbrace() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(2, 2, Set.of(Keyword.FLYING), GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(2, 2, Set.of(Keyword.FLYING), GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_DAMAGED_CREATURE_DIES,
                         new PutCountersOnEnchantedCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }

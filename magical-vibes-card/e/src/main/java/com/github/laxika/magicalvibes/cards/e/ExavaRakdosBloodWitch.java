@@ -5,7 +5,6 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -27,11 +26,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 public class ExavaRakdosBloodWitch extends Card {
 
     public ExavaRakdosBloodWitch() {
-        addEffect(EffectSlot.STATIC, new UnleashEffect());
-        addEffect(EffectSlot.STATIC, new CantBlockUnlessEffect(
+        addStaticEffect(new UnleashEffect());
+        addStaticEffect(new CantBlockUnlessEffect(
                 new NotCondition(new SourceCounterThreshold(1, CounterType.PLUS_ONE_PLUS_ONE)),
                 "it has no +1/+1 counters on it"));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.HASTE),
                 GrantScope.OWN_CREATURES,
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)));

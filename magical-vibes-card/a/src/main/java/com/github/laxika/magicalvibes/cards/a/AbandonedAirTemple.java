@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
@@ -23,7 +22,7 @@ import java.util.List;
 public class AbandonedAirTemple extends Card {
 
     public AbandonedAirTemple() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCountAtMost(0, new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.BASIC)

@@ -21,7 +21,7 @@ import java.util.Set;
 public class EssenceChanneler extends Card {
 
     public EssenceChanneler() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new ControllerDidntLoseLifeThisTurn()),
                 new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE), GrantScope.SELF)));
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,

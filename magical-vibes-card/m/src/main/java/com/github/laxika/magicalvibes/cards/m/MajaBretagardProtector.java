@@ -19,7 +19,7 @@ public class MajaBretagardProtector extends Card {
 
     public MajaBretagardProtector() {
         // Other creatures you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
 
         // Landfall — Whenever a land you control enters, create a 1/1 white Human Warrior creature token.
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,

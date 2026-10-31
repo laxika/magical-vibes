@@ -25,7 +25,7 @@ public class SigilOfDistinction extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
 
         // Equipped creature gets +1/+1 for each charge counter on this Equipment.
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 new CountersOnSource(CounterType.CHARGE),
                 new CountersOnSource(CounterType.CHARGE),
                 GrantScope.EQUIPPED_CREATURE));

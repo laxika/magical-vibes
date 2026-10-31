@@ -21,8 +21,7 @@ import java.util.List;
 public class WarriorsResolve extends Card {
 
     public WarriorsResolve() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.TRAINING, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAINING, GrantScope.ALL_OWN_CREATURES));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
@@ -31,6 +30,6 @@ public class MaraxusOfKeld extends Card {
                         ))
                 )),
                 CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(untappedPermanents, untappedPermanents));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(untappedPermanents, untappedPermanents));
     }
 }

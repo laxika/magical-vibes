@@ -14,6 +14,6 @@ public class UginsConjurant extends Card {
     public UginsConjurant() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
-        addEffect(EffectSlot.STATIC, PreventDamageAndRemovePlusOnePlusOneCountersEffect.onlyWhileCountered());
+        addStaticEffect(PreventDamageAndRemovePlusOnePlusOneCountersEffect.onlyWhileCountered());
     }
 }

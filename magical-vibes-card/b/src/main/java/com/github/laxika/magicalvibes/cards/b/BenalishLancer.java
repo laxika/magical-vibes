@@ -18,8 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class BenalishLancer extends Card {
 
     public BenalishLancer() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{W}"));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Kicked(),
+        addStaticEffect(new KickerEffect("{2}{W}"));
+        addStaticEffect(new ConditionalEffect(new Kicked(),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));

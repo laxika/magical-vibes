@@ -57,14 +57,12 @@ import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -474,7 +472,7 @@ public class StackResolutionService {
         entry.getPersistentAbilitiesOnEntry().forEach(perm::addPersistentAbility);
         // Mirage flash clause: cast at a time a sorcery couldn't have been cast, so its controller
         // sacrifices the permanent it becomes at the beginning of the next cleanup step.
-        if (entry.isCastWhenSorceryCouldNotBeCast() && card.getEffects(EffectSlot.STATIC).stream()
+        if (entry.isCastWhenSorceryCouldNotBeCast() && card.getStaticEffects().stream()
                 .anyMatch(FlashCastWithCleanupSacrificeEffect.class::isInstance)) {
             perm.setSacrificeAtNextCleanup(true);
         }
@@ -1097,7 +1095,7 @@ public class StackResolutionService {
 
                 // Handle control-changing auras (e.g., Persuasion): a WHILE_ATTACHED floating
                 // layer-2 control effect keyed to the aura permanent
-                CardEffect controlEffect = characteristics.getEffects(EffectSlot.STATIC).stream()
+                CardEffect controlEffect = characteristics.getStaticEffects().stream()
                         .filter(e -> e instanceof ControlEnchantedCreatureEffect)
                         .findFirst()
                         .orElse(null);

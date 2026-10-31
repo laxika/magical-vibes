@@ -15,7 +15,7 @@ public class CommandBridge extends Card {
 
     public CommandBridge() {
         // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // When this land enters, sacrifice it unless you tap an untapped permanent you control.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayPayTapPermanentsEffect(

@@ -17,7 +17,7 @@ public class SuturedGhoul extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileAnyNumberOfCreatureCardsFromGraveyardOnEnterEffect());
         // Characteristic-defining power/toughness from the exiled cards (CR 613.4a).
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new TotalPowerOfCardsExiledWithSource(), new TotalToughnessOfCardsExiledWithSource()));
     }
 }

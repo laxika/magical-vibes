@@ -34,9 +34,8 @@ public class HammerOfNazahn extends Card {
                                 "Attach that Equipment to target creature you control?"));
 
         // Equipped creature gets +2/+0 and has indestructible.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.EQUIPPED_CREATURE));
 
         // Equip {4}
         addActivatedAbility(new EquipActivatedAbility("{4}"));

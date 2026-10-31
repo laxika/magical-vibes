@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "166")
@@ -43,7 +42,7 @@ public class VrestinMenoptraLeader extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

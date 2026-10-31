@@ -23,7 +23,7 @@ import java.util.Set;
 public class TomBombadil extends Card {
 
     public TomBombadil() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlledPermanentCounterTotalAtLeast(
                         4, CounterType.LORE, new PermanentHasSubtypePredicate(CardSubtype.SAGA)),
                 new GrantKeywordEffect(Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.SELF)));

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -27,7 +26,7 @@ public class HighSentinelsOfArashin extends Card {
                         new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE))),
                 CountScope.CONTROLLER,
                 true);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(otherCounteredCreatures, otherCounteredCreatures));
+        addStaticEffect(new BoostSelfEffect(otherCounteredCreatures, otherCounteredCreatures));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

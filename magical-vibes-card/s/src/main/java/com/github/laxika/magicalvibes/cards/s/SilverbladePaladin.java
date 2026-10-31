@@ -24,7 +24,7 @@ public class SilverbladePaladin extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new SoulbondPairWithEnteringEffect());
 
         // As long as this creature is paired with another creature, both creatures have double strike.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF_AND_PAIRED)));
     }

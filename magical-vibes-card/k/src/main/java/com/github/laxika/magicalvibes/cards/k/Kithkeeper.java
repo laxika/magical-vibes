@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "23")
@@ -28,7 +27,7 @@ public class Kithkeeper extends Card {
                 CardType.CREATURE, new ColorsAmongControlledPermanents(), "Kithkin", 1, 1,
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.WHITE),
                 List.of(CardSubtype.KITHKIN), Set.of(), Set.of(), false, false,
-                Map.of(), List.of(), false, false, false, 0, Set.of()));
+                List.of(), List.of(), false, false, false, 0, Set.of()));
 
         addActivatedAbility(new ActivatedAbility(
                 false, null,

@@ -28,7 +28,7 @@ public class PorcinePortent extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 DraftCardFromSpellbookEffect.conjureToBattlefield(SPELLBOOK));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.BOAR)));
     }
 

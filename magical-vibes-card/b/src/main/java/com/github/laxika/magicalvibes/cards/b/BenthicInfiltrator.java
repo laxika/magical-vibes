@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfDefendingPlaye
 public class BenthicInfiltrator extends Card {
 
     public BenthicInfiltrator() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new ExileTopCardsOfDefendingPlayerLibraryEffect(1));
     }

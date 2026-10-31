@@ -28,19 +28,16 @@ public class ArterialAlchemy extends Card {
                 CreateTokenEffect.ofBloodToken(new Sum(new PlayersInGame(), new Fixed(-1))));
 
         // Blood tokens you control are Equipment in addition to their other types.
-        addEffect(EffectSlot.STATIC,
-                new GrantSubtypeEffect(CardSubtype.EQUIPMENT, GrantScope.OWN_PERMANENTS, false, blood));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.EQUIPMENT, GrantScope.OWN_PERMANENTS, false, blood));
 
         // Blood tokens you control have "Equipped creature gets +2/+0".
-        addEffect(EffectSlot.STATIC,
-                new GrantEffectEffect(
+        addStaticEffect(new GrantEffectEffect(
                         new AttachedBoostEffect(new Fixed(2), new Fixed(0), GrantScope.EQUIPPED_CREATURE),
                         GrantScope.OWN_PERMANENTS,
                         blood));
 
         // ...and equip {2}.
-        addEffect(EffectSlot.STATIC,
-                new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                         new EquipActivatedAbility("{2}"), GrantScope.OWN_PERMANENTS, blood));
     }
 }

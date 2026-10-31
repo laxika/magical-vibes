@@ -18,7 +18,7 @@ public class ScuttlingDoomEngine extends Card {
 
     public ScuttlingDoomEngine() {
         // "This creature can't be blocked by creatures with power 2 or less."
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtMostPredicate(2)));
 
         // "When this creature dies, it deals 6 damage to target opponent or planeswalker."

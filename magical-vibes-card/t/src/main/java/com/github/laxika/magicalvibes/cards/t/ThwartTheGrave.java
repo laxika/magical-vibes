@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.PartySize;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
@@ -21,7 +20,7 @@ import java.util.List;
 public class ThwartTheGrave extends Card {
 
     public ThwartTheGrave() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new PartySize()));
+        addStaticEffect(new ReduceOwnCastCostEffect(new PartySize()));
 
         CardPredicate creature = new CardTypePredicate(CardType.CREATURE);
         CardPredicate partyCreature = new CardAllOfPredicate(List.of(

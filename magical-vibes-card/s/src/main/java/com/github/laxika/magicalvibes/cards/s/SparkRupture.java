@@ -15,6 +15,6 @@ public class SparkRupture extends Card {
 
     public SparkRupture() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
-        addEffect(EffectSlot.STATIC, new PlaneswalkersWithLoyaltyBecomeCreaturesEffect());
+        addStaticEffect(new PlaneswalkersWithLoyaltyBecomeCreaturesEffect());
     }
 }

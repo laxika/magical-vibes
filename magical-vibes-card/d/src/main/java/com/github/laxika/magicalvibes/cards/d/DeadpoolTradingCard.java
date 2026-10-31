@@ -15,7 +15,7 @@ import java.util.List;
 public class DeadpoolTradingCard extends Card {
 
     public DeadpoolTradingCard() {
-        addEffect(EffectSlot.STATIC, new ExchangeTextBoxesEffect());
+        addStaticEffect(new ExchangeTextBoxesEffect());
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new LoseLifeEffect(3));
 

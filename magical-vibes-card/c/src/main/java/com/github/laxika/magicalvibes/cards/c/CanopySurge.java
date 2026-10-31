@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -14,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 public class CanopySurge extends Card {
 
     public CanopySurge() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
+        addStaticEffect(new KickerEffect("{2}"));
         addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 new MassDamageEffect(1, false, true, new PermanentHasKeywordPredicate(Keyword.FLYING)),
                 new MassDamageEffect(4, false, true, new PermanentHasKeywordPredicate(Keyword.FLYING))

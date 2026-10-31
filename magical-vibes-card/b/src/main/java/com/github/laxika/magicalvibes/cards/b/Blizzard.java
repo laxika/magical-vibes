@@ -29,8 +29,7 @@ public class Blizzard extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{2}"));
 
         // Creatures with flying don't untap during their controllers' untap steps.
-        addEffect(EffectSlot.STATIC,
-                new MatchingPermanentsDoesntUntapEffect(new PermanentAllOfPredicate(List.of(
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(), new PermanentHasKeywordPredicate(Keyword.FLYING)))));
     }
 }

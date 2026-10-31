@@ -42,7 +42,7 @@ public class RoaringFurnaceSteamingSauna extends Card {
                                         new PermanentNotPredicate(
                                                 new PermanentControlledBySourceControllerPredicate()))))));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceRoomDoorUnlocked(1),
+        addStaticEffect(new ConditionalEffect(new SourceRoomDoorUnlocked(1),
                 new NoMaximumHandSizeEffect()));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1), new DrawCardEffect(1)));

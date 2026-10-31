@@ -23,7 +23,7 @@ public class Capricopian extends Card {
     public Capricopian() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
-        addEffect(EffectSlot.STATIC, new CantAttackControllerEffect());
+        addStaticEffect(new CantAttackControllerEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",

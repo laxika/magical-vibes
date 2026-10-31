@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "BRO", collectorNumber = "219")
@@ -45,7 +44,7 @@ public class SaheeliFiligreeMaster extends Card {
                 List.of(new CreateTokenEffect(
                         CardType.CREATURE, 2, "Thopter", 1, 1, null, Set.of(),
                         List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT),
-                        false, false, Map.of(), List.of(), false, false, false, 0, Set.of(Keyword.HASTE))),
+                        false, false, List.of(), List.of(), false, false, false, 0, Set.of(Keyword.HASTE))),
                 "\u22122: Create two 1/1 colorless Thopter artifact creature tokens with flying. They gain haste until end of turn."
         ));
 

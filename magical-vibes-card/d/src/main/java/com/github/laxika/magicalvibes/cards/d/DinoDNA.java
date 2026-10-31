@@ -54,7 +54,7 @@ public class DinoDNA extends Card {
                 CardColor.GREEN,
                 Set.of(Keyword.TRAMPLE),
                 false,
-                Map.of(),
+                List.of(),
                 List.of(CardSubtype.DINOSAUR),
                 false,
                 false,

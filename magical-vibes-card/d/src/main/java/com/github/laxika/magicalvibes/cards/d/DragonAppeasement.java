@@ -14,7 +14,7 @@ public class DragonAppeasement extends Card {
 
     public DragonAppeasement() {
         // Skip your draw step.
-        addEffect(EffectSlot.STATIC, new SkipDrawStepEffect());
+        addStaticEffect(new SkipDrawStepEffect());
         // Whenever you sacrifice a creature, you may draw a card.
         addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
                 new TriggeringPermanentConditionalEffect(

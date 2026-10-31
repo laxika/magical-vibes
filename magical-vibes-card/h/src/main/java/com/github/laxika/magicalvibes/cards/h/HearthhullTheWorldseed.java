@@ -62,13 +62,13 @@ public class HearthhullTheWorldseed extends Card {
                         new PermanentIsLandPredicate(),
                         new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT)));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.CHARGE),
                 new AnimatePermanentsEffect(
                         (DynamicAmount) null, (DynamicAmount) null, List.of(), Set.of(), null,
                         Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.CONTINUOUS, null
                 )));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.CHARGE),
                 new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE, Keyword.HASTE), GrantScope.SELF)));
     }

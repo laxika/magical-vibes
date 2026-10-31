@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class SabSunenLuxaEmbodied extends Card {
 
     public SabSunenLuxaEmbodied() {
-        addEffect(EffectSlot.STATIC, new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(new CantAttackOrBlockUnlessEffect(
                 new SourceCounterCountParity(ManaValueParity.EVEN),
                 "it has an even number of counters on it"
         ));

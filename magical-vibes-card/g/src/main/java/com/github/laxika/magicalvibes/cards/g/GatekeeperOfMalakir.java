@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class GatekeeperOfMalakir extends Card {
 
     public GatekeeperOfMalakir() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{B}"));
+        addStaticEffect(new KickerEffect("{B}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
                         SacrificeRecipient.TARGET_PLAYER)));

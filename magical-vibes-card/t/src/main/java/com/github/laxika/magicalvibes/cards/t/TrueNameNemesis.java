@@ -12,6 +12,6 @@ public class TrueNameNemesis extends Card {
 
     public TrueNameNemesis() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChoosePlayerOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new ProtectionFromChosenPlayerEffect());
+        addStaticEffect(new ProtectionFromChosenPlayerEffect());
     }
 }

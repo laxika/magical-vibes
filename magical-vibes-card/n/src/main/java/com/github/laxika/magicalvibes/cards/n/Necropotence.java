@@ -26,7 +26,7 @@ public class Necropotence extends Card {
 
     public Necropotence() {
         // Skip your draw step.
-        addEffect(EffectSlot.STATIC, new SkipDrawStepEffect());
+        addStaticEffect(new SkipDrawStepEffect());
 
         // Whenever you discard a card, exile that card from your graveyard.
         addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, new ExileDiscardedCardFromGraveyardEffect());

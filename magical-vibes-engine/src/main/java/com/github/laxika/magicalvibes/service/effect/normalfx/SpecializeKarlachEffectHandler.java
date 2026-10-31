@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.cards.k.KarlachRagingTiefling;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -108,7 +107,7 @@ public class SpecializeKarlachEffectHandler implements NormalEffectHandlerBean {
         permanentRemovalService.removeCardFromGraveyardById(gameData, specialized.getId());
         // The graveyard card was frozen when its trigger was put on the stack; the returned card perpetually gains "can't block".
         Card returnedCard = specialized.createRuntimeCopy();
-        returnedCard.addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        returnedCard.addStaticEffect(new CantBlockEffect());
         Permanent returned = new Permanent(returnedCard);
         returned.setEnteredFromGraveyardOwnerId(ownerId);
         battlefieldEntryService.putPermanentOntoBattlefield(

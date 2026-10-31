@@ -23,7 +23,7 @@ public class KefnetsMonument extends Card {
 
     public KefnetsMonument() {
         // Blue creature spells you cast cost {1} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardAllOfPredicate(List.of(
                         new CardColorPredicate(CardColor.BLUE),
                         new CardTypePredicate(CardType.CREATURE)

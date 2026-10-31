@@ -15,7 +15,7 @@ public class ComfortingCounsel extends Card {
 
     public ComfortingCounsel() {
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new PutCountersOnSelfEffect(CounterType.GROWTH));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceCounterThreshold(5, CounterType.GROWTH), new StaticBoostEffect(3, 3, GrantScope.OWN_CREATURES)
+        addStaticEffect(new ConditionalEffect(new SourceCounterThreshold(5, CounterType.GROWTH), new StaticBoostEffect(3, 3, GrantScope.OWN_CREATURES)
         ));
     }
 }

@@ -23,7 +23,7 @@ public class Stasis extends Card {
 
     public Stasis() {
         // Players skip their untap steps â€” no permanent, any controller, untaps.
-        addEffect(EffectSlot.STATIC, new PlayersSkipUntapStepEffect());
+        addStaticEffect(new PlayersSkipUntapStepEffect());
 
         // At the beginning of your upkeep, sacrifice this enchantment unless you pay {U}.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,

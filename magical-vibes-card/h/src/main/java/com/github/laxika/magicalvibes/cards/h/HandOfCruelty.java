@@ -13,7 +13,7 @@ import java.util.Set;
 public class HandOfCruelty extends Card {
 
     public HandOfCruelty() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
         addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(1));
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(1));
     }

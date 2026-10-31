@@ -14,7 +14,7 @@ public class SlumberingCerberus extends Card {
 
     public SlumberingCerberus() {
         // This creature doesn't untap during your untap step.
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // Morbid — At the beginning of each end step, if a creature died this turn, untap this creature.
         addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(

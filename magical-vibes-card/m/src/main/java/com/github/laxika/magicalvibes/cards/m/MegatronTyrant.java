@@ -21,7 +21,7 @@ public class MegatronTyrant extends Card {
         setBackFaceCard(new MegatronDestructiveForce());
         addCastingOption(AlternateHandCast.moreThanMeetsTheEye("{1}{R}{W}{B}"));
 
-        addEffect(EffectSlot.STATIC, new OpponentsCantCastSpellsDuringCombatEffect());
+        addStaticEffect(new OpponentsCantCastSpellsDuringCombatEffect());
         addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
                 new MayEffect(
                         new TransformSelfThenEffect(

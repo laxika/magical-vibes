@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
 import com.github.laxika.magicalvibes.cards.l.LanternKami;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
@@ -115,7 +114,7 @@ class NezumiRoninTest extends BaseCardTest {
         addCreatureReady(player1, new HumbleBudoka());
         addCreatureReady(player1, new HumbleBudoka());
         NezumiRonin card = new NezumiRonin();
-        card.addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        card.addStaticEffect(new CanBlockAnyNumberOfCreaturesEffect());
         Permanent ronin = addCreatureReady(player2, card);
 
         declareAttackersAndPrepareBlockers(List.of(0, 1));

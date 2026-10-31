@@ -14,6 +14,6 @@ public class BrineboundGift extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.whiteSpirit(1));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_AURA_SPELL, CreateTokenEffect.whiteSpirit(1));
-        addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect());
+        addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 }

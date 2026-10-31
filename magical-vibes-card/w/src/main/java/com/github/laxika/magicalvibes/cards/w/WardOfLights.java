@@ -17,9 +17,8 @@ public class WardOfLights extends Card {
         // from it (the grant never detaches this Aura). The Mirage flash clause lets it be cast at
         // instant speed at the cost of being sacrificed at the next cleanup step.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new FlashCastWithCleanupSacrificeEffect())
+                .addStaticEffect(new FlashCastWithCleanupSacrificeEffect())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect())
-                .addEffect(EffectSlot.STATIC,
-                        new ProtectionFromChosenColorEffect(GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new ProtectionFromChosenColorEffect(GrantScope.ENCHANTED_CREATURE));
     }
 }

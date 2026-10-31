@@ -16,7 +16,7 @@ public class TheCaveOfSkulls extends Card {
 
     public TheCaveOfSkulls() {
         // Each creature card in your graveyard has scavenge. The scavenge cost is equal to its mana cost.
-        addEffect(EffectSlot.STATIC, new GrantScavengeEqualToManaCostToCreatureCardsEffect());
+        addStaticEffect(new GrantScavengeEqualToManaCostToCreatureCardsEffect());
 
         // Whenever chaos ensues, create two 1/1 white Warrior creature tokens.
         addEffect(EffectSlot.CHAOS_TRIGGERED,

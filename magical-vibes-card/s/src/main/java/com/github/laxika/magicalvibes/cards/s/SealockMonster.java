@@ -20,7 +20,7 @@ import java.util.List;
 public class SealockMonster extends Card {
 
     public SealockMonster() {
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new DefendingPlayerControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 "an Island"));
 

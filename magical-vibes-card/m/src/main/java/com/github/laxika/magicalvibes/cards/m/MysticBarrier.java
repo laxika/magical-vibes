@@ -24,6 +24,6 @@ public class MysticBarrier extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtResolutionEffect(directionChoice));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, directionChoice);
-        addEffect(EffectSlot.STATIC, new AttackOnlyNearestOpponentInDirectionEffect());
+        addStaticEffect(new AttackOnlyNearestOpponentInDirectionEffect());
     }
 }

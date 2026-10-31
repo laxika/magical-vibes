@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 public class AresGodOfWar extends Card {
 
     public AresGodOfWar() {
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentIsAttackingPredicate(), new ReturnTriggeringCardToOwnerHandEffect()));

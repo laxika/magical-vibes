@@ -35,6 +35,6 @@ public class KrosanVorine extends Card {
                 "Have target creature defending player controls untap and block Krosan Vorine if able?"
         ));
 
-        addEffect(EffectSlot.STATIC, new CanBeBlockedByAtMostNCreaturesEffect(1));
+        addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));
     }
 }

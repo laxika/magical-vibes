@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -144,7 +143,7 @@ class ActivationLimitAbilityIdentityTest extends BaseCardTest {
         card.setType(CardType.ARTIFACT);
         card.setSubtypes(List.of(CardSubtype.EQUIPMENT));
         card.setManaCost("{1}");
-        card.addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        card.addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(false, null, List.of(new GainLifeEffect(life)),
                         "Gain " + life + " life. Activate only once each turn.", 1),
                 GrantScope.EQUIPPED_CREATURE));

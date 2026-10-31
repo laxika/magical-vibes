@@ -26,7 +26,7 @@ public class HeraldOfLeshrac extends Card {
                 new PermanentNotPredicate(new PermanentOwnedBySourceControllerPredicate())));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 CumulativeUpkeepEffect.gainControlOf(new PermanentIsLandPredicate()));
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 new PermanentCount(landsYouControlButDoNotOwn, CountScope.CONTROLLER),
                 new PermanentCount(landsYouControlButDoNotOwn, CountScope.CONTROLLER), GrantScope.SELF));
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,

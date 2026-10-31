@@ -15,6 +15,6 @@ public class RealityTwist extends Card {
 
         // If tapped for mana, Plains produce {R}, Swamps produce {G}, Mountains produce {W},
         // and Forests produce {B} instead of any other type.
-        addEffect(EffectSlot.STATIC, new RealityTwistManaEffect());
+        addStaticEffect(new RealityTwistManaEffect());
     }
 }

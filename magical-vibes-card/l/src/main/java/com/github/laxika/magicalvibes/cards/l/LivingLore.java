@@ -28,8 +28,7 @@ public class LivingLore extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileCardFromGraveyardOnEnterEffect(instantOrSorcery));
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(exiledManaValue, exiledManaValue));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(exiledManaValue, exiledManaValue));
         addEffect(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE,
                 new MayEffect(
                         new SacrificeSelfThenEffect(new MayCastCardExiledWithSourceEffect()),

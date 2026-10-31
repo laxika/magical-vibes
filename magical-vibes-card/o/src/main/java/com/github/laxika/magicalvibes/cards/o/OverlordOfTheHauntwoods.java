@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DSK", collectorNumber = "194")
@@ -44,7 +43,7 @@ public class OverlordOfTheHauntwoods extends Card {
                 Set.of(),
                 false,
                 true,
-                Map.of(),
+                List.of(),
                 List.of(ManaAbilities.tapForAnyColor()),
                 false,
                 false,
@@ -62,7 +61,7 @@ public class OverlordOfTheHauntwoods extends Card {
                         new CastForAlternateCost(),
                         new SourceCounterThreshold(1, CounterType.TIME))),
                 new RemoveCounterFromSourceEffect(CounterType.TIME, 1)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new CastForAlternateCost(),
                         new SourceCounterThreshold(1, CounterType.TIME))),

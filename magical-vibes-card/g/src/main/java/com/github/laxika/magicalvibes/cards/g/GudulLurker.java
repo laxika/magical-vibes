@@ -12,7 +12,7 @@ public class GudulLurker extends Card {
 
     public GudulLurker() {
         addMorph("{U}");
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_TURNED_FACE_UP, new PutCountersOnTurnFaceUpEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, false));
     }
 }

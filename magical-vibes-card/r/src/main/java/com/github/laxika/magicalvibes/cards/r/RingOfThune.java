@@ -20,7 +20,7 @@ public class RingOfThune extends Card {
 
     public RingOfThune() {
         // Equipped creature has vigilance.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
 
         // At the beginning of your upkeep, put a +1/+1 counter on equipped creature if it's white.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCounterOnReferencedPermanentEffect(

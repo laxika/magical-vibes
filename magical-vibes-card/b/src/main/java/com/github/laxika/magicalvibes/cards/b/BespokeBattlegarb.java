@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class BespokeBattlegarb extends Card {
 
     public BespokeBattlegarb() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
 
         target(TargetFilters.creatureYouControl(), 0, 1)
                 .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(

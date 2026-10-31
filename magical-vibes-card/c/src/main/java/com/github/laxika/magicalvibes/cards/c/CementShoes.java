@@ -15,9 +15,9 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 public class CementShoes extends Card {
 
     public CementShoes() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(DoesntUntapEffect.enchanted());
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new TapPermanentsEffect(TapUntapScope.SELF),
                 GrantScope.EQUIPPED_CREATURE

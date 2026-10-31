@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,8 +19,7 @@ import java.util.Set;
 public class SkittishKavu extends Card {
 
     public SkittishKavu() {
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                         new NotCondition(
                                 new OpponentControlsPermanent(
                                         new PermanentAllOfPredicate(List.of(

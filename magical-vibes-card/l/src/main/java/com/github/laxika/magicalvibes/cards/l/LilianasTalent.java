@@ -26,7 +26,7 @@ public class LilianasTalent extends Card {
                 new PermanentIsPlaneswalkerPredicate(),
                 "Target must be a planeswalker"));
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         -8,
                         List.of(ReturnCardFromGraveyardEffect.builder()

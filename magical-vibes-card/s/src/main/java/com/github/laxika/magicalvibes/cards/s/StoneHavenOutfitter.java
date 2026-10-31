@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 public class StoneHavenOutfitter extends Card {
 
     public StoneHavenOutfitter() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsEquippedPredicate()));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentIsEquippedPredicate(), new DrawCardEffect(1)));

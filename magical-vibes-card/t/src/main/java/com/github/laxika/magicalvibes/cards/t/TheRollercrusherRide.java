@@ -17,7 +17,7 @@ public class TheRollercrusherRide extends Card {
         targetUpTo(new XValue(), TargetFilters.creature(), 100)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new DealDamageToEachTargetEffect(new XValue()));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new Delirium(), new DoubleControllerDamageEffect(null, false)));
     }
 }

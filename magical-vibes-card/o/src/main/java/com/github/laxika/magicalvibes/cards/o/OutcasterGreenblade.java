@@ -26,6 +26,6 @@ public class OutcasterGreenblade extends Card {
 
         PermanentCount desertsYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.DESERT), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(desertsYouControl, desertsYouControl));
+        addStaticEffect(new BoostSelfEffect(desertsYouControl, desertsYouControl));
     }
 }

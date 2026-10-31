@@ -23,7 +23,7 @@ public class MattMurdockJusticeSeeker extends Card {
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                         "Pay {1} to put a +1/+1 counter on target creature you control?"));
 
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(1),
                 GrantScope.ALL_OWN_CREATURES,

@@ -15,7 +15,7 @@ public class CastawaysDespair extends Card {
     public CastawaysDespair() {
         target(TargetFilters.creature())
                 // Enchanted creature doesn't untap during its controller's untap step.
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+                .addStaticEffect(DoesntUntapEffect.enchanted());
         // When this Aura enters, tap enchanted creature (the trigger doesn't target).
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED));
     }

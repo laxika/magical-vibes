@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "C19", collectorNumber = "13")
@@ -34,7 +33,7 @@ public class WallOfStolenIdentity extends Card {
                 false,
                 null,
                 Set.of(CardSubtype.WALL),
-                Map.of(),
+                List.of(),
                 false,
                 false,
                 null,

@@ -23,7 +23,7 @@ import java.util.Set;
 public class FaerieConclave extends Card {
 
     public FaerieConclave() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.BLUE));
         addActivatedAbility(new ActivatedAbility(
                 false,

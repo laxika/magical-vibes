@@ -20,8 +20,7 @@ public class HazelsBrewmaster extends Card {
         addEffect(EffectSlot.ON_ATTACK,
                 ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyardWithSource());
         addEffect(EffectSlot.ON_ATTACK, CreateTokenEffect.ofFoodToken(1));
-        addEffect(EffectSlot.STATIC,
-                new GrantActivatedAbilitiesOfCreatureCardsExiledWithSourceToMatchingPermanentsEffect(
+        addStaticEffect(new GrantActivatedAbilitiesOfCreatureCardsExiledWithSourceToMatchingPermanentsEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.FOOD)));
     }
 }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
@@ -23,15 +22,13 @@ import java.util.List;
 public class LuxiorGiadasGift extends Card {
 
     public LuxiorGiadasGift() {
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 new CountersOnSource(CounterType.ANY),
                 new CountersOnSource(CounterType.ANY),
                 GrantScope.EQUIPPED_CREATURE,
                 true));
-        addEffect(EffectSlot.STATIC,
-                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new RemoveCardTypeFromAttachedPermanentEffect(CardType.PLANESWALKER));
+        addStaticEffect(new GrantCardTypeEffect(CardType.CREATURE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new RemoveCardTypeFromAttachedPermanentEffect(CardType.PLANESWALKER));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

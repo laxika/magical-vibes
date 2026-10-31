@@ -20,7 +20,7 @@ import java.util.List;
 public class NevThePracticalDean extends Card {
 
     public NevThePracticalDean() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasCountersPredicate(CounterType.ANY)));

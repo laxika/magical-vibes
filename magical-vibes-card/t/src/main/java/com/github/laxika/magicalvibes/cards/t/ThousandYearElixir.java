@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -21,7 +20,7 @@ public class ThousandYearElixir extends Card {
 
     public ThousandYearElixir() {
         // You may activate abilities of creatures you control as though those creatures had haste.
-        addEffect(EffectSlot.STATIC, new ActivateCreatureAbilitiesAsThoughHasteEffect());
+        addStaticEffect(new ActivateCreatureAbilitiesAsThoughHasteEffect());
 
         // {1}, {T}: Untap target creature.
         addActivatedAbility(new ActivatedAbility(

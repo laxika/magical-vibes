@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsEnterUntappedEffect;
@@ -27,9 +26,9 @@ public class ArchelosLagoonMystic extends Card {
     );
 
     public ArchelosLagoonMystic() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new SourceIsTapped(), new EnterPermanentsOfTypesTappedEffect(PERMANENT_TYPES)));
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new SourceUntapped(), new AllPermanentsEnterUntappedEffect(new PermanentTruePredicate())));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnNextInstantOrSorceryCastFromHandToHandThisTurnEffect;
 
@@ -13,7 +12,7 @@ import java.util.List;
 public class SoulfireGrandMaster extends Card {
 
     public SoulfireGrandMaster() {
-        addEffect(EffectSlot.STATIC, GrantLifelinkToControllerSpellsByColorEffect.allColors());
+        addStaticEffect(GrantLifelinkToControllerSpellsByColorEffect.allColors());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

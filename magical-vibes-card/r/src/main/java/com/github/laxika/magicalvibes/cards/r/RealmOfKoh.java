@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
@@ -23,14 +23,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TLA", collectorNumber = "276")
 public class RealmOfKoh extends Card {
 
     public RealmOfKoh() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCountAtMost(0, new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.BASIC)
@@ -43,10 +42,11 @@ public class RealmOfKoh extends Card {
         CreateTokenEffect spiritToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Spirit", 1, 1, null, null,
                 List.of(CardSubtype.SPIRIT), Set.of(), Set.of(), false, false,
-                Map.of(EffectSlot.STATIC, SequenceEffect.of(
+                List.of(
+                        StaticAbility.of(SequenceEffect.of(
                         new CanBeBlockedOnlyByFilterEffect(spirit, "Spirit creatures"),
                         new CanBlockOnlyIfAttackerMatchesPredicateEffect(spirit, "Spirit creatures")
-                )),
+                ))),
                 List.of(), false, false, false, 0, Set.of()
         );
 

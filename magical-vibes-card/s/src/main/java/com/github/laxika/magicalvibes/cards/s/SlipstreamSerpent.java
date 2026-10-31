@@ -19,7 +19,7 @@ public class SlipstreamSerpent extends Card {
 
     public SlipstreamSerpent() {
         addMorph("{5}{U}");
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new DefendingPlayerControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 "an Island"
         ));

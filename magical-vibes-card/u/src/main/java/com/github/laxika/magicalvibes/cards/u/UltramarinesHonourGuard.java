@@ -21,6 +21,6 @@ public class UltramarinesHonourGuard extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new RepeatedAdditionalCostPaid("{2}"),
                         new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}"))));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
     }
 }

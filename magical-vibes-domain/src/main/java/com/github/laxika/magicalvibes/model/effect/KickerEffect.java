@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -36,6 +37,12 @@ public record KickerEffect(String cost, PermanentPredicate sacrificePredicate, S
                            int sacrificeCount, PayLifeCost lifeCost,
                            Set<ManaColor> xColorRestrictions, boolean xUsesEachColorAtMostOnce,
                            ForageOrPayManaCost forageCost, boolean countsAsKicker) implements CardEffect {
+
+    /** Kicker functions while the spell with kicker is on the stack (CR 702.33a). */
+    @Override
+    public AbilityZones staticAbilityZones() {
+        return AbilityZones.STACK;
+    }
 
     public KickerEffect(String cost, PermanentPredicate sacrificePredicate, String sacrificeDescription,
                         PermanentPredicate tapPredicate, String tapDescription,

@@ -26,7 +26,7 @@ public class ConstrictingSliver extends Card {
     ));
 
     public ConstrictingSliver() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(
                         new ExileTargetPermanentUntilSourceLeavesEffect(false, OPPONENT_CREATURE),

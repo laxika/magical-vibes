@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenDealManaValueDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -25,7 +24,7 @@ public class OrimsThunder extends Card {
     public OrimsThunder() {
         // The two "target" instances are independent (CR 115.3), so the artifact may also be the creature.
         setAllowSharedTargets(true);
-        addEffect(EffectSlot.STATIC, new KickerEffect("{R}"));
+        addStaticEffect(new KickerEffect("{R}"));
         addSpellEffect(new DestroyTargetPermanentThenDealManaValueDamageToTargetCreatureEffect(1));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(

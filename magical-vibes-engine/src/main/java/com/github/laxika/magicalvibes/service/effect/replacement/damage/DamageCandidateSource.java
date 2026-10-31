@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -185,7 +184,7 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (permanent.isFaceDown()) return;
             Card card = LayerSystemService.currentCard(gameData, permanent);
-            if (card.getEffects(EffectSlot.STATIC).stream().noneMatch(GlobalDamageMultiplyingEffect.class::isInstance)
+            if (card.getStaticEffects().stream().noneMatch(GlobalDamageMultiplyingEffect.class::isInstance)
                     || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) return;
             collectGlobalMultipliers(gameData, permanent.getId().toString(), card, multipliers);
         });
@@ -199,7 +198,7 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
 
     private static void collectGlobalMultipliers(GameData gameData, String sourceKey, Card card,
                                                  Map<String, NumericInstance> multipliers) {
-        List<CardEffect> statics = card.getEffects(EffectSlot.STATIC);
+        List<CardEffect> statics = card.getStaticEffects();
         for (int i = 0; i < statics.size(); i++) {
             if (statics.get(i) instanceof GlobalDamageMultiplyingEffect global) {
                 int factor = MaroGoneNutsSupport.apply(gameData, global, global.damageMultiplierFactor());

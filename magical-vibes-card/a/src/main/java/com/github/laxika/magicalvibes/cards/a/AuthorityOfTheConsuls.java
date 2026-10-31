@@ -16,7 +16,7 @@ import java.util.Set;
 public class AuthorityOfTheConsuls extends Card {
 
     public AuthorityOfTheConsuls() {
-        addEffect(EffectSlot.STATIC, new EnterPermanentsOfTypesTappedEffect(Set.of(CardType.CREATURE), true));
+        addStaticEffect(new EnterPermanentsOfTypesTappedEffect(Set.of(CardType.CREATURE), true));
         addEffect(EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD, new GainLifeEffect(1));
     }
 }

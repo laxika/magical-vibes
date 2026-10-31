@@ -23,7 +23,7 @@ import java.util.Set;
 public class PrototypeX8 extends Card {
 
     public PrototypeX8() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new Scaled(new CardsInGraveyard(
                         new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER), 2)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,

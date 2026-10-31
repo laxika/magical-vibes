@@ -16,7 +16,7 @@ public class Ribskiff extends Card {
 
     public Ribskiff() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
-        addEffect(EffectSlot.STATIC, new ToxicEffect(2));
+        addStaticEffect(new ToxicEffect(2));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

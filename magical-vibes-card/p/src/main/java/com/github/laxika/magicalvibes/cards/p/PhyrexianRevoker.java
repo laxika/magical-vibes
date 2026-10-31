@@ -17,6 +17,6 @@ public class PhyrexianRevoker extends Card {
 
     public PhyrexianRevoker() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameOnEnterEffect(List.of(CardType.LAND)));
-        addEffect(EffectSlot.STATIC, new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect(true));
+        addStaticEffect(new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect(true));
     }
 }

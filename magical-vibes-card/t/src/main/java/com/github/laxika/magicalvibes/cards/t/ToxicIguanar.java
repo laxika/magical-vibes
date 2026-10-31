@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -18,8 +17,7 @@ public class ToxicIguanar extends Card {
 
     public ToxicIguanar() {
         // Toxic Iguanar has deathtouch as long as you control a green permanent.
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                         new ControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.GREEN))),
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
     }

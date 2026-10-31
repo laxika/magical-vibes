@@ -27,7 +27,7 @@ public class PearlEarImperialAdvisor extends Card {
     public PearlEarImperialAdvisor() {
         PermanentCount aurasYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.AURA), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTypePredicate(CardType.ENCHANTMENT), aurasYouControl, CostModificationScope.SELF));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(

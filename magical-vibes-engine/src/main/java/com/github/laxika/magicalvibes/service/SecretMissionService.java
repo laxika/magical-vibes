@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.SecretMissionEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -98,7 +98,7 @@ public class SecretMissionService {
     }
 
     private static SecretMissionEffect secretMission(Card card) {
-        return card.getEffects(EffectSlot.COMMAND_ZONE_STATIC).stream()
+        return card.getStaticEffects(Zone.COMMAND).stream()
                 .filter(SecretMissionEffect.class::isInstance)
                 .map(SecretMissionEffect.class::cast)
                 .findFirst()

@@ -15,6 +15,6 @@ public class ShelteringBoughs extends Card {
     public ShelteringBoughs() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 3, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 3, GrantScope.ENCHANTED_CREATURE));
     }
 }

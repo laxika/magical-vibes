@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -15,14 +16,13 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ONE", collectorNumber = "17")
 public class InfestedFleshcutter extends Card {
 
     public InfestedFleshcutter() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
 
         addEffect(EffectSlot.ON_ATTACK, new CreateTokenEffect(
                 CardType.CREATURE,
@@ -37,9 +37,7 @@ public class InfestedFleshcutter extends Card {
                 Set.of(CardType.ARTIFACT),
                 false,
                 false,
-                Map.of(
-                        EffectSlot.STATIC, SequenceEffect.of(new CantBlockEffect(), new ToxicEffect(1))
-                ),
+                List.of(StaticAbility.of(SequenceEffect.of(new CantBlockEffect(), new ToxicEffect(1)))),
                 List.of(),
                 false,
                 false,

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -15,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class DarkEndurance extends Card {
 
     public DarkEndurance() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(
+        addStaticEffect(new ReduceOwnCastCostIfTargetingPermanentEffect(
                 new PermanentIsBlockingPredicate(), 1));
 
         target(TargetFilters.creature())

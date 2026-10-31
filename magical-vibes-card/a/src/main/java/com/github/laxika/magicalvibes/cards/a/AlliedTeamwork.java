@@ -19,7 +19,7 @@ public class AlliedTeamwork extends Card {
     public AlliedTeamwork() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 "Ally", 1, 1, CardColor.WHITE, List.of(CardSubtype.ALLY), Set.of(), Set.of()));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_PERMANENTS,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_PERMANENTS,
                 new PermanentHasSubtypePredicate(CardSubtype.ALLY)));
     }
 }

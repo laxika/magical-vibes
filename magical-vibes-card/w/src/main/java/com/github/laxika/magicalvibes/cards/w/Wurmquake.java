@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.amount.OpponentsWithAtLeastPoisonCou
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ONC", collectorNumber = "19")
@@ -41,7 +40,7 @@ public class Wurmquake extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

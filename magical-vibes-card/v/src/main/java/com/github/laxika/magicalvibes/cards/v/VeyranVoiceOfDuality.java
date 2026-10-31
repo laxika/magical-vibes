@@ -31,6 +31,6 @@ public class VeyranVoiceOfDuality extends Card {
                 new SpellCastTriggerEffect(INSTANT_OR_SORCERY, boost));
         addEffect(EffectSlot.ON_CONTROLLER_COPIES_SPELL,
                 new SpellCopyTriggerEffect(INSTANT_OR_SORCERY, boost));
-        addEffect(EffectSlot.STATIC, AdditionalTriggeredAbilityEffect.forInstantOrSorceryCastOrCopy());
+        addStaticEffect(AdditionalTriggeredAbilityEffect.forInstantOrSorceryCastOrCopy());
     }
 }

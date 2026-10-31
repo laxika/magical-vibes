@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class SwordOfKaldra extends Card {
 
     public SwordOfKaldra() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(5, 5, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(5, 5, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
                 new ExileDamagedCreatureEffect(true));
         addActivatedAbility(new EquipActivatedAbility("{4}"));

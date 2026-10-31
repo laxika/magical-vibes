@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -35,7 +34,7 @@ public class ChooseOpponentGainsControlOfSourceEffectHandler implements NormalEf
 
     /** Applies the static, as-entry form in the two-player engine, before any entry triggers fire. */
     public UUID resolveEnteringController(GameData gameData, UUID intendedControllerId, Permanent permanent) {
-        if (permanent.isFaceDown() || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        if (permanent.isFaceDown() || permanent.getCard().getStaticEffects().stream()
                 .noneMatch(effect -> effect.getClass() == handledEffect())) {
             return intendedControllerId;
         }

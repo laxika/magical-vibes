@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class StormbeaconBlade extends Card {
 
     public StormbeaconBlade() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 0, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
                 new MinimumMatchingAttackers(3, new PermanentTruePredicate()),
                 new DrawCardEffect()));

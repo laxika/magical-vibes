@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CombatTaxKind;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCombatTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseActivatedAbilityCostEffect;
@@ -15,9 +14,9 @@ public class OppressiveRays extends Card {
 
     public OppressiveRays() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCombatTaxEffect(3, CombatTaxKind.ATTACK))
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCombatTaxEffect(3, CombatTaxKind.BLOCK_WITH))
-                .addEffect(EffectSlot.STATIC, new IncreaseActivatedAbilityCostEffect(
+                .addStaticEffect(new EnchantedCreatureCombatTaxEffect(3, CombatTaxKind.ATTACK))
+                .addStaticEffect(new EnchantedCreatureCombatTaxEffect(3, CombatTaxKind.BLOCK_WITH))
+                .addStaticEffect(new IncreaseActivatedAbilityCostEffect(
                         new PermanentIsHostOfSourceAuraPredicate(), 3));
     }
 }

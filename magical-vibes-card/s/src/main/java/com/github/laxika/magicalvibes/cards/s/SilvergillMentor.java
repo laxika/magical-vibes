@@ -21,7 +21,7 @@ public class SilvergillMentor extends Card {
 
     public SilvergillMentor() {
         // As an additional cost to cast this spell, behold a Merfolk or pay {2}.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.MERFOLK))),
                 new IncreaseOwnCastCostUnlessRevealSubtypeEffect(2, CardSubtype.MERFOLK, true)));
 

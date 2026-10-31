@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class BusterSword extends Card {
 
     public BusterSword() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 2, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(1));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new MayCastAnySpellFromHandWithoutPayingManaCostEffect(new EventValue()));

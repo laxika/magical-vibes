@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 public class VelaTheNightClad extends Card {
 
     public VelaTheNightClad() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.OWN_CREATURES));
 
         LoseLifeEffect loseLife = new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT);
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, loseLife);

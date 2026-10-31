@@ -13,6 +13,6 @@ public class Rageform extends Card {
 
     public Rageform() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeAuraManifestTopCardEffect());
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.ENCHANTED_CREATURE));
     }
 }

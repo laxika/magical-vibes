@@ -22,7 +22,7 @@ public class NightpackAmbusher extends Card {
 
     public NightpackAmbusher() {
         // Other Wolves and Werewolves you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.WOLF, CardSubtype.WEREWOLF))));
 
         // At the beginning of your end step, if you didn't cast a spell this turn, create a 2/2

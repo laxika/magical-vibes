@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class ZardaThePowerPrincess extends Card {
 
     public ZardaThePowerPrincess() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new ConditionalEffect(new AttacksAlone(), new BoostTargetCreatureEffect(1, 1)),
                 GrantScope.OWN_CREATURES,

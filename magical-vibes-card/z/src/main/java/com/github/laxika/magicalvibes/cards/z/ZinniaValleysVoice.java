@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.z;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -25,8 +24,8 @@ public class ZinniaValleysVoice extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentBasePowerEqualsPredicate(1))),
                 CountScope.CONTROLLER, true);
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 otherBasePowerOneCreatures, new Fixed(0), GrantScope.SELF));
-        addEffect(EffectSlot.STATIC, new GrantOffspringToCreatureSpellsEffect("{2}"));
+        addStaticEffect(new GrantOffspringToCreatureSpellsEffect("{2}"));
     }
 }

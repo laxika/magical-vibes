@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.IntensifySourceByEnteringPowe
 public class QuickbeastAmulet extends Card {
 
     public QuickbeastAmulet() {
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 new SourceIntensity(), new SourceIntensity(), GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new IntensifySourceByEnteringPowerEffect());

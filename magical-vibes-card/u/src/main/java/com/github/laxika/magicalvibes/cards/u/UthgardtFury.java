@@ -11,6 +11,6 @@ public class UthgardtFury extends Card {
 
     public UthgardtFury() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(4));
-        addEffect(EffectSlot.STATIC, new DamageNotRemovedFromOpponentsCreaturesDuringCleanupEffect());
+        addStaticEffect(new DamageNotRemovedFromOpponentsCreaturesDuringCleanupEffect());
     }
 }

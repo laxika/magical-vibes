@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToSelfFromCreaturesItBlocksEffect;
 import com.github.laxika.magicalvibes.model.effect.WallOnlyTargetingRestrictionEffect;
 
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.WallOnlyTargetingRestrictionE
 public class WallOfShadows extends Card {
 
     public WallOfShadows() {
-        addEffect(EffectSlot.STATIC, new PreventAllDamageToSelfFromCreaturesItBlocksEffect());
-        addEffect(EffectSlot.STATIC, new WallOnlyTargetingRestrictionEffect());
+        addStaticEffect(new PreventAllDamageToSelfFromCreaturesItBlocksEffect());
+        addStaticEffect(new WallOnlyTargetingRestrictionEffect());
     }
 }

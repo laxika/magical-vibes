@@ -18,7 +18,7 @@ public class TheMasterMultiplied extends Card {
     public TheMasterMultiplied() {
         addEffect(EffectSlot.ON_ATTACK,
                 CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad());
-        addEffect(EffectSlot.STATIC, new IgnoreLegendRuleForControlledTokensEffect());
-        addEffect(EffectSlot.STATIC, new TriggeredAbilitiesCantCauseSacrificeOrExileCreatureTokensEffect());
+        addStaticEffect(new IgnoreLegendRuleForControlledTokensEffect());
+        addStaticEffect(new TriggeredAbilitiesCantCauseSacrificeOrExileCreatureTokensEffect());
     }
 }

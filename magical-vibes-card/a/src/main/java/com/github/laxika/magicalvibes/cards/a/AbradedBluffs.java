@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class AbradedBluffs extends Card {
 
     public AbradedBluffs() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

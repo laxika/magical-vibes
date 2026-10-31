@@ -28,8 +28,8 @@ import java.util.List;
 public class OgreHeadHelm extends Card {
 
     public OgreHeadHelm() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE,
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE,
                 GrantScope.SELF, EffectDuration.WHILE_ATTACHED));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(
                 new SacrificeSelfThenEffect(new DiscardOwnHandThenDrawEffect(new Fixed(3))),

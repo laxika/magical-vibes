@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReduceCyclingCostEffect;
 
 @CardRegistration(set = "USG", collectorNumber = "295")
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCyclingCostEffect;
 public class Fluctuator extends Card {
 
     public Fluctuator() {
-        addEffect(EffectSlot.STATIC, new ReduceCyclingCostEffect(2));
+        addStaticEffect(new ReduceCyclingCostEffect(2));
     }
 }

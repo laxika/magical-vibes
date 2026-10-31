@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect;
@@ -43,6 +42,6 @@ public class KasminaEnigmaSage extends Card {
         addActivatedAbility(fractalAbility);
         addActivatedAbility(searchAbility);
 
-        addEffect(EffectSlot.STATIC, new ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect());
+        addStaticEffect(new ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect());
     }
 }

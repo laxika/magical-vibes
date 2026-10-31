@@ -17,7 +17,7 @@ import java.util.Set;
 public class SylvanAnthem extends Card {
 
     public SylvanAnthem() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN))));
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(

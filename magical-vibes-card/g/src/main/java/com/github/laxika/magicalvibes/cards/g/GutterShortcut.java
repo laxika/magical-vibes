@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfAttackingAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -11,7 +10,7 @@ public class GutterShortcut extends Card {
 
     public GutterShortcut() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new CantBeBlockedIfAttackingAloneEffect());
-        addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect());
+                .addStaticEffect(new CantBeBlockedIfAttackingAloneEffect());
+        addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 }

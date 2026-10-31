@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
@@ -22,7 +21,7 @@ import java.util.List;
 public class LootExuberantExplorer extends Card {
 
     public LootExuberantExplorer() {
-        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect(1));
+        addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}{G}{G}",

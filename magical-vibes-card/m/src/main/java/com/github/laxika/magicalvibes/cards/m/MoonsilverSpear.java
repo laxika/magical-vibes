@@ -22,7 +22,7 @@ public class MoonsilverSpear extends Card {
 
     public MoonsilverSpear() {
         // Equipped creature has first strike.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature attacks, create a 4/4 white Angel creature token with flying.
         addEffect(EffectSlot.ON_ATTACK, new CreateTokenEffect(

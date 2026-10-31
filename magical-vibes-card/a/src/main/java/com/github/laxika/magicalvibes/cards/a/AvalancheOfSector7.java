@@ -19,7 +19,7 @@ public class AvalancheOfSector7 extends Card {
     public AvalancheOfSector7() {
         PermanentCount opponentArtifacts =
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.OPPONENTS);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(opponentArtifacts, new Fixed(3)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(opponentArtifacts, new Fixed(3)));
         addEffect(EffectSlot.ON_OPPONENT_ACTIVATES_ABILITY, new TriggeringPermanentConditionalEffect(
                 new PermanentIsArtifactPredicate(),
                 new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER)));

@@ -19,7 +19,7 @@ import java.util.List;
 public class Llanowar extends Card {
 
     public Llanowar() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null,
                         List.of(new AwardManaEffect(ManaColor.GREEN, 2)),
                         "{T}: Add {G}{G}."),

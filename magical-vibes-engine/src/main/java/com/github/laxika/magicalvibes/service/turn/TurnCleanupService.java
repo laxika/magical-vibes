@@ -12,8 +12,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.action.PhasedOutUntilEndOfNextTurn;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeTargetPermanentCopyOfTriggeringSpellUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerMaxHandSizeEffect;
@@ -305,7 +303,7 @@ public class TurnCleanupService {
         List<UUID> controllersWithOpponentDamagePersistence = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
             if (!gameQueryService.hasLostPrintedAbilities(gameData, p)
-                    && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                    && p.getCard().getStaticEffects().stream()
                     .anyMatch(OpponentCreatureDamagePersistenceEffect.class::isInstance)) {
                 controllersWithOpponentDamagePersistence.add(playerId);
             }
@@ -323,7 +321,7 @@ public class TurnCleanupService {
             // CR 514.2 — remove all damage marked on permanents during cleanup step
             List<CardEffect> activeStaticEffects = new ArrayList<>(gameQueryService.getActiveStaticEffects(gameData, p));
             activeStaticEffects.addAll(gameQueryService.getGrantedEffects(gameData, p));
-            activeStaticEffects.addAll(p.getPersistentTriggeredEffects(EffectSlot.STATIC));
+            activeStaticEffects.addAll(p.getPersistentStaticEffects());
             boolean damagePersists = !p.isLosesAllAbilitiesUntilEndOfTurn()
                     && activeStaticEffects.stream().anyMatch(DamagePersistenceEffect.class::isInstance);
             if (!damagePersists && allCreaturesKeepDamage && isCreatureForCleanup(gameData, p)) {
@@ -871,7 +869,7 @@ public class TurnCleanupService {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 ManaColor replacementColor = battlefield == null ? null : battlefield.stream()
                         .filter(permanent -> !gameQueryService.hasLostAllAbilities(gameData, permanent))
-                        .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                        .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                         .filter(ReplaceManaDrainWithColorlessEffect.class::isInstance)
                         .map(ReplaceManaDrainWithColorlessEffect.class::cast)
                         .map(ReplaceManaDrainWithColorlessEffect::replacementColor)
@@ -1078,7 +1076,7 @@ public class TurnCleanupService {
         if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
             return List.of();
         }
-        return perm.getCard().getEffects(EffectSlot.STATIC).stream()
+        return perm.getCard().getStaticEffects().stream()
                 .filter(effect -> !(effect instanceof ConditionalEffect))
                 .toList();
     }
@@ -1133,7 +1131,7 @@ public class TurnCleanupService {
                     continue;
                 }
                 List<CardEffect> staticEffects = gameQueryService == null
-                        ? perm.getCard().getEffects(EffectSlot.STATIC)
+                        ? perm.getCard().getStaticEffects()
                         : gameQueryService.getActiveStaticEffects(gameData, perm);
                 if (staticEffects.stream().anyMatch(NoMaximumHandSizeEffect.class::isInstance)) {
                     HandSizeStamp stamp = new HandSizeStamp(perm.getTimestamp(), handSizePosition(gameData, perm));
@@ -1174,7 +1172,7 @@ public class TurnCleanupService {
             for (Permanent perm : battlefield) {
                 // A face-down or ability-losing permanent has no printed static abilities (CR 708.2).
                 List<CardEffect> staticEffects = gameQueryService == null
-                        ? perm.getCard().getEffects(EffectSlot.STATIC)
+                        ? perm.getCard().getStaticEffects()
                         : gameQueryService.getActiveStaticEffects(gameData, perm);
                 if (staticEffects.stream().anyMatch(PlayersHaveNoMaximumHandSizeEffect.class::isInstance)) {
                     return true;
@@ -1183,7 +1181,7 @@ public class TurnCleanupService {
         }
         if (gameData.planechase != null) {
             for (var planarObject : gameData.planechase.faceUp) {
-                if (planarObject.getCard().getEffects(EffectSlot.STATIC).stream()
+                if (planarObject.getCard().getStaticEffects().stream()
                         .anyMatch(PlayersHaveNoMaximumHandSizeEffect.class::isInstance)) {
                     return true;
                 }

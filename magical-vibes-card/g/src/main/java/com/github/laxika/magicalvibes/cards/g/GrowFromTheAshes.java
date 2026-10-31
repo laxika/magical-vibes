@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -28,7 +27,7 @@ public class GrowFromTheAshes extends Card {
         ));
 
         // Kicker {2}
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
+        addStaticEffect(new KickerEffect("{2}"));
 
         // Search your library for a basic land card, put it onto the battlefield, then shuffle.
         // If this spell was kicked, instead search your library for two basic land cards,

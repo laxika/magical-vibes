@@ -17,7 +17,7 @@ public class SeshiroTheAnointed extends Card {
 
     public SeshiroTheAnointed() {
         // Other Snake creatures you control get +2/+2.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SNAKE)));
 
         // Whenever a Snake you control deals combat damage to a player, you may draw a card.

@@ -14,8 +14,8 @@ public class SecurityBypass extends Card {
 
     public SecurityBypass() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new CantBeBlockedIfAttackingAloneEffect())
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new CantBeBlockedIfAttackingAloneEffect())
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                         new DrawDiscardAndConniveEffect(), GrantScope.ENCHANTED_CREATURE));
     }

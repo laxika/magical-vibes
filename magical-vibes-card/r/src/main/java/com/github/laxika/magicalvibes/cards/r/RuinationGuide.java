@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate
 public class RuinationGuide extends Card {
 
     public RuinationGuide() {
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES, new PermanentIsColorlessPredicate()));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES, new PermanentIsColorlessPredicate()));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new ExileTopCardsOfDefendingPlayerLibraryEffect(1));
     }

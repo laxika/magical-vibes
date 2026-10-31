@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 
@@ -17,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 public class BlanketOfNight extends Card {
 
     public BlanketOfNight() {
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.SWAMP, GrantScope.ALL_LANDS));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.SWAMP, GrantScope.ALL_LANDS));
 
     }
 }

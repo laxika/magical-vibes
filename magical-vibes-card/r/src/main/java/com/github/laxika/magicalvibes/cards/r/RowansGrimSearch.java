@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -23,7 +22,7 @@ import java.util.List;
 public class RowansGrimSearch extends Card {
 
     public RowansGrimSearch() {
-        addEffect(EffectSlot.STATIC, new KickerEffect(
+        addStaticEffect(new KickerEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate(),

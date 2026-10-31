@@ -15,6 +15,6 @@ public class LustForWar extends Card {
         target(TargetFilters.creature());
         addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
                 new DealDamageToPlayersEffect(3, DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER));
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
     }
 }

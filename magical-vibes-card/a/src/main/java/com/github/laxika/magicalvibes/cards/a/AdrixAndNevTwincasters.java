@@ -14,6 +14,6 @@ public class AdrixAndNevTwincasters extends Card {
 
     public AdrixAndNevTwincasters() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.STATIC, new MultiplyTokenCreationEffect(2));
+        addStaticEffect(new MultiplyTokenCreationEffect(2));
     }
 }

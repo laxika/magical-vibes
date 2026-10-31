@@ -1,19 +1,19 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "198")
@@ -24,17 +24,17 @@ public class OutlawsMerriment extends Card {
     public OutlawsMerriment() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenAtRandomEffect(List.of(
                 token("Human Warrior", 3, 1, List.of(CardSubtype.HUMAN, CardSubtype.WARRIOR),
-                        Set.of(Keyword.TRAMPLE, Keyword.HASTE), Map.of()),
+                        Set.of(Keyword.TRAMPLE, Keyword.HASTE), List.of()),
                 token("Human Cleric", 2, 1, List.of(CardSubtype.HUMAN, CardSubtype.CLERIC),
-                        Set.of(Keyword.LIFELINK, Keyword.HASTE), Map.of()),
+                        Set.of(Keyword.LIFELINK, Keyword.HASTE), List.of()),
                 token("Human Rogue", 1, 2, List.of(CardSubtype.HUMAN, CardSubtype.ROGUE),
                         Set.of(Keyword.HASTE),
-                        Map.of(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(1))))));
+                        List.of(LegacySlots.triggered(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(1)))))));
     }
 
     private static CreateTokenEffect token(String name, int power, int toughness,
                                            List<CardSubtype> subtypes, Set<Keyword> keywords,
-                                           Map<EffectSlot, CardEffect> tokenEffects) {
+                                           List<Ability> tokenEffects) {
         return new CreateTokenEffect(
                 CardType.CREATURE,
                 1,

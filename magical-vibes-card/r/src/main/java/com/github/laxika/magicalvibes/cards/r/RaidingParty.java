@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RaidingPartyEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
@@ -21,7 +20,7 @@ import java.util.Set;
 public class RaidingParty extends Card {
 
     public RaidingParty() {
-        addEffect(EffectSlot.STATIC, TargetingRestrictionEffect.fromSourceColors(Set.of(CardColor.WHITE)));
+        addStaticEffect(TargetingRestrictionEffect.fromSourceColors(Set.of(CardColor.WHITE)));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

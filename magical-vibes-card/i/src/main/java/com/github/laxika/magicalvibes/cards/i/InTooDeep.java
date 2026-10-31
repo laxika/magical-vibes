@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -36,16 +35,11 @@ public class InTooDeep extends Card {
         target(new PermanentPredicateTargetFilter(
                 creaturePlaneswalkerOrClue,
                 "Target must be a creature, planeswalker, or Clue"))
-                .addEffect(EffectSlot.STATIC,
-                        new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.ENCHANTED_PERMANENT))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantSubtypeEffect(CardSubtype.CLUE, GrantScope.ENCHANTED_PERMANENT, true))
-                .addEffect(EffectSlot.STATIC,
-                        new BecomeColorlessEffect(GrantScope.ENCHANTED_PERMANENT))
-                .addEffect(EffectSlot.STATIC,
-                        new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantActivatedAbilityEffect(
+                .addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.CLUE, GrantScope.ENCHANTED_PERMANENT, true))
+                .addStaticEffect(new BecomeColorlessEffect(GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                                 new ActivatedAbility(
                                         false,
                                         "{2}",

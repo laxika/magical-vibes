@@ -20,10 +20,8 @@ public class WildbloodPack extends Card {
     public WildbloodPack() {
         // Attacking creatures you control get +3/+0.
         // OWN_CREATURES handles other creatures; SELF handles the source itself (no "other" in oracle text).
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(3, 0, GrantScope.OWN_CREATURES, new PermanentIsAttackingPredicate()));
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(3, 0, GrantScope.SELF, new PermanentIsAttackingPredicate()));
+        addStaticEffect(new StaticBoostEffect(3, 0, GrantScope.OWN_CREATURES, new PermanentIsAttackingPredicate()));
+        addStaticEffect(new StaticBoostEffect(3, 0, GrantScope.SELF, new PermanentIsAttackingPredicate()));
 
         // At the beginning of each upkeep, if a player cast two or more spells last turn, transform Wildblood Pack.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,

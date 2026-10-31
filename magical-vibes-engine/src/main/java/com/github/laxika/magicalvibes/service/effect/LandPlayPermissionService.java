@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -38,7 +37,7 @@ public class LandPlayPermissionService {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 List<CardEffect> activeStatics = gameQueryService.getActiveStaticEffects(gameData, permanent);
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     if (!(effect instanceof ConditionalEffect) && !activeStatics.contains(effect)) {
                         if (effect instanceof EachPlayerPlaysAdditionalLandEffect) conditionalExtra--;
                         else if (effect instanceof PlaysAdditionalLandEachTurnEffect additional

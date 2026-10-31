@@ -46,7 +46,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreatureCardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.PersistReturnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
@@ -1128,7 +1127,7 @@ public class PermanentRemovalService {
                 if (gameQueryService.hasLostAllAbilities(gameData, source)) {
                     continue;
                 }
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : source.getCard().getStaticEffects()) {
                     if (effect instanceof DyingCreatureReturnToHandReplacementEffect replacement
                             && replacement.appliesTo(source, target, dyingCreatureIsEnchanted,
                             sourceControllerId, dyingCreatureControllerId)) {
@@ -2297,7 +2296,7 @@ public class PermanentRemovalService {
         }
         for (var planar : gameData.planechase.faceUp) {
             ExileCreaturesInsteadOfDyingWithLifeLossEffect effect = planar.getCard()
-                    .getEffects(EffectSlot.STATIC).stream()
+                    .getStaticEffects().stream()
                     .filter(ExileCreaturesInsteadOfDyingWithLifeLossEffect.class::isInstance)
                     .map(ExileCreaturesInsteadOfDyingWithLifeLossEffect.class::cast)
                     .findFirst().orElse(null);
@@ -2751,7 +2750,7 @@ public class PermanentRemovalService {
         if (wasCreature) {
             gameData.creatureLeftBattlefieldCountThisTurn.merge(controllerId, 1, Integer::sum);
         }
-        target.getCard().getEffects(EffectSlot.STATIC).stream()
+        target.getCard().getStaticEffects().stream()
                 .filter(AnimateNoncreatureArtifactsEffect.class::isInstance)
                 .map(AnimateNoncreatureArtifactsEffect.class::cast)
                 .filter(AnimateNoncreatureArtifactsEffect::losesAllAbilities)
@@ -2839,7 +2838,7 @@ public class PermanentRemovalService {
                 if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
                     continue;
                 }
-                permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                permanent.getCard().getStaticEffects().stream()
                         .filter(ExileOpponentCreaturesInsteadOfDyingEffect.class::isInstance)
                         .map(ExileOpponentCreaturesInsteadOfDyingEffect.class::cast)
                         .filter(candidate -> !candidate.nontokenOnly() || !isToken(gameData, dyingCard))
@@ -2855,7 +2854,7 @@ public class PermanentRemovalService {
                 continue;
             }
             Permanent permanent = entry.getValue();
-            permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+            permanent.getCard().getStaticEffects().stream()
                     .filter(ExileOpponentCreaturesInsteadOfDyingEffect.class::isInstance)
                     .map(ExileOpponentCreaturesInsteadOfDyingEffect.class::cast)
                     .filter(candidate -> !candidate.nontokenOnly() || !isToken(gameData, dyingCard))
@@ -2922,7 +2921,7 @@ public class PermanentRemovalService {
         }
         for (Permanent permanent : gameData.simultaneousDyingPermanents.values()) {
             if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                    && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    && permanent.getCard().getStaticEffects().stream()
                     .anyMatch(ExileNontokenCreaturesInsteadOfDyingWithBloodCounterEffect.class::isInstance)) {
                 return new NontokenCreatureDyingExileReplacement(
                         permanent.getCard(), permanent.getId());
@@ -2932,7 +2931,7 @@ public class PermanentRemovalService {
     }
 
     private boolean hasBloodCounterExileReplacement(GameData gameData, Permanent permanent) {
-        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        return permanent.getCard().getStaticEffects().stream()
                 .anyMatch(ExileNontokenCreaturesInsteadOfDyingWithBloodCounterEffect.class::isInstance)
                 && !gameQueryService.hasLostPrintedAbilities(gameData, permanent);
     }
@@ -2941,7 +2940,7 @@ public class PermanentRemovalService {
     }
 
     private boolean hasOwnSubtypeExileReplacement(Card sourceCard, Set<CardSubtype> dyingSubtypes) {
-        return sourceCard.getEffects(EffectSlot.STATIC).stream()
+        return sourceCard.getStaticEffects().stream()
                 .filter(ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect.class::isInstance)
                 .map(ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect.class::cast)
                 .anyMatch(effect -> dyingSubtypes.contains(effect.subtype()));
@@ -2975,7 +2974,7 @@ public class PermanentRemovalService {
             if (controllerId != null && !ownerId.equals(controllerId)
                     && !entry.getValue().isFaceDown()
                     && !entry.getValue().isLosesAllAbilitiesUntilEndOfTurn()
-                    && entry.getValue().getCard().getEffects(EffectSlot.STATIC).stream()
+                    && entry.getValue().getCard().getStaticEffects().stream()
                     .anyMatch(OpponentCreatureCardExileReplacement.class::isInstance)) {
                 return true;
             }
@@ -3054,14 +3053,14 @@ public class PermanentRemovalService {
     }
 
     private boolean hasControlledSourceExileReplacement(GameData gameData, Permanent effectSource) {
-        return LayerSystemService.currentCard(gameData, effectSource).getEffects(EffectSlot.STATIC).stream()
+        return LayerSystemService.currentCard(gameData, effectSource).getStaticEffects().stream()
                 .anyMatch(ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect.class::isInstance)
                 && !gameQueryService.hasLostAllAbilities(gameData, effectSource);
     }
 
     private boolean hasExileDamagedCreaturesInsteadOfDying(GameData gameData, Permanent permanent) {
         return permanent.isExileDamagedCreaturesInsteadOfDyingThisTurn()
-                || (LayerSystemService.currentCard(gameData, permanent).getEffects(EffectSlot.STATIC).stream()
+                || (LayerSystemService.currentCard(gameData, permanent).getStaticEffects().stream()
                         .anyMatch(ExileCreaturesDamagedBySourceInsteadOfDyingEffect.class::isInstance)
                 && !gameQueryService.hasLostAllAbilities(gameData, permanent));
     }
@@ -3541,7 +3540,7 @@ public class PermanentRemovalService {
 
     /** The dying creature's own or granted "you may put it on top of its owner's library instead" replacement. */
     private DyingCreatureLibraryReplacementEffect findMayLibraryReplacement(GameData gameData, Permanent target) {
-        return target.getCard().getEffects(EffectSlot.STATIC).stream()
+        return target.getCard().getStaticEffects().stream()
                 .filter(DyingCreatureLibraryReplacementEffect.class::isInstance)
                 .map(DyingCreatureLibraryReplacementEffect.class::cast)
                 .filter(DyingCreatureLibraryReplacementEffect::mayChoose)

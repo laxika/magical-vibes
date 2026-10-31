@@ -20,8 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class QuintessentialKatana extends Card {
 
     public QuintessentialKatana() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE,
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.SOURCE_PERMANENT),

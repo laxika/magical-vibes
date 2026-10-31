@@ -22,7 +22,7 @@ import java.util.Set;
 public class RedXIIIProudWarrior extends Card {
 
     public RedXIIIProudWarrior() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE),
                 GrantScope.OWN_CREATURES,
                 new PermanentIsModifiedPredicate()));

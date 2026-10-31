@@ -28,7 +28,7 @@ public class DeepwayNavigator extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.MERFOLK),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AttackedWithCreaturesOfSubtypeThisTurn(3, CardSubtype.MERFOLK),
                 new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.MERFOLK))));

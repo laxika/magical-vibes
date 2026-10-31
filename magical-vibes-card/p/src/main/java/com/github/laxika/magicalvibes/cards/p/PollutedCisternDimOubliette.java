@@ -33,7 +33,7 @@ public class PollutedCisternDimOubliette extends Card {
                         .withManaCost("{4}{B}")
         )));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(0),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY,

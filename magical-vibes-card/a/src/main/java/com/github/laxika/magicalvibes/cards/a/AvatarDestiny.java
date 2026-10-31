@@ -23,10 +23,9 @@ public class AvatarDestiny extends Card {
                 new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);
 
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                .addStaticEffect(new AttachedBoostEffect(
                         creatureCards, creatureCards, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantSubtypeEffect(CardSubtype.AVATAR, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.AVATAR, GrantScope.ENCHANTED_CREATURE));
 
         addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
                 new MillControllerAndPutMilledCreaturesOntoBattlefieldEffect(new EventValue(), 1, true));

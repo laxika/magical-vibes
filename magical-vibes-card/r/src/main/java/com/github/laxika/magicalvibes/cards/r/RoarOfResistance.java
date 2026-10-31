@@ -20,7 +20,7 @@ import java.util.List;
 public class RoarOfResistance extends Card {
 
     public RoarOfResistance() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE,
                 GrantScope.OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(

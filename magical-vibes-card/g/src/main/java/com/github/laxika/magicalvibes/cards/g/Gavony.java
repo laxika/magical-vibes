@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class Gavony extends Card {
 
     public Gavony() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_CREATURES));
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_OWN_CREATURES));
     }

@@ -21,7 +21,7 @@ import java.util.List;
 public class AmazingAlliance extends Card {
 
     public AmazingAlliance() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
 
         PermanentAllOfPredicate attackingLegendary = new PermanentAllOfPredicate(List.of(
                 new PermanentIsAttackingPredicate(),

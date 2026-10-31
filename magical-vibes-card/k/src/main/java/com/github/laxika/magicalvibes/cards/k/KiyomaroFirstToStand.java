@@ -18,8 +18,8 @@ public class KiyomaroFirstToStand extends Card {
 
     public KiyomaroFirstToStand() {
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
+        addStaticEffect(new ConditionalEffect(
                 new CardsInHandAtLeast(4),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_SELF_DEALS_DAMAGE, new ConditionalEffect(

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -64,7 +63,7 @@ public class RevealTopCardCreatureDrawPowerGainToughnessEffectHandler implements
 
         int power = topCard.getPower() != null ? Math.max(0, topCard.getPower()) : 0;
         int toughness = topCard.getToughness() != null ? Math.max(0, topCard.getToughness()) : 0;
-        for (CardEffect staticEffect : topCard.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect staticEffect : topCard.getStaticEffects()) {
             if (staticEffect instanceof SetPowerToughnessToAmountEffect characteristicDefining) {
                 AmountContext context = AmountContext.forStaticEffect(new Permanent(topCard), controllerId);
                 power = Math.max(0, amountEvaluationService.evaluate(

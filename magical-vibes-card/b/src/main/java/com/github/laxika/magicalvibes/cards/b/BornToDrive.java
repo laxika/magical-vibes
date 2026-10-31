@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NEO", collectorNumber = "6")
@@ -38,7 +37,7 @@ public class BornToDrive extends Card {
         target(new PermanentPredicateTargetFilter(
                 artifactOrCreature,
                 "Target must be an artifact or creature"))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
                         new DynamicStaticBoostEffect(
                                 creaturesAndVehicles, creaturesAndVehicles, GrantScope.ENCHANTED_PERMANENT),
@@ -56,7 +55,7 @@ public class BornToDrive extends Card {
                         List.of(CardSubtype.PILOT),
                         Set.of(),
                         Set.of(),
-                        Map.of(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2, true)))),
+                        List.of(StaticAbility.of(new PowerBoostForCrewAndSaddleEffect(2, true))))),
                 "Channel — {2}{W}, Discard this card: Create two 1/1 colorless Pilot creature tokens with \"This token crews Vehicles as though its power were 2 greater.\""
         ));
     }

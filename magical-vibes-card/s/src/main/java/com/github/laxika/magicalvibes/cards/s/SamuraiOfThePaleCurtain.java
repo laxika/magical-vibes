@@ -12,6 +12,6 @@ public class SamuraiOfThePaleCurtain extends Card {
     public SamuraiOfThePaleCurtain() {
         addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(1));
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(1));
-        addEffect(EffectSlot.STATIC, new ExilePermanentsInsteadOfGraveyardEffect());
+        addStaticEffect(new ExilePermanentsInsteadOfGraveyardEffect());
     }
 }

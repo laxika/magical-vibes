@@ -34,6 +34,6 @@ public class Helitrooper extends Card {
         )).addEffect(EffectSlot.ON_ATTACK,
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
 
-        addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostForTargetingSourceEffect(2));
+        addStaticEffect(new ReduceActivatedAbilityCostForTargetingSourceEffect(2));
     }
 }

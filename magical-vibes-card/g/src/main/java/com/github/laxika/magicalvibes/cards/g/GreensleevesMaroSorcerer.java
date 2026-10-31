@@ -26,9 +26,9 @@ public class GreensleevesMaroSorcerer extends Card {
     public GreensleevesMaroSorcerer() {
         PermanentCount landsYouControl = new PermanentCount(
                 new PermanentIsLandPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new ProtectionFromCardTypesEffect(Set.of(CardType.PLANESWALKER)));
-        addEffect(EffectSlot.STATIC, new ProtectionFromSubtypesEffect(Set.of(CardSubtype.WIZARD)));
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl));
+        addStaticEffect(new ProtectionFromCardTypesEffect(Set.of(CardType.PLANESWALKER)));
+        addStaticEffect(new ProtectionFromSubtypesEffect(Set.of(CardSubtype.WIZARD)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl));
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
                 new CreateTokenEffect("Badger", 3, 3, CardColor.GREEN,
                         List.of(CardSubtype.BADGER), Set.of(), Set.of()));

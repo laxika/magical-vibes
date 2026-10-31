@@ -14,7 +14,7 @@ public class Apathy extends Card {
 
     public Apathy() {
         // "Enchant creature. Enchanted creature doesn't untap during its controller's untap step."
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+        target(TargetFilters.creature()).addStaticEffect(DoesntUntapEffect.enchanted());
 
         // "At the beginning of the upkeep of enchanted creature's controller, that player may
         // discard a card at random. If the player does, untap that creature."

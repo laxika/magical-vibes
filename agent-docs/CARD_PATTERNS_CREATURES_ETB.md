@@ -1,5 +1,13 @@
 # Card Patterns: Vanilla, Keyword & ETB Creatures
 
+> `STATIC` in this file means a static ability (CR 113.3d), written `addStaticEffect(e)`, or
+> `target(f).addStaticEffect(e)` for an Aura's enchant ability. It functions from the zones its effect's
+> rule names (`CardEffect.staticAbilityZones()`): the battlefield, the stack for kicker, buyback, gift,
+> "can't be countered" and "costs less to cast", and the hand for splice. An ability that states its
+> zones, such as Eminence, is written `addStaticEffect(AbilityZones.of(...), e)`. In a token's or a
+> copy's ability list it is `StaticAbility.of(e)`, next to `LegacySlots.triggered(EffectSlot.X, e)` for
+> a trigger. Readers use `getStaticEffects()`. There is no `EffectSlot.STATIC`.
+
 | ETB +1/+1 counters equal to total mana value of own instants and sorceries in graveyard | `i/InfernoProject.java` | ON_ENTER_BATTLEFIELD EnterWithCountersEffect(PLUS_ONE_PLUS_ONE, TotalManaValueOfCardsInGraveyard(CardAnyOfPredicate(INSTANT, SORCERY), CONTROLLER)) |
 
 | ETB during declare attackers may reselect an attacking creature's target | `p/PortalMage.java` | `target(TargetFilters.attackingCreature()).addEffect(ON_ENTER_BATTLEFIELD, ConditionalEffect(new DuringDeclareAttackers(), MayEffect(new ReselectAttackingCreatureAttackTargetEffect(), ...)))`; the original attacker is chosen at trigger time and the replacement attack target is chosen on resolution using current attack legality |
@@ -146,7 +154,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB copy of creature card in a graveyard | `s/SuperiorSpiderMan.java` | CopyCreatureCardInGraveyardOnEnterEffect(name, power, toughness, additionalSubtypes) — the chosen card remains in its graveyard until the reflexive exile trigger resolves; use the boolean overload for The Mimeoplasm's two-card exile and other-card-power counter choice |
 | ETB copy with P/T override | `q/QuicksilverGargantuan.java` | CopyPermanentOnEnterEffect(filter, typeLabel, 7, 7) — "copy except it's 7/7" |
 | ETB copy with type override | `p/PhyrexianMetamorph.java` | CopyPermanentOnEnterEffect(AnyOfPredicate, typeLabel, null, null, Set.of(ARTIFACT)) — "copy except it's also an artifact" |
-| ETB copy with added subtype + granted trigger | `p/PhantasmalImage.java` | CopyPermanentOnEnterEffect(filter, typeLabel, Set.of(ILLUSION), Map.of(ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY, List.of(new SacrificeSelfEffect()))) |
+| ETB copy with added subtype + granted trigger | `p/PhantasmalImage.java` | CopyPermanentOnEnterEffect(filter, typeLabel, Set.of(ILLUSION), List.of(LegacySlots.triggered(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY, List.of(new SacrificeSelfEffect())))) |
 | ETB copy with extra ability | `e/EvilTwin.java` | CopyPermanentOnEnterEffect with additionalActivatedAbilities — "copy except it has {U}{B},{T}: Destroy target creature with the same name" |
 | ETB copy with X additional +1/+1 counters | `a/AlteredEgo.java` | STATIC CantBeCounteredEffect + CopyPermanentOnEnterEffect(filter, typeLabel, new XValue()) — counters only when copying |
 | ETB may-sac another creature → deal its power to any target + Embalm | `h/HeartPiercerManticore.java` | ON_ENTER_BATTLEFIELD MayEffect(SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect(), "...") — resolution-time may: accept → choose any-target → choose another creature to sacrifice; source deals that creature's power (clamped ≥ 0). No target(...) filter. Embalm {5}{R} via ExileSelfFromGraveyardCost + CreateTokenCopyOfSourceEffect(false,1,WHITE,ZOMBIE,true) |

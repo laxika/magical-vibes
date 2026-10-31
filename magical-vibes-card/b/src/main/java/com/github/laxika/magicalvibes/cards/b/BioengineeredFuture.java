@@ -37,7 +37,7 @@ public class BioengineeredFuture extends Card {
 
     public BioengineeredFuture() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, LANDER);
-        addEffect(EffectSlot.STATIC, new ControlledPermanentsEnterWithAdditionalCountersByAmountEffect(
+        addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersByAmountEffect(
                 new PermanentIsCreaturePredicate(), new LandsEnteredBattlefieldThisTurn()));
     }
 }

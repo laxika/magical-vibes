@@ -6678,7 +6678,7 @@ public class GameData {
             return false;
         }
         for (Permanent source : playerBattlefields.getOrDefault(playerId, List.of())) {
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : source.getCard().getStaticEffects()) {
                 if (effect instanceof GrantCardTypeToOwnNonlandPermanentsEffect grant
                         && grant.cardType() == CardType.ARTIFACT) {
                     return true;
@@ -7722,7 +7722,7 @@ public class GameData {
             List<Permanent> battlefield = playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (effect instanceof EachPlayerPlaysAdditionalLandEffect) {
                         extraFromStatics = Math.min(Integer.MAX_VALUE, extraFromStatics + 1);
                     } else if (effect instanceof PlaysAdditionalLandEachTurnEffect additional && pid.equals(playerId)) {
@@ -7734,7 +7734,7 @@ public class GameData {
         }
         if (planechase != null) {
             for (var planar : planechase.faceUp) {
-                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     if (effect instanceof EachPlayerPlaysAdditionalLandEffect) {
                         extraFromStatics = Math.min(Integer.MAX_VALUE, extraFromStatics + 1);
                     } else if (effect instanceof PlayersWithChosenPlanarModePlayAdditionalLandEffect mode
@@ -11459,7 +11459,11 @@ public class GameData {
      * stacks.
      */
     public void grantPerpetualAbility(UUID cardId, EffectSlot slot, CardEffect effect) {
-        Ability ability = LegacySlots.ability(slot, effect);
+        grantPerpetualAbility(cardId, LegacySlots.ability(slot, effect));
+    }
+
+    /** Perpetually grants the card {@code cardId} {@code ability}; a repeated grant stacks (CR 113.2c). */
+    public void grantPerpetualAbility(UUID cardId, Ability ability) {
         perpetualTriggeredAbilityGrants.merge(cardId, List.of(ability), GameData::concatAbilities);
     }
 
@@ -11489,6 +11493,11 @@ public class GameData {
     /** The effects in {@code slot} of the perpetual grants of the card {@code cardId}, in grant order. */
     public List<CardEffect> perpetualAbilityEffects(UUID cardId, EffectSlot slot) {
         return LegacySlots.effectsIn(perpetualAbilities(cardId), slot);
+    }
+
+    /** The effects of the static abilities perpetually granted to the card {@code cardId}, in grant order. */
+    public List<CardEffect> perpetualStaticEffects(UUID cardId) {
+        return LegacySlots.staticEffectsIn(perpetualAbilities(cardId));
     }
 
     private static List<Ability> concatAbilities(List<Ability> existing, List<Ability> added) {

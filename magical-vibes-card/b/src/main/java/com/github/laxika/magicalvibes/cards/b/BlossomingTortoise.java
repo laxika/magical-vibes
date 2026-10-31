@@ -26,11 +26,11 @@ public class BlossomingTortoise extends Card {
     public BlossomingTortoise() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(new MillEffect(3, MillRecipient.CONTROLLER), returnLandEffect()));
         addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(new MillEffect(3, MillRecipient.CONTROLLER), returnLandEffect()));
-        addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+        addStaticEffect(new ReduceActivatedAbilityCostEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentControlledBySourceControllerPredicate())), 1));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsLandPredicate()));
     }
 

@@ -16,7 +16,7 @@ import java.util.Set;
 public class CallTheSpiritDragons extends Card {
 
     public CallTheSpiritDragons() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 0,
                 0,
                 Set.of(Keyword.INDESTRUCTIBLE),

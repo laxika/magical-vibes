@@ -28,10 +28,8 @@ public class MariTheKillingQuill extends Card {
 
         addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
                 new ExileTriggeringCreatureWithHitCounterEffect());
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, outlaw));
-        addEffect(EffectSlot.STATIC,
-                new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, outlaw));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                         new MayEffect(
                                 new RemoveHitCounterFromExiledCardEffect(

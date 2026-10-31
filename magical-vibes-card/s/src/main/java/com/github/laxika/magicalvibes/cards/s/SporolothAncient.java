@@ -24,7 +24,7 @@ public class SporolothAncient extends Card {
     public SporolothAncient() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.FUNGUS));
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
                         null,

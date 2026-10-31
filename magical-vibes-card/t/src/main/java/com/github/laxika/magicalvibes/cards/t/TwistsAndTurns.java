@@ -18,7 +18,7 @@ public class TwistsAndTurns extends Card {
     public TwistsAndTurns() {
         setBackFaceCard(new MycoidMaze());
 
-        addEffect(EffectSlot.STATIC, new ScryBeforeExploreReplacementEffect());
+        addStaticEffect(new ScryBeforeExploreReplacementEffect());
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExploreEffect(true));
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,

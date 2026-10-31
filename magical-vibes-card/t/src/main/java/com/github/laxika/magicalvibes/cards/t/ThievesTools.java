@@ -15,7 +15,7 @@ public class ThievesTools extends Card {
 
     public ThievesTools() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofTreasureToken(1));
-        addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+        addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentPowerAtMostPredicate(3), new CantBeBlockedEffect(), null));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

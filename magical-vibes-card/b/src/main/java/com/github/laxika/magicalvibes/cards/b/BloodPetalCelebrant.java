@@ -16,8 +16,7 @@ public class BloodPetalCelebrant extends Card {
 
     public BloodPetalCelebrant() {
         // This creature has first strike as long as it's attacking.
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF, new PermanentIsAttackingPredicate()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF, new PermanentIsAttackingPredicate()));
 
         // When this creature dies, create a Blood token.
         addEffect(EffectSlot.ON_DEATH, CreateTokenEffect.ofBloodToken(1));

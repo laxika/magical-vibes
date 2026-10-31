@@ -30,7 +30,7 @@ public class GarruksHarbinger extends Card {
         removeKeyword(Keyword.HEXPROOF);
 
         // Hexproof from black
-        addEffect(EffectSlot.STATIC, TargetingRestrictionEffect.hexproofFromColors(Set.of(CardColor.BLACK)));
+        addStaticEffect(TargetingRestrictionEffect.hexproofFromColors(Set.of(CardColor.BLACK)));
 
         addEffect(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
                 new LookAtTopCardsEffect(

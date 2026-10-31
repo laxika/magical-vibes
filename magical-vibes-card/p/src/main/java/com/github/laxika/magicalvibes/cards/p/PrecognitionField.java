@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
@@ -16,8 +15,8 @@ import java.util.Set;
 public class PrecognitionField extends Card {
 
     public PrecognitionField() {
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(Set.of(CardType.INSTANT, CardType.SORCERY)));
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new AllowCastFromTopOfLibraryEffect(Set.of(CardType.INSTANT, CardType.SORCERY)));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}",

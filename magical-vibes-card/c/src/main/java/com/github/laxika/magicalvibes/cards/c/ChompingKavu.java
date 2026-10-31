@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
@@ -24,7 +25,7 @@ import java.util.List;
 public class ChompingKavu extends Card {
 
     public ChompingKavu() {
-        addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(
+        addStaticEffect(new CanBeBlockedOnlyByFilterEffect(
                 new PermanentPowerAtLeastPredicate(3), "creatures with power 3 or greater"));
         PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
@@ -35,10 +36,9 @@ public class ChompingKavu extends Card {
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 new ConditionalEffect(
                         new TargetPermanentMatches(anotherCreature),
-                        new GrantEffectToTargetUntilEndOfTurnEffect(EffectSlot.STATIC,
-                                new CanBeBlockedOnlyByFilterEffect(
+                        new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(new CanBeBlockedOnlyByFilterEffect(
                                 new PermanentPowerAtLeastPredicate(3),
-                                "creatures with power 3 or greater"))
+                                "creatures with power 3 or greater")))
                 )
         ));
     }

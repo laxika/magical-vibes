@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -18,9 +17,9 @@ public class AngelicFieldMarshal extends Card {
 
     public AngelicFieldMarshal() {
         var lieutenant = new ControllerControlsOwnCommander();
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(lieutenant,
+        addStaticEffect(new ConditionalEffect(lieutenant,
                 new StaticBoostEffect(2, 2, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(lieutenant,
+        addStaticEffect(new ConditionalEffect(lieutenant,
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES)));
     }
 }

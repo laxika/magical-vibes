@@ -30,7 +30,7 @@ public class SecretArcadeDustyParlor extends Card {
                         .withManaCost("{2}{W}")
         )));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(0),
                 new GrantCardTypeToOwnNonlandPermanentsEffect(CardType.ENCHANTMENT, false)));
 

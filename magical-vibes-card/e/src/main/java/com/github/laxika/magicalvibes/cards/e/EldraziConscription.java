@@ -23,9 +23,9 @@ public class EldraziConscription extends Card {
 
     public EldraziConscription() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+                .addStaticEffect(new StaticBoostEffect(
                         10, 10, Set.of(Keyword.TRAMPLE), GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ATTACK,
                         new SacrificePermanentsEffect(
                                 2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER),

@@ -28,7 +28,7 @@ public class ElderfangVenom extends Card {
             new GainLifeEffect(1));
 
     public ElderfangVenom() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 0,
+        addStaticEffect(new StaticBoostEffect(0, 0,
                 Set.of(Keyword.DEATHTOUCH), GrantScope.OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),

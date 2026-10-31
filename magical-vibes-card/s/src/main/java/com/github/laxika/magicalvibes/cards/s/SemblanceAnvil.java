@@ -20,6 +20,6 @@ public class SemblanceAnvil extends Card {
                 new MayEffect(new ExileFromHandToImprintEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)), "a nonland card"),
                         "You may exile a nonland card from your hand."));
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostForSharedCardTypeWithImprintEffect(new Fixed(2)));
+        addStaticEffect(new ReduceOwnCastCostForSharedCardTypeWithImprintEffect(new Fixed(2)));
     }
 }

@@ -21,7 +21,7 @@ import java.util.List;
 public class ImmovableRod extends Card {
 
     public ImmovableRod() {
-        addEffect(EffectSlot.STATIC, new MayNotUntapDuringUntapStepEffect());
+        addStaticEffect(new MayNotUntapDuringUntapStepEffect());
         addEffect(EffectSlot.ON_SELF_BECOMES_UNTAPPED, new VentureIntoDungeonEffect());
 
         addActivatedAbility(new ActivatedAbility(

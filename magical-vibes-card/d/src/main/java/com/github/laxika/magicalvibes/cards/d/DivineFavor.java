@@ -18,6 +18,6 @@ public class DivineFavor extends Card {
     public DivineFavor() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 3, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 3, GrantScope.ENCHANTED_CREATURE));
     }
 }

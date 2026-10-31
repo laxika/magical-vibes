@@ -18,7 +18,7 @@ import java.util.List;
 public class TazeemRoilmage extends Card {
 
     public TazeemRoilmage() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{4}"));
+        addStaticEffect(new KickerEffect("{4}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)

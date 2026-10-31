@@ -11,6 +11,6 @@ public class HallOfTriumph extends Card {
 
     public HallOfTriumph() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenColorEffect(1, 1));
+        addStaticEffect(new BoostCreaturesOfChosenColorEffect(1, 1));
     }
 }

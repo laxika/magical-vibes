@@ -25,7 +25,7 @@ public class AirtightAlibi extends Card {
                         new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new UnsuspectEffect(GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new AttachedPermanentRestrictionEffect(new CantBecomeSuspectedEffect()));
+                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new AttachedPermanentRestrictionEffect(new CantBecomeSuspectedEffect()));
     }
 }

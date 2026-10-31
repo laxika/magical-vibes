@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExile
 public class LocusOfEnlightenment extends Card {
 
     public LocusOfEnlightenment() {
-        addEffect(EffectSlot.STATIC, new GainActivatedAbilitiesOfExiledCardsEffect(true));
+        addStaticEffect(new GainActivatedAbilitiesOfExiledCardsEffect(true));
         addEffect(EffectSlot.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY,
                 new CopyControllerActivatedAbilityTriggerEffect(null));
     }

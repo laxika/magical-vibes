@@ -18,8 +18,7 @@ import java.util.List;
 public class AngelsTrumpet extends Card {
 
     public AngelsTrumpet() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_CREATURES_INCLUDING_SELF));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_CREATURES_INCLUDING_SELF));
         addEffect(EffectSlot.END_STEP_TRIGGERED,
                 new TapPlayersPermanentsAndDamageEqualToCountEffect(
                         new PermanentAllOfPredicate(List.of(

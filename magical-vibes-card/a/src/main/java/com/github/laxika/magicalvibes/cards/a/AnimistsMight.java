@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -24,7 +23,7 @@ import java.util.List;
 public class AnimistsMight extends Card {
 
     public AnimistsMight() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(
+        addStaticEffect(new ReduceOwnCastCostIfTargetingPermanentEffect(
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY), 2, true));
 
         target(new ControlledPermanentPredicateTargetFilter(

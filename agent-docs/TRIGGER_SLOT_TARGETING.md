@@ -262,7 +262,7 @@ combat damage step is processed.
 Slots that currently **only ever push non-targeting entries** (no pending queue):
 The controller-draw slots are an exception when an effect declares a target: any-target effects use
 `DrawTriggerAnyTarget`, and permanent-target effects use `DrawTriggerPermanentTarget` as described above.
-`ON_TAP`, `STATIC`, `ON_SACRIFICE`, `ON_BLOCK` (only the non-targeting "that creature" flavour; the targeting variant is routed through the Attack pipeline — see the mapping table above),
+`ON_TAP`, `ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS`, `ON_SACRIFICE`, `ON_BLOCK` (only the non-targeting "that creature" flavour; the targeting variant is routed through the Attack pipeline — see the mapping table above),
 `GRAVEYARD_UPKEEP_TRIGGERED`, `EACH_UPKEEP_TRIGGERED`, `SUSPENDED_EACH_UPKEEP_TRIGGERED`, `EXILED_SCREAM_COUNTER_UPKEEP_TRIGGERED`, `EXILED_UPKEEP_TRIGGERED`, `OPPONENT_UPKEEP_TRIGGERED`,
 `ON_ANY_CREATURE_DIES`,
 `ON_ALLY_NONTOKEN_CREATURE_DIES`, `ON_ANY_NONTOKEN_CREATURE_DIES`, `ON_OPPONENT_CREATURE_DIES`,

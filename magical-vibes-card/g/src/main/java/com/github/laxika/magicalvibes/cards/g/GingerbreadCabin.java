@@ -24,7 +24,7 @@ import java.util.List;
 public class GingerbreadCabin extends Card {
 
     public GingerbreadCabin() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCountAtMost(2, new PermanentHasSubtypePredicate(CardSubtype.FOREST)),
                 new EntersTappedEffect()));
 

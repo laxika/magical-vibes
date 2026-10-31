@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 public class DelversTorch extends Card {
 
     public DelversTorch() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK, new VentureIntoDungeonEffect());
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

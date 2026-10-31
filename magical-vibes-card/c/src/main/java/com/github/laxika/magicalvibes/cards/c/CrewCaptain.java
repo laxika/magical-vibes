@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -13,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class CrewCaptain extends Card {
 
     public CrewCaptain() {
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new SourceEnteredBattlefieldThisTurn(),
+        addStaticEffect(new ConditionalEffect(new SourceEnteredBattlefieldThisTurn(),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
     }
 }

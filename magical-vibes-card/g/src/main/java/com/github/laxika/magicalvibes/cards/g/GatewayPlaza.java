@@ -18,7 +18,7 @@ import java.util.List;
 public class GatewayPlaza extends Card {
 
     public GatewayPlaza() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ForcedCostOrElseEffect(

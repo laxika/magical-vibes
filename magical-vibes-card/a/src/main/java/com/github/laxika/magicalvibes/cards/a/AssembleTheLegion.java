@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "142")
@@ -36,6 +35,6 @@ public class AssembleTheLegion extends Card {
                 new CreateTokenEffect(CardType.CREATURE, new CountersOnSource(CounterType.MUSTER),
                         "Soldier", 1, 1, CardColor.RED, Set.of(CardColor.RED, CardColor.WHITE),
                         List.of(CardSubtype.SOLDIER), Set.of(Keyword.HASTE), Set.of(),
-                        false, false, Map.of(), List.of(), false, false, false, 0, Set.of())));
+                        false, false, List.of(), List.of(), false, false, false, 0, Set.of())));
     }
 }

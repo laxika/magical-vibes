@@ -18,8 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class TideShaper extends Card {
 
     public TideShaper() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}"));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new KickerEffect("{1}"));
+        addStaticEffect(new ConditionalEffect(
                 new OpponentControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 new StaticBoostEffect(1, 1, GrantScope.SELF)));
 

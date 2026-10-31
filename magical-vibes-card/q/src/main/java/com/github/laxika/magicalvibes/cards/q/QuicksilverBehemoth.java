@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class QuicksilverBehemoth extends Card {
 
     public QuicksilverBehemoth() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
         addEffect(EffectSlot.ON_ATTACK, new ReturnSelfToHandAtEndOfCombatEffect());
         addEffect(EffectSlot.ON_BLOCK, new ReturnSelfToHandAtEndOfCombatEffect());

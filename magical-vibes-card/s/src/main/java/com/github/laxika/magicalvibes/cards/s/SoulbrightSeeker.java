@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -24,7 +23,7 @@ import java.util.List;
 public class SoulbrightSeeker extends Card {
 
     public SoulbrightSeeker() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL))),
                 new IncreaseOwnCastCostUnlessRevealSubtypeEffect(2, CardSubtype.ELEMENTAL)));
 

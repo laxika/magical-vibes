@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -20,7 +20,7 @@ import java.util.List;
 public class PlagueNurse extends Card {
 
     public PlagueNurse() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(2));
+        addStaticEffect(new ToxicEffect(2));
 
         var toxicOtherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentHasKeywordPredicate(Keyword.TOXIC),
@@ -30,9 +30,7 @@ public class PlagueNurse extends Card {
                 List.of(
                         new GrantKeywordEffect(Keyword.TOXIC, GrantScope.OWN_CREATURES,
                                 new PermanentHasKeywordPredicate(Keyword.TOXIC)),
-                        new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
-                                EffectSlot.STATIC,
-                                new ToxicEffect(1),
+                        new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(StaticAbility.of(new ToxicEffect(1)),
                                 toxicOtherCreature)),
                 "{2}{G}: Each other creature you control with toxic gains toxic 1 until end of turn. Activate only once each turn.",
                 1));

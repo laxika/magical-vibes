@@ -29,9 +29,9 @@ public class DionBahamut extends Card {
     public DionBahamut() {
         setBackFaceCard(new BahamutWardenOfLight());
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.KNIGHT))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(

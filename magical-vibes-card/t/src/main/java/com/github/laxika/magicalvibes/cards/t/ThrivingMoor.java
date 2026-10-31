@@ -25,7 +25,7 @@ import java.util.List;
 public class ThrivingMoor extends Card {
 
     public ThrivingMoor() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseColorOnEnterEffect(CardColor.WHITE, CardColor.BLUE, CardColor.RED, CardColor.GREEN));
 

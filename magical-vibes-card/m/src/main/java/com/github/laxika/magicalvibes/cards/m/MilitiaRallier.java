@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class MilitiaRallier extends Card {
 
     public MilitiaRallier() {
-        addEffect(EffectSlot.STATIC, new CantAttackOrBlockAloneEffect(false));
+        addStaticEffect(new CantAttackOrBlockAloneEffect(false));
 
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ATTACK,

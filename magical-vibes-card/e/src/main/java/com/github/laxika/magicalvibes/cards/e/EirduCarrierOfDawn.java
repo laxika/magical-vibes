@@ -19,8 +19,7 @@ public class EirduCarrierOfDawn extends Card {
         setBackFaceCard(new IsiluCarrierOfTwilight());
 
         // Creature spells you cast have convoke.
-        addEffect(EffectSlot.STATIC,
-                new GrantSpellCastingAbilityToSpellsEffect(Keyword.CONVOKE, new CardTypePredicate(CardType.CREATURE)));
+        addStaticEffect(new GrantSpellCastingAbilityToSpellsEffect(Keyword.CONVOKE, new CardTypePredicate(CardType.CREATURE)));
 
         // At the beginning of your first main phase, you may pay {B}. If you do, transform Eirdu.
         addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,

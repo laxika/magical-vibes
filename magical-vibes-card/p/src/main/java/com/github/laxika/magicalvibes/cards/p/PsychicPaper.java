@@ -26,15 +26,12 @@ public class PsychicPaper extends Card {
                         new ChooseCardNameAtResolutionEffect(CardType.CREATURE),
                         new ChooseSubtypeForSourceEffect()));
 
-        addEffect(EffectSlot.STATIC,
-                new SetChosenNameAndCreatureTypeEffect(GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.WARD, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantTriggeredAbilityEffect(
+        addStaticEffect(new SetChosenNameAndCreatureTypeEffect(GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.WARD, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                         new CounterUnlessPaysEffect(1), GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

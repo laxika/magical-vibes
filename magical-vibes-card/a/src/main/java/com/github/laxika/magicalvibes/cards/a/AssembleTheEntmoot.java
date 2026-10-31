@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -26,7 +25,7 @@ import java.util.Set;
 public class AssembleTheEntmoot extends Card {
 
     public AssembleTheEntmoot() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.REACH, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.OWN_CREATURES));
 
         LifeGainedThisTurn lifeGained = new LifeGainedThisTurn(CountScope.CONTROLLER);
         CreateTokenEffect treefolk = new CreateTokenEffect(

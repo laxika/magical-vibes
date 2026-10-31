@@ -51,7 +51,7 @@ public class SorcererClass extends Card {
                 "this Class is level 1"
         ));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
                 new GrantActivatedAbilityEffect(
                         new ActivatedAbility(

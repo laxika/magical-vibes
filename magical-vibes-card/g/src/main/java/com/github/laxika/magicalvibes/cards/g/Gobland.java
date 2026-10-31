@@ -42,6 +42,6 @@ public class Gobland extends Card {
 
     public Gobland() {
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.RED));
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
     }
 }

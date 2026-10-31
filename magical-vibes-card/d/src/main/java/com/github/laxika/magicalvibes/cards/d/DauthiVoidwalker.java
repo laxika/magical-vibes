@@ -3,10 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.AllowPlayAndCastCardsExiledWithVoidCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardExiledWithVoidCounterMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseVoidCounterCardMayPlayEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
@@ -19,7 +16,7 @@ import java.util.List;
 public class DauthiVoidwalker extends Card {
 
     public DauthiVoidwalker() {
-        addEffect(EffectSlot.STATIC, ExileOpponentCardsInsteadOfGraveyardEffect.withVoidCounter());
+        addStaticEffect(ExileOpponentCardsInsteadOfGraveyardEffect.withVoidCounter());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

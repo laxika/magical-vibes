@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
@@ -28,7 +27,7 @@ public class LightwheelEnhancements extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
                 "Target must be a creature or Vehicle"))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+                .addStaticEffect(new StaticBoostEffect(
                         1, 1, Set.of(Keyword.VIGILANCE), GrantScope.ENCHANTED_PERMANENT));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
@@ -22,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ImpsTaunt extends Card {
 
     public ImpsTaunt() {
-        addEffect(EffectSlot.STATIC, new BuybackEffect("{3}"));
+        addStaticEffect(new BuybackEffect("{3}"));
         addSpellEffect(new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK));
         addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
         target(TargetFilters.creature());

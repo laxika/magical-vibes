@@ -19,8 +19,8 @@ public class LeylineOfHope extends Card {
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with Leyline of Hope on the battlefield?"
         ));
-        addEffect(EffectSlot.STATIC, new AdditionalLifeGainEffect(1));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new AdditionalLifeGainEffect(1));
+        addStaticEffect(new ConditionalEffect(
                 new ControllerLifeAtLeast(7, true),
                 new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES)));
     }

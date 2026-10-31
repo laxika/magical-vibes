@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 public class DamiaSageOfStone extends Card {
 
     public DamiaSageOfStone() {
-        addEffect(EffectSlot.STATIC, new SkipDrawStepEffect());
+        addStaticEffect(new SkipDrawStepEffect());
 
         // At the beginning of your upkeep, if you have fewer than seven cards in hand, draw cards
         // equal to the difference.

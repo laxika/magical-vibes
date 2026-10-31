@@ -27,7 +27,7 @@ public class ConduitOfRuin extends Card {
                         LibrarySearchDestination.TOP_OF_LIBRARY),
                 "Search your library for a colorless creature card with mana value 7 or greater?"));
 
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForFirstMatchingSpellEachTurnEffect(
+        addStaticEffect(new ReduceCastCostForFirstMatchingSpellEachTurnEffect(
                 new CardTypePredicate(CardType.CREATURE), 2));
     }
 }

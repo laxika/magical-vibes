@@ -20,7 +20,7 @@ import java.util.Set;
 public class HarmoniousArchon extends Card {
 
     public HarmoniousArchon() {
-        addEffect(EffectSlot.STATIC, new SetBasePowerToughnessEffect(3, 3,
+        addStaticEffect(new SetBasePowerToughnessEffect(3, 3,
                 GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.ARCHON))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(

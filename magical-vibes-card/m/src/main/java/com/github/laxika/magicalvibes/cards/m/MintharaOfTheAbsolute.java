@@ -18,8 +18,7 @@ public class MintharaOfTheAbsolute extends Card {
     public MintharaOfTheAbsolute() {
         OncePerTurnTriggerEffect intensify =
                 new OncePerTurnTriggerEffect(new IntensifyNamedCardsEffect(CARD_NAME));
-        addEffect(EffectSlot.STATIC,
-                new DynamicStaticBoostEffect(new SourceIntensity(), new Fixed(0), GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new DynamicStaticBoostEffect(new SourceIntensity(), new Fixed(0), GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, intensify);
         addEffect(EffectSlot.ON_ALLY_PERMANENT_LEAVES_BATTLEFIELD, intensify);
     }

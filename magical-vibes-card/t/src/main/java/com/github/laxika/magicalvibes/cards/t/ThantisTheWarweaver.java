@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class ThantisTheWarweaver extends Card {
 
     public ThantisTheWarweaver() {
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesMustAttackEffect(
+        addStaticEffect(new MatchingCreaturesMustAttackEffect(
                 new PermanentIsCreaturePredicate()));
         addEffect(EffectSlot.ON_CREATURE_ATTACKS_YOU, new PutCountersOnSourceEffect(1, 1, 1));
     }

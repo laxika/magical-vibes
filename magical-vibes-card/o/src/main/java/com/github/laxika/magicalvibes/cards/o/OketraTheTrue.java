@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
@@ -22,7 +21,7 @@ public class OketraTheTrue extends Card {
 
     public OketraTheTrue() {
         // Oketra can't attack or block unless you control at least three other creatures.
-        addEffect(EffectSlot.STATIC, new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(new CantAttackOrBlockUnlessEffect(
                 new ControlsOtherPermanentCount(3, new PermanentIsCreaturePredicate()),
                 "you control at least three other creatures"
         ));

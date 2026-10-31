@@ -5,44 +5,33 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
-import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.FlashforwardCast;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Retrace;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastSourceCardFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtFaceDownCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.PubliclyRevealedHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.WebSlingingEffect;
 import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
 import com.github.laxika.magicalvibes.networking.message.JoinGame;
@@ -302,7 +291,7 @@ public class GameViewProjectionFactory {
                 Map<UUID, List<CardView>> cardsByViewer = new LinkedHashMap<>();
                 for (ExiledCardEntry entry : data.getExiledWithPermanentEntries(p.getId(), p.getCard().getId())) {
                     if (!entry.faceDown()) continue;
-                    if (p.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(
+                    if (p.getCard().getStaticEffects().stream().anyMatch(
                             com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement.class::isInstance)) {
                         continue;
                     }
@@ -317,7 +306,9 @@ public class GameViewProjectionFactory {
                     boolean grantsImplicitLookPermission = !exiledFaceDownFromHandOnEnter
                             && !data.exiledCardsWithIntelCounters.contains(entry.card().getId())
                             && java.util.stream.Stream.concat(
-                                    java.util.stream.Stream.concat(p.getCard().getCastingCostsAndSpellEffects().stream(),
+                                    java.util.stream.Stream.concat(
+                                            java.util.stream.Stream.concat(p.getCard().getCastingCostsAndSpellEffects().stream(),
+                                                    p.getCard().getStaticEffects().stream()),
                                             java.util.Arrays.stream(EffectSlot.values())
                                                     .flatMap(slot -> p.getCard().getEffects(slot).stream())),
                                     p.getCard().getActivatedAbilities().stream()
@@ -472,7 +463,7 @@ public class GameViewProjectionFactory {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (effect instanceof PubliclyRevealedHandEffect reveal) {
                         if (!reveal.controllerOnly()) {
                             allHandsRevealed = true;
@@ -498,7 +489,7 @@ public class GameViewProjectionFactory {
             if (bf != null) {
                 for (Permanent perm : bf) {
                     if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    for (CardEffect effect : perm.getCard().getStaticEffects()) {
                         if (effect instanceof RevealOpponentHandsEffect) {
                             fullHandRevealed = true;
                             break;
@@ -570,7 +561,7 @@ public class GameViewProjectionFactory {
         Set<UUID> revealedPlayerIds = new HashSet<>();
         if (data.planechase != null) {
             for (var planar : data.planechase.faceUp) {
-                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed
                             && topCardRevealed.allPlayers()) {
                         revealedPlayerIds.addAll(data.orderedPlayerIds);
@@ -586,7 +577,7 @@ public class GameViewProjectionFactory {
             // A card whose own static ability lets it be cast from the top of its owner's library also lets its
             // owner look at it there (Chittering Illuminator, Pearl Lake Warden; one ability, CR 113.6b).
             if (pid.equals(viewerId) && deck != null && !deck.isEmpty()
-                    && deck.getFirst().getEffects(EffectSlot.STATIC).stream()
+                    && deck.getFirst().getStaticEffects().stream()
                     .anyMatch(AllowCastSourceCardFromTopOfLibraryEffect.class::isInstance)) {
                 revealedPlayerIds.add(pid);
             }
@@ -1357,7 +1348,7 @@ public class GameViewProjectionFactory {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (effect instanceof CantSearchLibrariesEffect restriction && restriction.payableToIgnore()) {
                         if (paidSet == null || !paidSet.contains(perm.getId())) {
                             unpaidCount++;

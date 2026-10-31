@@ -13,6 +13,6 @@ public class ConvincingMirage extends Card {
     public ConvincingMirage() {
         target(TargetFilters.land())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseBasicLandTypeOnEnterEffect())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesChosenTypeEffect());
+                .addStaticEffect(new EnchantedPermanentBecomesChosenTypeEffect());
     }
 }

@@ -21,7 +21,7 @@ import java.util.List;
 public class BartzAndBoko extends Card {
 
     public BartzAndBoko() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.BIRD), CountScope.CONTROLLER)));
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

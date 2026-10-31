@@ -13,8 +13,7 @@ public class WerewolfOfAncientHunger extends Card {
 
     public WerewolfOfAncientHunger() {
         CardsInHand cardsInAllPlayersHands = new CardsInHand(CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(cardsInAllPlayersHands, cardsInAllPlayersHands));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(cardsInAllPlayersHands, cardsInAllPlayersHands));
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), new TransformSelfEffect()));
     }

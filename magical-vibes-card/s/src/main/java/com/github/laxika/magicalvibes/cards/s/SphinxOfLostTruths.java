@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class SphinxOfLostTruths extends Card {
 
     public SphinxOfLostTruths() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{U}"));
+        addStaticEffect(new KickerEffect("{1}{U}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(3));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new NotKicked(), new DiscardEffect(3, DiscardRecipient.CONTROLLER)));

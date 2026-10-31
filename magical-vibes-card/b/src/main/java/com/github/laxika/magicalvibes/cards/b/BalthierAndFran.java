@@ -22,7 +22,7 @@ import java.util.Set;
 public class BalthierAndFran extends Card {
 
     public BalthierAndFran() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1, 1, Set.of(Keyword.REACH, Keyword.VIGILANCE), GrantScope.OWN_PERMANENTS,
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
         addEffect(EffectSlot.ON_CREWS_VEHICLE, new RegisterDelayedVehicleAttackEffect(

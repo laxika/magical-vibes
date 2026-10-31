@@ -19,7 +19,7 @@ public class BitterthornNissasAnimus extends Card {
 
     public BitterthornNissasAnimus() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LivingWeaponEffect());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED),
                 "Search your library for a basic land card?"));

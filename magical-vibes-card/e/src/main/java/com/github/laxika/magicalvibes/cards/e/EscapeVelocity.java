@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,8 +17,7 @@ public class EscapeVelocity extends Card {
 
     public EscapeVelocity() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), GrantScope.ENCHANTED_CREATURE));
 
         addCastingOption(new GraveyardCast(null, "{1}{R}", List.of(
                 new ExileNCardsFromGraveyardCastingCost(null, "other cards", 2)),

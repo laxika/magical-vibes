@@ -24,9 +24,9 @@ public class GuildpactGreenwalker extends Card {
                 "Choose a creature card in your hand to perpetually incorporate {1}{G} and get +4/+4?"));
 
         var multicoloredCreature = new PermanentIsMulticoloredPredicate();
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.WARD, GrantScope.OWN_CREATURES, multicoloredCreature));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(2), GrantScope.OWN_CREATURES, multicoloredCreature));
     }

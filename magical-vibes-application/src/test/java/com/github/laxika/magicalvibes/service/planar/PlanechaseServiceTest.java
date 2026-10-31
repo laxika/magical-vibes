@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.*;
 import com.github.laxika.magicalvibes.model.effect.*;
 import com.github.laxika.magicalvibes.model.planar.*;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
-import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.testutil.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,11 +33,22 @@ class PlanechaseServiceTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    private Card fixture(String name, CardType type, EffectSlot slot, CardEffect effect) {
+    private Card fixture(String name, CardType type) {
         Card card = new Card();
         card.setName(name);
         card.setType(type);
-        if (effect != null) card.addEffect(slot, effect);
+        return card;
+    }
+
+    private Card fixture(String name, CardType type, EffectSlot slot, CardEffect effect) {
+        Card card = fixture(name, type);
+        card.addEffect(slot, effect);
+        return card;
+    }
+
+    private Card staticFixture(String name, CardType type, CardEffect effect) {
+        Card card = fixture(name, type);
+        card.addStaticEffect(effect);
         return card;
     }
 
@@ -50,7 +60,7 @@ class PlanechaseServiceTest extends BaseCardTest {
 
     @Test
     void continuousBoostAffectsBothPlayersAndStopsAfterPlaneswalking() {
-        faceUp(fixture("Test plane", CardType.PLANE, EffectSlot.STATIC,
+        faceUp(staticFixture("Test plane", CardType.PLANE,
                 new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING), GrantScope.ALL_CREATURES)));
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -66,7 +76,7 @@ class PlanechaseServiceTest extends BaseCardTest {
 
     @Test
     void controllerRelativeContinuousEffectMovesWithController() {
-        faceUp(fixture("Test plane", CardType.PLANE, EffectSlot.STATIC,
+        faceUp(staticFixture("Test plane", CardType.PLANE,
                 new StaticBoostEffect(1, 1, Set.of(), GrantScope.OWN_CREATURES)));
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -143,7 +153,7 @@ class PlanechaseServiceTest extends BaseCardTest {
 
     @Test
     void planarActivatedAbilityPaysThenResolvesNormally() {
-        Card plane = fixture("Test plane", CardType.PLANE, EffectSlot.STATIC, null);
+        Card plane = fixture("Test plane", CardType.PLANE);
         plane.addActivatedAbility(new ActivatedAbility(false, "{1}", List.of(new DrawCardEffect(1)), "Draw a card."));
         var source = faceUp(plane);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -177,8 +187,8 @@ class PlanechaseServiceTest extends BaseCardTest {
 
     @Test
     void multipleDepartingPlanesAreOrderedWithoutTouchingLibraries() {
-        var first = faceUp(fixture("First plane", CardType.PLANE, EffectSlot.STATIC, null));
-        var second = faceUp(fixture("Second plane", CardType.PLANE, EffectSlot.STATIC, null));
+        var first = faceUp(fixture("First plane", CardType.PLANE));
+        var second = faceUp(fixture("Second plane", CardType.PLANE));
         int librarySize = gd.playerDecks.get(player1.getId()).size();
         harness.inMutationScope(() -> planar.planeswalk(gd));
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
@@ -219,7 +229,7 @@ class PlanechaseServiceTest extends BaseCardTest {
 
     @Test
     void phenomenonDoesNotMoveDuringAnUnfinishedResolution() {
-        faceUp(fixture("Test phenomenon", CardType.PHENOMENON, EffectSlot.STATIC, null));
+        faceUp(fixture("Test phenomenon", CardType.PHENOMENON));
         gd.effectResolutionDepth = 1;
         assertThat(planar.checkPhenomena(gd)).isFalse();
         gd.effectResolutionDepth = 0;
@@ -229,7 +239,7 @@ class PlanechaseServiceTest extends BaseCardTest {
 
     @Test
     void staleOrUnauthorizedPlanarActivationDoesNotSpendMana() {
-        Card plane = fixture("Test plane", CardType.PLANE, EffectSlot.STATIC, null);
+        Card plane = fixture("Test plane", CardType.PLANE);
         plane.addActivatedAbility(new ActivatedAbility(false, "{1}", List.of(new DrawCardEffect(1)), "Draw a card."));
         var source = faceUp(plane);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -245,7 +255,7 @@ class PlanechaseServiceTest extends BaseCardTest {
 
     @Test
     void planeswalkingExpiresOnlyTheMatchingFloatingDuration() {
-        faceUp(fixture("Test plane", CardType.PLANE, EffectSlot.STATIC, null));
+        faceUp(fixture("Test plane", CardType.PLANE));
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent creature = gd.playerBattlefields.get(player1.getId()).getFirst();
         gd.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
@@ -357,7 +367,7 @@ class PlanechaseServiceTest extends BaseCardTest {
         gd.planechase.recordSpecialAction(player1.getId(), gd.turnNumber);
         gd.planechase.recordSpecialAction(player1.getId(), gd.turnNumber);
         gd.playerManaPools.get(player1.getId()).addPowerstoneOnlyColorless(1);
-        Card powerstone = fixture("Powerstone", CardType.ARTIFACT, EffectSlot.STATIC, null);
+        Card powerstone = fixture("Powerstone", CardType.ARTIFACT);
         powerstone.addActivatedAbility(new ActivatedAbility(true, null,
                 List.of(new AwardRestrictedManaEffect(ManaColor.COLORLESS, 1, new ManaRestriction.Powerstone())), "Add mana."));
         harness.addToBattlefield(player1, powerstone);

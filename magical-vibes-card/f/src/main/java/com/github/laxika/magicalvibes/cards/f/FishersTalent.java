@@ -33,7 +33,7 @@ public class FishersTalent extends Card {
         CreateTokenEffect fishToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Fish", 1, 1,
                 CardColor.BLUE, null, List.of(CardSubtype.FISH), Set.of(), Set.of(),
-                false, false, java.util.Map.of(), List.of(), false, false, false, 0, Set.of());
+                false, false, List.of(), List.of(), false, false, false, 0, Set.of());
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
                 ConditionalEffect.unless(
@@ -55,7 +55,7 @@ public class FishersTalent extends Card {
                 new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
                 "this Class is level 1"));
 
-        addEffect(EffectSlot.STATIC, new ReplaceTokenSubtypeCreationEffect(
+        addStaticEffect(new ReplaceTokenSubtypeCreationEffect(
                 CardSubtype.FISH,
                 new CreateTokenEffect(
                         "Shark", 3, 3, CardColor.BLUE, List.of(CardSubtype.SHARK), Set.of(), Set.of()),
@@ -73,7 +73,7 @@ public class FishersTalent extends Card {
                         new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL)))),
                 "this Class is level 2"));
 
-        addEffect(EffectSlot.STATIC, new ReplaceTokenSubtypeCreationEffect(
+        addStaticEffect(new ReplaceTokenSubtypeCreationEffect(
                 CardSubtype.SHARK,
                 new CreateTokenEffect(
                         "Octopus", 8, 8, CardColor.BLUE, List.of(CardSubtype.OCTOPUS), Set.of(), Set.of()),

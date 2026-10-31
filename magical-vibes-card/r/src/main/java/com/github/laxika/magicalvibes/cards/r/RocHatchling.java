@@ -34,10 +34,10 @@ public class RocHatchling extends Card {
                 new RemoveCounterFromSourceEffect(CounterType.SHELL, 1));
 
         // As long as this creature has no shell counters on it, it gets +3/+2 and has flying.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new SourceCounterThreshold(1, CounterType.SHELL)),
                 new StaticBoostEffect(3, 2, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new SourceCounterThreshold(1, CounterType.SHELL)),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
     }

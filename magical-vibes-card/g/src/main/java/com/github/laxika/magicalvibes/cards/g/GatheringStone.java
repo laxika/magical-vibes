@@ -19,8 +19,7 @@ public class GatheringStone extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
 
         // Spells you cast of the chosen type cost {1} less to cast.
-        addEffect(EffectSlot.STATIC,
-                new ReduceCastCostForMatchingSpellsEffect(chosenType, 1, CostModificationScope.SELF));
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(chosenType, 1, CostModificationScope.SELF));
 
         // When this artifact enters and at the beginning of your upkeep, look at the top card of
         // your library. If it is a card of the chosen type, you may reveal it and put it into your

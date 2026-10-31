@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.IfSourceAttacking;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
@@ -19,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class TahngarthsRage extends Card {
 
     public TahngarthsRage() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        target(TargetFilters.creature()).addStaticEffect(new AttachedBoostEffect(
                 new IfSourceAttacking(new Fixed(3), new Fixed(-2)),
                 new IfSourceAttacking(new Fixed(0), new Fixed(-1)),
                 GrantScope.ENCHANTED_CREATURE,

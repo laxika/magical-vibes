@@ -12,6 +12,6 @@ public class SealOfTheGuildpact extends Card {
 
     public SealOfTheGuildpact() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect(2));
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForEachChosenColorEffect());
+        addStaticEffect(new ReduceCastCostForEachChosenColorEffect());
     }
 }

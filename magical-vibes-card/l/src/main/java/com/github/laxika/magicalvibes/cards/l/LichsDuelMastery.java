@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.LichDuelMasteryLifeLossReplac
 public class LichsDuelMastery extends Card {
 
     public LichsDuelMastery() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF));
-        addEffect(EffectSlot.STATIC, new LichDuelMasteryLifeLossReplacementEffect());
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF));
+        addStaticEffect(new LichDuelMasteryLifeLossReplacementEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTopCardsToSourceEffect(5, true));
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ControllerLosesGameOnLeavesEffect());
     }

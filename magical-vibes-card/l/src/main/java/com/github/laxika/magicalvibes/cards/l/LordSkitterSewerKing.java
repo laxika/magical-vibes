@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "97")
@@ -30,6 +30,6 @@ public class LordSkitterSewerKing extends Card {
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                 new CreateTokenEffect(1, "Rat", 1, 1, CardColor.BLACK,
                         List.of(CardSubtype.RAT), Set.of(), Set.of(),
-                        Map.of(EffectSlot.STATIC, new CantBlockEffect())));
+                        List.of(StaticAbility.of(new CantBlockEffect()))));
     }
 }

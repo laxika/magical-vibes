@@ -33,7 +33,7 @@ public class KembaKhaEnduring extends Card {
                                 new CardIsSelfPredicate(), new CardSubtypePredicate(CardSubtype.CAT))),
                                 new AttachTargetEquipmentToTriggeringPermanentEffect()));
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsEquippedPredicate()));
 
         addActivatedAbility(new ActivatedAbility(

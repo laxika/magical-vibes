@@ -32,7 +32,7 @@ public class BottomlessPoolLockerRoom extends Card {
         target(TargetFilters.creature(), 0, 1).addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
                 new TriggeringRoomDoorConditionalEffect(0, ReturnToHandEffect.target()));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,

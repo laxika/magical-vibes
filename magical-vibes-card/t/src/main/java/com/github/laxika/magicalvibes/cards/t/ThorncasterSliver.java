@@ -17,7 +17,7 @@ public class ThorncasterSliver extends Card {
         // Thorncaster Sliver is itself a Sliver, so ALL_OWN_CREATURES (source must pass the filter too).
         // The granted attack trigger is collected off each attacking Sliver in CombatAttackService and
         // routed through the AttackTriggerTarget interaction, with that Sliver as the damage source.
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(EffectSlot.ON_ATTACK,
+        addStaticEffect(new GrantTriggeredAbilityEffect(EffectSlot.ON_ATTACK,
                 new DealDamageToAnyTargetEffect(1), GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
     }

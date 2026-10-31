@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SOK", collectorNumber = "165")
@@ -56,7 +55,7 @@ public class TombOfUrami extends Card {
                                 Set.of(),
                                 false,
                                 false,
-                                Map.of(),
+                                List.of(),
                                 List.of(),
                                 false,
                                 false,

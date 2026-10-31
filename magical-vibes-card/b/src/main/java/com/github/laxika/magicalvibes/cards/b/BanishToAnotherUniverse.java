@@ -16,7 +16,7 @@ public class BanishToAnotherUniverse extends Card {
 
     public BanishToAnotherUniverse() {
         // Affinity for historic permanents.
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsHistoricPredicate(), CountScope.CONTROLLER)));
 
         target(TargetFilters.nonlandPermanentAnOpponentControls())

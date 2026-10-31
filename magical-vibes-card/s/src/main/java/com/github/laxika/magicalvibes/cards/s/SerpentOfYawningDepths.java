@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -24,7 +23,7 @@ public class SerpentOfYawningDepths extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.SERPENT)
         ));
 
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new GrantEffectEffect(
                 new CanBeBlockedOnlyByFilterEffect(seaMonster,
                         "Krakens, Leviathans, Octopuses, and Serpents"),
                 GrantScope.ALL_OWN_CREATURES,

@@ -19,9 +19,8 @@ public class MeteoricMace extends Card {
         addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());
 
         // Equipped creature gets +4/+0 and has trample.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(4, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(4, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
 
         // Equip {4}
         addActivatedAbility(new EquipActivatedAbility("{4}"));

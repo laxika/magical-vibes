@@ -16,7 +16,7 @@ import java.util.List;
 public class CuratorBeastie extends Card {
 
     public CuratorBeastie() {
-        addEffect(EffectSlot.STATIC, new ControlledPermanentsEnterWithAdditionalCountersEffect(
+        addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsColorlessPredicate())),

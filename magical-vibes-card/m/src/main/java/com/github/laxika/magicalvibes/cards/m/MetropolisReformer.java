@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 public class MetropolisReformer extends Card {
 
     public MetropolisReformer() {
-        addEffect(EffectSlot.STATIC, new GrantControllerKeywordEffect(Keyword.HEXPROOF));
+        addStaticEffect(new GrantControllerKeywordEffect(Keyword.HEXPROOF));
         addEffect(EffectSlot.ON_DEALT_DAMAGE, new GainLifeEffect(new EventValue()));
     }
 }

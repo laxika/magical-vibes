@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class PullOfTheMistMoon extends Card {
 
     public PullOfTheMistMoon() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{U}"));
+        addStaticEffect(new KickerEffect("{1}{U}"));
 
         // When Pull of the Mist Moon enters, exile target nonland permanent an opponent controls
         // until Pull of the Mist Moon leaves the battlefield.

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DuringControllerTurn;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -25,6 +24,6 @@ public class AngryMob extends Card {
                 new Fixed(2),
                 new DuringControllerTurn(new PermanentCount(
                         new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.OPPONENTS)));
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(powerToughness, powerToughness));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(powerToughness, powerToughness));
     }
 }

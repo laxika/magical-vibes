@@ -21,14 +21,11 @@ public class ArmedWithProof extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofClueToken(2));
 
         PermanentHasSubtypePredicate clues = new PermanentHasSubtypePredicate(CardSubtype.CLUE);
-        addEffect(EffectSlot.STATIC,
-                new GrantSubtypeEffect(CardSubtype.EQUIPMENT, GrantScope.OWN_PERMANENTS, false, clues));
-        addEffect(EffectSlot.STATIC,
-                new GrantEffectEffect(
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.EQUIPMENT, GrantScope.OWN_PERMANENTS, false, clues));
+        addStaticEffect(new GrantEffectEffect(
                         new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE),
                         GrantScope.OWN_PERMANENTS,
                         clues));
-        addEffect(EffectSlot.STATIC,
-                new GrantActivatedAbilityEffect(new EquipActivatedAbility("{2}"), GrantScope.OWN_PERMANENTS, clues));
+        addStaticEffect(new GrantActivatedAbilityEffect(new EquipActivatedAbility("{2}"), GrantScope.OWN_PERMANENTS, clues));
     }
 }

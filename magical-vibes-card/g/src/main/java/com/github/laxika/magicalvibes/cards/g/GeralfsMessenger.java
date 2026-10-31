@@ -16,7 +16,7 @@ public class GeralfsMessenger extends Card {
 
     public GeralfsMessenger() {
         // Geralf's Messenger enters the battlefield tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // When Geralf's Messenger enters the battlefield, target opponent loses 2 life.
         // Undying is loaded from Scryfall and resolved automatically when it dies.

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 public class ThunderBrute extends Card {
 
     public ThunderBrute() {
-        addEffect(EffectSlot.STATIC, new TributeEffect(3));
+        addStaticEffect(new TributeEffect(3));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TributeNotPaidEffect(
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
     }

@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SoaringSeacliff extends Card {
 
     public SoaringSeacliff() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));

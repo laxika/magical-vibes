@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CastingCost;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCardsInsteadOfGraveyardEffect;
@@ -19,12 +18,12 @@ import java.util.List;
 public class FestivalOfEmbers extends Card {
 
     public FestivalOfEmbers() {
-        addEffect(EffectSlot.STATIC, new CastSpellsFromGraveyardEffect(
+        addStaticEffect(new CastSpellsFromGraveyardEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))),
                 List.<CastingCost>of(new LifeCastingCost(1)), true));
-        addEffect(EffectSlot.STATIC, new ExileOwnCardsInsteadOfGraveyardEffect());
+        addStaticEffect(new ExileOwnCardsInsteadOfGraveyardEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -32,7 +32,7 @@ public class ElderSpawn extends Card {
                 true));
 
         // This creature can't be blocked by red creatures.
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentColorInPredicate(Set.of(CardColor.RED))));
     }
 }

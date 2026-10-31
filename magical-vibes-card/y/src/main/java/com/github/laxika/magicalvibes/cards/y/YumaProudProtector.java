@@ -35,7 +35,7 @@ public class YumaProudProtector extends Card {
             "Sacrifice a land to draw a card?");
 
     public YumaProudProtector() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new CardsInGraveyard(new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER)));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SACRIFICE_LAND_TO_DRAW);

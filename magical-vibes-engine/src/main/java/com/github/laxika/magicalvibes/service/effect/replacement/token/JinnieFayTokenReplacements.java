@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.token;
 
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -82,7 +81,7 @@ public class JinnieFayTokenReplacements implements ReplacementCandidateSource<To
                     || permanent.isStaticEffectSuppressed(JinnieFayTokenReplacementEffect.class)) {
                 continue;
             }
-            List<CardEffect> statics = permanent.getCard().getEffects(EffectSlot.STATIC);
+            List<CardEffect> statics = permanent.getCard().getStaticEffects();
             for (int i = 0; i < statics.size(); i++) {
                 if (statics.get(i) instanceof JinnieFayTokenReplacementEffect) {
                     instances.add(new Instance(KEY_PREFIX + permanent.getId() + ":" + i, permanent));

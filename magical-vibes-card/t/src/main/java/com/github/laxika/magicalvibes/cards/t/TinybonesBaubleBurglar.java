@@ -21,8 +21,7 @@ public class TinybonesBaubleBurglar extends Card {
     public TinybonesBaubleBurglar() {
         addEffect(EffectSlot.ON_OPPONENT_DISCARDS,
                 ExileDiscardedCardFromGraveyardEffect.withStashCounter());
-        addEffect(EffectSlot.STATIC,
-                AllowCastFromCardsExiledWithSourceEffect.forStashCounters(true));
+        addStaticEffect(AllowCastFromCardsExiledWithSourceEffect.forStashCounters(true));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}{B}",

@@ -18,7 +18,7 @@ import java.util.List;
 public class UrborgSkeleton extends Card {
 
     public UrborgSkeleton() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}"));
+        addStaticEffect(new KickerEffect("{3}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
         addActivatedAbility(new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()),

@@ -69,10 +69,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -3567,7 +3565,7 @@ public class GraveyardReturnSupport {
                 new CreateTokenEffect(
                         CardType.CREATURE, 1, "Thopter", 0, 0, null, Set.of(),
                         List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT),
-                        false, false, Map.of(), List.of(), false, false, false,
+                        false, false, List.of(), List.of(), false, false, false,
                         0, Set.of(), Set.of()));
         if (counters <= 0) {
             return;

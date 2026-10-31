@@ -17,7 +17,7 @@ public class OathkeeperTakenosDaisho extends Card {
 
     public OathkeeperTakenosDaisho() {
         // Equipped creature gets +3/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 1, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature dies, return that card to the battlefield under your control
         // if it's a Samurai card.

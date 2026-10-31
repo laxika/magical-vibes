@@ -18,7 +18,7 @@ public class CaitCageBrawler extends Card {
 
     public CaitCageBrawler() {
         // During your turn, Cait has indestructible.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
 
         // Whenever Cait attacks, you and defending player each draw a card, then discard a card.

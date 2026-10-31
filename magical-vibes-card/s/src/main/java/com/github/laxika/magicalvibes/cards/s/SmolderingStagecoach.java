@@ -28,7 +28,7 @@ public class SmolderingStagecoach extends Card {
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))),
                 CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(instantsAndSorceries, new Fixed(5)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(instantsAndSorceries, new Fixed(5)));
 
         addEffect(EffectSlot.ON_ATTACK, new RegisterDelayedControllerSpellCastTriggerEffect(
                 new CardTypePredicate(CardType.INSTANT),

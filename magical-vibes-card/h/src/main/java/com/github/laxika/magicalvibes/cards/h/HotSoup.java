@@ -13,7 +13,7 @@ public class HotSoup extends Card {
 
     public HotSoup() {
         // Equipped creature can't be blocked.
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         // Whenever equipped creature is dealt damage, destroy it.
         addEffect(EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
         addActivatedAbility(new EquipActivatedAbility("{3}"));

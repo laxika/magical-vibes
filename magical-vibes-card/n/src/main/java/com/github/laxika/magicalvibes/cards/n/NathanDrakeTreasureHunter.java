@@ -11,9 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorForActivat
 public class NathanDrakeTreasureHunter extends Card {
 
     public NathanDrakeTreasureHunter() {
-        addEffect(EffectSlot.STATIC, new SpendAnyManaTypeToCastSpellsYouDontOwnEffect());
-        addEffect(EffectSlot.STATIC,
-                new SpendManaAsAnyColorForActivatedAbilitiesOfNonOwnedPermanentsEffect());
+        addStaticEffect(new SpendAnyManaTypeToCastSpellsYouDontOwnEffect());
+        addStaticEffect(new SpendManaAsAnyColorForActivatedAbilitiesOfNonOwnedPermanentsEffect());
         addEffect(EffectSlot.ON_ATTACK, new ExileTopCardOfEachPlayersLibraryAndMayCastSpellsEffect());
     }
 }

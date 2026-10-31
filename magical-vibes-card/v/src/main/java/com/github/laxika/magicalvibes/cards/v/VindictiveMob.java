@@ -19,7 +19,7 @@ public class VindictiveMob extends Card {
                 1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER));
 
         // This creature can't be blocked by Saprolings.
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.SAPROLING)));
     }
 }

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 public class VenomousBrutalizer extends Card {
 
     public VenomousBrutalizer() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(3));
+        addStaticEffect(new ToxicEffect(3));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayPayManaEffect("{1}{G}", new ProliferateEffect(new Fixed(1)), "Pay {1}{G}?"));
     }

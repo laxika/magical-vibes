@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromCreaturesEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "212")
@@ -12,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromCreaturesEffe
 public class GratuitousViolence extends Card {
 
     public GratuitousViolence() {
-        addEffect(EffectSlot.STATIC, new DoubleDamageFromCreaturesEffect());
+        addStaticEffect(new DoubleDamageFromCreaturesEffect());
     }
 }

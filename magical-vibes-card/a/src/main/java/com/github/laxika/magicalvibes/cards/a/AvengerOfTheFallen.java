@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtE
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TDM", collectorNumber = "73")
@@ -24,7 +23,7 @@ public class AvengerOfTheFallen extends Card {
                 CardType.CREATURE,
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
                 "Warrior", 1, 1, CardColor.RED, null, List.of(CardSubtype.WARRIOR),
-                Set.of(), Set.of(), true, false, Map.of(), List.of(), false, false, false, 0, Set.of()
+                Set.of(), Set.of(), true, false, List.of(), List.of(), false, false, false, 0, Set.of()
         ), new SacrificeCreatedPermanentsAtEndStepEffect()));
     }
 }

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantUnearthToTarg
 public class HighwayReaver extends Card {
 
     public HighwayReaver() {
-        addEffect(EffectSlot.STATIC, new MaxSpeedFreeFirstUnearthEffect());
+        addStaticEffect(new MaxSpeedFreeFirstUnearthEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PerpetuallyGrantUnearthToTargetCreatureCardEffect());
         addEffect(EffectSlot.ON_ATTACK,

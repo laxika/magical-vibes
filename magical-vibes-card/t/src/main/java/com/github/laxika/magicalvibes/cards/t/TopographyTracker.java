@@ -12,6 +12,6 @@ public class TopographyTracker extends Card {
 
     public TopographyTracker() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofMapToken(1));
-        addEffect(EffectSlot.STATIC, new DoubleExploreReplacementEffect());
+        addStaticEffect(new DoubleExploreReplacementEffect());
     }
 }

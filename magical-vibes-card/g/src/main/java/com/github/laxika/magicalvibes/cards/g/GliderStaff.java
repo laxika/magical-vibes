@@ -17,8 +17,8 @@ public class GliderStaff extends Card {
     public GliderStaff() {
         target(TargetFilters.creature(), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AirbendTargetPermanentEffect());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

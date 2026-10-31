@@ -24,7 +24,7 @@ public class AuraOfSilence extends Card {
 
     public AuraOfSilence() {
         // Artifact and enchantment spells your opponents cast cost {2} more to cast.
-        addEffect(EffectSlot.STATIC, new IncreaseSpellCostEffect(
+        addStaticEffect(new IncreaseSpellCostEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardTypePredicate(CardType.ENCHANTMENT)

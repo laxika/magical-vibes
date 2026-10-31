@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class KLiTheResourceful extends Card {
 
     public KLiTheResourceful() {
-        addEffect(EffectSlot.STATIC, new StoriedEffect());
-        addEffect(EffectSlot.STATIC, new FreeEquipWhileEnduringStoryEffect());
+        addStaticEffect(new StoriedEffect());
+        addStaticEffect(new FreeEquipWhileEnduringStoryEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.DWARF),

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -24,7 +23,7 @@ import java.util.List;
 public class CrumbAndGetIt extends Card {
 
     public CrumbAndGetIt() {
-        addEffect(EffectSlot.STATIC, new GiftEffect());
+        addStaticEffect(new GiftEffect());
         target(TargetFilters.creatureYouControl())
                 .addSpellEffect(new ConditionalEffect(new GiftPromised(),
                         TargetOpponentCreatesTokenEffect.gift(foodToken())))

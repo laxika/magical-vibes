@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -38,17 +37,17 @@ public class LumenClassFrigate extends Card {
                         + "on Lumen-Class Frigate.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.CHARGE),
                 new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(12, CounterType.CHARGE),
                 new AnimatePermanentsEffect((DynamicAmount) null, (DynamicAmount) null, List.of(), Set.of(), null,
                         Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.CONTINUOUS, null)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(12, CounterType.CHARGE),
                 new SetBasePowerToughnessEffect(3, 5, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(12, CounterType.CHARGE),
                 new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), GrantScope.SELF)));
     }

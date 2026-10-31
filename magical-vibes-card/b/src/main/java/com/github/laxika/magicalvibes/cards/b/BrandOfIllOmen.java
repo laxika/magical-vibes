@@ -23,7 +23,6 @@ public class BrandOfIllOmen extends Card {
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{R}"))
 
                 // Enchanted creature's controller can't cast creature spells.
-                .addEffect(EffectSlot.STATIC,
-                        new EnchantedPermanentControllerCantCastSpellTypeEffect(Set.of(CardType.CREATURE)));
+                .addStaticEffect(new EnchantedPermanentControllerCantCastSpellTypeEffect(Set.of(CardType.CREATURE)));
     }
 }

@@ -19,8 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class SkyclaveShade extends Card {
 
     public SkyclaveShade() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{B}"));
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new KickerEffect("{2}{B}"));
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new Kicked(),
                         new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));

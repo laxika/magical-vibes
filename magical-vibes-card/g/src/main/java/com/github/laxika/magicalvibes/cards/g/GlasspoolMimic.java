@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ZNR", collectorNumber = "60")
@@ -29,7 +28,7 @@ public class GlasspoolMimic extends Card {
                 )),
                 "creature you control",
                 Set.of(CardSubtype.SHAPESHIFTER, CardSubtype.ROGUE),
-                Map.of()
+                List.of()
         ));
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Glasspool Mimic", List.of()),

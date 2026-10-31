@@ -26,7 +26,7 @@ import java.util.List;
 public class FireNationPalace extends Card {
 
     public FireNationPalace() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCountAtMost(0, new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.BASIC)

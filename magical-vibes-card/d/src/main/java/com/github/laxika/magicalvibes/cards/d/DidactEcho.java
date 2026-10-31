@@ -16,7 +16,7 @@ public class DidactEcho extends Card {
 
     public DidactEcho() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(4, new CardIsPermanentPredicate()),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
     }

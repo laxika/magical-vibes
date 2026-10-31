@@ -24,7 +24,7 @@ public class FungalBehemoth extends Card {
                 CounterType.PLUS_ONE_PLUS_ONE,
                 new PermanentIsCreaturePredicate(),
                 CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 plusOneCountersOnCreaturesYouControl,
                 plusOneCountersOnCreaturesYouControl));
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,

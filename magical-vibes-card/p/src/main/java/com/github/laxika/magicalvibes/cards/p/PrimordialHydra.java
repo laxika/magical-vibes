@@ -32,7 +32,7 @@ public class PrimordialHydra extends Card {
                         new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)));
 
         // This creature has trample as long as it has ten or more +1/+1 counters on it.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(10, CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
     }

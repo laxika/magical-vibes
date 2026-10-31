@@ -13,6 +13,6 @@ public class SkullbriarTheWalkingGrave extends Card {
 
     public SkullbriarTheWalkingGrave() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new PutCountersOnSourceEffect(1, 1, 1));
-        addEffect(EffectSlot.STATIC, new PreserveCountersOnZoneChangeEffect());
+        addStaticEffect(new PreserveCountersOnZoneChangeEffect());
     }
 }

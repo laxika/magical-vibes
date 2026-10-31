@@ -15,7 +15,7 @@ public class ProteanHydra extends Card {
 
     public ProteanHydra() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
-        addEffect(EffectSlot.STATIC, new PreventDamageAndRemovePlusOnePlusOneCountersEffect());
+        addStaticEffect(new PreventDamageAndRemovePlusOnePlusOneCountersEffect());
         addEffect(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTER_REMOVED, new DelayedPlusOnePlusOneCounterRegrowthEffect());
     }
 }

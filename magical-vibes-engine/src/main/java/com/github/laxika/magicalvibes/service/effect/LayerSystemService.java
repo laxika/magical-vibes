@@ -615,7 +615,7 @@ public class LayerSystemService {
     }
 
     private static boolean hasFullTextCopyEffect(Card card) {
-        List<CardEffect> staticEffects = card.getEffects(EffectSlot.STATIC);
+        List<CardEffect> staticEffects = card.getStaticEffects();
         if (staticEffects.isEmpty()) {
             return false;
         }
@@ -634,6 +634,7 @@ public class LayerSystemService {
         }
         copy.addCastingCostsAndSpellEffectsFrom(original,
                 effect -> !copy.getCastingCostsAndSpellEffects().contains(effect));
+        copy.addStaticAbilitiesFrom(original, effect -> !copy.getStaticEffects().contains(effect));
         for (EffectSlot slot : EffectSlot.values()) {
             for (var registration : original.getEffectRegistrations(slot)) {
                 boolean alreadyPresent = copy.getEffectRegistrations(slot).stream()
@@ -1111,7 +1112,7 @@ public class LayerSystemService {
                 if ((entry.getEntryType() == StackEntryType.INSTANT_SPELL
                         || entry.getEntryType() == StackEntryType.SORCERY_SPELL)
                         && entry.getCard() != null
-                        && entry.getCard().getEffects(EffectSlot.STATIC).stream()
+                        && entry.getCard().getStaticEffects().stream()
                         .anyMatch(WrappedStackStaticEffect.class::isInstance)) {
                     sources.add(entry);
                 }
@@ -1360,7 +1361,7 @@ public class LayerSystemService {
             if (slot.permanent().isFaceDown()) {
                 continue;
             }
-            for (CardEffect effect : slot.permanent().getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : slot.permanent().getCard().getStaticEffects()) {
                 Pass active = activePass(gameData);
                 if (active != null && slot.permanent().getId().equals(active.excludedProtectionSourceId)
                         && isAttachmentProtectionGrant(effect)) {
@@ -1397,7 +1398,7 @@ public class LayerSystemService {
                 continue;
             }
             for (Card card : graveyard) {
-                List<CardEffect> staticEffects = card.getEffects(EffectSlot.STATIC);
+                List<CardEffect> staticEffects = card.getStaticEffects();
                 if (staticEffects.stream().noneMatch(GraveyardStaticEffect.class::isInstance)) {
                     continue;
                 }
@@ -1425,7 +1426,7 @@ public class LayerSystemService {
             // CR 113.6: an instant or sorcery's abilities function while it is on the stack.
             PermanentSlot source = new PermanentSlot(spell.getControllerId(), Permanent.forSpellOnStack(spell),
                     stackPosition++);
-            for (CardEffect effect : spell.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : spell.getCard().getStaticEffects()) {
                 if (!(effect instanceof WrappedStackStaticEffect)) {
                     continue;
                 }
@@ -1442,7 +1443,7 @@ public class LayerSystemService {
             for (Card scheme : gameData.faceUpSchemes(ownerId)) {
                 // CR 314.4: a face-up scheme's static abilities affect the game from the command zone.
                 PermanentSlot source = new PermanentSlot(ownerId, new Permanent(scheme), schemePosition++);
-                for (CardEffect effect : scheme.getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : scheme.getStaticEffects()) {
                     if (isConditionalWrapper(effect) && !admitsConditionalWrapper(effect, layer)) {
                         continue;
                     }
@@ -1457,7 +1458,7 @@ public class LayerSystemService {
         }
         if (gameData.planechase != null) {
             for (var planar : gameData.planechase.faceUp) {
-                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     var classification = classifyOrNull(effect);
                     if (classification != null && classification.layers().contains(layer)) {
                         instances.add(new EffectInstance(null, effect, effect, null, false,
@@ -2901,7 +2902,7 @@ public class LayerSystemService {
                 }
             }
             state.addKeywords(keepingPerpetualRemovals(gameData, permanent.getCard().getId(), rewrittenKeywords));
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof ProtectionFromColorsEffect protection && protection.scope() == null) {
                     ProtectionFromColorsEffect rewritten = (ProtectionFromColorsEffect)
                             TextChangeTransformer.transform(protection, permanent.getTextReplacements(),
@@ -3121,7 +3122,7 @@ public class LayerSystemService {
             CharacteristicState sourceState = board.states().get(source.permanent().getId());
             if (sourceState == null || sourceState.isPrintedAbilitiesRemoved() || sourceState.isLosesAllAbilities()
                     || sourceState.isLosesAllNonManaAbilities()
-                    || source.permanent().getCard().getEffects(EffectSlot.STATIC).stream()
+                    || source.permanent().getCard().getStaticEffects().stream()
                     .noneMatch(ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect.class::isInstance)) {
                 continue;
             }

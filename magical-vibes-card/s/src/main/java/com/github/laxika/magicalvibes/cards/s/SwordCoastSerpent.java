@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.c.CapsizingWave;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,7 +19,7 @@ public class SwordCoastSerpent extends Card {
     public SwordCoastSerpent() {
         setBackFaceCard(new CapsizingWave());
         addCastingOption(new AdventureCast("{1}{U}"));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerCastSpellThisTurn(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                 new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
     }

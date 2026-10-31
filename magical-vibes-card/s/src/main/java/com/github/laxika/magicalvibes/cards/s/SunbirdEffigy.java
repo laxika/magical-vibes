@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongCardsExiledWithSource;
 import com.github.laxika.magicalvibes.model.effect.AwardOneManaOfEachColorAmongCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
@@ -13,7 +12,7 @@ public class SunbirdEffigy extends Card {
 
     public SunbirdEffigy() {
         ColorsAmongCardsExiledWithSource colors = new ColorsAmongCardsExiledWithSource();
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(colors, colors));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(colors, colors));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

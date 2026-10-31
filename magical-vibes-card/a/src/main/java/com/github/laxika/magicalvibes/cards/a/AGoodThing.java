@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class AGoodThing extends Card {
 
     public AGoodThing() {
-        addEffect(EffectSlot.STATIC, new OwnEffectsCantAffectSourceEffect());
+        addStaticEffect(new OwnEffectsCantAffectSourceEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
                 new DoubleControllerLifeEffect(),
                 ConditionalEffect.unless(new ControllerLifeAtLeast(1_000), new ControllerLosesGameEffect())));

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.ai.interaction;
 import com.github.laxika.magicalvibes.ai.AiGameActions;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -66,7 +65,7 @@ class LibrarySearchAiStrategyTest {
 
     private static Card librarySearchCastOffer(String name, String manaCost) {
         Card card = card(name, CardType.CREATURE, manaCost);
-        card.addEffect(EffectSlot.STATIC, new CastFromLibraryWhileSearchingEffect());
+        card.addStaticEffect(new CastFromLibraryWhileSearchingEffect());
         return card;
     }
 

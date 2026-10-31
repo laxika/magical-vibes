@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawInstantOrSorceryCreateTokenEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "40K", collectorNumber = "127")
@@ -23,7 +22,7 @@ public class InquisitorEisenhorn extends Card {
         CreateTokenEffect cherubael = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Cherubael", 4, 4, CardColor.BLACK, null,
                 List.of(CardSubtype.DEMON), Set.of(Keyword.FLYING), Set.of(),
-                false, false, Map.of(), List.of(), false, false, true, 0, Set.of(),
+                false, false, List.of(), List.of(), false, false, true, 0, Set.of(),
                 Set.of(CardSupertype.LEGENDARY));
 
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS,

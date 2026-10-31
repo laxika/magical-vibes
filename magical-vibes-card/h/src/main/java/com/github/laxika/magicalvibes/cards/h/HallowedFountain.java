@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
@@ -19,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffec
 public class HallowedFountain extends Card {
 
     public HallowedFountain() {
-        addEffect(EffectSlot.STATIC, new MayPayLifeOrEntersTappedEffect(2));
+        addStaticEffect(new MayPayLifeOrEntersTappedEffect(2));
 
         // {T}: Add {W} or {U}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.WHITE));

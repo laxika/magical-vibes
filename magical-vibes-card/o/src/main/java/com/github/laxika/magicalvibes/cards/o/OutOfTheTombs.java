@@ -23,6 +23,6 @@ public class OutOfTheTombs extends Card {
 
         // "If you would draw a card while your library has no cards in it, instead return a creature
         // card from your graveyard to the battlefield. If you can't, you lose the game."
-        addEffect(EffectSlot.STATIC, new ReturnCreatureFromGraveyardInsteadOfEmptyLibraryDrawEffect());
+        addStaticEffect(new ReturnCreatureFromGraveyardInsteadOfEmptyLibraryDrawEffect());
     }
 }

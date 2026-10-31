@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -14,7 +13,7 @@ public class ViciousOffering extends Card {
 
     public ViciousOffering() {
         // Kicker—Sacrifice a creature.
-        addEffect(EffectSlot.STATIC, new KickerEffect(
+        addStaticEffect(new KickerEffect(
                 new PermanentIsCreaturePredicate(),
                 "a creature"
         ));

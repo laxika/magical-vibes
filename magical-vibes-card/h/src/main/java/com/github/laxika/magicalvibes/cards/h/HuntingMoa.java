@@ -19,6 +19,6 @@ public class HuntingMoa extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, counter)
                 .addEffect(EffectSlot.ON_DEATH, counter);
-        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{2}{G}"));
+        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{2}{G}"));
     }
 }

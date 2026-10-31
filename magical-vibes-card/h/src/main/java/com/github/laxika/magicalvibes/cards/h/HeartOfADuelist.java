@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawFromAnywhereInLibraryEffe
 public class HeartOfADuelist extends Card {
 
     public HeartOfADuelist() {
-        addEffect(EffectSlot.STATIC, new DrawFromAnywhereInLibraryEffect());
+        addStaticEffect(new DrawFromAnywhereInLibraryEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
     }
 }

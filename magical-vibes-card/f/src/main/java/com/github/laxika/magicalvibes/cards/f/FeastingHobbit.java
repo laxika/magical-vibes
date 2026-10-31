@@ -21,6 +21,6 @@ public class FeastingHobbit extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.FOOD), 3));
 
         // Creatures with power less than this creature's power can't block it.
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesWithLessPowerEffect());
+        addStaticEffect(new CantBeBlockedByCreaturesWithLessPowerEffect());
     }
 }

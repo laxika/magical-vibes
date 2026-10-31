@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class VigorousCharge extends Card {
 
     public VigorousCharge() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{W}"));
+        addStaticEffect(new KickerEffect("{W}"));
         target(TargetFilters.creature())
                 .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
                 .addSpellEffect(new ConditionalEffect(new Kicked(),

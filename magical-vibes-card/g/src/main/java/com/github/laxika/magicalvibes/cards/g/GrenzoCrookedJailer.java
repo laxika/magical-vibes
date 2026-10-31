@@ -26,7 +26,7 @@ public class GrenzoCrookedJailer extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new HeistTargetLibraryEffect())
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED, new HeistTargetLibraryEffect());
 
-        addEffect(EffectSlot.STATIC, new AlternativeCostForSpellsEffect(
+        addStaticEffect(new AlternativeCostForSpellsEffect(
                 "{0}",
                 new CardAllOfPredicate(List.of(
                         new CardControllerDoesNotOwnPredicate(),

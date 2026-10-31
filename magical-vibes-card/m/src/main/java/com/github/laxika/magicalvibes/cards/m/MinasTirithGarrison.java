@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class MinasTirithGarrison extends Card {
 
     public MinasTirithGarrison() {
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new CardsInHand(CountScope.CONTROLLER), new Fixed(5)));
 
         addEffect(EffectSlot.ON_ATTACK, new TapAnyNumberOfPermanentsThenDrawPerTappedEffect(

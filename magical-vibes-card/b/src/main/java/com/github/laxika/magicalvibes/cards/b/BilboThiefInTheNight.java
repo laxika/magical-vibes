@@ -26,7 +26,7 @@ public class BilboThiefInTheNight extends Card {
             new CardTypePredicate(CardType.SORCERY)));
 
     public BilboThiefInTheNight() {
-        addEffect(EffectSlot.STATIC, new ReduceNonHandSpellCastCostEffect(1));
+        addStaticEffect(new ReduceNonHandSpellCastCostEffect(1));
         addEffect(EffectSlot.ON_ATTACK, new CastCardFromGraveyardEffect(
                 new CardAllOfPredicate(List.of(
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),

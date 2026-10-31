@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class DampeningPulse extends Card {
 
     public DampeningPulse() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, 0, GrantScope.OPPONENT_CREATURES));
+        addStaticEffect(new StaticBoostEffect(-1, 0, GrantScope.OPPONENT_CREATURES));
     }
 }

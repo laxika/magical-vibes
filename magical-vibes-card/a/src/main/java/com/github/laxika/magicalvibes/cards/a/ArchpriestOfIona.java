@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ArchpriestOfIona extends Card {
 
     public ArchpriestOfIona() {
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(new PartySize(), new Fixed(2)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(new PartySize(), new Fixed(2)));
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
                         new FullParty(),

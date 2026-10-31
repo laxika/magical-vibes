@@ -11,8 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpe
 public class TevalArbiterOfVirtue extends Card {
 
     public TevalArbiterOfVirtue() {
-        addEffect(EffectSlot.STATIC,
-                new GrantSpellCastingAbilityToSpellsEffect(Keyword.DELVE, null));
+        addStaticEffect(new GrantSpellCastingAbilityToSpellsEffect(Keyword.DELVE, null));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 CasterLosesLifeOnSpellCastEffect.equalToSpellManaValue(null));
     }

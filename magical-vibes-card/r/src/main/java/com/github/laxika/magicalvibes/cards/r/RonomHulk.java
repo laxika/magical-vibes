@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 public class RonomHulk extends Card {
 
     public RonomHulk() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromPermanentsMatchingEffect(
+        addStaticEffect(new ProtectionFromPermanentsMatchingEffect(
                 new PermanentHasSupertypePredicate(CardSupertype.SNOW)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{1}"));
     }

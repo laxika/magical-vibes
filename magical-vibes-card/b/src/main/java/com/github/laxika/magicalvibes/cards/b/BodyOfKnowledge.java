@@ -16,8 +16,8 @@ public class BodyOfKnowledge extends Card {
 
     public BodyOfKnowledge() {
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
+        addStaticEffect(new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
+        addStaticEffect(new NoMaximumHandSizeEffect());
         addEffect(EffectSlot.ON_DEALT_DAMAGE, new DrawCardEffect(new EventValue()));
     }
 }

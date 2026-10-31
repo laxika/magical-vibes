@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class ThirstingAxe extends Card {
 
     public ThirstingAxe() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(4, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(4, 0, GrantScope.EQUIPPED_CREATURE));
         // You can only sacrifice a permanent you control (CR 701.21a), so an opponent's equipped
         // creature is left alone.
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(

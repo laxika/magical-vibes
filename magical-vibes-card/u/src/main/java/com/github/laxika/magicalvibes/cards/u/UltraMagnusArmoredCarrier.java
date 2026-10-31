@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 public class UltraMagnusArmoredCarrier extends Card {
 
     public UltraMagnusArmoredCarrier() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ATTACK, new GrantKeywordEffect(

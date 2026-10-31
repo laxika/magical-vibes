@@ -15,7 +15,7 @@ import java.util.List;
 public class SoldierOfThePantheon extends Card {
 
     public SoldierOfThePantheon() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromMulticoloredEffect());
+        addStaticEffect(new ProtectionFromMulticoloredEffect());
 
         // Whenever an opponent casts a multicolored spell, you gain 1 life.
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL,

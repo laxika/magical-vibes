@@ -16,7 +16,7 @@ import java.util.Set;
 public class KnightOfSorrows extends Card {
 
     public KnightOfSorrows() {
-        addEffect(EffectSlot.STATIC, new GrantAdditionalBlockEffect(1));
+        addStaticEffect(new GrantAdditionalBlockEffect(1));
         addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
                 1, "Spirit", 1, 1, CardColor.WHITE,
                 Set.of(CardColor.WHITE, CardColor.BLACK),

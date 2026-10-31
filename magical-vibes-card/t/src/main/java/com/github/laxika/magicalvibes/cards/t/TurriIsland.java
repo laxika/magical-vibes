@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class TurriIsland extends Card {
 
     public TurriIsland() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTypePredicate(CardType.CREATURE), 2, CostModificationScope.ALL));
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 LookAtTopCardsEffect.chooseNToHandRestToGraveyard(

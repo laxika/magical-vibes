@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class HeirloomBlade extends Card {
 
     public HeirloomBlade() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new MayEffect(
                 new RevealUntilCreatureSharingTypeWithDyingCreatureToHandEffect(),
                 "Reveal cards from the top of your library until you reveal a creature card that shares a creature type with it?"));

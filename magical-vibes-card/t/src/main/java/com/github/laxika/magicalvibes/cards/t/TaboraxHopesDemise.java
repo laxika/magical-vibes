@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 public class TaboraxHopesDemise extends Card {
 
     public TaboraxHopesDemise() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)));
 

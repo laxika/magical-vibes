@@ -19,6 +19,6 @@ public class PinkiePie extends Card {
                 null,
                 List.of(CreateTokenEffect.ofTreasureToken(1, true))
         ));
-        addEffect(EffectSlot.STATIC, new PartyAlwaysFullEffect());
+        addStaticEffect(new PartyAlwaysFullEffect());
     }
 }

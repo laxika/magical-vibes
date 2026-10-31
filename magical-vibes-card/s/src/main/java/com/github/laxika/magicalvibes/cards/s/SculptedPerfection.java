@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "253")
@@ -21,7 +20,7 @@ public class SculptedPerfection extends Card {
 
     public SculptedPerfection() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, incubatorToken());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN)));
     }
 
@@ -34,7 +33,7 @@ public class SculptedPerfection extends Card {
         );
         return new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Incubator", 0, 0, null, null,
-                List.of(), Set.of(), Set.of(), false, false, Map.of(), List.of(transform),
+                List.of(), Set.of(), Set.of(), false, false, List.of(), List.of(transform),
                 false, false, false, 2, Set.of()
         );
     }

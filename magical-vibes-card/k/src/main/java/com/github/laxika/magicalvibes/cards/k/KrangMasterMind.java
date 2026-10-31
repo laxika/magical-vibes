@@ -23,7 +23,7 @@ public class KrangMasterMind extends Card {
 
     public KrangMasterMind() {
         // Affinity for artifacts.
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
@@ -34,7 +34,7 @@ public class KrangMasterMind extends Card {
 
         PermanentCount otherArtifacts = new PermanentCount(
                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER, true);
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 otherArtifacts, new Fixed(0), GrantScope.SELF));
     }
 }

@@ -27,7 +27,7 @@ public class SwarmbornGiant extends Card {
                 List.of(new MonstrosityEffect(2)),
                 "{4}{G}{G}: Monstrosity 2."
         ));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(monstrous,
+        addStaticEffect(new ConditionalEffect(monstrous,
                 new GrantKeywordEffect(Keyword.REACH, GrantScope.SELF)));
     }
 }

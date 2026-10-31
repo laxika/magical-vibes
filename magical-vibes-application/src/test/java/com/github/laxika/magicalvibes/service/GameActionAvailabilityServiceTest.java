@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -223,8 +224,7 @@ class GameActionAvailabilityServiceTest {
             spell.setType(CardType.INSTANT);
             spell.setManaCost("{2}{W}");
             var creaturePredicate = new PermanentIsCreaturePredicate();
-            spell.addEffect(EffectSlot.STATIC,
-                    new IncreaseOwnCastCostIfTargetingPermanentEffect(creaturePredicate, 3));
+            spell.addStaticEffect(new IncreaseOwnCastCostIfTargetingPermanentEffect(creaturePredicate, 3));
             spell.target(TargetFilters.nonlandPermanent())
                     .addSpellEffect(new ExileTargetPermanentEffect());
 
@@ -352,8 +352,7 @@ class GameActionAvailabilityServiceTest {
             Card reducer = new Card();
             reducer.setName("Heartless Summoning");
             reducer.setType(CardType.ENCHANTMENT);
-            reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
+            reducer.addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
                             new Fixed(2), CostModificationScope.SELF));
             evaluateCardTypePredicates();
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
@@ -381,7 +380,7 @@ class GameActionAvailabilityServiceTest {
             Card reducer = new Card();
             reducer.setName("Cosmos Charger");
             reducer.setType(CardType.CREATURE);
-            reducer.addEffect(EffectSlot.STATIC, new ForetellCostReductionEffect(1, true));
+            reducer.addStaticEffect(new ForetellCostReductionEffect(1, true));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
             Card foretellCard = new Card();
@@ -403,8 +402,7 @@ class GameActionAvailabilityServiceTest {
             Card reducer = new Card();
             reducer.setName("Big Reducer");
             reducer.setType(CardType.ENCHANTMENT);
-            reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
+            reducer.addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
                             new Fixed(5), CostModificationScope.SELF));
             evaluateCardTypePredicates();
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
@@ -432,8 +430,7 @@ class GameActionAvailabilityServiceTest {
             Card thalia = new Card();
             thalia.setName("Thalia");
             thalia.setType(CardType.CREATURE);
-            thalia.addEffect(EffectSlot.STATIC,
-                    new IncreaseSpellCostEffect(new CardAnyOfPredicate(List.of(
+            thalia.addStaticEffect(new IncreaseSpellCostEffect(new CardAnyOfPredicate(List.of(
                             new CardTypePredicate(CardType.INSTANT),
                             new CardTypePredicate(CardType.SORCERY))), 1, CostModificationScope.OPPONENT));
             evaluateCardTypePredicates();

@@ -19,8 +19,7 @@ public class GalactusDevourerOfWorlds extends Card {
     public GalactusDevourerOfWorlds() {
         target(TargetFilters.permanent())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentEffect());
-        addEffect(EffectSlot.STATIC,
-                new MustAttackOpponentWithMostLifeEffect(new PermanentAllOfPredicate(List.of(
+        addStaticEffect(new MustAttackOpponentWithMostLifeEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNamedPredicate("Silver Surfer, Galactus's Herald")))));
     }

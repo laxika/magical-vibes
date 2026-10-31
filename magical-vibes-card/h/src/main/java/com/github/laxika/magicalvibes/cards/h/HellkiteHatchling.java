@@ -21,9 +21,7 @@ public class HellkiteHatchling extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DevourEffect(1));
 
         // This creature has flying and trample if it devoured a creature.
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new DevouredCreature(), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new DevouredCreature(), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new DevouredCreature(), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new DevouredCreature(), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
     }
 }

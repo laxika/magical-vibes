@@ -30,7 +30,7 @@ public class DefilerOfDreams extends Card {
 
     public DefilerOfDreams() {
         CardAllOfPredicate bluePermanentFilter = bluePermanentSpell();
-        addEffect(EffectSlot.STATIC, new PayLifeToReduceColoredCastCostEffect(
+        addStaticEffect(new PayLifeToReduceColoredCastCostEffect(
                 bluePermanentFilter, "{U}", 2, CostModificationScope.SELF));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 bluePermanentFilter, List.of(new DrawCardEffect(1))));

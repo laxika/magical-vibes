@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "103")
@@ -37,7 +36,7 @@ public class Corpsehatch extends Card {
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 2, "Eldrazi Spawn", 0, 1, null, null,
                 List.of(CardSubtype.ELDRAZI, CardSubtype.SPAWN), Set.of(), Set.of(), false, false,
-                Map.of(), List.of(new ActivatedAbility(
+                List.of(), List.of(new ActivatedAbility(
                         false,
                         null,
                         List.of(new SacrificeSelfCost(), new AwardManaEffect(ManaColor.COLORLESS)),

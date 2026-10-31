@@ -25,8 +25,7 @@ public class RockHydra extends Card {
     public RockHydra() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
-        addEffect(EffectSlot.STATIC,
-                PreventDamageAndRemovePlusOnePlusOneCountersEffect.onlyIfCounterAvailable());
+        addStaticEffect(PreventDamageAndRemovePlusOnePlusOneCountersEffect.onlyIfCounterAvailable());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

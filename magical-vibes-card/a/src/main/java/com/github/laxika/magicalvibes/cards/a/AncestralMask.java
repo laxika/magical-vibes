@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -23,7 +22,7 @@ public class AncestralMask extends Card {
         Scaled boost = new Scaled(otherEnchantments, 2);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                .addStaticEffect(new AttachedBoostEffect(
                         boost, boost, GrantScope.ENCHANTED_CREATURE));
     }
 }

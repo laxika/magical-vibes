@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -20,8 +19,7 @@ public class ElderArthurMaxson extends Card {
 
     public ElderArthurMaxson() {
         // Creature tokens you control have training.
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.TRAINING, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAINING, GrantScope.ALL_OWN_CREATURES,
                         new PermanentIsTokenPredicate()));
 
         // Sacrifice another creature: Elder Arthur Maxson gains indestructible until end of turn.

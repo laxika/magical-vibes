@@ -18,7 +18,7 @@ public class HeraldOfThePantheon extends Card {
 
     public HeraldOfThePantheon() {
         // Enchantment spells you cast cost {1} less to cast
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTypePredicate(CardType.ENCHANTMENT), 1, CostModificationScope.SELF));
         // Whenever you cast an enchantment spell, you gain 1 life
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(

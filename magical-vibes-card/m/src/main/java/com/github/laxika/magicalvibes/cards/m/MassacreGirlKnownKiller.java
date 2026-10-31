@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredi
 public class MassacreGirlKnownKiller extends Card {
 
     public MassacreGirlKnownKiller() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.WITHER, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.WITHER, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentToughnessAtMostPredicate(0), new DrawCardEffect(1)));
     }

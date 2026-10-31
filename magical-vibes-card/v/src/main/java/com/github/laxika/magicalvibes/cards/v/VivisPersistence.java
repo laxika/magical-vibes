@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -23,18 +24,16 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FIC", collectorNumber = "458")
 public class VivisPersistence extends Card {
 
     public VivisPersistence() {
-        Map<EffectSlot, CardEffect> wizardTokenEffects = Map.of(
-                EffectSlot.ON_CONTROLLER_CASTS_SPELL,
-                new SpellCastTriggerEffect(
+        List<Ability> wizardTokenEffects = List.of(
+                LegacySlots.triggered(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))));
+                        List.of(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)))));
 
         addSpellEffect(new CreateTokenEffect(
                 1, "Wizard", 0, 1, CardColor.BLACK, List.of(CardSubtype.WIZARD),

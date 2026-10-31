@@ -25,7 +25,7 @@ import java.util.Set;
 public class WeatherlightCompleated extends Card {
 
     public WeatherlightCompleated() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.PHYRESIS),
                 new AnimatePermanentsEffect(
                         (DynamicAmount) null,

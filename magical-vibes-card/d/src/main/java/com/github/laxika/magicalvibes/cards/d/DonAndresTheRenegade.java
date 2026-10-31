@@ -29,10 +29,10 @@ public class DonAndresTheRenegade extends Card {
         PermanentNotPredicate controlledButNotOwned = new PermanentNotPredicate(
                 new PermanentOwnedBySourceControllerPredicate());
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 2, 2, Set.of(Keyword.MENACE, Keyword.DEATHTOUCH),
                 GrantScope.ALL_OWN_CREATURES, controlledButNotOwned));
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(
+        addStaticEffect(new GrantSubtypeEffect(
                 CardSubtype.PIRATE, GrantScope.ALL_OWN_CREATURES, false, controlledButNotOwned));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(

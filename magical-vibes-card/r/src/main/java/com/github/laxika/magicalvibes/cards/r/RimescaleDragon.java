@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class RimescaleDragon extends Card {
 
     public RimescaleDragon() {
-        addEffect(EffectSlot.STATIC, new MatchingPermanentsDoesntUntapEffect(
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasCountersPredicate(CounterType.ICE)

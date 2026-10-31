@@ -34,9 +34,9 @@ public class GarlandRoyalKidnapper extends Card {
         PermanentPredicate creaturesYouControlButDontOwn = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentOwnedBySourceControllerPredicate())));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
                 creaturesYouControlButDontOwn));
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(new CantBeSacrificedEffect(),
+        addStaticEffect(new GrantEffectEffect(new CantBeSacrificedEffect(),
                 GrantScope.ALL_OWN_CREATURES, creaturesYouControlButDontOwn));
 
         target(new PermanentPredicateTargetFilter(

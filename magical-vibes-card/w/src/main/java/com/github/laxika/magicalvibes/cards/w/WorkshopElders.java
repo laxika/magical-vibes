@@ -28,7 +28,7 @@ import java.util.Set;
 public class WorkshopElders extends Card {
 
     public WorkshopElders() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.FLYING,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsArtifactPredicate()));

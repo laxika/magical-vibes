@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -20,7 +19,7 @@ public class AetherStorm extends Card {
 
     public AetherStorm() {
         // Creature spells can't be cast (symmetric — no player may cast them).
-        addEffect(EffectSlot.STATIC, new CantCastSpellTypeEffect(Set.of(CardType.CREATURE), true));
+        addStaticEffect(new CantCastSpellTypeEffect(Set.of(CardType.CREATURE), true));
 
         // Pay 4 life: Destroy this enchantment. It can't be regenerated. Any player may activate this ability.
         addActivatedAbility(new ActivatedAbility(

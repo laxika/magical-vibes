@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlay
 public class FeldonRonomExcavator extends Card {
 
     public FeldonRonomExcavator() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_DEALT_DAMAGE,
                 new ExileTopCardsChooseOneMayPlayUntilNextTurnEffect(new EventValue()));
     }

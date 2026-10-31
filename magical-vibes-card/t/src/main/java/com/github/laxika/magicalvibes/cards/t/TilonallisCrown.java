@@ -15,8 +15,8 @@ public class TilonallisCrown extends Card {
 
     public TilonallisCrown() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 0, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(3, 0, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, DealDamageToEnchantedCreatureEffect.toCurrentlyEnchanted(1));
     }
 }

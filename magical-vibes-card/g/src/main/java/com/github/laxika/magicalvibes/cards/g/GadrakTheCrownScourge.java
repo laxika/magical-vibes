@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class GadrakTheCrownScourge extends Card {
 
     public GadrakTheCrownScourge() {
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new ControlsPermanentCount(4, new PermanentIsArtifactPredicate()),
                 "you control four or more artifacts"
         ));

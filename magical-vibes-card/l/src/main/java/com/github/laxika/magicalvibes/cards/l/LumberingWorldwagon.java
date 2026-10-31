@@ -24,7 +24,7 @@ public class LumberingWorldwagon extends Card {
     public LumberingWorldwagon() {
         PermanentCount landsYouControl = new PermanentCount(
                 new PermanentIsLandPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(landsYouControl, new Fixed(4)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(landsYouControl, new Fixed(4)));
 
         MayEffect searchBasicLand = new MayEffect(
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(),

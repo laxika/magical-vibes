@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SkylineCascade extends Card {
 
     public SkylineCascade() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SkipNextUntapEffect(TapUntapScope.TARGET));

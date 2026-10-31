@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class TippyToeTerrificPartner extends Card {
 
     public TippyToeTerrificPartner() {
-        addEffect(EffectSlot.STATIC, new AddFoodTokenToTokenCreationEffect());
+        addStaticEffect(new AddFoodTokenToTokenCreationEffect());
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
                 new GainedLifeThisTurn(),
                 new DrawCardEffect(1)));

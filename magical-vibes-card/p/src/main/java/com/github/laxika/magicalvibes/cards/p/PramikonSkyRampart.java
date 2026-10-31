@@ -13,6 +13,6 @@ public class PramikonSkyRampart extends Card {
 
     public PramikonSkyRampart() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseModeOnEnterEffect(List.of("Left", "Right")));
-        addEffect(EffectSlot.STATIC, new AttackOnlyNearestOpponentInDirectionEffect());
+        addStaticEffect(new AttackOnlyNearestOpponentInDirectionEffect());
     }
 }

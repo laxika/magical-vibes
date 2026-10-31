@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -30,7 +29,7 @@ public class Scuttletide extends Card {
                                 List.of(CardSubtype.CRAB), Set.of(), Set.of())),
                 "{1}, Discard a card: Create a 0/3 blue Crab creature token."
         ));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new Delirium(),
                 new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.CRAB))));

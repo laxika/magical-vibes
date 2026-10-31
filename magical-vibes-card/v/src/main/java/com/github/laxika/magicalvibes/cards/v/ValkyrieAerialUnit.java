@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class ValkyrieAerialUnit extends Card {
 
     public ValkyrieAerialUnit() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SurveilEffect(2));
     }

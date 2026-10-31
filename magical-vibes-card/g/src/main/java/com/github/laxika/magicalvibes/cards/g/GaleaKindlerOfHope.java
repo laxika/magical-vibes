@@ -24,8 +24,8 @@ public class GaleaKindlerOfHope extends Card {
                 new CardSubtypePredicate(CardSubtype.AURA),
                 new CardSubtypePredicate(CardSubtype.EQUIPMENT)));
 
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(auraOrEquipment));
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new AllowCastFromTopOfLibraryEffect(auraOrEquipment));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(
                         new CardSubtypePredicate(CardSubtype.EQUIPMENT),

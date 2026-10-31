@@ -26,7 +26,7 @@ public class MischievousLookout extends Card {
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 new CardNotPredicate(new CardSubtypePredicate(CardSubtype.AURA))));
 
-        addEffect(EffectSlot.STATIC, new PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
+        addStaticEffect(new PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
                 noncreatureNonAuraPermanent,
                 new GrantTriggeredAbilityToCastSpellEffect(
                         EffectSlot.ON_ENTER_BATTLEFIELD,

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -24,7 +23,7 @@ import java.util.Set;
 public class PoolResources extends Card {
 
     public PoolResources() {
-        addEffect(EffectSlot.STATIC, new GiftEffect());
+        addStaticEffect(new GiftEffect());
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 TargetOpponentCreatesTokenEffect.gift(fishToken())));
         addSpellEffect(new ConditionalEffect(new NotCondition(new GiftPromised()),

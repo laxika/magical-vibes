@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class TheGoldenCityOfOrazca extends Card {
 
     public TheGoldenCityOfOrazca() {
-        addEffect(EffectSlot.STATIC, new AscendEffect());
+        addStaticEffect(new AscendEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(
                         new PermanentIsCreaturePredicate(),

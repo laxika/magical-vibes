@@ -29,7 +29,7 @@ public class BlueLoyalRaptor extends Card {
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
 
-        addEffect(EffectSlot.STATIC, new ControlledPermanentsEnterWithSourceCountersEffect(
+        addStaticEffect(new ControlledPermanentsEnterWithSourceCountersEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)));
     }
 }

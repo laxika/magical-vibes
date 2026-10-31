@@ -18,7 +18,7 @@ import java.util.List;
 public class ShamblingCieth extends Card {
 
     public ShamblingCieth() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),

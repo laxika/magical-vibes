@@ -26,9 +26,9 @@ public class Towashi extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsModifiedPredicate()));
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES, modifiedCreature));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
                 new DrawCardEffect(1), GrantScope.ALL_OWN_CREATURES, modifiedCreature));
 

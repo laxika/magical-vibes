@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "PC2", collectorNumber = "24")
@@ -20,7 +20,7 @@ public class SakashimasStudent extends Card {
         addNinjutsu("{1}{U}");
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
-                new PermanentIsCreaturePredicate(), "creature", Set.of(CardSubtype.NINJA), Map.of()
+                new PermanentIsCreaturePredicate(), "creature", Set.of(CardSubtype.NINJA), List.of()
         ));
     }
 }

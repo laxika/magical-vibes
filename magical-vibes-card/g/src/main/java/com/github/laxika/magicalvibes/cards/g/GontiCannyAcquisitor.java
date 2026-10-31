@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredi
 public class GontiCannyAcquisitor extends Card {
 
     public GontiCannyAcquisitor() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardControllerDoesNotOwnPredicate(), 1, CostModificationScope.SELF));
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(null,

@@ -33,7 +33,7 @@ public class ObscuraAscendancy extends Card {
                                 List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of()))),
                 new SpellManaValueEqualsSourceCounters(CounterType.SOUL, 1)));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.SOUL),
                 new StaticBoostEffect(3, 3, GrantScope.OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.SPIRIT))));

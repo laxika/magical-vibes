@@ -20,7 +20,7 @@ import java.util.List;
 public class PixieIllusionist extends Card {
 
     public PixieIllusionist() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}{G}"));
+        addStaticEffect(new KickerEffect("{3}{G}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
         addActivatedAbility(new ActivatedAbility(

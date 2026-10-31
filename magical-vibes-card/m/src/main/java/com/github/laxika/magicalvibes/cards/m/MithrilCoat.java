@@ -28,8 +28,7 @@ public class MithrilCoat extends Card {
                 "Target must be a legendary creature you control"))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new AttachSourceEquipmentToTargetCreatureEffect());
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE,
+        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE,
                         GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 public class FanaticOfXenagos extends Card {
 
     public FanaticOfXenagos() {
-        addEffect(EffectSlot.STATIC, new TributeEffect(1));
+        addStaticEffect(new TributeEffect(1));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new TributeNotPaidEffect(new BoostSelfEffect(1, 1)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

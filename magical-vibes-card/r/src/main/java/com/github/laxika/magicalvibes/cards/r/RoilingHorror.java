@@ -21,7 +21,7 @@ public class RoilingHorror extends Card {
     public RoilingHorror() {
         Sum lifeDifference = new Sum(new ControllerLifeTotal(),
                 new Scaled(new HighestOpponentLifeTotal(), -1));
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(lifeDifference, lifeDifference));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(lifeDifference, lifeDifference));
         addEffect(EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,
                 new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
         addEffect(EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,

@@ -14,7 +14,7 @@ public class AmuletOfSafekeeping extends Card {
     public AmuletOfSafekeeping() {
         addEffect(EffectSlot.ON_CONTROLLER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
                 new CounterUnlessPaysEffect(1));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, 0, GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(-1, 0, GrantScope.ALL_CREATURES,
                 new PermanentIsTokenPredicate()));
     }
 }

@@ -26,10 +26,8 @@ public class GiftOfDoom extends Card {
         ))));
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.ON_TURNED_FACE_UP, new TurnFaceUpAttachAuraEffect());
     }
 }

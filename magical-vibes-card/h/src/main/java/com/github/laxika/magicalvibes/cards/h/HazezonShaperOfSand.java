@@ -19,8 +19,7 @@ import java.util.Set;
 public class HazezonShaperOfSand extends Card {
 
     public HazezonShaperOfSand() {
-        addEffect(EffectSlot.STATIC,
-                new PlayLandsFromGraveyardEffect(new CardSubtypePredicate(CardSubtype.DESERT)));
+        addStaticEffect(new PlayLandsFromGraveyardEffect(new CardSubtypePredicate(CardSubtype.DESERT)));
 
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(

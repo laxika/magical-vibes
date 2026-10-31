@@ -27,7 +27,7 @@ public class MasterSplicer extends Card {
                 List.of(CardSubtype.PHYREXIAN, CardSubtype.GOLEM), Set.of(), Set.of(CardType.ARTIFACT)));
 
         // Golems you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.GOLEM)));
     }

@@ -20,7 +20,7 @@ public class NestingBot extends Card {
     public NestingBot() {
         addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
                 "Servo", 1, 1, null, List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new MaxSpeed(),
+        addStaticEffect(new ConditionalEffect(new MaxSpeed(),
                 new StaticBoostEffect(1, 0, GrantScope.SELF)));
     }
 }

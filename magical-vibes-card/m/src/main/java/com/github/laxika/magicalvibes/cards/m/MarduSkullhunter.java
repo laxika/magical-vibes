@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class MarduSkullhunter extends Card {
 
     public MarduSkullhunter() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"

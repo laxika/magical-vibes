@@ -21,7 +21,7 @@ public class HeraldOfTorment extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new LoseLifeEffect(1));
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+                .addStaticEffect(new StaticBoostEffect(
                         3, 3, Set.of(Keyword.FLYING), GrantScope.ENCHANTED_CREATURE));
     }
 }

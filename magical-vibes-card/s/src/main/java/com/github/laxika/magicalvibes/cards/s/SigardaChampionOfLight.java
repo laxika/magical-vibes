@@ -22,7 +22,7 @@ import java.util.List;
 public class SigardaChampionOfLight extends Card {
 
     public SigardaChampionOfLight() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
                 new Coven(),

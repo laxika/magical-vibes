@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCanAttackAsThoughNoDefenderEffect;
@@ -20,10 +19,8 @@ import java.util.List;
 public class HighAlert extends Card {
 
     public HighAlert() {
-        addEffect(EffectSlot.STATIC,
-                new AssignCombatDamageWithToughnessEffect(GrantScope.ALL_OWN_CREATURES));
-        addEffect(EffectSlot.STATIC,
-                new MatchingCreaturesCanAttackAsThoughNoDefenderEffect(
+        addStaticEffect(new AssignCombatDamageWithToughnessEffect(GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new MatchingCreaturesCanAttackAsThoughNoDefenderEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentControlledBySourceControllerPredicate(),
                                 new PermanentIsCreaturePredicate()))));

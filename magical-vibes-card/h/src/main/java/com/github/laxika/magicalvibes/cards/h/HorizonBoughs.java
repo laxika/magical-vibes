@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 public class HorizonBoughs extends Card {
 
     public HorizonBoughs() {
-        addEffect(EffectSlot.STATIC, new AllPermanentsUntapDuringEachPlayersUntapStepEffect());
+        addStaticEffect(new AllPermanentsUntapDuringEachPlayersUntapStepEffect());
         addEffect(EffectSlot.CHAOS_TRIGGERED, new MayEffect(
                 new SearchLibraryEffect(new Fixed(3), CardPredicateUtils.basicLand(),
                         LibrarySearchDestination.BATTLEFIELD_TAPPED),

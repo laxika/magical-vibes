@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
@@ -19,8 +18,8 @@ import java.util.Set;
 public class ShiftingCeratops extends Card {
 
     public ShiftingCeratops() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLUE)));
+        addStaticEffect(new CantBeCounteredEffect());
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLUE)));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{G}",

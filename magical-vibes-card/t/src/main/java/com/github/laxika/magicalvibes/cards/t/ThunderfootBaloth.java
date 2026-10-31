@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -22,9 +21,9 @@ public class ThunderfootBaloth extends Card {
     public ThunderfootBaloth() {
         ControllerControlsOwnCommander lieutenant = new ControllerControlsOwnCommander();
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(lieutenant,
+        addStaticEffect(new ConditionalEffect(lieutenant,
                 new StaticBoostEffect(2, 2, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(lieutenant,
+        addStaticEffect(new ConditionalEffect(lieutenant,
                 new StaticBoostEffect(2, 2, Set.of(Keyword.TRAMPLE), GrantScope.OWN_CREATURES)));
     }
 }

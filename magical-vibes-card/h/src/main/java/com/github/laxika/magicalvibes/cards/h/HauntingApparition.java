@@ -29,7 +29,6 @@ public class HauntingApparition extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 new CardColorPredicate(CardColor.GREEN)
         )), CountScope.CHOSEN_PLAYER);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(new Sum(new Fixed(1), greenCreatures), new Fixed(2)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(new Sum(new Fixed(1), greenCreatures), new Fixed(2)));
     }
 }

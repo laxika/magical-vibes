@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "153")
@@ -53,7 +52,7 @@ public class DeathpactAngel extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(tokenAbility),
                 false,
                 false,

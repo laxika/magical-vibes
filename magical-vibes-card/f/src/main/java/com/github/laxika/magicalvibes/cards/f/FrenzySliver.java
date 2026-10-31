@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class FrenzySliver extends Card {
 
     public FrenzySliver() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACKS_UNBLOCKED,
                 new BoostSelfEffect(1, 0),
                 GrantScope.ALL_CREATURES_INCLUDING_SELF,

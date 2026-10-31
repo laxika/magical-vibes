@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class InsidiousMist extends Card {
 
     public InsidiousMist() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBlockEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_ATTACKS_UNBLOCKED,
                 new MayPayManaEffect("{2}{B}", new TransformSelfEffect(),
                         "Pay {2}{B} to transform this creature?"));

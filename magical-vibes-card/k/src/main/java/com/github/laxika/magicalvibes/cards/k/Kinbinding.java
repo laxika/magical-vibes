@@ -21,7 +21,7 @@ public class Kinbinding extends Card {
 
     public Kinbinding() {
         var creaturesEntered = new CreaturesEnteredBattlefieldThisTurn(CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 creaturesEntered, creaturesEntered, GrantScope.OWN_CREATURES));
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new CreateTokenEffect(
                 "Kithkin", 1, 1, CardColor.GREEN,

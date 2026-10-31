@@ -17,7 +17,7 @@ public class CybermanPatrol extends Card {
 
     public CybermanPatrol() {
         // Artifact creatures you control have afflict 3.
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_BLOCKED,
                 new LoseLifeEffect(3, LoseLifeRecipient.DEFENDING_PLAYER),
                 GrantScope.ALL_OWN_CREATURES,

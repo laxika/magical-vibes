@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopPlanarCardMayPutOnBo
 @CardRegistration(set = "OPCA", collectorNumber = "73")
 public class StairsToInfinity extends Card {
     public StairsToInfinity() {
-        addEffect(EffectSlot.STATIC, new PlayersHaveNoMaximumHandSizeEffect());
+        addStaticEffect(new PlayersHaveNoMaximumHandSizeEffect());
         addEffect(EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE, new DrawCardEffect(1));
         addEffect(EffectSlot.CHAOS_TRIGGERED, new RevealTopPlanarCardMayPutOnBottomEffect());
     }

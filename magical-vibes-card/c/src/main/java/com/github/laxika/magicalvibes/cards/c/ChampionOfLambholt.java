@@ -22,7 +22,7 @@ public class ChampionOfLambholt extends Card {
 
     public ChampionOfLambholt() {
         // Creatures with power less than this creature's power can't block creatures you control.
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesCantBlockMatchingCreaturesEffect(
+        addStaticEffect(new MatchingCreaturesCantBlockMatchingCreaturesEffect(
                 new PermanentPowerLessThanSourcePowerPredicate(),
                 new PermanentControlledBySourceControllerPredicate(),
                 "Creatures with power less than this creature's power can't block creatures you control"));

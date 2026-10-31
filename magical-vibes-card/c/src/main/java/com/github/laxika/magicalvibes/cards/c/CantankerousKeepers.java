@@ -21,7 +21,7 @@ import java.util.List;
 public class CantankerousKeepers extends Card {
 
     public CantankerousKeepers() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ELF), CountScope.CONTROLLER)));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillControllerAndReturnMilledCardsToHandEffect(

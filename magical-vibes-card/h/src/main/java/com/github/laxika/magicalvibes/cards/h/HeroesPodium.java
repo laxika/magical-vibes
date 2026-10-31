@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -27,7 +26,7 @@ import java.util.List;
 public class HeroesPodium extends Card {
 
     public HeroesPodium() {
-        addEffect(EffectSlot.STATIC, new BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect(1, 1));
+        addStaticEffect(new BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect(1, 1));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

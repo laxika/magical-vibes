@@ -19,7 +19,7 @@ public class Momentum extends Card {
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
                         new PutCountersOnSelfEffect(CounterType.GROWTH),
                         "Put a growth counter on Momentum?"))
-                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                .addStaticEffect(new AttachedBoostEffect(
                         new CountersOnSource(CounterType.GROWTH),
                         new CountersOnSource(CounterType.GROWTH),
                         GrantScope.ENCHANTED_CREATURE));

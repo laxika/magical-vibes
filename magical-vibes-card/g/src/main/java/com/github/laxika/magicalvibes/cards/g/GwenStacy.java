@@ -30,7 +30,7 @@ public class GwenStacy extends Card {
         setBackFaceCard(new GhostSpider());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, ExileAccessScope.CONTROLLER_WITHOUT_CONTROL_CHANGE));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTopCardOfOwnLibraryEffect(true));
 
@@ -51,7 +51,7 @@ public class GwenStacy extends Card {
 class GhostSpider extends Card {
 
     GhostSpider() {
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, ExileAccessScope.CONTROLLER_WITHOUT_CONTROL_CHANGE));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 null,

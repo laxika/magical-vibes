@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -15,6 +14,6 @@ public class Pariah extends Card {
 
     public Pariah() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new RedirectPlayerDamageToEnchantedCreatureEffect());
+                .addStaticEffect(new RedirectPlayerDamageToEnchantedCreatureEffect());
     }
 }

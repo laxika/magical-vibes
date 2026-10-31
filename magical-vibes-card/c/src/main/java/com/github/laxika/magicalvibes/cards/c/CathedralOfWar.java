@@ -20,7 +20,7 @@ public class CathedralOfWar extends Card {
     public CathedralOfWar() {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 ConditionalEffect.atTriggerTime(new AttacksAlone(), new BoostTargetCreatureEffect(1, 1)));
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // {T}: Add {C}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));

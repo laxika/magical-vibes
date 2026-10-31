@@ -24,7 +24,7 @@ public class PistonSledge extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AttachSourceEquipmentToTargetCreatureEffect());
 
         // Equipped creature gets +3/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 1, GrantScope.EQUIPPED_CREATURE));
 
         // Equip — Sacrifice an artifact.
         addActivatedAbility(new ActivatedAbility(

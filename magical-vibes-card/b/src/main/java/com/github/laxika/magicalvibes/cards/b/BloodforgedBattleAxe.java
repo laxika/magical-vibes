@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class BloodforgedBattleAxe extends Card {
 
     public BloodforgedBattleAxe() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new CreateTokenCopyOfSourceEffect());
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

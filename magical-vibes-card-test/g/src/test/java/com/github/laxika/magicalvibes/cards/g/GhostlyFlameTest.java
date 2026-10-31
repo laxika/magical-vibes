@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.cards.w.WellLaidPlans;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -46,7 +45,7 @@ class GhostlyFlameTest extends BaseCardTest {
     private static Card createCreatureWithProtection(String name, int power, int toughness,
                                                       CardColor color, CardColor protectedColor) {
         Card card = createCreature(name, power, toughness, color);
-        card.addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(protectedColor)));
+        card.addStaticEffect(new ProtectionFromColorsEffect(Set.of(protectedColor)));
         return card;
     }
 

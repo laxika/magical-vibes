@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanent
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "140")
@@ -33,7 +32,7 @@ public class DevastatingSummons extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

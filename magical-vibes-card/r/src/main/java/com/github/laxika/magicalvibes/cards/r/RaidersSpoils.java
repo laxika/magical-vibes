@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class RaidersSpoils extends Card {
 
     public RaidersSpoils() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(

@@ -17,8 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class WebShooters extends Card {
 
     public WebShooters() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.REACH, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.EQUIPPED_CREATURE));
         // The attack trigger is granted to the equipped creature, so that creature is its source and
         // its controller controls it.
         setAttackTriggerGrantedByEquipment(true);

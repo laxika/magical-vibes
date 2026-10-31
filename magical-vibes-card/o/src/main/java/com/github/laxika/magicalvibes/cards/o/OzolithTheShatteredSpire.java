@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersToArtifactsOrCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -21,7 +20,7 @@ import java.util.List;
 public class OzolithTheShatteredSpire extends Card {
 
     public OzolithTheShatteredSpire() {
-        addEffect(EffectSlot.STATIC, new AddOnePlusOneCountersToArtifactsOrCreaturesEffect());
+        addStaticEffect(new AddOnePlusOneCountersToArtifactsOrCreaturesEffect());
         addCycling("{2}");
 
         ControlledPermanentPredicateTargetFilter artifactOrCreatureYouControl =

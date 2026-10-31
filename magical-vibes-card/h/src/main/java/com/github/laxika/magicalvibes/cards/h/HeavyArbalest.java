@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -17,8 +16,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class HeavyArbalest extends Card {
 
     public HeavyArbalest() {
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(DoesntUntapEffect.enchanted());
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,

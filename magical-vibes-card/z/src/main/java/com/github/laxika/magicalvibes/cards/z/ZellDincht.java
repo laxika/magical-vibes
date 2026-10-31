@@ -18,11 +18,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class ZellDincht extends Card {
 
     public ZellDincht() {
-        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect(1));
+        addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
 
         PermanentCount landsYouControl =
                 new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(landsYouControl, new Fixed(0)));
+        addStaticEffect(new BoostSelfEffect(landsYouControl, new Fixed(0)));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ReturnPermanentControlledByPlayerToHandEffect(new PermanentIsLandPredicate(), "land"));

@@ -16,10 +16,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 public class SyrElenoraTheDiscerning extends Card {
 
     public SyrElenoraTheDiscerning() {
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new CardsInHand(CountScope.CONTROLLER), new Fixed(4)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
-        addEffect(EffectSlot.STATIC, new IncreaseOpponentCostForTargetingControlledPermanentEffect(
+        addStaticEffect(new IncreaseOpponentCostForTargetingControlledPermanentEffect(
                 new PermanentIsSourcePermanentPredicate(), 2, false));
     }
 }

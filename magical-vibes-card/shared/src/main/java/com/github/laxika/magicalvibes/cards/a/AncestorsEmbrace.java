@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -12,8 +11,7 @@ public class AncestorsEmbrace extends Card {
 
     public AncestorsEmbrace() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect());
+                .addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 }

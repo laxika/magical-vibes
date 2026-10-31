@@ -29,7 +29,7 @@ public class DormantVolcano extends Card {
 
     public DormantVolcano() {
         // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // When this land enters, sacrifice it unless you return an untapped Mountain you control to
         // its owner's hand.

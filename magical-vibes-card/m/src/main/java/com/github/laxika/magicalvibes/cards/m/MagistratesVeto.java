@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -16,7 +15,7 @@ import java.util.Set;
 public class MagistratesVeto extends Card {
 
     public MagistratesVeto() {
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesCantBlockMatchingCreaturesEffect(
+        addStaticEffect(new MatchingCreaturesCantBlockMatchingCreaturesEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE)),
                         new PermanentColorInPredicate(Set.of(CardColor.BLUE)))),

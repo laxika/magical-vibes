@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class IceCage extends Card {
 
     public IceCage() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
-          .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateAbilitiesEffect())
+        target(TargetFilters.creature()).addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
+          .addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect())
           .addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
                   new DestroyReferencedPermanentEffect(PermanentReference.SOURCE));
     }

@@ -22,7 +22,7 @@ import java.util.List;
 public class CybermenSquadron extends Card {
 
     public CybermenSquadron() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad(),
                 GrantScope.ALL_OWN_CREATURES,

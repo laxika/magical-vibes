@@ -15,6 +15,6 @@ public class FiremawKavu extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetCreatureEffect(2))
                 .addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new DealDamageToTargetCreatureEffect(4));
-        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{5}{R}"));
+        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{5}{R}"));
     }
 }

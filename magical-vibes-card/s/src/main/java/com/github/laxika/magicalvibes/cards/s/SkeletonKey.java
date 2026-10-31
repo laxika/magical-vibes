@@ -18,7 +18,7 @@ public class SkeletonKey extends Card {
 
     public SkeletonKey() {
         // Equipped creature has skulk.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SKULK, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.SKULK, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature deals combat damage to a player, you may draw a card. If you
         // do, discard a card.

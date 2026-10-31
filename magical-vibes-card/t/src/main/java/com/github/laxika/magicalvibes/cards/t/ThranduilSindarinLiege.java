@@ -22,7 +22,7 @@ public class ThranduilSindarinLiege extends Card {
         setBackFaceCard(new SilvanRally());
         addCastingOption(new AdventureCast("{1}{G/U}{G/U}"));
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ELF)));
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
                 new CreateTokenEffect("Elf", 1, 1, CardColor.GREEN,

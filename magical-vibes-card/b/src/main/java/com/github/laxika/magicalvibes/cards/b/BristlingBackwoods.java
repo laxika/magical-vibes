@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class BristlingBackwoods extends Card {
 
     public BristlingBackwoods() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

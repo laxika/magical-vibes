@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 public class HerosBlade extends Card {
 
     public HerosBlade() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 2, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSupertypePredicate(CardSupertype.LEGENDARY),

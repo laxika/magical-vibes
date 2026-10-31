@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -48,7 +47,7 @@ public class KeeperOfTheCrown extends Card {
     public KeeperOfTheCrown() {
         setBackFaceCard(new CoronationOfTheWilds());
         addCastingOption(new AdventureCast("{2}{G}"));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1,
                 1,
                 Set.of(Keyword.INDESTRUCTIBLE),

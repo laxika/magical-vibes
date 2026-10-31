@@ -25,7 +25,7 @@ public class ZurgoThundersDecree extends Card {
         addEffect(EffectSlot.ON_ATTACK,
                 new CreateTokenEffect(2, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true));
         addEffect(EffectSlot.ON_ATTACK, new SacrificeCreatedPermanentsAtEndStepEffect());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerEndStep(),
+        addStaticEffect(new ConditionalEffect(new ControllerEndStep(),
                 new GrantEffectEffect(new CantBeSacrificedEffect(), GrantScope.OWN_PERMANENTS,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsTokenPredicate(),

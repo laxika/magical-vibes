@@ -19,7 +19,7 @@ public class GauntletOfPower extends Card {
 
     public GauntletOfPower() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasSourceChosenColorPredicate()));
         addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
                 new AddExtraManaOfChosenColorOnLandTapEffect(false,

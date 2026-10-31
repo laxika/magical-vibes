@@ -31,10 +31,10 @@ import java.util.Set;
 public class ArixmethesSlumberingIsle extends Card {
 
     public ArixmethesSlumberingIsle() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.SLUMBER, new Fixed(5)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.SLUMBER),
                 new SetCardTypesEffect(Set.of(CardType.LAND), GrantScope.SELF)));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(

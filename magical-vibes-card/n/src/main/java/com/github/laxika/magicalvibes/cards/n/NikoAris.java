@@ -24,7 +24,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "225")
@@ -77,7 +76,7 @@ public class NikoAris extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(new ActivatedAbility(
                         false,
                         "{2}",

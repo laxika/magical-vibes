@@ -29,7 +29,7 @@ public class MyojinOfSeeingWinds extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new CastFromZone(Zone.HAND),
                 new EnterWithCountersEffect(CounterType.DIVINITY, new Fixed(1))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.DIVINITY),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
 

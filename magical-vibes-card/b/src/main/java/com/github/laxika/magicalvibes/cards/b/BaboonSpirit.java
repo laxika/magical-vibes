@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -22,7 +23,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TLE", collectorNumber = "89")
@@ -65,12 +65,13 @@ public class BaboonSpirit extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(EffectSlot.STATIC, SequenceEffect.of(
+                List.of(
+                        StaticAbility.of(SequenceEffect.of(
                         new CantBeBlockedByCreaturesMatchingPredicateEffect(
                                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.SPIRIT))),
                         new CanBlockOnlyIfAttackerMatchesPredicateEffect(
                                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT), "Spirits")
-                )),
+                ))),
                 List.of(),
                 false,
                 false,

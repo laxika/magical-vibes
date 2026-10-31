@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantPlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantTargetLandsEffect;
 
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantTargetLandsEffec
 public class TomikDistinguishedAdvokist extends Card {
 
     public TomikDistinguishedAdvokist() {
-        addEffect(EffectSlot.STATIC, new OpponentsCantTargetLandsEffect());
-        addEffect(EffectSlot.STATIC, new OpponentsCantPlayLandsFromGraveyardEffect());
+        addStaticEffect(new OpponentsCantTargetLandsEffect());
+        addStaticEffect(new OpponentsCantPlayLandsFromGraveyardEffect());
     }
 }

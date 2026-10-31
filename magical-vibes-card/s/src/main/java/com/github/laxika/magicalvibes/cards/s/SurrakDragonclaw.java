@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
@@ -14,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class SurrakDragonclaw extends Card {
 
     public SurrakDragonclaw() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.STATIC, new ControllerCreatureSpellsCantBeCounteredEffect());
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new CantBeCounteredEffect());
+        addStaticEffect(new ControllerCreatureSpellsCantBeCounteredEffect());
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
     }
 }

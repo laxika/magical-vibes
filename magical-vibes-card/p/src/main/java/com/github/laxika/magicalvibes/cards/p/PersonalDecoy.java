@@ -23,7 +23,7 @@ public class PersonalDecoy extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.LOYALTY, new ControllerLifeTotal()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileIfLeavesBattlefieldEffect());
-        addEffect(EffectSlot.STATIC, new CreaturesCantAttackControllerUnlessPredicateEffect(
+        addStaticEffect(new CreaturesCantAttackControllerUnlessPredicateEffect(
                 new PermanentNotPredicate(new PermanentTruePredicate())));
 
         addActivatedAbility(new ActivatedAbility(

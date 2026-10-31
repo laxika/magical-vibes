@@ -24,7 +24,7 @@ import java.util.List;
 public class WaystonesGuidance extends Card {
 
     public WaystonesGuidance() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsTokenPredicate(),
                         new PermanentIsAttackingPredicate()))));

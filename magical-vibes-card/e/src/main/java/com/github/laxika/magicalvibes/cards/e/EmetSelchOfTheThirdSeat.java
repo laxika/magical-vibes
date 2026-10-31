@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 public class EmetSelchOfTheThirdSeat extends Card {
 
     public EmetSelchOfTheThirdSeat() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTruePredicate(), 2, CostModificationScope.SELF, Zone.GRAVEYARD));
 
         addEffect(EffectSlot.ON_OPPONENT_LOSES_LIFE, OncePerTurnTriggerEffect.markOnAcceptance(

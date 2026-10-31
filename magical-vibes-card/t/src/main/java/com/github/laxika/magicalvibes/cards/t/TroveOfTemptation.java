@@ -11,7 +11,7 @@ public class TroveOfTemptation extends Card {
 
     public TroveOfTemptation() {
         // Each opponent must attack you or a planeswalker you control with at least one creature each combat if able.
-        addEffect(EffectSlot.STATIC, new OpponentsMustAttackControllerEffect());
+        addStaticEffect(new OpponentsMustAttackControllerEffect());
 
         // At the beginning of your end step, create a Treasure token.
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, CreateTokenEffect.ofTreasureToken(1));

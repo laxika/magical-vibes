@@ -21,7 +21,7 @@ import java.util.List;
 public class BilboUnexpectedAdventurer extends Card {
 
     public BilboUnexpectedAdventurer() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtLeastPredicate(3)));
 
         addEffect(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,

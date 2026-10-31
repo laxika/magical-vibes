@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantForetellToNonlandCardsIn
 public class DreamDevourer extends Card {
 
     public DreamDevourer() {
-        addEffect(EffectSlot.STATIC, new GrantForetellToNonlandCardsInHandEffect());
+        addStaticEffect(new GrantForetellToNonlandCardsInHandEffect());
         addEffect(EffectSlot.ON_CONTROLLER_FORETELLS, new BoostSelfEffect(2, 0));
     }
 }

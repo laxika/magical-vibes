@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
@@ -13,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 public class ProudWildbonder extends Card {
 
     public ProudWildbonder() {
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new GrantEffectEffect(
                 new AssignCombatDamageAsThoughUnblockedEffect(),
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasKeywordPredicate(Keyword.TRAMPLE)));

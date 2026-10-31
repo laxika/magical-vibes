@@ -22,7 +22,7 @@ import java.util.List;
 public class TwentyToedToad extends Card {
 
     public TwentyToedToad() {
-        addEffect(EffectSlot.STATIC, new SetControllerMaximumHandSizeEffect(20));
+        addStaticEffect(new SetControllerMaximumHandSizeEffect(20));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 new ConditionalEffect(new MinimumAttackers(2), SequenceEffect.of(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),

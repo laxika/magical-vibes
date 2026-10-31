@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
@@ -14,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEf
 public class OracleOfMulDaya extends Card {
 
     public OracleOfMulDaya() {
-        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect(1));
-        addEffect(EffectSlot.STATIC, new PlayWithTopCardRevealedEffect());
-        addEffect(EffectSlot.STATIC, new PlayLandsFromTopOfLibraryEffect());
+        addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
+        addStaticEffect(new PlayWithTopCardRevealedEffect());
+        addStaticEffect(new PlayLandsFromTopOfLibraryEffect());
     }
 }

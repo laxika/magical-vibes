@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class TorgaarFamineIncarnate extends Card {
 
     public TorgaarFamineIncarnate() {
-        addEffect(EffectSlot.STATIC, new SacrificeCreaturesForCostReductionEffect(2));
+        addStaticEffect(new SacrificeCreaturesForCostReductionEffect(2));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"

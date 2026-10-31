@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -17,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class VampiresBite extends Card {
 
     public VampiresBite() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{B}"));
+        addStaticEffect(new KickerEffect("{2}{B}"));
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(3, 0))
                 .addSpellEffect(new ConditionalEffect(new Kicked(),

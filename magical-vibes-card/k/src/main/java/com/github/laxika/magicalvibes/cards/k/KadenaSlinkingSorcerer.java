@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 public class KadenaSlinkingSorcerer extends Card {
 
     public KadenaSlinkingSorcerer() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForFirstMatchingSpellEachTurnEffect(
+        addStaticEffect(new ReduceCastCostForFirstMatchingSpellEachTurnEffect(
                 new CardTypePredicate(CardType.CREATURE), 3, false, true));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(

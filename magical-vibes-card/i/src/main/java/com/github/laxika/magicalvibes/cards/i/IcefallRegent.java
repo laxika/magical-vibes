@@ -18,7 +18,7 @@ public class IcefallRegent extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.TARGET))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, DoesntUntapEffect.targetWhileSourceControlled());
-        addEffect(EffectSlot.STATIC, new IncreaseOpponentCostForTargetingControlledPermanentEffect(
+        addStaticEffect(new IncreaseOpponentCostForTargetingControlledPermanentEffect(
                 new PermanentIsSourcePermanentPredicate(), 2, false));
     }
 }

@@ -19,8 +19,7 @@ public class ErebossTitan extends Card {
 
     public ErebossTitan() {
         // As long as your opponents control no creatures, this creature has indestructible.
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                         new NotCondition(new OpponentControlsPermanent(new PermanentIsCreaturePredicate())),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
 

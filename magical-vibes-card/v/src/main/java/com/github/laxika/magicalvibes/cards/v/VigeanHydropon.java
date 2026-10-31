@@ -18,7 +18,7 @@ public class VigeanHydropon extends Card {
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5)));
         addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
                 new MoveCounterFromSourceToEnteringCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesCantAttackOrBlockEffect(
+        addStaticEffect(new MatchingCreaturesCantAttackOrBlockEffect(
                 new PermanentIsSourceCardPredicate(), "This creature can't attack or block"));
     }
 }

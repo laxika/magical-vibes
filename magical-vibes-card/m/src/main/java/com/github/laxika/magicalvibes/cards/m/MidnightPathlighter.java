@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 public class MidnightPathlighter extends Card {
 
     public MidnightPathlighter() {
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new GrantEffectEffect(
                 new CanBeBlockedOnlyByFilterEffect(
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                         "legendary creatures"),

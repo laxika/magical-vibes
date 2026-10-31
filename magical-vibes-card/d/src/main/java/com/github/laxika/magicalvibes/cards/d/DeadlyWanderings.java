@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
@@ -19,8 +18,7 @@ import java.util.Set;
 public class DeadlyWanderings extends Card {
 
     public DeadlyWanderings() {
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                         new AllOf(List.of(
                                 new ControlsPermanentCount(1, new PermanentIsCreaturePredicate()),
                                 new ControlsPermanentCountAtMost(1, new PermanentIsCreaturePredicate()))),

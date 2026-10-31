@@ -18,7 +18,7 @@ import java.util.List;
 public class ViashinoBranchrider extends Card {
 
     public ViashinoBranchrider() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{G}"));
+        addStaticEffect(new KickerEffect("{2}{G}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
         addActivatedAbility(new ActivatedAbility(false, "{2}{R}", List.of(new BoostSelfEffect(2, 0)),

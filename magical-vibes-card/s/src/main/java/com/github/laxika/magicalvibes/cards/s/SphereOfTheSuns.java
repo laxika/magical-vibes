@@ -19,7 +19,7 @@ public class SphereOfTheSuns extends Card {
 
     public SphereOfTheSuns() {
         // Sphere of the Suns enters the battlefield tapped and with three charge counters on it.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(3)));
 
         // {T}, Remove a charge counter from Sphere of the Suns: Add one mana of any color.

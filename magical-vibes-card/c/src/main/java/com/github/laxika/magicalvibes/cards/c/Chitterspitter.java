@@ -25,7 +25,7 @@ public class Chitterspitter extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MaySacrificePermanentForCounterSourceEffect(
                 new PermanentIsTokenPredicate(), "a token", CounterType.ACORN));
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL), CounterType.ACORN, false));
 

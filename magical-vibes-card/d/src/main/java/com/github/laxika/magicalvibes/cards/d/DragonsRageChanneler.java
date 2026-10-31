@@ -29,8 +29,8 @@ public class DragonsRageChanneler extends Card {
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 List.of(new SurveilEffect(1))));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new Delirium(), new StaticBoostEffect(2, 2, Set.of(Keyword.FLYING), GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Delirium(), new MustAttackEffect()));
+        addStaticEffect(new ConditionalEffect(new Delirium(), new MustAttackEffect()));
     }
 }

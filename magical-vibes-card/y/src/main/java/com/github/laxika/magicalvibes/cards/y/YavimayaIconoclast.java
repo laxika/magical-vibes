@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class YavimayaIconoclast extends Card {
 
     public YavimayaIconoclast() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{R}"));
+        addStaticEffect(new KickerEffect("{R}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 SequenceEffect.of(
                         new BoostSelfEffect(1, 1),

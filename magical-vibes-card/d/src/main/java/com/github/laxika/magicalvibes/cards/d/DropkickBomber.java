@@ -23,7 +23,7 @@ import java.util.List;
 public class DropkickBomber extends Card {
 
     public DropkickBomber() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)));
 
         addActivatedAbility(new ActivatedAbility(

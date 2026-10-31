@@ -18,7 +18,7 @@ public class HeraldicBanner extends Card {
 
     public HeraldicBanner() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenColorEffect(1, 0));
+        addStaticEffect(new BoostCreaturesOfChosenColorEffect(1, 0));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

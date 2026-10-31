@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -26,10 +25,10 @@ public class IvoryGuardians extends Card {
 
     public IvoryGuardians() {
         // Protection from red.
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.RED)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.RED)));
 
         // Creatures named Ivory Guardians get +1/+1 as long as an opponent controls a nontoken red permanent.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new OpponentControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentColorInPredicate(Set.of(CardColor.RED)),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate())))),

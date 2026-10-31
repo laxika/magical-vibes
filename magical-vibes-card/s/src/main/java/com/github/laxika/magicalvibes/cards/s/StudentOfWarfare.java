@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -31,22 +30,22 @@ public class StudentOfWarfare extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF));
-        addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new RemoveKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF));
+        addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(2, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(7, CounterType.LEVEL)))),
                 new SetBasePowerToughnessEffect(3, 3, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(7, CounterType.LEVEL),
                 new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(2, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(7, CounterType.LEVEL)))),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(7, CounterType.LEVEL),
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF)));
     }

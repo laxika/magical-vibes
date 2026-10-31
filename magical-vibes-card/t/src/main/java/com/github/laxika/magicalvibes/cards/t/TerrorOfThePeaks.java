@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 public class TerrorOfThePeaks extends Card {
 
     public TerrorOfThePeaks() {
-        addEffect(EffectSlot.STATIC, new IncreaseOpponentLifeCostForTargetingControlledPermanentEffect(
+        addStaticEffect(new IncreaseOpponentLifeCostForTargetingControlledPermanentEffect(
                 new PermanentIsSourcePermanentPredicate(), 3));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new DealDamageToAnyTargetEffect(new ChosenPermanentPower()));

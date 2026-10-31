@@ -22,7 +22,7 @@ import java.util.List;
 public class BatteryBearer extends Card {
 
     public BatteryBearer() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,

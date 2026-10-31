@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -26,7 +25,7 @@ import java.util.List;
 public class ElspethStormSlayer extends Card {
 
     public ElspethStormSlayer() {
-        addEffect(EffectSlot.STATIC, new MultiplyTokenCreationEffect(2));
+        addStaticEffect(new MultiplyTokenCreationEffect(2));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

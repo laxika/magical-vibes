@@ -18,7 +18,7 @@ public class TheCyberController extends Card {
     public TheCyberController() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MillEachOpponentAndPutMilledCreaturesFaceDownAsCybermenEffect(new XValue()));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentIsArtifactPredicate()));
     }
 }

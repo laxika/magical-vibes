@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -50,7 +49,7 @@ public class ExileBottomCardsToSourceEffectHandler implements NormalEffectHandle
                 : gameQueryService.findPermanentById(gameData, sourcePermanentId);
         Card sourceCard = source != null ? source.getCard() : entry.getCard();
         List<AllowCastFromCardsExiledWithSourceEffect> persistentPermissions = sourceCard
-                .getEffects(EffectSlot.STATIC).stream()
+                .getStaticEffects().stream()
                 .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
                 .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
                 .filter(AllowCastFromCardsExiledWithSourceEffect::persistsAfterSourceLeaves)

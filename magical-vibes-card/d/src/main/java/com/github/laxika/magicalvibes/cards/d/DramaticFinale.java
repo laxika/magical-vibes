@@ -19,7 +19,7 @@ import java.util.Set;
 public class DramaticFinale extends Card {
 
     public DramaticFinale() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentIsTokenPredicate()));
 
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,

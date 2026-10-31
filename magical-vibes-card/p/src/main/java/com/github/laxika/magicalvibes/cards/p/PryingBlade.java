@@ -13,7 +13,7 @@ public class PryingBlade extends Card {
 
     public PryingBlade() {
         // Equipped creature gets +1/+0.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature deals combat damage to a player, create a Treasure token.
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, CreateTokenEffect.ofTreasureToken(1));

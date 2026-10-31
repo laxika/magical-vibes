@@ -20,7 +20,7 @@ import java.util.Set;
 public class MalakirBloodwitch extends Card {
 
     public MalakirBloodwitch() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseLifeEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE), CountScope.CONTROLLER),
                 LoseLifeRecipient.EACH_OPPONENT,

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -37,7 +36,7 @@ import java.util.Set;
 public class GrMaWormtongue extends Card {
 
     public GrMaWormtongue() {
-        addEffect(EffectSlot.STATIC, new OpponentsCantGainLifeEffect());
+        addStaticEffect(new OpponentsCantGainLifeEffect());
 
         PermanentPredicate army = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

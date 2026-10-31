@@ -25,7 +25,7 @@ public class PollywogSymbiote extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 new CardKeywordPredicate(Keyword.MUTATE)));
 
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 mutateCreature, 1, CostModificationScope.SELF));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 mutateCreature, List.of(

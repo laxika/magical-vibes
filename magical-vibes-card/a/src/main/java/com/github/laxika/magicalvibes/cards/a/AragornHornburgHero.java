@@ -20,9 +20,9 @@ public class AragornHornburgHero extends Card {
     public AragornHornburgHero() {
         var attacking = new PermanentIsAttackingPredicate();
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES, attacking));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new RenownEffect(1), GrantScope.ALL_OWN_CREATURES, attacking));
 

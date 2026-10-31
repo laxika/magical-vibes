@@ -32,8 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveXCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
-import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
-import com.github.laxika.magicalvibes.model.effect.BeholdCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
@@ -187,7 +185,7 @@ public class CardViewFactory {
                 .or(() -> card.getCastingOption(AdventureCast.class).map(a -> (CastingOption) a))
                 .or(() -> card.getCastingOption(BestowCast.class).map(b -> (CastingOption) b));
         boolean hasAlternateCastingCost = altCastOpt.isPresent();
-        CollectEvidenceCost collectEvidenceAlternativeCost = card.getEffects(EffectSlot.STATIC).stream()
+        CollectEvidenceCost collectEvidenceAlternativeCost = card.getStaticEffects().stream()
                 .filter(AlternativeCostForSpellsEffect.class::isInstance)
                 .map(AlternativeCostForSpellsEffect.class::cast)
                 .map(AlternativeCostForSpellsEffect::nonManaCost)
@@ -232,7 +230,7 @@ public class CardViewFactory {
         String flashforwardCost = flashforwardCast == null ? null
                 : flashforwardCast.getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
 
-        BuybackEffect buybackEffect = card.getEffects(EffectSlot.STATIC).stream()
+        BuybackEffect buybackEffect = card.getStaticEffects().stream()
                 .filter(e -> e instanceof BuybackEffect)
                 .map(e -> (BuybackEffect) e)
                 .findFirst().orElse(null);
@@ -242,7 +240,7 @@ public class CardViewFactory {
                 : buybackEffect.hasDiscardCost() ? "Discard " + buybackEffect.discardCount() + " cards"
                 : null;
 
-        KickerEffect kickerEffect = card.getEffects(EffectSlot.STATIC).stream()
+        KickerEffect kickerEffect = card.getStaticEffects().stream()
                 .filter(e -> e instanceof KickerEffect)
                 .map(e -> (KickerEffect) e)
                 .findFirst().orElse(null);

@@ -13,7 +13,7 @@ public class FblthpLostOnTheRange extends Card {
     public FblthpLostOnTheRange() {
         // Ward {2}.
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, new PlotNonlandCardsFromTopOfLibraryEffect());
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new PlotNonlandCardsFromTopOfLibraryEffect());
     }
 }

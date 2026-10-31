@@ -14,6 +14,6 @@ public class CursedRack extends Card {
     public CursedRack() {
         // "As this artifact enters, choose an opponent. The chosen player's maximum hand size is four."
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new SetOpponentMaximumHandSizeEffect(4));
+        addStaticEffect(new SetOpponentMaximumHandSizeEffect(4));
     }
 }

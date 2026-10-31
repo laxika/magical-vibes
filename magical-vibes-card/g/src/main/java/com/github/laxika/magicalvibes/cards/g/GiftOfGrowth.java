@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -17,7 +16,7 @@ public class GiftOfGrowth extends Card {
 
     public GiftOfGrowth() {
         // Kicker {2}
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
+        addStaticEffect(new KickerEffect("{2}"));
 
         // Untap target creature.
         // It gets +2/+2 until end of turn.

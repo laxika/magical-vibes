@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -82,8 +83,7 @@ public class OddricLunarMarquis extends Card {
                                         new ExileTopCardsOfDefendingPlayerLibraryEffect(1))),
                         new ConditionalEffect(
                                 sharesNonbasicLandwalk(),
-                                new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
-                                        EffectSlot.STATIC, NONBASIC_LANDWALK)),
+                                new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(StaticAbility.of(NONBASIC_LANDWALK))),
                         new ConditionalEffect(
                                 sharesManaAbility(),
                                 new GrantActivatedAbilityEffect(

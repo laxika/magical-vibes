@@ -15,8 +15,7 @@ public class FatedFirepower extends Card {
     public FatedFirepower() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.FIRE, new XValue()));
-        addEffect(EffectSlot.STATIC,
-                new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(
+        addStaticEffect(new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(
                         new CountersOnSource(CounterType.FIRE)));
     }
 }

@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class CyanVengefulSamurai extends Card {
 
     public CyanVengefulSamurai() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER)));
         addEffect(EffectSlot.ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));

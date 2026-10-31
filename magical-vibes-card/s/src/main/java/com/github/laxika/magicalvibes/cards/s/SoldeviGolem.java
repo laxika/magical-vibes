@@ -25,7 +25,7 @@ public class SoldeviGolem extends Card {
 
     public SoldeviGolem() {
         // This creature doesn't untap during your untap step.
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // At the beginning of your upkeep, you may untap target tapped creature an opponent
         // controls. If you do, untap this creature.

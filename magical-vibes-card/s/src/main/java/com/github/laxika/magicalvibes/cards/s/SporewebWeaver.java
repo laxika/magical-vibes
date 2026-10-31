@@ -19,7 +19,7 @@ public class SporewebWeaver extends Card {
 
     public SporewebWeaver() {
         // Hexproof from blue: opponents' blue spells and abilities can't target this creature.
-        addEffect(EffectSlot.STATIC, TargetingRestrictionEffect.hexproofFromColors(Set.of(CardColor.BLUE)));
+        addStaticEffect(TargetingRestrictionEffect.hexproofFromColors(Set.of(CardColor.BLUE)));
 
         // Whenever this creature is dealt damage, you gain 1 life and create a 1/1 green Saproling
         // creature token.

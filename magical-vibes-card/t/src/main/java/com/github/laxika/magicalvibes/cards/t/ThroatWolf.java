@@ -21,7 +21,7 @@ public class ThroatWolf extends Card {
         // "You may cast this during an opponent's combat phase" is a permission on top of normal timing,
         // so it is modeled as a flash-style condition rather than a restriction to that window.
         setFlashCastCondition(new AllConditions(List.of(new DuringCombat(), new NotControllerTurn())));
-        addEffect(EffectSlot.STATIC, new FirstestStrikeEffect());
+        addStaticEffect(new FirstestStrikeEffect());
         addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED,
                 new ConditionalEffect(
                         new AllConditions(List.of(new FirstCombatPhase(), new NotControllerTurn())),

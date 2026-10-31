@@ -19,9 +19,9 @@ public class NerdRage extends Card {
 
     public NerdRage() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+                .addStaticEffect(new GrantEffectEffect(
                         new NoMaximumHandSizeEffect(), GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ATTACK,
                         new ConditionalEffect(new CardsInHandAtLeast(10), new BoostSelfEffect(10, 10)),
                         GrantScope.ENCHANTED_CREATURE));

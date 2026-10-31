@@ -26,7 +26,7 @@ public class SphereGrid extends Card {
                         true));
 
         // Creatures you control with +1/+1 counters on them have reach and trample.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.REACH, Keyword.TRAMPLE),
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)));

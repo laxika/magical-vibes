@@ -15,6 +15,6 @@ public class PhantomWurm extends Card {
     public PhantomWurm() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
-        addEffect(EffectSlot.STATIC, new PreventDamageAndRemovePlusOnePlusOneCountersEffect(true));
+        addStaticEffect(new PreventDamageAndRemovePlusOnePlusOneCountersEffect(true));
     }
 }

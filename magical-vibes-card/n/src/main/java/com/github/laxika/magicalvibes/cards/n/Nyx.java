@@ -21,7 +21,7 @@ import java.util.List;
 public class Nyx extends Card {
 
     public Nyx() {
-        addEffect(EffectSlot.STATIC, new GrantCardTypeEffect(
+        addStaticEffect(new GrantCardTypeEffect(
                 CardType.ENCHANTMENT,
                 GrantScope.ALL_PERMANENTS,
                 new PermanentAllOfPredicate(List.of(

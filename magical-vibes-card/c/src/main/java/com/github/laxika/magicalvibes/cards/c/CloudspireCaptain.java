@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndSaddleEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -15,9 +14,9 @@ import java.util.Set;
 public class CloudspireCaptain extends Card {
 
     public CloudspireCaptain() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1, 1, GrantScope.OWN_PERMANENTS,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MOUNT, CardSubtype.VEHICLE))));
-        addEffect(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2));
+        addStaticEffect(new PowerBoostForCrewAndSaddleEffect(2));
     }
 }

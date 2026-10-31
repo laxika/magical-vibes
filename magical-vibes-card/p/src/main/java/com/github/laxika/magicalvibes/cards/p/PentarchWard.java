@@ -18,7 +18,6 @@ public class PentarchWard extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC,
-                        new ProtectionFromChosenColorEffect(GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new ProtectionFromChosenColorEffect(GrantScope.ENCHANTED_CREATURE));
     }
 }

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.outcome;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -113,7 +112,7 @@ public class ExquisiteArchangelLossReplacer implements LossReplacer {
             if (permanent.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, permanent)) {
                 continue;
             }
-            boolean hasReplacement = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+            boolean hasReplacement = permanent.getCard().getStaticEffects().stream()
                     .anyMatch(ReplaceControllerLossWithExileAndStartingLifeEffect.class::isInstance);
             if (hasReplacement) {
                 result.add(permanent);

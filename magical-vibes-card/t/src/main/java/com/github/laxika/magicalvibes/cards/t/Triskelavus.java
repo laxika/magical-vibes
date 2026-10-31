@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "266")
@@ -46,7 +45,7 @@ public class Triskelavus extends Card {
                                 Set.of(CardType.ARTIFACT),
                                 false,
                                 false,
-                                Map.of(),
+                                List.of(),
                                 List.of(new ActivatedAbility(
                                         false,
                                         null,

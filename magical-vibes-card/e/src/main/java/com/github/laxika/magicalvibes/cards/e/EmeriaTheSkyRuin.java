@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class EmeriaTheSkyRuin extends Card {
 
     public EmeriaTheSkyRuin() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new ControlsPermanentCount(7, new PermanentHasSubtypePredicate(CardSubtype.PLAINS)),
                 new MayEffect(ReturnCardFromGraveyardEffect.builder()

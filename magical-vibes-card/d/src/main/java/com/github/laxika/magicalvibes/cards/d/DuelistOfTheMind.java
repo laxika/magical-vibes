@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 public class DuelistOfTheMind extends Card {
 
     public DuelistOfTheMind() {
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new CardsDrawnThisTurn(CountScope.CONTROLLER), new Fixed(3)));
         addEffect(EffectSlot.ON_CONTROLLER_COMMITS_CRIME,
                 new OncePerTurnTriggerEffect(new MayEffect(SequenceEffect.of(

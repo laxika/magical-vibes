@@ -30,7 +30,7 @@ public class GraftedGrowth extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
 
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(true, null, List.of(new AwardAnyColorManaEffect(2)),
                                 "{T}: Add two mana of any one color."),
                         GrantScope.ENCHANTED_PERMANENT

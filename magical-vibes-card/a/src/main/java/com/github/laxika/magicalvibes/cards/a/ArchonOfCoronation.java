@@ -13,7 +13,7 @@ public class ArchonOfCoronation extends Card {
 
     public ArchonOfCoronation() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeMonarchEffect());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerIsMonarch(), new DamageDoesNotCauseLifeLossEffect()));
     }
 }

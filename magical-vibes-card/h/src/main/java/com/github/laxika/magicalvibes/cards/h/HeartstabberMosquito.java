@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class HeartstabberMosquito extends Card {
 
     public HeartstabberMosquito() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{B}"));
+        addStaticEffect(new KickerEffect("{2}{B}"));
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -20,10 +19,10 @@ public class Swampbenders extends Card {
     public Swampbenders() {
         PermanentCount swampsOnBattlefield = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 swampsOnBattlefield, swampsOnBattlefield));
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.SWAMP, GrantScope.OWN_LANDS));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.SWAMP, GrantScope.OWN_LANDS));
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapFor(ManaColor.BLACK), GrantScope.OWN_LANDS));
     }
 }

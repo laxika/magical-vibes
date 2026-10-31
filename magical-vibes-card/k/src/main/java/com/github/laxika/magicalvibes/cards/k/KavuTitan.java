@@ -17,8 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class KavuTitan extends Card {
 
     public KavuTitan() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{G}"));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Kicked(),
+        addStaticEffect(new KickerEffect("{2}{G}"));
+        addStaticEffect(new ConditionalEffect(new Kicked(),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3))));

@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingEnchanted
 public class CurseOfHospitality extends Card {
 
     public CurseOfHospitality() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE,
                 GrantScope.ALL_CREATURES,
                 new PermanentIsAttackingEnchantedPlayerPredicate()));

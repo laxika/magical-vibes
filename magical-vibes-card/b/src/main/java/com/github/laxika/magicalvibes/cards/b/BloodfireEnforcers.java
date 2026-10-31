@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -21,7 +20,7 @@ public class BloodfireEnforcers extends Card {
 
     public BloodfireEnforcers() {
         // This creature has first strike and trample as long as an instant card and a sorcery card are in your graveyard.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AllConditions(List.of(
                         new GraveyardCardThreshold(1, new CardTypePredicate(CardType.INSTANT)),
                         new GraveyardCardThreshold(1, new CardTypePredicate(CardType.SORCERY)))),

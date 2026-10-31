@@ -17,7 +17,7 @@ import java.util.List;
 public class PhyrexianWarhorse extends Card {
 
     public PhyrexianWarhorse() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{W}"));
+        addStaticEffect(new KickerEffect("{W}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new Kicked(), CreateTokenEffect.whiteSoldier(1)));
 

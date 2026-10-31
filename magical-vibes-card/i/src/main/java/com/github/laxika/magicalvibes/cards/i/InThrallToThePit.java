@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class InThrallToThePit extends Card {
 
     public InThrallToThePit() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{B}"));
+        addStaticEffect(new KickerEffect("{2}{B}"));
         target(TargetFilters.creature())
                 .addSpellEffect(new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
                 .addSpellEffect(new UntapPermanentsEffect(TapUntapScope.TARGET))

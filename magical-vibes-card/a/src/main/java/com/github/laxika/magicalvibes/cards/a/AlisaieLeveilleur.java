@@ -20,6 +20,6 @@ public class AlisaieLeveilleur extends Card {
                 "Have target player put Alphinaud Leveilleur into their hand from their library?",
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
-        addEffect(EffectSlot.STATIC, new ReduceSecondSpellCastCostEffect(2));
+        addStaticEffect(new ReduceSecondSpellCastCostEffect(2));
     }
 }

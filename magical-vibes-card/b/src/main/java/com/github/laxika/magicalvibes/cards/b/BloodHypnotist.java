@@ -21,7 +21,7 @@ import java.util.List;
 public class BloodHypnotist extends Card {
 
     public BloodHypnotist() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
 
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED,
                 new OncePerTurnTriggerEffect(new TriggeringPermanentConditionalEffect(

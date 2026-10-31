@@ -14,7 +14,7 @@ public class SkinInvasion extends Card {
         setBackFaceCard(new SkinShedder());
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new MustAttackEffect())
+                .addStaticEffect(new MustAttackEffect())
                 .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
                         new ReturnSourceTransformedFromGraveyardEffect());
     }

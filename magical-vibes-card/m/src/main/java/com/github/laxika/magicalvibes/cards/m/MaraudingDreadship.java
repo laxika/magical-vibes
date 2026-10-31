@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "153")
@@ -37,7 +36,7 @@ public class MaraudingDreadship extends Card {
         );
         return new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Incubator", 0, 0, null, null,
-                List.of(), Set.of(), Set.of(), false, false, Map.of(), List.of(transform),
+                List.of(), Set.of(), Set.of(), false, false, List.of(), List.of(transform),
                 false, false, false, counters, Set.of()
         );
     }

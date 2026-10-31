@@ -30,7 +30,7 @@ public class CallToArms extends Card {
 
         // "White creatures get +1/+1 as long as the chosen color is the most common color among
         // nontoken permanents the chosen player controls but isn't tied for most common."
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ChosenColorStrictlyMostCommonAmongOpponentNontokens(),
                 new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE)))));

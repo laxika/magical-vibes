@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -23,7 +22,7 @@ public class UpriserRenegade extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsModifiedPredicate())),
                 CountScope.CONTROLLER, true);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(
+        addStaticEffect(new BoostSelfEffect(
                 new Scaled(otherModifiedCreatures, 2), new Fixed(0)));
     }
 }

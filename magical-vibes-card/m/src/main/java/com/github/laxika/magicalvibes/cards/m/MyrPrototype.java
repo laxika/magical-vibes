@@ -15,7 +15,6 @@ public class MyrPrototype extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSourceEffect(1, 1, 1));
 
         // This creature can't attack or block unless you pay {1} for each +1/+1 counter on it.
-        addEffect(EffectSlot.STATIC,
-                new CantAttackOrBlockUnlessPaysPerCounterEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+        addStaticEffect(new CantAttackOrBlockUnlessPaysPerCounterEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

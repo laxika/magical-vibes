@@ -16,9 +16,9 @@ public class DescendantOfKiyomaro extends Card {
     public DescendantOfKiyomaro() {
         ControllerHasMoreCardsInHandThanEachOpponent condition =
                 new ControllerHasMoreCardsInHandThanEachOpponent();
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(condition,
+        addStaticEffect(new ConditionalEffect(condition,
                 new StaticBoostEffect(1, 2, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(condition,
+        addStaticEffect(new ConditionalEffect(condition,
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE,
                         new GainLifeEffect(3), GrantScope.SELF)));

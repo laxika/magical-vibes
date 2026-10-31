@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class TeethingWurmlet extends Card {
 
     public TeethingWurmlet() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Metalcraft(),
+        addStaticEffect(new ConditionalEffect(new Metalcraft(),
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD, SequenceEffect.of(
                 new GainLifeEffect(1),

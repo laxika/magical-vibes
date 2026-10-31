@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -24,10 +23,10 @@ public class GoblinWarchief extends Card {
 
     public GoblinWarchief() {
         // Goblin spells you cast cost {1} less to cast
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.GOBLIN), 1, CostModificationScope.SELF));
         // Goblins you control have haste
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 0, Set.of(Keyword.HASTE), GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(0, 0, Set.of(Keyword.HASTE), GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN))));
     }
 }

@@ -31,7 +31,7 @@ import java.util.List;
 public class MysticSanctuary extends Card {
 
     public MysticSanctuary() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCountAtMost(2, new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 new EntersTappedEffect()));
 

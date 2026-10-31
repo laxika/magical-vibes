@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "237")
@@ -29,7 +28,7 @@ public class RinoaHeartilly extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 CardType.CREATURE, 1, "Angelo", 1, 1, CardColor.GREEN,
                 Set.of(CardColor.GREEN, CardColor.WHITE), List.of(CardSubtype.DOG),
-                Set.of(), Set.of(), false, false, Map.of(), List.of(),
+                Set.of(), Set.of(), false, false, List.of(), List.of(),
                 false, false, true, 0, Set.of()));
 
         PermanentCount creaturesYouControl =

@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ONE", collectorNumber = "219")
@@ -41,7 +40,7 @@ public class VenserCorpsePuppet extends Card {
         CreateTokenEffect hollowSentinel = new CreateTokenEffect(
                 CardType.CREATURE, 1, HOLLOW_SENTINEL_NAME, 3, 3, null, null,
                 List.of(CardSubtype.PHYREXIAN, CardSubtype.GOLEM), Set.of(), Set.of(CardType.ARTIFACT),
-                false, false, Map.of(), List.of(), false, false, true, 0, Set.of());
+                false, false, List.of(), List.of(), false, false, true, 0, Set.of());
 
         addEffect(EffectSlot.ON_CONTROLLER_PROLIFERATES, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

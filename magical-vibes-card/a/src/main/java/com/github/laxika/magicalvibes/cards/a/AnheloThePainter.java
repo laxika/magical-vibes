@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -18,7 +17,7 @@ import java.util.List;
 public class AnheloThePainter extends Card {
 
     public AnheloThePainter() {
-        addEffect(EffectSlot.STATIC, new GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
+        addStaticEffect(new GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
                 Keyword.CASUALTY, 2, new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY))

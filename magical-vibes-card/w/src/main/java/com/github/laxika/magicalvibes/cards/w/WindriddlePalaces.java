@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect
 public class WindriddlePalaces extends Card {
 
     public WindriddlePalaces() {
-        addEffect(EffectSlot.STATIC, PlayWithTopCardRevealedEffect.forAllPlayers());
-        addEffect(EffectSlot.STATIC, new AllowPlayFromAnyLibraryTopEffect());
+        addStaticEffect(PlayWithTopCardRevealedEffect.forAllPlayers());
+        addStaticEffect(new AllowPlayFromAnyLibraryTopEffect());
         addEffect(EffectSlot.CHAOS_TRIGGERED, new MillEffect(1, MillRecipient.CONTROLLER));
         addEffect(EffectSlot.CHAOS_TRIGGERED, new MillEffect(1, MillRecipient.EACH_OPPONENT));
     }

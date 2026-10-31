@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class TrainingRegimen extends Card {
 
     public TrainingRegimen() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)

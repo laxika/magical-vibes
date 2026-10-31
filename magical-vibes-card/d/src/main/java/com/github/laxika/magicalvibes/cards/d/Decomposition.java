@@ -28,7 +28,7 @@ public class Decomposition extends Card {
                 "Target must be a black creature"
         ))
                 // Enchanted creature has "Cumulative upkeep-Pay 1 life."
-                .addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+                .addStaticEffect(new GrantEffectEffect(
                         CumulativeUpkeepEffect.life(1), GrantScope.ENCHANTED_CREATURE))
 
                 // When enchanted creature dies, its controller loses 2 life.

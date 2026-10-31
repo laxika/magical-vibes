@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -364,7 +363,7 @@ public class StaticEffectSupport {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent source : bf) {
-                for (CardEffect e : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect e : source.getCard().getStaticEffects()) {
                     if (e instanceof AnimateNoncreatureArtifactsEffect) return true;
                 }
             }
@@ -378,7 +377,7 @@ public class StaticEffectSupport {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent source : bf) {
-                for (CardEffect e : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect e : source.getCard().getStaticEffects()) {
                     if (e instanceof AllLandsAreCreaturesEffect animateLands
                             && (animateLands.scope() == GrantScope.ALL_LANDS
                                     || (animateLands.scope() == GrantScope.OWN_LANDS

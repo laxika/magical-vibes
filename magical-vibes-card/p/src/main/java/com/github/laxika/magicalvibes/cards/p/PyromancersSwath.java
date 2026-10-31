@@ -15,7 +15,7 @@ import java.util.Set;
 public class PyromancersSwath extends Card {
 
     public PyromancersSwath() {
-        addEffect(EffectSlot.STATIC, new AdditionalControllerDamageEffect(2,
+        addStaticEffect(new AdditionalControllerDamageEffect(2,
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL))));
         addEffect(EffectSlot.END_STEP_TRIGGERED, new DiscardHandEffect());
     }

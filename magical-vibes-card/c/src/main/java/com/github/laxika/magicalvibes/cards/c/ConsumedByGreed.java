@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
@@ -31,7 +30,7 @@ public class ConsumedByGreed extends Card {
     public ConsumedByGreed() {
         CardTypePredicate creatureCards = new CardTypePredicate(CardType.CREATURE);
 
-        addEffect(EffectSlot.STATIC, new GiftEffect(1));
+        addStaticEffect(new GiftEffect(1));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"

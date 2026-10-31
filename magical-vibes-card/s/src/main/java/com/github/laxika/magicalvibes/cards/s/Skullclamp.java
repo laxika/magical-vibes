@@ -37,7 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class Skullclamp extends Card {
 
     public Skullclamp() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, -1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, -1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new DrawCardEffect(2));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }

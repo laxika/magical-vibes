@@ -22,7 +22,7 @@ public class SilverShroudCostume extends Card {
                         new AttachSourceEquipmentToTargetCreatureEffect())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new GrantKeywordEffect(Keyword.SHROUD, GrantScope.TARGET));
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

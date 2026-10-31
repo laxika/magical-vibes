@@ -27,11 +27,11 @@ public class TheDalekEmperor extends Card {
 
     public TheDalekEmperor() {
         // Affinity for Daleks.
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.DALEK), CountScope.CONTROLLER)));
 
         // Other Daleks you control have haste.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.DALEK)));
 
         // Each opponent sacrifices a creature or the controller creates a Dalek.

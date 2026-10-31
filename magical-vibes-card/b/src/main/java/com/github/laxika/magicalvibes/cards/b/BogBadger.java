@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class BogBadger extends Card {
 
     public BogBadger() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{B}"));
+        addStaticEffect(new KickerEffect("{B}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES)));
     }

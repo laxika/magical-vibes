@@ -15,6 +15,6 @@ public class ElderscaleWurm extends Card {
     public ElderscaleWurm() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new ControllerLifeAtMost(6), new SetLifeTotalEffect(7)));
-        addEffect(EffectSlot.STATIC, new DamageLifeFloorEffect(7, LifeFloorCondition.LIFE_AT_LEAST_FLOOR));
+        addStaticEffect(new DamageLifeFloorEffect(7, LifeFloorCondition.LIFE_AT_LEAST_FLOOR));
     }
 }

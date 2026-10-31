@@ -43,13 +43,13 @@ public class BelloBardOfTheBrambles extends Card {
         ));
         PermanentPredicate eligiblePermanent = new PermanentAnyOfPredicate(List.of(artifact, enchantment));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new AnimatePermanentsEffect(
                         new Fixed(4), new Fixed(4), List.of(CardSubtype.ELEMENTAL),
                         Set.of(Keyword.INDESTRUCTIBLE, Keyword.HASTE), null,
                         Set.of(CardType.CREATURE), GrantScope.OWN_PERMANENTS,
                         EffectDuration.CONTINUOUS, eligiblePermanent)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                         new DrawCardEffect(), GrantScope.OWN_PERMANENTS, eligiblePermanent)));

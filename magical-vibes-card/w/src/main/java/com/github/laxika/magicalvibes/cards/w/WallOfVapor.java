@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToSelfFromCreaturesItBlocksEffect;
 
 @CardRegistration(set = "CHR", collectorNumber = "27")
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToSelfFromCre
 public class WallOfVapor extends Card {
 
     public WallOfVapor() {
-        addEffect(EffectSlot.STATIC, new PreventAllDamageToSelfFromCreaturesItBlocksEffect());
+        addStaticEffect(new PreventAllDamageToSelfFromCreaturesItBlocksEffect());
     }
 }

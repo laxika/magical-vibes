@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleEnergyCountersEffect;
@@ -20,7 +19,7 @@ import java.util.Set;
 public class AetherRefinery extends Card {
 
     public AetherRefinery() {
-        addEffect(EffectSlot.STATIC, new DoubleEnergyCountersEffect());
+        addStaticEffect(new DoubleEnergyCountersEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

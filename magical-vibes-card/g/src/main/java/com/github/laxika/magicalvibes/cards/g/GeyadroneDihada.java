@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
@@ -36,8 +35,7 @@ import java.util.List;
 public class GeyadroneDihada extends Card {
 
     public GeyadroneDihada() {
-        addEffect(EffectSlot.STATIC,
-                new ProtectionFromPermanentsWithCountersEffect(CounterType.CORRUPTION));
+        addStaticEffect(new ProtectionFromPermanentsWithCountersEffect(CounterType.CORRUPTION));
 
         PermanentPredicate creatureOrPlaneswalker = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(), new PermanentIsPlaneswalkerPredicate()));

@@ -20,7 +20,7 @@ public class TerritorialAllosaurus extends Card {
 
     public TerritorialAllosaurus() {
         // Kicker {2}{G}
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{G}"));
+        addStaticEffect(new KickerEffect("{2}{G}"));
 
         // When this creature enters, if it was kicked, it fights another target creature
         target(new PermanentPredicateTargetFilter(

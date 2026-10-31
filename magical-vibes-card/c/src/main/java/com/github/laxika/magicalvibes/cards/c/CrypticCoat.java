@@ -18,8 +18,8 @@ public class CrypticCoat extends Card {
 
     public CrypticCoat() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CloakTopCardAndAttachSourceEquipmentEffect());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new CantBeBlockedEffect());
         addActivatedAbility(new ActivatedAbility(false, "{1}{U}", List.of(ReturnToHandEffect.self()),
                 "{1}{U}: Return this Equipment to its owner's hand."));
     }

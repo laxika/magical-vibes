@@ -18,7 +18,7 @@ public class TauntingSliver extends Card {
     public TauntingSliver() {
         // Sliver creatures you control have "When this creature enters, goad target creature
         // an opponent controls."
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 new GoadTargetCreatureUntilNextTurnEffect(
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())),

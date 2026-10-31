@@ -15,9 +15,8 @@ public class EtalisFavor extends Card {
 
     public EtalisFavor() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscoverEffect(3));
     }

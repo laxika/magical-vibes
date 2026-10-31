@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
- * Continuous static effect placed in {@code EffectSlot.STATIC}: the permanent identified by
+ * Continuous static effect added as a static ability: the permanent identified by
  * {@code scope} doesn't untap during its controller's untap step for as long as the
  * {@code counterBearer} has at least one counter of the given type. The counter-conditional sibling
  * of {@link DoesntUntapEffect#self()} (which never untaps at all), read directly by

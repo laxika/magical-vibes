@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class CouncilOfReeds extends Card {
 
     public CouncilOfReeds() {
-        addEffect(EffectSlot.STATIC, new IgnoreLegendRuleForControlledCreaturesEffect());
+        addStaticEffect(new IgnoreLegendRuleForControlledCreaturesEffect());
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
                 new ControllerCastSpellThisTurn(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                 new CreateTokenCopyOfSourceEffect()));

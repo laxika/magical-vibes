@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -21,7 +20,7 @@ import java.util.List;
 public class JaceWielderOfMysteries extends Card {
 
     public JaceWielderOfMysteries() {
-        addEffect(EffectSlot.STATIC, new WinGameOnEmptyLibraryDrawEffect());
+        addStaticEffect(new WinGameOnEmptyLibraryDrawEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

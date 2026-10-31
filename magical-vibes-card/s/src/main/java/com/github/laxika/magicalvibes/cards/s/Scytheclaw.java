@@ -24,7 +24,7 @@ public class Scytheclaw extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LivingWeaponEffect());
 
         // Equipped creature gets +1/+1
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature deals combat damage to a player, that player loses half
         // their life, rounded up

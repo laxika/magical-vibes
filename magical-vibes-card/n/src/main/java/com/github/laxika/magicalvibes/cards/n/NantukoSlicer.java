@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardAndConjureOpponentG
 public class NantukoSlicer extends Card {
 
     public NantukoSlicer() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{B}"));
+        addStaticEffect(new KickerEffect("{B}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ReturnCardAndConjureOpponentGraveyardDuplicateEffect());
     }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -16,7 +15,7 @@ import java.util.Set;
 public class GravbladeHeavy extends Card {
 
     public GravbladeHeavy() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentIsArtifactPredicate()),
                 new StaticBoostEffect(1, 0, Set.of(Keyword.DEATHTOUCH), GrantScope.SELF)));
     }

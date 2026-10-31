@@ -35,7 +35,7 @@ public class CaseOfTheMarketMelee extends Card {
                 "Target must be any target"))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(1));
 
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new GrantEffectEffect(
                 new DamageNotRemovedDuringCleanupEffect(), GrantScope.ALL_CREATURES_INCLUDING_SELF));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,

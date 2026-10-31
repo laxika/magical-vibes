@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class OraclesGift extends Card {
@@ -24,7 +23,7 @@ public class OraclesGift extends Card {
                 CardType.CREATURE, new XValue(), "Fractal", 0, 0,
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.BLUE),
                 List.of(CardSubtype.FRACTAL), Set.of(), Set.of(), false, false,
-                Map.of(), List.of(), false, false, false, 0, Set.of()));
+                List.of(), List.of(), false, false, false, 0, Set.of()));
         addSpellEffect(new PutCounterOnEachMatchingPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new XValue(),
                 new PermanentAllOfPredicate(List.of(

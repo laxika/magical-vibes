@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -38,14 +37,14 @@ public class GalvanizingSawship extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.CHARGE),
                 new AnimatePermanentsEffect((DynamicAmount) null, (DynamicAmount) null, List.of(), Set.of(), null,
                         Set.of(CardType.CREATURE), GrantScope.SELF, EffectDuration.CONTINUOUS, null)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.CHARGE),
                 new SetBasePowerToughnessEffect(6, 5, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.CHARGE),
                 new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.HASTE), GrantScope.SELF)));
     }

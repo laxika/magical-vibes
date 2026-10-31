@@ -23,7 +23,7 @@ import java.util.List;
 public class FoundingTheThirdPath extends Card {
 
     public FoundingTheThirdPath() {
-        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
+        addStaticEffect(new ReadAheadEffect(false));
         CardPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));

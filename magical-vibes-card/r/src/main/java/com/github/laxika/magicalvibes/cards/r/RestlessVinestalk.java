@@ -27,7 +27,7 @@ import java.util.Set;
 public class RestlessVinestalk extends Card {
 
     public RestlessVinestalk() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

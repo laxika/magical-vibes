@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -99,7 +98,7 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
         protectionColors.addAll(creature.getProtectionFromColorsUntilEndOfTurn());
 
         if (!bonus.losesAllAbilities()) {
-            for (CardEffect staticEffect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect staticEffect : creature.getCard().getStaticEffects()) {
                 if (staticEffect instanceof ProtectionFromColorsOfPermanentsYouControlEffect protection
                         && protection.scope() == null) {
                     collectColorsOfControlledPermanents(gameData, creature, protectionColors);

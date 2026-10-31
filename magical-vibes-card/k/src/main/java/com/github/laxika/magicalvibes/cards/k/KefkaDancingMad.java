@@ -16,8 +16,7 @@ public class KefkaDancingMad extends Card {
 
     public KefkaDancingMad() {
         // During your turn, Kefka has indestructible.
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
 
         // At the beginning of your end step, exile a card at random from each opponent's graveyard.

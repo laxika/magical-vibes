@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerGreaterThanBase
 public class KutzilMalametExemplar extends Card {
 
     public KutzilMalametExemplar() {
-        addEffect(EffectSlot.STATIC, new OpponentsCantCastOrActivateDuringYourTurnEffect(false));
+        addStaticEffect(new OpponentsCantCastOrActivateDuringYourTurnEffect(false));
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(
                         new PermanentPowerGreaterThanBasePowerPredicate(),

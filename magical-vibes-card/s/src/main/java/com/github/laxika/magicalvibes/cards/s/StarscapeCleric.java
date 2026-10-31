@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 public class StarscapeCleric extends Card {
 
     public StarscapeCleric() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{B}"));
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new KickerEffect("{2}{B}"));
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));

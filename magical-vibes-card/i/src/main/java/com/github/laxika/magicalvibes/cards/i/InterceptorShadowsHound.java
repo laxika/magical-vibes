@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 public class InterceptorShadowsHound extends Card {
 
     public InterceptorShadowsHound() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.MENACE,
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ASSASSIN)));

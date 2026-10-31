@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "40K", collectorNumber = "63")
@@ -28,7 +27,7 @@ public class TheirNumberIsLegion extends Card {
                 CardType.CREATURE, new XValue(), "Necron Warrior", 2, 2,
                 CardColor.BLACK, null,
                 List.of(CardSubtype.NECRON, CardSubtype.WARRIOR), Set.of(), Set.of(CardType.ARTIFACT),
-                false, true, Map.of(), List.of(), false, false, false, 0, Set.of()));
+                false, true, List.of(), List.of(), false, false, false, 0, Set.of()));
         addSpellEffect(new GainLifeEffect(new PermanentCount(
                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
         addSpellEffect(new ExileSpellEffect());

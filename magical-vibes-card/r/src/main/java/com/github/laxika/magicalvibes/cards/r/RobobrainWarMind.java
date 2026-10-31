@@ -25,7 +25,7 @@ import java.util.List;
 public class RobobrainWarMind extends Card {
 
     public RobobrainWarMind() {
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new CardsInHand(CountScope.CONTROLLER), new Fixed(5)));
 
         PermanentCount artifactCreaturesYouControl = new PermanentCount(

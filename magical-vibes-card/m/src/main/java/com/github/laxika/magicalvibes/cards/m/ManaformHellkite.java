@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "170")
@@ -29,7 +28,7 @@ public class ManaformHellkite extends Card {
         CreateTokenEffect dragonIllusion = new CreateTokenEffect(
                 CardType.CREATURE, new Fixed(1), "Dragon Illusion", new XValue(), new XValue(),
                 CardColor.RED, null, List.of(CardSubtype.DRAGON, CardSubtype.ILLUSION),
-                Set.of(Keyword.FLYING, Keyword.HASTE), Set.of(), false, false, Map.of(), List.of(),
+                Set.of(Keyword.FLYING, Keyword.HASTE), Set.of(), false, false, List.of(), List.of(),
                 false, true, false, 0, Set.of());
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(

@@ -17,7 +17,7 @@ public class QuantumRiddler extends Card {
 
     public QuantumRiddler() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new CardsInHandAtMost(1), new QuantumRiddlerDrawReplacementEffect()));
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{U}"))));
     }

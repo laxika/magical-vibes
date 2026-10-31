@@ -56,7 +56,7 @@ public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffect
         // ability, not a copiable value of the token, so it rides on each token's permanent.
         boolean linked = sourceEnchantment != null;
         var copyOptions = new CreateTokenCopyOfTargetPermanentEffect(List.of(), Set.of(), null, null, Map.of(),
-                false, false, false, false, linked, false, null, Set.of(), false, Map.of(), List.of(), false, false,
+                false, false, false, false, linked, false, null, Set.of(), false, List.of(), List.of(), false, false,
                 new Fixed(1), false, Set.of(), false);
         UUID enchantmentId = linked ? sourceEnchantment.getId() : null;
         tokenCopySupport.createTokenCopiesWithTokenRider(gameData, entry, List.of(targetCreature.getCard()),

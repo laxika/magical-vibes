@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -278,7 +277,7 @@ class ExileTopCardsToSourceEffectHandlerTest {
     void usesAdventureFaceForPersistentPermission() {
         Card sourceCard = card("Decadent Dragon");
         Card adventureFace = card("Expensive Taste");
-        adventureFace.addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        adventureFace.addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, null, false, false, 0, null, false, false, false, true));
         sourceCard.setBackFaceCard(adventureFace);
         gd.playerDecks.get(player2Id).add(card("Exiled card"));

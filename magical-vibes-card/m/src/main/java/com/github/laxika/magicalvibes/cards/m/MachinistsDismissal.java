@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
@@ -29,7 +28,7 @@ public class MachinistsDismissal extends Card {
                 "Target must be a noncreature spell."
         )).addSpellEffect(new CounterSpellEffect());
 
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new Sum(
+        addStaticEffect(new ReduceOwnCastCostEffect(new Sum(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER),
                 new MatchingCardsInHand(CountScope.CONTROLLER,
                         new CardTypePredicate(CardType.ARTIFACT)))));

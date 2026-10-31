@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsAndMayCastSpells
 public class PrimevalSpawn extends Card {
 
     public PrimevalSpawn() {
-        addEffect(EffectSlot.STATIC, new ExileSelfIfUncastOrUnpaidEffect());
+        addStaticEffect(new ExileSelfIfUncastOrUnpaidEffect());
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                 ExileTopCardsAndMayCastSpellsEffect.controllerWithTotalManaValue(10, 10));
     }

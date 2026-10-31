@@ -16,7 +16,7 @@ public class FlourishingBloomKin extends Card {
     public FlourishingBloomKin() {
         PermanentCount forestsYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.FOREST), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(forestsYouControl, forestsYouControl));
+        addStaticEffect(new BoostSelfEffect(forestsYouControl, forestsYouControl));
 
         addMorph("{4}{G}");
         addEffect(EffectSlot.ON_TURNED_FACE_UP,

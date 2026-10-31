@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -22,7 +21,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NEO", collectorNumber = "178")
@@ -38,7 +36,7 @@ public class CarefulCultivation extends Card {
         CreateTokenEffect humanMonk = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Human Monk", 1, 1, CardColor.GREEN, null,
                 List.of(CardSubtype.HUMAN, CardSubtype.MONK), Set.of(), Set.of(), false, false,
-                Map.of(), List.of(new ActivatedAbility(
+                List.of(), List.of(new ActivatedAbility(
                         true, null,
                         List.of(new AwardManaEffect(ManaColor.GREEN)),
                         "{T}: Add {G}."
@@ -46,15 +44,15 @@ public class CarefulCultivation extends Card {
 
         target(new PermanentPredicateTargetFilter(artifactOrCreature,
                 "Target must be an artifact or creature"))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         creature,
                         new StaticBoostEffect(1, 3, GrantScope.ENCHANTED_CREATURE),
                         null))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         creature,
                         new GrantKeywordEffect(Keyword.REACH, GrantScope.ENCHANTED_CREATURE),
                         null))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         creature,
                         new GrantActivatedAbilityEffect(
                                 new ActivatedAbility(true, null,

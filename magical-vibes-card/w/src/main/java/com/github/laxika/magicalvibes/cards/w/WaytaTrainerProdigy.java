@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
@@ -17,8 +16,7 @@ import java.util.List;
 public class WaytaTrainerProdigy extends Card {
 
     public WaytaTrainerProdigy() {
-        addEffect(EffectSlot.STATIC,
-                AdditionalTriggeredAbilityEffect.forControlledCreatureBeingDealtDamage());
+        addStaticEffect(AdditionalTriggeredAbilityEffect.forControlledCreatureBeingDealtDamage());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

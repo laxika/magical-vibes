@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -13,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 public class MysticSpeculation extends Card {
 
     public MysticSpeculation() {
-        addEffect(EffectSlot.STATIC, new BuybackEffect("{2}"));
+        addStaticEffect(new BuybackEffect("{2}"));
         addSpellEffect(new ScryEffect(3));
         addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }

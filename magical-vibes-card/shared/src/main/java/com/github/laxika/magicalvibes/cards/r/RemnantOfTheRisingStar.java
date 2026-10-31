@@ -22,7 +22,7 @@ public class RemnantOfTheRisingStar extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new PayXManaPutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, true));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(5, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(), new PermanentIsModifiedPredicate()))),
                 new StaticBoostEffect(5, 5, Set.of(Keyword.TRAMPLE), GrantScope.SELF)));

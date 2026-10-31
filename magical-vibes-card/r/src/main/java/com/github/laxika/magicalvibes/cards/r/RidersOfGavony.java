@@ -17,7 +17,6 @@ public class RidersOfGavony extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
 
         // Human creatures you control have protection from creatures of the chosen type.
-        addEffect(EffectSlot.STATIC,
-                new GrantProtectionFromChosenTypeToOwnCreaturesEffect(CardSubtype.HUMAN));
+        addStaticEffect(new GrantProtectionFromChosenTypeToOwnCreaturesEffect(CardSubtype.HUMAN));
     }
 }

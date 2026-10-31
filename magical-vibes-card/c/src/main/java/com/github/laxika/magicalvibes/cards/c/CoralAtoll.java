@@ -28,7 +28,7 @@ public class CoralAtoll extends Card {
 
     public CoralAtoll() {
         // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // When this land enters, sacrifice it unless you return an untapped Island you control to
         // its owner's hand.

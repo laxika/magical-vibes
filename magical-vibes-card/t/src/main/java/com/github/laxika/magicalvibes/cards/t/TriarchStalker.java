@@ -18,7 +18,7 @@ public class TriarchStalker extends Card {
                 new ChooseOpponentForTargetingRelayEffect());
 
         // Creatures attacking the last chosen player have menace.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.MENACE, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentIsAttackingRememberedPlayerPredicate()));
     }

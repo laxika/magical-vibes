@@ -17,7 +17,7 @@ import java.util.List;
 public class TawnossCoffin extends Card {
 
     public TawnossCoffin() {
-        addEffect(EffectSlot.STATIC, new MayNotUntapDuringUntapStepEffect());
+        addStaticEffect(new MayNotUntapDuringUntapStepEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",

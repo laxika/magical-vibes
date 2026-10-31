@@ -25,7 +25,7 @@ import java.util.List;
 public class RaggadraggaGoregutsBoss extends Card {
 
     public RaggadraggaGoregutsBoss() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 2,
                 2,
                 GrantScope.ALL_OWN_CREATURES,

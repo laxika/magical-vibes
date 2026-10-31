@@ -28,9 +28,9 @@ public class TreacherousVampire extends Card {
         addEffect(EffectSlot.ON_BLOCK, sacrificeUnlessExile);
 
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new StaticBoostEffect(2, 2, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new GrantTriggeredAbilityEffect(EffectSlot.ON_DEATH, new LoseLifeEffect(6), GrantScope.SELF)));
     }
 }

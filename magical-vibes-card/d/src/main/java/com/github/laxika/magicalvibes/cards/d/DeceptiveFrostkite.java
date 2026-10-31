@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TDC", collectorNumber = "19")
@@ -31,8 +31,9 @@ public class DeceptiveFrostkite extends Card {
                 )),
                 "creature you control with power 4 or greater",
                 Set.of(CardSubtype.DRAGON),
-                Map.of(EffectSlot.STATIC, List.<CardEffect>of(
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)))
+                List.of(
+                        StaticAbility.of(List.<CardEffect>of(
+                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF))))
         ));
     }
 }

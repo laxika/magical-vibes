@@ -16,8 +16,8 @@ public class PrisonTerm extends Card {
     public PrisonTerm() {
         target(TargetFilters.creature())
                 // Enchanted creature can't attack or block, and its activated abilities can't be activated.
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateAbilitiesEffect())
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
+                .addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect())
                 // Whenever a creature an opponent controls enters, you may attach this Aura to that creature.
                 .addEffect(EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
                         new AttachSourceAuraToEnteringCreatureEffect());

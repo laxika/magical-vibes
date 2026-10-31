@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 public class Skizzik extends Card {
 
     public Skizzik() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{R}"));
+        addStaticEffect(new KickerEffect("{R}"));
         addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(new NotKicked(), new SacrificeSelfEffect()));
     }
 }

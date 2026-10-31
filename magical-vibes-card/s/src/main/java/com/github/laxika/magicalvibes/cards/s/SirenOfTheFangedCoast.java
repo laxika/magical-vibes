@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SirenOfTheFangedCoast extends Card {
 
     public SirenOfTheFangedCoast() {
-        addEffect(EffectSlot.STATIC, new TributeEffect(3));
+        addStaticEffect(new TributeEffect(3));
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new TributeNotPaidEffect(new GainControlOfTargetEffect(ControlDuration.PERMANENT)));
     }

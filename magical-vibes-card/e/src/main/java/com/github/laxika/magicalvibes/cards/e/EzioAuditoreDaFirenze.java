@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class EzioAuditoreDaFirenze extends Card {
 
     public EzioAuditoreDaFirenze() {
-        addEffect(EffectSlot.STATIC, new GrantFreerunningToSpellsEffect(
+        addStaticEffect(new GrantFreerunningToSpellsEffect(
                 "{B}{B}", new CardSubtypePredicate(CardSubtype.ASSASSIN)));
 
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,

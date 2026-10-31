@@ -21,7 +21,7 @@ import java.util.List;
 public class IchorAberration extends Card {
 
     public IchorAberration() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourcePowerAtLeast(7),
                 new CanAttackAsThoughNoDefenderEffect()));
 

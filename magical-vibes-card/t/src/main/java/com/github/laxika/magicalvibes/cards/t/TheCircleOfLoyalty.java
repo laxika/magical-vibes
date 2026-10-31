@@ -28,11 +28,11 @@ public class TheCircleOfLoyalty extends Card {
 
     public TheCircleOfLoyalty() {
         // Affinity for Knights.
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.KNIGHT), CountScope.CONTROLLER)));
 
         // Creatures you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
 
         CreateTokenEffect knightToken = new CreateTokenEffect(
                 "Knight", 2, 2, CardColor.WHITE,

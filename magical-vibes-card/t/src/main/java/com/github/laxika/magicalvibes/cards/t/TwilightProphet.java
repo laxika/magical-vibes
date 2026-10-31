@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndDr
 public class TwilightProphet extends Card {
 
     public TwilightProphet() {
-        addEffect(EffectSlot.STATIC, new AscendEffect());
+        addStaticEffect(new AscendEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(new ControllerHasCityBlessing(),
                 new RevealTopCardPutIntoHandAndDrainOpponentsEffect()));
     }

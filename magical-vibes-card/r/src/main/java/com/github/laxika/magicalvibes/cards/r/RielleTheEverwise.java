@@ -23,7 +23,7 @@ public class RielleTheEverwise extends Card {
         CardsInGraveyard instantsAndSorceries = new CardsInGraveyard(new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY))), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(instantsAndSorceries, new Fixed(0)));
+        addStaticEffect(new BoostSelfEffect(instantsAndSorceries, new Fixed(0)));
         addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT,
                 OncePerTurnTriggerEffect.firstDiscardEvent(new DrawCardEffect(new EventValue())));
     }

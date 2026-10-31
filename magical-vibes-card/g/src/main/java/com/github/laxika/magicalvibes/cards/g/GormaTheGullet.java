@@ -22,7 +22,7 @@ public class GormaTheGullet extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
-        addEffect(EffectSlot.STATIC, new ControlledPermanentsEnterWithAdditionalCountersByAmountEffect(
+        addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersByAmountEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()))),

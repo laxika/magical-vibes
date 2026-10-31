@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class TheHippodrome extends Card {
 
     public TheHippodrome() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-5, 0, GrantScope.ALL_CREATURES));
+        addStaticEffect(new StaticBoostEffect(-5, 0, GrantScope.ALL_CREATURES));
         target(TargetFilters.creature()).addEffect(EffectSlot.CHAOS_TRIGGERED, new MayEffect(
                 new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentPowerAtMostPredicate(0)),

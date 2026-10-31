@@ -24,7 +24,7 @@ import java.util.Set;
 public class PalanisHatcher extends Card {
 
     public PalanisHatcher() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE,
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)));

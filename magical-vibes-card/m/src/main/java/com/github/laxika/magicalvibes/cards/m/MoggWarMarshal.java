@@ -22,7 +22,7 @@ import java.util.Set;
 public class MoggWarMarshal extends Card {
 
     public MoggWarMarshal() {
-        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{1}{R}"));
+        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{1}{R}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, goblinToken());
         addEffect(EffectSlot.ON_DEATH, goblinToken());
     }

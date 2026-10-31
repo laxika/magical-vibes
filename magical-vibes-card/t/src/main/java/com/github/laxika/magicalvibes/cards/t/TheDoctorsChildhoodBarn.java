@@ -17,8 +17,7 @@ import java.util.Set;
 public class TheDoctorsChildhoodBarn extends Card {
 
     public TheDoctorsChildhoodBarn() {
-        addEffect(EffectSlot.STATIC,
-                new EnterPermanentsOfTypesTappedEffect(Set.of(CardType.CREATURE)));
+        addStaticEffect(new EnterPermanentsOfTypesTappedEffect(Set.of(CardType.CREATURE)));
         target(TargetFilters.nonlandPermanentAnOpponentControls(), 0, 1)
                 .addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.TARGET),

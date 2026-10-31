@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 public class ZagrasThiefOfHeartbeats extends Card {
 
     public ZagrasThiefOfHeartbeats() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new PartySize()));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES));
+        addStaticEffect(new ReduceOwnCastCostEffect(new PartySize()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_PLANESWALKER,
                 TriggeringPermanentConditionalEffect.combatDamageOnly(new DestroyTargetPermanentEffect()));
     }

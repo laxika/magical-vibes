@@ -14,7 +14,7 @@ import java.util.List;
 public class LiesaShroudOfDusk extends Card {
 
     public LiesaShroudOfDusk() {
-        addEffect(EffectSlot.STATIC, new PayLifeInsteadOfCommanderTaxEffect(2));
+        addStaticEffect(new PayLifeInsteadOfCommanderTaxEffect(2));
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new SpellCastTriggerEffect(
                 null, List.of(new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER))));
     }

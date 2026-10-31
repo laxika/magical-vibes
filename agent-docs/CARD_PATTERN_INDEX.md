@@ -160,8 +160,8 @@
 | villainous-choice replacement plus optional additional vote | `t/TheValeyard.java` + `TheValeyardEffect` + `MayVoteAdditionalTimeEffect` |
 | draw three, then target opponent chooses between discarding three and a controller free-cast from hand | `g/GreatIntelligencesPlan.java` + `GreatIntelligencesPlanVillainousChoiceEffect` |
 | randomly choose a creature, steal it until end of turn, untap and haste it, then destroy the other creatures | `t/TheNiptonLottery.java` + `ChooseRandomCreatureGainControlUntilEndOfTurnThenDestroyOtherCreaturesEffect` |
-| command-zone Secret Mission: pregame secret choice, end-step reveal special action, reward trigger | `m/MarchesasSurpriseParty.java` + `COMMAND_ZONE_STATIC SecretMissionEffect(List<Mission(label, Condition)>, reward)` |
-| command-zone conspiracy restricting attacks to an even number and doubling a target creature's power | `r/RuleWithAnEvenHand.java` + `COMMAND_ZONE_STATIC CombatAttackCountRestrictionEffect` + `COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK` |
+| command-zone Secret Mission: pregame secret choice, end-step reveal special action, reward trigger | `m/MarchesasSurpriseParty.java` + `addStaticEffect(AbilityZones.COMMAND, new SecretMissionEffect(List<Mission(label, Condition)>, reward))` |
+| command-zone conspiracy restricting attacks to an even number and doubling a target creature's power | `r/RuleWithAnEvenHand.java` + `addStaticEffect(AbilityZones.COMMAND, CombatAttackCountRestrictionEffect)` + `COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK` |
 | commander cast-cost reduction plus draw when that commander enters the command zone | `m/MythUnbound.java` + `ReduceCommanderCastCostEffect(CommanderCastsFromCommandZoneThisGame)` + `ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE DrawCardEffect` |
 | playtest creature with custom nimble evasion and thoughtweft keyword sharing | `b/BrigidWhosSeenSomeStuff.java` + filtered `GrantKeywordEffect` |
 | playtest Sliver lord with a custom damage-prevention keyword | `s/SliverOfHope.java` + filtered `GrantKeywordEffect(Keyword.HOPE)`; Hope is enforced by the damage pipeline for attacking creatures |
@@ -585,7 +585,7 @@ When implementing a card, use these as the **best** test file to read for each c
 | Lord/anthem | `GloriousAnthemTest.java` | Covers static boost + removal |
 | Vanilla creature | (no test needed) | Empty body, no engine logic |
 | Tapped artifact token with its own targeted ETB and produced-mana trigger | `r/RoxanneStarfallSavant.java` | Use the full `CreateTokenEffect` constructor for non-creature token state, put the damage ability in `ON_ENTER_BATTLEFIELD`, and put the dynamic mana rider in `ON_SELF_TAPPED_FOR_MANA` |
-| ETB creates an Equipment token and attaches it to the source | `u/USAgentJohnWalker.java` | Use `CreateTokenAndAttachToSourceEffect(CreateTokenEffect.ofArtifactToken(...).withTokenEffects(Map.of(STATIC, new StaticBoostEffect(...))))`; put the token's `EquipActivatedAbility` in its token ability list |
+| ETB creates an Equipment token and attaches it to the source | `u/USAgentJohnWalker.java` | Use `CreateTokenAndAttachToSourceEffect(CreateTokenEffect.ofArtifactToken(...).withTokenEffects(List.of(StaticAbility.of(new StaticBoostEffect(...)))))`; put the token's `EquipActivatedAbility` in its token ability list |
 | Equipment swap ability | `a/ArcanumThings.java` | Add the equipped-creature static effect, `EquipActivatedAbility`, and an activated ability with `EquipmentSwapEffect()` |
 
 | activated ability tracks cards exiled as a cost for an opponent's choice | `c/CoinOfFate.java` / `c/CoinOfFateTest.java` | Mark the graveyard-exile cost as tracked, resolve the choice through a pending interaction, and resume the parked ability through `InputCompletionService` |

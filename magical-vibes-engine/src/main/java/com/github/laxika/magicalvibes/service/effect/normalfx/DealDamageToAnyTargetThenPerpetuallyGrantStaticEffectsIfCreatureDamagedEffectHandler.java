@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -66,8 +65,8 @@ public class DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDam
             var copy = damagedPermanent.getCard().createRuntimeCopy();
             boolean changed = false;
             for (CardEffect staticEffect : damageEffect.staticEffects()) {
-                if (!copy.getEffects(EffectSlot.STATIC).contains(staticEffect)) {
-                    copy.addEffect(EffectSlot.STATIC, staticEffect);
+                if (!copy.getStaticEffects().contains(staticEffect)) {
+                    copy.addStaticEffect(staticEffect);
                     changed = true;
                 }
             }

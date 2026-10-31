@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -19,7 +18,7 @@ public class SentinelsEyes extends Card {
 
     public SentinelsEyes() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+                .addStaticEffect(new StaticBoostEffect(
                         1, 1, Set.of(Keyword.VIGILANCE), GrantScope.ENCHANTED_CREATURE));
         addCastingOption(new GraveyardCast(null, "{W}", List.of(
                 new ExileNCardsFromGraveyardCastingCost(null, "other cards", 2)), null, false, false, true));

@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 public class SmellerbeeRebelFighter extends Card {
 
     public SmellerbeeRebelFighter() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 new DiscardOwnHandThenDrawEffect(
                         new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER)),

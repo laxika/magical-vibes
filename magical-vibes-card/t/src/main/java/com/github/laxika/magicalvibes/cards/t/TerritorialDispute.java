@@ -22,7 +22,6 @@ public class TerritorialDispute extends Card {
                 List.of(new SacrificeSelfEffect()),
                 true));
         // Players can't play lands.
-        addEffect(EffectSlot.STATIC,
-                new PlayersCantPlayLandsIfPermanentCountEffect(0, new PermanentTruePredicate()));
+        addStaticEffect(new PlayersCantPlayLandsIfPermanentCountEffect(0, new PermanentTruePredicate()));
     }
 }

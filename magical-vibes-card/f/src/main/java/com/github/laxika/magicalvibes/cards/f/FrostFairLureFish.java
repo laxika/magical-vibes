@@ -28,8 +28,8 @@ public class FrostFairLureFish extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofTreasureToken(2, true));
 
         PermanentHasSubtypePredicate fish = new PermanentHasSubtypePredicate(CardSubtype.FISH);
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES, fish));
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES, fish));
+        addStaticEffect(new GrantEffectEffect(
                 new CantBeBlockedByCreaturesMatchingPredicateEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN)),
                 GrantScope.ALL_OWN_CREATURES, fish));

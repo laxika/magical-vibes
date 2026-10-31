@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCanDrawOnlyOneCardEa
 public class LeovoldEmissaryOfTrest extends Card {
 
     public LeovoldEmissaryOfTrest() {
-        addEffect(EffectSlot.STATIC, new OpponentsCanDrawOnlyOneCardEachTurnEffect());
+        addStaticEffect(new OpponentsCanDrawOnlyOneCardEachTurnEffect());
         addEffect(EffectSlot.ON_ALLY_PERMANENT_OR_PLAYER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
                 new MayEffect(new DrawCardEffect(), "Draw a card?"));
     }

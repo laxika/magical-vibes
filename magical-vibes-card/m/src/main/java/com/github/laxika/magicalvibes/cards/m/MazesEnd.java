@@ -26,7 +26,7 @@ import java.util.List;
 public class MazesEnd extends Card {
 
     public MazesEnd() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS));
 

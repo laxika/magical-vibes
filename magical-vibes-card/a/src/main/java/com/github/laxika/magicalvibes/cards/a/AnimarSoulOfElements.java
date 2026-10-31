@@ -25,8 +25,7 @@ public class AnimarSoulOfElements extends Card {
 
     public AnimarSoulOfElements() {
         // Protection from white and from black.
-        addEffect(EffectSlot.STATIC,
-                new ProtectionFromColorsEffect(Set.of(CardColor.WHITE, CardColor.BLACK)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE, CardColor.BLACK)));
 
         // Whenever you cast a creature spell, put a +1/+1 counter on Animar.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
@@ -34,7 +33,7 @@ public class AnimarSoulOfElements extends Card {
                 List.of(new PutCountersOnSourceEffect(1, 1, 1))));
 
         // Creature spells you cast cost {1} less to cast for each +1/+1 counter on Animar.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTypePredicate(CardType.CREATURE),
                 new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
                 CostModificationScope.SELF));

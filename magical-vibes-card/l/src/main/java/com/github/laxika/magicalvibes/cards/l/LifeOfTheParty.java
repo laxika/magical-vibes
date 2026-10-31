@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GoadCreatedPermanentsForRestO
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
-import java.util.Map;
+import java.util.List;
 
 @CardRegistration(set = "NCC", collectorNumber = "48")
 @CardRegistration(set = "NCC", collectorNumber = "148")
@@ -26,7 +26,7 @@ public class LifeOfTheParty extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 new CreateTokenCopyOfSourceForEachOtherPlayerEffect(
-                        CreateTokenCopyOfTargetPermanentEffect.withAdditionalEffects(false, Map.of())),
+                        CreateTokenCopyOfTargetPermanentEffect.withAdditionalEffects(false, List.of())),
                 new GoadCreatedPermanentsForRestOfGameEffect()));
     }
 }

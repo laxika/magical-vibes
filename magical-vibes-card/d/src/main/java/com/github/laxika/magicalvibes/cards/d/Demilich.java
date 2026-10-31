@@ -28,7 +28,7 @@ public class Demilich extends Card {
                 new CardTypePredicate(CardType.SORCERY)));
         GraveyardSearchScope ownGraveyard = GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
 
-        addEffect(EffectSlot.STATIC, new ReduceOwnColoredCastCostEffect(ManaColor.BLUE,
+        addStaticEffect(new ReduceOwnColoredCastCostEffect(ManaColor.BLUE,
                 new SpellsCastThisTurn(instantOrSorcery, CountScope.CONTROLLER)));
         target(new GraveyardCardPredicateTargetFilter(instantOrSorcery, ownGraveyard), 0, 1)
                 .addEffect(EffectSlot.ON_ATTACK,

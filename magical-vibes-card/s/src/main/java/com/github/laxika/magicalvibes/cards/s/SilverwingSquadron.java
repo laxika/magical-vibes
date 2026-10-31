@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOC", collectorNumber = "207")
@@ -28,13 +27,13 @@ public class SilverwingSquadron extends Card {
     public SilverwingSquadron() {
         PermanentCount creaturesYouControl =
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(creaturesYouControl, creaturesYouControl));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(creaturesYouControl, creaturesYouControl));
 
         addEffect(EffectSlot.ON_ATTACK, new CreateTokenEffect(
                 CardType.CREATURE,
                 new Sum(new PlayersInGame(), new Fixed(-1)),
                 "Knight", 2, 2, CardColor.WHITE, null,
                 List.of(CardSubtype.KNIGHT), Set.of(Keyword.VIGILANCE), Set.of(),
-                false, false, Map.of(), List.of(), false, false, false, 0, Set.of()));
+                false, false, List.of(), List.of(), false, false, false, 0, Set.of()));
     }
 }

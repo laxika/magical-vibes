@@ -22,7 +22,7 @@ public class FormOfTheDragon extends Card {
         addEffect(EffectSlot.END_STEP_TRIGGERED, new SetLifeTotalEffect(5));
 
         // Creatures without flying can't attack you.
-        addEffect(EffectSlot.STATIC, new CreaturesCantAttackControllerUnlessPredicateEffect(
+        addStaticEffect(new CreaturesCantAttackControllerUnlessPredicateEffect(
                 new PermanentHasKeywordPredicate(Keyword.FLYING)));
     }
 }

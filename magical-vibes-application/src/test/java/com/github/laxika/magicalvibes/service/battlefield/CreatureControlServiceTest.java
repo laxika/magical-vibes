@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -45,7 +44,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -407,7 +405,7 @@ class CreatureControlServiceTest {
         void createsMissingControlAuraEffect() {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
             Card auraCard = createCreatureCard("In Bolas's Clutches");
-            auraCard.addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+            auraCard.addStaticEffect(new ControlEnchantedCreatureEffect());
             Permanent aura = new Permanent(auraCard);
             aura.setAttachedTo(bear.getId());
             gd.playerBattlefields.get(player1Id).add(aura);
@@ -441,7 +439,7 @@ class CreatureControlServiceTest {
         void auraControlFollowsAuraController() {
             Permanent bear = addCreature(player2Id, "Grizzly Bears");
             Card auraCard = createCreatureCard("In Bolas's Clutches");
-            auraCard.addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+            auraCard.addStaticEffect(new ControlEnchantedCreatureEffect());
             Permanent aura = new Permanent(auraCard);
             aura.setAttachedTo(bear.getId());
             gd.playerBattlefields.get(player1Id).add(aura);

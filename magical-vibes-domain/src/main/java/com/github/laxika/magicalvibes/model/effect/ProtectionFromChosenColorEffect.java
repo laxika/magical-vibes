@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *              {@link com.github.laxika.magicalvibes.model.EffectSlot#ON_ENTER_BATTLEFIELD}, where it
  *              also performs the colour choice (Voice of All).
  *              {@link GrantScope#ENCHANTED_CREATURE} means the creature this Aura is attached to has
- *              it — declare it in {@link com.github.laxika.magicalvibes.model.EffectSlot#STATIC} and
+ *              it — declare it as a static ability and
  *              pair with a {@link ChooseColorOnEnterEffect} for the choice (Ward of Lights). An Aura
  *              carrying the enchanted-creature scope is never made illegally attached by the
  *              protection it grants ("This effect doesn't remove this Aura").

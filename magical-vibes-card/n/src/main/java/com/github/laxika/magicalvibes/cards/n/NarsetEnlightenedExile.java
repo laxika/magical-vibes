@@ -31,7 +31,7 @@ public class NarsetEnlightenedExile extends Card {
             new CardManaValueLessThanSourcePowerPredicate()));
 
     public NarsetEnlightenedExile() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),

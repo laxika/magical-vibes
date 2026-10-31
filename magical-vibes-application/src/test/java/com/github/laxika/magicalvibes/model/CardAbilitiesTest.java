@@ -1,11 +1,17 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -46,30 +52,64 @@ class CardAbilitiesTest {
 
     @Test
     void eachStaticEffectIsAStaticAbilityOfItsZone() {
-        card.addEffect(EffectSlot.STATIC, DRAW_ONE);
-        card.addEffect(EffectSlot.STATIC, DRAW_TWO);
-        card.addEffect(EffectSlot.COMMAND_ZONE_STATIC, GAIN_ONE);
+        card.addStaticEffect(DRAW_ONE);
+        card.addStaticEffect(DRAW_TWO);
+        card.addStaticEffect(AbilityZones.COMMAND, GAIN_ONE);
 
         assertThat(card.getAbilities()).containsExactly(
                 new StaticAbility(List.of(DRAW_ONE)),
                 new StaticAbility(List.of(DRAW_TWO)),
                 new StaticAbility(List.of(GAIN_ONE), AbilityZones.COMMAND));
-        assertThat(card.getEffects(EffectSlot.STATIC)).containsExactly(DRAW_ONE, DRAW_TWO);
-        assertThat(card.getEffectRegistrations(EffectSlot.COMMAND_ZONE_STATIC))
-                .containsExactly(new EffectRegistration(GAIN_ONE));
+        assertThat(card.getStaticEffects()).containsExactly(DRAW_ONE, DRAW_TWO, GAIN_ONE);
+        assertThat(card.getStaticEffects(Zone.BATTLEFIELD)).containsExactly(DRAW_ONE, DRAW_TWO);
+        assertThat(card.getStaticEffects(Zone.COMMAND)).containsExactly(GAIN_ONE);
+        assertThat(card.getStaticAbilities()).hasSize(3);
     }
 
     @Test
-    void aStaticEffectKeepsNoTriggerModeAndStaysItsOwnAbility() {
-        card.addEffect(EffectSlot.STATIC, DRAW_ONE, TriggerMode.INDEPENDENT);
-        card.addSimultaneousEffects(EffectSlot.STATIC, GAIN_ONE, GAIN_TWO);
+    void aStaticEffectFunctionsFromTheZonesItsRuleNames() {
+        KickerEffect kicker = new KickerEffect("{1}");
+        SpliceEffect splice = SpliceEffect.ontoInstantOrSorcery("{1}");
+        CardEffect conditionalReduction = new ConditionalEffect(new ControllerLifeAtMost(10),
+                new ReduceOwnCastCostEffect(new Fixed(1)));
+        card.addStaticEffect(kicker);
+        card.addStaticEffect(splice);
+        card.addStaticEffect(conditionalReduction);
+        card.addStaticEffect(AbilityZones.of(Zone.BATTLEFIELD, Zone.COMMAND), GAIN_ONE);
+
+        assertThat(card.getStaticEffects(Zone.STACK)).containsExactly(kicker, conditionalReduction);
+        assertThat(card.getStaticEffects(Zone.HAND)).containsExactly(splice);
+        assertThat(card.getStaticEffects(Zone.BATTLEFIELD)).containsExactly(GAIN_ONE);
+        assertThat(card.getStaticEffects(Zone.COMMAND)).containsExactly(GAIN_ONE);
+        assertThat(card.getStaticEffects()).containsExactly(kicker, splice, conditionalReduction, GAIN_ONE);
+    }
+
+    @Test
+    void anAddedStaticAbilityKeepsItsZonesAndStaysOutOfTheSlotViews() {
+        card.addStaticEffect(DRAW_ONE);
+        card.addAbility(new StaticAbility(List.of(GAIN_ONE, GAIN_TWO), AbilityZones.COMMAND));
 
         assertThat(card.getAbilities()).containsExactly(
                 new StaticAbility(List.of(DRAW_ONE)),
-                new StaticAbility(List.of(GAIN_ONE)),
-                new StaticAbility(List.of(GAIN_TWO)));
-        assertThat(card.getEffectRegistrations(EffectSlot.STATIC)).containsExactly(
-                new EffectRegistration(DRAW_ONE), new EffectRegistration(GAIN_ONE), new EffectRegistration(GAIN_TWO));
+                new StaticAbility(List.of(GAIN_ONE), AbilityZones.COMMAND),
+                new StaticAbility(List.of(GAIN_TWO), AbilityZones.COMMAND));
+        for (EffectSlot slot : EffectSlot.values()) {
+            assertThat(card.getEffects(slot)).isEmpty();
+        }
+    }
+
+    @Test
+    void staticAbilitiesAreCopiedWithTheirZones() {
+        Card source = new Card();
+        source.addStaticEffect(DRAW_ONE);
+        source.addStaticEffect(AbilityZones.COMMAND, GAIN_ONE);
+        source.addStaticEffect(DRAW_TWO);
+
+        card.addStaticAbilitiesFrom(source, effect -> effect != DRAW_TWO);
+
+        assertThat(card.getAbilities()).containsExactly(
+                new StaticAbility(List.of(DRAW_ONE)),
+                new StaticAbility(List.of(GAIN_ONE), AbilityZones.COMMAND));
     }
 
     @Test
@@ -172,12 +212,12 @@ class CardAbilitiesTest {
 
     @Test
     void effectsCanBeRemovedFromSomeSlotsOnly() {
-        card.addEffect(EffectSlot.STATIC, DRAW_ONE);
+        card.addStaticEffect(DRAW_ONE);
         card.addEffect(EffectSlot.ON_DEATH, DRAW_ONE);
 
-        card.removeSlotEffectsIf((slot, effect) -> slot != EffectSlot.STATIC);
+        card.removeAbilityEffectsIf((ability, effect) -> !(ability instanceof StaticAbility));
 
-        assertThat(card.getEffects(EffectSlot.STATIC)).containsExactly(DRAW_ONE);
+        assertThat(card.getStaticEffects()).containsExactly(DRAW_ONE);
         assertThat(card.getEffects(EffectSlot.ON_DEATH)).isEmpty();
     }
 
@@ -236,14 +276,14 @@ class CardAbilitiesTest {
     @Test
     void clearingAbilitiesEmptiesEverySlot() {
         card.addSpellEffect(DRAW_ONE);
-        card.addEffect(EffectSlot.STATIC, DRAW_TWO);
+        card.addStaticEffect(DRAW_TWO);
         card.addEffect(EffectSlot.ON_DEATH, GAIN_ONE);
 
         card.clearRulesTextAndAbilities();
 
         assertThat(card.getAbilities()).isEmpty();
         assertThat(card.getSpellEffects()).isEmpty();
-        assertThat(card.getEffects(EffectSlot.STATIC)).isEmpty();
+        assertThat(card.getStaticEffects()).isEmpty();
     }
 
     @Test
@@ -321,7 +361,7 @@ class CardAbilitiesTest {
     @Test
     void aCardWithoutASpellAbilityOffersAllItsGroupsAsSpellTargets() {
         // An Aura spell: its Enchant ability decides its target.
-        card.target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, GAIN_ONE);
+        card.target(TargetFilters.creature()).addStaticEffect(GAIN_ONE);
 
         assertThat(card.getSpellAbility()).isEmpty();
         assertThat(card.getSpellTargetGroups()).isEqualTo(card.getTargetGroups()).hasSize(1);

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
@@ -23,6 +22,6 @@ public class AncientOoze extends Card {
         ));
         PermanentManaValueSum totalManaValue = new PermanentManaValueSum(
                 otherCreaturesYouControl, CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(totalManaValue, totalManaValue));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(totalManaValue, totalManaValue));
     }
 }

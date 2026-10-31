@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -24,7 +23,7 @@ import java.util.Set;
 public class NemataPrimevalWarden extends Card {
 
     public NemataPrimevalWarden() {
-        addEffect(EffectSlot.STATIC, new ExileOpponentCreaturesInsteadOfDyingEffect(
+        addStaticEffect(new ExileOpponentCreaturesInsteadOfDyingEffect(
                 false, new QueueReflexiveAbilityEffect(saprolingToken())));
 
         addActivatedAbility(new ActivatedAbility(

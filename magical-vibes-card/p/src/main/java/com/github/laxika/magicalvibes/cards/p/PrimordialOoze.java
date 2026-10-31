@@ -14,7 +14,7 @@ public class PrimordialOoze extends Card {
 
     public PrimordialOoze() {
         // This creature attacks each combat if able.
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
 
         // At the beginning of your upkeep, put a +1/+1 counter on this creature. Then you may pay
         // {X}, where X is the number of +1/+1 counters on it. If you don't, tap this creature and

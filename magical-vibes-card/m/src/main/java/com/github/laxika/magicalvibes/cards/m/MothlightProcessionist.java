@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class MothlightProcessionist extends Card {
 
     public MothlightProcessionist() {
-        addEffect(EffectSlot.STATIC, new GrantSpellCastingAbilityToSpellsEffect(
+        addStaticEffect(new GrantSpellCastingAbilityToSpellsEffect(
                 Keyword.CONVOKE, new CardTypePredicate(CardType.ENCHANTMENT)));
 
         ConjureCardIntoHandAndDiscardAtNextEndStepEffect eerie =

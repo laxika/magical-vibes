@@ -27,7 +27,7 @@ public class CracklingDrake extends Card {
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new Sum(
                         new CardsInExile(instantOrSorcery, CountScope.CONTROLLER),
                         new CardsInGraveyard(instantOrSorcery, CountScope.CONTROLLER)),

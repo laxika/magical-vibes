@@ -18,10 +18,10 @@ public class FloweringOfTheWhiteTree extends Card {
     public FloweringOfTheWhiteTree() {
         PermanentHasSupertypePredicate legendary = new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY);
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.ALL_OWN_CREATURES, legendary));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.ALL_OWN_CREATURES, legendary));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentNotPredicate(legendary)));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(1),
                 GrantScope.ALL_OWN_CREATURES,

@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class Quakebringer extends Card {
 
     public Quakebringer() {
-        addEffect(EffectSlot.STATIC, new OpponentsCantGainLifeEffect());
+        addStaticEffect(new OpponentsCantGainLifeEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
         addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,

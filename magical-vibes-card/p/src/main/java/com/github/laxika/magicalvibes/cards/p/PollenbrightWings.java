@@ -24,7 +24,7 @@ public class PollenbrightWings extends Card {
 
     public PollenbrightWings() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                         new CreateTokenEffect(new EventValue(), "Saproling", 1, 1,
                                 CardColor.GREEN, List.of(CardSubtype.SAPROLING), Set.of(), Set.of()));

@@ -28,7 +28,7 @@ public class ExcavatingAnurid extends Card {
                         false),
                 "Sacrifice a land to draw a card?"));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
                 new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE), GrantScope.SELF)));
     }

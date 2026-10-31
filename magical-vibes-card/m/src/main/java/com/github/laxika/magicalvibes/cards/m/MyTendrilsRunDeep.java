@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class MyTendrilsRunDeep extends Card {
 
     public MyTendrilsRunDeep() {
-        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect(1));
+        addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
                 new ControlsPermanentCount(6, new PermanentIsLandPredicate()),

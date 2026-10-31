@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.t.ThePrismaticBridge;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -28,10 +27,8 @@ public class EsikaGodOfTheTree extends Card {
         addActivatedAbility(ManaAbilities.tapForAnyColor());
 
         var legendaryCreature = new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY);
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES, legendaryCreature));
-        addEffect(EffectSlot.STATIC,
-                new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES, legendaryCreature));
+        addStaticEffect(new GrantActivatedAbilityEffect(
                         ManaAbilities.tapForAnyColor(), GrantScope.OWN_CREATURES, legendaryCreature));
 
         addSpellEffect(new ChooseOneEffect(List.of(

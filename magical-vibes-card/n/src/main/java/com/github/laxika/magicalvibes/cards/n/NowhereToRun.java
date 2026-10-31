@@ -14,7 +14,7 @@ public class NowhereToRun extends Card {
     public NowhereToRun() {
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostTargetCreatureEffect(-3, -3));
-        addEffect(EffectSlot.STATIC, new IgnoreOpponentCreatureHexproofEffect());
-        addEffect(EffectSlot.STATIC, new PreventOpponentCreatureWardTriggersEffect());
+        addStaticEffect(new IgnoreOpponentCreatureHexproofEffect());
+        addStaticEffect(new PreventOpponentCreatureWardTriggersEffect());
     }
 }

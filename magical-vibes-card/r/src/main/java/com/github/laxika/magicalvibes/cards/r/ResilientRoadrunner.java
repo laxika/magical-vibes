@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
@@ -17,7 +16,7 @@ import java.util.Set;
 public class ResilientRoadrunner extends Card {
 
     public ResilientRoadrunner() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromSubtypesEffect(Set.of(CardSubtype.COYOTE)));
+        addStaticEffect(new ProtectionFromSubtypesEffect(Set.of(CardSubtype.COYOTE)));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}",

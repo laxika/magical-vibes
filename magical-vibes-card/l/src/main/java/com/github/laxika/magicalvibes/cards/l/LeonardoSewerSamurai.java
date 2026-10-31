@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -29,7 +28,7 @@ public class LeonardoSewerSamurai extends Card {
         CardPredicate lowPowerOrToughness = new CardAnyOfPredicate(List.of(
                 new CardPowerAtMostPredicate(1),
                 new CardNotPredicate(new CardToughnessAtLeastPredicate(2))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerTurn(),
                 new CastSpellsFromGraveyardEffect(
                         new CardAllOfPredicate(List.of(

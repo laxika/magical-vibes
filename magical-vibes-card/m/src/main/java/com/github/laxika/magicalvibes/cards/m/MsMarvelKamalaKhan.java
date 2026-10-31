@@ -23,7 +23,7 @@ import java.util.List;
 public class MsMarvelKamalaKhan extends Card {
 
     public MsMarvelKamalaKhan() {
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
+        addStaticEffect(new NoMaximumHandSizeEffect());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 null,
                 List.of(

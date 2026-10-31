@@ -17,7 +17,7 @@ public class Elbrus extends Card {
         setBackFaceCard(new WithengarUnbound());
 
         // Equipped creature gets +1/+0.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
 
         // When equipped creature deals combat damage to a player, unattach Elbrus, then transform it.
         // (The unattach is handled in AnimationResolutionService.resolveTransformSelf: an attached

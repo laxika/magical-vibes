@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class KavuPrimarch extends Card {
 
     public KavuPrimarch() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{4}"));
+        addStaticEffect(new KickerEffect("{4}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4))));
     }

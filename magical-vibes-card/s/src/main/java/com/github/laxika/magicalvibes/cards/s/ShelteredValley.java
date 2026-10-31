@@ -17,7 +17,7 @@ public class ShelteredValley extends Card {
     public ShelteredValley() {
         // If this land would enter, instead sacrifice each other permanent named Sheltered Valley
         // you control, then put this land onto the battlefield.
-        addEffect(EffectSlot.STATIC, new SacrificeOtherPermanentsWithSameNameOnEnterEffect());
+        addStaticEffect(new SacrificeOtherPermanentsWithSameNameOnEnterEffect());
 
         // At the beginning of your upkeep, if you control three or fewer lands, you gain 1 life.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(

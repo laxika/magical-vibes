@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "KTK", collectorNumber = "186")
@@ -39,7 +38,7 @@ public class MarduCharm extends Card {
                         "Create two 1/1 white Warrior creature tokens. They gain first strike until end of turn",
                         new CreateTokenEffect(CardType.CREATURE, 2, "Warrior", 1, 1, CardColor.WHITE,
                                 null, List.of(CardSubtype.WARRIOR), Set.of(), Set.of(), false, false,
-                                Map.of(), List.of(), false, false, false, 0, Set.of(Keyword.FIRST_STRIKE))),
+                                List.of(), List.of(), false, false, false, 0, Set.of(Keyword.FIRST_STRIKE))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent reveals their hand. You choose a noncreature, nonland card from it. That player discards that card",
                         new ChooseCardsFromTargetHandEffect(

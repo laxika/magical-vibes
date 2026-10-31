@@ -36,7 +36,7 @@ public class HashatonScarabsFist extends Card {
                 CardColor.BLACK,
                 Set.of(),
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 true,
                 false,

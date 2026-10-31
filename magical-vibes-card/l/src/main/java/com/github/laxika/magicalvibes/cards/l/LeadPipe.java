@@ -18,7 +18,7 @@ import java.util.List;
 public class LeadPipe extends Card {
 
     public LeadPipe() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES,
                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

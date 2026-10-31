@@ -17,7 +17,7 @@ import java.util.Set;
 public class LordOfTheUlvenwald extends Card {
 
     public LordOfTheUlvenwald() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.WOLF, CardSubtype.WEREWOLF))));
         addEffect(EffectSlot.ON_ATTACK, addManaEffect());
     }

@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class SlayersPlate extends Card {
 
     public SlayersPlate() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(4, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(4, 2, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.HUMAN),
                 CreateTokenEffect.whiteSpirit(1)

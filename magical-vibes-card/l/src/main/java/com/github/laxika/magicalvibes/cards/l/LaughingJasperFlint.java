@@ -34,7 +34,7 @@ public class LaughingJasperFlint extends Card {
             CardSubtype.WARLOCK);
 
     public LaughingJasperFlint() {
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(
+        addStaticEffect(new GrantSubtypeEffect(
                 CardSubtype.MERCENARY,
                 GrantScope.ALL_OWN_CREATURES,
                 false,
@@ -48,7 +48,7 @@ public class LaughingJasperFlint extends Card {
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED, new ExileTopCardsToSourceEffect(
                         outlawsYouControl, false, false, LibraryScope.TARGET_OPPONENT, true));
 
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 true, new CardNotPredicate(new CardTypePredicate(CardType.LAND)), false, false, 0, null,
                 false, true, false, true));
     }

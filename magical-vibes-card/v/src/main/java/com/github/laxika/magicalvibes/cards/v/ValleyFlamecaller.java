@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AdditionalSubtypeSourceDamageEffect;
 
 import java.util.Set;
@@ -12,7 +11,7 @@ import java.util.Set;
 public class ValleyFlamecaller extends Card {
 
     public ValleyFlamecaller() {
-        addEffect(EffectSlot.STATIC, new AdditionalSubtypeSourceDamageEffect(1, Set.of(
+        addStaticEffect(new AdditionalSubtypeSourceDamageEffect(1, Set.of(
                 CardSubtype.LIZARD,
                 CardSubtype.MOUSE,
                 CardSubtype.OTTER,

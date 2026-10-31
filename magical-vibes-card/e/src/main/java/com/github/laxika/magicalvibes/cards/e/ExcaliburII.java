@@ -17,7 +17,7 @@ public class ExcaliburII extends Card {
     public ExcaliburII() {
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
                 new PutCountersOnSelfEffect(CounterType.CHARGE));
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 new CountersOnSource(CounterType.CHARGE),
                 new CountersOnSource(CounterType.CHARGE),
                 GrantScope.EQUIPPED_CREATURE));

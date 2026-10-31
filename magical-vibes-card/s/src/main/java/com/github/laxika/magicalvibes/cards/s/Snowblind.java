@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.IfSourceAttacking;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -31,7 +30,7 @@ public class Snowblind extends Card {
         // smaller. The amount is evaluated from the enchanted creature's perspective, so
         // IfSourceAttacking reads its combat state; the Y clamp lives in the effect's handler.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new ShrinkEnchantedCreatureEffect(new IfSourceAttacking(
+                .addStaticEffect(new ShrinkEnchantedCreatureEffect(new IfSourceAttacking(
                         new PermanentCount(snowLand, CountScope.DEFENDING_PLAYER),
                         new PermanentCount(snowLand, CountScope.CONTROLLER))));
     }

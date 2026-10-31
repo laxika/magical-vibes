@@ -14,7 +14,7 @@ public class LeoninLightbringer extends Card {
 
     public LeoninLightbringer() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Equipped(),
+        addStaticEffect(new ConditionalEffect(new Equipped(),
                 new StaticBoostEffect(1, 1, GrantScope.SELF)));
     }
 }

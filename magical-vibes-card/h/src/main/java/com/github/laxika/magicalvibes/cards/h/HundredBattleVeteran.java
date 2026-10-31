@@ -19,7 +19,7 @@ public class HundredBattleVeteran extends Card {
 
     public HundredBattleVeteran() {
         addCastingOption(new GraveyardCast());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlledCreatureCounterKindsAtLeast(3),
                 new StaticBoostEffect(2, 4, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(

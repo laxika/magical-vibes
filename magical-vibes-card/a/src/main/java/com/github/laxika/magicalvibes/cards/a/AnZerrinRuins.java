@@ -20,7 +20,7 @@ public class AnZerrinRuins extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
 
         // Creatures of the chosen type don't untap during their controllers' untap steps.
-        addEffect(EffectSlot.STATIC, new MatchingPermanentsDoesntUntapEffect(
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSourceChosenSubtypePredicate()))));

@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 public class AntiqueCollector extends Card {
 
     public AntiqueCollector() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtMostPredicate(2)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PerpetuallyGrantTriggeredAbilityToOwnCreaturesEffect(

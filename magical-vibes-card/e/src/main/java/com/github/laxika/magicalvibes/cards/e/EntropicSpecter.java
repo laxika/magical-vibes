@@ -17,7 +17,7 @@ public class EntropicSpecter extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
 
         CardsInHand chosenOpponentHand = new CardsInHand(CountScope.CHOSEN_PLAYER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(chosenOpponentHand, chosenOpponentHand));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(chosenOpponentHand, chosenOpponentHand));
 
         addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER,
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));

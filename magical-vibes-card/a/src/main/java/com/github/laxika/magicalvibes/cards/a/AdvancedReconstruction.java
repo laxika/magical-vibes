@@ -54,7 +54,7 @@ public class AdvancedReconstruction extends Card {
                 new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL)))),
                 "this Class is level 2"));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),
                 new ReduceNonHandSpellCastCostEffect(2)));
     }

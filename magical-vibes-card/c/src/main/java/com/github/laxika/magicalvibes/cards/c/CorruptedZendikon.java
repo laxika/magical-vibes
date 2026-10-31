@@ -16,7 +16,7 @@ public class CorruptedZendikon extends Card {
 
     public CorruptedZendikon() {
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesCreatureEffect(
+                .addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(
                         3, 3, CardColor.BLACK, List.of(CardSubtype.OOZE)));
 
         addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,

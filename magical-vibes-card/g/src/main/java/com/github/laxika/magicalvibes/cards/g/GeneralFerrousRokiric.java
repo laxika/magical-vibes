@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MH2", collectorNumber = "198")
@@ -21,13 +20,13 @@ public class GeneralFerrousRokiric extends Card {
 
     public GeneralFerrousRokiric() {
         removeKeyword(Keyword.HEXPROOF);
-        addEffect(EffectSlot.STATIC, TargetingRestrictionEffect.hexproofFromMonocolored());
+        addStaticEffect(TargetingRestrictionEffect.hexproofFromMonocolored());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(new CardIsMulticoloredPredicate(), List.of(
                         new CreateTokenEffect(
                                 CardType.CREATURE, 1, "Golem", 4, 4,
                                 CardColor.RED, Set.of(CardColor.RED, CardColor.WHITE),
                                 List.of(CardSubtype.GOLEM), Set.of(), Set.of(CardType.ARTIFACT),
-                                false, false, Map.of(), List.of(), false, false, false, 0, Set.of()))));
+                                false, false, List.of(), List.of(), false, false, false, 0, Set.of()))));
     }
 }

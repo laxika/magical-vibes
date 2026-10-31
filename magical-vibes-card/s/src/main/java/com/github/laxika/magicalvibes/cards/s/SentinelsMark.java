@@ -20,9 +20,8 @@ public class SentinelsMark extends Card {
 
     public SentinelsMark() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 2, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ConditionalEffect(new AllOf(List.of(new WasCast(), new ControllerMainPhase())),
                                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ENCHANTED_CREATURE), true));

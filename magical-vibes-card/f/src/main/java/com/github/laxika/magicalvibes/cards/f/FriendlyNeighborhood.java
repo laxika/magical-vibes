@@ -31,7 +31,7 @@ public class FriendlyNeighborhood extends Card {
                         Set.of(CardColor.GREEN, CardColor.WHITE),
                         List.of(CardSubtype.HUMAN, CardSubtype.CITIZEN)
                 ))
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 true,
                                 "{1}",

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCanDrawOnlyOneCardEachTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -23,7 +22,7 @@ import java.util.List;
 public class NarsetParterOfVeils extends Card {
 
     public NarsetParterOfVeils() {
-        addEffect(EffectSlot.STATIC, new OpponentsCanDrawOnlyOneCardEachTurnEffect());
+        addStaticEffect(new OpponentsCanDrawOnlyOneCardEachTurnEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 -2,

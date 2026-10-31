@@ -15,7 +15,7 @@ public class EdgarCharmedGroom extends Card {
 
     public EdgarCharmedGroom() {
         setBackFaceCard(new EdgarMarkovsCoffin());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1, 1, GrantScope.OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE)));
         addEffect(EffectSlot.ON_DEATH, new ReturnSourceTransformedFromGraveyardEffect(false, true));
     }

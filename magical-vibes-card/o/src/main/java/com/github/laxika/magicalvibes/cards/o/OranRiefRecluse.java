@@ -20,7 +20,7 @@ import java.util.List;
 public class OranRiefRecluse extends Card {
 
     public OranRiefRecluse() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{G}"));
+        addStaticEffect(new KickerEffect("{2}{G}"));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

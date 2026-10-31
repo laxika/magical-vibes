@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.turn;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -518,7 +517,7 @@ public class TurnProgressionService {
                 .filter(java.util.Objects::nonNull)
                 .flatMap(List::stream)
                 .filter(permanent -> !gameQueryService.hasLostAllAbilities(gameData, permanent))
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .anyMatch(RunedTerrorEffect.class::isInstance);
     }
 
@@ -1531,7 +1530,7 @@ public class TurnProgressionService {
             UUID sourceControllerId = battlefieldEntry.getKey();
             for (Permanent permanent : battlefieldEntry.getValue()) {
                 if (gameQueryService.hasLostPrintedAbilities(gameData, permanent)) continue;
-                boolean applies = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                boolean applies = permanent.getCard().getStaticEffects().stream()
                         .filter(ExtraTurnSkipReplacementEffect.class::isInstance)
                         .map(ExtraTurnSkipReplacementEffect.class::cast)
                         .anyMatch(effect -> effect.appliesToExtraTurn(sourceControllerId, extraTurnPlayerId));

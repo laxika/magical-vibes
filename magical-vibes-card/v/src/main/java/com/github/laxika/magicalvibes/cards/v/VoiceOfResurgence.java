@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DGM", collectorNumber = "114")
@@ -36,8 +36,7 @@ public class VoiceOfResurgence extends Card {
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.WHITE),
                 List.of(CardSubtype.ELEMENTAL), Set.of(), Set.of(),
                 false, false,
-                Map.of(EffectSlot.STATIC,
-                        new SetPowerToughnessToAmountEffect(creaturesYouControl, creaturesYouControl)),
+                List.of(StaticAbility.of(new SetPowerToughnessToAmountEffect(creaturesYouControl, creaturesYouControl))),
                 List.of(), false, false, false, 0, Set.of()
         );
 

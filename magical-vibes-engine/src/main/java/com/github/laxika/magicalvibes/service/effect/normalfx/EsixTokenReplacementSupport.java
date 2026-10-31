@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingTokenCreationReplacement;
@@ -74,7 +73,7 @@ public class EsixTokenReplacementSupport {
         for (Permanent crown : battlefield) {
             if (gameData.tokenCreationReplacementUsedThisTurn.contains(crown.getId())
                     || crown.getAttachedTo() == null
-                    || crown.getCard().getEffects(EffectSlot.STATIC).stream()
+                    || crown.getCard().getStaticEffects().stream()
                     .noneMatch(MirrormindCrownEffect.class::isInstance)
                     || gameQueryService.findPermanentById(gameData, crown.getAttachedTo()) == null) {
                 continue;
@@ -112,7 +111,7 @@ public class EsixTokenReplacementSupport {
         for (Permanent aura : battlefield) {
             if (gameData.tokenCreationReplacementUsedThisTurn.contains(aura.getId())
                     || aura.getAttachedTo() == null
-                    || aura.getCard().getEffects(EffectSlot.STATIC).stream()
+                    || aura.getCard().getStaticEffects().stream()
                     .noneMatch(MoonlitMeditationEffect.class::isInstance)
                     || gameQueryService.findPermanentById(gameData, aura.getAttachedTo()) == null) {
                 continue;
@@ -145,7 +144,7 @@ public class EsixTokenReplacementSupport {
             if (gameData.tokenCreationReplacementUsedThisTurn.contains(permanent.getId())
                     || permanent.isLosesAllAbilitiesUntilEndOfTurn()
                     || permanent.isStaticEffectSuppressed(EsixFractalBloomEffect.class)
-                    || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    || permanent.getCard().getStaticEffects().stream()
                     .noneMatch(EsixFractalBloomEffect.class::isInstance)) {
                 continue;
             }

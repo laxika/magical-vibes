@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLand
 public class GhirapurOrrery extends Card {
 
     public GhirapurOrrery() {
-        addEffect(EffectSlot.STATIC, new EachPlayerPlaysAdditionalLandEffect());
+        addStaticEffect(new EachPlayerPlaysAdditionalLandEffect());
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new ConditionalEffect(
                 new ActivePlayerHandEmpty(), new DrawCardForTargetPlayerEffect(3)));
     }

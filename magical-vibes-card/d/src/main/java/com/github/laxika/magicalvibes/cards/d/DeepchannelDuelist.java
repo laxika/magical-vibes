@@ -22,7 +22,7 @@ public class DeepchannelDuelist extends Card {
     public DeepchannelDuelist() {
         var merfolk = new PermanentHasSubtypePredicate(CardSubtype.MERFOLK);
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, merfolk));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, merfolk));
 
         var controlledMerfolk = new PermanentAllOfPredicate(List.of(
                 merfolk,

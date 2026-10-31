@@ -20,8 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class Fiendlash extends Card {
 
     public Fiendlash() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.REACH, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.EQUIPPED_CREATURE));
 
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(),

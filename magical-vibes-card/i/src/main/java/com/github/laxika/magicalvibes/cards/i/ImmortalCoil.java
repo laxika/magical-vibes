@@ -23,7 +23,7 @@ public class ImmortalCoil extends Card {
 
         // "If damage would be dealt to you, prevent that damage. Exile a card from your graveyard
         //  for each 1 damage prevented this way."
-        addEffect(EffectSlot.STATIC, new PreventAllDamageToControllerAndExileFromGraveyardEffect());
+        addStaticEffect(new PreventAllDamageToControllerAndExileFromGraveyardEffect());
 
         // "When there are no cards in your graveyard, you lose the game." — state-triggered (CR 603.8).
         addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(

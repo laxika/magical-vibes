@@ -26,7 +26,7 @@ public class DeluxeDragster extends Card {
                 "Crew 2"
         ));
 
-        addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(
+        addStaticEffect(new CanBeBlockedOnlyByFilterEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE), "Vehicles"));
 
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,

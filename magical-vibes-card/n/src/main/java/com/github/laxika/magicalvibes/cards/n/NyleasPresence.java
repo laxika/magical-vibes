@@ -28,8 +28,8 @@ public class NyleasPresence extends Card {
                 new BasicLandGrant(CardSubtype.MOUNTAIN, ManaColor.RED),
                 new BasicLandGrant(CardSubtype.FOREST, ManaColor.GREEN)
         ).forEach(grant -> {
-            addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(grant.subtype(), GrantScope.ENCHANTED_PERMANENT));
-            addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+            addStaticEffect(new GrantSubtypeEffect(grant.subtype(), GrantScope.ENCHANTED_PERMANENT));
+            addStaticEffect(new GrantActivatedAbilityEffect(
                     ManaAbilities.tapFor(grant.color()), GrantScope.ENCHANTED_PERMANENT));
         });
     }

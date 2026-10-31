@@ -22,8 +22,8 @@ import java.util.List;
 public class MadameWebClairvoyant extends Card {
 
     public MadameWebClairvoyant() {
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(new CardAnyOfPredicate(List.of(
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new AllowCastFromTopOfLibraryEffect(new CardAnyOfPredicate(List.of(
                 new CardSubtypePredicate(CardSubtype.SPIDER),
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))))));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,

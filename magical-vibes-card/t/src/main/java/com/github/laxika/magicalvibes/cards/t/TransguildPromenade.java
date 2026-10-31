@@ -19,7 +19,7 @@ public class TransguildPromenade extends Card {
 
     public TransguildPromenade() {
         // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // When this land enters, sacrifice it unless you pay {1}.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

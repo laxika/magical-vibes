@@ -24,7 +24,7 @@ public class TheOmenkeel extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE),
                         new ExileTopCardsToSourceEffect(new EventValue(), false, false,
                                 LibraryScope.TARGET_OPPONENT, false)));
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, new CardTypePredicate(CardType.LAND), false, false, 0,
                 null, false, false, false, true));
 

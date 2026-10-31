@@ -21,7 +21,7 @@ public class TangleweaveArmor extends Card {
         // Equipped creature gets +X/+X, where X is the greatest mana value among your commanders
         GreatestManaValueAmongOwnedCommanders greatestCommanderManaValue =
                 new GreatestManaValueAmongOwnedCommanders();
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 greatestCommanderManaValue,
                 greatestCommanderManaValue,
                 GrantScope.EQUIPPED_CREATURE));

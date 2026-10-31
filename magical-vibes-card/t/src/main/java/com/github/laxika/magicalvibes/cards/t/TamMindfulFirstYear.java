@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantHexproofFromOwnColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -16,7 +15,7 @@ import java.util.List;
 public class TamMindfulFirstYear extends Card {
 
     public TamMindfulFirstYear() {
-        addEffect(EffectSlot.STATIC, new GrantHexproofFromOwnColorsEffect());
+        addStaticEffect(new GrantHexproofFromOwnColorsEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

@@ -31,7 +31,7 @@ public class TheEighthDoctor extends Card {
                 historic,
                 new CardIsPermanentPredicate(),
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
-        addEffect(EffectSlot.STATIC, new PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
+        addStaticEffect(new PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
                 historicPermanentSpell, historic, null, true));
     }
 }

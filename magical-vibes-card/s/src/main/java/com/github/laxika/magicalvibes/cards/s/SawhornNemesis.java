@@ -12,6 +12,6 @@ public class SawhornNemesis extends Card {
 
     public SawhornNemesis() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChoosePlayerOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new DoubleDamageToChosenPlayerAndTheirPermanentsEffect());
+        addStaticEffect(new DoubleDamageToChosenPlayerAndTheirPermanentsEffect());
     }
 }

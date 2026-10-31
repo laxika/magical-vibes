@@ -29,6 +29,6 @@ public class WeakstonesSubjugation extends Card {
                         new MayPayManaEffect("{3}",
                                 new TapPermanentsEffect(TapUntapScope.ENCHANTED),
                                 "Pay {3} to tap enchanted permanent?"))
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+                .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

@@ -19,6 +19,6 @@ public class NightveilSpecter extends Card {
                 new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_OPPONENT));
 
         // You may play lands and cast spells from among cards exiled with this creature.
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(false));
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(false));
     }
 }

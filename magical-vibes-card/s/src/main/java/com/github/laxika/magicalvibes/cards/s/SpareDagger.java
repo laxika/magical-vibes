@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class SpareDagger extends Card {
 
     public SpareDagger() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 new MayEffect(
                         new SacrificeGrantingEquipmentThenEffect(new DealDamageToAnyTargetEffect(1)),

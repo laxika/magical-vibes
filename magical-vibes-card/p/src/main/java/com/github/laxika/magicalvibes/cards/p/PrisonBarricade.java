@@ -15,10 +15,10 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class PrisonBarricade extends Card {
 
     public PrisonBarricade() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{W}"));
+        addStaticEffect(new KickerEffect("{1}{W}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Kicked(),
+        addStaticEffect(new ConditionalEffect(new Kicked(),
                 new CanAttackAsThoughNoDefenderEffect()));
     }
 }

@@ -17,8 +17,7 @@ public class SleepersGuile extends Card {
 
     public SleepersGuile() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.FEAR, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new GrantKeywordEffect(Keyword.FEAR, GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)

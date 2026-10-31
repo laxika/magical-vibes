@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 public class DormantGomazoa extends Card {
 
     public DormantGomazoa() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(new EntersTappedEffect());
+        addStaticEffect(DoesntUntapEffect.self());
 
         addEffect(EffectSlot.ON_CONTROLLER_BECOMES_TARGET_OF_SPELL,
                 new MayEffect(new UntapPermanentsEffect(TapUntapScope.SELF), "Untap this creature?"));

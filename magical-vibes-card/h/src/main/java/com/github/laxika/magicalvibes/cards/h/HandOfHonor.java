@@ -15,6 +15,6 @@ public class HandOfHonor extends Card {
     public HandOfHonor() {
         addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(1));
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(1));
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
     }
 }

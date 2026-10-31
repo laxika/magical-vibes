@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatesTokenEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NEO", collectorNumber = "217")
@@ -23,11 +22,11 @@ public class EiganjoUprising extends Card {
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, new XValue(), "Samurai", 2, 2, CardColor.WHITE, null,
                 List.of(CardSubtype.SAMURAI), Set.of(Keyword.VIGILANCE), Set.of(), false, false,
-                Map.of(), List.of(), false, false, false, 0,
+                List.of(), List.of(), false, false, false, 0,
                 Set.of(Keyword.MENACE, Keyword.HASTE)));
         addSpellEffect(new EachOpponentCreatesTokenEffect(new CreateTokenEffect(
                 CardType.CREATURE, new Sum(new XValue(), new Fixed(-1)), "Samurai", 2, 2, CardColor.WHITE, null,
                 List.of(CardSubtype.SAMURAI), Set.of(Keyword.VIGILANCE), Set.of(), false, false,
-                Map.of(), List.of(), false, false, false, 0, Set.of())));
+                List.of(), List.of(), false, false, false, 0, Set.of())));
     }
 }

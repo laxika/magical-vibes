@@ -26,7 +26,7 @@ import java.util.List;
 public class GrevenPredatorCaptain extends Card {
 
     public GrevenPredatorCaptain() {
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(
+        addStaticEffect(new BoostSelfEffect(
                 new LifeLostThisTurn(CountScope.CONTROLLER), new Fixed(0)));
 
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(

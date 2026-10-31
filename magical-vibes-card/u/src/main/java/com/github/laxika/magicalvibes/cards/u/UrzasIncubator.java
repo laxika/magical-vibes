@@ -15,6 +15,6 @@ public class UrzasIncubator extends Card {
 
     public UrzasIncubator() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForChosenSubtypeSpellsEffect(2, CostModificationScope.ALL));
+        addStaticEffect(new ReduceCastCostForChosenSubtypeSpellsEffect(2, CostModificationScope.ALL));
     }
 }

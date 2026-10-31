@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 public class AvatarOfGrowth extends Card {
 
     public AvatarOfGrowth() {
-        addEffect(EffectSlot.STATIC,
-                new ReduceOwnCastCostEffect(new Sum(new PlayersInGame(), new Fixed(-1))));
+        addStaticEffect(new ReduceOwnCastCostEffect(new Sum(new PlayersInGame(), new Fixed(-1))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect.mandatory(2));
     }

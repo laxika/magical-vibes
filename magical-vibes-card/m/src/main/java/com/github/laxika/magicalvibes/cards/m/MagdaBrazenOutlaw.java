@@ -26,7 +26,7 @@ import java.util.List;
 public class MagdaBrazenOutlaw extends Card {
 
     public MagdaBrazenOutlaw() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.DWARF)));
         addEffect(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED, new TriggeringPermanentConditionalEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.DWARF),

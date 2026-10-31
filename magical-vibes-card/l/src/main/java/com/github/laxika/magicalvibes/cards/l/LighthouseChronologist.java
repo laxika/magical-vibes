@@ -30,12 +30,12 @@ public class LighthouseChronologist extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(4, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(7, CounterType.LEVEL)))),
                 new SetBasePowerToughnessEffect(2, 4, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(7, CounterType.LEVEL),
                 new SetBasePowerToughnessEffect(3, 5, GrantScope.SELF)));
         addEffect(EffectSlot.END_STEP_TRIGGERED, ConditionalEffect.atTriggerTime(

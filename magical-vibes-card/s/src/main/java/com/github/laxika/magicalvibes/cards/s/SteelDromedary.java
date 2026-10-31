@@ -11,24 +11,16 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
-import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "237")
 public class SteelDromedary extends Card {
 
     public SteelDromedary() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
-        addEffect(EffectSlot.STATIC,
-                new DoesntUntapWithCounterEffect(CounterType.PLUS_ONE_PLUS_ONE));
+        addStaticEffect(new DoesntUntapWithCounterEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,

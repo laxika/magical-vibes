@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 public class TyrranaxRex extends Card {
 
     public TyrranaxRex() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(4));
-        addEffect(EffectSlot.STATIC, new ToxicEffect(4));
+        addStaticEffect(new ToxicEffect(4));
     }
 }

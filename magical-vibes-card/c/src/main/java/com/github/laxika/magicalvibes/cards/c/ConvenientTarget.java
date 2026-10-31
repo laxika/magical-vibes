@@ -21,7 +21,7 @@ public class ConvenientTarget extends Card {
     public ConvenientTarget() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SuspectEffect(GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
 
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,

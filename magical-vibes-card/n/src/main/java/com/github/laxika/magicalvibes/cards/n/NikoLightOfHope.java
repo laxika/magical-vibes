@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DSK", collectorNumber = "224")
@@ -74,7 +73,7 @@ public class NikoLightOfHope extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(new ActivatedAbility(
                         false,
                         "{2}",

@@ -22,7 +22,7 @@ import java.util.Set;
 public class MorcantsLoyalist extends Card {
 
     public MorcantsLoyalist() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF))));
 
         addEffect(EffectSlot.ON_DEATH, ReturnCardFromGraveyardEffect.builder()

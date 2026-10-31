@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -24,11 +23,11 @@ public class BrandedBrawlers extends Card {
     ));
 
     public BrandedBrawlers() {
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new NotCondition(new DefendingPlayerControlsPermanent(UNTAPPED_LAND)),
                 "defending player controls no untapped land"
         ));
-        addEffect(EffectSlot.STATIC, new CantBlockUnlessEffect(
+        addStaticEffect(new CantBlockUnlessEffect(
                 new NotCondition(new ControlsPermanentCount(1, UNTAPPED_LAND)),
                 "you control no untapped land"
         ));

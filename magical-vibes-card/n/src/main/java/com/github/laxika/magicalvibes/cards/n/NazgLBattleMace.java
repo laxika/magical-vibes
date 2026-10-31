@@ -20,10 +20,9 @@ import java.util.Set;
 public class NazgLBattleMace extends Card {
 
     public NazgLBattleMace() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.DEATHTOUCH),
+        addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.DEATHTOUCH),
                         GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 new SacrificePermanentsEffect(
                         1, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER),

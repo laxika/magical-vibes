@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class LushOasis extends Card {
 
     public LushOasis() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

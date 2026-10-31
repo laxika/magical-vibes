@@ -18,7 +18,7 @@ import java.util.Set;
 public class StormbreathDragon extends Card {
 
     public StormbreathDragon() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}{R}{R}",

@@ -28,7 +28,7 @@ public class UkkimaStalkingShadow extends Card {
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
 
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),

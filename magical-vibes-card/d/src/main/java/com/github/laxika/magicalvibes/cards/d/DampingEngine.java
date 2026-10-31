@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMorePermanentsThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.effect.DampingEngineEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect;
@@ -16,7 +15,7 @@ import java.util.List;
 public class DampingEngine extends Card {
 
     public DampingEngine() {
-        addEffect(EffectSlot.STATIC, new DampingEngineEffect());
+        addStaticEffect(new DampingEngineEffect());
         addActivatedAbility(new ActivatedAbility(false, null,
                         List.of(new SacrificePermanentCost(new PermanentTruePredicate(), "a permanent", false),
                                 new IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect()),

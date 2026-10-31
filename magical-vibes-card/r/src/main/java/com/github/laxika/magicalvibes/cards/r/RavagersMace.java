@@ -22,9 +22,9 @@ public class RavagersMace extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AttachSourceEquipmentToTargetCreatureEffect());
 
         // Equipped creature gets +1/+0 for each creature in your party and has menace.
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 new PartySize(), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
 
         // Equip {2}{B}{R}
         addActivatedAbility(new EquipActivatedAbility("{2}{B}{R}"));

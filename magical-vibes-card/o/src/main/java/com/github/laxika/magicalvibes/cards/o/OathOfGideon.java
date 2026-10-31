@@ -21,7 +21,7 @@ public class OathOfGideon extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 2, "Kor Ally", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.KOR, CardSubtype.ALLY), Set.of(), Set.of()));
-        addEffect(EffectSlot.STATIC, new ControlledPermanentsEnterWithAdditionalCountersEffect(
+        addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersEffect(
                 new PermanentIsPlaneswalkerPredicate(), CounterType.LOYALTY, 1));
     }
 }

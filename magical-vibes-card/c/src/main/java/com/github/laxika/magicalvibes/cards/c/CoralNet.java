@@ -28,7 +28,7 @@ public class CoralNet extends Card {
                                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))
                         )))),
                 "Target must be a green or white creature"
-        )).addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        )).addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.UPKEEP_TRIGGERED,
                 new SacrificeUnlessDiscardCardTypeEffect(null),
                 GrantScope.ENCHANTED_CREATURE));

@@ -20,7 +20,7 @@ import java.util.List;
 public class TahngarthFirstMate extends Card {
 
     public TahngarthFirstMate() {
-        addEffect(EffectSlot.STATIC, new CanBeBlockedByAtMostNCreaturesEffect(1));
+        addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));
         addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS, new ConditionalEffect(
                 new AllOf(List.of(
                         new AttackingPlayerIsOpponent(),

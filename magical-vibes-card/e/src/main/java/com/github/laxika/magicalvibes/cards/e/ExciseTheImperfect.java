@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOC", collectorNumber = "14")
@@ -40,7 +39,7 @@ public class ExciseTheImperfect extends Card {
         );
         return new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Incubator", 0, 0, null, null,
-                List.of(), Set.of(), Set.of(), false, false, Map.of(), List.of(transform),
+                List.of(), Set.of(), Set.of(), false, false, List.of(), List.of(transform),
                 false, false, false, 0, Set.of()
         );
     }

@@ -19,8 +19,8 @@ public class AvacynsCollar extends Card {
 
     public AvacynsCollar() {
         // Equipped creature gets +1/+0 and has vigilance
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature dies, if it was a Human, create a 1/1 white Spirit creature token with flying
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new TriggeringCardConditionalEffect(

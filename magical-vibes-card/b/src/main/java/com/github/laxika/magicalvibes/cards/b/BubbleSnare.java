@@ -15,10 +15,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class BubbleSnare extends Card {
 
     public BubbleSnare() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{U}"));
+        addStaticEffect(new KickerEffect("{2}{U}"));
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ConditionalEffect(new Kicked(), new TapPermanentsEffect(TapUntapScope.ENCHANTED)))
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+                .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

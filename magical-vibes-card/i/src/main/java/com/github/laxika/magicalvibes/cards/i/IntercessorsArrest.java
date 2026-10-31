@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantCrewEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentCantActivateAbilitiesEffect;
@@ -13,8 +12,8 @@ public class IntercessorsArrest extends Card {
 
     public IntercessorsArrest() {
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantCrewEffect())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentCantActivateAbilitiesEffect());
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
+                .addStaticEffect(new EnchantedCreatureCantCrewEffect())
+                .addStaticEffect(new EnchantedPermanentCantActivateAbilitiesEffect());
     }
 }

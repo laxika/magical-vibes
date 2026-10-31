@@ -17,8 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class PouncingKavu extends Card {
 
     public PouncingKavu() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{R}"));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Kicked(),
+        addStaticEffect(new KickerEffect("{2}{R}"));
+        addStaticEffect(new ConditionalEffect(new Kicked(),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));

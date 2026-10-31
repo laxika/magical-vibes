@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -38,7 +37,7 @@ public class FortuneTellersTalent extends Card {
     );
 
     public FortuneTellersTalent() {
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -50,12 +49,12 @@ public class FortuneTellersTalent extends Card {
                 new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
                 "this Class is level 1"));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
                         new ControllerCastSpellThisTurn(ANY_CARD))),
                 new PlayLandsFromTopOfLibraryEffect()));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
                         new ControllerCastSpellThisTurn(ANY_CARD))),
@@ -73,7 +72,7 @@ public class FortuneTellersTalent extends Card {
                         new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL)))),
                 "this Class is level 2"));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),
                 new ReduceNonHandSpellCastCostEffect(2)));
     }

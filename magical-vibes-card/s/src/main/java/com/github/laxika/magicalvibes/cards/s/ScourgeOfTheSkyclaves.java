@@ -17,14 +17,13 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 public class ScourgeOfTheSkyclaves extends Card {
 
     public ScourgeOfTheSkyclaves() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{4}{B}"));
+        addStaticEffect(new KickerEffect("{4}{B}"));
         addEffect(EffectSlot.ON_SELF_CAST, new ConditionalEffect(new Kicked(),
                 new EachPlayerLosesFractionOfLifeRoundedUpEffect(2)));
 
         var powerAndToughness = new Sum(
                 new Fixed(20),
                 new Scaled(new HighestLifeTotalAmongPlayers(), -1));
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(powerAndToughness, powerAndToughness));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(powerAndToughness, powerAndToughness));
     }
 }

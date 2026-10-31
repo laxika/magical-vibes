@@ -25,7 +25,7 @@ public class BirgiGodOfStorytelling extends Card {
                 null,
                 List.of(new AwardPersistentManaEffect(ManaColor.RED, new Fixed(1)))
         ));
-        addEffect(EffectSlot.STATIC, new AllowExtraBoastActivationEffect());
+        addStaticEffect(new AllowExtraBoastActivationEffect());
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Birgi, God of Storytelling", List.of())
                         .withManaCost("{2}{R}"),

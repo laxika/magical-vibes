@@ -34,9 +34,9 @@ public class SolitaryDefiance extends Card {
                 new ControlsPermanentCount(1, new PermanentIsCreaturePredicate()),
                 new ControlsPermanentCountAtMost(1, new PermanentIsCreaturePredicate())));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(exactlyOneCreature,
+        addStaticEffect(new ConditionalEffect(exactlyOneCreature,
                 new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.WARD), GrantScope.OWN_CREATURES)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(exactlyOneCreature,
+        addStaticEffect(new ConditionalEffect(exactlyOneCreature,
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                         new CounterUnlessPaysEffect(2), GrantScope.OWN_CREATURES)));

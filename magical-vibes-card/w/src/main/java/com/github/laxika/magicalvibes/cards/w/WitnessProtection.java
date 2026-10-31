@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -24,21 +23,13 @@ public class WitnessProtection extends Card {
 
     public WitnessProtection() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new SetNameEffect("Legitimate Businessperson", GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantSubtypeEffect(CardSubtype.CITIZEN, GrantScope.ENCHANTED_CREATURE, true))
-                .addEffect(EffectSlot.STATIC,
-                        new BecomeColorlessEffect(GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantColorEffect(CardColor.GREEN, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantColorEffect(CardColor.WHITE, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new SetNameEffect("Legitimate Businessperson", GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.CITIZEN, GrantScope.ENCHANTED_CREATURE, true))
+                .addStaticEffect(new BecomeColorlessEffect(GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantColorEffect(CardColor.GREEN, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantColorEffect(CardColor.WHITE, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
     }
 }

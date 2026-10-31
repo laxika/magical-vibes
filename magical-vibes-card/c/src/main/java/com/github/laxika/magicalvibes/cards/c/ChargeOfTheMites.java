@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ONE", collectorNumber = "6")
@@ -53,9 +52,7 @@ public class ChargeOfTheMites extends Card {
                                 Set.of(CardType.ARTIFACT),
                                 false,
                                 false,
-                                Map.of(
-                                        EffectSlot.STATIC, SequenceEffect.of(new CantBlockEffect(), new ToxicEffect(1))
-                                ),
+                                List.of(StaticAbility.of(SequenceEffect.of(new CantBlockEffect(), new ToxicEffect(1)))),
                                 List.of(),
                                 false,
                                 false,

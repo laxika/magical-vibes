@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -23,7 +22,7 @@ import java.util.List;
 public class RonasVortex extends Card {
 
     public RonasVortex() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{B}"));
+        addStaticEffect(new KickerEffect("{2}{B}"));
 
         PermanentPredicate creatureOrPlaneswalker = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

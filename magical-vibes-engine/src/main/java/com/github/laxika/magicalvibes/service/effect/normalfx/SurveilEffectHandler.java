@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -116,7 +115,7 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
             return counts;
         }
         for (var permanent : battlefield) {
-            for (CardEffect staticEffect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect staticEffect : permanent.getCard().getStaticEffects()) {
                 if (staticEffect instanceof AdditionalSurveilCardsEffect additional && additional.amount() > 0) {
                     counts.add(additional.amount());
                 }

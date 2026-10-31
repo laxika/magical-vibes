@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class EternalTaskmaster extends Card {
 
     public EternalTaskmaster() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ATTACK, new MayPayManaEffect(
                 "{2}{B}",
                 ReturnCardFromGraveyardEffect.builder()

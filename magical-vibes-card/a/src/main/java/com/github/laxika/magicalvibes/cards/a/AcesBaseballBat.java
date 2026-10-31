@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
@@ -23,12 +22,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 public class AcesBaseballBat extends Card {
 
     public AcesBaseballBat() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+        addStaticEffect(new StaticBoostEffect(3, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentIsAttackingPredicate(),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE),
                 null));
-        addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+        addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentIsAttackingPredicate(),
                 new MustBeBlockedByMatchingCreatureIfAbleEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.DALEK)),

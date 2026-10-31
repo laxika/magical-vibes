@@ -32,7 +32,7 @@ public class KollTheForgemaster extends Card {
                         enchantedOrEquipped)),
                 new ReturnTriggeringCardToOwnerHandEffect()));
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsTokenPredicate(),
                         enchantedOrEquipped))));

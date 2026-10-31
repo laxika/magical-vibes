@@ -32,7 +32,7 @@ public class SilumgarAssassin extends Card {
                 )),
                 "Target must be a creature with power 3 or less an opponent controls"
         )).addEffect(EffectSlot.ON_TURNED_FACE_UP, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(
+        addStaticEffect(new CanBeBlockedOnlyByFilterEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtMostSourcePowerPredicate()

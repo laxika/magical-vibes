@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -22,7 +21,7 @@ public class AkkiWarPaint extends Card {
 
         target(new PermanentPredicateTargetFilter(artifactOrCreature,
                 "Target must be an artifact or creature"))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1,
+                .addStaticEffect(new StaticBoostEffect(2, 1,
                         GrantScope.ENCHANTED_PERMANENT, new PermanentIsCreaturePredicate()));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -15,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class SliverLegion extends Card {
 
     public SliverLegion() {
-        addEffect(EffectSlot.STATIC, new BoostBySharedCreatureTypeEffect(
+        addStaticEffect(new BoostBySharedCreatureTypeEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
     }
 }

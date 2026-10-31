@@ -32,7 +32,7 @@ public class TwistedEmbrace extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 artifactOrCreature,
                 "Target must be an artifact or creature you control"
-        )).addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+        )).addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentIsCreaturePredicate(),
                 new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
                 null

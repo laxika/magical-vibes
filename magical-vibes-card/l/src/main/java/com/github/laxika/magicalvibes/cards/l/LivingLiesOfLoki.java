@@ -18,7 +18,7 @@ public class LivingLiesOfLoki extends Card {
         // This creature gets +1/+0 for each other Illusion you control.
         PermanentCount otherIllusionsYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.ILLUSION), CountScope.CONTROLLER, true);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(otherIllusionsYouControl, new Fixed(0)));
+        addStaticEffect(new BoostSelfEffect(otherIllusionsYouControl, new Fixed(0)));
 
         // When this creature dies, draw a card.
         addEffect(EffectSlot.ON_DEATH, new DrawCardEffect());

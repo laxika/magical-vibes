@@ -27,7 +27,7 @@ public class FearOfRidicule extends Card {
                 new PermanentIsCreaturePredicate()
         ));
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.MENACE, GrantScope.ALL_OWN_CREATURES, enchantmentCreature));
 
         CreateTokenCopyOfTargetPermanentEffect tokenCopy = new CreateTokenCopyOfTargetPermanentEffect(

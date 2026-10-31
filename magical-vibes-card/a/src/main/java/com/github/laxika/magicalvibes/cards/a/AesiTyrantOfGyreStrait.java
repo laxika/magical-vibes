@@ -13,7 +13,7 @@ public class AesiTyrantOfGyreStrait extends Card {
 
     public AesiTyrantOfGyreStrait() {
         // You may play an additional land on each of your turns.
-        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect(1));
+        addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
 
         // Whenever a land enters the battlefield under your control, you may draw a card.
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,

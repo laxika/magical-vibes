@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
@@ -22,7 +21,7 @@ import java.util.Set;
 public class MegaFlare extends Card {
 
     public MegaFlare() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}{R}{R}"));
+        addStaticEffect(new KickerEffect("{3}{R}{R}"));
         addSpellEffect(new ConditionalEffect(new Kicked(),
                 new CreateTokenEffect("Dragon", 6, 6, CardColor.RED, List.of(CardSubtype.DRAGON),
                         Set.of(Keyword.FLYING), Set.of())));

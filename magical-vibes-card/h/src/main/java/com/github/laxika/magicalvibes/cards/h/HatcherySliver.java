@@ -19,7 +19,7 @@ public class HatcherySliver extends Card {
     public HatcherySliver() {
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{1}{G}")));
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{1}{G}"));
-        addEffect(EffectSlot.STATIC, new GrantSpellCastingAbilityToSpellsEffect(
+        addStaticEffect(new GrantSpellCastingAbilityToSpellsEffect(
                 Keyword.REPLICATE, new CardSubtypePredicate(CardSubtype.SLIVER)));
     }
 }

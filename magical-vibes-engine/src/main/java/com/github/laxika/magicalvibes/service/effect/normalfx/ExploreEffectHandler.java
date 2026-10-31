@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -171,7 +170,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
                     || gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()) {
                 continue;
             }
-            for (CardEffect staticEffect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect staticEffect : permanent.getCard().getStaticEffects()) {
                 if (staticEffect instanceof ScryBeforeExploreReplacementEffect) {
                     scryCount++;
                 } else if (staticEffect instanceof DoubleExploreReplacementEffect) {

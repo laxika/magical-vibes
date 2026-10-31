@@ -25,7 +25,7 @@ public class RonomSerpent extends Card {
                 new PermanentHasSupertypePredicate(CardSupertype.SNOW)
         ));
 
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new DefendingPlayerControlsPermanent(snowLand),
                 "a snow land"
         ));

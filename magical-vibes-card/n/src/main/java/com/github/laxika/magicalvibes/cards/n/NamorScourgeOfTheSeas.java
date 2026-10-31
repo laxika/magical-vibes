@@ -20,7 +20,7 @@ import java.util.List;
 public class NamorScourgeOfTheSeas extends Card {
 
     public NamorScourgeOfTheSeas() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.FLYING,
                 GrantScope.OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(

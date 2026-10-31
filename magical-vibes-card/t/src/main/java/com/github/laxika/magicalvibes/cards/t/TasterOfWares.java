@@ -24,7 +24,7 @@ import java.util.List;
 public class TasterOfWares extends Card {
 
     public TasterOfWares() {
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 true,
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),

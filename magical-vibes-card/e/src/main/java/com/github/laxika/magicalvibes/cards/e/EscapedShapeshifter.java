@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -33,12 +32,12 @@ public class EscapedShapeshifter extends Card {
 
     public EscapedShapeshifter() {
         for (Keyword keyword : List.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.TRAMPLE)) {
-            addEffect(EffectSlot.STATIC, new ConditionalEffect(
+            addStaticEffect(new ConditionalEffect(
                     new OpponentControlsPermanent(otherCreatureMatching(new PermanentHasKeywordPredicate(keyword))),
                     new GrantKeywordEffect(keyword, GrantScope.SELF)));
         }
         for (CardColor color : CardColor.values()) {
-            addEffect(EffectSlot.STATIC, new ConditionalEffect(
+            addStaticEffect(new ConditionalEffect(
                     new OpponentControlsPermanent(
                             otherCreatureMatching(new PermanentHasProtectionFromColorPredicate(color))),
                     new ProtectionFromColorsEffect(Set.of(color))));

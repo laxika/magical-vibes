@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -18,7 +17,7 @@ public class FieldOfReality extends Card {
     public FieldOfReality() {
         target(TargetFilters.creature())
                 // Enchanted creature can't be blocked by Spirits.
-                .addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+                .addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)));
         addActivatedAbility(new ActivatedAbility(
                 false,

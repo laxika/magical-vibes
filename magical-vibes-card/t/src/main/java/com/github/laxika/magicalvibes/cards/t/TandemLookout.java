@@ -26,7 +26,7 @@ public class TandemLookout extends Card {
 
         // While paired, both creatures have "Whenever this creature deals damage to an
         // opponent, draw a card."
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
                 new GrantTriggeredAbilityEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
                         new DrawCardEffect(1), GrantScope.SELF_AND_PAIRED)));

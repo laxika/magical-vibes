@@ -18,8 +18,8 @@ public class StratusWalk extends Card {
     public StratusWalk() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new CanBlockOnlyIfAttackerMatchesPredicateEffect(
+                .addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new CanBlockOnlyIfAttackerMatchesPredicateEffect(
                         new PermanentHasKeywordPredicate(Keyword.FLYING),
                         "creatures with flying"
                 ));

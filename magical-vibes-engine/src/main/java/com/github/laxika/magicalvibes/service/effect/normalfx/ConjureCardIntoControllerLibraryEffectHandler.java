@@ -45,8 +45,7 @@ public class ConjureCardIntoControllerLibraryEffectHandler implements NormalEffe
         Card conjuredCard = printing.createCard();
         conjuredCard.setConjured(true);
         conjuredCard.setOwnerId(entry.getControllerId());
-        conjure.additionalEffects().forEach((slot, effects) ->
-                effects.forEach(additionalEffect -> conjuredCard.addEffect(slot, additionalEffect)));
+        conjure.additionalAbilities().forEach(conjuredCard::addAbility);
         conjuredCard.freeze();
 
         var library = gameData.playerDecks.get(entry.getControllerId());

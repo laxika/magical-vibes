@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
@@ -19,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "125")
@@ -30,10 +30,10 @@ public class AnaxHardenedInTheForge extends Card {
     private static final CreateTokenEffect SATYR_TOKEN = new CreateTokenEffect(
             new FixedIfCondition(new EventValueAtLeast(4), 2, 1), "Satyr", 1, 1,
             CardColor.RED, List.of(CardSubtype.SATYR), Set.of(), Set.of())
-            .withTokenEffects(Map.of(EffectSlot.STATIC, new CantBlockEffect()));
+            .withTokenEffects(List.of(StaticAbility.of(new CantBlockEffect())));
 
     public AnaxHardenedInTheForge() {
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new ColorManaSymbolsAmongControlledPermanents(ManaColor.RED), new Fixed(3)));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(

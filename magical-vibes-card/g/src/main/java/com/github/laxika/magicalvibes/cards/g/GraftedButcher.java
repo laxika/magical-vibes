@@ -32,7 +32,7 @@ public class GraftedButcher extends Card {
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.PHYREXIAN))));
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1,
                 1,
                 GrantScope.OWN_CREATURES,

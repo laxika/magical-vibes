@@ -20,7 +20,7 @@ public class BlitzwingAdaptiveAssailant extends Card {
 
     public BlitzwingAdaptiveAssailant() {
         // Living metal: during your turn, this Vehicle is also a creature.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
 

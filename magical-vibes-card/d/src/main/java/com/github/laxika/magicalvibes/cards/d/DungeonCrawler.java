@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 public class DungeonCrawler extends Card {
 
     public DungeonCrawler() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_COMPLETES_DUNGEON,
                 new MayEffect(new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
                         "Return Dungeon Crawler to your hand?"));

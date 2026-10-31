@@ -13,7 +13,7 @@ public class FailedConversion extends Card {
 
     public FailedConversion() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(-4, -4, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(-4, -4, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new SurveilEffect(2));
     }
 }

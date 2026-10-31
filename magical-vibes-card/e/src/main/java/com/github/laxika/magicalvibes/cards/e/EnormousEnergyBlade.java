@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 public class EnormousEnergyBlade extends Card {
 
     public EnormousEnergyBlade() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(4, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(4, 0, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_EQUIPMENT_ATTACHED,
                 new TapPermanentsEffect(TapUntapScope.ENCHANTED));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

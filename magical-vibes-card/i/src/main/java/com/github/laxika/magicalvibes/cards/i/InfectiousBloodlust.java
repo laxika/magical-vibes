@@ -22,9 +22,9 @@ public class InfectiousBloodlust extends Card {
         // Enchant creature
         target(TargetFilters.creature())
         // Enchanted creature gets +2/+1, has haste, and attacks each combat if able.
-        .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.ENCHANTED_CREATURE))
-        .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE))
-        .addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        .addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.ENCHANTED_CREATURE))
+        .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE))
+        .addStaticEffect(new MustAttackEffect());
 
         // When enchanted creature dies, you may search your library for a card named
         // Infectious Bloodlust, reveal it, put it into your hand, then shuffle.

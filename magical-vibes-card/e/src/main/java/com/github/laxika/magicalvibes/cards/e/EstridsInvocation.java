@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
@@ -14,7 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "1325")
@@ -29,7 +29,8 @@ public class EstridsInvocation extends Card {
                 )),
                 "enchantment you control",
                 Set.of(),
-                Map.of(EffectSlot.UPKEEP_TRIGGERED, List.of(
+                List.of(
+                        LegacySlots.triggered(EffectSlot.UPKEEP_TRIGGERED, List.of(
                         new MayEffect(
                                 new FlickerEffect(
                                         FlickerScope.SELF,
@@ -45,7 +46,7 @@ public class EstridsInvocation extends Card {
                                 ),
                                 "Exile this enchantment?"
                         )
-                ))
+                )))
         ));
     }
 }

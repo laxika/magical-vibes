@@ -20,9 +20,8 @@ public class CommandingPresence extends Card {
 
     public CommandingPresence() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(2, 2, Set.of(Keyword.FIRST_STRIKE), GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new StaticBoostEffect(2, 2, Set.of(Keyword.FIRST_STRIKE), GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                         new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()),

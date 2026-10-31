@@ -28,7 +28,7 @@ public class RonaDiscipleOfGix extends Card {
                 "Exile a historic card from your graveyard?"));
 
         // You may cast spells from among cards exiled with Rona.
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, new CardNotPredicate(new CardTypePredicate(CardType.LAND)), false, false, 0));
 
         // {4}, {T}: Exile the top card of your library.

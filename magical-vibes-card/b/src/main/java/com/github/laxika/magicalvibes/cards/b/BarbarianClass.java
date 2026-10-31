@@ -25,7 +25,7 @@ import java.util.List;
 public class BarbarianClass extends Card {
 
     public BarbarianClass() {
-        addEffect(EffectSlot.STATIC, new RollWithAdvantageEffect());
+        addStaticEffect(new RollWithAdvantageEffect());
 
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE,
                 new ConditionalEffect(
@@ -44,7 +44,7 @@ public class BarbarianClass extends Card {
                 new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
                 "this Class is level 1"));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)));
 

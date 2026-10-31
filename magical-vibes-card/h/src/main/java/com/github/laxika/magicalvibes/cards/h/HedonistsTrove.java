@@ -21,7 +21,7 @@ public class HedonistsTrove extends Card {
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileGraveyardCardsEffect(0, GraveyardExileScope.TARGET_PLAYER_ENTIRE,
                         null, null, false, true, false));
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, null, false, false, 0, null, true, false, false));
     }
 }

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -57,7 +56,7 @@ public class AttackSacrificeCostService {
         Map<PermanentPredicate, Integer> costs = new LinkedHashMap<>();
         for (Permanent attacker : attackers) {
             if (gameQueryService.hasLostPrintedAbilities(gameData, attacker)) continue;
-            for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : attacker.getCard().getStaticEffects()) {
                 if (effect instanceof CantAttackUnlessSacrificeEffect sac) {
                     costs.merge(sac.filter(), sac.count(), Integer::sum);
                 }
@@ -84,7 +83,7 @@ public class AttackSacrificeCostService {
         Map<PermanentPredicate, Integer> costs = collectGlobalCosts(gameData, playerId, attackers);
         for (Permanent attacker : attackers) {
             if (gameQueryService.hasLostPrintedAbilities(gameData, attacker)) continue;
-            for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : attacker.getCard().getStaticEffects()) {
                 if (effect instanceof CantAttackUnlessSacrificeEffect sacrifice) {
                     costs.merge(sacrifice.filter(), sacrifice.count(), Integer::sum);
                 }
@@ -114,7 +113,7 @@ public class AttackSacrificeCostService {
             if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                 return;
             }
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (!(effect instanceof CreaturesCantAttackUnlessSacrificeEffect restriction)) {
                     continue;
                 }

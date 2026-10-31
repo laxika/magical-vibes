@@ -25,7 +25,7 @@ public class InvigoratingHotSpring extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE, GrantScope.ALL_OWN_CREATURES, new PermanentIsModifiedPredicate()));
 
         addActivatedAbility(new ActivatedAbility(

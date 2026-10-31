@@ -19,7 +19,7 @@ public class SuspiciousStowaway extends Card {
     public SuspiciousStowaway() {
         setBackFaceCard(new SeafaringWerewolf());
 
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, SequenceEffect.of(
                 new DrawCardEffect(),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER)));

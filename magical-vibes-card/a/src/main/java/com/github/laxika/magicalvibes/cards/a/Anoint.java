@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -17,7 +16,7 @@ public class Anoint extends Card {
         // Buyback {3} (You may pay an additional {3} as you cast this spell. If you do, put this
         // card into your hand as it resolves.)
         // Prevent the next 3 damage that would be dealt to target creature this turn.
-        addEffect(EffectSlot.STATIC, new BuybackEffect("{3}"));
+        addStaticEffect(new BuybackEffect("{3}"));
         addSpellEffect(PreventDamageEffect.nextToTargetCreature(3));
         addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }

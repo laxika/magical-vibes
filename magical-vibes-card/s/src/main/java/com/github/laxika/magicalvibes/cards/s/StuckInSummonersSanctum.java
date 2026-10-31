@@ -26,7 +26,7 @@ public class StuckInSummonersSanctum extends Card {
                 "Target must be an artifact or creature"))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentCantActivateAbilitiesEffect(true));
+                .addStaticEffect(DoesntUntapEffect.enchanted())
+                .addStaticEffect(new EnchantedPermanentCantActivateAbilitiesEffect(true));
     }
 }

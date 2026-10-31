@@ -13,10 +13,10 @@ public class DeepSlumberTitan extends Card {
 
     public DeepSlumberTitan() {
         // This creature enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // This creature doesn't untap during your untap step.
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // Whenever this creature is dealt damage, untap it.
         addEffect(EffectSlot.ON_DEALT_DAMAGE, new UntapPermanentsEffect(TapUntapScope.SELF));

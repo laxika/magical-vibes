@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -20,9 +19,9 @@ public class FountainWatch extends Card {
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsEnchantmentPredicate()
         ));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.OWN_PERMANENTS,
+        addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.OWN_PERMANENTS,
                 artifactOrEnchantment));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.SELF,
+        addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.SELF,
                 artifactOrEnchantment));
     }
 }

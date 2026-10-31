@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.combat.block;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -109,7 +108,7 @@ public class BlockLegalityService {
             }
             if (!source.isFaceDown() && !source.isLosesAllAbilitiesUntilEndOfTurn()
                         && !gameQueryService.computeStaticBonus(gameData, source).losesAllAbilities()) {
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : source.getCard().getStaticEffects()) {
                     if (effect instanceof BlockingRestrictionEffect restriction) {
                         addGlobalBlockRestriction(globalBlockRestrictions, restriction,
                                 FilterContext.of(gameData)
@@ -149,7 +148,7 @@ public class BlockLegalityService {
                 FilterContext filterContext = FilterContext.of(gameData)
                         .withSourceControllerId(planarController)
                         .withSourceCardId(planar.getCard().getId());
-                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     if (effect instanceof BlockingRestrictionEffect restriction) {
                         addGlobalBlockRestriction(globalBlockRestrictions, restriction, filterContext);
                     }
@@ -541,7 +540,7 @@ public class BlockLegalityService {
         }
         UUID controllerId = null;
         if (!creature.isFaceDown() && !gameQueryService.hasLostAllAbilities(gameData, creature)) {
-            List<CardEffect> staticEffects = new ArrayList<>(creature.getCard().getEffects(EffectSlot.STATIC));
+            List<CardEffect> staticEffects = new ArrayList<>(creature.getCard().getStaticEffects());
             staticEffects.addAll(gameQueryService.getGrantedEffects(gameData, creature));
             for (CardEffect effect : staticEffects) {
                 Condition unless = null;
@@ -598,7 +597,7 @@ public class BlockLegalityService {
         }
         for (Permanent source : context.attachedTo(attacker)) {
             if (!source.isFaceDown()) {
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : source.getCard().getStaticEffects()) {
                     if (effect instanceof BlockabilityRestrictionEffect restriction
                             && (restriction.unblockableIfDefenderControls() != null
                             || restriction.unblockableIfDefenderHasRadCounters()
@@ -730,7 +729,7 @@ public class BlockLegalityService {
         if (!bonus.losesAllAbilities() && !blocker.isLosesAllAbilitiesUntilEndOfTurn()) {
             UUID blockerControllerId = gameQueryService.findPermanentController(gameData, blocker.getId());
             if (!blocker.isFaceDown()) {
-                for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : blocker.getCard().getStaticEffects()) {
                     effect = staticEffectConditionResolver.resolve(gameData, blocker, blockerControllerId, effect);
                     if (effect == null) {
                         continue;

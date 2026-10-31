@@ -31,12 +31,12 @@ public class LeylineImmersion extends Card {
         ));
 
         target(new PermanentPredicateTargetFilter(legendaryCreature, "Target must be a legendary creature"))
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                         new CounterUnlessPaysEffect(2),
                         GrantScope.ENCHANTED_CREATURE
                 ))
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 true,
                                 null,

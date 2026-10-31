@@ -36,7 +36,7 @@ public class Seasinger extends Card {
         ));
 
         // "You may choose not to untap this creature during your untap step."
-        addEffect(EffectSlot.STATIC, new MayNotUntapDuringUntapStepEffect());
+        addStaticEffect(new MayNotUntapDuringUntapStepEffect());
 
         // "{T}: Gain control of target creature whose controller controls an Island for as long
         // as you control this creature and this creature remains tapped."

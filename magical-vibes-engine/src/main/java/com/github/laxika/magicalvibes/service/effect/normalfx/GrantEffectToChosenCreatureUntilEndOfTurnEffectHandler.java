@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -42,6 +43,6 @@ public class GrantEffectToChosenCreatureUntilEndOfTurnEffectHandler implements N
                 && entry.getSourcePermanentId() != null) {
             grantedEffect = aware.withGrantingPermanentId(entry.getSourcePermanentId());
         }
-        chosenCreature.addTemporaryTriggeredEffect(grant.slot(), grantedEffect);
+        chosenCreature.addTemporaryAbility(LegacySlots.withEffect(grant.grantedAbility(), grantedEffect));
     }
 }

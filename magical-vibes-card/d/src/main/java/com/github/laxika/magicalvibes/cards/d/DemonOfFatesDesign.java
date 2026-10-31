@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
@@ -21,8 +20,7 @@ import java.util.List;
 public class DemonOfFatesDesign extends Card {
 
     public DemonOfFatesDesign() {
-        addEffect(EffectSlot.STATIC,
-                AlternativeCostForSpellsEffect.payLifeEqualToManaValueOnceDuringControllerTurn(
+        addStaticEffect(AlternativeCostForSpellsEffect.payLifeEqualToManaValueOnceDuringControllerTurn(
                         new CardTypePredicate(CardType.ENCHANTMENT)));
 
         addActivatedAbility(new ActivatedAbility(

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
@@ -45,12 +44,12 @@ public class ImprisonedInTheMoon extends Card {
                 "Target must be a creature, land, or planeswalker"
         ))
                 // Enchanted permanent is a colorless land …
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesOnlyLandEffect())
-                .addEffect(EffectSlot.STATIC, new BecomeColorlessEffect(GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new EnchantedPermanentBecomesOnlyLandEffect())
+                .addStaticEffect(new BecomeColorlessEffect(GrantScope.ENCHANTED_PERMANENT))
                 // … loses all other abilities …
-                .addEffect(EffectSlot.STATIC, new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT))
                 // … and has "{T}: Add {C}"
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         ManaAbilities.tapFor(ManaColor.COLORLESS),
                         GrantScope.ENCHANTED_PERMANENT
                 ));

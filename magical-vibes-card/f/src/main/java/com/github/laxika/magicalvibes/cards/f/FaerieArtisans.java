@@ -24,7 +24,7 @@ public class FaerieArtisans extends Card {
     public FaerieArtisans() {
         CreateTokenCopyOfTargetPermanentEffect copyEffect = new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(CardType.ARTIFACT), null, null, Map.of(), false, false, false, false,
-                true, false, null, Set.of(), false, Map.of(), List.of(), false, false,
+                true, false, null, Set.of(), false, List.of(), List.of(), false, false,
                 new Fixed(1), false, Set.of(), false);
         addEffect(EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(

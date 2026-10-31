@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * and the locks themselves are released.
  *
  * <p>Giant Oyster's "When this creature leaves the battlefield or becomes untapped, remove all -1/-1
- * counters from the creature." Placed in {@code EffectSlot.STATIC} and read directly by
+ * counters from the creature." Added as a static ability and read directly by
  * {@code UntapLockReleaseService} from the untap and leaves-the-battlefield paths — there is no
  * handler, the same way {@link DoesntUntapWithCounterEffect} is read by the untap step.
  *

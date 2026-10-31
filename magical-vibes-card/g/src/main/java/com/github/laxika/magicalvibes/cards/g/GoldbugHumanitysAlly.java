@@ -20,8 +20,7 @@ public class GoldbugHumanitysAlly extends Card {
         setBackFaceCard(new GoldbugScrappyScout());
         addCastingOption(AlternateHandCast.moreThanMeetsTheEye("{W}{U}"));
 
-        addEffect(EffectSlot.STATIC,
-                new PreventCombatDamageToAttackingCreaturesYouControlEffect(
+        addStaticEffect(new PreventCombatDamageToAttackingCreaturesYouControlEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new NthSpellCastTriggerEffect(2, List.of(new TransformSelfEffect())));

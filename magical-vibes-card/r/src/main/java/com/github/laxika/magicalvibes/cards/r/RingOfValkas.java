@@ -19,7 +19,7 @@ public class RingOfValkas extends Card {
 
     public RingOfValkas() {
         // Equipped creature has haste.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.EQUIPPED_CREATURE));
 
         // At the beginning of your upkeep, put a +1/+1 counter on equipped creature if it's red.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCounterOnReferencedPermanentEffect(

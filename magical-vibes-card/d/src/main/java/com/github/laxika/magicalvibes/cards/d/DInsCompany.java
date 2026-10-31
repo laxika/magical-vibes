@@ -21,7 +21,7 @@ import java.util.List;
 public class DInsCompany extends Card {
 
     public DInsCompany() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.DWARF)),
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)));
 

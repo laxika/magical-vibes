@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.KarnScionRevealTwoOpponentCho
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "1")
@@ -48,8 +47,7 @@ public class KarnScionOfUrza extends Card {
                         1, "Construct", 0, 0,
                         null, List.of(CardSubtype.CONSTRUCT),
                         Set.of(), Set.of(CardType.ARTIFACT),
-                        Map.of(EffectSlot.STATIC,
-                                new BoostSelfEffect(artifactsYouControl, artifactsYouControl))
+                        List.of(StaticAbility.of(new BoostSelfEffect(artifactsYouControl, artifactsYouControl)))
                 )),
                 "−2: Create a 0/0 colorless Construct artifact creature token with \"This creature gets +1/+1 for each artifact you control.\""
         ));

@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 public class FlameWreathedPhoenix extends Card {
 
     public FlameWreathedPhoenix() {
-        addEffect(EffectSlot.STATIC, new TributeEffect(2));
+        addStaticEffect(new TributeEffect(2));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TributeNotPaidEffect(SequenceEffect.of(
                 new SetSelfKeywordIndefinitelyEffect(Keyword.HASTE, true),
                 new GrantEffectToSourceEffect(EffectSlot.ON_DEATH,

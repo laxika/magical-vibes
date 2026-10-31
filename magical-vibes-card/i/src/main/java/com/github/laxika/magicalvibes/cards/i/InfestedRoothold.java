@@ -19,7 +19,7 @@ import java.util.Set;
 public class InfestedRoothold extends Card {
 
     public InfestedRoothold() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromCardTypesEffect(Set.of(CardType.ARTIFACT)));
+        addStaticEffect(new ProtectionFromCardTypesEffect(Set.of(CardType.ARTIFACT)));
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new MayEffect(
                 new SpellCastTriggerEffect(
                         new CardTypePredicate(CardType.ARTIFACT),

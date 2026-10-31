@@ -19,8 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class DetectiveOfTheMonth extends Card {
 
     public DetectiveOfTheMonth() {
-        addEffect(EffectSlot.STATIC, new AscendEffect());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerHasCityBlessing(),
+        addStaticEffect(new AscendEffect());
+        addStaticEffect(new ConditionalEffect(new ControllerHasCityBlessing(),
                 new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.DETECTIVE))));
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD,

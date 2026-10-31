@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -30,7 +29,7 @@ public class AspectOfWolf extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.FOREST), CountScope.CONTROLLER);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                .addStaticEffect(new AttachedBoostEffect(
                         new Divided(forests, 2),
                         new Divided(new Sum(forests, new Fixed(1)), 2),
                         GrantScope.ENCHANTED_CREATURE));

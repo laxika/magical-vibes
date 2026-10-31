@@ -19,7 +19,7 @@ public class GoblinGloryChaser extends Card {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new RenownEffect(1));
 
         // As long as this creature is renowned, it has menace.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceIsRenowned(), new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)));
     }
 }

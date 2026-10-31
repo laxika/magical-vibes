@@ -14,8 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 public class SecretPlans extends Card {
 
     public SecretPlans() {
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(0, 1, GrantScope.OWN_CREATURES, new PermanentIsFaceDownPredicate()));
+        addStaticEffect(new StaticBoostEffect(0, 1, GrantScope.OWN_CREATURES, new PermanentIsFaceDownPredicate()));
         addEffect(EffectSlot.ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP, new DrawCardEffect());
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -19,8 +18,8 @@ public class DivineSacrament extends Card {
 
     public DivineSacrament() {
         PermanentColorInPredicate whiteCreatures = new PermanentColorInPredicate(Set.of(CardColor.WHITE));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF, whiteCreatures));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF, whiteCreatures));
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
                 new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF, whiteCreatures)));
     }

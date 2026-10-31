@@ -24,7 +24,7 @@ public class VadrikAstralArchmage extends Card {
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 instantOrSorcery, new SourcePower(), CostModificationScope.SELF));
 
         addEffect(EffectSlot.ON_DAY_NIGHT_CHANGE, new PutCountersOnSourceEffect(1, 1, 1));

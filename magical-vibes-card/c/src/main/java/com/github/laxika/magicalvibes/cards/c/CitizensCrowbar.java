@@ -31,8 +31,8 @@ public class CitizensCrowbar extends Card {
                         "Citizen", 1, 1, CardColor.GREEN,
                         Set.of(CardColor.GREEN, CardColor.WHITE),
                         List.of(CardSubtype.CITIZEN))));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         "{W}",

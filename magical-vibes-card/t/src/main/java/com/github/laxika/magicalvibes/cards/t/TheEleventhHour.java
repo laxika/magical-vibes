@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -17,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "41")
@@ -31,8 +31,9 @@ public class TheEleventhHour extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_II, CreateTokenEffect.ofFoodToken(1));
         addEffect(EffectSlot.SAGA_CHAPTER_II, new CreateTokenEffect(
                 1, "Human", 1, 1, CardColor.WHITE, List.of(CardSubtype.HUMAN), Set.of(), Set.of(),
-                Map.of(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
-                        new CardSubtypePredicate(CardSubtype.DOCTOR), 1, CostModificationScope.SELF))));
+                List.of(
+                        StaticAbility.of(new ReduceCastCostForMatchingSpellsEffect(
+                        new CardSubtypePredicate(CardSubtype.DOCTOR), 1, CostModificationScope.SELF)))));
 
         addEffect(EffectSlot.SAGA_CHAPTER_III, CreateTokenCopyOfTargetPermanentEffect.withNameAndCreatureSubtypeOverride(
                 "Prisoner Zero", List.of(CardSubtype.ALIEN), Set.of(CardSupertype.LEGENDARY)));

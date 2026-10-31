@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
@@ -20,11 +19,11 @@ public class VectisGloves extends Card {
 
     public VectisGloves() {
         // Equipped creature gets +2/+0
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 new Fixed(2), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
 
         // Artifact landwalk
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new GrantEffectEffect(
                 new CantBeBlockedIfDefenderControlsMatchingPermanentEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),

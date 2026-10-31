@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class WhispersteelDagger extends Card {
 
     public WhispersteelDagger() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
                 new AllowCastMatchingCardsFromDamagedPlayerGraveyardThisTurnEffect(
                         new CardTypePredicate(CardType.CREATURE), true));

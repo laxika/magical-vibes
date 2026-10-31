@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
 
@@ -16,6 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
 public class Worship extends Card {
 
     public Worship() {
-        addEffect(EffectSlot.STATIC, new DamageLifeFloorEffect(1, LifeFloorCondition.CONTROLS_A_CREATURE));
+        addStaticEffect(new DamageLifeFloorEffect(1, LifeFloorCondition.CONTROLS_A_CREATURE));
     }
 }

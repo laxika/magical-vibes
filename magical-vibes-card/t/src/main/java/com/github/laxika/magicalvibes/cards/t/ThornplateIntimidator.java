@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class ThornplateIntimidator extends Card {
 
     public ThornplateIntimidator() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}", false));
+        addStaticEffect(new KickerEffect("{3}", false));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)), TriggerMode.INDEPENDENT);
         target(new PlayerPredicateTargetFilter(

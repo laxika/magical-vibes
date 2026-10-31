@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 
 import java.util.List;
 
@@ -22,7 +21,7 @@ import java.util.List;
 public class TombFortress extends Card {
 
     public TombFortress() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // {T}: Add {B}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLACK));

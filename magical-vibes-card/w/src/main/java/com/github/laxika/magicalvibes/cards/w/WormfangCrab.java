@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class WormfangCrab extends Card {
 
     public WormfangCrab() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new OpponentChoosesPermanentToExileUntilSourceLeavesEffect(
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));

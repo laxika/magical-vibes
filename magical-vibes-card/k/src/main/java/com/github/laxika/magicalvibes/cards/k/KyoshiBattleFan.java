@@ -24,7 +24,7 @@ public class KyoshiBattleFan extends Card {
                 new CreateTokenEffect("Ally", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.ALLY), Set.of(), Set.of()),
                 new AttachMatchingEquipmentToCreatedPermanentEffect(new PermanentIsSourcePermanentPredicate())));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

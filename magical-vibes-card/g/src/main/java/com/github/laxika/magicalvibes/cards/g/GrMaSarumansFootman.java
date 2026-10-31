@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOfTargetPlayerU
 public class GrMaSarumansFootman extends Card {
 
     public GrMaSarumansFootman() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffect());
     }

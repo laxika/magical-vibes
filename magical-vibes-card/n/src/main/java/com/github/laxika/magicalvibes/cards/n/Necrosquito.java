@@ -23,8 +23,7 @@ public class Necrosquito extends Card {
     public Necrosquito() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.OIL, new Fixed(2)));
-        addEffect(EffectSlot.STATIC,
-                new DynamicStaticBoostEffect(new CountersOnSource(CounterType.OIL),
+        addStaticEffect(new DynamicStaticBoostEffect(new CountersOnSource(CounterType.OIL),
                         new CountersOnSource(CounterType.OIL), GrantScope.SELF));
         addEffect(EffectSlot.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(

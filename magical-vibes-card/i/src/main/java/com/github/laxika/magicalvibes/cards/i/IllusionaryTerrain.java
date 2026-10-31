@@ -18,6 +18,6 @@ public class IllusionaryTerrain extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseBasicLandTypeOnEnterEffect(2));
 
         // Basic lands of the first chosen type are the second chosen type.
-        addEffect(EffectSlot.STATIC, new BasicLandsOfChosenTypesBecomeTypeEffect());
+        addStaticEffect(new BasicLandsOfChosenTypesBecomeTypeEffect());
     }
 }

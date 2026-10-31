@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.DungeonProgress;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -179,7 +178,7 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
             if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
                 continue;
             }
-            count += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+            count += (int) permanent.getCard().getStaticEffects().stream()
                     .filter(AdditionalDungeonRoomTriggerEffect.class::isInstance)
                     .count();
         }
@@ -264,7 +263,7 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
                 case 7 -> List.of(new CreateTokenEffect(
                         CardType.CREATURE, 1, "Skeleton", 4, 1, com.github.laxika.magicalvibes.model.CardColor.BLACK,
                         null, List.of(CardSubtype.SKELETON), java.util.Set.of(Keyword.MENACE), java.util.Set.of(), false, false,
-                        java.util.Map.of(), java.util.List.of(), false, false, false, 0, java.util.Set.of()));
+                        java.util.List.of(), java.util.List.of(), false, false, false, 0, java.util.Set.of()));
                 case 8 -> List.of(new CompleteDungeonEffect(progress.dungeon()));
                 default -> List.of();
             };
@@ -276,7 +275,7 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
                                              com.github.laxika.magicalvibes.model.CardColor color,
                                              List<CardSubtype> subtypes, java.util.Set<Keyword> keywords, boolean legendary) {
         return new CreateTokenEffect(CardType.CREATURE, count, name, power, toughness, color, null,
-                subtypes, keywords, java.util.Set.of(), false, false, java.util.Map.of(), List.of(),
+                subtypes, keywords, java.util.Set.of(), false, false, List.of(), List.of(),
                 false, false, legendary, 0, java.util.Set.of());
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOrRevealCreatureCardCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
@@ -1189,7 +1189,7 @@ public abstract class AiDecisionEngine {
     }
 
     private boolean hasCantAttackOrBlockAlone(Permanent creature) {
-        return creature.getCard().getEffects(EffectSlot.STATIC).stream()
+        return creature.getCard().getStaticEffects().stream()
                 .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance);
     }
 
@@ -1458,7 +1458,7 @@ public abstract class AiDecisionEngine {
         if (battlefield == null || request.attackerIndices().stream()
                 .filter(index -> index >= 0 && index < battlefield.size())
                 .map(battlefield::get)
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .noneMatch(CombatTapCostEffect.class::isInstance)) {
             return request;
         }
@@ -1719,7 +1719,7 @@ public abstract class AiDecisionEngine {
             return true;
         }
 
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : attacker.getCard().getStaticEffects()) {
             if (effect instanceof CantAttackOrBlockUnlessCountAlsoDoesEffect restriction
                     && attackerIndices.size() - 1 < restriction.otherCount()) {
                 return true;
@@ -1902,7 +1902,7 @@ public abstract class AiDecisionEngine {
                 .collect(Collectors.toCollection(LinkedHashSet::new));
         boolean hasTapCost = blockerIndices.stream()
                 .map(defenderBattlefield::get)
-                .flatMap(blocker -> blocker.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(blocker -> blocker.getCard().getStaticEffects().stream())
                 .anyMatch(CombatTapCostEffect.class::isInstance);
         if (!hasTapCost) {
             return assignments;
@@ -1976,7 +1976,7 @@ public abstract class AiDecisionEngine {
     private boolean hasUnmetBlockPartnerRequirement(
             GameData gameData, List<Permanent> battlefield, Set<Integer> selectedBlockers, int blockerIdx) {
         Permanent blocker = battlefield.get(blockerIdx);
-        for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : blocker.getCard().getStaticEffects()) {
             if (effect instanceof CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect) {
                 int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
                 boolean hasGreaterPowerPartner = selectedBlockers.stream()
@@ -2155,7 +2155,7 @@ public abstract class AiDecisionEngine {
             GameData gameData, Permanent attacker, List<Permanent> attackerBattlefield) {
         int maximumBlockers = Integer.MAX_VALUE;
         for (Permanent permanent : attackerBattlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction
                         && (restriction.affectedCreatureFilter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(
@@ -2220,14 +2220,14 @@ public abstract class AiDecisionEngine {
         if (blocker.isMustBlockThisTurnIfAble()) {
             return true;
         }
-        if (blocker.getCard().getEffects(EffectSlot.STATIC).stream()
+        if (blocker.getCard().getStaticEffects().stream()
                 .anyMatch(MustBlockEachCombatEffect.class::isInstance)
                 || gameQueryService.hasAuraWithEffect(gameData, blocker, MustBlockEachCombatEffect.class)) {
             return true;
         }
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             if (battlefield.stream()
-                    .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                    .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                     .anyMatch(GlobalMustBlockEachCombatEffect.class::isInstance)) {
                 return true;
             }
@@ -3948,7 +3948,7 @@ public abstract class AiDecisionEngine {
     protected CostReductionPlan selectCostReductionPlan(
             GameData gameData, Card card, Integer xValue, int targetingTax, int delveReduction,
             ManaPool pool) {
-        SacrificeCreaturesForCostReductionEffect reductionEffect = card.getEffects(EffectSlot.STATIC).stream()
+        SacrificeCreaturesForCostReductionEffect reductionEffect = card.getStaticEffects().stream()
                 .filter(SacrificeCreaturesForCostReductionEffect.class::isInstance)
                 .map(SacrificeCreaturesForCostReductionEffect.class::cast)
                 .findFirst()
@@ -4228,7 +4228,7 @@ public abstract class AiDecisionEngine {
             return false;
         }
         for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof SpellCastingAbilityGrantingEffect grant
                         && grant.grantedAbility() == Keyword.CONVOKE
                         && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {

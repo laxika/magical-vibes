@@ -20,7 +20,7 @@ import java.util.List;
 public class HamletGlutton extends Card {
 
     public HamletGlutton() {
-        addEffect(EffectSlot.STATIC, new KickerEffect(
+        addStaticEffect(new KickerEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate(),
@@ -28,7 +28,7 @@ public class HamletGlutton extends Card {
                 )),
                 "an artifact, enchantment, or token"
         ));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new Kicked(), new ReduceOwnCastCostEffect(new Fixed(2))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3));
     }

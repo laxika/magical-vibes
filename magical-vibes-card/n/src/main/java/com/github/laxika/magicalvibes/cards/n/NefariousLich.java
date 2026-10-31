@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.NefariousLichLifeGainReplacem
 public class NefariousLich extends Card {
 
     public NefariousLich() {
-        addEffect(EffectSlot.STATIC, new NefariousLichDamageReplacementEffect());
-        addEffect(EffectSlot.STATIC, new NefariousLichLifeGainReplacementEffect());
+        addStaticEffect(new NefariousLichDamageReplacementEffect());
+        addStaticEffect(new NefariousLichLifeGainReplacementEffect());
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new ControllerLosesGameOnLeavesEffect());
     }
 }

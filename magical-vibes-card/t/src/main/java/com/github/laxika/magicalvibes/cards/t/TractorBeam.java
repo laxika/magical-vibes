@@ -28,7 +28,7 @@ public class TractorBeam extends Card {
         ))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new TapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect())
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+                .addStaticEffect(new ControlEnchantedCreatureEffect())
+                .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

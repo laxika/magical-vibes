@@ -12,7 +12,7 @@ import java.util.List;
 public class ApexObservatory extends Card {
 
     public ApexObservatory() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 ChooseCardTypeOnEnterEffect.forSharedCraftMaterials());
         addActivatedAbility(new ActivatedAbility(

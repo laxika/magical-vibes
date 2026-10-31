@@ -23,8 +23,7 @@ public class ColonelAutumn extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?"));
 
-        addEffect(EffectSlot.STATIC,
-                new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ENTER_BATTLEFIELD,
                         new MayEffect(new ExploitEffect(), "Sacrifice a creature?"),
                         GrantScope.OWN_CREATURES,

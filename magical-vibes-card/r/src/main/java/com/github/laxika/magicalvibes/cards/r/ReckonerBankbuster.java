@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -20,7 +21,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NEO", collectorNumber = "255")
@@ -62,7 +62,7 @@ public class ReckonerBankbuster extends Card {
                 List.of(CardSubtype.PILOT),
                 Set.of(),
                 Set.of(),
-                Map.of(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2, true))
+                List.of(StaticAbility.of(new PowerBoostForCrewAndSaddleEffect(2, true)))
         );
     }
 }

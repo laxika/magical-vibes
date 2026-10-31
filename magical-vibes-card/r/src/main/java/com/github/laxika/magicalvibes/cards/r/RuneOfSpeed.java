@@ -23,17 +23,16 @@ public class RuneOfSpeed extends Card {
     public RuneOfSpeed() {
         target(TargetFilters.permanent())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
                         new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), GrantScope.ENCHANTED_CREATURE),
                         null
                 ))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                         new BoostEquippedCreatureOfEnchantedEquipmentEffect(1, 0),
                         null
                 ))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect(Keyword.HASTE));
+                .addStaticEffect(new GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect(Keyword.HASTE));
     }
 }

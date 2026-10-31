@@ -18,12 +18,9 @@ public class ZoeticGlyph extends Card {
 
     public ZoeticGlyph() {
         target(TargetFilters.artifact())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantCardTypeEffect(CardType.CREATURE, GrantScope.ENCHANTED_PERMANENT))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantSubtypeEffect(CardSubtype.GOLEM, GrantScope.ENCHANTED_PERMANENT))
-                .addEffect(EffectSlot.STATIC,
-                        new SetBasePowerToughnessEffect(5, 4, GrantScope.ENCHANTED_PERMANENT));
+                .addStaticEffect(new GrantCardTypeEffect(CardType.CREATURE, GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.GOLEM, GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new SetBasePowerToughnessEffect(5, 4, GrantScope.ENCHANTED_PERMANENT));
 
         addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, new DiscoverEffect(3));
     }

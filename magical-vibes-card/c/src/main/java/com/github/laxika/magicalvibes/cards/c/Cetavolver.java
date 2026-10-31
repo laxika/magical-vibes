@@ -21,18 +21,18 @@ import java.util.List;
 public class Cetavolver extends Card {
 
     public Cetavolver() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{R}"));
+        addStaticEffect(new KickerEffect("{1}{R}"));
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{G}"), true, 1));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Kicked(),
+        addStaticEffect(new ConditionalEffect(new Kicked(),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{G}"),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new RepeatedAdditionalCostPaid("{G}"),
+        addStaticEffect(new ConditionalEffect(new RepeatedAdditionalCostPaid("{G}"),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
     }
 }

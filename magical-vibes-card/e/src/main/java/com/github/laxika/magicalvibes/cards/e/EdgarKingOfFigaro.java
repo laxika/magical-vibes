@@ -16,6 +16,6 @@ public class EdgarKingOfFigaro extends Card {
     public EdgarKingOfFigaro() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.STATIC, new EdgarKingOfFigaroEffect());
+        addStaticEffect(new EdgarKingOfFigaroEffect());
     }
 }

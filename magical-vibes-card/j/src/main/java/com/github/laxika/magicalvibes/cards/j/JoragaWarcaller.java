@@ -24,7 +24,7 @@ public class JoragaWarcaller extends Card {
         addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{1}{G}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new RepeatedAdditionalCostCount("{1}{G}")));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1, 1, Set.of(), GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF)),
                 CounterType.PLUS_ONE_PLUS_ONE));

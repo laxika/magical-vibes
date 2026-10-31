@@ -28,15 +28,14 @@ public class ValkyriesSword extends Card {
                 CardType.CREATURE, 1, "Angel Warrior", 4, 4, CardColor.WHITE, null,
                 List.of(CardSubtype.ANGEL, CardSubtype.WARRIOR),
                 Set.of(Keyword.FLYING, Keyword.VIGILANCE), Set.of(), false, false,
-                java.util.Map.of(), List.of(), false, false, false, 0, Set.of());
+                List.of(), List.of(), false, false, false, 0, Set.of());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayPayManaEffect("{4}{W}",
                         SequenceEffect.of(angel,
                                 new AttachMatchingEquipmentToCreatedPermanentEffect(
                                         new PermanentIsSourcePermanentPredicate())),
                         "Pay {4}{W} to create an Angel Warrior token and attach Valkyrie's Sword to it?"));
-        addEffect(EffectSlot.STATIC,
-                new AttachedBoostEffect(new Fixed(2), new Fixed(1), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new AttachedBoostEffect(new Fixed(2), new Fixed(1), GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

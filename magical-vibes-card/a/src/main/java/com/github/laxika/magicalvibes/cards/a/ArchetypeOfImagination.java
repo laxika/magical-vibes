@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
@@ -16,9 +15,9 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 public class ArchetypeOfImagination extends Card {
 
     public ArchetypeOfImagination() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES));
-        addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.FLYING, GrantScope.OPPONENT_CREATURES));
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.OPPONENT_CREATURES));
+        addStaticEffect(new GrantEffectEffect(
                 new CantHaveOrGainKeywordEffect(Keyword.FLYING), GrantScope.OPPONENT_CREATURES));
     }
 }

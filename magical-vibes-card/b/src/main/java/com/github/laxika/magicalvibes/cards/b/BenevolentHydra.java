@@ -26,7 +26,7 @@ public class BenevolentHydra extends Card {
     public BenevolentHydra() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
-        addEffect(EffectSlot.STATIC, new AddOnePlusOneCountersToOtherCreaturesEffect());
+        addStaticEffect(new AddOnePlusOneCountersToOtherCreaturesEffect());
 
         PermanentPredicateTargetFilter otherCreatureTarget = new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

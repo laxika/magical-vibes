@@ -17,6 +17,6 @@ public class JinGitaxiasCoreAugur extends Card {
 
     public JinGitaxiasCoreAugur() {
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new DrawCardEffect(7));
-        addEffect(EffectSlot.STATIC, new ReduceOpponentMaxHandSizeEffect(7));
+        addStaticEffect(new ReduceOpponentMaxHandSizeEffect(7));
     }
 }

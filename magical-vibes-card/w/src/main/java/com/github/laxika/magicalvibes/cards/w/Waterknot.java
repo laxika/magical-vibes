@@ -15,6 +15,6 @@ public class Waterknot extends Card {
     public Waterknot() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+                .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

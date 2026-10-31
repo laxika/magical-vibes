@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "189")
@@ -31,7 +30,7 @@ public class KessigCagebreakers extends Card {
                 Set.of(), Set.of(),
                 true,   // tappedAndAttacking
                 false,  // tapped
-                Map.of(), List.of(), false, false, false, 0, Set.of()
+                List.of(), List.of(), false, false, false, 0, Set.of()
         ));
     }
 }

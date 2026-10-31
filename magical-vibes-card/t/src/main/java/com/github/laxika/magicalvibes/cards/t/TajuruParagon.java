@@ -17,9 +17,9 @@ import java.util.List;
 public class TajuruParagon extends Card {
 
     public TajuruParagon() {
-        addEffect(EffectSlot.STATIC, new GrantSubtypesToSelfEffect(List.of(
+        addStaticEffect(new GrantSubtypesToSelfEffect(List.of(
                 CardSubtype.CLERIC, CardSubtype.ROGUE, CardSubtype.WARRIOR, CardSubtype.WIZARD)));
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}"));
+        addStaticEffect(new KickerEffect("{3}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(
                         6, new CardSharesCreatureTypeWithSourcePredicate()).withRevealedTopCards()));

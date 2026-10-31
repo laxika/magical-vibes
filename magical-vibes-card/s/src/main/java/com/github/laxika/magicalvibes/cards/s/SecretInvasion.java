@@ -21,7 +21,7 @@ public class SecretInvasion extends Card {
 
     public SecretInvasion() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                         new CounterUnlessPaysEffect(2), GrantScope.ENCHANTED_CREATURE));
         target(new PermanentPredicateTargetFilter(

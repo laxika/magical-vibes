@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.a.AvenFisher;
 import com.github.laxika.magicalvibes.cards.a.AvenSmokeweaver;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -155,7 +154,7 @@ class CulturalExchangeTest extends BaseCardTest {
         prepare();
         // No implemented creature has this restriction; use a runtime copy to exercise the engine's control prohibition.
         Card restrictedCard = new AvenFisher().createRuntimeCopy();
-        restrictedCard.addEffect(EffectSlot.STATIC, new CantBeControlledByOtherPlayersEffect());
+        restrictedCard.addStaticEffect(new CantBeControlledByOtherPlayersEffect());
         Permanent restricted = harness.addToBattlefieldAndReturn(player1, restrictedCard);
         Permanent own = harness.addToBattlefieldAndReturn(player1, new AvenSmokeweaver());
         Permanent opponentFirst = harness.addToBattlefieldAndReturn(player2, new AvenFisher());

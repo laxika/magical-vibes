@@ -13,7 +13,7 @@ public class Despondency extends Card {
 
     public Despondency() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(-2, 0, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(-2, 0, GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                 new ReturnSourceCardFromGraveyardToOwnerHandEffect());
     }

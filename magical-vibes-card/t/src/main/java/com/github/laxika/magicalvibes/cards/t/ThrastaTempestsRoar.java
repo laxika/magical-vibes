@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -18,14 +17,14 @@ public class ThrastaTempestsRoar extends Card {
 
     public ThrastaTempestsRoar() {
         // This spell costs {3} less to cast for each other spell cast this turn.
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new Scaled(new SpellsCastThisTurn(CountScope.ANY_PLAYER), 3)));
 
         // Trample over planeswalkers (CR 702.19c); Scryfall lists no keyword for it.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE_OVER_PLANESWALKERS, GrantScope.SELF));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE_OVER_PLANESWALKERS, GrantScope.SELF));
 
         // Thrasta has hexproof as long as it entered the battlefield this turn.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceEnteredBattlefieldThisTurn(),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
     }

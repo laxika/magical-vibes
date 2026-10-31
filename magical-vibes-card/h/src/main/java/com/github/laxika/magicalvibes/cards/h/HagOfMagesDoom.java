@@ -15,7 +15,7 @@ public class HagOfMagesDoom extends Card {
 
     public HagOfMagesDoom() {
         // Warlocks you control have "Ward—Pay 2 life."
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysLifeEffect(new Fixed(2)),
                 GrantScope.ALL_OWN_CREATURES,

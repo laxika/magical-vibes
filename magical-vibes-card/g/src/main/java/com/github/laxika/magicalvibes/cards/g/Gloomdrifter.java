@@ -20,7 +20,7 @@ public class Gloomdrifter extends Card {
     public Gloomdrifter() {
         // Threshold — as long as there are seven or more cards in your graveyard,
         // this creature has "When this creature enters, nonblack creatures get -2/-2 until end of turn."
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
                 new GrantTriggeredAbilityEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new BoostAllCreaturesEffect(-2, -2,

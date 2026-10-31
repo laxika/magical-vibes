@@ -24,7 +24,7 @@ public class ThornbiteStaff extends Card {
 
     public ThornbiteStaff() {
         // Equipped creature has "{2}, {T}: This creature deals 1 damage to any target."
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         "{2}",
@@ -36,7 +36,7 @@ public class ThornbiteStaff extends Card {
 
         // Equipped creature has "Whenever a creature dies, untap this creature." The granted trigger
         // belongs to the equipped creature, so its controller controls it and it untaps that creature.
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ANY_CREATURE_DIES,
                 new UntapPermanentsEffect(TapUntapScope.SELF),
                 GrantScope.EQUIPPED_CREATURE

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -421,7 +420,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         if (sourceCard == null) {
             return List.of();
         }
-        return sourceCard.getEffects(EffectSlot.STATIC).stream()
+        return sourceCard.getStaticEffects().stream()
                 .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
                 .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
                 .filter(AllowCastFromCardsExiledWithSourceEffect::persistsAfterSourceLeaves)

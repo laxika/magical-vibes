@@ -20,7 +20,7 @@ public class MageRingResponder extends Card {
 
     public MageRingResponder() {
         // This creature doesn't untap during your untap step.
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // {7}: Untap this creature.
         addActivatedAbility(new ActivatedAbility(

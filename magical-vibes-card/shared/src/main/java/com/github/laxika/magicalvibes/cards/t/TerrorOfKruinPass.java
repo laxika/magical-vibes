@@ -25,7 +25,7 @@ public class TerrorOfKruinPass extends Card {
         // Double strike is loaded from Scryfall.
 
         // Werewolves you control have menace (including self).
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 0, Set.of(Keyword.MENACE), GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(0, 0, Set.of(Keyword.MENACE), GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.WEREWOLF))));
 
         // At the beginning of each upkeep, if a player cast two or more spells last turn, transform Terror of Kruin Pass.

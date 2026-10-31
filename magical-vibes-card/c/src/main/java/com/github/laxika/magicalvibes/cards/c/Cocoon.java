@@ -27,7 +27,7 @@ public class Cocoon extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.TARGET));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutCountersOnSelfEffect(CounterType.PUPA, 3));
-        addEffect(EffectSlot.STATIC, DoesntUntapWithCounterEffect.enchanted(CounterType.PUPA));
+        addStaticEffect(DoesntUntapWithCounterEffect.enchanted(CounterType.PUPA));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new RemoveCounterOrSacrificeSelfEffect(CounterType.PUPA, List.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, GrantDuration.INDEFINITE)

@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "IKO", collectorNumber = "114")
@@ -48,7 +47,7 @@ public class EverquillPhoenix extends Card {
 
         addEffect(EffectSlot.ON_SELF_MUTATES, new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Feather", 0, 0, CardColor.RED, null,
-                List.of(), Set.of(), Set.of(), false, false, Map.of(), List.of(featherAbility),
+                List.of(), Set.of(), Set.of(), false, false, List.of(), List.of(featherAbility),
                 false, false, false, 0, Set.of()));
     }
 }

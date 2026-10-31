@@ -30,8 +30,8 @@ public class T45PowerArmor extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnergyCountersEffect(2));
 
         // Equipped creature gets +3/+3 and doesn't untap during its controller's untap step.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+        addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(DoesntUntapEffect.enchanted());
 
         // At the beginning of your upkeep, you may pay one energy counter. If you do, untap
         // equipped creature, then put your choice of a menace, trample, or lifelink counter on it.

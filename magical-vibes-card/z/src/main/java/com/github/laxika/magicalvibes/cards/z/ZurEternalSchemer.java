@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -30,7 +29,7 @@ public class ZurEternalSchemer extends Card {
                 new PermanentIsEnchantmentPredicate(),
                 new PermanentIsCreaturePredicate()
         ));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK, Keyword.HEXPROOF),
                 GrantScope.ALL_OWN_CREATURES,
                 enchantmentCreature));

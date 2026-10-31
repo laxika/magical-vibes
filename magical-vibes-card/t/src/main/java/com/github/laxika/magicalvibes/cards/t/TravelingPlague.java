@@ -18,7 +18,7 @@ public class TravelingPlague extends Card {
     public TravelingPlague() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.PLAGUE))
-                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                .addStaticEffect(new AttachedBoostEffect(
                         new Scaled(new CountersOnSource(CounterType.PLAGUE), -1),
                         new Scaled(new CountersOnSource(CounterType.PLAGUE), -1),
                         GrantScope.ENCHANTED_CREATURE))

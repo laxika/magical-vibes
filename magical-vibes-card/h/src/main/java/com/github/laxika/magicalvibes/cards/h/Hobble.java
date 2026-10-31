@@ -17,7 +17,7 @@ public class Hobble extends Card {
 
     public Hobble() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.BLACK)),
                         new EnchantedCreatureCantAttackOrBlockEffect(),
                         new EnchantedCreatureCantAttackOrBlockEffect(true, false)));

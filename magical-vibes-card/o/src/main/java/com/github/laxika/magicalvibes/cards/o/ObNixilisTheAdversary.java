@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CasualtyCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -26,7 +27,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SNC", collectorNumber = "206")
@@ -55,8 +55,7 @@ public class ObNixilisTheAdversary extends Card {
                 -2,
                 List.of(new CreateTokenEffect(
                         1, "Devil", 1, 1, CardColor.RED, List.of(CardSubtype.DEVIL),
-                        Set.of(), Set.of(), Map.of(
-                                EffectSlot.ON_DEATH, new DealDamageToAnyTargetEffect(1)))),
+                        Set.of(), Set.of(), List.of(LegacySlots.triggered(EffectSlot.ON_DEATH, new DealDamageToAnyTargetEffect(1))))),
                 "−2: Create a 1/1 red Devil creature token with \"When this token dies, it deals 1 damage to any target.\""
         ));
 

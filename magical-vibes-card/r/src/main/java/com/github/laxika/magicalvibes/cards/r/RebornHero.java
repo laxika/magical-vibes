@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 public class RebornHero extends Card {
 
     public RebornHero() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_DEATH,

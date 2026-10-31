@@ -29,7 +29,7 @@ import java.util.List;
 public class BlossomingSands extends Card {
 
     public BlossomingSands() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(1));
 
         addActivatedAbility(new ActivatedAbility(

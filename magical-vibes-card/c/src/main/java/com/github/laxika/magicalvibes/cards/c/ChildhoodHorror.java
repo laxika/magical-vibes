@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
@@ -15,9 +14,9 @@ public class ChildhoodHorror extends Card {
 
     public ChildhoodHorror() {
         var threshold = new GraveyardCardThreshold(7, null);
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new StaticBoostEffect(2, 2, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new CantBlockUnlessEffect(
+        addStaticEffect(new CantBlockUnlessEffect(
                 new NotCondition(threshold), "there are fewer than seven cards in your graveyard"));
     }
 }

@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MRD", collectorNumber = "198")
@@ -47,7 +46,7 @@ public class LightningCoils extends Card {
                                 Set.of(),
                                 false,
                                 false,
-                                Map.of(),
+                                List.of(),
                                 List.of(),
                                 false,
                                 true,

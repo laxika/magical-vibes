@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.AradeshTheFounderEffect;
 public class AradeshTheFounder extends Card {
 
     public AradeshTheFounder() {
-        addEffect(EffectSlot.STATIC, new AradeshTheFounderEffect());
+        addEffect(EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS, new AradeshTheFounderEffect());
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -19,7 +18,7 @@ import java.util.List;
 public class TorrentOfLava extends Card {
 
     public TorrentOfLava() {
-        addEffect(EffectSlot.STATIC, new WrappedStackStaticEffect(new GrantActivatedAbilityEffect(
+        addStaticEffect(new WrappedStackStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null,
                         List.of(new PreventNextDamageToSourceFromCardEffect()),
                         "Tap: Prevent the next 1 damage that would be dealt to this creature by Torrent of Lava this turn."),

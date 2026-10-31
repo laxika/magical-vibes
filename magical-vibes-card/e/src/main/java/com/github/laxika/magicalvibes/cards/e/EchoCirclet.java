@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class EchoCirclet extends Card {
 
     public EchoCirclet() {
-        addEffect(EffectSlot.STATIC, new GrantAdditionalBlockEffect(1));
+        addStaticEffect(new GrantAdditionalBlockEffect(1));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

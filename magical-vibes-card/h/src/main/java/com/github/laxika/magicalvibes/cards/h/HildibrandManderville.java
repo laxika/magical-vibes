@@ -17,7 +17,7 @@ public class HildibrandManderville extends Card {
     public HildibrandManderville() {
         setBackFaceCard(new GentlemansRise());
         addCastingOption(new AdventureCast("{2}{B}"));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentIsTokenPredicate()));
         // The "may" is the later cast; the permission itself is granted when the trigger resolves.
         addEffect(EffectSlot.ON_DEATH, new AllowCastSourceAsAdventureFromGraveyardUntilNextTurnEffect());

@@ -106,8 +106,7 @@ public class CityInABottle extends Card {
     ));
 
     public CityInABottle() {
-        addEffect(EffectSlot.STATIC,
-                new SpellsAndLandsWithSpecifiedNamesCantBePlayedEffect(ARABIAN_NIGHTS_CARD_NAMES));
+        addStaticEffect(new SpellsAndLandsWithSpecifiedNamesCantBePlayedEffect(ARABIAN_NIGHTS_CARD_NAMES));
         addEffect(EffectSlot.STATE_TRIGGERED, StateTriggerEffect.whenBattlefieldHasAtLeast(
                 1,
                 OTHER_ARABIAN_NIGHTS_PERMANENT,

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 public class AkoumFirebird extends Card {
 
     public AkoumFirebird() {
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD,
                 new MayPayManaEffect("{4}{R}{R}",
                         ReturnCardFromGraveyardEffect.builder()

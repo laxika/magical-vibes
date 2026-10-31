@@ -69,14 +69,13 @@ public class SpecializeLukaminaEffectHandler implements NormalEffectHandlerBean 
                         .bindEffect(lockEffect);
                 specializationTrigger = List.of(tapEffect, lockEffect);
             }
-            case BLACK -> specialized.addEffect(EffectSlot.STATIC, new MustBeBlockedIfAbleEffect());
+            case BLACK -> specialized.addStaticEffect(new MustBeBlockedIfAbleEffect());
             case RED -> {
                 CardEffect wolfTokenEffect = wolfTokenEffect();
                 specialized.addEffect(EffectSlot.ON_ATTACK, wolfTokenEffect);
                 specializationTrigger = List.of(wolfTokenEffect);
             }
-            case GREEN -> specialized.addEffect(EffectSlot.STATIC,
-                    new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), GrantScope.OWN_CREATURES));
+            case GREEN -> specialized.addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), GrantScope.OWN_CREATURES));
             default -> throw new IllegalStateException("Unsupported Lukamina specialization color: "
                     + specialize.color());
         }

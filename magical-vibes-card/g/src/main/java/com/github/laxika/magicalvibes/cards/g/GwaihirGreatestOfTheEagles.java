@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -19,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "LTC", collectorNumber = "15")
@@ -47,7 +47,7 @@ public class GwaihirGreatestOfTheEagles extends Card {
                 CardColor.WHITE, null,
                 List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of(),
                 false, false,
-                Map.of(EffectSlot.ON_ATTACK, birdAttackTrigger), List.of(),
+                List.of(LegacySlots.triggered(EffectSlot.ON_ATTACK, birdAttackTrigger)), List.of(),
                 false, false, false, 0, Set.of())
                 .withTokenTargetFilter(attackingCreature);
         addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(

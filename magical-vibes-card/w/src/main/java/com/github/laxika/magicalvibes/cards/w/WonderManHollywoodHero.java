@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraPowerUpActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
@@ -14,7 +13,7 @@ import java.util.List;
 public class WonderManHollywoodHero extends Card {
 
     public WonderManHollywoodHero() {
-        addEffect(EffectSlot.STATIC, new AllowExtraPowerUpActivationEffect());
+        addStaticEffect(new AllowExtraPowerUpActivationEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
@@ -23,7 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class StormcarvedCoast extends Card {
 
     public StormcarvedCoast() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCountAtMost(1, new PermanentIsLandPredicate()), new EntersTappedEffect()));
 
         // {T}: Add {U}.

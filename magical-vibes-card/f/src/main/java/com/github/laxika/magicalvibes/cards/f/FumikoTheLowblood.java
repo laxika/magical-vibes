@@ -24,7 +24,7 @@ public class FumikoTheLowblood extends Card {
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(attackingCreatures));
 
         // Creatures your opponents control attack each combat if able.
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesMustAttackEffect(
+        addStaticEffect(new MatchingCreaturesMustAttackEffect(
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
     }
 }

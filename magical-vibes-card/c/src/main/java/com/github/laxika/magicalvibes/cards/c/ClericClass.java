@@ -28,7 +28,7 @@ import java.util.List;
 public class ClericClass extends Card {
 
     public ClericClass() {
-        addEffect(EffectSlot.STATIC, new AdditionalLifeGainEffect(1));
+        addStaticEffect(new AdditionalLifeGainEffect(1));
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
                 ConditionalEffect.atTriggerTime(new SourceClassLevelAtLeast(2),
                 PutCounterOnTargetPermanentEffect.withTargetRestriction(

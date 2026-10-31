@@ -24,7 +24,7 @@ import java.util.List;
 public class ThassaGodOfTheSea extends Card {
 
     public ThassaGodOfTheSea() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorAtLeast(ManaColor.BLUE, 5)),
                 new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ScryEffect(1));

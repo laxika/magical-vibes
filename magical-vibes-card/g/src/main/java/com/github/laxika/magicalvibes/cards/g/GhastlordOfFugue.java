@@ -14,7 +14,7 @@ public class GhastlordOfFugue extends Card {
 
     public GhastlordOfFugue() {
         // This creature can't be blocked.
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
 
         // Whenever this creature deals combat damage to a player, that player reveals their hand.
         // You choose a card from it. That player exiles that card. (The damaged player is supplied

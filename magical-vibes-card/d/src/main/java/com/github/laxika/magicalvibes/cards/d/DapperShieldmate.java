@@ -17,7 +17,7 @@ public class DapperShieldmate extends Card {
     public DapperShieldmate() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new StaticBoostEffect(2, 0, GrantScope.SELF)));
     }
 }

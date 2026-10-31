@@ -23,11 +23,11 @@ public class BalefireLiege extends Card {
 
     public BalefireLiege() {
         // Other red creatures you control get +1/+1. (OWN_CREATURES scope excludes the source itself.)
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentColorInPredicate(Set.of(CardColor.RED))));
 
         // Other white creatures you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))));
 
         // Whenever you cast a red spell, this creature deals 3 damage to target player or planeswalker.

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantEncoreToArtifactCreatureCardsEffect;
 
 @CardRegistration(set = "BRC", collectorNumber = "10")
@@ -10,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantEncoreToArtifactCreature
 public class WireSurgeons extends Card {
 
     public WireSurgeons() {
-        addEffect(EffectSlot.STATIC, new GrantEncoreToArtifactCreatureCardsEffect());
+        addStaticEffect(new GrantEncoreToArtifactCreatureCardsEffect());
     }
 }

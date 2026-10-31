@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAsEntersOrGraveyardEffect;
@@ -18,7 +17,7 @@ import java.util.List;
 public class ScorchedRuins extends Card {
 
     public ScorchedRuins() {
-        addEffect(EffectSlot.STATIC, new SacrificePermanentAsEntersOrGraveyardEffect(
+        addStaticEffect(new SacrificePermanentAsEntersOrGraveyardEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentNotPredicate(new PermanentIsTappedPredicate())

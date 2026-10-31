@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class GandalfFriendOfTheShire extends Card {
 
     public GandalfFriendOfTheShire() {
-        addEffect(EffectSlot.STATIC,
-                new GrantFlashToCardTypeEffect(new CardTypePredicate(CardType.SORCERY)));
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardTypePredicate(CardType.SORCERY)));
         addEffect(EffectSlot.ON_CONTROLLER_TEMPTS_RING, new DrawCardEffect());
     }
 }

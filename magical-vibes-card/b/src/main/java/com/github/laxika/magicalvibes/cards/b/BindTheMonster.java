@@ -18,6 +18,6 @@ public class BindTheMonster extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                         new TapPermanentsEffect(TapUntapScope.ENCHANTED),
                         new EnchantedCreatureDealsPowerDamageToControllerEffect()))
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+                .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

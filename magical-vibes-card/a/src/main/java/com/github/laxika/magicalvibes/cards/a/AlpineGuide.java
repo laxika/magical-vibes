@@ -22,7 +22,7 @@ public class AlpineGuide extends Card {
                         new CardSubtypePredicate(CardSubtype.MOUNTAIN),
                         LibrarySearchDestination.BATTLEFIELD_TAPPED),
                         "Search your library for a Mountain card?"));
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                 new SacrificePermanentsEffect(1,
                         new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),

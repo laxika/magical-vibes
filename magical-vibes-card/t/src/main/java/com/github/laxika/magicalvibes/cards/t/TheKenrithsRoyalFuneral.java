@@ -37,7 +37,7 @@ public class TheKenrithsRoyalFuneral extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(greatestExiledManaValue));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new LoseLifeEffect(greatestExiledManaValue, LoseLifeRecipient.CONTROLLER));
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSupertypePredicate(CardSupertype.LEGENDARY),
                 new CardsExiledWithSource(), CostModificationScope.SELF));
     }

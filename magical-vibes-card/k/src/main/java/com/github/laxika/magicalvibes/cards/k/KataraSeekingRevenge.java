@@ -30,6 +30,6 @@ public class KataraSeekingRevenge extends Card {
 
         CardsInGraveyard lessons = new CardsInGraveyard(
                 new CardSubtypePredicate(CardSubtype.LESSON), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(lessons, lessons));
+        addStaticEffect(new BoostSelfEffect(lessons, lessons));
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -17,7 +16,7 @@ import java.util.Set;
 public class ConquerorsPledge extends Card {
 
     public ConquerorsPledge() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{6}"));
+        addStaticEffect(new KickerEffect("{6}"));
         addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 new CreateTokenEffect(6, "Kor Soldier", 1, 1,
                         CardColor.WHITE, List.of(CardSubtype.KOR, CardSubtype.SOLDIER),

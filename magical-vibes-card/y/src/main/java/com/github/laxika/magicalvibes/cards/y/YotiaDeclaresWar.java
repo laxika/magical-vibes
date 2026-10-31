@@ -25,7 +25,7 @@ import java.util.Set;
 public class YotiaDeclaresWar extends Card {
 
     public YotiaDeclaresWar() {
-        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
+        addStaticEffect(new ReadAheadEffect(false));
 
         addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(
                 1, "Ornithopter", 0, 2, null,

@@ -13,7 +13,7 @@ public class EmberwildeCaliph extends Card {
 
     public EmberwildeCaliph() {
         // This creature attacks each combat if able.
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
 
         // Whenever this creature deals damage, you lose that much life.
         addEffect(EffectSlot.ON_SELF_DEALS_DAMAGE, new LoseLifeEffect(new EventValue(), LoseLifeRecipient.CONTROLLER, false));

@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class CarrionGrub extends Card {
 
     public CarrionGrub() {
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(
+        addStaticEffect(new BoostSelfEffect(
                 new GreatestPowerAmongCardsInGraveyard(
                         new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
                 new Fixed(0)));

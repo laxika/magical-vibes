@@ -15,8 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 public class GrapplingHook extends Card {
 
     public GrapplingHook() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK,
                 new MayEffect(new MustBlockSourceEffect(null),
                         "Have target creature block it this turn if able?"));

@@ -22,7 +22,7 @@ public class AuntiesSnitch extends Card {
 
     public AuntiesSnitch() {
         // This creature can't block.
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
 
         // Prowl {1}{B}: cast for this cost if you dealt combat damage to a player this turn with a
         // Goblin or Rogue.

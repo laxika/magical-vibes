@@ -13,7 +13,7 @@ public class StormCauldron extends Card {
 
     public StormCauldron() {
         // Each player may play an additional land during each of their turns.
-        addEffect(EffectSlot.STATIC, new EachPlayerPlaysAdditionalLandEffect());
+        addStaticEffect(new EachPlayerPlaysAdditionalLandEffect());
         // Whenever a land is tapped for mana, return it to its owner's hand.
         addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new ReturnTappedLandToHandEffect());
     }

@@ -19,8 +19,7 @@ public class DragonScales extends Card {
 
     public DragonScales() {
         target(TargetFilters.creature());
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 2, Set.of(Keyword.VIGILANCE), GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 2, Set.of(Keyword.VIGILANCE), GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardMinManaValuePredicate(6),

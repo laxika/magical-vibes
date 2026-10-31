@@ -44,14 +44,30 @@ public record GrantEffectToTargetEffect(
         this(slot, grantedEffect, EffectDuration.PERMANENT, true);
     }
 
+    /** The grant of {@code grantedAbility}, such as a static ability, which has no slot. */
+    public GrantEffectToTargetEffect(Ability grantedAbility) {
+        this(grantedAbility, EffectDuration.PERMANENT, true);
+    }
+
     /** Grant with an explicit duration, skipping equal existing grants by default. */
     public GrantEffectToTargetEffect(EffectSlot slot, CardEffect grantedEffect, EffectDuration duration) {
         this(slot, grantedEffect, duration, true);
     }
 
+    /** The grant of {@code grantedAbility}, such as a static ability, which has no slot. */
+    public GrantEffectToTargetEffect(Ability grantedAbility, EffectDuration duration) {
+        this(grantedAbility, duration, true);
+    }
+
     public GrantEffectToTargetEffect(EffectSlot slot, CardEffect grantedEffect, EffectDuration duration,
                                      boolean skipIfAlreadyPresent) {
         this(slot, grantedEffect, duration, skipIfAlreadyPresent, GrantScope.TARGET);
+    }
+
+    /** The grant of {@code grantedAbility}, such as a static ability, which has no slot. */
+    public GrantEffectToTargetEffect(Ability grantedAbility, EffectDuration duration,
+                                     boolean skipIfAlreadyPresent) {
+        this(grantedAbility, duration, skipIfAlreadyPresent, GrantScope.TARGET);
     }
 
     /** Indefinite grant to the source permanent (Kellan, Planar Trailblazer). */

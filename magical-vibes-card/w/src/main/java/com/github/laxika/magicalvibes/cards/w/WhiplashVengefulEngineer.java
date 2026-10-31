@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class WhiplashVengefulEngineer extends Card {
 
     public WhiplashVengefulEngineer() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         AttachmentsOnSource equipmentCount = new AttachmentsOnSource(false, true);
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(new Equipped(),
                 SequenceEffect.of(

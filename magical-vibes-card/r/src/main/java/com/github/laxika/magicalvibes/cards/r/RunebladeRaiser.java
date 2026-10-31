@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 public class RunebladeRaiser extends Card {
 
     public RunebladeRaiser() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_DEATH,
                 new ReturnSourceCardFromGraveyardToBattlefieldEffect(false, false, true));
     }

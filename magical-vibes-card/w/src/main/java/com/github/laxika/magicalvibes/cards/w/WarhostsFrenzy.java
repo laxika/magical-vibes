@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilit
 public class WarhostsFrenzy extends Card {
 
     public WarhostsFrenzy() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{B}"));
+        addStaticEffect(new KickerEffect("{B}"));
         addSpellEffect(new BoostAllOwnCreaturesEffect(2, 0));
         addSpellEffect(new ConditionalEffect(new Kicked(),
                 new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(

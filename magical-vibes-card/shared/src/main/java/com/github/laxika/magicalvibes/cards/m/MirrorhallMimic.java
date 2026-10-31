@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "68")
@@ -20,7 +20,7 @@ public class MirrorhallMimic extends Card {
         setBackFaceCard(new GhastlyMimicry());
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
-                new PermanentIsCreaturePredicate(), "creature", Set.of(CardSubtype.SPIRIT), Map.of()));
+                new PermanentIsCreaturePredicate(), "creature", Set.of(CardSubtype.SPIRIT), List.of()));
         addCastingOption(new DisturbCast("{3}{U}{U}"));
     }
 

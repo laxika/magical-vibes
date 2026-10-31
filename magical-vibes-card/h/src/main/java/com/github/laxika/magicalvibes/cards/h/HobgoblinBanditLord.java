@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -21,7 +20,7 @@ public class HobgoblinBanditLord extends Card {
 
     public HobgoblinBanditLord() {
         var goblinPermanent = new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, goblinPermanent));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, goblinPermanent));
 
         var goblinsEntered = new PermanentsEnteredBattlefieldThisTurn(
                 new CardSubtypePredicate(CardSubtype.GOBLIN), CountScope.CONTROLLER);

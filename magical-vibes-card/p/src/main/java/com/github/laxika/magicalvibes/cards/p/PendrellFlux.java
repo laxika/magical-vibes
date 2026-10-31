@@ -17,7 +17,7 @@ public class PendrellFlux extends Card {
 
     public PendrellFlux() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.UPKEEP_TRIGGERED,
                         new ForcedCostOrElseEffect(
                                 PayManaCost.forSourceManaCost(),

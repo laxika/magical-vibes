@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "947")
@@ -26,7 +25,7 @@ public class GrandCrescendo extends Card {
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, new XValue(), "Citizen", 1, 1, CardColor.GREEN,
                 Set.of(CardColor.GREEN, CardColor.WHITE), List.of(CardSubtype.CITIZEN), Set.of(), Set.of(),
-                false, false, Map.of(), List.of(), false, false, false, 0, Set.of()));
+                false, false, List.of(), List.of(), false, false, false, 0, Set.of()));
         addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_CREATURES));
     }
 }

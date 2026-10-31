@@ -27,7 +27,7 @@ import java.util.Set;
 public class PiaNalaarConsulOfRevival extends Card {
 
     public PiaNalaarConsulOfRevival() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.THOPTER)));
 
         CardEffect createThopter = new CreateTokenEffect("Thopter", 1, 1, null,

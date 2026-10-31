@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -20,7 +19,7 @@ import java.util.List;
 public class RingOfGix extends Card {
 
     public RingOfGix() {
-        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{3}"));
+        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{3}"));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

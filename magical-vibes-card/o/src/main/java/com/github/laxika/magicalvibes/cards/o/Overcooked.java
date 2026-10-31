@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class Overcooked extends Card {
 
     public Overcooked() {
-        addEffect(EffectSlot.STATIC, new PlayersCantGainLifeEffect());
+        addStaticEffect(new PlayersCantGainLifeEffect());
 
         PermanentEnteredThisTurn celebration = new PermanentEnteredThisTurn(
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)), 2);

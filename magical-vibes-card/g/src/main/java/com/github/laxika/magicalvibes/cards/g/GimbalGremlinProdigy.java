@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOC", collectorNumber = "3")
@@ -28,7 +27,7 @@ import java.util.Set;
 public class GimbalGremlinProdigy extends Card {
 
     public GimbalGremlinProdigy() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsArtifactPredicate()));
@@ -49,7 +48,7 @@ public class GimbalGremlinProdigy extends Card {
                 Set.of(CardType.ARTIFACT),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

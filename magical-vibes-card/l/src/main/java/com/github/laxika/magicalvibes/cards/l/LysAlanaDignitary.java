@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class LysAlanaDignitary extends Card {
 
     public LysAlanaDignitary() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ELF))),
                 new IncreaseOwnCastCostUnlessRevealSubtypeEffect(2, CardSubtype.ELF)));
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -193,7 +194,7 @@ class AiTargetSelector {
 
         boolean isBeneficial = false;
         if (card.isAura()) {
-            for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : card.getStaticEffects()) {
                 if ((effect instanceof StaticCreatureBoostEffect boost
                         && (boost.scope() == GrantScope.ENCHANTED_CREATURE || boost.scope() == GrantScope.EQUIPPED_CREATURE))
                         || (effect instanceof KeywordGrantingEffect grant && grant.scope() == GrantScope.ENCHANTED_CREATURE)) {
@@ -220,7 +221,7 @@ class AiTargetSelector {
             // Detrimental aura — target opponent's most threatening creature that doesn't already have this effect
             List<Permanent> oppBattlefield = gameData.playerBattlefields.get(opponentId);
             if (oppBattlefield != null) {
-                List<Class<? extends CardEffect>> auraEffectClasses = card.getEffects(EffectSlot.STATIC).stream()
+                List<Class<? extends CardEffect>> auraEffectClasses = card.getStaticEffects().stream()
                         .map(CardEffect::getClass)
                         .toList();
                 UUID target = oppBattlefield.stream()

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
@@ -17,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "225")
@@ -34,9 +35,9 @@ public class GhoulcallersHarvest extends Card {
                 CardColor.BLACK, null,
                 List.of(CardSubtype.ZOMBIE), Set.of(Keyword.DECAYED), Set.of(),
                 false, false,
-                Map.of(
-                        EffectSlot.STATIC, new CantBlockEffect(),
-                        EffectSlot.ON_ATTACK, new SacrificeAtEndOfCombatEffect()),
+                List.of(
+                        StaticAbility.of(new CantBlockEffect()),
+                        LegacySlots.triggered(EffectSlot.ON_ATTACK, new SacrificeAtEndOfCombatEffect())),
                 List.of(), false, false, false, 0, Set.of()));
         addCastingOption(new FlashbackCast("{3}{B}{G}"));
     }

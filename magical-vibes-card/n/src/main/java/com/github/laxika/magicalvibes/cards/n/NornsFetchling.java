@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class NornsFetchling extends Card {
 
     public NornsFetchling() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
+        addStaticEffect(new ToxicEffect(1));
 
         ConjureCardNamedIntoHandEffect conjurePlains =
                 new ConjureCardNamedIntoHandEffect("LEA", "286", false);

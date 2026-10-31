@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class JunkWinder extends Card {
 
     public JunkWinder() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsTokenPredicate(), CountScope.CONTROLLER)));
 
         target(TargetFilters.nonlandPermanentAnOpponentControls()).addEffect(

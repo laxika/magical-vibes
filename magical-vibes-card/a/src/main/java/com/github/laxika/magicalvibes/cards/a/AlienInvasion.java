@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MSH", collectorNumber = "200")
@@ -38,6 +38,6 @@ public class AlienInvasion extends Card {
                 List.of(CardSubtype.ALIEN),
                 Set.of(Keyword.HASTE),
                 Set.of(),
-                Map.of(EffectSlot.STATIC, new MustAttackEffect()));
+                List.of(StaticAbility.of(new MustAttackEffect())));
     }
 }

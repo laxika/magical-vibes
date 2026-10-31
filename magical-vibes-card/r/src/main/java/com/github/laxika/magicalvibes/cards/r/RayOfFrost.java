@@ -28,10 +28,10 @@ public class RayOfFrost extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                         new EnchantedPermanentMatches(red, "enchanted creature is red"),
                         new TapPermanentsEffect(TapUntapScope.ENCHANTED)))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         red,
                         new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE),
                         null))
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+                .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

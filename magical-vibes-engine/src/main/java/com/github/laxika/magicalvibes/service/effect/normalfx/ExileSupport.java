@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.ExilePlayCostModifier;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -151,7 +150,7 @@ public class ExileSupport {
         if (sourceControllerId == null) {
             return;
         }
-        for (CardEffect staticEffect : sourceCard.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect staticEffect : sourceCard.getStaticEffects()) {
             if (!(staticEffect instanceof AllowCastFromCardsExiledWithSourceEffect permission)
                     || !permission.persistsAfterSourceLeaves()) {
                 continue;

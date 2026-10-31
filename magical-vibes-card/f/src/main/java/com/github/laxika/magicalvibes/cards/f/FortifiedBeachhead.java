@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
@@ -23,7 +22,7 @@ public class FortifiedBeachhead extends Card {
 
         // As this land enters, you may reveal a Soldier card from your hand. This land enters tapped
         // unless you revealed a Soldier card this way or you control a Soldier.
-        addEffect(EffectSlot.STATIC, new RevealSubtypeOrEntersTappedEffect(
+        addStaticEffect(new RevealSubtypeOrEntersTappedEffect(
                 CardSubtype.SOLDIER, new ControlsPermanent(soldier)));
 
         // {T}: Add {W} or {U}.

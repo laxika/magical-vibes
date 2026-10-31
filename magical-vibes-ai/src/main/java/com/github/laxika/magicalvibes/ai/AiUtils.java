@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -69,7 +68,7 @@ public final class AiUtils {
     static int minimumBlockersRequiredToBlock(GameData gameData, GameQueryService gameQueryService,
                                               Permanent attacker) {
         int minimum = gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) ? 2 : 1;
-        for (var effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+        for (var effect : attacker.getCard().getStaticEffects()) {
             if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction) {
                 minimum = Math.max(minimum, restriction.minBlockers());
             }

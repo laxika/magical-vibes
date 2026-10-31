@@ -24,7 +24,7 @@ public class BenalishKnightCounselorTriggerCollectorService {
     private final GameLogService gameLogService;
 
     @CollectsTrigger(value = GrantAdditionalPlusOnePlusOneCounterToNextCreatureSpellEffect.class,
-            slot = EffectSlot.STATIC)
+            slot = EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS)
     private boolean handleBoonTrigger(TriggerMatchContext match,
                                       GrantAdditionalPlusOnePlusOneCounterToNextCreatureSpellEffect effect,
                                       TriggerContext context) {

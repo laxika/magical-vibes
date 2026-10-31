@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "238")
@@ -29,6 +28,6 @@ public class RufusShinra extends Card {
                 new CreateTokenEffect(CardType.CREATURE, 1, "Darkstar", 2, 2,
                         CardColor.WHITE, Set.of(CardColor.WHITE, CardColor.BLACK),
                         List.of(CardSubtype.DOG), Set.of(), Set.of(),
-                        false, false, Map.of(), List.of(), false, false, true, 0, Set.of())));
+                        false, false, List.of(), List.of(), false, false, true, 0, Set.of())));
     }
 }

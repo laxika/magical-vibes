@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
 
 /**
@@ -23,6 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDu
 public class GrandAbolisher extends Card {
 
     public GrandAbolisher() {
-        addEffect(EffectSlot.STATIC, new OpponentsCantCastOrActivateDuringYourTurnEffect());
+        addStaticEffect(new OpponentsCantCastOrActivateDuringYourTurnEffect());
     }
 }

@@ -16,6 +16,6 @@ public class MirrorGolem extends Card {
                 new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
                         null, GraveyardSearchScope.ALL_GRAVEYARDS),
                 "Exile target card from a graveyard?"));
-        addEffect(EffectSlot.STATIC, new ProtectionFromImprintedCardTypesEffect());
+        addStaticEffect(new ProtectionFromImprintedCardTypesEffect());
     }
 }

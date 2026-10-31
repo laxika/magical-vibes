@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
@@ -17,7 +16,7 @@ import java.util.List;
 public class SecretTunnel extends Card {
 
     public SecretTunnel() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
         addActivatedAbility(new ActivatedAbility(
                 true,

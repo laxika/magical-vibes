@@ -39,7 +39,7 @@ public class ArcheryTraining extends Card {
         // creature, where X is the number of arrow counters on Archery Training." The counter count
         // reads the Aura (the granting permanent), not the creature — bound at activation in
         // ActivatedAbilityExecutionService.snapshotEffects. The damage source is the creature.
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,

@@ -25,7 +25,7 @@ public class PawpatchRecruit extends Card {
                 new PermanentControlledBySourceControllerPredicate()
         ));
 
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
+        addStaticEffect(new KickerEffect("{2}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,

@@ -20,7 +20,7 @@ import java.util.List;
 public class GruulBeastmaster extends Card {
 
     public GruulBeastmaster() {
-        addEffect(EffectSlot.STATIC, new RiotEffect());
+        addStaticEffect(new RiotEffect());
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

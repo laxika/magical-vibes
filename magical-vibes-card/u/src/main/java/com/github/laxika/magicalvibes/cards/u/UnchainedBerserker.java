@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -15,9 +14,7 @@ import java.util.Set;
 public class UnchainedBerserker extends Card {
 
     public UnchainedBerserker() {
-        addEffect(EffectSlot.STATIC,
-                new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(2, 0, GrantScope.SELF, new PermanentIsAttackingPredicate()));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.SELF, new PermanentIsAttackingPredicate()));
     }
 }

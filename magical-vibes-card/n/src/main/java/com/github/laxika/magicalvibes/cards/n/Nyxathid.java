@@ -17,6 +17,6 @@ public class Nyxathid extends Card {
         // This creature gets -1/-1 for each card in the chosen player's hand.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
         Scaled minusOnePerCard = new Scaled(new CardsInHand(CountScope.CHOSEN_PLAYER), -1);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(minusOnePerCard, minusOnePerCard));
+        addStaticEffect(new BoostSelfEffect(minusOnePerCard, minusOnePerCard));
     }
 }

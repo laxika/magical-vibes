@@ -31,7 +31,7 @@ public class PuresteelPaladin extends Card {
         addEffect(EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD,
                 new MayEffect(new DrawCardEffect(), "Draw a card?"));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Metalcraft(), 
+        addStaticEffect(new ConditionalEffect(new Metalcraft(), 
                 new GrantActivatedAbilityEffect(
                         new EquipActivatedAbility("{0}"),
                         GrantScope.OWN_PERMANENTS,

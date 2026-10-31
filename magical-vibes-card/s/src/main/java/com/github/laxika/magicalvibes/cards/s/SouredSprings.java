@@ -19,7 +19,7 @@ import java.util.List;
 public class SouredSprings extends Card {
 
     public SouredSprings() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

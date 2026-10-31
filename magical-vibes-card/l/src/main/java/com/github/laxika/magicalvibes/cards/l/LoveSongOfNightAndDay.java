@@ -32,7 +32,7 @@ import java.util.Set;
 public class LoveSongOfNightAndDay extends Card {
 
     public LoveSongOfNightAndDay() {
-        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
+        addStaticEffect(new ReadAheadEffect(false));
 
         // Chapter I: You and target opponent each draw two cards.
         addEffect(EffectSlot.SAGA_CHAPTER_I, new DrawCardEffect(2));

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.mayfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -165,7 +164,7 @@ public class BreathstealersCryptDrawReplacementHandler implements MayEffectHandl
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     if (effect instanceof BreathstealersCryptDrawReplacementEffect crypt) {
                         sources.add(new CryptSource(permanent.getCard(), permanent.getId(), pid, crypt));
                     }

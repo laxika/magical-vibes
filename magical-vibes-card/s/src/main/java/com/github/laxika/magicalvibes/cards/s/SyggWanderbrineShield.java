@@ -15,7 +15,7 @@ import java.util.EnumSet;
 public class SyggWanderbrineShield extends Card {
 
     public SyggWanderbrineShield() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
 
         // Whenever this creature transforms into Sygg, Wanderbrine Shield, target creature you control
         // gains protection from each color until your next turn.

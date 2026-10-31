@@ -38,7 +38,7 @@ public class CrampedVentsAccessMaze extends Card {
                         new DealDamageToTargetCreatureEffect(6),
                         new GainLifeEffect(new EventValue()))));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
                 new AlternativeCostForSpellsEffect(
                         null, null, null, true, true, false, false, true,

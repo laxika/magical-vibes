@@ -30,7 +30,7 @@ public class KnightlyValor extends Card {
                         "Knight", 2, 2, CardColor.WHITE,
                         List.of(CardSubtype.KNIGHT),
                         Set.of(Keyword.VIGILANCE), Set.of()))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+                .addStaticEffect(new StaticBoostEffect(
                         2, 2, Set.of(Keyword.VIGILANCE), GrantScope.ENCHANTED_CREATURE));
     }
 }

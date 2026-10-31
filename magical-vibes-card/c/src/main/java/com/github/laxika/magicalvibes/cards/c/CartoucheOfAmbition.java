@@ -32,8 +32,8 @@ public class CartoucheOfAmbition extends Card {
                 "Target must be a creature you control"
         ))
                 // Enchanted creature gets +1/+1 and has lifelink.
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ENCHANTED_CREATURE));
 
         // When this Aura enters, you may put a -1/-1 counter on target creature.
         target(TargetFilters.creature())

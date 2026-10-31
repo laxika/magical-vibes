@@ -21,7 +21,7 @@ public class PolisCrusher extends Card {
     public PolisCrusher() {
         SourceIsMonstrous monstrous = new SourceIsMonstrous();
 
-        addEffect(EffectSlot.STATIC, new ProtectionFromCardTypesEffect(Set.of(CardType.ENCHANTMENT)));
+        addStaticEffect(new ProtectionFromCardTypesEffect(Set.of(CardType.ENCHANTMENT)));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{R}{G}",

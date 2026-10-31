@@ -23,7 +23,7 @@ import java.util.List;
 public class KoseiPenitentWarlord extends Card {
 
     public KoseiPenitentWarlord() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new Enchanted(),
                         new Equipped(),

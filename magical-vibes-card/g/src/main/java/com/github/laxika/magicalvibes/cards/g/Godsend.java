@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class Godsend extends Card {
 
     public Godsend() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new CantCastSpellsWithSameNameAsExiledCardEffect(true));
+        addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new CantCastSpellsWithSameNameAsExiledCardEffect(true));
         addEffect(EffectSlot.ON_BLOCK,
                 new MayEffect(new ExileOneOfCombatOpponentsAndTrackWithSourceEffect(),
                         "Exile one of those creatures?"), TriggerMode.ONCE_PER_BLOCK);

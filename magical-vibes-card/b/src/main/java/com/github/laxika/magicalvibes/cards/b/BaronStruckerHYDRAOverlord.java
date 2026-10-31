@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class BaronStruckerHYDRAOverlord extends Card {
 
     public BaronStruckerHYDRAOverlord() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.VILLAIN), 1, CostModificationScope.SELF));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(

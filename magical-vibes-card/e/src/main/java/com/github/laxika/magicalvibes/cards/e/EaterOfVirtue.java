@@ -15,9 +15,8 @@ public class EaterOfVirtue extends Card {
     public EaterOfVirtue() {
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES,
                 new ExileTriggeringCreatureAndTrackWithSourceEffect());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GainKeywordsOfCardsExiledWithSourceToEquippedCreatureEffect());
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GainKeywordsOfCardsExiledWithSourceToEquippedCreatureEffect());
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

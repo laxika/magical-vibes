@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
@@ -22,10 +21,10 @@ public class AltarGolem extends Card {
         // Power and toughness are each equal to the number of creatures on the battlefield.
         PermanentCount creaturesOnBattlefield =
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(creaturesOnBattlefield, creaturesOnBattlefield));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(creaturesOnBattlefield, creaturesOnBattlefield));
 
         // This creature doesn't untap during your untap step.
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // Tap five untapped creatures you control: Untap this creature.
         addActivatedAbility(new ActivatedAbility(

@@ -18,8 +18,8 @@ public class Strandwalker extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LivingWeaponEffect());
 
         // Equipped creature gets +2/+4 and has reach
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 4, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.REACH, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 4, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.EQUIPPED_CREATURE));
 
         // Equip {4}
         addActivatedAbility(new EquipActivatedAbility("{4}"));

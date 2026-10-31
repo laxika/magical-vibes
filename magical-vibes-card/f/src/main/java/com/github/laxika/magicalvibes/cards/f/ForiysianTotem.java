@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -30,7 +29,7 @@ public class ForiysianTotem extends Card {
                         4, 4, List.of(CardSubtype.GIANT), Set.of(Keyword.TRAMPLE), CardColor.RED)),
                 "{4}{R}: This artifact becomes a 4/4 red Giant artifact creature with trample until end of turn."
         ));
-        addEffect(EffectSlot.STATIC, new GrantAdditionalBlockEffect(1, new PermanentAllOfPredicate(List.of(
+        addStaticEffect(new GrantAdditionalBlockEffect(1, new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsSourceCardPredicate()))));
     }

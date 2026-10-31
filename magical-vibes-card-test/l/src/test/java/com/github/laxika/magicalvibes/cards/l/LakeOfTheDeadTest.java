@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.b.BloodMoon;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -153,8 +152,7 @@ class LakeOfTheDeadTest extends BaseCardTest {
     @Test
     void lakeCanPayItsOwnSwampCost() {
         LakeOfTheDead lakeCard = new LakeOfTheDead();
-        lakeCard.addEffect(EffectSlot.STATIC,
-                new GrantSubtypeEffect(CardSubtype.SWAMP, GrantScope.SELF));
+        lakeCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.SWAMP, GrantScope.SELF));
         Permanent lake = harness.addToBattlefieldAndReturn(player1, lakeCard);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, lake)).contains(CardSubtype.SWAMP);

@@ -15,7 +15,7 @@ public class ShimmerwildsGrowth extends Card {
     public ShimmerwildsGrowth() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesChosenColorEffect())
+                .addStaticEffect(new EnchantedPermanentBecomesChosenColorEffect())
                 .addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
                         new AddManaOnEnchantedLandTapEffect(new AwardChosenColorManaEffect()));
     }

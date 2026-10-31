@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -19,7 +18,7 @@ import java.util.Set;
 public class BurrentonForgeTender extends Card {
 
     public BurrentonForgeTender() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.RED)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.RED)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

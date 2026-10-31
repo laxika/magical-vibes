@@ -16,7 +16,7 @@ public class TangleKelp extends Card {
     public TangleKelp() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentAttackedDuringControllersLastTurnPredicate(),
                         DoesntUntapEffect.enchanted(),
                         null));

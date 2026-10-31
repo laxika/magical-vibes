@@ -22,8 +22,7 @@ public class TrailOfTheMageRings extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
 
-        addEffect(EffectSlot.STATIC,
-                GrantSpellCastingAbilityToSpellsEffect.allPlayers(Keyword.REBOUND, instantOrSorcery));
+        addStaticEffect(GrantSpellCastingAbilityToSpellsEffect.allPlayers(Keyword.REBOUND, instantOrSorcery));
         addEffect(EffectSlot.CHAOS_TRIGGERED, new MayEffect(new SearchLibraryEffect(instantOrSorcery),
                 "Search your library for an instant or sorcery card?"));
     }

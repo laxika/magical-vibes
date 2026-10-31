@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OTJ", collectorNumber = "89")
@@ -25,13 +24,13 @@ public class GisaTheHellraiser extends Card {
         // Ward—{2}, Pay 2 life.
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2, 2));
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, Set.of(Keyword.MENACE), GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.MENACE), GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SKELETON, CardSubtype.ZOMBIE))));
 
         addEffect(EffectSlot.ON_CONTROLLER_COMMITS_CRIME, new OncePerTurnTriggerEffect(
                 new CreateTokenEffect(CardType.CREATURE, 2, "Zombie Rogue", 2, 2,
                         CardColor.BLUE, Set.of(CardColor.BLUE, CardColor.BLACK),
                         List.of(CardSubtype.ZOMBIE, CardSubtype.ROGUE), Set.of(), Set.of(),
-                        false, true, Map.of(), List.of(), false, false, false, 0, Set.of())));
+                        false, true, List.of(), List.of(), false, false, false, 0, Set.of())));
     }
 }

@@ -21,7 +21,7 @@ public class HornedLochWhale extends Card {
 
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
 
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new NotCondition(new ControllerTurn()), new EntersTappedEffect()));
     }
 

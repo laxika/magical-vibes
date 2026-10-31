@@ -28,6 +28,6 @@ public class EncaseInIce extends Card {
         ))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new TapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+                .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

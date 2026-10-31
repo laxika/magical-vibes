@@ -20,6 +20,6 @@ public class GideonsResolve extends Card {
                 "Search your library and/or graveyard for a card named Gideon, Martial Paragon?"
         ));
         // Creatures you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
     }
 }

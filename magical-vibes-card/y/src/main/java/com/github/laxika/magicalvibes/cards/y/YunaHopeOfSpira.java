@@ -33,17 +33,17 @@ public class YunaHopeOfSpira extends Card {
     private static final Set<Keyword> TURN_KEYWORDS = Set.of(Keyword.TRAMPLE, Keyword.LIFELINK);
 
     public YunaHopeOfSpira() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(TURN_KEYWORDS, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(TURN_KEYWORDS, GrantScope.ALL_OWN_CREATURES,
                         new PermanentIsEnchantmentPredicate())));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                         new CounterUnlessPaysEffect(2), GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                         new CounterUnlessPaysEffect(2), GrantScope.ALL_OWN_CREATURES,

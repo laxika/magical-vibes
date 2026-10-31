@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfSourceAttackingOpponentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
@@ -21,7 +20,7 @@ import java.util.Set;
 public class MistDancer extends Card {
 
     public MistDancer() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, Set.of(Keyword.FLYING), GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.FLYING), GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)));
 
         addGraveyardActivatedAbility(new ActivatedAbility(

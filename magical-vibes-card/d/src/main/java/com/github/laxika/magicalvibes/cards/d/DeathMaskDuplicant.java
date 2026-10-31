@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsExiledWithSourceEffect;
@@ -23,6 +22,6 @@ public class DeathMaskDuplicant extends Card {
                         new CardTypePredicate(CardType.CREATURE), GraveyardSearchScope.CONTROLLERS_GRAVEYARD)),
                 "{1}: Exile target creature card from your graveyard."
         ));
-        addEffect(EffectSlot.STATIC, new GainKeywordsOfCreatureCardsExiledWithSourceEffect());
+        addStaticEffect(new GainKeywordsOfCreatureCardsExiledWithSourceEffect());
     }
 }

@@ -29,7 +29,7 @@ public class GranGran extends Card {
                         SequenceEffect.of(new DrawCardEffect(1),
                                 new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(3, new CardSubtypePredicate(CardSubtype.LESSON)),
                 new ReduceCastCostForMatchingSpellsEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),

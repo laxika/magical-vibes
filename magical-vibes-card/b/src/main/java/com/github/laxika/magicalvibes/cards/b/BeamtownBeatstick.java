@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class BeamtownBeatstick extends Card {
 
     public BeamtownBeatstick() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
                 CreateTokenEffect.ofTreasureToken(1));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

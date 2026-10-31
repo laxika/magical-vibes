@@ -25,7 +25,7 @@ public class ScrutinyOfTheGuildpact extends Card {
                 new ChooseCardFromHandAndApplyPerpetualIncorporationEffect(
                         new CardTypePredicate(CardType.CREATURE), "{W}", detectiveToken()),
                 "Choose a creature card in your hand to perpetually incorporate {W}?"));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentIsMulticoloredPredicate()));
     }
 

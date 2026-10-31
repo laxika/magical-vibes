@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 
@@ -365,7 +366,7 @@ public class MulliganService {
         for (UUID playerId : pregameActionOrder) {
             // A Secret Mission's owner secretly chooses its mission before the game.
             for (Card card : gameData.playerCommandZones.getOrDefault(playerId, List.of())) {
-                for (CardEffect effect : card.getEffects(EffectSlot.COMMAND_ZONE_STATIC)) {
+                for (CardEffect effect : card.getStaticEffects(Zone.COMMAND)) {
                     if (effect instanceof SecretMissionEffect mission
                             && !gameData.secretMissionChoices.containsKey(card.getId())) {
                         gameData.pendingMayAbilities.add(new PendingMayAbility(

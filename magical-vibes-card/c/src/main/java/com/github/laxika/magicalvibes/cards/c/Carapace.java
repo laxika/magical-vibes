@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -19,7 +18,7 @@ import java.util.List;
 public class Carapace extends Card {
 
     public Carapace() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 2, GrantScope.ENCHANTED_CREATURE));
+        target(TargetFilters.creature()).addStaticEffect(new StaticBoostEffect(0, 2, GrantScope.ENCHANTED_CREATURE));
 
         // Sacrifice this Aura: Regenerate enchanted creature. The self RegenerateEffect on an Aura
         // resolves against the Aura's attachedTo permanent (the enchanted creature).

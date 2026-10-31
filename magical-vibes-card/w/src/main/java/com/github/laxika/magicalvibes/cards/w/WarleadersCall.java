@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class WarleadersCall extends Card {
 
     public WarleadersCall() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
     }

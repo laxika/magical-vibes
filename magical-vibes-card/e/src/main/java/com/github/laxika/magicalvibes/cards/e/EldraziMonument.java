@@ -23,7 +23,7 @@ import java.util.Set;
 public class EldraziMonument extends Card {
 
     public EldraziMonument() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1,
+        addStaticEffect(new StaticBoostEffect(1, 1,
                 Set.of(Keyword.FLYING, Keyword.INDESTRUCTIBLE), GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ForcedCostOrElseEffect(

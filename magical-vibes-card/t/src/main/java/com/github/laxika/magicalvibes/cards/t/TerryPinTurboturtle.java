@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.effect.AllActivatedAbilitiesCanBeActivatedAtInstantSpeedEffect;
@@ -42,6 +41,6 @@ public class TerryPinTurboturtle extends Card {
     }
 
     public TerryPinTurboturtle() {
-        addEffect(EffectSlot.STATIC, new AllActivatedAbilitiesCanBeActivatedAtInstantSpeedEffect());
+        addStaticEffect(new AllActivatedAbilitiesCanBeActivatedAtInstantSpeedEffect());
     }
 }

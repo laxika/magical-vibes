@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PrimalClayForm;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryCharacteristicsEffect;
@@ -139,27 +140,40 @@ public class PermanentCopierService {
             return original;
         }
         Card copy = original.createRuntimeCopy();
+        for (CardEffect effect : original.getStaticEffects()) {
+            CardEffect chosen = chosenModeEffect(copy, permanent, effect);
+            if (chosen != null) {
+                copy.addStaticEffect(chosen);
+            }
+        }
         for (EffectSlot slot : EffectSlot.values()) {
-            List<EffectRegistration> registrations = copy.getEffectRegistrations(slot);
-            if (registrations.isEmpty()) continue;
-            List<EffectRegistration> selectedEffects = new ArrayList<>();
-            for (EffectRegistration registration : registrations) {
-                if (registration.effect() instanceof ConditionalEffect conditional
-                        && conditional.condition() instanceof SourceHasChosenMode chosenMode
-                        && permanent.getChosenModeLabels().contains(chosenMode.mode())) {
-                    if (conditional.wrapped() instanceof SetBasePowerToughnessEffect set
-                            && set.scope() == GrantScope.SELF) {
-                        copy.setPower(set.power());
-                        copy.setToughness(set.toughness());
-                        continue;
-                    }
-                    selectedEffects.add(new EffectRegistration(conditional.wrapped(), registration.triggerMode(),
-                            registration.simultaneousWithPrevious()));
+            for (EffectRegistration registration : original.getEffectRegistrations(slot)) {
+                CardEffect chosen = chosenModeEffect(copy, permanent, registration.effect());
+                if (chosen != null) {
+                    copy.addEffect(slot, chosen, registration.triggerMode());
                 }
             }
-            registrations.addAll(0, selectedEffects);
         }
         return copy;
+    }
+
+    /**
+     * The effect that {@code effect} becomes on a copy when it applies only in a mode the copied
+     * permanent chose, or {@code null} when it doesn't depend on a chosen mode. A chosen base
+     * power and toughness is set on {@code copy} instead, so it is {@code null} too.
+     */
+    private static CardEffect chosenModeEffect(Card copy, Permanent permanent, CardEffect effect) {
+        if (!(effect instanceof ConditionalEffect conditional
+                && conditional.condition() instanceof SourceHasChosenMode chosenMode
+                && permanent.getChosenModeLabels().contains(chosenMode.mode()))) {
+            return null;
+        }
+        if (conditional.wrapped() instanceof SetBasePowerToughnessEffect set && set.scope() == GrantScope.SELF) {
+            copy.setPower(set.power());
+            copy.setToughness(set.toughness());
+            return null;
+        }
+        return conditional.wrapped();
     }
 
     /**
@@ -206,6 +220,9 @@ public class PermanentCopierService {
         boolean hasPTOverride = powerOverride != null || toughnessOverride != null;
         copy.addCastingCostsAndSpellEffectsFrom(target,
                 effect -> !hasPTOverride || !effect.isPowerToughnessDefining());
+        // CR 707.9d: when a copy effect provides specific P/T values,
+        // characteristic-defining abilities that define P/T are not copied
+        copy.addStaticAbilitiesFrom(target, effect -> !hasPTOverride || !effect.isPowerToughnessDefining());
         for (EffectSlot slot : EffectSlot.values()) {
             for (EffectRegistration reg : target.getEffectRegistrations(slot)) {
                 // CR 707.9d: when a copy effect provides specific P/T values,

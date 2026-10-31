@@ -14,8 +14,8 @@ public class HierophantBioTitan extends Card {
     public HierophantBioTitan() {
         // Ward {2}.
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.STATIC, new RemoveCountersForCostReductionEffect(2));
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new RemoveCountersForCostReductionEffect(2));
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtMostPredicate(2)));
     }
 }

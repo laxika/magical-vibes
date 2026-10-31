@@ -23,17 +23,16 @@ public class RuneOfMight extends Card {
     public RuneOfMight() {
         target(TargetFilters.permanent())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
                         new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), GrantScope.ENCHANTED_CREATURE),
                         null
                 ))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                         new BoostEquippedCreatureOfEnchantedEquipmentEffect(1, 1),
                         null
                 ))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect(Keyword.TRAMPLE));
+                .addStaticEffect(new GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect(Keyword.TRAMPLE));
     }
 }

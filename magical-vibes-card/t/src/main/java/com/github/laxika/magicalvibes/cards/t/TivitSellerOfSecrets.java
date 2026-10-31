@@ -13,6 +13,6 @@ public class TivitSellerOfSecrets extends Card {
     public TivitSellerOfSecrets() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CouncilDilemmaEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new CouncilDilemmaEffect());
-        addEffect(EffectSlot.STATIC, new MayVoteAdditionalTimeEffect());
+        addStaticEffect(new MayVoteAdditionalTimeEffect());
     }
 }

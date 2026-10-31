@@ -5,15 +5,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ONE", collectorNumber = "194")
@@ -33,7 +32,7 @@ public class ViralSpawning extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(EffectSlot.STATIC, new ToxicEffect(1)),
+                List.of(StaticAbility.of(new ToxicEffect(1))),
                 List.of(),
                 false,
                 false,

@@ -20,7 +20,7 @@ import java.util.List;
 public class AangMasterOfElements extends Card {
 
     public AangMasterOfElements() {
-        addEffect(EffectSlot.STATIC, new ReduceColoredCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceColoredCastCostForMatchingSpellsEffect(
                 new CardTruePredicate(), new ManaCost("{W}{U}{B}{R}{G}"),
                 CostModificationScope.SELF, true));
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new MayEffect(

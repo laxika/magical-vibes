@@ -705,7 +705,7 @@ public class CARDNAME extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        )).addEffect(EffectSlot.STATIC, new STATIC_EFFECT_CLASS(ARGS));
+        )).addStaticEffect(new STATIC_EFFECT_CLASS(ARGS));
     }
 }
 ```
@@ -794,7 +794,7 @@ public class CARDNAME extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        )).addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        )).addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         REQUIRES_TAP,
                         "ABILITY_MANA_COST_OR_NULL",

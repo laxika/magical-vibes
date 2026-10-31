@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 public class RiveteersDecoy extends Card {
 
     public RiveteersDecoy() {
-        addEffect(EffectSlot.STATIC, new MustBeBlockedIfAbleEffect());
+        addStaticEffect(new MustBeBlockedIfAbleEffect());
 
         addCastingOption(AlternateHandCast.blitz("{3}{G}"));
 

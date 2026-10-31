@@ -19,6 +19,6 @@ public class PithingNeedle extends Card {
 
     public PithingNeedle() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect());
+        addStaticEffect(new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect());
     }
 }

@@ -20,10 +20,10 @@ import java.util.Set;
 public class KangeeAerieKeeper extends Card {
 
     public KangeeAerieKeeper() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{X}{2}"));
+        addStaticEffect(new KickerEffect("{X}{2}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new PutCountersOnSelfEffect(CounterType.FEATHER, new XValue())));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, Set.of(), GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(), GrantScope.ALL_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.BIRD), CounterType.FEATHER));
     }
 }

@@ -20,6 +20,6 @@ public class DjeruWithEyesOpen extends Card {
                         "Search your library for a planeswalker card?"));
 
         // "If a source would deal damage to a planeswalker you control, prevent 1 of that damage."
-        addEffect(EffectSlot.STATIC, new PreventFixedDamageToPlaneswalkersYouControlEffect(1));
+        addStaticEffect(new PreventFixedDamageToPlaneswalkersYouControlEffect(1));
     }
 }

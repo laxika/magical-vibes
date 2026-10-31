@@ -47,7 +47,7 @@ public class DontWorryAboutIt extends Card {
         target(new HandCardPredicateTargetFilter(
                 new CardTruePredicate(), "Target must be a card in your hand"));
         addSpellEffect(new EnchantCardInHandEffect());
-        addEffect(EffectSlot.STATIC, new ReduceEnchantedHandCardCastCostEffect());
+        addStaticEffect(new ReduceEnchantedHandCardCastCostEffect());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new CopyEnchantedHandCardOnCastEffect());
     }
 }

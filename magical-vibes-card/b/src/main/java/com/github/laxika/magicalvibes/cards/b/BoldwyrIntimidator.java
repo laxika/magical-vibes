@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -19,7 +18,7 @@ public class BoldwyrIntimidator extends Card {
 
     public BoldwyrIntimidator() {
         // Cowards can't block Warriors.
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesCantBlockMatchingCreaturesEffect(
+        addStaticEffect(new MatchingCreaturesCantBlockMatchingCreaturesEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.COWARD),
                 new PermanentHasSubtypePredicate(CardSubtype.WARRIOR),
                 "Cowards can't block Warriors"));

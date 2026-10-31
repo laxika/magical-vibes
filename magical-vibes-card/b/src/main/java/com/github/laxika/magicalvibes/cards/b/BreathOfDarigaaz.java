@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -20,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class BreathOfDarigaaz extends Card {
 
     public BreathOfDarigaaz() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
+        addStaticEffect(new KickerEffect("{2}"));
         addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 new MassDamageEffect(1, false, true,
                         new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))),

@@ -22,7 +22,7 @@ import java.util.Set;
 public class RestlessFortress extends Card {
 
     public RestlessFortress() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

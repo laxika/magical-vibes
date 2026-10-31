@@ -21,8 +21,8 @@ public class VerdantEmbrace extends Card {
 
     public VerdantEmbrace() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.EACH_UPKEEP_TRIGGERED,
                         new CreateTokenEffect(
                                 "Saproling",

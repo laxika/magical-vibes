@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "577")
@@ -28,7 +27,7 @@ public class DalekIntensiveCare extends Card {
         CreateTokenEffect dalekToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Dalek", 3, 3, CardColor.BLACK, null,
                 List.of(CardSubtype.DALEK), Set.of(Keyword.MENACE), Set.of(CardType.ARTIFACT),
-                false, false, Map.of(), List.of(), false, false, false, 0,
+                false, false, List.of(), List.of(), false, false, false, 0,
                 Set.of(Keyword.HASTE));
         var nonDalekCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

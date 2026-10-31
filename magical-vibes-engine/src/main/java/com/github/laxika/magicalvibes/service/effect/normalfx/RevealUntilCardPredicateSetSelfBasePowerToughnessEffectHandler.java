@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -107,7 +106,7 @@ public class RevealUntilCardPredicateSetSelfBasePowerToughnessEffectHandler
     private CardPowerToughness currentPowerToughness(GameData gameData, Card card, UUID controllerId) {
         Permanent characteristicSource = new Permanent(card);
         AmountContext context = AmountContext.forStaticEffect(characteristicSource, controllerId);
-        for (CardEffect staticEffect : card.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect staticEffect : card.getStaticEffects()) {
             if (staticEffect instanceof SetPowerToughnessToAmountEffect setPowerToughness) {
                 return new CardPowerToughness(
                         amountEvaluationService.evaluate(gameData, setPowerToughness.power(), context),

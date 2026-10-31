@@ -18,8 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 public class GenjiGlove extends Card {
 
     public GenjiGlove() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(new FirstCombatPhase(), SequenceEffect.of(
                 new UntapPermanentsEffect(TapUntapScope.ENCHANTED),
                 new AdditionalCombatPhaseEffect(1))));

@@ -38,12 +38,12 @@ public class SarumanTheWhiteHand extends Card {
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN)),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ORC))
         ));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.WARD,
                 GrantScope.OWN_PERMANENTS,
                 goblinOrOrc
         ));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(2),
                 GrantScope.OWN_PERMANENTS,

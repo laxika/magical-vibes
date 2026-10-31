@@ -22,7 +22,7 @@ public class FaithboundJudge extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new NotCondition(new SourceCounterThreshold(3, CounterType.JUDGMENT)),
                 new PutCountersOnSelfEffect(CounterType.JUDGMENT)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.JUDGMENT),
                 new CanAttackAsThoughNoDefenderEffect()));
 

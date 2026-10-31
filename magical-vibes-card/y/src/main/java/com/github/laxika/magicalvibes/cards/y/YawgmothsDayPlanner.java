@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.y;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardEffect;
@@ -30,9 +29,9 @@ public class YawgmothsDayPlanner extends Card {
 
         // You may cast spells from your graveyard. Only mana produced by abilities that caused you to lose life
         // may be spent to cast spells this way.
-        addEffect(EffectSlot.STATIC, new CastSpellsFromGraveyardEffect(new CardTruePredicate(), true));
+        addStaticEffect(new CastSpellsFromGraveyardEffect(new CardTruePredicate(), true));
 
         // If a card would be put into your graveyard from anywhere, exile it instead.
-        addEffect(EffectSlot.STATIC, new ExileOwnCardsInsteadOfGraveyardEffect());
+        addStaticEffect(new ExileOwnCardsInsteadOfGraveyardEffect());
     }
 }

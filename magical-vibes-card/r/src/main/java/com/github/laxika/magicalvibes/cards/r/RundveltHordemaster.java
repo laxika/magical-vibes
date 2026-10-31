@@ -20,7 +20,7 @@ import java.util.List;
 public class RundveltHordemaster extends Card {
 
     public RundveltHordemaster() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)));
 
         ExileTopCardsMayCastMatchingUntilNextTurnEffect deathEffect =

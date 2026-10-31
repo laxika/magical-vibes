@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SeekDragonAndPerpetuallyBoost
 public class DarigaazsWhelp extends Card {
 
     public DarigaazsWhelp() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{R}"));
+        addStaticEffect(new KickerEffect("{1}{R}"));
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new PerpetuallyBoostDrawnDragonEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new Kicked(), new SeekDragonAndPerpetuallyBoostEffect()));

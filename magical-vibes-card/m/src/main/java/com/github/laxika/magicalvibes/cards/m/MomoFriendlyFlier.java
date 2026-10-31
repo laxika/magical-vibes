@@ -21,7 +21,7 @@ import java.util.List;
 public class MomoFriendlyFlier extends Card {
 
     public MomoFriendlyFlier() {
-        addEffect(EffectSlot.STATIC, new ReduceFirstMatchingSpellCastCostEffect(
+        addStaticEffect(new ReduceFirstMatchingSpellCastCostEffect(
                 new CardAllOfPredicate(List.of(
                         new CardNotPredicate(new CardSubtypePredicate(CardSubtype.LEMUR)),
                         new CardTypePredicate(CardType.CREATURE),

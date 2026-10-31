@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 public class SulfuricVortex extends Card {
 
     public SulfuricVortex() {
-        addEffect(EffectSlot.STATIC, new PlayersCantGainLifeEffect());
+        addStaticEffect(new PlayersCantGainLifeEffect());
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new DealDamageToPlayersEffect(2, DamageRecipient.ACTIVE_PLAYER));
     }

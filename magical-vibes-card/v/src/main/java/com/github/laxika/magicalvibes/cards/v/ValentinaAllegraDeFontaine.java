@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class ValentinaAllegraDeFontaine extends Card {
 
     public ValentinaAllegraDeFontaine() {
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(
+        addStaticEffect(new GrantSubtypeEffect(
                 CardSubtype.HERO,
                 GrantScope.OWN_CREATURES,
                 false,

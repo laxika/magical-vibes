@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -17,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "AFC", collectorNumber = "16")
@@ -32,7 +32,7 @@ public class MinnWilyIllusionist extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD,
                 new CreateTokenEffect(1, "Illusion", 1, 1, CardColor.BLUE,
                         List.of(CardSubtype.ILLUSION), Set.of(), Set.of(),
-                        Map.of(EffectSlot.STATIC, illusionBoost)));
+                        List.of(StaticAbility.of(illusionBoost))));
 
         TriggeringPermanentConditionalEffect illusionDies = new TriggeringPermanentConditionalEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.ILLUSION),

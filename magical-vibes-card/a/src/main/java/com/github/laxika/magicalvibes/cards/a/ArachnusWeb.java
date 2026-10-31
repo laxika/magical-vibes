@@ -20,8 +20,8 @@ public class ArachnusWeb extends Card {
         // Enchant creature
         target(TargetFilters.creature())
                 // Enchanted creature can't attack or block, and its activated abilities can't be activated.
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateAbilitiesEffect())
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
+                .addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect())
                 // At the beginning of the end step, if enchanted creature's power is 4 or greater,
                 // destroy this Aura.
                 .addEffect(EffectSlot.END_STEP_TRIGGERED,

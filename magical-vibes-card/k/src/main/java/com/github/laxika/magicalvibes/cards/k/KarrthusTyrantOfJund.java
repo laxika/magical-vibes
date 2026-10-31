@@ -25,7 +25,7 @@ public class KarrthusTyrantOfJund extends Card {
                 new UntapPermanentsEffect(TapUntapScope.ALL_PERMANENTS, new PermanentHasSubtypePredicate(CardSubtype.DRAGON)));
 
         // Other Dragon creatures you control have haste.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.DRAGON)));
     }
 }

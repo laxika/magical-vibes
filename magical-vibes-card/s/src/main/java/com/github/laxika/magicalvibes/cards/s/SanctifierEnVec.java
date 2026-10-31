@@ -24,9 +24,9 @@ public class SanctifierEnVec extends Card {
                 new CardColorPredicate(CardColor.RED)
         ));
 
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(protectedColors));
+        addStaticEffect(new ProtectionFromColorsEffect(protectedColors));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileGraveyardCardsEffect(0, GraveyardExileScope.ALL_PLAYERS, blackOrRed));
-        addEffect(EffectSlot.STATIC, new ExileCardsOfColorsInsteadOfGraveyardEffect(protectedColors));
+        addStaticEffect(new ExileCardsOfColorsInsteadOfGraveyardEffect(protectedColors));
     }
 }

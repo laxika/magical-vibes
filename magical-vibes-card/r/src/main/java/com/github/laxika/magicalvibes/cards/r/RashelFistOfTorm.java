@@ -18,7 +18,7 @@ public class RashelFistOfTorm extends Card {
     public RashelFistOfTorm() {
         // Auras you control have exalted. Grant the exalted attack trigger to each Aura you
         // control; the trigger's recorded attacker is boosted when it attacks alone.
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new ConditionalEffect(new AttacksAlone(), new BoostTargetCreatureEffect(1, 1)),
                 GrantScope.OWN_PERMANENTS,

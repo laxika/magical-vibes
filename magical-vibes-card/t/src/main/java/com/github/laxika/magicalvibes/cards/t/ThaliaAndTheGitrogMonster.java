@@ -23,8 +23,8 @@ import java.util.List;
 public class ThaliaAndTheGitrogMonster extends Card {
 
     public ThaliaAndTheGitrogMonster() {
-        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect(1));
-        addEffect(EffectSlot.STATIC, EnterPermanentsOfTypesTappedEffect.matching(
+        addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
+        addStaticEffect(EnterPermanentsOfTypesTappedEffect.matching(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentAllOfPredicate(List.of(

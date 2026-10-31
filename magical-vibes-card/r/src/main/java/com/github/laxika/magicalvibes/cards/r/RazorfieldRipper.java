@@ -32,7 +32,7 @@ import java.util.Set;
 public class RazorfieldRipper extends Card {
 
     public RazorfieldRipper() {
-        addEffect(EffectSlot.STATIC, new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
+        addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
                 EffectDuration.WHILE_ATTACHED));
         addEffect(EffectSlot.ON_ATTACK, new EnergyCountersEffect(1));
         addEffect(EffectSlot.ON_ATTACK, new BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(

@@ -16,7 +16,7 @@ public class ConcealedWeapon extends Card {
         addMorph("{2}{R}");
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_TURNED_FACE_UP, new AttachSourceEquipmentToTargetCreatureEffect());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 0, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{1}{R}"));
     }
 }

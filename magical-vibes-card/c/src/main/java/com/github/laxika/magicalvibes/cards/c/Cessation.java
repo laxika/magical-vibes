@@ -15,7 +15,7 @@ public class Cessation extends Card {
 
     public Cessation() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect(true, false));
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect(true, false));
         addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)

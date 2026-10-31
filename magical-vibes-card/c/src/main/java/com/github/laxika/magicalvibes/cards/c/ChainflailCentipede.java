@@ -26,7 +26,7 @@ public class ChainflailCentipede extends Card {
 
     public ChainflailCentipede() {
         addEffect(EffectSlot.ON_ATTACK, new BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(2, 0));
-        addEffect(EffectSlot.STATIC, new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
+        addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
                 EffectDuration.WHILE_ATTACHED));
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(

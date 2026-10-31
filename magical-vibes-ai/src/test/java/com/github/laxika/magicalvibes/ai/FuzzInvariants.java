@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -330,7 +330,7 @@ final class FuzzInvariants {
     private boolean hasGlobalLegendRuleExemption(GameData gd) {
         return gd.playerBattlefields.values().stream()
                 .flatMap(List::stream)
-                .anyMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(perm -> perm.getCard().getStaticEffects().stream()
                         .anyMatch(GlobalLegendRuleExemptionEffect.class::isInstance));
     }
 
@@ -338,7 +338,7 @@ final class FuzzInvariants {
         int totalWithName = countOnBattlefield(gd, name);
         return battlefield.stream()
                 .filter(perm -> name.equals(perm.getCard().getName()))
-                .allMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                .allMatch(perm -> perm.getCard().getStaticEffects().stream()
                         .filter(LegendRuleExemptionEffect.class::isInstance)
                         .map(LegendRuleExemptionEffect.class::cast)
                         .anyMatch(exemption -> exemption.exemptFromLegendRule(totalWithName)));

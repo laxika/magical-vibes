@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 public class BlightbellyRat extends Card {
 
     public BlightbellyRat() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
+        addStaticEffect(new ToxicEffect(1));
         addEffect(EffectSlot.ON_DEATH, new ProliferateEffect());
     }
 }

@@ -16,7 +16,7 @@ import java.util.List;
 public class Transcendence extends Card {
 
     public Transcendence() {
-        addEffect(EffectSlot.STATIC, new CantLoseGameFromLifeEffect());
+        addStaticEffect(new CantLoseGameFromLifeEffect());
 
         addEffect(EffectSlot.ON_CONTROLLER_LOSES_LIFE,
                 new GainLifeEffect(new Scaled(new EventValue(), 2)));

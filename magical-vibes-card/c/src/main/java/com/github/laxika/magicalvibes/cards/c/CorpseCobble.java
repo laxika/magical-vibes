@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanent
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "214")
@@ -27,7 +26,7 @@ public class CorpseCobble extends Card {
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, new Fixed(1), "Zombie", new XValue(), new XValue(), CardColor.BLUE,
                 Set.of(CardColor.BLUE, CardColor.BLACK), List.of(CardSubtype.ZOMBIE), Set.of(Keyword.MENACE),
-                Set.of(), false, false, Map.of(), List.of(), false, false, false, 0, Set.of(), Set.of()));
+                Set.of(), false, false, List.of(), List.of(), false, false, false, 0, Set.of(), Set.of()));
         addCastingOption(new FlashbackCast("{3}{U}{B}"));
     }
 }

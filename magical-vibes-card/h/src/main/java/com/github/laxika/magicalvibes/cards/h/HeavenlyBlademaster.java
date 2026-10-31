@@ -18,7 +18,7 @@ public class HeavenlyBlademaster extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new AttachAnyNumberOfControlledAurasAndEquipmentToSourceEffect());
         AttachmentsOnSource attachments = new AttachmentsOnSource(true, true);
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(attachments, attachments,
+        addStaticEffect(new DynamicStaticBoostEffect(attachments, attachments,
                 GrantScope.OWN_CREATURES));
     }
 }

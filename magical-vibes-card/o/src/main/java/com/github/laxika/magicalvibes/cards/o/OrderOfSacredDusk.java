@@ -19,7 +19,7 @@ public class OrderOfSacredDusk extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new ConditionalEffect(new AttacksAlone(), new BoostTargetCreatureEffect(1, 1)));
 
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new ConditionalEffect(new AttacksAlone(), new BoostTargetCreatureEffect(1, 1)),
                 GrantScope.OWN_CREATURES,

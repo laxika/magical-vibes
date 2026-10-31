@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
@@ -36,7 +35,7 @@ public class KaitoBaneOfNightmares extends Card {
     public KaitoBaneOfNightmares() {
         addNinjutsu("{1}{U}{B}");
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AllConditions(List.of(
                         new ControllerTurn(),
                         new SourceCounterThreshold(1, CounterType.LOYALTY)

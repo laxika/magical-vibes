@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class ProsperousBandit extends Card {
 
     public ProsperousBandit() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}"));
+        addStaticEffect(new KickerEffect("{1}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,

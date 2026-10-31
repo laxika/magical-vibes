@@ -23,8 +23,7 @@ public class Strixhaven extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
 
-        addEffect(EffectSlot.STATIC,
-                GrantSpellCastingAbilityToSpellsEffect.allPlayers(Keyword.DEMONSTRATE, instantOrSorcery));
+        addStaticEffect(GrantSpellCastingAbilityToSpellsEffect.allPlayers(Keyword.DEMONSTRATE, instantOrSorcery));
         target(new GraveyardCardPredicateTargetFilter(instantOrSorcery, GraveyardSearchScope.ALL_GRAVEYARDS), 0, 1)
                 .addEffect(EffectSlot.CHAOS_TRIGGERED, ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)

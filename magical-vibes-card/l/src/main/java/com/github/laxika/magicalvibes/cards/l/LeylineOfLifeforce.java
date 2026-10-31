@@ -15,6 +15,6 @@ public class LeylineOfLifeforce extends Card {
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with Leyline of Lifeforce on the battlefield?"
         ));
-        addEffect(EffectSlot.STATIC, new CreatureSpellsCantBeCounteredEffect());
+        addStaticEffect(new CreatureSpellsCantBeCounteredEffect());
     }
 }

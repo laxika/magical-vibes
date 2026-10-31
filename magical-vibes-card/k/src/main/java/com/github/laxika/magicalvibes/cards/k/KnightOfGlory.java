@@ -16,7 +16,7 @@ public class KnightOfGlory extends Card {
 
     public KnightOfGlory() {
         // Protection from black.
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
         // Exalted: whenever a creature you control attacks alone, that creature gets +1/+1 until
         // end of turn. ON_ALLY_CREATURE_ATTACKS fires per attacking ally and records the attacker
         // as the trigger's (non-targeting) target, so BoostTargetCreatureEffect boosts "that

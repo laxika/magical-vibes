@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndSaddleEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -15,7 +14,7 @@ import java.util.List;
 public class DeathlessPilot extends Card {
 
     public DeathlessPilot() {
-        addEffect(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2));
+        addStaticEffect(new PowerBoostForCrewAndSaddleEffect(2));
 
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,

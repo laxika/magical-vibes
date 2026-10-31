@@ -33,7 +33,7 @@ public class DirgurFocusmageBraingeyser extends Card {
     public DirgurFocusmageBraingeyser() {
         setBackFaceCard(new Braingeyser());
 
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 INSTANT_OR_SORCERY, 1, CostModificationScope.SELF));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 HIGH_VALUE_INSTANT_OR_SORCERY,

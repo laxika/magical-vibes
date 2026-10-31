@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class EmporiumThopterist extends Card {
 
     public EmporiumThopterist() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.THOPTER)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ConjureCardNamedIntoHandEffect("ATQ", "60", false));

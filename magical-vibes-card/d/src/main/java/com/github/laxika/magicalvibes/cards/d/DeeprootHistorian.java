@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpellsEffect;
@@ -17,7 +16,7 @@ import java.util.List;
 public class DeeprootHistorian extends Card {
 
     public DeeprootHistorian() {
-        addEffect(EffectSlot.STATIC, GrantSpellCastingAbilityToSpellsEffect.fromZone(
+        addStaticEffect(GrantSpellCastingAbilityToSpellsEffect.fromZone(
                 Keyword.RETRACE,
                 new CardAnyOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.MERFOLK),

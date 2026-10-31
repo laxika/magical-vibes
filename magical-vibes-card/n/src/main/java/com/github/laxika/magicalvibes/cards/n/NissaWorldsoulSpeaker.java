@@ -13,7 +13,6 @@ public class NissaWorldsoulSpeaker extends Card {
 
     public NissaWorldsoulSpeaker() {
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new EnergyCountersEffect(2));
-        addEffect(EffectSlot.STATIC,
-                AlternativeCostForSpellsEffect.payEnergy(8, new CardIsPermanentPredicate()));
+        addStaticEffect(AlternativeCostForSpellsEffect.payEnergy(8, new CardIsPermanentPredicate()));
     }
 }

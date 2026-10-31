@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class VelisVel extends Card {
 
     public VelisVel() {
-        addEffect(EffectSlot.STATIC, new BoostBySharedCreatureTypeEffect());
+        addStaticEffect(new BoostBySharedCreatureTypeEffect());
         target(TargetFilters.creature()).addEffect(
                 EffectSlot.CHAOS_TRIGGERED,
                 new GrantAllCreatureTypesToOwnCreaturesEffect(GrantScope.TARGET));

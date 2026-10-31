@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAndBeBlockedOnlyByFilterEffect;
@@ -19,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TLE", collectorNumber = "139")
@@ -40,9 +40,7 @@ public class HeiBaiForestGuardian extends Card {
                 new PermanentCount(legendaryEnchantments, CountScope.CONTROLLER),
                 "Spirit", 1, 1, null, null, List.of(CardSubtype.SPIRIT), Set.of(), Set.of(),
                 false, false,
-                Map.of(
-                        EffectSlot.STATIC, new CanBlockAndBeBlockedOnlyByFilterEffect(spirits, "Spirits")
-                ),
+                List.of(StaticAbility.of(new CanBlockAndBeBlockedOnlyByFilterEffect(spirits, "Spirits"))),
                 List.of(), false, false, false, 0, Set.of());
 
         addActivatedAbility(new ActivatedAbility(

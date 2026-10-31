@@ -20,7 +20,7 @@ public class TempestTechnique extends Card {
 
         PermanentCount enchantmentsYouControl = new PermanentCount(
                 new PermanentIsEnchantmentPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 enchantmentsYouControl, enchantmentsYouControl, GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect(true));
     }

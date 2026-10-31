@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
@@ -29,11 +28,11 @@ public class FavorOfJukai extends Card {
 
         target(new PermanentPredicateTargetFilter(artifactOrCreature,
                 "Target must be an artifact or creature"))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         creature,
                         new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE),
                         null))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         creature,
                         new GrantKeywordEffect(Keyword.REACH, GrantScope.ENCHANTED_CREATURE),
                         null));

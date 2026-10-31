@@ -26,7 +26,7 @@ public class GirderGoons extends Card {
 
         // Blitz (CR 702.152a): haste while the blitz cost was paid; the end-step sacrifice is
         // created as the spell resolves.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
                 1, "Rogue", 2, 2, CardColor.BLACK, List.of(CardSubtype.ROGUE),

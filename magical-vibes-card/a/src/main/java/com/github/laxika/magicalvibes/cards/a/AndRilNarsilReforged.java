@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class AndRilNarsilReforged extends Card {
 
     public AndRilNarsilReforged() {
-        addEffect(EffectSlot.STATIC, new AscendEffect());
+        addStaticEffect(new AscendEffect());
 
         PutCounterOnEachControlledPermanentEffect oneCounter =
                 new PutCounterOnEachControlledPermanentEffect(

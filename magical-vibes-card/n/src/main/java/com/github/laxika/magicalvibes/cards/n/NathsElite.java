@@ -12,7 +12,7 @@ public class NathsElite extends Card {
 
     public NathsElite() {
         // All creatures able to block this creature do so.
-        addEffect(EffectSlot.STATIC, new MustBeBlockedByAllCreaturesEffect());
+        addStaticEffect(new MustBeBlockedByAllCreaturesEffect());
 
         // When this creature enters, clash with an opponent. If you win, put a +1/+1 counter on it.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

@@ -20,7 +20,7 @@ import java.util.List;
 public class NivMizzetParun extends Card {
 
     public NivMizzetParun() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
 
         // Whenever you draw a card, Niv-Mizzet deals 1 damage to any target.
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new DealDamageToAnyTargetEffect(1));

@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class KorAeronaut extends Card {
 
     public KorAeronaut() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{W}"));
+        addStaticEffect(new KickerEffect("{1}{W}"));
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ConditionalEffect(new Kicked(), new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)));

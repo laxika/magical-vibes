@@ -25,7 +25,7 @@ public class TyrantsFamiliar extends Card {
     public TyrantsFamiliar() {
         ControllerControlsOwnCommander lieutenant = new ControllerControlsOwnCommander();
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(lieutenant,
+        addStaticEffect(new ConditionalEffect(lieutenant,
                 new StaticBoostEffect(2, 2, GrantScope.SELF)));
 
         target(new PermanentPredicateTargetFilter(

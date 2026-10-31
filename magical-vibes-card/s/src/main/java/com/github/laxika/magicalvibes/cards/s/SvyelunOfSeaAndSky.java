@@ -25,13 +25,13 @@ import java.util.List;
 public class SvyelunOfSeaAndSky extends Card {
 
     public SvyelunOfSeaAndSky() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsOtherPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
 
         addEffect(EffectSlot.ON_ATTACK, new DrawCardEffect());
 
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(1),
                 GrantScope.OWN_PERMANENTS,

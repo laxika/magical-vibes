@@ -19,7 +19,7 @@ public class OverlaidTerrain extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificeAllPermanentsAsEntersEffect(
                 new PermanentIsLandPredicate()));
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null, List.of(new AwardAnyColorManaEffect(2)),
                         "{T}: Add two mana of any one color."),
                 GrantScope.OWN_LANDS));

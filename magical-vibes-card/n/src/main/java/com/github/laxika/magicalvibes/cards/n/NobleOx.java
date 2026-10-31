@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MakeAllUnblockedCreaturesAtta
 public class NobleOx extends Card {
 
     public NobleOx() {
-        addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        addStaticEffect(new CanBlockAnyNumberOfCreaturesEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MakeAllUnblockedCreaturesAttackingControllerBlockedBySourceEffect());
     }

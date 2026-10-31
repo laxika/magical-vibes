@@ -28,6 +28,6 @@ public class BlightwingWhelp extends Card {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new SeekCardsToHandEffect(
                 new Fixed(1), null,
                 new ManaValueBound(new DefendingPlayerPoisonCounters(), true, 0)));
-        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
+        addStaticEffect(new ToxicEffect(1));
     }
 }

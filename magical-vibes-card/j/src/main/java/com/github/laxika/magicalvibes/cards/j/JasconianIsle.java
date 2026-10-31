@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 public class JasconianIsle extends Card {
 
     public JasconianIsle() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(new EntersTappedEffect());
+        addStaticEffect(DoesntUntapEffect.self());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayPayManaEffect(
                 "{U}{U}",
                 new UntapPermanentsEffect(TapUntapScope.SELF),

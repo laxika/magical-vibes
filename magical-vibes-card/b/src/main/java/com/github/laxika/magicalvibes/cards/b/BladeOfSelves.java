@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 public class BladeOfSelves extends Card {
 
     public BladeOfSelves() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad(),
                 GrantScope.EQUIPPED_CREATURE));

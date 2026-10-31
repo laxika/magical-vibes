@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class CapriciousSliver extends Card {
 
     public CapriciousSliver() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new ExileTopCardMayPlayThisTurnEffect(false),
                 GrantScope.ALL_OWN_CREATURES,

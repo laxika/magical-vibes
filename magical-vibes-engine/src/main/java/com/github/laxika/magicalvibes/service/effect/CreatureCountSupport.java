@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -40,7 +39,7 @@ public final class CreatureCountSupport {
         }
         if (GameQueryService.isStaticEvaluationActive()) {
             int count = 1;
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof CountAsCreaturesEffect countEffect) {
                     count = Math.max(count, countEffect.count());
                 }

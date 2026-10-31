@@ -17,6 +17,6 @@ public class VolitionReins extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new EnchantedPermanentMatches(new PermanentIsTappedPredicate(), "enchanted permanent is tapped"),
                 new UntapPermanentsEffect(TapUntapScope.ENCHANTED)));
-        addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+        addStaticEffect(new ControlEnchantedCreatureEffect());
     }
 }

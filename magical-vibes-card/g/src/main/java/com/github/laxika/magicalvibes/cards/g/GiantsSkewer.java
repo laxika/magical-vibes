@@ -19,7 +19,7 @@ import java.util.List;
 public class GiantsSkewer extends Card {
 
     public GiantsSkewer() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
                 new CreateTokenWhenEquippedCreatureDealsCombatDamageToCreatureEffect(foodToken()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));

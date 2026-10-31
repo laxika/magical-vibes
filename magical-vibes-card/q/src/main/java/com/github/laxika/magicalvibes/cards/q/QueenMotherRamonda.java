@@ -15,7 +15,7 @@ public class QueenMotherRamonda extends Card {
 
     public QueenMotherRamonda() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeMonarchEffect());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerIsMonarch(),
                 new CreaturesCantAttackControllerUnlessPredicateEffect(
                         new PermanentPowerAtLeastPredicate(3))));

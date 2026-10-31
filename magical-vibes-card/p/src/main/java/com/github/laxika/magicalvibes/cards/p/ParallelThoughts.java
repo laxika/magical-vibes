@@ -11,6 +11,6 @@ public class ParallelThoughts extends Card {
 
     public ParallelThoughts() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SearchLibraryForCardsToExileFaceDownPileEffect(7));
-        addEffect(EffectSlot.STATIC, new ParallelThoughtsDrawReplacementEffect());
+        addStaticEffect(new ParallelThoughtsDrawReplacementEffect());
     }
 }

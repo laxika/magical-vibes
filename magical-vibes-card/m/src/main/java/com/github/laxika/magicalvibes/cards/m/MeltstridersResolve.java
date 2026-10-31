@@ -26,8 +26,8 @@ public class MeltstridersResolve extends Card {
                 )),
                 "Target must be a creature you control"
         ))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 2, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new CanBeBlockedByAtMostNCreaturesEffect(1));
+                .addStaticEffect(new StaticBoostEffect(0, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));
 
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnchantedCreatureFightsTargetCreatureEffect());

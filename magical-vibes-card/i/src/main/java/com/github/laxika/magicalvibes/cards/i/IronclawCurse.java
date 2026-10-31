@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -17,7 +16,7 @@ public class IronclawCurse extends Card {
         // the enchanted creature's (effective) toughness. The can't-block restriction is read at
         // declare-blockers time by GameQueryService.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, -1, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect());
+                .addStaticEffect(new StaticBoostEffect(0, -1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect());
     }
 }

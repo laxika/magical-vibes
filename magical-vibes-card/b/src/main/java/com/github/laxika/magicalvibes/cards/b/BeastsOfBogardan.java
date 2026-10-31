@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -22,9 +21,9 @@ import java.util.Set;
 public class BeastsOfBogardan extends Card {
 
     public BeastsOfBogardan() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.RED)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.RED)));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new OpponentControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE)),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate())))),

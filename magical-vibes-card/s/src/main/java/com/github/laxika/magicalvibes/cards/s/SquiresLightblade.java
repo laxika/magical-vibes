@@ -22,7 +22,7 @@ public class SquiresLightblade extends Card {
                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET));
 
         // Equipped creature gets +1/+0.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
 
         // Equip {3}
         addActivatedAbility(new EquipActivatedAbility("{3}"));

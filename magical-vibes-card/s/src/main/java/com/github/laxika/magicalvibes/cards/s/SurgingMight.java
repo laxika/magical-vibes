@@ -14,7 +14,7 @@ public class SurgingMight extends Card {
 
     public SurgingMight() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_SELF_CAST,
                         new MayEffect(new RippleEffect(4), "Reveal the top four cards of your library?"));
     }

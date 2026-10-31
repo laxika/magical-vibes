@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ScheduleCreatedPermanentsEffe
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "STH", collectorNumber = "136")
@@ -23,7 +22,7 @@ public class HornetCannon extends Card {
                 CardType.CREATURE, 1, "Hornet", 1, 1,
                 null, null, List.of(CardSubtype.INSECT),
                 Set.of(Keyword.FLYING, Keyword.HASTE), Set.of(CardType.ARTIFACT),
-                false, false, Map.of(), List.of(), false, false, false, 0, Set.of());
+                false, false, List.of(), List.of(), false, false, false, 0, Set.of());
 
         addActivatedAbility(new ActivatedAbility(
                 true, "{3}", List.of(hornetToken,

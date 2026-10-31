@@ -27,8 +27,7 @@ import java.util.List;
 public class AlibouAncientWitness extends Card {
 
     public AlibouAncientWitness() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES,
                         new PermanentIsArtifactPredicate()));
 
         PermanentAllOfPredicate artifactCreature = new PermanentAllOfPredicate(List.of(

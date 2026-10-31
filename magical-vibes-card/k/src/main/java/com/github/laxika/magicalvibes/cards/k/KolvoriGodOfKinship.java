@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -37,9 +36,9 @@ public class KolvoriGodOfKinship extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)
                 )));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(legendaryCreatureThreshold,
+        addStaticEffect(new ConditionalEffect(legendaryCreatureThreshold,
                 new StaticBoostEffect(4, 2, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(legendaryCreatureThreshold,
+        addStaticEffect(new ConditionalEffect(legendaryCreatureThreshold,
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
 
         addActivatedAbility(new ActivatedAbility(true, "{1}{G}", List.of(

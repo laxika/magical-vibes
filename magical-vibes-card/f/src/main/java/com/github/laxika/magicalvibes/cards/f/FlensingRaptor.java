@@ -21,7 +21,7 @@ import java.util.List;
 public class FlensingRaptor extends Card {
 
     public FlensingRaptor() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
+        addStaticEffect(new ToxicEffect(1));
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

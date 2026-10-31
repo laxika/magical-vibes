@@ -17,7 +17,7 @@ public class DoubtlessOne extends Card {
     public DoubtlessOne() {
         PermanentCount clericsOnBattlefield = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.CLERIC), CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 clericsOnBattlefield, clericsOnBattlefield));
         addEffect(EffectSlot.ON_SELF_DEALS_DAMAGE, new GainLifeEffect(new EventValue()));
     }

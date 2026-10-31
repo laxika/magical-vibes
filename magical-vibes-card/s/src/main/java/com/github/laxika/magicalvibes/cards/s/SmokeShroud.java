@@ -20,8 +20,7 @@ public class SmokeShroud extends Card {
 
     public SmokeShroud() {
         target(TargetFilters.creature());
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING), GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING), GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.NINJA),

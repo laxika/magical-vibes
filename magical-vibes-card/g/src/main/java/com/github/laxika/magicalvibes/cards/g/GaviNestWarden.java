@@ -15,7 +15,7 @@ import java.util.Set;
 public class GaviNestWarden extends Card {
 
     public GaviNestWarden() {
-        addEffect(EffectSlot.STATIC, new FreeCyclingFirstCardEachTurnEffect());
+        addStaticEffect(new FreeCyclingFirstCardEachTurnEffect());
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD,
                 new CreateTokenEffect("Dinosaur Cat", 2, 2, CardColor.RED,
                         Set.of(CardColor.RED, CardColor.WHITE),

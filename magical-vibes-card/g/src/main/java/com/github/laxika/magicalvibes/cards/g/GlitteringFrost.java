@@ -14,8 +14,7 @@ public class GlitteringFrost extends Card {
 
     public GlitteringFrost() {
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantSupertypeToEnchantedPermanentEffect(CardSupertype.SNOW))
+                .addStaticEffect(new GrantSupertypeToEnchantedPermanentEffect(CardSupertype.SNOW))
                 .addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
                         new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect()));
     }

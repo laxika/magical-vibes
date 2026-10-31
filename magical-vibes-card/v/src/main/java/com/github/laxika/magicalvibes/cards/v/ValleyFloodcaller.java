@@ -32,7 +32,7 @@ public class ValleyFloodcaller extends Card {
                     CardSubtype.RAT))));
 
     public ValleyFloodcaller() {
-        addEffect(EffectSlot.STATIC, new GrantFlashToCardTypeEffect(
+        addStaticEffect(new GrantFlashToCardTypeEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),

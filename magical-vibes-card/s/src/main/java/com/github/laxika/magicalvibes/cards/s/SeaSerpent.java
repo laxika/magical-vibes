@@ -26,7 +26,7 @@ public class SeaSerpent extends Card {
 
     public SeaSerpent() {
         // "This creature can't attack unless defending player controls an Island."
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new DefendingPlayerControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 "an Island"
         ));

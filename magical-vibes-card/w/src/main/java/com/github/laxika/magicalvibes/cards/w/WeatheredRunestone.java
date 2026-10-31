@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
@@ -19,12 +18,12 @@ import java.util.Set;
 public class WeatheredRunestone extends Card {
 
     public WeatheredRunestone() {
-        addEffect(EffectSlot.STATIC, new CardsCantEnterBattlefieldFromZonesEffect(
+        addStaticEffect(new CardsCantEnterBattlefieldFromZonesEffect(
                 new CardAllOfPredicate(List.of(
                         new CardIsPermanentPredicate(),
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND))
                 )), Set.of(Zone.GRAVEYARD, Zone.LIBRARY)));
-        addEffect(EffectSlot.STATIC, new PlayersCantCastSpellsFromZonesEffect(
+        addStaticEffect(new PlayersCantCastSpellsFromZonesEffect(
                 Set.of(Zone.GRAVEYARD, Zone.LIBRARY)));
     }
 }

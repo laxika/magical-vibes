@@ -18,10 +18,10 @@ public class KianneCorruptedMemory extends Card {
 
     public KianneCorruptedMemory() {
         CardNotPredicate noncreatureSpell = new CardNotPredicate(new CardTypePredicate(CardType.CREATURE));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourcePowerParity(ManaValueParity.EVEN),
                 new GrantFlashToCardTypeEffect(noncreatureSpell)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourcePowerParity(ManaValueParity.ODD),
                 new GrantFlashToCardTypeEffect(new CardTypePredicate(CardType.CREATURE))));
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS,

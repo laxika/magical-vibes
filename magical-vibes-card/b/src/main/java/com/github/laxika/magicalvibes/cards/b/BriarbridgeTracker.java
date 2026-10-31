@@ -16,7 +16,7 @@ public class BriarbridgeTracker extends Card {
 
     public BriarbridgeTracker() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofClueToken(1));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentIsTokenPredicate()),
                 new StaticBoostEffect(2, 0, GrantScope.SELF)));
     }

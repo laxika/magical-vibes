@@ -17,7 +17,7 @@ import java.util.Set;
 public class AttumaAtlanteanWarlord extends Card {
 
     public AttumaAtlanteanWarlord() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MERFOLK))));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER,
                 new ConditionalEffect(

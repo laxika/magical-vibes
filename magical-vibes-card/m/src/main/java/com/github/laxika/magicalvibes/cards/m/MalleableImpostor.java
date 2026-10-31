@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOC", collectorNumber = "10")
@@ -27,7 +26,7 @@ public class MalleableImpostor extends Card {
                 )),
                 "creature an opponent controls",
                 null, null, Set.of(), List.of(), null, null, false, null,
-                Set.of(CardSubtype.FAERIE, CardSubtype.SHAPESHIFTER), Map.of(), false, false,
+                Set.of(CardSubtype.FAERIE, CardSubtype.SHAPESHIFTER), List.of(), false, false,
                 null, Set.of(), Set.of(Keyword.FLYING), false, true, Set.of(), false, false,
                 null, false, false
         ));

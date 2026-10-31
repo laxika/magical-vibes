@@ -22,7 +22,7 @@ public class SejiriRefuge extends Card {
 
     public SejiriRefuge() {
         // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // When this land enters, you gain 1 life.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(1));

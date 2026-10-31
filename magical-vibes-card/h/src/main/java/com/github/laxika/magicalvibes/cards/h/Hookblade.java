@@ -20,8 +20,8 @@ public class Hookblade extends Card {
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new AttachSourceEquipmentToTargetCreatureEffect());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE)));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

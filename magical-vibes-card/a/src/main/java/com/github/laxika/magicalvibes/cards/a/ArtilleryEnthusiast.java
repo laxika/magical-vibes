@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 public class ArtilleryEnthusiast extends Card {
 
     public ArtilleryEnthusiast() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.MENACE,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsModifiedPredicate()));

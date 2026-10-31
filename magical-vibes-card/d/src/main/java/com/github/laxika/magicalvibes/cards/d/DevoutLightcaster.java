@@ -15,7 +15,7 @@ import java.util.Set;
 public class DevoutLightcaster extends Card {
 
     public DevoutLightcaster() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
         target(new PermanentPredicateTargetFilter(
                 new PermanentColorInPredicate(Set.of(CardColor.BLACK)),
                 "Target must be a black permanent"

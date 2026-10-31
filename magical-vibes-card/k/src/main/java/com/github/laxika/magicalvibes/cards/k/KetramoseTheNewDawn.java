@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class KetramoseTheNewDawn extends Card {
 
     public KetramoseTheNewDawn() {
-        addEffect(EffectSlot.STATIC, new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(new CantAttackOrBlockUnlessEffect(
                 new CardsInExileAtLeast(7),
                 "there are seven or more cards in exile"
         ));

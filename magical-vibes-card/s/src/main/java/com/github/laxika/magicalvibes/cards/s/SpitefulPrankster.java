@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class SpitefulPrankster extends Card {
 
     public SpitefulPrankster() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES,
                 new DealDamageToTargetPlayerOrPlaneswalkerEffect(1));

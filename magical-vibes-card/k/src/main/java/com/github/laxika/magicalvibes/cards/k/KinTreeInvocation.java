@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.GreatestToughnessAmongControl
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "KTK", collectorNumber = "183")
@@ -30,7 +29,7 @@ public class KinTreeInvocation extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

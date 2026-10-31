@@ -21,8 +21,7 @@ public class MayorOfAvabruck extends Card {
         setBackFaceCard(new HowlpackAlpha());
 
         // Other Human creatures you control get +1/+1.
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform Mayor of Avabruck.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,

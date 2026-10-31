@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -325,7 +324,7 @@ public class CoinFlipService {
      */
     private void beginPokeyReplacementChoice(GameData gameData, UUID playerId) {
         Permanent pokey = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .filter(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(permanent -> permanent.getCard().getStaticEffects().stream()
                         .anyMatch(PokeyTheScallywaggEffect.class::isInstance)
                         && !gameQueryService.hasLostAllAbilities(gameData, permanent))
                 .findFirst().orElseThrow();

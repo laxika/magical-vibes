@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MaximumCombatCreaturesEffect;
 public class AstralArena extends Card {
 
     public AstralArena() {
-        addEffect(EffectSlot.STATIC, new MaximumCombatCreaturesEffect(1, 1));
+        addStaticEffect(new MaximumCombatCreaturesEffect(1, 1));
         addEffect(EffectSlot.CHAOS_TRIGGERED, new MassDamageEffect(2));
     }
 }

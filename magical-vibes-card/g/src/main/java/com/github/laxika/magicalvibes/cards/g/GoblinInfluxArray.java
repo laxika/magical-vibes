@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class GoblinInfluxArray extends Card {
 
     public GoblinInfluxArray() {
-        addEffect(EffectSlot.STATIC, new ReduceColoredCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceColoredCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.GOBLIN),
                 new ManaCost("{R}"),
                 CostModificationScope.SELF,

@@ -16,9 +16,7 @@ public class MaiAndZuko extends Card {
 
     public MaiAndZuko() {
         addEffect(EffectSlot.ON_ATTACK, new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 3));
-        addEffect(EffectSlot.STATIC,
-                new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.ALLY)));
-        addEffect(EffectSlot.STATIC,
-                new GrantFlashToCardTypeEffect(new CardTypePredicate(CardType.ARTIFACT)));
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.ALLY)));
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardTypePredicate(CardType.ARTIFACT)));
     }
 }

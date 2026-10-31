@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "45")
@@ -35,7 +34,7 @@ public class KioraTheRisingTide extends Card {
                 new MayEffect(new CreateTokenEffect(
                         CardType.CREATURE, 1, "Scion of the Deep", 8, 8,
                         CardColor.BLUE, null, List.of(CardSubtype.OCTOPUS),
-                        Set.of(), Set.of(), false, false, Map.of(), List.of(),
+                        Set.of(), Set.of(), false, false, List.of(), List.of(),
                         false, false, true, 0, Set.of()),
                         "Create Scion of the Deep?")));
     }

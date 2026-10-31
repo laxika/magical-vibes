@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoGraveyardCost;
@@ -15,7 +14,7 @@ import java.util.List;
 public class VoidMaw extends Card {
 
     public VoidMaw() {
-        addEffect(EffectSlot.STATIC, new ExilePermanentsInsteadOfGraveyardEffect(
+        addStaticEffect(new ExilePermanentsInsteadOfGraveyardEffect(
                 new PermanentIsCreaturePredicate(), true, true));
         addActivatedAbility(new ActivatedAbility(false, null,
                 List.of(new PutCardExiledWithSourceIntoGraveyardCost(), new BoostSelfEffect(2, 2)),

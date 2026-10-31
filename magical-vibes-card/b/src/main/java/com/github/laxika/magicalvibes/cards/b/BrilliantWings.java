@@ -17,8 +17,7 @@ public class BrilliantWings extends Card {
 
     public BrilliantWings() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.HEXPROOF),
+                .addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.HEXPROOF),
                                 GrantScope.ENCHANTED_CREATURE));
 
         // Whenever a creature you control enters, you may pay {1}. If you do, attach this Aura to it.

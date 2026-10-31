@@ -16,10 +16,8 @@ public class NecrogenCommunion extends Card {
 
     public NecrogenCommunion() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.TOXIC, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantEffectEffect(new ToxicEffect(2), GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.TOXIC, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantEffectEffect(new ToxicEffect(2), GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
                         new ReturnEnchantedCreatureToBattlefieldOnDeathEffect(true));
     }

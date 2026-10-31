@@ -33,7 +33,7 @@ public class SkywayRobber extends Card {
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceWasCastWithEscape(),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,

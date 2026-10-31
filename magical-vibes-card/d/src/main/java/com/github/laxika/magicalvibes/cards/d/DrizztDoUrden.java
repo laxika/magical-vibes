@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "AFR", collectorNumber = "220")
@@ -31,7 +30,7 @@ public class DrizztDoUrden extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new CreateTokenEffect(CardType.CREATURE, 1, "Guenhwyvar", 4, 1,
                         CardColor.GREEN, null, List.of(CardSubtype.CAT), Set.of(Keyword.TRAMPLE), Set.of(),
-                        false, false, Map.of(), List.of(), false, false, true, 0, Set.of()));
+                        false, false, List.of(), List.of(), false, false, true, 0, Set.of()));
 
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
                 new PermanentNotPredicate(new PermanentPowerAtMostSourcePowerPredicate()),

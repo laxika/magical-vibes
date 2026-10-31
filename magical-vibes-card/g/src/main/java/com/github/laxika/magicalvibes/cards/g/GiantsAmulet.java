@@ -36,10 +36,8 @@ public class GiantsAmulet extends Card {
                                 new AttachMatchingEquipmentToCreatedPermanentEffect(
                                         new PermanentIsSourcePermanentPredicate())),
                         "Pay {3}{U} to create a Giant Wizard token and attach Giant's Amulet to it?"));
-        addEffect(EffectSlot.STATIC,
-                new AttachedBoostEffect(new Fixed(0), new Fixed(1), GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new EnchantedPermanentConditionalEffect(
+        addStaticEffect(new AttachedBoostEffect(new Fixed(0), new Fixed(1), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentIsTappedPredicate()),
                         new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.EQUIPPED_CREATURE),
                         null));

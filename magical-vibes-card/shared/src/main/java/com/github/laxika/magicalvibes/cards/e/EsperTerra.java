@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnCreatedPermanent;
@@ -78,7 +79,8 @@ public class EsperTerra extends Card {
                 null,
                 Set.of(),
                 false,
-                Map.of(EffectSlot.ON_ENTER_BATTLEFIELD, List.of(
-                        SacrificeSelfAtEndStepEffect.atCurrentControllersEndStep())));
+                List.of(
+                        LegacySlots.triggered(EffectSlot.ON_ENTER_BATTLEFIELD, List.of(
+                        SacrificeSelfAtEndStepEffect.atCurrentControllersEndStep()))));
     }
 }

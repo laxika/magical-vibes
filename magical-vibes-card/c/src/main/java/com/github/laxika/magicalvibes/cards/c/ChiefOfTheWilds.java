@@ -23,7 +23,7 @@ public class ChiefOfTheWilds extends Card {
                         new CardSubtypePredicate(CardSubtype.WOLF),
                         new PutCountersOnSourceEffect(1, 1, 2)));
 
-        addEffect(EffectSlot.STATIC, new AdditionalTriggeredAbilityEffect(
+        addStaticEffect(new AdditionalTriggeredAbilityEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.WOLF),
                         new PermanentIsBattlePredicate()))));

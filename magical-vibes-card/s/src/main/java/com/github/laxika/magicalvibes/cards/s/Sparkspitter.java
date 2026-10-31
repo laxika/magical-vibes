@@ -8,12 +8,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FUT", collectorNumber = "109")
@@ -31,7 +31,7 @@ public class Sparkspitter extends Card {
                                 CardColor.RED, null, List.of(CardSubtype.ELEMENTAL),
                                 Set.of(Keyword.TRAMPLE, Keyword.HASTE), Set.of(),
                                 false, false,
-                                Map.of(EffectSlot.END_STEP_TRIGGERED, new SacrificeSelfEffect()), List.of(),
+                                List.of(LegacySlots.triggered(EffectSlot.END_STEP_TRIGGERED, new SacrificeSelfEffect())), List.of(),
                                 false, false, false, 0, Set.of())
                 ),
                 "{R}, {T}, Discard a card: Create a 3/1 red Elemental creature token named Spark Elemental. "

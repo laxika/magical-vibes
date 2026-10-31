@@ -27,8 +27,8 @@ public class RatonhnhakTon extends Card {
         ConditionalEffect hasNotDealtDamage = new ConditionalEffect(
                 new NotCondition(new SourceHasDealtDamage()),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF));
-        addEffect(EffectSlot.STATIC, hasNotDealtDamage);
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(hasNotDealtDamage);
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new SourceHasDealtDamage()),
                 new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
 

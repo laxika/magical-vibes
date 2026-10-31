@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class IridescentVinelasher extends Card {
 
     public IridescentVinelasher() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
+        addStaticEffect(new KickerEffect("{2}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         target(new PlayerPredicateTargetFilter(

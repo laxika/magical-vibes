@@ -14,11 +14,9 @@ import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
-import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -844,7 +842,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
     private boolean hasLureEffect(GameData gameData, Permanent attacker) {
         if (attacker.isMustBeBlockedByAllThisTurn()) return true;
-        boolean hasOnCard = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean hasOnCard = attacker.getCard().getStaticEffects().stream()
                 .anyMatch(MustBeBlockedByAllCreaturesEffect.class::isInstance);
         if (hasOnCard) return true;
         return gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedByAllCreaturesEffect.class);
@@ -852,7 +850,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
     private boolean hasMustBeBlockedIfAble(GameData gameData, Permanent attacker) {
         if (attacker.isMustBeBlockedThisTurn()) return true;
-        boolean hasOnCard = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean hasOnCard = attacker.getCard().getStaticEffects().stream()
                 .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance);
         if (hasOnCard) return true;
         return gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);

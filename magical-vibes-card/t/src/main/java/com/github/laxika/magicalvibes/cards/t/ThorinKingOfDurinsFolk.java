@@ -33,7 +33,7 @@ public class ThorinKingOfDurinsFolk extends Card {
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.DWARF),
                         CreateTokenEffect.ofTreasureToken(1)));
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 artifactTokens, new Fixed(0), GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.DWARF)));
     }

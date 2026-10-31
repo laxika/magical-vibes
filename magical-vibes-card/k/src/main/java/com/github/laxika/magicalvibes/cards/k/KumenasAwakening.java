@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class KumenasAwakening extends Card {
 
     public KumenasAwakening() {
-        addEffect(EffectSlot.STATIC, new AscendEffect());
+        addStaticEffect(new AscendEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
                 new ConditionalEffect(new ControllerHasCityBlessing(), new DrawCardEffect()),
                 new ConditionalEffect(new NotCondition(new ControllerHasCityBlessing()),

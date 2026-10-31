@@ -17,8 +17,7 @@ public class AspectOfMongoose extends Card {
 
     public AspectOfMongoose() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                 ReturnCardFromGraveyardEffect.builder()
                         .source(GraveyardSearchScope.ALL_GRAVEYARDS)

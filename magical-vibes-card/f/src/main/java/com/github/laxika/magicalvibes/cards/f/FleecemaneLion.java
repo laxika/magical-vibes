@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -31,9 +30,9 @@ public class FleecemaneLion extends Card {
                 "{3}{G}{W}: Monstrosity 1."
         ));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(monstrous,
+        addStaticEffect(new ConditionalEffect(monstrous,
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(monstrous,
+        addStaticEffect(new ConditionalEffect(monstrous,
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
     }
 }

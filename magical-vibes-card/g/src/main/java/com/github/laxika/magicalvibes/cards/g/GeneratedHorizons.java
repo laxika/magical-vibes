@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MB1", collectorNumber = "75")
@@ -30,7 +29,7 @@ public class GeneratedHorizons extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(ManaAbilities.tapFor(ManaColor.GREEN)),
                 false,
                 false,

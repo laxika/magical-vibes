@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSou
 public class KainTraitorousDragoon extends Card {
 
     public KainTraitorousDragoon() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
         EventValue damage = new EventValue();

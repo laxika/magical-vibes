@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class WolverineClawsOut extends Card {
 
     public WolverineClawsOut() {
-        addEffect(EffectSlot.STATIC, new AssignCombatDamageAsThoughUnblockedEffect());
+        addStaticEffect(new AssignCombatDamageAsThoughUnblockedEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.MUTANT),

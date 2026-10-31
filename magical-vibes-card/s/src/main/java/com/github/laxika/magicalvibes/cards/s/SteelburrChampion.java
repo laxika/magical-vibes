@@ -20,7 +20,7 @@ import java.util.List;
 public class SteelburrChampion extends Card {
 
     public SteelburrChampion() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{W}"));
+        addStaticEffect(new KickerEffect("{1}{W}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL,

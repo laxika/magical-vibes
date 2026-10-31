@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class CeremonialKnife extends Card {
 
     public CeremonialKnife() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE, CreateTokenEffect.ofBloodToken(1),
                 GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

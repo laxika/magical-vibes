@@ -16,7 +16,7 @@ public class BatteredGolem extends Card {
 
     public BatteredGolem() {
         // This creature doesn't untap during your untap step.
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // Whenever an artifact enters, you may untap this creature.
         addEffect(EffectSlot.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD,

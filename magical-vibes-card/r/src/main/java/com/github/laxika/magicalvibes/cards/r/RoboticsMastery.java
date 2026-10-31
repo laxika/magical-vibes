@@ -24,6 +24,6 @@ public class RoboticsMastery extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                         2, "Robot", 1, 1, null,
                         List.of(CardSubtype.ROBOT), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
     }
 }

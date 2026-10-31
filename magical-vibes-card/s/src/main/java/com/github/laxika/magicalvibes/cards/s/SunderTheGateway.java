@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "39")
@@ -62,7 +61,7 @@ public class SunderTheGateway extends Card {
         );
         return new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Incubator", 0, 0, null, null,
-                List.of(CardSubtype.INCUBATOR), Set.of(), Set.of(), false, false, Map.of(), List.of(transform),
+                List.of(CardSubtype.INCUBATOR), Set.of(), Set.of(), false, false, List.of(), List.of(transform),
                 false, false, false, counters, Set.of()
         );
     }

@@ -21,9 +21,8 @@ public class ArmadilloCloak extends Card {
 
     public ArmadilloCloak() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_ENCHANTED_CREATURE_DEALS_DAMAGE,
                         new GainLifeEffect(new EventValue(), GainLifeRecipient.TRIGGERING_PLAYER));
     }

@@ -27,7 +27,7 @@ import java.util.Set;
 public class BalothPrime extends Card {
 
     public BalothPrime() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.STUN, new Fixed(6)));
 

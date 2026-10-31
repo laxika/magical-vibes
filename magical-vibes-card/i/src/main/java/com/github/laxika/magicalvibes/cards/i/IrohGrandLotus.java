@@ -31,9 +31,9 @@ public class IrohGrandLotus extends Card {
                 instantOrSorcery,
                 new CardNotPredicate(new CardSubtypePredicate(CardSubtype.LESSON))));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantFlashbackToGraveyardCardsEffect(nonLessonInstantOrSorcery)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantFlashbackToGraveyardCardsEffect(
                         new CardSubtypePredicate(CardSubtype.LESSON), "{1}")));
     }

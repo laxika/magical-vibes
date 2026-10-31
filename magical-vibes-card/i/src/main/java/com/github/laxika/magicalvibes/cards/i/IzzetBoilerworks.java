@@ -33,7 +33,7 @@ import java.util.List;
 public class IzzetBoilerworks extends Card {
 
     public IzzetBoilerworks() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnPermanentControlledByPlayerToHandEffect(
                 new PermanentIsLandPredicate(),
                 "land"

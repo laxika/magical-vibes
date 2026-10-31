@@ -350,7 +350,7 @@ public class BoardEvaluator {
         double bonus = 0;
         List<Permanent> controllerBattlefield = gameData.playerBattlefields.getOrDefault(controllerId, List.of());
 
-        for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : perm.getCard().getStaticEffects()) {
             if (effect instanceof StaticCreatureBoostEffect boost) {
                 GrantScope scope = boost.scope();
                 if (scope != GrantScope.OWN_CREATURES && scope != GrantScope.ALL_OWN_CREATURES

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
@@ -21,7 +20,7 @@ import java.util.List;
 public class Illuminate extends Card {
 
     public Illuminate() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{R}"));
+        addStaticEffect(new KickerEffect("{2}{R}"));
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{3}{U}"), true, 1));
 
         target(TargetFilters.creature())

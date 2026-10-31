@@ -22,8 +22,8 @@ import java.util.List;
 public class Jokulmorder extends Card {
 
     public Jokulmorder() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(new EntersTappedEffect());
+        addStaticEffect(DoesntUntapEffect.self());
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ForcedCostOrElseEffect(
                 new SacrificeMultiplePermanentsCost(5, new PermanentIsLandPredicate()),

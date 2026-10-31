@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingTokenCreationReplacement;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnchantedPermanentEffect;
@@ -19,9 +20,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import java.util.EnumMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -235,7 +235,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         for (Permanent permanent : battlefield) {
             if (gameData.tokenCreationReplacementUsedThisTurn.contains(permanent.getId())
                     || permanent.getAttachedTo() == null
-                    || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    || permanent.getCard().getStaticEffects().stream()
                     .noneMatch(MirrormindCrownEffect.class::isInstance)) {
                 continue;
             }
@@ -257,7 +257,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         for (Permanent permanent : battlefield) {
             if (gameData.tokenCreationReplacementUsedThisTurn.contains(permanent.getId())
                     || permanent.getAttachedTo() == null
-                    || permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    || permanent.getCard().getStaticEffects().stream()
                     .noneMatch(MoonlitMeditationEffect.class::isInstance)) {
                 continue;
             }
@@ -274,18 +274,24 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
      * The id is only knowable at resolution, so the blueprint carries a {@code null} placeholder.
      */
     private static CreateTokenEffect bindDeathReturn(CreateTokenEffect token, StackEntry entry) {
-        Map<EffectSlot, CardEffect> tokenEffects = token.tokenEffects();
+        List<Ability> tokenEffects = token.tokenEffects();
         if (tokenEffects == null || entry.getCard() == null) {
             return token;
         }
-        CardEffect deathEffect = tokenEffects.get(EffectSlot.ON_DEATH);
-        if (!(deathEffect instanceof ReturnExiledCardToBattlefieldUnderOwnerControlEffect returnEffect)
-                || returnEffect.exiledCardId() != null) {
-            return token;
+        List<Ability> bound = new ArrayList<>(tokenEffects.size());
+        boolean changed = false;
+        for (Ability ability : tokenEffects) {
+            if (LegacySlots.slotOf(ability) == EffectSlot.ON_DEATH
+                    && LegacySlots.effectsOf(ability).getFirst()
+                    instanceof ReturnExiledCardToBattlefieldUnderOwnerControlEffect returnEffect
+                    && returnEffect.exiledCardId() == null) {
+                bound.add(LegacySlots.triggered(EffectSlot.ON_DEATH,
+                        new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(entry.getCard().getId())));
+                changed = true;
+            } else {
+                bound.add(ability);
+            }
         }
-        Map<EffectSlot, CardEffect> bound = new EnumMap<>(tokenEffects);
-        bound.put(EffectSlot.ON_DEATH,
-                new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(entry.getCard().getId()));
-        return token.withTokenEffects(bound);
+        return changed ? token.withTokenEffects(bound) : token;
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
@@ -34,13 +33,12 @@ public class GleamOfAuthority extends Card {
                         new PermanentNotPredicate(new PermanentIsHostOfSourceAuraPredicate())
                 )),
                 CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 countersOnOtherCreaturesYouControl,
                 countersOnOtherCreaturesYouControl,
                 GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, "{W}", List.of(new BolsterEffect(1)),
                         "{W}, {T}: Bolster 1."),
                 GrantScope.ENCHANTED_CREATURE));

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -19,7 +18,7 @@ import java.util.List;
 public class ChokingMiasma extends Card {
 
     public ChokingMiasma() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{G}"));
+        addStaticEffect(new KickerEffect("{G}"));
         addSpellEffect(new ConditionalEffect(
                 new Kicked(),
                 new PutCounterOnTargetPermanentEffect(

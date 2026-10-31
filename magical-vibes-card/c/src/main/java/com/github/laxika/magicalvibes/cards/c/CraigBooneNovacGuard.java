@@ -20,8 +20,7 @@ import java.util.Set;
 public class CraigBooneNovacGuard extends Card {
 
     public CraigBooneNovacGuard() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.REACH), GrantScope.SELF));
+        addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.REACH), GrantScope.SELF));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 new ConditionalEffect(new MinimumAttackers(2),
                         new PutCountersOnSelfThenReflexiveEffect(

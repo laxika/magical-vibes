@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class MitoticUltimus extends Card {
 
     public MitoticUltimus() {
-        addEffect(EffectSlot.STATIC,
-                new ReduceOwnCastCostEffect(new GreatestPowerAmongControlled()));
+        addStaticEffect(new ReduceOwnCastCostEffect(new GreatestPowerAmongControlled()));
         addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
                 new ConjureCardToBattlefieldEffect("M11", "185"),
                 new ConjureCardToBattlefieldEffect("M11", "185")));

@@ -14,6 +14,6 @@ public class StupefyingTouch extends Card {
     public StupefyingTouch() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateAbilitiesEffect());
+                .addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect());
     }
 }

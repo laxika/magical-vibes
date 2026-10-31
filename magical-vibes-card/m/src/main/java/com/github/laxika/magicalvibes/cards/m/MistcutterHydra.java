@@ -17,8 +17,8 @@ import java.util.Set;
 public class MistcutterHydra extends Card {
 
     public MistcutterHydra() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLUE)));
+        addStaticEffect(new CantBeCounteredEffect());
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLUE)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
     }

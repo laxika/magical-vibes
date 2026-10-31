@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
@@ -30,7 +29,7 @@ public class AllThatGlitters extends Card {
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate()
                 )), CountScope.CONTROLLER);
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        target(TargetFilters.creature()).addStaticEffect(new AttachedBoostEffect(
                 artifactsAndEnchantmentsYouControl,
                 artifactsAndEnchantmentsYouControl,
                 GrantScope.ENCHANTED_CREATURE));

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutAllCardsExiledWithSourceIn
 public class WatcherForTomorrow extends Card {
 
     public WatcherForTomorrow() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileOneFromTopCardsFaceDownWithSourceEffect(4, true));
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                 new PutAllCardsExiledWithSourceIntoOwnersHandsEffect());

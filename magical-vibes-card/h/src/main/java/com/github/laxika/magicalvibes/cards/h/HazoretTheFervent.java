@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
@@ -23,7 +22,7 @@ public class HazoretTheFervent extends Card {
 
         // Hazoret the Fervent can't attack or block unless you have one or fewer cards in hand.
         // "one or fewer cards" = not (two or more cards).
-        addEffect(EffectSlot.STATIC, new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(new CantAttackOrBlockUnlessEffect(
                 new NotCondition(new CardsInHandAtLeast(2)),
                 "you have one or fewer cards in hand"
         ));

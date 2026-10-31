@@ -22,7 +22,7 @@ public class Fastbond extends Card {
 
     public Fastbond() {
         // You may play any number of lands on each of your turns.
-        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect(Integer.MAX_VALUE - 1));
+        addStaticEffect(new PlaysAdditionalLandEachTurnEffect(Integer.MAX_VALUE - 1));
 
         // Whenever you play a land, if it wasn't the first land you played this turn, this enchantment
         // deals 1 damage to you. The outer wrapper checks the intervening-if when the land-play

@@ -21,7 +21,7 @@ public class QuietusSpike extends Card {
 
     public QuietusSpike() {
         // Static: equipped creature has deathtouch
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.EQUIPPED_CREATURE));
 
         // Triggered: whenever equipped creature deals combat damage to a player,
         // that player loses half their life, rounded up

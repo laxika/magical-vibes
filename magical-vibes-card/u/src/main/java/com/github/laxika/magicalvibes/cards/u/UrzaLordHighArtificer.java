@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MH1", collectorNumber = "75")
@@ -36,7 +36,7 @@ public class UrzaLordHighArtificer extends Card {
         CreateTokenEffect constructToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Construct", 0, 0, null, null,
                 List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT), false, false,
-                Map.of(EffectSlot.STATIC, new BoostSelfEffect(artifactsYouControl, artifactsYouControl)),
+                List.of(StaticAbility.of(new BoostSelfEffect(artifactsYouControl, artifactsYouControl))),
                 List.of(), false, false, false, 0, Set.of());
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, constructToken);

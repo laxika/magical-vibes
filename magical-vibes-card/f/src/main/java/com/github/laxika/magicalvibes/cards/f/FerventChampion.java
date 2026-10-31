@@ -34,6 +34,6 @@ public class FerventChampion extends Card {
                 "Target must be another attacking Knight you control"
         )).addEffect(EffectSlot.ON_ATTACK, new BoostTargetCreatureEffect(1, 0, ANOTHER_ATTACKING_KNIGHT));
 
-        addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostForTargetingSourceEffect(3));
+        addStaticEffect(new ReduceActivatedAbilityCostForTargetingSourceEffect(3));
     }
 }

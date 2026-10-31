@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class TransmograntsCrown extends Card {
 
     public TransmograntsCrown() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new DrawCardEffect(1));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
         addActivatedAbility(new EquipActivatedAbility("{B}"));

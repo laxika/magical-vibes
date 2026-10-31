@@ -26,8 +26,7 @@ import java.util.Set;
 public class NahirisResolve extends Card {
 
     public NahirisResolve() {
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), GrantScope.OWN_CREATURES));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 FlickerEffect.exileControllersAnyNumberPermanentsReturnAtStep(

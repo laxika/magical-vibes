@@ -14,10 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 public class HexingSquelcher extends Card {
 
     public HexingSquelcher() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.STATIC, new ControllerSpellsCantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
+        addStaticEffect(new ControllerSpellsCantBeCounteredEffect());
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(0, 2));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(0, 2),
                 GrantScope.OWN_CREATURES));

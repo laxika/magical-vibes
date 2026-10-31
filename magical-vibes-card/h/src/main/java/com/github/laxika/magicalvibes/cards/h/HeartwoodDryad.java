@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CanBlockCreaturesWithShadowEffect;
 
 /**
@@ -13,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockCreaturesWithShadowEf
 public class HeartwoodDryad extends Card {
 
     public HeartwoodDryad() {
-        addEffect(EffectSlot.STATIC, new CanBlockCreaturesWithShadowEffect());
+        addStaticEffect(new CanBlockCreaturesWithShadowEffect());
     }
 }

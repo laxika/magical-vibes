@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * battlefield. If you don't, put it into its owner's graveyard." (Alliances trading-post land
  * cycle, e.g. Balduvian Trading Post.)
  * <p>
- * Replacement effect (CR 614) registered in {@code EffectSlot.STATIC} and applied by
+ * Replacement effect (CR 614) added as a static ability and applied by
  * {@code BattlefieldEntryService} before the permanent is placed. The controller chooses which
  * matching permanents to sacrifice, and may decline (the card then goes to its owner's graveyard);
  * with fewer than the required number of matching permanents there is no prompt and the card goes

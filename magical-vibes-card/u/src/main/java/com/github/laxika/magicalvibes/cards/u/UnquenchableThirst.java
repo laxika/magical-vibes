@@ -34,6 +34,6 @@ public class UnquenchableThirst extends Card {
                         new TapPermanentsEffect(TapUntapScope.ENCHANTED)));
 
         // Enchanted creature doesn't untap during its controller's untap step.
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+        addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

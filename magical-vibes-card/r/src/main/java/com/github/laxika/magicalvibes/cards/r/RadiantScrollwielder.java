@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpel
 public class RadiantScrollwielder extends Card {
 
     public RadiantScrollwielder() {
-        addEffect(EffectSlot.STATIC, GrantLifelinkToControllerSpellsByColorEffect.allColors());
+        addStaticEffect(GrantLifelinkToControllerSpellsByColorEffect.allColors());
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ExileRandomInstantOrSorceryFromGraveyardMayCastThisTurnEffect());
     }

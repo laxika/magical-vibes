@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndControllerDrawsEffect;
@@ -18,7 +17,7 @@ public class SoulRansom extends Card {
 
     public SoulRansom() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+                .addStaticEffect(new ControlEnchantedCreatureEffect());
         addActivatedAbility(new ActivatedAbility(false, null,
                         List.of(new DiscardCardTypeCost(null, null, 2),
                                 new SacrificeSelfAndControllerDrawsEffect(2)),

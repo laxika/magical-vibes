@@ -26,4 +26,23 @@ public record StaticAbility(List<CardEffect> effects, AbilityZones zones) implem
     public StaticAbility(List<CardEffect> effects) {
         this(effects, AbilityZones.BATTLEFIELD);
     }
+
+    /**
+     * The static ability made of {@code effects}, which functions from the zones its first effect
+     * names ({@link CardEffect#staticAbilityZones()}): the battlefield, unless its rule says otherwise.
+     */
+    public static StaticAbility of(CardEffect... effects) {
+        if (effects.length == 0) {
+            throw new IllegalArgumentException("A static ability needs at least one effect");
+        }
+        return new StaticAbility(List.of(effects), effects[0].staticAbilityZones());
+    }
+
+    /** Like {@link #of(CardEffect...)}, for effects held in a list. */
+    public static StaticAbility of(List<? extends CardEffect> effects) {
+        if (effects.isEmpty()) {
+            throw new IllegalArgumentException("A static ability needs at least one effect");
+        }
+        return new StaticAbility(List.copyOf(effects), effects.getFirst().staticAbilityZones());
+    }
 }

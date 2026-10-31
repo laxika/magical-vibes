@@ -27,7 +27,7 @@ import java.util.List;
 public class AshadTheLoneCyberman extends Card {
 
     public AshadTheLoneCyberman() {
-        addEffect(EffectSlot.STATIC, new GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
+        addStaticEffect(new GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
                 Keyword.CASUALTY, 2, new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.ARTIFACT),
                 new CardNotPredicate(new CardSupertypePredicate(CardSupertype.LEGENDARY))))));

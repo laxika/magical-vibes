@@ -14,7 +14,7 @@ public class MedomaiTheAgeless extends Card {
 
     public MedomaiTheAgeless() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new ControllerExtraTurnEffect(1));
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new NotCondition(new ExtraTurn()),
                 "it isn't an extra turn"
         ));

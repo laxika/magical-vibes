@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueParityPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /** Back face of Soundwave, Sonic Spy. */
@@ -24,12 +23,12 @@ public class SoundwaveSuperiorCaptain extends Card {
                 CardType.ARTIFACT, 1, "Ravage", 3, 3, CardColor.BLACK,
                 Set.of(CardColor.BLACK), List.of(CardSubtype.ROBOT),
                 Set.of(Keyword.MENACE, Keyword.DEATHTOUCH), Set.of(CardType.CREATURE),
-                false, false, Map.of(), List.of(), false, false, true, 0, Set.of());
+                false, false, List.of(), List.of(), false, false, true, 0, Set.of());
         CreateTokenEffect laserbeak = new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Laserbeak", 2, 2, CardColor.BLUE,
                 Set.of(CardColor.BLUE), List.of(CardSubtype.ROBOT),
                 Set.of(Keyword.FLYING, Keyword.HEXPROOF), Set.of(CardType.CREATURE),
-                false, false, Map.of(), List.of(), false, false, true, 0, Set.of());
+                false, false, List.of(), List.of(), false, false, true, 0, Set.of());
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(

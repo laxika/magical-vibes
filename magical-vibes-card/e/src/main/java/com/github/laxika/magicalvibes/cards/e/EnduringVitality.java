@@ -16,7 +16,7 @@ import java.util.Set;
 public class EnduringVitality extends Card {
 
     public EnduringVitality() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(), GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.ON_DEATH, new DyingPermanentWasCreatureConditionalEffect(
                 new ReturnSourceCardFromGraveyardToBattlefieldEffect(false, Set.of(CardType.ENCHANTMENT))));

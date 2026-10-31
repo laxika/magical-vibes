@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -20,7 +19,7 @@ import java.util.List;
 public class TrainingGrounds extends Card {
 
     public TrainingGrounds() {
-        addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+        addStaticEffect(new ReduceActivatedAbilityCostEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledBySourceControllerPredicate())), 2, true, true));

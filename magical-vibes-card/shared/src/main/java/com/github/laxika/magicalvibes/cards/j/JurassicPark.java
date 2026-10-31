@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -17,8 +16,7 @@ import java.util.List;
 public class JurassicPark extends Card {
 
     public JurassicPark() {
-        addEffect(EffectSlot.STATIC,
-                new GrantEscapeToGraveyardCardsEffect(new CardSubtypePredicate(CardSubtype.DINOSAUR)));
+        addStaticEffect(new GrantEscapeToGraveyardCardsEffect(new CardSubtypePredicate(CardSubtype.DINOSAUR)));
         addActivatedAbility(new ActivatedAbility(
                 true, null,
                 List.of(new AwardManaEffect(ManaColor.GREEN,

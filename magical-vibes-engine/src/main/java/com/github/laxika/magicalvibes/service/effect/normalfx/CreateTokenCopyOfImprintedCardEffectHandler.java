@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
@@ -86,7 +86,7 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
                 e.powerOverride(), e.toughnessOverride(), Map.of(), e.grantHasteUntilEndOfTurn(),
                 e.exileAtEndStep(), false, false, false, false, null,
                 e.grantHaste() ? Set.of(Keyword.HASTE) : Set.of(), false,
-                e.additionalEffects().isEmpty() ? Map.of() : Map.of(EffectSlot.STATIC, e.additionalEffects()),
+                e.additionalEffects().isEmpty() ? List.of() : List.of(StaticAbility.of(e.additionalEffects())),
                 List.of(), false, false, new Fixed(1), false, Set.of(), false, List.of(), null, false,
                 e.grantHasteUntilEndOfTurn(), null);
     }

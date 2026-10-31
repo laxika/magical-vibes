@@ -29,7 +29,7 @@ public class BasaltMonolith extends Card {
 
     public BasaltMonolith() {
         // This artifact doesn't untap during your untap step.
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // {T}: Add {C}{C}{C}.
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS, 3));

@@ -21,7 +21,7 @@ public class FellFlagship extends Card {
 
     public FellFlagship() {
         // Pirates you control get +1/+0.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.PIRATE))));
 
         // Whenever Fell Flagship deals combat damage to a player, that player discards a card.

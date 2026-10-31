@@ -819,7 +819,8 @@ public class TriggeredAbilityQueueService {
                 .orElse(-1);
         if (targetGroupIndex < 0) {
             Set<Integer> compatibleTargetGroups = java.util.stream.Stream.concat(
-                            sourceCard.getCastingCostsAndSpellEffects().stream(),
+                            java.util.stream.Stream.concat(sourceCard.getCastingCostsAndSpellEffects().stream(),
+                                    sourceCard.getStaticEffects().stream()),
                             Arrays.stream(EffectSlot.values()).flatMap(slot -> sourceCard.getEffects(slot).stream()))
                     .filter(authored -> effects.stream()
                             .anyMatch(queued -> authored.getClass().equals(queued.getClass())

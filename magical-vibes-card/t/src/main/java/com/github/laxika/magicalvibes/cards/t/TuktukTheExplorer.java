@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "169")
@@ -23,7 +22,7 @@ public class TuktukTheExplorer extends Card {
         addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
                 CardType.CREATURE, 1, "Tuktuk the Returned", 5, 5, null, null,
                 List.of(CardSubtype.GOBLIN, CardSubtype.GOLEM), Set.of(),
-                Set.of(CardType.ARTIFACT), false, false, Map.of(), List.of(),
+                Set.of(CardType.ARTIFACT), false, false, List.of(), List.of(),
                 false, false, true, 0, Set.of()));
     }
 }

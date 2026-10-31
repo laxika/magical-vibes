@@ -32,6 +32,6 @@ public class ArmsScavenger extends Card {
     public ArmsScavenger() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new DraftCardFromSpellbookEffect(SPELLBOOK, true));
-        addEffect(EffectSlot.STATIC, new ReduceEquipCostEffect(1));
+        addStaticEffect(new ReduceEquipCostEffect(1));
     }
 }

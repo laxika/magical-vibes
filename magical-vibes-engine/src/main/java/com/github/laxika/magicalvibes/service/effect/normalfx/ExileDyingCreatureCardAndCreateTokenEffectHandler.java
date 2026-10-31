@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -16,9 +18,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import java.util.EnumMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -86,18 +87,25 @@ public class ExileDyingCreatureCardAndCreateTokenEffectHandler implements Normal
     }
 
     private static CreateTokenEffect bindExiledCardReturn(CreateTokenEffect token, UUID exiledCardId) {
-        Map<EffectSlot, CardEffect> tokenEffects = token.tokenEffects();
+        List<Ability> tokenEffects = token.tokenEffects();
         if (tokenEffects == null) {
             return token;
         }
-        CardEffect combatDamageEffect = tokenEffects.get(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
-        CardEffect bound = bindReturn(combatDamageEffect, exiledCardId);
-        if (bound == combatDamageEffect) {
-            return token;
+        List<Ability> boundTokenEffects = new ArrayList<>(tokenEffects.size());
+        boolean changed = false;
+        for (Ability ability : tokenEffects) {
+            if (LegacySlots.slotOf(ability) == EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER) {
+                CardEffect combatDamageEffect = LegacySlots.effectsOf(ability).getFirst();
+                CardEffect bound = bindReturn(combatDamageEffect, exiledCardId);
+                if (bound != combatDamageEffect) {
+                    boundTokenEffects.add(LegacySlots.triggered(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, bound));
+                    changed = true;
+                    continue;
+                }
+            }
+            boundTokenEffects.add(ability);
         }
-        Map<EffectSlot, CardEffect> boundTokenEffects = new EnumMap<>(tokenEffects);
-        boundTokenEffects.put(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, bound);
-        return token.withTokenEffects(boundTokenEffects);
+        return changed ? token.withTokenEffects(boundTokenEffects) : token;
     }
 
     private static CardEffect bindReturn(CardEffect effect, UUID exiledCardId) {

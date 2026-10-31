@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -44,7 +43,7 @@ public class UntapLockReleaseService {
      * permanents that were locked.
      */
     public void releaseUntapLocks(GameData gameData, Permanent source) {
-        List<CounterType> counterTypes = source.getCard().getEffects(EffectSlot.STATIC).stream()
+        List<CounterType> counterTypes = source.getCard().getStaticEffects().stream()
                 .filter(RemoveCountersWhenUntapLockEndsEffect.class::isInstance)
                 .map(e -> ((RemoveCountersWhenUntapLockEndsEffect) e).counterType())
                 .toList();

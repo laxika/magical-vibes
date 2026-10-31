@@ -16,7 +16,6 @@ public class LeylineOfSingularity extends Card {
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with Leyline of Singularity on the battlefield?"
         ));
-        addEffect(EffectSlot.STATIC,
-                new GrantSupertypeToAllNonlandPermanentsEffect(CardSupertype.LEGENDARY));
+        addStaticEffect(new GrantSupertypeToAllNonlandPermanentsEffect(CardSupertype.LEGENDARY));
     }
 }

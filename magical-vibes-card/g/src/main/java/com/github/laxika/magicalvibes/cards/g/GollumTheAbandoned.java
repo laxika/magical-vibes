@@ -21,7 +21,7 @@ import java.util.List;
 public class GollumTheAbandoned extends Card {
 
     public GollumTheAbandoned() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 ExileGraveyardCardsEffect.upToOneTargetFromOpponentGraveyard());

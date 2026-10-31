@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -35,7 +34,6 @@ import java.util.ArrayList;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -86,7 +84,7 @@ public final class TokenCreationReplacementSupport {
      */
     public static boolean entersAsCreature(Card tokenCard) {
         return tokenCard.hasType(CardType.CREATURE)
-                && tokenCard.getEffects(EffectSlot.STATIC).stream()
+                && tokenCard.getStaticEffects().stream()
                 .noneMatch(effect -> effect instanceof SetCardTypesEffect set
                         && set.scope() == GrantScope.SELF
                         && !set.cardTypes().contains(CardType.CREATURE));
@@ -100,7 +98,7 @@ public final class TokenCreationReplacementSupport {
     public static CreateTokenEffect copyKind(Card tokenCard) {
         return new CreateTokenEffect(tokenCard.getType(), 1, tokenCard.getName(), 0, 0, tokenCard.getColor(),
                 null, List.copyOf(tokenCard.getSubtypes()), Set.of(), Set.copyOf(tokenCard.getAdditionalTypes()),
-                false, false, Map.of(), List.of(), false, false, false, 0, Set.of(), Set.of());
+                false, false, List.of(), List.of(), false, false, false, 0, Set.of(), Set.of());
     }
 
     /** Applies token-profile replacements before a token permanent is created. */
@@ -295,7 +293,7 @@ public final class TokenCreationReplacementSupport {
         return new CreateTokenEffect(
                 CardType.CREATURE, 1, "Frog", 1, 1, CardColor.GREEN, null,
                 List.of(CardSubtype.FROG), Set.of(), Set.of(),
-                original.tappedAndAttacking(), original.tapped(), Map.of(), List.of(),
+                original.tappedAndAttacking(), original.tapped(), List.of(), List.of(),
                 original.exileAtEndOfCombat(), original.exileAtEndStep(), false,
                 original.initialPlusOnePlusOneCounters(), original.grantedKeywordsUntilEndOfTurn(), Set.of());
     }
@@ -315,7 +313,7 @@ public final class TokenCreationReplacementSupport {
         return new CreateTokenEffect(
                 CardType.CREATURE, 1, "Squirrel", 1, 1, CardColor.GREEN, null,
                 List.of(CardSubtype.SQUIRREL), Set.of(), Set.of(),
-                original.tappedAndAttacking(), original.tapped(), Map.of(), List.of(),
+                original.tappedAndAttacking(), original.tapped(), List.of(), List.of(),
                 original.exileAtEndOfCombat(), original.exileAtEndStep(), false,
                 original.initialPlusOnePlusOneCounters(), original.grantedKeywordsUntilEndOfTurn(), Set.of());
     }
@@ -399,7 +397,7 @@ public final class TokenCreationReplacementSupport {
         return new CreateTokenEffect(
                 CardType.CREATURE, 1, "Soldier", 1, 1, CardColor.WHITE, null,
                 List.of(CardSubtype.SOLDIER), Set.of(), Set.of(), tappedAndAttacking, tapped,
-                Map.of(), List.of(), exileAtEndOfCombat, exileAtEndStep, false,
+                List.of(), List.of(), exileAtEndOfCombat, exileAtEndStep, false,
                 initialCounters, grantedKeywords, Set.of());
     }
 
@@ -431,7 +429,7 @@ public final class TokenCreationReplacementSupport {
                     || permanent.isStaticEffectSuppressed(AddTreasureToFoodTokenCreationEffect.class)) {
                 continue;
             }
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof AddTreasureToFoodTokenCreationEffect) {
                     bilboCount++;
                 }
@@ -466,7 +464,7 @@ public final class TokenCreationReplacementSupport {
             List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(controllerId, List.of());
             for (Permanent permanent : battlefield) {
                 if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) continue;
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     if (effect instanceof com.github.laxika.magicalvibes.model.effect.AddTokenCreationEffect add
                             && add.affectedSubtype() == CardSubtype.TREASURE
                             && !permanent.isStaticEffectSuppressed(add.getClass())) {
@@ -572,7 +570,7 @@ public final class TokenCreationReplacementSupport {
         return new CreateTokenEffect(
                 CardType.ARTIFACT, 1, treasure.tokenName(), 0, 0, treasure.color(), treasure.colors(),
                 treasure.subtypes(), treasure.keywords(), treasure.additionalTypes(), false,
-                original.tapped() || original.tappedAndAttacking(), Map.of(), treasure.tokenAbilities(),
+                original.tapped() || original.tappedAndAttacking(), List.of(), treasure.tokenAbilities(),
                 original.exileAtEndOfCombat(), original.exileAtEndStep(), false,
                 original.initialPlusOnePlusOneCounters(), Set.of());
     }
@@ -592,7 +590,7 @@ public final class TokenCreationReplacementSupport {
                 Set.of(),
                 original.tappedAndAttacking(),
                 original.tapped(),
-                Map.of(),
+                List.of(),
                 List.of(),
                 original.exileAtEndOfCombat(),
                 original.exileAtEndStep(),
@@ -661,7 +659,7 @@ public final class TokenCreationReplacementSupport {
                 continue;
             }
             int sourceLevel = permanent.getClassLevel();
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof ReplaceTokenSubtypeCreationEffect replacement
                         && sourceLevel >= replacement.minimumSourceLevel()
                         && !permanent.isStaticEffectSuppressed(effect.getClass())) {
@@ -692,7 +690,7 @@ public final class TokenCreationReplacementSupport {
                     || permanent.isStaticEffectSuppressed(effectType)) {
                 continue;
             }
-            count += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+            count += (int) permanent.getCard().getStaticEffects().stream()
                     .filter(effectType::isInstance)
                     .count();
         }
@@ -716,7 +714,7 @@ public final class TokenCreationReplacementSupport {
                     || permanent.isStaticEffectSuppressed(effectType)) {
                 continue;
             }
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effectType.isInstance(effect)
                         && !permanent.isStaticEffectSuppressed(effect.getClass())) {
                     count++;
@@ -816,7 +814,7 @@ public final class TokenCreationReplacementSupport {
                     || permanent.isStaticEffectSuppressed(AcademyManufactorTokenReplacementEffect.class)) {
                 continue;
             }
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof AcademyManufactorTokenReplacementEffect) {
                     count++;
                 }

@@ -22,9 +22,9 @@ public class DreadwingScavenger extends Card {
         addEffect(EffectSlot.ON_ATTACK, loot());
 
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new StaticBoostEffect(1, 1, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
     }
 

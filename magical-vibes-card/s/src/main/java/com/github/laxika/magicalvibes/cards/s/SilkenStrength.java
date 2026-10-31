@@ -29,7 +29,6 @@ public class SilkenStrength extends Card {
         target(new PermanentPredicateTargetFilter(creatureOrVehicle, "Target must be a creature or Vehicle"))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new UntapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(1, 2, Set.of(Keyword.REACH), GrantScope.ENCHANTED_PERMANENT));
+                .addStaticEffect(new StaticBoostEffect(1, 2, Set.of(Keyword.REACH), GrantScope.ENCHANTED_PERMANENT));
     }
 }

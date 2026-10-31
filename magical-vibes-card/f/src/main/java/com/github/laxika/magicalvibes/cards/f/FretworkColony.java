@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class FretworkColony extends Card {
 
     public FretworkColony() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
                 new PutCountersOnSourceEffect(1, 1, 1),
                 new LoseLifeEffect(1)));

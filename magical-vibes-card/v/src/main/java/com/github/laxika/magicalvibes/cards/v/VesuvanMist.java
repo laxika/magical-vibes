@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfReturnedPermanentIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class VesuvanMist extends Card {
 
     public VesuvanMist() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{B}"));
+        addStaticEffect(new KickerEffect("{1}{B}"));
 
         PermanentAllOfPredicate nontokenNonland = new PermanentAllOfPredicate(List.of(
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),

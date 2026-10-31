@@ -18,7 +18,7 @@ import java.util.List;
 public class BanonTheReturnersLeader extends Card {
 
     public BanonTheReturnersLeader() {
-        addEffect(EffectSlot.STATIC, new CastSpellFromGraveyardOncePerYourTurnEffect(
+        addStaticEffect(new CastSpellFromGraveyardOncePerYourTurnEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardPutIntoGraveyardFromNonBattlefieldThisTurnPredicate()))));

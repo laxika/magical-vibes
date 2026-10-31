@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -18,7 +17,7 @@ import java.util.Set;
 public class AlwaysWatching extends Card {
 
     public AlwaysWatching() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE),
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE),
                 GrantScope.ALL_OWN_CREATURES, new PermanentNotPredicate(new PermanentIsTokenPredicate())));
     }
 }

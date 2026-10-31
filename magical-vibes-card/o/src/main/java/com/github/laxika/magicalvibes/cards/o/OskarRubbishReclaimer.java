@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 public class OskarRubbishReclaimer extends Card {
 
     public OskarRubbishReclaimer() {
-        addEffect(EffectSlot.STATIC,
-                new ReduceOwnCastCostEffect(new DistinctManaValuesAmongCardsInGraveyard()));
+        addStaticEffect(new ReduceOwnCastCostEffect(new DistinctManaValuesAmongCardsInGraveyard()));
         addEffect(EffectSlot.ON_CONTROLLER_DISCARDS, new CastDiscardedCardFromGraveyardEffect());
     }
 }

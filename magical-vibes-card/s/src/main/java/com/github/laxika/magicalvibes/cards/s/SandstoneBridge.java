@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SandstoneBridge extends Card {
 
     public SandstoneBridge() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BoostTargetCreatureEffect(1, 1))

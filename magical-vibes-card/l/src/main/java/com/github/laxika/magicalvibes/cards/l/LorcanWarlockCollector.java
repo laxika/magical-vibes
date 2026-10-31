@@ -22,7 +22,6 @@ public class LorcanWarlockCollector extends Card {
                         "Pay life equal to that card's mana value to return it to the battlefield?"));
 
         // If a Warlock you control would die, exile it instead.
-        addEffect(EffectSlot.STATIC,
-                new ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect(CardSubtype.WARLOCK));
+        addStaticEffect(new ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect(CardSubtype.WARLOCK));
     }
 }

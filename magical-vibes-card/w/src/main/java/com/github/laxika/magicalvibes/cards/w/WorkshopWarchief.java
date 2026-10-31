@@ -25,7 +25,7 @@ public class WorkshopWarchief extends Card {
         addCastingOption(AlternateHandCast.blitz("{4}{G}{G}"));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect("Rhino Warrior", 4, 4, CardColor.GREEN,
                 List.of(CardSubtype.RHINO, CardSubtype.WARRIOR), Set.of(), Set.of()));

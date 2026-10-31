@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -26,10 +25,8 @@ public class ShortCircuit extends Card {
 
         target(new PermanentPredicateTargetFilter(artifactOrCreature,
                 "Target must be an artifact or creature"))
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(-3, 0, GrantScope.ENCHANTED_CREATURE, creaturePredicate))
-                .addEffect(EffectSlot.STATIC,
-                        new RemoveKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE,
+                .addStaticEffect(new StaticBoostEffect(-3, 0, GrantScope.ENCHANTED_CREATURE, creaturePredicate))
+                .addStaticEffect(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE,
                                 creaturePredicate, EffectDuration.PERMANENT));
     }
 }

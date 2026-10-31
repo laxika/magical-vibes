@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
@@ -24,7 +23,7 @@ import java.util.List;
 public class CryptOfAgadeem extends Card {
 
     public CryptOfAgadeem() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLACK));
         addActivatedAbility(new ActivatedAbility(
                 true,

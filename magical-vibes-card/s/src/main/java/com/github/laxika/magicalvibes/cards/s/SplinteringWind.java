@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAndLinkToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -21,7 +23,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ALL", collectorNumber = "99")
@@ -31,8 +32,7 @@ public class SplinteringWind extends Card {
         // The Splinter token carries its own cumulative upkeep. "When it leaves the battlefield" is a
         // delayed triggered ability of this ability (CR 603.7), so "you" stays the activating player
         // even if the token has changed controllers.
-        Map<EffectSlot, CardEffect> splinterEffects = Map.of(
-                EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{G}"));
+        List<Ability> splinterEffects = List.of(LegacySlots.triggered(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{G}")));
         CardEffect splinterLeaves = SequenceEffect.of(
                 new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER),
                 new MassDamageEffect(1, false, false, new PermanentAllOfPredicate(List.of(

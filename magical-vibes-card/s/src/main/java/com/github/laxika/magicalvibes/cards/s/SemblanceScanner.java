@@ -27,7 +27,7 @@ public class SemblanceScanner extends Card {
     public SemblanceScanner() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new ConjureDuplicateOfCombatDamageSourceIntoHandEffect());
-        addEffect(EffectSlot.STATIC, new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
+        addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
                 EffectDuration.WHILE_ATTACHED));
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(

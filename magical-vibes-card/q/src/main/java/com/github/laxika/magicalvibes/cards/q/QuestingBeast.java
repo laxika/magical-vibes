@@ -23,9 +23,9 @@ import java.util.List;
 public class QuestingBeast extends Card {
 
     public QuestingBeast() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtMostPredicate(2)));
-        addEffect(EffectSlot.STATIC, new ControlledCreaturesCombatDamageCantBePreventedEffect());
+        addStaticEffect(new ControlledCreaturesCombatDamageCantBePreventedEffect());
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

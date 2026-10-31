@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DGM", collectorNumber = "92")
@@ -29,9 +29,10 @@ public class ProgenitorMimic extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(
                 new PermanentIsCreaturePredicate(), "creature",
                 Set.of(),
-                Map.of(EffectSlot.UPKEEP_TRIGGERED, List.<CardEffect>of(
+                List.of(
+                        LegacySlots.triggered(EffectSlot.UPKEEP_TRIGGERED, List.<CardEffect>of(
                         new ConditionalEffect(new NotCondition(new SourceIsToken()),
-                                new CreateTokenCopyOfSourceEffect())))
+                                new CreateTokenCopyOfSourceEffect()))))
         ));
     }
 }

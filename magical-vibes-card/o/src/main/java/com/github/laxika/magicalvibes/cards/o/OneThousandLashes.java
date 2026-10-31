@@ -16,8 +16,8 @@ public class OneThousandLashes extends Card {
         target(TargetFilters.creature())
                 // Enchanted creature can't attack or block, and its activated abilities
                 // can't be activated.
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateAbilitiesEffect())
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
+                .addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect())
 
                 // At the beginning of the upkeep of enchanted creature's controller,
                 // that player loses 1 life.

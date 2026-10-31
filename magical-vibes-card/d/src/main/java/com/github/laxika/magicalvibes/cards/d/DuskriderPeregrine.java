@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import java.util.List;
 import java.util.Set;
@@ -15,7 +14,7 @@ import java.util.Set;
 public class DuskriderPeregrine extends Card {
 
     public DuskriderPeregrine() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
         addHandActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{W}",

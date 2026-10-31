@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 public class TaintedObserver extends Card {
 
     public TaintedObserver() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
+        addStaticEffect(new ToxicEffect(1));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new MayPayManaEffect("{2}", new ProliferateEffect(),
                         "Pay {2} to proliferate?"));

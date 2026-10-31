@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class OpalineSliver extends Card {
 
     public OpalineSliver() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY,
                 new MayEffect(new DrawCardEffect(), "Draw a card?"),
                 GrantScope.ALL_CREATURES_INCLUDING_SELF,

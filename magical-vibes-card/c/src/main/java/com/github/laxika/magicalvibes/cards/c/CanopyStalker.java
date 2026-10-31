@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 public class CanopyStalker extends Card {
 
     public CanopyStalker() {
-        addEffect(EffectSlot.STATIC, new MustBeBlockedIfAbleEffect());
+        addStaticEffect(new MustBeBlockedIfAbleEffect());
         addEffect(EffectSlot.ON_DEATH,
                 new GainLifeEffect(new CreatureDeathsThisTurn(CountScope.ANY_PLAYER)));
     }

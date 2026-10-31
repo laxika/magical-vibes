@@ -20,7 +20,7 @@ import java.util.List;
 public class NinjaPizza extends Card {
 
     public NinjaPizza() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,

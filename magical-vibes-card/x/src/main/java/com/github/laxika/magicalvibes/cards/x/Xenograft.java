@@ -11,6 +11,6 @@ public class Xenograft extends Card {
 
     public Xenograft() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new GrantChosenSubtypeToOwnCreaturesEffect());
+        addStaticEffect(new GrantChosenSubtypeToOwnCreaturesEffect());
     }
 }

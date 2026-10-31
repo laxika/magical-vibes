@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class NyssaOfTraken extends Card {
 
     public NyssaOfTraken() {
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
+        addStaticEffect(new NoMaximumHandSizeEffect());
 
         targetUpTo(new EventValue(), TargetFilters.creature(), 1000)
                 .addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(

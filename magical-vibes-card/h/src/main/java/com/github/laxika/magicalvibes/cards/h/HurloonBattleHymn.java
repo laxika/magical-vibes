@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class HurloonBattleHymn extends Card {
 
     public HurloonBattleHymn() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{W}"));
+        addStaticEffect(new KickerEffect("{W}"));
 
         PermanentPredicate creatureOrPlaneswalker = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

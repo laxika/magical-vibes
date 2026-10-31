@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class BaldinCenturyHerdmaster extends Card {
 
     public BaldinCenturyHerdmaster() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new AssignCombatDamageWithToughnessEffect(GrantScope.ALL_CREATURES)));
 
         target(TargetFilters.creature(), 0, 100).addEffect(EffectSlot.ON_ATTACK,

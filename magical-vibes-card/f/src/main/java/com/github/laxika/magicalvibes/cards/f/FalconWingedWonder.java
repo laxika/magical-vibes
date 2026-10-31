@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MSH", collectorNumber = "52")
@@ -31,7 +31,7 @@ public class FalconWingedWonder extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(EffectSlot.ON_ATTACK, new SurveilEffect(1)),
+                List.of(LegacySlots.triggered(EffectSlot.ON_ATTACK, new SurveilEffect(1))),
                 List.of(),
                 false,
                 false,

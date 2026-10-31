@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
@@ -75,7 +75,7 @@ public class LookAtTopSevenAndPerpetuallyGainKeywordsEffectHandler implements No
                     foundKeywords.add(keyword);
                 }
             }
-            for (CardEffect staticEffect : card.getEffects(EffectSlot.STATIC)) {
+            for (CardEffect staticEffect : card.getStaticEffects()) {
                 if (staticEffect instanceof ProtectionGrantingEffect protection
                         && protection.protectionScope() == null) {
                     protectionEffects.add(staticEffect);
@@ -119,7 +119,7 @@ public class LookAtTopSevenAndPerpetuallyGainKeywordsEffectHandler implements No
         }
 
         for (CardEffect protectionEffect : protectionEffects) {
-            source.addPersistentTriggeredEffect(EffectSlot.STATIC, protectionEffect);
+            source.addPersistentAbility(StaticAbility.of(protectionEffect));
             if (perpetualCard != null) {
                 addPerpetualStaticEffect(gameData, perpetualCard.getId(), protectionEffect);
             }
@@ -131,6 +131,6 @@ public class LookAtTopSevenAndPerpetuallyGainKeywordsEffectHandler implements No
      * the card carries it, including after it leaves the battlefield and is cast again.
      */
     private void addPerpetualStaticEffect(GameData gameData, UUID cardId, CardEffect effect) {
-        gameData.grantPerpetualAbility(cardId, EffectSlot.STATIC, effect);
+        gameData.grantPerpetualAbility(cardId, StaticAbility.of(effect));
     }
 }

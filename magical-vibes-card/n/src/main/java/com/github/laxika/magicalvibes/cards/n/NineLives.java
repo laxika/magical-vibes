@@ -19,8 +19,7 @@ import java.util.List;
 public class NineLives extends Card {
 
     public NineLives() {
-        addEffect(EffectSlot.STATIC,
-                new PreventDamageToControllerAndPutCounterOnSelfEffect(CounterType.INCARNATION));
+        addStaticEffect(new PreventDamageToControllerAndPutCounterOnSelfEffect(CounterType.INCARNATION));
         addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
                 (gameData, sourcePermanent, controllerId) ->
                         sourcePermanent.getCounterCount(CounterType.INCARNATION) >= 9,

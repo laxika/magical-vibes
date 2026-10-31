@@ -31,10 +31,10 @@ public class GrimgrinCorpseBorn extends Card {
 
     public GrimgrinCorpseBorn() {
         // Grimgrin enters tapped
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // Doesn't untap during your untap step
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // Sacrifice another creature: Untap Grimgrin and put a +1/+1 counter on it
         addActivatedAbility(new ActivatedAbility(

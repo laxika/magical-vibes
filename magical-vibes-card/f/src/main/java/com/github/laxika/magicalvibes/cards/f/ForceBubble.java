@@ -16,8 +16,7 @@ import java.util.List;
 public class ForceBubble extends Card {
 
     public ForceBubble() {
-        addEffect(EffectSlot.STATIC,
-                new DamageToControllerCounterReplacementEffect(CounterType.DEPLETION));
+        addStaticEffect(new DamageToControllerCounterReplacementEffect(CounterType.DEPLETION));
         addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
                 new PermanentHasAtLeastCountersPredicate(CounterType.DEPLETION, 4),
                 List.of(new SacrificeSelfEffect()),

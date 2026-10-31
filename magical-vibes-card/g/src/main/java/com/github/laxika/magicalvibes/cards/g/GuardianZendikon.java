@@ -20,9 +20,9 @@ public class GuardianZendikon extends Card {
     public GuardianZendikon() {
         // Enchant land. Enchanted land is a 2/6 white Wall creature with defender. It's still a land.
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesCreatureEffect(
+                .addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(
                         2, 6, CardColor.WHITE, List.of(CardSubtype.WALL)))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+                .addStaticEffect(new GrantKeywordEffect(
                         Keyword.DEFENDER, GrantScope.ENCHANTED_PERMANENT));
 
         // When enchanted land dies, return that card to its owner's hand.

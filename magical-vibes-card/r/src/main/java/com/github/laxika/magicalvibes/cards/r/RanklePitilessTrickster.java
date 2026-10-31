@@ -22,7 +22,7 @@ import java.util.Set;
 public class RanklePitilessTrickster extends Card {
 
     public RanklePitilessTrickster() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new OpponentControlsNoPermanent(new PermanentIsCreaturePredicate()),
                 new GrantKeywordEffect(Set.of(Keyword.HASTE, Keyword.LIFELINK), GrantScope.SELF)));
 

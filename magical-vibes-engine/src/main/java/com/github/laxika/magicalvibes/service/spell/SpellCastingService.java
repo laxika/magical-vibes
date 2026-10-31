@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.spell;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.BendingType;
@@ -93,8 +94,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToKickedSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostUnlessRevealSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
@@ -171,7 +170,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoOwnersLibrariesEffect;
@@ -362,7 +360,7 @@ public class SpellCastingService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return values;
         for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof SpellCastingAbilityGrantingEffect grant
                         && grant.grantedAbility() == ability
                         && grant.appliesToSourceZone(sourceZone)
@@ -1025,7 +1023,7 @@ public class SpellCastingService {
         }
 
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof CastTimeXValueModifierEffect modifier
                         && modifier.appliesTo(card, controllerId, controllerId)) {
                     effectiveXValue = modifier.modifyCastTimeXValue(effectiveXValue);
@@ -3692,7 +3690,7 @@ public class SpellCastingService {
         List<Card> hand = gameData.castingSourceCards(player.getId());
         if (hand == null || cardIndex < 0 || cardIndex >= hand.size()) return;
         Card spell = hand.get(cardIndex);
-        IncreaseOwnCastCostUnlessRevealSubtypeEffect cost = spell.getEffects(EffectSlot.STATIC).stream()
+        IncreaseOwnCastCostUnlessRevealSubtypeEffect cost = spell.getStaticEffects().stream()
                 .map(effect -> effect instanceof ConditionalEffect conditional ? conditional.wrapped() : effect)
                 .filter(IncreaseOwnCastCostUnlessRevealSubtypeEffect.class::isInstance)
                 .map(IncreaseOwnCastCostUnlessRevealSubtypeEffect.class::cast)
@@ -3821,7 +3819,7 @@ public class SpellCastingService {
                 && handEarly.get(cardIndex).getBackFaceCard() != null && effectiveXValue == 1
                 ? handEarly.get(cardIndex).getBackFaceCard() : handEarly.get(cardIndex);
         boolean hasSacrificeForCostReduction = !costReductionSacrificeIds.isEmpty() && !fromGraveyard
-                && sacrificeReductionFace.getEffects(EffectSlot.STATIC).stream()
+                && sacrificeReductionFace.getStaticEffects().stream()
                         .anyMatch(SacrificeCreaturesForCostReductionEffect.class::isInstance);
         RemoveCountersForCostReductionEffect counterCostReductionEffect = !fromGraveyard
                 ? additionalSpellCostService.findRemoveCountersForCostReductionEffect(handEarly.get(cardIndex))
@@ -4153,7 +4151,7 @@ public class SpellCastingService {
                 if (!convokePlayable.contains(cardIndex)) {
                     throw new IllegalStateException("Card is not playable even with casting assistance");
                 }
-            } else if (kicked && cardCheck.getEffects(EffectSlot.STATIC).stream()
+            } else if (kicked && cardCheck.getStaticEffects().stream()
                     .anyMatch(KickerEffect.class::isInstance)) {
                 // Allow the cast-time kicker choice to determine the final cost below.
             } else if (hasCostReduction) {
@@ -4301,7 +4299,7 @@ public class SpellCastingService {
         gameData.spellColorOverrides.remove(card.getId());
         gameData.spellColorOverridesUntilEndOfTurn.remove(card.getId());
         gameData.spellTextReplacements.remove(card.getId());
-        boolean hasGiftChoice = card.getEffects(EffectSlot.STATIC).stream()
+        boolean hasGiftChoice = card.getStaticEffects().stream()
                 .anyMatch(GiftEffect.class::isInstance);
         if (giftPromised && !hasGiftChoice) {
             throw new IllegalStateException("Gift was promised for a card without Gift");
@@ -8458,7 +8456,7 @@ public class SpellCastingService {
 
     /** The life a commander's {@link PayLifeInsteadOfCommanderTaxEffect} charges for this cast, or zero. */
     private int commanderTaxLife(GameData gameData, Card card) {
-        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof PayLifeInsteadOfCommanderTaxEffect replacement) {
                 return replacement.lifePerPreviousCast()
                         * (gameData.commanderTaxByCardId.getOrDefault(gameData.commandCastCardId, 0) / 2);
@@ -9865,7 +9863,7 @@ public class SpellCastingService {
 
     private static SacrificeCreaturesForCostReductionEffect sacrificeCreaturesForCostReductionEffect(
             Card reductionFace) {
-        return reductionFace.getEffects(EffectSlot.STATIC).stream()
+        return reductionFace.getStaticEffects().stream()
                 .filter(SacrificeCreaturesForCostReductionEffect.class::isInstance)
                 .map(SacrificeCreaturesForCostReductionEffect.class::cast)
                 .findFirst().orElseThrow();
@@ -11231,7 +11229,7 @@ public class SpellCastingService {
             additionalCost += flashOption.flashAdditionalGenericCost();
         }
         List<UUID> costReductionSacrificeIds = !additionalCostSacrificePermanentIds.isEmpty()
-                && card.getEffects(EffectSlot.STATIC).stream()
+                && card.getStaticEffects().stream()
                         .anyMatch(SacrificeCreaturesForCostReductionEffect.class::isInstance)
                 ? additionalCostSacrificePermanentIds : List.of();
         // The creatures are sacrificed with the other costs below; the reduction they give is known once they
@@ -12155,7 +12153,7 @@ public class SpellCastingService {
         if (graveyardLandPermission.isPresent()
                 && graveyardLandPermission.get().permission().entryTriggeredAbilityGrant() != null) {
             var grant = graveyardLandPermission.get().permission().entryTriggeredAbilityGrant();
-            permanent.addPersistentTriggeredEffect(grant.slot(), grant.grantedEffect());
+            permanent.addPersistentAbility(grant.grantedAbility());
         }
         if (entersTapped) {
             permanent.tap();
@@ -15982,14 +15980,14 @@ public class SpellCastingService {
     }
 
     private KickerEffect findKickerEffect(Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .filter(e -> e instanceof KickerEffect)
                 .map(e -> (KickerEffect) e)
                 .findFirst().orElse(null);
     }
 
     private BuybackEffect findBuybackEffect(Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .filter(e -> e instanceof BuybackEffect)
                 .map(e -> (BuybackEffect) e)
                 .findFirst().orElse(null);
@@ -16142,7 +16140,7 @@ public class SpellCastingService {
     }
 
     private SpliceEffect findMatchingSpliceEffect(Card spliceCard, Card hostSpell) {
-        return spliceCard.getEffects(EffectSlot.STATIC).stream()
+        return spliceCard.getStaticEffects().stream()
                 .filter(SpliceEffect.class::isInstance)
                 .map(SpliceEffect.class::cast)
                 .filter(s -> s.appliesTo(hostSpell))
@@ -18561,7 +18559,7 @@ public class SpellCastingService {
         gameData.clearSpellCastSplicedKeywords(card.getId());
 
         if (castEntry != null && castEntry.wasKicked()) {
-            for (CardEffect staticEffect : card.getEffects(EffectSlot.STATIC)) {
+            for (CardEffect staticEffect : card.getStaticEffects()) {
                 if (staticEffect instanceof GrantKeywordsToKickedSpellEffect marker) {
                     castEntry.getGrantedKeywordsWhileOnStack().addAll(marker.keywords());
                 }
@@ -18605,7 +18603,7 @@ public class SpellCastingService {
             }
         }
 
-        for (CardEffect staticEffect : castCharacteristics.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect staticEffect : castCharacteristics.getStaticEffects()) {
             CardEffect unwrappedStatic = staticEffect instanceof ConditionalEffect conditional
                     && conditionEvaluationService.isMet(gameData, conditional.condition(),
                     com.github.laxika.magicalvibes.service.effect.ConditionContext.forCasting(playerId))

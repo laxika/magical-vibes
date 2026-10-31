@@ -30,8 +30,7 @@ public class Aggression extends Card {
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.WALL)))),
                 "Target must be a creature that isn't a Wall"))
                 // Enchanted creature has first strike and trample.
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE),
+                .addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE),
                                 GrantScope.ENCHANTED_CREATURE))
                 // At the beginning of the end step of enchanted creature's controller,
                 // destroy that creature if it didn't attack this turn.

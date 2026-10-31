@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ECC", collectorNumber = "15")
@@ -24,7 +23,7 @@ public class ElementalSpectacle extends Card {
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, new ColorsAmongControlledPermanents(), "Elemental", 5, 5,
                 CardColor.RED, Set.of(CardColor.RED, CardColor.GREEN), List.of(CardSubtype.ELEMENTAL),
-                Set.of(), Set.of(), false, false, Map.of(), List.of(), false, false, false, 0, Set.of()));
+                Set.of(), Set.of(), false, false, List.of(), List.of(), false, false, false, 0, Set.of()));
         addSpellEffect(new GainLifeEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
     }

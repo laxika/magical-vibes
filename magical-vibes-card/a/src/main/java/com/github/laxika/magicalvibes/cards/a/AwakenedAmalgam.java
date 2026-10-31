@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DistinctPermanentNamesCount;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -15,6 +14,6 @@ public class AwakenedAmalgam extends Card {
     public AwakenedAmalgam() {
         DynamicAmount differentlyNamedLands = new DistinctPermanentNamesCount(
                 new PermanentIsLandPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(differentlyNamedLands, differentlyNamedLands));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(differentlyNamedLands, differentlyNamedLands));
     }
 }

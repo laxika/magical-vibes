@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentOrDiscardCardCost;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -32,11 +31,9 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardEf
 import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardIfNoSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetNoncreatureCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastForMadnessCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastForMiracleCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastSpellWithSuspendCostFromHandEffect;
@@ -2410,7 +2407,7 @@ public class MayCastHandlerService {
         List<Card> reveals = new ArrayList<>();
         int genericCost = Math.max(0, castingCostService.getCastCostModifier(
                 gameData, playerId, card, 0, Zone.OUTSIDE_GAME));
-        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostUnlessRevealSubtypeEffect cost) {
                 Card reveal = gameData.playerHands.getOrDefault(playerId, List.of()).stream()
                         .filter(candidate -> !candidate.getId().equals(card.getId()))

@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SNC", collectorNumber = "21")
@@ -26,7 +25,7 @@ public class MagesAttendant extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 CardType.CREATURE, 1, "Wizard", 1, 1,
                 CardColor.BLUE, null, List.of(CardSubtype.WIZARD), Set.of(), Set.of(),
-                false, false, Map.of(), List.of(new ActivatedAbility(
+                false, false, List.of(), List.of(new ActivatedAbility(
                         false,
                         "{1}",
                         List.of(new SacrificeSelfCost(), new CounterUnlessPaysEffect(1)),

@@ -21,7 +21,7 @@ public class PhoenixFleetAirship extends Card {
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
                 new ControllerSacrificedPermanentThisTurn(), new CreateTokenCopyOfSourceEffect()));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(8, new PermanentNamedPredicate("Phoenix Fleet Airship")),
                 AnimatePermanentsEffect.crew()));
 

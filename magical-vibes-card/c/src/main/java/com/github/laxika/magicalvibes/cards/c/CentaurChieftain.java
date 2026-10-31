@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class CentaurChieftain extends Card {
 
     public CentaurChieftain() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ENTER_BATTLEFIELD,

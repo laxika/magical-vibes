@@ -29,6 +29,6 @@ public class MindHarness extends Card {
                 // Cumulative upkeep {1}
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{1}"))
                 // You control enchanted creature.
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+                .addStaticEffect(new ControlEnchantedCreatureEffect());
     }
 }

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class SpectersShroud extends Card {
 
     public SpectersShroud() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
         addActivatedAbility(new EquipActivatedAbility("{1}"));

@@ -35,7 +35,7 @@ public class TheHourglassCoven extends Card {
                 new DraftCardFromSpellbookEffect(SPELLBOOK, List.of(new HoldDraftedSpellbookCardEffect())),
                 new DraftCardFromSpellbookEffect(SPELLBOOK, List.of(new HoldDraftedSpellbookCardEffect())),
                 new PutHeldSpellbookCardsOntoBattlefieldEffect()));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.WARLOCK))));
     }
 }

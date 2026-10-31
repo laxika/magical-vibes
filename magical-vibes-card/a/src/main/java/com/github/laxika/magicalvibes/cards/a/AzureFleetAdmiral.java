@@ -13,7 +13,7 @@ public class AzureFleetAdmiral extends Card {
     public AzureFleetAdmiral() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeMonarchEffect());
         // "This creature can't be blocked by creatures the monarch controls."
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentControlledByMonarchPredicate()));
     }
 }

@@ -16,10 +16,8 @@ public class SnakeCultInitiation extends Card {
 
     public SnakeCultInitiation() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.POISONOUS, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantKeywordEffect(Keyword.POISONOUS, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                                 new GivePoisonCountersEffect(3, PoisonRecipient.TARGET_PLAYER),
                                 GrantScope.ENCHANTED_CREATURE));

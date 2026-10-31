@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -24,12 +24,12 @@ import java.util.List;
 public class SkrelvDefectorMite extends Card {
 
     public SkrelvDefectorMite() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
-        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
+        addStaticEffect(new CantBlockEffect());
+        addStaticEffect(new ToxicEffect(1));
 
         addActivatedAbility(new ActivatedAbility(true, "{W/P}", List.of(
                 new GrantKeywordEffect(Keyword.TOXIC, GrantScope.TARGET, new PermanentIsCreaturePredicate()),
-                new GrantEffectToTargetUntilEndOfTurnEffect(EffectSlot.STATIC, new ToxicEffect(1)),
+                new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(new ToxicEffect(1))),
                 new GrantTargetCreatureHexproofFromChosenColorAndCantBeBlockedByItUntilEndOfTurnEffect()
         ), "{W/P}, {T}: Choose a color. Another target creature you control gains toxic 1 and "
                 + "hexproof from that color until end of turn. It can't be blocked by creatures of "

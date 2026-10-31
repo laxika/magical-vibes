@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DSK", collectorNumber = "211")
@@ -40,7 +39,7 @@ public class Broodspinner extends Card {
                                 Set.of(),
                                 false,
                                 false,
-                                Map.of(),
+                                List.of(),
                                 List.of(),
                                 false,
                                 false,

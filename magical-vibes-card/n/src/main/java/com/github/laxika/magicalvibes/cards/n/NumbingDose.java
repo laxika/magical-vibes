@@ -24,7 +24,7 @@ public class NumbingDose extends Card {
                 "Target must be an artifact or creature"
         ))
                 // Enchanted permanent doesn't untap during its controller's untap step.
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted())
+                .addStaticEffect(DoesntUntapEffect.enchanted())
 
                 // At the beginning of the upkeep of enchanted permanent's controller, that player loses 1 life.
                 .addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED, new EnchantedCreatureControllerLosesLifeEffect(1));

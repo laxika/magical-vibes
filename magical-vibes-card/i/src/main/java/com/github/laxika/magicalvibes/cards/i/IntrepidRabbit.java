@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class IntrepidRabbit extends Card {
 
     public IntrepidRabbit() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}"));
+        addStaticEffect(new KickerEffect("{1}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         target(TargetFilters.creatureYouControl())

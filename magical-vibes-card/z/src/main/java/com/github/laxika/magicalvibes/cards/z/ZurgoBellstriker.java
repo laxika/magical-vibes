@@ -16,7 +16,7 @@ public class ZurgoBellstriker extends Card {
 
     public ZurgoBellstriker() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{R}"))));
-        addEffect(EffectSlot.STATIC, new CantBlockCreaturesWithPowerAtLeastEffect(2));
+        addStaticEffect(new CantBlockCreaturesWithPowerAtLeastEffect(2));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnSelfToHandIfDashCostPaidEffect());
     }
 }

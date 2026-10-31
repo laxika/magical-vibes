@@ -20,7 +20,7 @@ public class RacersScoreboard extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 new DrawCardEffect(2),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new MaxSpeed(),
                 new ReduceCastCostForMatchingSpellsEffect(
                         new CardTruePredicate(), 1, CostModificationScope.SELF)));

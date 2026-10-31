@@ -29,12 +29,9 @@ public class DancersChakrams extends Card {
                 new LivingWeaponEffect(new CreateTokenEffect("Hero", 1, 1, null,
                         List.of(CardSubtype.HERO), Set.of(), Set.of())));
 
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(2, 2, Set.of(Keyword.LIFELINK), GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantSubtypeEffect(CardSubtype.PERFORMER, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantEffectEffect(new StaticBoostEffect(2, 2, Set.of(Keyword.LIFELINK),
+        addStaticEffect(new StaticBoostEffect(2, 2, Set.of(Keyword.LIFELINK), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.PERFORMER, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantEffectEffect(new StaticBoostEffect(2, 2, Set.of(Keyword.LIFELINK),
                         GrantScope.OWN_PERMANENTS, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCommanderPredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))),

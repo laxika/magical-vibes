@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantEncoreToCreatureCardsOfSubtypesEffect;
 
 import java.util.Set;
@@ -13,7 +12,7 @@ import java.util.Set;
 public class GraywatersFixer extends Card {
 
     public GraywatersFixer() {
-        addEffect(EffectSlot.STATIC, new GrantEncoreToCreatureCardsOfSubtypesEffect(Set.of(
+        addStaticEffect(new GrantEncoreToCreatureCardsOfSubtypesEffect(Set.of(
                 CardSubtype.ASSASSIN,
                 CardSubtype.MERCENARY,
                 CardSubtype.PIRATE,

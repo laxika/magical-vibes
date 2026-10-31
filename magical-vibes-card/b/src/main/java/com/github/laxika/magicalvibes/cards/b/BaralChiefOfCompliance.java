@@ -34,7 +34,7 @@ public class BaralChiefOfCompliance extends Card {
     );
 
     public BaralChiefOfCompliance() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 INSTANT_OR_SORCERY, 1, CostModificationScope.SELF));
 
         addEffect(EffectSlot.ON_CONTROLLER_COUNTERS_SPELL, new MayEffect(

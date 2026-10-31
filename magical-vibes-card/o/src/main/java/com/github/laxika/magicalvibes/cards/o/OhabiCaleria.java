@@ -18,7 +18,7 @@ public class OhabiCaleria extends Card {
 
     public OhabiCaleria() {
         // Untap all Archers you control during each other player's untap step.
-        addEffect(EffectSlot.STATIC, new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
+        addStaticEffect(new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
                 TurnStep.UNTAP, new PermanentHasSubtypePredicate(CardSubtype.ARCHER),
                 TapUntapScope.CONTROLLED));
 

@@ -21,7 +21,7 @@ public class TheFifteenthDoctor extends Card {
     public TheFifteenthDoctor() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, millAndReturnArtifact());
         addEffect(EffectSlot.ON_ATTACK, millAndReturnArtifact());
-        addEffect(EffectSlot.STATIC, new GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
+        addStaticEffect(new GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
                 Keyword.IMPROVISE, new CardNotPredicate(new CardTypePredicate(CardType.ARTIFACT))));
     }
 

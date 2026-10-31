@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -20,7 +19,7 @@ import java.util.List;
 public class CharixTheRagingIsle extends Card {
 
     public CharixTheRagingIsle() {
-        addEffect(EffectSlot.STATIC, new IncreaseOpponentCostForTargetingControlledPermanentEffect(
+        addStaticEffect(new IncreaseOpponentCostForTargetingControlledPermanentEffect(
                 new PermanentIsSourcePermanentPredicate(), 2, false));
 
         PermanentCount islandsYouControl = new PermanentCount(

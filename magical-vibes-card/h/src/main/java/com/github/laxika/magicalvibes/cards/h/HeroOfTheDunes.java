@@ -33,7 +33,7 @@ public class HeroOfTheDunes extends Card {
                 .build());
 
         // Creatures you control with mana value 3 or less get +1/+0.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1, 0, GrantScope.ALL_OWN_CREATURES, new PermanentMaxManaValuePredicate(3)));
     }
 }

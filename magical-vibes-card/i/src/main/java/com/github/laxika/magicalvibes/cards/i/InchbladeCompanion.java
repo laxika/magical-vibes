@@ -27,8 +27,8 @@ import java.util.Set;
 public class InchbladeCompanion extends Card {
 
     public InchbladeCompanion() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
                 EffectDuration.WHILE_ATTACHED));
         addEffect(EffectSlot.ON_EQUIPMENT_ATTACHED,
                 new OncePerTurnTriggerEffect(

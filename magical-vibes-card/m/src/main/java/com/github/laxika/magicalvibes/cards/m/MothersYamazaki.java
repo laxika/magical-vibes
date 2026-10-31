@@ -63,12 +63,12 @@ public class MothersYamazaki extends Card {
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
 
-        addEffect(EffectSlot.STATIC, new IgnoreLegendRuleWhenControllerControlsExactlyTwoSameNameEffect());
+        addStaticEffect(new IgnoreLegendRuleWhenControllerControlsExactlyTwoSameNameEffect());
 
         var exactlyTwo = new AllConditions(List.of(
                 new ControlsPermanentCount(2, new PermanentNamedPredicate(CARD_NAME)),
                 new ControlsPermanentCountAtMost(2, new PermanentNamedPredicate(CARD_NAME))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(exactlyTwo,
+        addStaticEffect(new ConditionalEffect(exactlyTwo,
                 new StaticBoostEffect(2, 2, Set.of(Keyword.VIGILANCE, Keyword.HASTE),
                         GrantScope.ALL_OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.SAMURAI))));
     }

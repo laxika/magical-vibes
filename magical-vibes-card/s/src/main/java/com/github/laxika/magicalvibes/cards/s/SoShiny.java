@@ -23,6 +23,6 @@ public class SoShiny extends Card {
                                 SequenceEffect.of(
                                         new TapPermanentsEffect(TapUntapScope.ENCHANTED),
                                         new ScryEffect(2))))
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+                .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

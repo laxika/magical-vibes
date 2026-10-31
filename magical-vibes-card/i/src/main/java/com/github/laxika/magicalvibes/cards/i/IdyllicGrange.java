@@ -22,7 +22,7 @@ import java.util.Set;
 public class IdyllicGrange extends Card {
 
     public IdyllicGrange() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCountAtMost(2,
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.PLAINS))),
                 new EntersTappedEffect()));

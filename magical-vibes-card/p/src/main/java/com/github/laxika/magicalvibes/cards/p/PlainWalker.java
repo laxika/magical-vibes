@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 public class PlainWalker extends Card {
 
     public PlainWalker() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedIfDefenderControlsMatchingPermanentEffect(
+        addStaticEffect(new CantBeBlockedIfDefenderControlsMatchingPermanentEffect(
                 new PermanentIsPlaneswalkerPredicate()));
         addEffect(EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
                 new PlaneswalkEffect());

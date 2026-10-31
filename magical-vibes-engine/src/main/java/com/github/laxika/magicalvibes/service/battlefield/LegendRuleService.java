@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -211,7 +210,7 @@ public class LegendRuleService {
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         return battlefield != null && battlefield.stream()
-                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(source -> source.getCard().getStaticEffects().stream())
                 .anyMatch(ControlledTokensLegendRuleExemptionEffect.class::isInstance);
     }
 

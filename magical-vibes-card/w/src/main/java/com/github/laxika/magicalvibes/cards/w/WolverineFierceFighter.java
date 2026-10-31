@@ -24,6 +24,6 @@ public class WolverineFierceFighter extends Card {
         ));
         target(new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SourceFightsTargetCreatureEffect());
-        addEffect(EffectSlot.STATIC, new HealPreviousDamageWhenDealtEffect());
+        addStaticEffect(new HealPreviousDamageWhenDealtEffect());
     }
 }

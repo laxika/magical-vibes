@@ -18,10 +18,8 @@ public class Blossombind extends Card {
                 // When this Aura enters, tap enchanted creature.
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED))
                 // Enchanted creature can't become untapped.
-                .addEffect(EffectSlot.STATIC,
-                        new CantBecomeUntappedEffect(GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new CantBecomeUntappedEffect(GrantScope.ENCHANTED_CREATURE))
                 // Enchanted creature can't have counters put on it.
-                .addEffect(EffectSlot.STATIC,
-                        new CantHaveCountersEffect(GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new CantHaveCountersEffect(GrantScope.ENCHANTED_CREATURE));
     }
 }

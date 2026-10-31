@@ -3,13 +3,11 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardPutCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreatureCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorForActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
 
@@ -18,8 +16,8 @@ import java.util.List;
 public class AgathasSoulCauldron extends Card {
 
     public AgathasSoulCauldron() {
-        addEffect(EffectSlot.STATIC, SpendManaAsAnyColorForActivatedAbilitiesEffect.controlledCreatures());
-        addEffect(EffectSlot.STATIC, new GainActivatedAbilitiesOfCreatureCardsExiledWithSourceEffect());
+        addStaticEffect(SpendManaAsAnyColorForActivatedAbilitiesEffect.controlledCreatures());
+        addStaticEffect(new GainActivatedAbilitiesOfCreatureCardsExiledWithSourceEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SeekCardsToHandEffect;
 public class SoulstealerAxe extends Card {
 
     public SoulstealerAxe() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new SeekCardsToHandEffect(
                 new Fixed(1), null, new ManaValueBound(new EventValue(), true, 0)));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

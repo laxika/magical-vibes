@@ -22,7 +22,7 @@ import java.util.Set;
 public class BasrisLieutenant extends Card {
 
     public BasrisLieutenant() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromMulticoloredEffect());
+        addStaticEffect(new ProtectionFromMulticoloredEffect());
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 

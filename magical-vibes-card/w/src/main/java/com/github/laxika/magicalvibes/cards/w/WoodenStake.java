@@ -15,7 +15,7 @@ public class WoodenStake extends Card {
 
     public WoodenStake() {
         // Equipped creature gets +1/+0
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature blocks or becomes blocked by a Vampire,
         // destroy that creature. It can't be regenerated.

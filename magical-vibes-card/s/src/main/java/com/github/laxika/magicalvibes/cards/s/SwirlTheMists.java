@@ -15,6 +15,6 @@ public class SwirlTheMists extends Card {
 
         // "All instances of color words in the text of spells and permanents are changed to the
         // chosen color word."
-        addEffect(EffectSlot.STATIC, new AllColorWordsBecomeChosenColorEffect());
+        addStaticEffect(new AllColorWordsBecomeChosenColorEffect());
     }
 }

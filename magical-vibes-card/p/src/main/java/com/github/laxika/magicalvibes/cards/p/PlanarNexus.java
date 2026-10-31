@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
@@ -17,7 +16,7 @@ import java.util.List;
 public class PlanarNexus extends Card {
 
     public PlanarNexus() {
-        addEffect(EffectSlot.STATIC, new GrantSubtypesToSelfEffect(List.of(
+        addStaticEffect(new GrantSubtypesToSelfEffect(List.of(
                 CardSubtype.CAVE,
                 CardSubtype.DESERT,
                 CardSubtype.GATE,

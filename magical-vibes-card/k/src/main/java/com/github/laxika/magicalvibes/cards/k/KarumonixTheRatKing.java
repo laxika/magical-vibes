@@ -29,11 +29,9 @@ public class KarumonixTheRatKing extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.RAT)
         ));
 
-        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.TOXIC, GrantScope.OWN_CREATURES, rat));
-        addEffect(EffectSlot.STATIC,
-                new GrantEffectEffect(new ToxicEffect(1), GrantScope.OWN_CREATURES, rat));
+        addStaticEffect(new ToxicEffect(1));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TOXIC, GrantScope.OWN_CREATURES, rat));
+        addStaticEffect(new GrantEffectEffect(new ToxicEffect(1), GrantScope.OWN_CREATURES, rat));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new LookAtTopCardsEffect(
                         new Fixed(5),

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -78,7 +77,7 @@ public class ShrinkEnchantedCreatureEffectHandler implements StaticEffectHandler
         var board = pass == null ? null : pass.board();
         var layeredBase = board == null ? null : board.basePt7b().get(enchanted.getId());
         if (layeredBase == null || layeredBase.toughness() == null) {
-            for (CardEffect cardEffect : enchanted.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect cardEffect : enchanted.getCard().getStaticEffects()) {
                 if (cardEffect instanceof SetPowerToughnessToAmountEffect characteristic) {
                     return amountEvaluationService.evaluate(context.gameData(), characteristic.toughness(), ctx)
                             + enchanted.getToughnessModifiers();

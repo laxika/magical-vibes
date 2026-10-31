@@ -2051,7 +2051,7 @@ public class SpellCastTriggerCollectorService {
     }
 
     private int kickedCount(StackEntry spellEntry) {
-        boolean nonKickerAdditionalCost = spellEntry.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean nonKickerAdditionalCost = spellEntry.getCard().getStaticEffects().stream()
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.KickerEffect kicker
                         && !kicker.countsAsKicker());
         int count = spellEntry.isKicked() && !nonKickerAdditionalCost

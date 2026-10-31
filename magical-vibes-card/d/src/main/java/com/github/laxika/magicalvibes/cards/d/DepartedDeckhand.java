@@ -26,7 +26,7 @@ public class DepartedDeckhand extends Card {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL, new SacrificeSelfEffect());
 
         // This creature can't be blocked except by Spirits.
-        addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(
+        addStaticEffect(new CanBeBlockedOnlyByFilterEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT),
                 "Spirits"
         ));

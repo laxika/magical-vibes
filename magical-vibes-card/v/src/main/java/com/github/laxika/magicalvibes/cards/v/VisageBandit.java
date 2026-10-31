@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OTJ", collectorNumber = "76")
@@ -23,7 +22,7 @@ public class VisageBandit extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentControlledBySourceControllerPredicate()
-                )), "creature you control", Set.of(CardSubtype.SHAPESHIFTER, CardSubtype.ROGUE), Map.of()
+                )), "creature you control", Set.of(CardSubtype.SHAPESHIFTER, CardSubtype.ROGUE), List.of()
         ));
 
         // Plot {2}{U}

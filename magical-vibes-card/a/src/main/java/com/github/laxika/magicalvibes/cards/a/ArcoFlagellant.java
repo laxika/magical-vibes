@@ -24,7 +24,7 @@ public class ArcoFlagellant extends Card {
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}")));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new RepeatedAdditionalCostPaid("{2}"), new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}"))));
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

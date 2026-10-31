@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -95,7 +94,7 @@ public class LearnEffectHandler implements NormalEffectHandlerBean {
     private Card findReplacementCard(GameData gameData, StackEntry entry, Set<UUID> excludedCardIds) {
         return gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of()).stream()
                 .filter(card -> !excludedCardIds.contains(card.getId()))
-                .filter(card -> card.getEffects(EffectSlot.STATIC).stream()
+                .filter(card -> card.getStaticEffects().stream()
                         .anyMatch(ReturnFromGraveyardInsteadOfLearnEffect.class::isInstance))
                 .findFirst()
                 .orElse(null);

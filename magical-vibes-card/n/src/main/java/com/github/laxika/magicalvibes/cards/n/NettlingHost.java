@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
@@ -15,7 +14,7 @@ import java.util.List;
 public class NettlingHost extends Card {
 
     public NettlingHost() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(2));
+        addStaticEffect(new ToxicEffect(2));
 
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,

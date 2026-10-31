@@ -38,7 +38,7 @@ public class MosswortBridge extends Card {
         // Hideaway 4 — when this enters, look at the top four cards, exile one face down, rest on bottom.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ImprintFromTopCardsEffect(4, true));
         // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         // {T}: Add {G}.
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
         // {G}, {T}: You may play the exiled card without paying its mana cost if creatures you control have total power 10 or greater.

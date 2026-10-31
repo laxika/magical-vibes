@@ -23,7 +23,7 @@ public class GisaAndGeralf extends Card {
 
     public GisaAndGeralf() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(4, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.STATIC, new CastSpellFromGraveyardOncePerYourTurnEffect(
+        addStaticEffect(new CastSpellFromGraveyardOncePerYourTurnEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSubtypePredicate(CardSubtype.ZOMBIE)))));

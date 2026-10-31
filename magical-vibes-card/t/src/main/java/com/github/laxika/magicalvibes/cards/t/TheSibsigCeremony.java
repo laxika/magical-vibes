@@ -25,7 +25,7 @@ public class TheSibsigCeremony extends Card {
 
     public TheSibsigCeremony() {
         // Creature spells you cast cost {2} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTypePredicate(CardType.CREATURE), new Fixed(2), CostModificationScope.SELF));
 
         // Whenever a creature you control enters, if you cast it, destroy that creature, then

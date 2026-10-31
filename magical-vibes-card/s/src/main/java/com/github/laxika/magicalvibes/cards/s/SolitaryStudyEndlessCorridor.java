@@ -33,7 +33,7 @@ public class SolitaryStudyEndlessCorridor extends Card {
                         .withManaCost("{1}{W}")
         )));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(0),
                 new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES)));
 

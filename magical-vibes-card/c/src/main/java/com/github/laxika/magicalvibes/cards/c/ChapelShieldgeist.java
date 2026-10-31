@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 public class ChapelShieldgeist extends Card {
 
     public ChapelShieldgeist() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(1), GrantScope.ALL_OWN_CREATURES));
-        addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect());
+        addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 }

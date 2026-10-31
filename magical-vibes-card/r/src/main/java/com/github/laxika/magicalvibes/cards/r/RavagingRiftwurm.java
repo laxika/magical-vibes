@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelf
 public class RavagingRiftwurm extends Card {
 
     public RavagingRiftwurm() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{4}"));
+        addStaticEffect(new KickerEffect("{4}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.TIME, new Fixed(2)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),

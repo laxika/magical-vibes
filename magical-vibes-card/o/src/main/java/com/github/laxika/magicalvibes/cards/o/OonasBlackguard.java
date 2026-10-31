@@ -17,7 +17,7 @@ public class OonasBlackguard extends Card {
 
     public OonasBlackguard() {
         // Each other Rogue creature you control enters with an additional +1/+1 counter on it.
-        addEffect(EffectSlot.STATIC, new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.ROGUE, 1));
+        addStaticEffect(new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.ROGUE, 1));
 
         // Whenever a creature you control with a +1/+1 counter on it deals combat damage to a
         // player, that player discards a card.

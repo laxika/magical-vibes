@@ -29,8 +29,7 @@ public class NerivCracklingVanguard extends Card {
                                 new PermanentIsTokenPredicate(), CountScope.CONTROLLER),
                         false, false, LibraryScope.CONTROLLER, false));
 
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                         new AttackedWithCommanderThisTurn(),
                         new AllowCastFromCardsExiledWithSourceEffect(
                                 false, null, false, false, 0, null,

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublingEffect;
@@ -19,7 +18,7 @@ public final class MaroGoneNutsSupport {
             if (permanent.isFaceDown()) {
                 return;
             }
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof MaroGoneNutsEffect) {
                     count[0]++;
                 }

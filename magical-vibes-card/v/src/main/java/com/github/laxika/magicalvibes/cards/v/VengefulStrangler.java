@@ -23,7 +23,7 @@ public class VengefulStrangler extends Card {
     public VengefulStrangler() {
         setBackFaceCard(new StranglingGrasp());
 
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

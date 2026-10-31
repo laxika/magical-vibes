@@ -22,12 +22,12 @@ public class SlivMizzetHivemind extends Card {
     public SlivMizzetHivemind() {
         PermanentHasSubtypePredicate sliver = new PermanentHasSubtypePredicate(CardSubtype.SLIVER);
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.FLYING, GrantScope.ALL_OWN_CREATURES, sliver));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_CONTROLLER_DRAWS,
                 new DealDamageToAnyTargetEffect(1), GrantScope.ALL_OWN_CREATURES, sliver));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null, List.of(new DrawCardEffect(1)), "{T}: Draw a card."),
                 GrantScope.ALL_OWN_CREATURES, sliver));
     }

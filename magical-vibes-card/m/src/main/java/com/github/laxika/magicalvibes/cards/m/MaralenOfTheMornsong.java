@@ -11,7 +11,7 @@ public class MaralenOfTheMornsong extends Card {
 
     public MaralenOfTheMornsong() {
         // Players can't draw cards.
-        addEffect(EffectSlot.STATIC, new PlayersCannotDrawCardsEffect());
+        addStaticEffect(new PlayersCannotDrawCardsEffect());
         // At the beginning of each player's draw step, that player loses 3 life, searches their
         // library for a card, puts it into their hand, then shuffles.
         addEffect(EffectSlot.EACH_DRAW_TRIGGERED, new TargetPlayerLosesLifeAndSearchesLibraryToHandEffect(3));

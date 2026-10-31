@@ -21,7 +21,7 @@ public class LeafCrownedVisionary extends Card {
 
     public LeafCrownedVisionary() {
         // Other Elves you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF))));
 
         // Whenever you cast an Elf spell, you may pay {G}. If you do, draw a card.

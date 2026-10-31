@@ -21,12 +21,12 @@ public class TheReaverCleaver extends Card {
 
     public TheReaverCleaver() {
         // Equipped creature gets +1/+1 and has trample.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
 
         // The equipped creature has "Whenever this creature deals combat damage to a player or
         // planeswalker, create that many Treasure tokens", so its controller creates them.
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER,
                 CreateTokenEffect.ofTreasureToken(new EventValue()),
                 GrantScope.EQUIPPED_CREATURE));

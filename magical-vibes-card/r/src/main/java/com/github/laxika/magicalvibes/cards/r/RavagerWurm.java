@@ -19,7 +19,7 @@ import java.util.List;
 public class RavagerWurm extends Card {
 
     public RavagerWurm() {
-        addEffect(EffectSlot.STATIC, new RiotEffect());
+        addStaticEffect(new RiotEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "This creature fights target creature you don't control",

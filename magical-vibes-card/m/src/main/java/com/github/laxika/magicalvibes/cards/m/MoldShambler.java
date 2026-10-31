@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class MoldShambler extends Card {
 
     public MoldShambler() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{G}"));
+        addStaticEffect(new KickerEffect("{1}{G}"));
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()),
                 "Target must be a noncreature permanent"

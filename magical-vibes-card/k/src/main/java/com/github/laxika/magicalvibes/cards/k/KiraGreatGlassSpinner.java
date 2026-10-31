@@ -19,7 +19,7 @@ public class KiraGreatGlassSpinner extends Card {
         // for the first time each turn, counter that spell or ability." ALL_OWN_CREATURES includes Kira
         // itself. The "first time each turn" gating and targeting the triggering object are handled in
         // TriggerCollectionService for any counterspelling effect in this slot (as for Glyph Keeper).
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
                 new CounterSpellEffect(),
                 GrantScope.ALL_OWN_CREATURES));

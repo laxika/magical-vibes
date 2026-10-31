@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class MortuaryMire extends Card {
 
     public MortuaryMire() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLACK));
 

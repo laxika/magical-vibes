@@ -15,6 +15,6 @@ public class ObeliskOfUrd extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
 
         // Creatures you control of the chosen type get +2/+2.
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenSubtypeEffect(2, 2));
+        addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(2, 2));
     }
 }

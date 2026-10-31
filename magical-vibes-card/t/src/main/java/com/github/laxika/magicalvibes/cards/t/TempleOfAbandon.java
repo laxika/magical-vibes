@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 public class TempleOfAbandon extends Card {
 
     public TempleOfAbandon() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(1));
 
         // {T}: Add {R}.

@@ -28,7 +28,7 @@ public class VeiledApparition extends Card {
                 List.of(new BecomeCreatureEffect(3, 3, CardSubtype.ILLUSION, Set.of(Keyword.FLYING))),
                 new SourceIsEnchantment()));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceIsCreature(),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.UPKEEP_TRIGGERED,

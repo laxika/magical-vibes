@@ -35,7 +35,7 @@ public class SelesnyaSanctuary extends Card {
 
     public SelesnyaSanctuary() {
         // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // When this land enters, return a land you control to its owner's hand.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnPermanentControlledByPlayerToHandEffect(

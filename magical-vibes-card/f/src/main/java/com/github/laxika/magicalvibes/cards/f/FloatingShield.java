@@ -19,8 +19,7 @@ public class FloatingShield extends Card {
     public FloatingShield() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect())
-                .addEffect(EffectSlot.STATIC,
-                        new ProtectionFromChosenColorEffect(GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new ProtectionFromChosenColorEffect(GrantScope.ENCHANTED_CREATURE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

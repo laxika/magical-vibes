@@ -21,7 +21,7 @@ import java.util.Set;
 public class ArchonOfSunsGrace extends Card {
 
     public ArchonOfSunsGrace() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.PEGASUS)));
         addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
                 new CreateTokenEffect("Pegasus", 2, 2, CardColor.WHITE,

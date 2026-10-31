@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TDC", collectorNumber = "2")
@@ -21,6 +20,6 @@ public class ElshaThreefoldMaster extends Card {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new CreateTokenEffect(CardType.CREATURE, new EventValue(), "Monk", 1, 1,
                         CardColor.WHITE, null, List.of(CardSubtype.MONK), Set.of(Keyword.PROWESS), Set.of(),
-                        false, false, Map.of(), List.of(), false, false, false, 0, Set.of()));
+                        false, false, List.of(), List.of(), false, false, false, 0, Set.of()));
     }
 }

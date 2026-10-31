@@ -18,7 +18,7 @@ import java.util.Set;
 public class EverettKRossHaplessAttache extends Card {
 
     public EverettKRossHaplessAttache() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1, 1, Set.of(Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsCommanderPredicate()));
         addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
@@ -21,7 +22,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "VOW", collectorNumber = "17")
@@ -31,7 +31,7 @@ public class HallowedHaunting extends Card {
 
     public HallowedHaunting() {
         // As long as you control seven or more enchantments, creatures you control have flying and vigilance.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(7, new PermanentIsEnchantmentPredicate()),
                 new StaticBoostEffect(0, 0, Set.of(Keyword.FLYING, Keyword.VIGILANCE), GrantScope.OWN_CREATURES)));
 
@@ -42,7 +42,7 @@ public class HallowedHaunting extends Card {
         CreateTokenEffect spiritCleric = new CreateTokenEffect(
                 1, "Spirit Cleric", 0, 0, CardColor.WHITE,
                 List.of(CardSubtype.SPIRIT, CardSubtype.CLERIC), Set.of(), Set.of(),
-                Map.of(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(spirits, spirits)));
+                List.of(StaticAbility.of(new SetPowerToughnessToAmountEffect(spirits, spirits))));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardTypePredicate(CardType.ENCHANTMENT),
                 List.of(spiritCleric)));

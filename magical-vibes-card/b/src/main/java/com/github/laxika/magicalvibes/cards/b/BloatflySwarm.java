@@ -15,7 +15,6 @@ public class BloatflySwarm extends Card {
     public BloatflySwarm() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5)));
-        addEffect(EffectSlot.STATIC,
-                PreventDamageAndRemovePlusOnePlusOneCountersEffect.withEachPlayerRadCounterFollowUp());
+        addStaticEffect(PreventDamageAndRemovePlusOnePlusOneCountersEffect.withEachPlayerRadCounterFollowUp());
     }
 }

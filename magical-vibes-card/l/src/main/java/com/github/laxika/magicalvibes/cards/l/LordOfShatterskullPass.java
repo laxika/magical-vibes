@@ -27,7 +27,7 @@ public class LordOfShatterskullPass extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
                 new SetBasePowerToughnessEffect(6, 6, GrantScope.SELF)));
         // Level 6+ is a static ability that grants the attack trigger, not an intervening "if", so the

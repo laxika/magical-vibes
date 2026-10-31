@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.e.EntropicDecay;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -22,7 +21,7 @@ public class GraySlaad extends Card {
         setBackFaceCard(new EntropicDecay());
         addCastingOption(new AdventureCast("{1}{B}"));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(4, new CardTypePredicate(CardType.CREATURE)),
                 new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.DEATHTOUCH), GrantScope.SELF)));
     }

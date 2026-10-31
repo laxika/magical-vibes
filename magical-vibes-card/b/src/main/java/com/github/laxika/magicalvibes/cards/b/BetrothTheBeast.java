@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class BetrothTheBeast extends Card {
@@ -39,12 +39,13 @@ public class BetrothTheBeast extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(EffectSlot.STATIC, SequenceEffect.of(
+                List.of(
+                        StaticAbility.of(SequenceEffect.of(
                         new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
                         new GrantTriggeredAbilityEffect(
                                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                                 new CounterUnlessPaysEffect(1),
-                                GrantScope.ENCHANTED_CREATURE))),
+                                GrantScope.ENCHANTED_CREATURE)))),
                 List.of(),
                 false,
                 false,

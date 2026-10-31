@@ -18,7 +18,7 @@ public class AccursedWitch extends Card {
     public AccursedWitch() {
         setBackFaceCard(new InfectiousCurse());
 
-        addEffect(EffectSlot.STATIC, new ReduceOpponentCostForTargetingControlledPermanentEffect(
+        addStaticEffect(new ReduceOpponentCostForTargetingControlledPermanentEffect(
                 new PermanentIsSourcePermanentPredicate(), 1));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

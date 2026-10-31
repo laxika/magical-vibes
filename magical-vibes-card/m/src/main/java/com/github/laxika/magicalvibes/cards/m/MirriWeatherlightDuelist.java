@@ -22,7 +22,7 @@ public class MirriWeatherlightDuelist extends Card {
         addEffect(EffectSlot.ON_ATTACK, new LimitOpposingBlockersThisCombatEffect());
 
         // As long as Mirri is tapped, no more than one creature can attack you each combat.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceIsTapped(),
                 new MaximumCombatCreaturesEffect(1, Integer.MAX_VALUE, CombatAttackTargetScope.CONTROLLER)));
     }

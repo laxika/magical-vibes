@@ -21,9 +21,8 @@ public class TheFourthDoctor extends Card {
     public TheFourthDoctor() {
         CardIsHistoricPredicate historic = new CardIsHistoricPredicate();
 
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC,
-                new PlayLandOrCastSpellFromTopOfLibraryOncePerTurnEffect(historic));
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new PlayLandOrCastSpellFromTopOfLibraryOncePerTurnEffect(historic));
 
         CreateFoodWhenPlayingCardFromTopOfLibraryEffect createFood =
                 new CreateFoodWhenPlayingCardFromTopOfLibraryEffect(historic);

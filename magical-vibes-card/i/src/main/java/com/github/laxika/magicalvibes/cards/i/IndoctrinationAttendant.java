@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -16,14 +17,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ONE", collectorNumber = "16")
 public class IndoctrinationAttendant extends Card {
 
     public IndoctrinationAttendant() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
+        addStaticEffect(new ToxicEffect(1));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
                 new ReturnPermanentControlledByPlayerToHandThenEffect(
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()),
@@ -46,8 +46,7 @@ public class IndoctrinationAttendant extends Card {
                 Set.of(CardType.ARTIFACT),
                 false,
                 false,
-                Map.of(
-                        EffectSlot.STATIC, SequenceEffect.of(new CantBlockEffect(), new ToxicEffect(1))),
+                List.of(StaticAbility.of(SequenceEffect.of(new CantBlockEffect(), new ToxicEffect(1)))),
                 List.of(),
                 false,
                 false,

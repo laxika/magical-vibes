@@ -17,7 +17,7 @@ public class AshioksErasure extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryTruePredicate(), "Target must be a spell."))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetSpellUntilSourceLeavesEffect())
-                .addEffect(EffectSlot.STATIC, new CantCastSpellsWithSameNameAsExiledCardEffect(true))
+                .addStaticEffect(new CantCastSpellsWithSameNameAsExiledCardEffect(true))
                 .addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                         new PutAllCardsExiledWithSourceIntoOwnersHandsEffect());
     }

@@ -27,8 +27,7 @@ public class CaseOfTheRansackedLab extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
 
-        addEffect(EffectSlot.STATIC,
-                new ReduceCastCostForMatchingSpellsEffect(instantOrSorcery, 1, CostModificationScope.SELF));
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(instantOrSorcery, 1, CostModificationScope.SELF));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ConditionalEffect(new AllOf(List.of(

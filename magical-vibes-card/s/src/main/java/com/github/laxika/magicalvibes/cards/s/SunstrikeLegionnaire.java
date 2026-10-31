@@ -19,7 +19,7 @@ import java.util.List;
 public class SunstrikeLegionnaire extends Card {
 
     public SunstrikeLegionnaire() {
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
         addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
                 new UntapPermanentsEffect(TapUntapScope.SELF));
 

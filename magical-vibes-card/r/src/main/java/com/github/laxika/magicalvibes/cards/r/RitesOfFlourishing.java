@@ -20,6 +20,6 @@ public class RitesOfFlourishing extends Card {
         addEffect(EffectSlot.EACH_DRAW_TRIGGERED, new DrawCardForTargetPlayerEffect(1));
 
         // Each player may play an additional land on each of their turns.
-        addEffect(EffectSlot.STATIC, new EachPlayerPlaysAdditionalLandEffect());
+        addStaticEffect(new EachPlayerPlaysAdditionalLandEffect());
     }
 }

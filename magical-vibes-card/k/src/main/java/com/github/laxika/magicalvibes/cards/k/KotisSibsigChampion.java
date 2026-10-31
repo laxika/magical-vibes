@@ -15,7 +15,7 @@ import java.util.List;
 public class KotisSibsigChampion extends Card {
 
     public KotisSibsigChampion() {
-        addEffect(EffectSlot.STATIC, new CastSpellFromGraveyardOncePerYourTurnEffect(
+        addStaticEffect(new CastSpellFromGraveyardOncePerYourTurnEffect(
                 new CardTypePredicate(CardType.CREATURE),
                 List.of(), 3));
 

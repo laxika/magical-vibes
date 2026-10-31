@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -79,7 +78,7 @@ class LayerDependencyTest extends BaseCardTest {
         Card card = new Card();
         card.setName(name);
         card.setType(CardType.LAND);
-        card.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.SWAMP,
+        card.addStaticEffect(new GrantSubtypeEffect(CardSubtype.SWAMP,
                 GrantScope.ALL_PERMANENTS, false, new PermanentIsLandPredicate()));
         return card;
     }
@@ -89,7 +88,7 @@ class LayerDependencyTest extends BaseCardTest {
         Card card = new Card();
         card.setName(name);
         card.setType(CardType.LAND);
-        card.addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING),
+        card.addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING),
                 GrantScope.OWN_CREATURES));
         return card;
     }
@@ -199,7 +198,7 @@ class LayerDependencyTest extends BaseCardTest {
     @DisplayName("A lose-all on a lord strips its grant from other creatures even with a later timestamp")
     void loseAllOnLordStripsGrantRegardlessOfTimestamps() {
         Card lordCard = creature("Test Lord", 2, 2, CardSubtype.HUMAN);
-        lordCard.addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING),
+        lordCard.addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING),
                 GrantScope.OWN_CREATURES));
         Permanent lord = addPermanent(player1, lordCard);
         Permanent bears = addPermanent(player1, new GrizzlyBears());
@@ -228,14 +227,14 @@ class LayerDependencyTest extends BaseCardTest {
         Card goblinsAreElves = new Card();
         goblinsAreElves.setName("Goblins Are Elves");
         goblinsAreElves.setType(CardType.ENCHANTMENT);
-        goblinsAreElves.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.ELF,
+        goblinsAreElves.addStaticEffect(new GrantSubtypeEffect(CardSubtype.ELF,
                 GrantScope.ALL_CREATURES, false, new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN))));
         addPermanent(player1, goblinsAreElves);
 
         Card elvesAreGoblins = new Card();
         elvesAreGoblins.setName("Elves Are Goblins");
         elvesAreGoblins.setType(CardType.ENCHANTMENT);
-        elvesAreGoblins.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.GOBLIN,
+        elvesAreGoblins.addStaticEffect(new GrantSubtypeEffect(CardSubtype.GOBLIN,
                 GrantScope.ALL_CREATURES, false, new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF))));
         addPermanent(player1, elvesAreGoblins);
 

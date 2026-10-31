@@ -80,7 +80,7 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                 e.powerOverride(), e.toughnessOverride(), entersWithCounters,
                 false, e.exileAtEndStep(), false, e.tappedAndAttacking(), false, false,
                 e.colorOverride(), e.grantHaste() ? Set.of(Keyword.HASTE) : Set.of(),
-                false, Map.of(), List.of(), e.tapped(), e.removeLegendary(), new Fixed(1),
+                false, List.of(), List.of(), e.tapped(), e.removeLegendary(), new Fixed(1),
                 e.exileAtEndOfCombat(), Set.of(), false, List.of());
 
         // "Put N counters on that token" is measured as the effect resolves and done once the tokens have entered;

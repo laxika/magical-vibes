@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class AvatarKyoshiEarthbender extends Card {
 
     public AvatarKyoshiEarthbender() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
 
         target(TargetFilters.landYouControl())

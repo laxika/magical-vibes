@@ -23,7 +23,7 @@ public class SandwurmConvergence extends Card {
     public SandwurmConvergence() {
         // Creatures with flying can't attack you or planeswalkers you control.
         // Exemption = creatures WITHOUT flying (they may still attack); flying creatures are barred.
-        addEffect(EffectSlot.STATIC, new CreaturesCantAttackControllerUnlessPredicateEffect(
+        addStaticEffect(new CreaturesCantAttackControllerUnlessPredicateEffect(
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)), true));
 
         // At the beginning of your end step, create a 5/5 green Wurm creature token.

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldTh
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NEO", collectorNumber = "226")
@@ -39,7 +39,7 @@ public class KaitoShizuki extends Card {
                 -2,
                 List.of(new CreateTokenEffect(
                         1, "Ninja", 1, 1, CardColor.BLUE, List.of(CardSubtype.NINJA),
-                        Set.of(), Set.of(), Map.of(EffectSlot.STATIC, new CantBeBlockedEffect()))),
+                        Set.of(), Set.of(), List.of(StaticAbility.of(new CantBeBlockedEffect())))),
                 "−2: Create a 1/1 blue Ninja creature token with \"This token can't be blocked.\""
         ));
 

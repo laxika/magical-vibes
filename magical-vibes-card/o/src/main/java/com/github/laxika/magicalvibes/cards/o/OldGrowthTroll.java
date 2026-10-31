@@ -35,13 +35,13 @@ public class OldGrowthTroll extends Card {
                 new PermanentIsCreaturePredicate(),
                 new ReturnSourceAsAuraEffect(forestYouControl)));
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null,
                         List.of(new AwardManaEffect(ManaColor.GREEN, 2)),
                         "{T}: Add {G}{G}."),
                 GrantScope.ENCHANTED_PERMANENT));
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, "{1}",
                         List.of(
                                 new SacrificeSelfCost(),

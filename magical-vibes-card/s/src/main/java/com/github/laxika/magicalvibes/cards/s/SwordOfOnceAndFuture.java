@@ -32,8 +32,8 @@ public class SwordOfOnceAndFuture extends Card {
             new CardAllOfPredicate(List.of(new CardTypePredicate(CardType.SORCERY), MAX_MANA_VALUE_TWO))));
 
     public SwordOfOnceAndFuture() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new ProtectionFromColorsEffect(
                 Set.of(CardColor.BLUE, CardColor.BLACK), GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
                 SurveilThenEffect.direct(2, new CastCardFromGraveyardEffect(

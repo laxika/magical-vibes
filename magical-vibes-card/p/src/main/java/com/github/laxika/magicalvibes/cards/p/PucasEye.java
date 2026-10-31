@@ -21,7 +21,7 @@ public class PucasEye extends Card {
     public PucasEye() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorForSourceEffect());
-        addEffect(EffectSlot.STATIC, new BecomeChosenColorEffect());
+        addStaticEffect(new BecomeChosenColorEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

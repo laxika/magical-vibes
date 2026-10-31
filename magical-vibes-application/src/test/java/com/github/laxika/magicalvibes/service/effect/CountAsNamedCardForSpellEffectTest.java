@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
@@ -41,8 +40,7 @@ class CountAsNamedCardForSpellEffectTest extends BaseCardTest {
         graveyardCard = new Card();
         graveyardCard.setName("Actual Name");
         graveyardCard.setType(CardType.CREATURE);
-        graveyardCard.addEffect(EffectSlot.STATIC,
-                new CountAsNamedCardForSpellEffect("Counting Spell", "Counted Card"));
+        graveyardCard.addStaticEffect(new CountAsNamedCardForSpellEffect("Counting Spell", "Counted Card"));
         harness.setGraveyard(player1, List.of(graveyardCard));
     }
 

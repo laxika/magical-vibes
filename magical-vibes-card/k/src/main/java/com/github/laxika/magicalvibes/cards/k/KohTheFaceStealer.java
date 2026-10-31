@@ -39,6 +39,6 @@ public class KohTheFaceStealer extends Card {
                 List.of(new PayLifeCost(1), new ChooseCreatureCardExiledWithSourceEffect()),
                 "Pay 1 life: Choose a creature card exiled with Koh."
         ));
-        addEffect(EffectSlot.STATIC, new GainAbilitiesOfLastChosenExiledCardEffect());
+        addStaticEffect(new GainAbilitiesOfLastChosenExiledCardEffect());
     }
 }

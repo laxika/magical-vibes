@@ -14,7 +14,7 @@ public class RiverSneak extends Card {
 
     public RiverSneak() {
         // River Sneak can't be blocked.
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
 
         // Whenever another Merfolk you control enters, River Sneak gets +1/+1 until end of turn.
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,

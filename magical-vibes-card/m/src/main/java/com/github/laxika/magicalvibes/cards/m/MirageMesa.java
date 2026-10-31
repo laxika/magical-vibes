@@ -14,7 +14,7 @@ import java.util.List;
 public class MirageMesa extends Card {
 
     public MirageMesa() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,

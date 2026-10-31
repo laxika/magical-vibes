@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -17,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class CruelclawsHeist extends Card {
 
     public CruelclawsHeist() {
-        addEffect(EffectSlot.STATIC, new GiftEffect());
+        addStaticEffect(new GiftEffect());
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

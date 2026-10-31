@@ -19,7 +19,7 @@ public class BreathOfDreams extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{U}"));
 
         // Green creatures have "Cumulative upkeep {1}."
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new GrantEffectEffect(
                 new CumulativeUpkeepEffect("{1}"),
                 GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN))));

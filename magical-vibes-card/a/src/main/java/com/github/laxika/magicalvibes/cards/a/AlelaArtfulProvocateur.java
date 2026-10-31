@@ -27,7 +27,7 @@ public class AlelaArtfulProvocateur extends Card {
 
     public AlelaArtfulProvocateur() {
         // Other creatures you control with flying get +1/+0.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
                 new PermanentHasKeywordPredicate(Keyword.FLYING)));
 
         // Whenever you cast an artifact or enchantment spell, create a 1/1 blue Faerie creature

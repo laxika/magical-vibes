@@ -18,8 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class PirateHat extends Card {
 
     public PirateHat() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 SequenceEffect.of(
                         new DrawCardEffect(1),

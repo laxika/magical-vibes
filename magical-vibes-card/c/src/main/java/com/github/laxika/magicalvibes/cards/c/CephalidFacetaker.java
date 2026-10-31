@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -13,7 +14,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NCC", collectorNumber = "23")
@@ -22,7 +22,7 @@ public class CephalidFacetaker extends Card {
 
     public CephalidFacetaker() {
         // This creature can't be blocked.
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
 
         // At the beginning of combat on your turn, you may have this creature become a copy of
         // another target creature until end of turn, except it's 1/4 and has this ability.
@@ -35,7 +35,7 @@ public class CephalidFacetaker extends Card {
         )).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new MayEffect(
                 new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
                         null, Set.of(), 1, 4, Set.of(), Set.of(), Set.of(), null,
-                        Map.of(EffectSlot.STATIC, List.of(new CantBeBlockedEffect()))),
+                        List.of(StaticAbility.of(List.of(new CantBeBlockedEffect())))),
                 "Become a copy of the target creature?"));
     }
 }

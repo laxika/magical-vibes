@@ -161,16 +161,16 @@ public class EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEf
         copy.removeKeyword(Keyword.CHANGELING);
         copy.removeKeyword(Keyword.DEVOID);
         copy.addCastingCostsAndSpellEffectsFrom(original, effect -> true);
+        copy.addStaticAbilitiesFrom(original, effect -> {
+            boolean definesColor = effect instanceof GrantColorEffect grant
+                    && grant.scope() == GrantScope.SELF && grant.filter() == null;
+            boolean definesTypes = effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
+                    && grant.scope() == GrantScope.SELF && grant.filter() == null;
+            return !definesColor && !definesTypes;
+        });
         for (EffectSlot slot : EffectSlot.values()) {
             for (var registration : original.getEffectRegistrations(slot)) {
-                CardEffect effect = registration.effect();
-                boolean definesColor = effect instanceof GrantColorEffect grant
-                        && grant.scope() == GrantScope.SELF && grant.filter() == null;
-                boolean definesTypes = effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
-                        && grant.scope() == GrantScope.SELF && grant.filter() == null;
-                if (slot != EffectSlot.STATIC || (!definesColor && !definesTypes)) {
-                    copy.addEffect(slot, effect, registration.triggerMode());
-                }
+                copy.addEffect(slot, registration.effect(), registration.triggerMode());
             }
         }
         original.getActivatedAbilities().forEach(copy::addActivatedAbility);

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * <p>An empty {@code manaCost} with a positive {@code lifeAmount} represents a life-only payment.
  *
- * <p>A static marker placed in {@link com.github.laxika.magicalvibes.model.EffectSlot#STATIC}
+ * <p>A static marker added as a static ability
  * and read by {@code StepTriggerService} during each player's upkeep: for every permanent the
  * active player controls that matches {@code filter} it pushes a
  * {@link ForcedCostOrElseEffect}{@code (PayManaCost, [SacrificeSelfEffect] or

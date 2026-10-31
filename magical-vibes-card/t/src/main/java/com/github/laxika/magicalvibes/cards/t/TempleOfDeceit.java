@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 public class TempleOfDeceit extends Card {
 
     public TempleOfDeceit() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(1));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));

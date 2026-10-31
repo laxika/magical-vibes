@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ElvishHydromancer extends Card {
 
     public ElvishHydromancer() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}{U}"));
+        addStaticEffect(new KickerEffect("{3}{U}"));
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ConditionalEffect(new Kicked(), new CreateTokenCopyOfTargetPermanentEffect()));

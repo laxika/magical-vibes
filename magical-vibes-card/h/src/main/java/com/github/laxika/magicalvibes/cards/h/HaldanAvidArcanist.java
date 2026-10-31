@@ -22,8 +22,7 @@ public class HaldanAvidArcanist extends Card {
                 "Have target player put Pako, Arcane Retriever into their hand from their library?",
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
-        addEffect(EffectSlot.STATIC,
-                AllowCastFromCardsExiledWithSourceEffect.forFetchCounters(
+        addStaticEffect(AllowCastFromCardsExiledWithSourceEffect.forFetchCounters(
                         true, new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))));
     }
 }

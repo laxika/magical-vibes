@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
@@ -25,6 +24,6 @@ public class ChoArrimLegate extends Card {
                         new OpponentControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.SWAMP)),
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.PLAINS)))),
                 false));
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -20,7 +19,7 @@ import java.util.Set;
 public class ChameleonColossus extends Card {
 
     public ChameleonColossus() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
         // {2}{G}{G}: This creature gets +X/+X until end of turn, where X is its power.
         // SourcePower snapshots the effective power at resolution, so repeated activations double it.
         addActivatedAbility(new ActivatedAbility(

@@ -24,8 +24,8 @@ public class SummonersGrimoire extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new LivingWeaponEffect(new CreateTokenEffect("Hero", 1, 1, null,
                         List.of(CardSubtype.HERO), Set.of(), Set.of())));
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.SHAMAN, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.SHAMAN, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature")
                         .withEnterTappedAndAttackingIf(new CardTypePredicate(CardType.ENCHANTMENT)),

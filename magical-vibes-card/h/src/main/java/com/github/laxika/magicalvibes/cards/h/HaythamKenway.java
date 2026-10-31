@@ -21,12 +21,9 @@ public class HaythamKenway extends Card {
     public HaythamKenway() {
         PermanentHasSubtypePredicate knights = new PermanentHasSubtypePredicate(CardSubtype.KNIGHT);
 
-        addEffect(EffectSlot.STATIC,
-                new ProtectionFromSubtypesEffect(Set.of(CardSubtype.ASSASSIN)));
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES, knights));
-        addEffect(EffectSlot.STATIC,
-                new GrantEffectEffect(
+        addStaticEffect(new ProtectionFromSubtypesEffect(Set.of(CardSubtype.ASSASSIN)));
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES, knights));
+        addStaticEffect(new GrantEffectEffect(
                         new ProtectionFromSubtypesEffect(Set.of(CardSubtype.ASSASSIN)),
                         GrantScope.OWN_CREATURES, knights));
 

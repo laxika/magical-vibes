@@ -26,7 +26,7 @@ import java.util.Set;
 public class SyrGingerTheMealEnder extends Card {
 
     public SyrGingerTheMealEnder() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new OpponentControlsPermanent(new PermanentIsPlaneswalkerPredicate()),
                 new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HEXPROOF, Keyword.HASTE), GrantScope.SELF)));
 

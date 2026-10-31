@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformGrantingPermanentEff
 public class OptimusPrimeAutobotLeader extends Card {
 
     public OptimusPrimeAutobotLeader() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
 

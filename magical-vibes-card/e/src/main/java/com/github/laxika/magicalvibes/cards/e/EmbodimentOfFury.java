@@ -20,7 +20,7 @@ import java.util.Set;
 public class EmbodimentOfFury extends Card {
 
     public EmbodimentOfFury() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsLandPredicate()));

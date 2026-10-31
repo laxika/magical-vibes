@@ -16,9 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 public class StitchersGraft extends Card {
 
     public StitchersGraft() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK, new SkipNextUntapEffect(TapUntapScope.TRIGGERING));
-        addEffect(EffectSlot.STATIC, new SacrificeOnUnattachEffect());
+        addStaticEffect(new SacrificeOnUnattachEffect());
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

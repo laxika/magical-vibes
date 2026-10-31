@@ -34,7 +34,7 @@ public class GalvanicAlchemist extends Card {
                 List.of(new UntapPermanentsEffect(TapUntapScope.SELF)),
                 "{2}{U}: Untap this creature."
         );
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
                 new GrantActivatedAbilityEffect(untap, GrantScope.SELF_AND_PAIRED)));
     }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -32,9 +31,9 @@ public class GoblinKing extends Card {
 
     public GoblinKing() {
         // Other Goblins get +1/+1 and have mountainwalk, whoever controls them (including noncreature Goblins).
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN))));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.MOUNTAINWALK, GrantScope.ALL_PERMANENTS,
+        addStaticEffect(new GrantKeywordEffect(Keyword.MOUNTAINWALK, GrantScope.ALL_PERMANENTS,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN))));
     }
 }

@@ -21,7 +21,7 @@ public class Splinterfright extends Card {
     public Splinterfright() {
         CardsInGraveyard creaturesInGraveyard =
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(creaturesInGraveyard, creaturesInGraveyard));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(creaturesInGraveyard, creaturesInGraveyard));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MillEffect(2, MillRecipient.CONTROLLER));
     }
 }

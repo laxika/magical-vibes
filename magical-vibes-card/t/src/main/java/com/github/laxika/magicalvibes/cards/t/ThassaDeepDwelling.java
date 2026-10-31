@@ -30,7 +30,7 @@ import java.util.Set;
 public class ThassaDeepDwelling extends Card {
 
     public ThassaDeepDwelling() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorAtLeast(ManaColor.BLUE, 5)),
                 new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
 

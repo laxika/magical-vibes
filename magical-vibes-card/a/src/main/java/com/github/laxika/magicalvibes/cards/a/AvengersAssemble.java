@@ -20,7 +20,7 @@ import java.util.List;
 public class AvengersAssemble extends Card {
 
     public AvengersAssemble() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.HERO)));
         addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
                 new AnyOf(List.of(

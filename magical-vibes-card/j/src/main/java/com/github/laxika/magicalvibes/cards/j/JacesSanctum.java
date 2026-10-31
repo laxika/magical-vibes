@@ -19,7 +19,7 @@ public class JacesSanctum extends Card {
 
     public JacesSanctum() {
         // Instant and sorcery spells you cast cost {1} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)

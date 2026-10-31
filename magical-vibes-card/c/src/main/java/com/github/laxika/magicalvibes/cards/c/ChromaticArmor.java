@@ -20,7 +20,7 @@ import java.util.List;
 public class ChromaticArmor extends Card {
 
     public ChromaticArmor() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new PreventColorDamageToEnchantedCreatureEffect());
+        target(TargetFilters.creature()).addStaticEffect(new PreventColorDamageToEnchantedCreatureEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.SLEIGHT, new Fixed(1)));
 

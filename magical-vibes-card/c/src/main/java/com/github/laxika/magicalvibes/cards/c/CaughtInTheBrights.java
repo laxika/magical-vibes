@@ -15,7 +15,7 @@ public class CaughtInTheBrights extends Card {
 
     public CaughtInTheBrights() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect());
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect());
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new TriggeringPermanentConditionalEffect(

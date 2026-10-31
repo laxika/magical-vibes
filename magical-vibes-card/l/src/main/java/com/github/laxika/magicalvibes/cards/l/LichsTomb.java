@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class LichsTomb extends Card {
 
     public LichsTomb() {
-        addEffect(EffectSlot.STATIC, new CantLoseGameFromLifeEffect());
+        addStaticEffect(new CantLoseGameFromLifeEffect());
         addEffect(EffectSlot.ON_CONTROLLER_LOSES_LIFE, new SacrificePermanentsEffect(
                 new EventValue(), new PermanentTruePredicate(), SacrificeRecipient.CONTROLLER));
     }

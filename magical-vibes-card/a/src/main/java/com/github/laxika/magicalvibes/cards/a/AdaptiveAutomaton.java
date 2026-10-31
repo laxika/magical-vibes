@@ -19,9 +19,9 @@ public class AdaptiveAutomaton extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
 
         // This creature is the chosen type in addition to its other types.
-        addEffect(EffectSlot.STATIC, GrantChosenSubtypeToOwnCreaturesEffect.toSelf());
+        addStaticEffect(GrantChosenSubtypeToOwnCreaturesEffect.toSelf());
 
         // Other creatures you control of the chosen type get +1/+1.
-        addEffect(EffectSlot.STATIC, BoostCreaturesOfChosenSubtypeEffect.otherOwnCreatures(1, 1));
+        addStaticEffect(BoostCreaturesOfChosenSubtypeEffect.otherOwnCreatures(1, 1));
     }
 }

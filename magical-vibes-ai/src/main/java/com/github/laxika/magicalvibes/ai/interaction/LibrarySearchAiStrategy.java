@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.ai.interaction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.LibrarySearchCastPermission;
@@ -70,7 +69,7 @@ class LibrarySearchAiStrategy implements AiInteractionStrategy<PendingInteractio
 
     private static boolean isLibrarySearchCastOption(LibrarySearchParams params, Card card) {
         return params.allowCastFromLibraryWhileSearching()
-                && card.getEffects(EffectSlot.STATIC).stream()
+                && card.getStaticEffects().stream()
                 .anyMatch(LibrarySearchCastPermission.class::isInstance);
     }
 }

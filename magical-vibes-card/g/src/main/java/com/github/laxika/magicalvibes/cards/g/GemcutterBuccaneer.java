@@ -28,23 +28,19 @@ public class GemcutterBuccaneer extends Card {
 
         PermanentPredicate treasure = new PermanentHasSubtypePredicate(CardSubtype.TREASURE);
 
-        addEffect(EffectSlot.STATIC,
-                new GrantSubtypeEffect(CardSubtype.EQUIPMENT, GrantScope.OWN_PERMANENTS, false, treasure));
-        addEffect(EffectSlot.STATIC,
-                new GrantEffectEffect(
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.EQUIPMENT, GrantScope.OWN_PERMANENTS, false, treasure));
+        addStaticEffect(new GrantEffectEffect(
                         new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE),
                         GrantScope.OWN_PERMANENTS,
                         treasure));
-        addEffect(EffectSlot.STATIC,
-                new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                         new EquipActivatedAbility(
                                 "{1}",
                                 new PermanentHasSubtypePredicate(CardSubtype.PIRATE),
                                 "Target must be a Pirate you control"),
                         GrantScope.OWN_PERMANENTS,
                         treasure));
-        addEffect(EffectSlot.STATIC,
-                new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                         new EquipActivatedAbility("{3}"),
                         GrantScope.OWN_PERMANENTS,
                         treasure));

@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class ExpeditionDiviner extends Card {
 
     public ExpeditionDiviner() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.WIZARD)),
                 new GrantTriggeredAbilityEffect(EffectSlot.ON_DEATH, new DrawCardEffect(1), GrantScope.SELF)));
     }

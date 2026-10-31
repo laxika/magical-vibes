@@ -30,9 +30,8 @@ public class BindingGrasp extends Card {
                                 List.of(new SacrificeSelfEffect()),
                                 true))
                 // You control enchanted creature.
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect())
+                .addStaticEffect(new ControlEnchantedCreatureEffect())
                 // Enchanted creature gets +0/+1.
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(0, 1, Set.of(), GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(0, 1, Set.of(), GrantScope.ENCHANTED_CREATURE));
     }
 }

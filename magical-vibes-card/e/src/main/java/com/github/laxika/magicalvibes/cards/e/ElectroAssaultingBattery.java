@@ -21,7 +21,7 @@ import java.util.List;
 public class ElectroAssaultingBattery extends Card {
 
     public ElectroAssaultingBattery() {
-        addEffect(EffectSlot.STATIC, new PreventManaDrainEffect(ManaColor.RED));
+        addStaticEffect(new PreventManaDrainEffect(ManaColor.RED));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardAnyOfPredicate(List.of(

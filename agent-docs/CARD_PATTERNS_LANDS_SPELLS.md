@@ -5,6 +5,14 @@
 > is a casting cost (CR 601.2b, 601.2f), written `addCastingCost(c)`; it is not part of the spell ability.
 > There is no `EffectSlot.SPELL`.
 
+> `STATIC` in this file means a static ability (CR 113.3d), written `addStaticEffect(e)`, or
+> `target(f).addStaticEffect(e)` for an Aura's enchant ability. It functions from the zones its effect's
+> rule names (`CardEffect.staticAbilityZones()`): the battlefield, the stack for kicker, buyback, gift,
+> "can't be countered" and "costs less to cast", and the hand for splice. An ability that states its
+> zones, such as Eminence, is written `addStaticEffect(AbilityZones.of(...), e)`. In a token's or a
+> copy's ability list it is `StaticAbility.of(e)`, next to `LegacySlots.triggered(EffectSlot.X, e)` for
+> a trigger. Readers use `getStaticEffects()`. There is no `EffectSlot.STATIC`.
+
 - Sacrifice half your lands rounded up as a spell cost + land mana grant | `t/TectonicSplit.java` | `SacrificeFractionRoundedUpCost(2, PermanentIsLandPredicate)` in the SPELL slot + `GrantActivatedAbilityEffect(new ActivatedAbility(true, null, List.of(new AwardAnyColorManaEffect(3)), "{T}: Add three mana of any one color."), GrantScope.OWN_LANDS)` |
 - Final Act (`f/FinalAct.java`): for a choose-one-or-more global modal spell, use typed `DestroyAllPermanentsEffect` modes, `ExileGraveyardCardsEffect(ALL_PLAYERS)`, and `EachOpponentLosesAllCountersEffect()`.
 - Cosmic Rebirth (`c/CosmicRebirth.java`): target a permanent card in your graveyard; gate `ReturnCardFromGraveyardEffect` battlefield/hand branches with `TargetGraveyardCardManaValueAtMost(3)` and `TargetGraveyardCardManaValueAtLeast(4)`, then add `GainLifeEffect(3)`.

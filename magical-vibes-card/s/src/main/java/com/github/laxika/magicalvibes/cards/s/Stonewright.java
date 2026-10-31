@@ -33,7 +33,7 @@ public class Stonewright extends Card {
                 List.of(new BoostSelfEffect(1, 0)),
                 "{R}: This creature gets +1/+0 until end of turn."
         );
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
                 new GrantActivatedAbilityEffect(pump, GrantScope.SELF_AND_PAIRED)));
     }

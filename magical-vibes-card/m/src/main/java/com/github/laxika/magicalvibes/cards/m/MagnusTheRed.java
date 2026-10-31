@@ -29,7 +29,7 @@ public class MagnusTheRed extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsTokenPredicate())),
                 CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))),

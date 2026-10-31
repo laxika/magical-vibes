@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerLosesLif
 public class ForsakenWastes extends Card {
 
     public ForsakenWastes() {
-        addEffect(EffectSlot.STATIC, new PlayersCantGainLifeEffect());
+        addStaticEffect(new PlayersCantGainLifeEffect());
 
         // EACH_UPKEEP_TRIGGERED sets the active player as the target, so "that player loses 1 life".
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new LoseLifeEffect(1, LoseLifeRecipient.ACTIVE_PLAYER));

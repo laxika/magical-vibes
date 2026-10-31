@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 public class KrangTheAllPowerful extends Card {
 
     public KrangTheAllPowerful() {
-        addEffect(EffectSlot.STATIC, AdditionalTriggeredAbilityEffect.forDrawCausedTriggers());
+        addStaticEffect(AdditionalTriggeredAbilityEffect.forDrawCausedTriggers());
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
         addEffect(EffectSlot.ON_OPPONENT_DRAWS,

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -22,7 +21,7 @@ import java.util.Set;
 public class TheEaglesAreComing extends Card {
 
     public TheEaglesAreComing() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{W}{W}"));
+        addStaticEffect(new KickerEffect("{2}{W}{W}"));
 
         OwnedPermanentPredicateTargetFilter creatureYouOwn = new OwnedPermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),

@@ -31,7 +31,7 @@ public class SamLoyalAttendant extends Card {
 
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, CreateTokenEffect.ofFoodToken(1));
 
-        addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+        addStaticEffect(new ReduceActivatedAbilityCostEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.FOOD),
                         new PermanentControlledBySourceControllerPredicate())),

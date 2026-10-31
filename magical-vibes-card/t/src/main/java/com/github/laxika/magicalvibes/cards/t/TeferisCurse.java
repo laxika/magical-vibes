@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -25,7 +24,7 @@ public class TeferisCurse extends Card {
                 "Target must be an artifact or creature"
         ))
                 // Enchanted permanent has phasing.
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+                .addStaticEffect(new GrantKeywordEffect(
                         Keyword.PHASING, GrantScope.ENCHANTED_PERMANENT));
     }
 }

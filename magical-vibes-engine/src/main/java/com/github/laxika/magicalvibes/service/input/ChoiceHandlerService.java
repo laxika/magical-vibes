@@ -52,7 +52,6 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -4622,7 +4621,8 @@ public class ChoiceHandlerService {
         // Shared-target modes reuse the target chosen when the spell or ability was put on
         // the stack. Choosing zero targets for an optional group remains final.
         boolean sharedTargetMode = java.util.stream.Stream.concat(
-                        ctx.sourceCard().getCastingCostsAndSpellEffects().stream(),
+                        java.util.stream.Stream.concat(ctx.sourceCard().getCastingCostsAndSpellEffects().stream(),
+                                ctx.sourceCard().getStaticEffects().stream()),
                         java.util.Arrays.stream(EffectSlot.values())
                                 .flatMap(slot -> ctx.sourceCard().getEffects(slot).stream()))
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect modal

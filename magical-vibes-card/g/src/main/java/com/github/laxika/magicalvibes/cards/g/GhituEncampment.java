@@ -22,7 +22,7 @@ import java.util.Set;
 public class GhituEncampment extends Card {
 
     public GhituEncampment() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.RED));
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -16,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class SheoldredsRestoration extends Card {
 
     public SheoldredsRestoration() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{W}"));
+        addStaticEffect(new KickerEffect("{2}{W}"));
         addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)

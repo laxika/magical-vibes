@@ -22,9 +22,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class BilbosRing extends Card {
 
     public BilbosRing() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.EQUIPPED_CREATURE)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(), new CantBeBlockedEffect()));
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(), new CantBeBlockedEffect()));
 
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(new AttacksAlone(),
                 SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))));

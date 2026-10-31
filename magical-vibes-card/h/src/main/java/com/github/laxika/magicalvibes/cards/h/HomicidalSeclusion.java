@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
@@ -23,8 +22,7 @@ public class HomicidalSeclusion extends Card {
         // "Exactly one" is the conjunction of the at-least-one and at-most-one creature counts;
         // while it holds, the only creature you control is the sole recipient of an
         // own-creatures boost.
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                         new AllOf(List.of(
                                 new ControlsPermanentCount(1, new PermanentIsCreaturePredicate()),
                                 new ControlsPermanentCountAtMost(1, new PermanentIsCreaturePredicate()))),

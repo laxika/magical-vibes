@@ -15,7 +15,7 @@ public class EnemyOfEnlightenment extends Card {
 
     public EnemyOfEnlightenment() {
         Scaled minusOnePerCard = new Scaled(new CardsInHand(CountScope.OPPONENTS), -1);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(minusOnePerCard, minusOnePerCard));
+        addStaticEffect(new BoostSelfEffect(minusOnePerCard, minusOnePerCard));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new DiscardEffect(1, DiscardRecipient.EACH_PLAYER));
     }
 }

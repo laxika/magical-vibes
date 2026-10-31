@@ -17,8 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class UnderworldCerberus extends Card {
 
     public UnderworldCerberus() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByFewerThanNCreaturesEffect(3));
-        addEffect(EffectSlot.STATIC, new GraveyardCardsCantBeTargetedEffect());
+        addStaticEffect(new CantBeBlockedByFewerThanNCreaturesEffect(3));
+        addStaticEffect(new GraveyardCardsCantBeTargetedEffect());
         addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
                 new ExileSourceCardFromGraveyardEffect(),
                 ReturnCardFromGraveyardEffect.builder()

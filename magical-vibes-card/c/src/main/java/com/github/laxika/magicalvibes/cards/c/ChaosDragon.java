@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RollD20ForEachPlayerAndRestri
 public class ChaosDragon extends Card {
 
     public ChaosDragon() {
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                 new RollD20ForEachPlayerAndRestrictSourceAttacksEffect());
     }

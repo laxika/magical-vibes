@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class OodSphere extends Card {
 
     public OodSphere() {
-        addEffect(EffectSlot.STATIC, GrantSpellCastingAbilityToSpellsEffect.allPlayers(
+        addStaticEffect(GrantSpellCastingAbilityToSpellsEffect.allPlayers(
                 Keyword.CONVOKE, new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))));
 
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);

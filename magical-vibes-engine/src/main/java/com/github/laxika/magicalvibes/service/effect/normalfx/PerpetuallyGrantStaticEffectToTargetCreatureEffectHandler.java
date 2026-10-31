@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -45,7 +44,7 @@ public class PerpetuallyGrantStaticEffectToTargetCreatureEffectHandler
 
             if (grant.staticEffect() instanceof EnterWithCountersEffect) {
                 var copy = target.getCard().createRuntimeCopy();
-                copy.addEffect(EffectSlot.STATIC, grant.staticEffect());
+                copy.addStaticEffect(grant.staticEffect());
                 target.exchangeCard(copy);
                 continue;
             }

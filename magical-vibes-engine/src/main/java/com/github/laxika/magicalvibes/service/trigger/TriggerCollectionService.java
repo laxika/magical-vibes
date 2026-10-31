@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.Card;
@@ -291,7 +292,6 @@ import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
@@ -6143,7 +6143,7 @@ public class TriggerCollectionService {
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (randomizer[0] == null
                     && !gameQueryService.hasLostAllAbilities(gameData, permanent)
-                    && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    && permanent.getCard().getStaticEffects().stream()
                     .anyMatch(ChooseTargetsAtRandomEffect.class::isInstance)) {
                 randomizer[0] = permanent;
             }
@@ -8440,7 +8440,7 @@ public class TriggerCollectionService {
         TriggerContext context = new TriggerContext.AttackingCreatureTriggeredAbility(
                 attacker, triggeredAbility, enlistment, enlistedCreature);
         for (Permanent watcher : List.copyOf(battlefield)) {
-            dispatchSlot(gameData, watcher, controllerId, EffectSlot.STATIC, context);
+            dispatchSlot(gameData, watcher, controllerId, EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS, context);
         }
     }
 
@@ -11682,7 +11682,7 @@ public class TriggerCollectionService {
     private void addLookBackConditionalGrantedDeathEffects(GameData gameData, Permanent source,
                                                            UUID controllerId, Permanent dyingPermanent,
                                                            List<CardEffect> effects) {
-        for (CardEffect staticEffect : source.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect staticEffect : source.getCard().getStaticEffects()) {
             if (!(staticEffect instanceof ConditionalEffect conditional)
                     || !(conditional.condition() instanceof com.github.laxika.magicalvibes.model.condition.ControlsPermanent controls)
                     || !(conditional.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect grant)
@@ -14286,7 +14286,7 @@ public class TriggerCollectionService {
         UUID leavingId = leavingPermanent.getId();
 
         UUID leavingOwnerId = leavingPermanent.getCard().getOwnerId();
-        boolean leavingHasStaticEffects = !leavingPermanent.getCard().getEffects(EffectSlot.STATIC).isEmpty();
+        boolean leavingHasStaticEffects = !leavingPermanent.getCard().getStaticEffects().isEmpty();
         BiConsumer<UUID, Permanent> collect = (ownerId, perm) -> {
             if (perm.getId().equals(leavingId)) return;
             if (perm.isLosesAllAbilitiesUntilEndOfTurn()

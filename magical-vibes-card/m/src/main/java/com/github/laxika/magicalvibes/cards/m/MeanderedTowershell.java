@@ -47,8 +47,7 @@ public class MeanderedTowershell extends Card {
 
     public MeanderedTowershell() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.ISLANDWALK, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.ISLANDWALK, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_ATTACK,
                         new ExileEnchantedCreatureAndSelfReturnAtNextTurnDeclareAttackersEffect());
     }

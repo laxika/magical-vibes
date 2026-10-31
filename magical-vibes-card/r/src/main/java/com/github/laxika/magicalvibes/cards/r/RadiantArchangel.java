@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -24,6 +23,6 @@ public class RadiantArchangel extends Card {
                         new PermanentHasKeywordPredicate(Keyword.FLYING))),
                 CountScope.ANY_PLAYER,
                 true);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(otherFlyingCreatures, otherFlyingCreatures));
+        addStaticEffect(new BoostSelfEffect(otherFlyingCreatures, otherFlyingCreatures));
     }
 }

@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 public class RoseTyler extends Card {
 
     public RoseTyler() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.SELF, CounterType.TIME));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.SELF, CounterType.TIME));
         addEffect(EffectSlot.ON_ATTACK, new PutCountersOnSelfEffect(
                 CounterType.TIME,
                 new Sum(

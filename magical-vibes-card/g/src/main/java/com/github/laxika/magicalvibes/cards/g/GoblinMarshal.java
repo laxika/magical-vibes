@@ -23,6 +23,6 @@ public class GoblinMarshal extends Card {
         addEffect(EffectSlot.ON_DEATH, goblinTokens);
 
         // Echo {4}{R}{R}.
-        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{4}{R}{R}"));
+        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{4}{R}{R}"));
     }
 }

@@ -30,7 +30,7 @@ public class SentryBot extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsAttackingSourceControllerPredicate()));
 
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(attackingCreatures, CountScope.ANY_PLAYER)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnergyCountersEffect(new PermanentCount(attackingCreatures, CountScope.ANY_PLAYER)));

@@ -14,7 +14,7 @@ public class VampireSoulcaller extends Card {
 
     public VampireSoulcaller() {
         // This creature can't block.
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
 
         // When this creature enters, return target creature card from your graveyard to your hand.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnCardFromGraveyardEffect.builder()

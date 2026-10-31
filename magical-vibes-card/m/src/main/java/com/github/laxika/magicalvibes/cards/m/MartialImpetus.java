@@ -27,8 +27,8 @@ public class MartialImpetus extends Card {
         setAttackTriggerOwnedByAura(true);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GoadEquippedCreatureEffect());
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GoadEquippedCreatureEffect());
 
         addEffect(EffectSlot.ON_ATTACK, new BoostAllCreaturesEffect(1, 1,
                 new PermanentAllOfPredicate(List.of(

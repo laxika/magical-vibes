@@ -47,7 +47,7 @@ public class ChatzukMightyGuitarist extends Card {
     }
 
     public ChatzukMightyGuitarist() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardKeywordPredicate(Keyword.BANDING))),

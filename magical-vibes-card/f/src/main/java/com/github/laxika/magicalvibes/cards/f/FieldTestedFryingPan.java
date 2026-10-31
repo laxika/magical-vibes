@@ -33,7 +33,7 @@ public class FieldTestedFryingPan extends Card {
 
         // Equipped creature has "Whenever you gain life, this creature gets +X/+X until end of
         // turn, where X is the amount of life you gained."
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_CONTROLLER_GAINS_LIFE,
                 new BoostSelfEffect(new EventValue(), new EventValue()),
                 GrantScope.EQUIPPED_CREATURE));

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /**
@@ -10,4 +11,10 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * {@link ConditionalEffect}.
  */
 public record ReduceOwnCastCostEffect(DynamicAmount amount) implements CardEffect {
+
+    /** An ability that modifies what its own object costs to cast functions on the stack (CR 113.6d). */
+    @Override
+    public AbilityZones staticAbilityZones() {
+        return AbilityZones.STACK;
+    }
 }

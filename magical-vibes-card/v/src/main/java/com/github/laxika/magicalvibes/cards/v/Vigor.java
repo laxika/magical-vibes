@@ -18,7 +18,7 @@ public class Vigor extends Card {
         // Trample is auto-loaded from Scryfall.
         // "If damage would be dealt to another creature you control, prevent that damage.
         // Put a +1/+1 counter on that creature for each 1 damage prevented this way."
-        addEffect(EffectSlot.STATIC, new PreventDamageToOtherCreaturesAndAddPlusCountersEffect());
+        addStaticEffect(new PreventDamageToOtherCreaturesAndAddPlusCountersEffect());
         // "When Vigor is put into a graveyard from anywhere, shuffle it into its owner's library."
         addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, new ShuffleSelfFromGraveyardIntoLibraryEffect());
     }

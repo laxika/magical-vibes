@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 public class GoldForgedThopteryx extends Card {
 
     public GoldForgedThopteryx() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(2),
                 GrantScope.OWN_PERMANENTS,

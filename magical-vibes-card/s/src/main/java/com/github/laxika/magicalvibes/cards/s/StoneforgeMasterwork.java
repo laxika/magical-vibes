@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -28,7 +27,7 @@ public class StoneforgeMasterwork extends Card {
                 new PermanentSharesCreatureTypeWithEquippedCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentIsHostOfSourceAuraPredicate())));
         PermanentCount otherMatchingCreatures = new PermanentCount(otherMatchingCreature, CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 otherMatchingCreatures, otherMatchingCreatures, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

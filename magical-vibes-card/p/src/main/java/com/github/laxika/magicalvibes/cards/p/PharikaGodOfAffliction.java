@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
@@ -18,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "JOU", collectorNumber = "154")
@@ -27,7 +25,7 @@ import java.util.Set;
 public class PharikaGodOfAffliction extends Card {
 
     public PharikaGodOfAffliction() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorsAtLeast(Set.of(ManaColor.BLACK, ManaColor.GREEN), 7)),
                 new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
 
@@ -35,7 +33,7 @@ public class PharikaGodOfAffliction extends Card {
                 CardType.CREATURE, 1, "Snake", 1, 1,
                 CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),
                 List.of(CardSubtype.SNAKE), Set.of(Keyword.DEATHTOUCH), Set.of(CardType.ENCHANTMENT),
-                false, false, Map.of(), List.of(), false, false, false, 0, Set.of());
+                false, false, List.of(), List.of(), false, false, false, 0, Set.of());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}{G}",

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerDrawsCardEffect;
@@ -27,7 +26,7 @@ public class DewdropCure extends Card {
                 new CardMaxManaValuePredicate(2)
         ));
 
-        addEffect(EffectSlot.STATIC, new GiftEffect(2));
+        addStaticEffect(new GiftEffect(2));
         target(new GraveyardCardPredicateTargetFilter(
                 creatureCards, GraveyardSearchScope.CONTROLLERS_GRAVEYARD), 0, 3)
                 .addSpellEffect(new ConditionalEffect(new GiftPromised(),

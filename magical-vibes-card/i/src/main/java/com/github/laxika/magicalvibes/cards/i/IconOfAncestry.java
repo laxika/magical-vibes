@@ -18,7 +18,7 @@ public class IconOfAncestry extends Card {
 
     public IconOfAncestry() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenSubtypeEffect(1, 1));
+        addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(1, 1));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

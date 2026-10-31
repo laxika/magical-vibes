@@ -22,7 +22,7 @@ public class MichelangeloWeirdnessTo11 extends Card {
 
     public MichelangeloWeirdnessTo11() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, mutagenToken());
-        addEffect(EffectSlot.STATIC, new AddOnePlusOneCountersEffect());
+        addStaticEffect(new AddOnePlusOneCountersEffect());
     }
 
     private static CreateTokenEffect mutagenToken() {

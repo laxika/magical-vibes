@@ -20,7 +20,7 @@ public class MagneticWeb extends Card {
     public MagneticWeb() {
         // If a creature with a magnet counter on it attacks, all creatures with magnet counters on
         // them attack if able.
-        addEffect(EffectSlot.STATIC, new CreaturesWithCounterAttackTogetherEffect(CounterType.MAGNET));
+        addStaticEffect(new CreaturesWithCounterAttackTogetherEffect(CounterType.MAGNET));
 
         // Whenever a creature with a magnet counter on it attacks, all creatures with magnet
         // counters on them block that creature this turn if able.

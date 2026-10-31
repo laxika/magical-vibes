@@ -19,7 +19,7 @@ re-check them with a grep before acting on them.
 | 3 | `Card` stores abilities behind the slot adapter | done |
 | 4 | Granted, temporary and delayed triggers store abilities | done |
 | 5 | Spell abilities leave the enum | done |
-| 6 | Static abilities leave the enum | open |
+| 6 | Static abilities leave the enum | done |
 | 7 | Activated and mana abilities in one list | open |
 | 8 | Replacement effects, special actions and markers leave the enum | open |
 | 9 | Rules events for zone changes, and shadow mode | open |
@@ -1456,6 +1456,167 @@ later step should do it, together with the trigger families that take their grou
   suite was not run here.
 - A scan that builds every card class confirmed that all 32,371 construct, and that each card's spell effects
   and casting costs equal what its `SPELL` slot held, card for card.
+
+### Step 6
+
+`EffectSlot.STATIC` and `EffectSlot.COMMAND_ZONE_STATIC` are gone. Three decisions went beyond the step text:
+the readers ask for every static ability rather than the battlefield's, the hand and stack keywords got their
+zones, and the slot-keyed ability maps of the token and copy records became ability lists (step 4 asked steps 5
+and 6 for that).
+
+**Static abilities.**
+
+- Authoring: `addStaticEffect(e)`, `addStaticEffect(AbilityZones, e)` and `target(f).addStaticEffect(e)` (an
+  Aura's enchant ability, CR 303.4a, checked). Each call adds one `StaticAbility` with one effect, as before.
+- `StaticAbility.of(e…)` and `StaticAbility.of(List)` build one for a token's or a copy's ability list.
+- Zones: `CardEffect.staticAbilityZones()` names the zones a static ability made of that effect functions from.
+  It is the battlefield (CR 113.6, checked) except for:
+  - `KickerEffect` (CR 702.33a), `BuybackEffect` (CR 702.27a), `GiftEffect` (CR 702.174a) and
+    `CantBeCounteredEffect` (CR 113.6g): the stack;
+  - `ReduceOwnCastCostEffect` (CR 113.6d): the stack. `ConditionalEffect` passes its wrapped effect's zones on,
+    so a conditional reduction keeps them;
+  - `SpliceEffect` (CR 702.47a): the hand.
+
+  All CR numbers here were checked. `AbilityZones.STACK` is new.
+- The Ur-Dragon's Eminence is one ability that functions in two zones, `AbilityZones.of(BATTLEFIELD, COMMAND)`
+  (CR 113.6b, checked). It used to be the same effect registered in `STATIC` and in `COMMAND_ZONE_STATIC`.
+  Rule with an Even Hand and Marchesa's Surprise Party have command-zone abilities.
+
+**Readers.** The plan's table said `getEffects(STATIC)` becomes `getStaticEffects(Zone.BATTLEFIELD)`. It became
+`getStaticEffects()`, every static ability whatever its zones, and `getEffects(COMMAND_ZONE_STATIC)` became
+`getStaticEffects(Zone.COMMAND)`:
+
+- The engine reads `STATIC` off cards in every zone: planes in the command zone, kicker on a card in hand, the
+  reduction on a spell. A battlefield filter would have dropped kicker and the other zoned keywords, or forced
+  them to keep a false battlefield zone.
+- The engine already knows where a card is and which effect types it wants. The one reader that filters by zone
+  is the command-zone scan.
+- The two views differ for exactly the three command-zone cards. Those never reach a battlefield reader, and no
+  engine code scans the command zone through `getStaticEffects()` (checked by grep).
+
+There are 712 `getStaticEffects()` reads in main code and 4 `getStaticEffects(Zone.COMMAND)` reads. `Card` also
+has `getStaticAbilities()`, `getStaticEffects(Zone)`, `addStaticAbilitiesFrom(source, keep)` and
+`removeAbilityEffectsIf(BiPredicate<Ability, CardEffect>)`. `SlotIndex` caches the static abilities and effects
+next to the slot views. `LegacySlots.slotOf` returns `null` for a static ability, so it is in no slot view, and
+`LegacySlots.ability(slot, e)` only builds triggered abilities. `LegacySlots` gained `staticEffectsIn`,
+`withEffect` and `label`.
+
+**Granted static abilities.**
+
+- `Permanent`: `getTemporaryStaticEffects()`, `getPersistentStaticEffects()` and
+  `removePersistentStaticEffectsIf`, plus `addCombatAbility` and `addUntilNextUpkeepAbility` next to step 4's
+  adders.
+- `GameData`: `grantPerpetualAbility(cardId, Ability)` and `perpetualStaticEffects(cardId)`.
+- `GameQueryService.getEffectiveGraveyardStaticEffects`.
+- A grant record's derived `slot()` is `null` for a static grant, so the grant handlers now add
+  `grantedAbility()` and log `LegacySlots.label(...)`. Where a handler adjusts the effect first (until end of
+  combat, the chosen creature), it uses `LegacySlots.withEffect`.
+- `scripts/step6-grant-ability-constructors.py` gave five grant records an `Ability` twin of each slot
+  constructor. `BattlefieldPlacementService.applyPerpetualTriggeredAbilityGrants` handles a static grant on
+  its own.
+
+**Copy paths.** Every loop over `EffectSlot.values()` used to copy `STATIC` with the rest. Each now calls
+`addStaticAbilitiesFrom` with the same filter: `CopySupport`, `TokenCopySupport`, `PermanentCopierService`
+(clone copy and chosen modes), `MutationSupport`, `LayerSystemService.buildFullTextCopy` and
+`EachOpponentChooses…TokenCopy…`. These scans read the static effects too: `GameViewProjectionFactory`,
+`TriggeredAbilityQueueService`, `ChoiceHandlerService`, `CreatureControlService`,
+`PerpetuallyBoostCardEffectHandler`, and the "has abilities" checks in `PredicateEvaluationService`. A copy keeps
+each static ability's zones.
+
+**A broken path fixed.** `PermanentCopierService`'s chosen-mode copy (a copy of Catch of the Day) used to add
+the chosen modes' effects to the list returned by `getEffectRegistrations`. Since step 3 that list is read-only,
+so the call threw. It now adds them through `addStaticEffect` and `addEffect`.
+
+**Ability lists in token and copy records.** These records now hold `List<Ability>`:
+
+- `CreateTokenEffect.tokenEffects`, which keeps its name;
+- `additionalAbilities` in `BecomeCopyOfExiledCreaturePermanentlyEffect`, `ConjureCardIntoControllerLibraryEffect`,
+  `ConjureCardNamedIntoLibraryEffect`, `CopyPermanentOnEnterEffect`, `CreateTokenCopyOfTargetPermanentEffect` and
+  `TurnFaceUpCopyEffect`;
+- `additionalAbilitiesOverride` in `BecomeCopyOfTargetCreatureUntilEndOfTurnEffect`.
+
+The old components were `Map<EffectSlot, CardEffect>` and `Map<EffectSlot, List<CardEffect>>`, and some were
+named `additionalSlotEffects` or `additionalEffects`.
+
+- A card writes `List.of(StaticAbility.of(e), LegacySlots.triggered(EffectSlot.ON_DEATH, e2))`.
+  `LegacySlots.triggered(slot, List)` builds one ability whose effects the card regroups as the slot's collectors
+  do (`Card.addAbility`).
+- A list keeps its order. `Map.of` has no defined iteration order, so a token with two slot-keyed abilities used
+  to get them in an order that could change from run to run.
+- The handlers add each ability with `Card.addAbility`. A token blueprint's static `SequenceEffect` is still split
+  into separate static abilities, in `TokenCardFactory`.
+- Lookups by key became filters on `LegacySlots.slotOf`. In `CreateTokenAndLinkToSource` the blueprint's own
+  leaves-the-battlefield ability is replaced, as the map's `put` replaced it.
+
+**Five triggers filed as static.** Guardian of New Benalia, Goblin Morale Sergeant, Benalish Knight-Counselor,
+Aradesh, the Founder and Firebender Ascension are triggered abilities ("whenever this creature enlists a creature",
+"whenever a creature you control attacking causes a triggered ability of that creature to trigger"). Their
+collectors were registered on `STATIC`. They have a new legacy slot,
+`ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS`, with the same collectors and the same dispatch from
+`checkAttackingCreatureTriggeredAbilityTriggers`. They belong to step 13's combat family.
+
+**Cards and tests, by script.**
+
+- `scripts/step6-static-ability.py`, run per letter module and over every other module, changed 8,328 card
+  classes, 12 card test classes and the engine, AI, networking, domain and application sources. It reads the
+  converted records' constructor and factory signatures from a git revision. That way it knows which positional
+  `Map.of()` is the slot map, since `CreateTokenCopyOfTargetPermanentEffect` also takes a counter map.
+- By hand:
+  - a dozen card call sites the script reported: `java.util.Map.of()`, `Map.<EffectSlot, CardEffect>of(…)`, a
+    `Map.of()` after a comment, and Outlaws' Merriment's own `token(…)` helper;
+  - The Ur-Dragon;
+  - the engine handlers that read the maps.
+- `scripts/strip-unused-imports.py` then removed the imports left unused in the changed files.
+- `scripts/step6-docs.py` rewrote the agent-docs snippets. It converts slot-keyed maps whatever their slots.
+  Each doc that uses `STATIC` as a label has a note on what it means now.
+
+**For later steps.**
+
+- Step 8: `STATIC` still held replacement effects (`EntersTappedEffect` and the others step 1 listed) and echo
+  (`RegisterEchoAtNextUpkeepEffect`, a triggered ability). They are static abilities of the battlefield now, as
+  before, and move with step 8's replacement effects and the trigger families.
+- Some battlefield readers scan cards in other zones through `getStaticEffects()`. Planes are one example: their
+  static abilities function in the command zone, but the plane cards don't say so. A step that makes a reader
+  filter by zone has to give those abilities their zones first.
+- The `Grant…` records keep their slot constructors and derived `slot()`. `slot()` is `null` for a static grant,
+  so new handler code should read `grantedAbility()`.
+- Copies still lose the simultaneous flag and use slot order for triggered abilities (step 3). Static abilities
+  are copied in the source's order.
+
+**Tests changed.**
+
+- `CardAbilitiesTest`:
+  - `eachStaticEffectIsAStaticAbilityOfItsZone` reads the zone views.
+  - `aStaticEffectKeepsNoTriggerModeAndStaysItsOwnAbility` became
+    `anAddedStaticAbilityKeepsItsZonesAndStaysOutOfTheSlotViews`, because `addSimultaneousEffects(STATIC, …)`
+    no longer exists.
+  - `effectsCanBeRemovedFromSomeSlotsOnly` uses `removeAbilityEffectsIf`.
+  - New: `aStaticEffectFunctionsFromTheZonesItsRuleNames` and `staticAbilitiesAreCopiedWithTheirZones`.
+- `GrantedAbilitiesTest`:
+  - `aSlotAndAnEffectStandForTheAbilityOfTheirKind` became `aSlotAndAnEffectStandForATriggeredAbility`, plus a
+    new `aStaticAbilityIsInNoSlot`.
+  - The slot-view and `addAbility` tests use `StaticAbility.of`.
+  - New: `aPermanentsStaticGrantsAreReadApartFromItsTriggers` and `perpetualStaticGrantsAreReadApartFromTriggers`.
+- `LegacySlotTriggerTest`: every slot is now a legacy trigger, and the test that rejected the static slots is
+  gone.
+- `PlanechaseServiceTest`: the fixture helper builds static planes with `addStaticEffect`.
+- Every other application, AI and card test was converted by the script with no change of meaning.
+
+**Test runs.**
+
+- Application, against HEAD: the same test classes were run in a HEAD worktree. They cover every changed model
+  type and the services whose tests the script touched. The failures equal HEAD's, 223 cases, mostly mock wiring
+  in service tests. The new tests pass.
+- AI: 14 classes, 777 tests. Four fail, and the same four fail at HEAD: two kicker casts in
+  `RandomAiDecisionEngineTest` and two unclassified-effect checks in `TargetPolarityGuardTest`.
+- Card: 1,409 classes and 11,580 tests, all passing. They are the classes of:
+  - every card whose source uses a token or copy ability list, a grant record, a copy, conjure, mutate or
+    turn-face-up effect, or an effect whose handler changed;
+  - the five enlist cards, The Ur-Dragon, Rule with an Even Hand, Marchesa's Surprise Party and Catch of the Day;
+  - 120 random kicker, buyback, splice, gift, cost-reduction and can't-be-countered cards;
+  - 300 random other converted cards;
+  - the converted card tests.
+- The whole build, every card module and every test source compiles. The full card suite was not run here.
 
 ## Prompt
 

@@ -26,7 +26,7 @@ import java.util.Set;
 public class UreniTheSongUnending extends Card {
 
     public UreniTheSongUnending() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.WHITE, CardColor.BLACK)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE, CardColor.BLACK)));
 
         PermanentPredicate targetFilter = new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(

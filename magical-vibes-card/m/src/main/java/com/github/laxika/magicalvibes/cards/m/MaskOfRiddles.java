@@ -16,7 +16,7 @@ public class MaskOfRiddles extends Card {
 
     public MaskOfRiddles() {
         // Static: equipped creature has fear
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FEAR, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FEAR, GrantScope.EQUIPPED_CREATURE));
 
         // Triggered: whenever equipped creature deals combat damage to a player, you may draw a card
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,

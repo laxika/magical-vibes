@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -24,7 +23,7 @@ public class MurmuringBosk extends Card {
     public MurmuringBosk() {
         // As this land enters, you may reveal a Treefolk card from your hand.
         // If you don't, this land enters tapped.
-        addEffect(EffectSlot.STATIC, new RevealSubtypeOrEntersTappedEffect(CardSubtype.TREEFOLK));
+        addStaticEffect(new RevealSubtypeOrEntersTappedEffect(CardSubtype.TREEFOLK));
 
         // {T}: Add {G}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));

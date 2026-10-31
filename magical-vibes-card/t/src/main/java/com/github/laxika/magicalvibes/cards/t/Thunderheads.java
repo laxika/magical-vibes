@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.ReplicateEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "GPT", collectorNumber = "37")
@@ -25,7 +24,7 @@ public class Thunderheads extends Card {
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 1, "Weird", 3, 3, CardColor.BLUE, null,
                 List.of(CardSubtype.WEIRD), Set.of(Keyword.DEFENDER, Keyword.FLYING), Set.of(),
-                false, false, Map.of(), List.of(), false, true, false, 0, Set.of()));
+                false, false, List.of(), List.of(), false, true, false, 0, Set.of()));
         addEffect(EffectSlot.ON_SELF_CAST, new ReplicateEffect("{2}{U}"));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -18,7 +17,7 @@ public class PeerlessRecycling extends Card {
     public PeerlessRecycling() {
         CardIsPermanentPredicate permanentCards = new CardIsPermanentPredicate();
 
-        addEffect(EffectSlot.STATIC, new GiftEffect(1));
+        addStaticEffect(new GiftEffect(1));
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new EachOtherPlayerDrawsCardEffect(1)));
         targetWhenGiftPromised(new GraveyardCardPredicateTargetFilter(

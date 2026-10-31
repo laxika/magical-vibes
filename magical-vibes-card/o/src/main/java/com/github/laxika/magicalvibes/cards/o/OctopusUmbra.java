@@ -26,10 +26,9 @@ public class OctopusUmbra extends Card {
                 new PermanentPowerAtMostPredicate(8)));
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new SetBasePowerToughnessEffect(8, 8, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new TotemArmorEffect())
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new SetBasePowerToughnessEffect(8, 8, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new TotemArmorEffect())
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ATTACK,
                         new MayEffect(
                                 new TapPermanentsEffect(TapUntapScope.TARGET, creatureWithPowerAtMostEight),

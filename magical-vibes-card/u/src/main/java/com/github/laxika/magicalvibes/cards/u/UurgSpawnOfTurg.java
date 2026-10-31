@@ -24,7 +24,7 @@ public class UurgSpawnOfTurg extends Card {
     public UurgSpawnOfTurg() {
         CardsInGraveyard landCardsInGraveyard =
                 new CardsInGraveyard(new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(landCardsInGraveyard, new Fixed(5)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(landCardsInGraveyard, new Fixed(5)));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new SurveilEffect(1));
 

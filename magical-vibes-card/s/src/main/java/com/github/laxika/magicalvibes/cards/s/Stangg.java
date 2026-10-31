@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceE
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "CHR", collectorNumber = "86")
@@ -35,7 +34,7 @@ public class Stangg extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

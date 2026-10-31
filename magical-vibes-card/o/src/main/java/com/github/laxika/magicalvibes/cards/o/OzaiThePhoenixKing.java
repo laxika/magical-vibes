@@ -19,8 +19,8 @@ public class OzaiThePhoenixKing extends Card {
 
     public OzaiThePhoenixKing() {
         addEffect(EffectSlot.ON_ATTACK, new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 4));
-        addEffect(EffectSlot.STATIC, new ReplaceManaDrainWithColorlessEffect(ManaColor.RED));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ReplaceManaDrainWithColorlessEffect(ManaColor.RED));
+        addStaticEffect(new ConditionalEffect(
                 new ControllerUnspentManaAtLeast(6),
                 new StaticBoostEffect(0, 0, Set.of(Keyword.FLYING, Keyword.INDESTRUCTIBLE), GrantScope.SELF)));
     }

@@ -28,7 +28,7 @@ public class ChainerDementiaMaster extends Card {
 
     public ChainerDementiaMaster() {
         // All Nightmares get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.NIGHTMARE)));
 
         // {B}{B}{B}, Pay 3 life: Put target creature card from a graveyard onto the battlefield

@@ -29,7 +29,7 @@ import java.util.List;
 public class TempleOfMalice extends Card {
 
     public TempleOfMalice() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(1));
 
         addActivatedAbility(new ActivatedAbility(

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersEffect;
@@ -20,9 +19,9 @@ import java.util.List;
 public class TheEarthCrystal extends Card {
 
     public TheEarthCrystal() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardColorPredicate(CardColor.GREEN), 1, CostModificationScope.SELF));
-        addEffect(EffectSlot.STATIC, new DoublePlusOnePlusOneCountersEffect());
+        addStaticEffect(new DoublePlusOnePlusOneCountersEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

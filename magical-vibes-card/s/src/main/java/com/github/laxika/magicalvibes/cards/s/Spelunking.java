@@ -25,6 +25,6 @@ public class Spelunking extends Card {
                                 new CardTypePredicate(CardType.LAND), "land",
                                 new CardSubtypePredicate(CardSubtype.CAVE), new GainLifeEffect(4)),
                         "Put a land card from your hand onto the battlefield?")));
-        addEffect(EffectSlot.STATIC, new ControlledLandsEnterUntappedEffect());
+        addStaticEffect(new ControlledLandsEnterUntappedEffect());
     }
 }

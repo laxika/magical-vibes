@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -18,9 +17,8 @@ public class GraftedIdentity extends Card {
         target(TargetFilters.creature())
                 // As an additional cost to cast this spell, sacrifice a creature.
                 // You control enchanted creature.
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect())
+                .addStaticEffect(new ControlEnchantedCreatureEffect())
                 // Enchanted creature gets +1/+1.
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
     }
 }

@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 public class DocOcksTentacles extends Card {
 
     public DocOcksTentacles() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(4, 4, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(4, 4, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardMinManaValuePredicate(5),
                         new AttachSourceEquipmentToEnteringCreatureEffect()));

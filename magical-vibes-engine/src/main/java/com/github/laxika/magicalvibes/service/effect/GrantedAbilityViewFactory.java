@@ -120,7 +120,7 @@ public class GrantedAbilityViewFactory {
                 && !bonus.losesAllAbilities()) {
             result.add(new GrantedAbilityView("Protection from creatures your opponents control", null));
         }
-        if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        if (permanent.getCard().getStaticEffects().stream()
                 .anyMatch(ProtectionFromChosenPlayerEffect.class::isInstance)
                 && !permanent.isStaticEffectSuppressed(ProtectionFromChosenPlayerEffect.class)
                 && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
@@ -144,7 +144,7 @@ public class GrantedAbilityViewFactory {
 
     private Set<CardColor> printedProtectionColors(Permanent permanent) {
         Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
-        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : permanent.getCard().getStaticEffects()) {
             if (effect instanceof ProtectionFromColorsEffect protection && protection.scope() == null) {
                 ProtectionFromColorsEffect rewritten = (ProtectionFromColorsEffect)
                         TextChangeTransformer.transform(protection, permanent.getTextReplacements());

@@ -26,7 +26,7 @@ public class NimbleTrapfinder extends Card {
                 new CardSubtypePredicate(CardSubtype.ROGUE),
                 new CardSubtypePredicate(CardSubtype.WARRIOR),
                 new CardSubtypePredicate(CardSubtype.WIZARD)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AnotherPermanentEnteredThisTurn(partySubtype),
                 new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -26,7 +25,7 @@ public class SamutVoiceOfDissent extends Card {
         // Flash, double strike, vigilance and haste are intrinsic keywords auto-loaded from Scryfall.
 
         // Other creatures you control have haste. OWN_CREATURES already excludes the source itself.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
 
         // {W}, {T}: Untap another target creature. "Another" excludes the source; targeting is
         // narrowed to any non-source creature.

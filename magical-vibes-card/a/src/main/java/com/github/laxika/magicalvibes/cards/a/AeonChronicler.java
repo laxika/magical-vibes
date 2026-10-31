@@ -20,7 +20,7 @@ public class AeonChronicler extends Card {
 
     public AeonChronicler() {
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
         addEffect(EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE, new DrawCardEffect());
         addHandActivatedAbility(new ActivatedAbility(
                 false,

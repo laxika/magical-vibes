@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -14,7 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "EOE", collectorNumber = "223")
@@ -30,9 +30,10 @@ public class PinnacleEmissary extends Card {
                 List.of(),
                 Set.of(Keyword.FLYING),
                 Set.of(CardType.ARTIFACT),
-                Map.of(EffectSlot.STATIC, new CanBlockOnlyIfAttackerMatchesPredicateEffect(
+                List.of(
+                        StaticAbility.of(new CanBlockOnlyIfAttackerMatchesPredicateEffect(
                         new PermanentHasKeywordPredicate(Keyword.FLYING),
-                        "creatures with flying")));
+                        "creatures with flying"))));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(new CardTypePredicate(CardType.ARTIFACT), List.of(drone)));

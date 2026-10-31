@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.WayBehind;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -16,7 +15,7 @@ import java.util.Set;
 public class KnightOfLostCauses extends Card {
 
     public KnightOfLostCauses() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new WayBehind(),
                 new StaticBoostEffect(3, 3, Set.of(Keyword.INDESTRUCTIBLE), GrantScope.SELF)));
     }

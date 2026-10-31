@@ -15,7 +15,6 @@ public class MightstonesAnimation extends Card {
     public MightstonesAnimation() {
         target(TargetFilters.artifact())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC,
-                        new EnchantedPermanentBecomesCreatureEffect(4, 4, null, List.of()));
+                .addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(4, 4, null, List.of()));
     }
 }

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class Naktamun extends Card {
 
     public Naktamun() {
-        addEffect(EffectSlot.STATIC, new GrantEmbalmEqualToManaCostToCreatureCardsEffect());
+        addStaticEffect(new GrantEmbalmEqualToManaCostToCreatureCardsEffect());
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new MayEffect(new DiscardAndDrawCardEffect(), "Discard a card to draw a card?"));
     }

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -143,7 +142,7 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
 
     private void collectReductions(GameData gameData, Permanent permanent, Map<String, NumericInstance> reductions) {
         if (gameQueryService.hasLostAllAbilities(gameData, permanent)) return;
-        List<CardEffect> statics = permanent.getCard().getEffects(EffectSlot.STATIC);
+        List<CardEffect> statics = permanent.getCard().getStaticEffects();
         for (int i = 0; i < statics.size(); i++) {
             if (statics.get(i) instanceof ReduceSpellDamageEffect reduce && reduce.amount() > 0) {
                 reductions.put(permanent.getId() + "#" + i, new NumericInstance(

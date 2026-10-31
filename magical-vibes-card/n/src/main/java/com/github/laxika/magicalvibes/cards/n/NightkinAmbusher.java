@@ -23,6 +23,6 @@ public class NightkinAmbusher extends Card {
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new GiveTargetPlayerRadCountersEffect(4));
 
-        addEffect(EffectSlot.STATIC, new CantBeBlockedIfDefenderHasRadCountersEffect());
+        addStaticEffect(new CantBeBlockedIfDefenderHasRadCountersEffect());
     }
 }

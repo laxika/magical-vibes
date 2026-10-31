@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 public class TaleOfKataraAndToph extends Card {
 
     public TaleOfKataraAndToph() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
                 new TriggeringPermanentConditionalEffect(new PermanentIsSourceCardPredicate(),
                         new OncePerTurnPerCreatureTriggerEffect(

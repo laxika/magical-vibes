@@ -30,7 +30,7 @@ public class GoblinAssault extends Card {
         ));
 
         // Goblin creatures attack each combat if able (all Goblins, any controller).
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesMustAttackEffect(
+        addStaticEffect(new MatchingCreaturesMustAttackEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)));
     }
 }

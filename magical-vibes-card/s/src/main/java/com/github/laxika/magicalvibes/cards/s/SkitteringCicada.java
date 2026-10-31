@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 public class SkitteringCicada extends Card {
 
     public SkitteringCicada() {
-        addEffect(EffectSlot.STATIC,
-                new GrantFlashToCardTypeEffect(new CardIsColorlessPredicate()));
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardIsColorlessPredicate()));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new BoostSelfByCastSpellManaValueEffect(new CardIsColorlessPredicate(), Keyword.TRAMPLE));
     }

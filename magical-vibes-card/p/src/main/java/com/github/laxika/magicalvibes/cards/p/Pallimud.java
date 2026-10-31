@@ -19,7 +19,7 @@ public class Pallimud extends Card {
 
     public Pallimud() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOpponentOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new PermanentCount(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsLandPredicate(), new PermanentIsTappedPredicate())),

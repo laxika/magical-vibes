@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "LEG", collectorNumber = "230")
@@ -30,7 +29,7 @@ public class HazezonTamar extends Card {
                 CardType.CREATURE, landsYouControl, "Sand Warrior", 1, 1, CardColor.RED,
                 Set.of(CardColor.RED, CardColor.GREEN, CardColor.WHITE),
                 List.of(CardSubtype.SAND, CardSubtype.WARRIOR), Set.of(), Set.of(), false, false,
-                Map.of(), List.of(), false, false, false, 0, Set.of());
+                List.of(), List.of(), false, false, false, 0, Set.of());
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new RegisterDelayedCreateTokenAtNextUpkeepEffect(sandWarrior));

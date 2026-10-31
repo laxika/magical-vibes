@@ -42,7 +42,7 @@ public class EncoreEffectHandler implements NormalEffectHandlerBean {
                 .toList();
         CreateTokenCopyOfTargetPermanentEffect copyEffect = new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), null, null, Map.of(), false, false, true, false, false,
-                false, null, Set.of(), false, Map.of(), List.of(), false, false,
+                false, null, Set.of(), false, List.of(), List.of(), false, false,
                 new Fixed(1), false, Set.of(), false,
                 List.of());
         // "They gain haste" is granted to the tokens, not part of the copy (CR 707.2).

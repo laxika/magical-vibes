@@ -25,16 +25,14 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class GrimReapersSprint extends Card {
 
     public GrimReapersSprint() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new Morbid(), new ReduceOwnCastCostEffect(new Fixed(3))));
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                         new ControllerMainPhase(), new AdditionalCombatPhaseEffect(1)))
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE));
     }
 }

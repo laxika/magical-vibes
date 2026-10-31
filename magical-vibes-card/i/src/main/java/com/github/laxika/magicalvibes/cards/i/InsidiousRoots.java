@@ -23,7 +23,7 @@ import java.util.Set;
 public class InsidiousRoots extends Card {
 
     public InsidiousRoots() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(), GrantScope.OWN_CREATURES, new PermanentIsTokenPredicate()));
 
         addEffect(EffectSlot.ON_CONTROLLER_CREATURE_CARDS_LEAVE_GRAVEYARD, SequenceEffect.of(

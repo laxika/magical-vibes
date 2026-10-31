@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllCreaturesMustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackingPlayerChoosesBlockersEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AttackingPlayerChoosesBlocker
 public class InvasionPlans extends Card {
 
     public InvasionPlans() {
-        addEffect(EffectSlot.STATIC, new AllCreaturesMustBlockEachCombatEffect());
-        addEffect(EffectSlot.STATIC, new AttackingPlayerChoosesBlockersEffect());
+        addStaticEffect(new AllCreaturesMustBlockEachCombatEffect());
+        addStaticEffect(new AttackingPlayerChoosesBlockersEffect());
     }
 }

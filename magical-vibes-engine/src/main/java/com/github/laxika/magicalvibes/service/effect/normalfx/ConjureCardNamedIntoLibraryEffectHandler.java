@@ -49,8 +49,7 @@ public class ConjureCardNamedIntoLibraryEffectHandler implements NormalEffectHan
             card.setConjured(true);
             card.setOwnerId(controllerId);
             conjuredName = card.getName();
-            conjure.additionalEffects().forEach((slot, effects) ->
-                    effects.forEach(additionalEffect -> card.addEffect(slot, additionalEffect)));
+            conjure.additionalAbilities().forEach(card::addAbility);
             card.freeze();
             library.add(card);
             conjuredCount++;

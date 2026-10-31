@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "INR", collectorNumber = "226")
@@ -58,7 +57,7 @@ public class WrennAndSeven extends Card {
                         1, "Treefolk", 0, 0,
                         CardColor.GREEN, List.of(CardSubtype.TREEFOLK),
                         Set.of(Keyword.REACH), Set.of(),
-                        Map.of(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl))
+                        List.of(StaticAbility.of(new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl)))
                 )),
                 "\u22123: Create a green Treefolk creature token with reach and \"This token's power and toughness are each equal to the number of lands you control.\""
         ));

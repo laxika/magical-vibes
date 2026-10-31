@@ -19,6 +19,6 @@ public class LiesaForgottenArchangel extends Card {
                 new RegisterDelayedReturnCardFromGraveyardToHandEffect(null));
 
         // If a creature an opponent controls would die, exile it instead.
-        addEffect(EffectSlot.STATIC, new ExileOpponentCreaturesInsteadOfDyingEffect());
+        addStaticEffect(new ExileOpponentCreaturesInsteadOfDyingEffect());
     }
 }

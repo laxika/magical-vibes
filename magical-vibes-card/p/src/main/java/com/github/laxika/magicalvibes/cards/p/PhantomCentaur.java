@@ -16,9 +16,9 @@ import java.util.Set;
 public class PhantomCentaur extends Card {
 
     public PhantomCentaur() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3)));
-        addEffect(EffectSlot.STATIC, new PreventDamageAndRemovePlusOnePlusOneCountersEffect(true));
+        addStaticEffect(new PreventDamageAndRemovePlusOnePlusOneCountersEffect(true));
     }
 }

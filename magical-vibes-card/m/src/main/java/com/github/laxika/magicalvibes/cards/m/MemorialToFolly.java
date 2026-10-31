@@ -22,7 +22,7 @@ import java.util.List;
 public class MemorialToFolly extends Card {
 
     public MemorialToFolly() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.BLACK));
         addActivatedAbility(new ActivatedAbility(
                 true,

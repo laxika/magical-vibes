@@ -30,7 +30,7 @@ public class KylerSigardianEmissary extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(OTHER_HUMAN,
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 new AllCountersOnSource(),
                 new AllCountersOnSource(),
                 GrantScope.OWN_CREATURES,

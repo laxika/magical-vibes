@@ -48,13 +48,13 @@ public class NinjaTeen extends Card {
                         new NotCondition(new SourceClassLevelAtLeast(3)))),
                 "This Class must be level 2."));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceClassLevelAtLeast(2),
                 new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceClassLevelAtLeast(2),
                 new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceClassLevelAtLeast(3),
                 new CastCreatureSpellsWithSneakFromGraveyardEffect("{3}{B}")));
     }

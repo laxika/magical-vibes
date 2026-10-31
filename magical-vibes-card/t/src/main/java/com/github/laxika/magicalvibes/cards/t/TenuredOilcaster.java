@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class TenuredOilcaster extends Card {
 
     public TenuredOilcaster() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new OpponentGraveyardAtLeast(8),
                 new StaticBoostEffect(3, 0, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ATTACK, new MillEffect(1, MillRecipient.CONTROLLER));

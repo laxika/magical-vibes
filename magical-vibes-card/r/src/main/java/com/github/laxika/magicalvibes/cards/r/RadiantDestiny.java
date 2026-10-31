@@ -18,10 +18,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubty
 public class RadiantDestiny extends Card {
 
     public RadiantDestiny() {
-        addEffect(EffectSlot.STATIC, new AscendEffect());
+        addStaticEffect(new AscendEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenSubtypeEffect(1, 1));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerHasCityBlessing(),
+        addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(1, 1));
+        addStaticEffect(new ConditionalEffect(new ControllerHasCityBlessing(),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES,
                         new PermanentHasSourceChosenSubtypePredicate())));
     }

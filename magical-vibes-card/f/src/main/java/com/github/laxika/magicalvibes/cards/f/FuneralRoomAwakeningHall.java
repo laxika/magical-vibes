@@ -36,7 +36,7 @@ public class FuneralRoomAwakeningHall extends Card {
         SequenceEffect drain = SequenceEffect.of(
                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(1));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(0),
                 new GrantTriggeredAbilityEffect(EffectSlot.ON_ALLY_CREATURE_DIES, drain, GrantScope.SELF)));
 

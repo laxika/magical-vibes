@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterWithAdditionalCountersEffect;
@@ -29,8 +28,7 @@ public class TromellSeymoursButler extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentIsTokenPredicate())
         ));
-        addEffect(EffectSlot.STATIC,
-                new ControlledPermanentsEnterWithAdditionalCountersEffect(nontokenCreature, 1));
+        addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersEffect(nontokenCreature, 1));
 
         var nontokenCreatureCard = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),

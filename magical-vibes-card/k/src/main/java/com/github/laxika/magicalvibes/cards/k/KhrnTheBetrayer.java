@@ -13,14 +13,14 @@ public class KhrnTheBetrayer extends Card {
 
     public KhrnTheBetrayer() {
         // Berzerker — attacks or blocks each combat if able.
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
-        addEffect(EffectSlot.STATIC, new MustBlockEachCombatEffect());
+        addStaticEffect(new MustAttackEffect());
+        addStaticEffect(new MustBlockEachCombatEffect());
 
         // Sigil of Corruption — draw two cards when you lose control of Khârn.
         addEffect(EffectSlot.ON_SELF_LOSES_CONTROL, new DrawCardEffect(2));
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new DrawCardEffect(2));
 
         // The Betrayer — prevent damage to Khârn and immediately give it to an opponent.
-        addEffect(EffectSlot.STATIC, new PreventDamageToSelfAndOpponentGainsControlEffect());
+        addStaticEffect(new PreventDamageToSelfAndOpponentGainsControlEffect());
     }
 }

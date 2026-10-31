@@ -21,7 +21,7 @@ import java.util.List;
 public class IconicShield extends Card {
 
     public IconicShield() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
 
         // The attack trigger is granted to the equipped creature, so that creature is its source and
         // its controller controls it.

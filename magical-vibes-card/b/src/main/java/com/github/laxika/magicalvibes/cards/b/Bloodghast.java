@@ -25,8 +25,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 public class Bloodghast extends Card {
 
     public Bloodghast() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new CantBlockEffect());
+        addStaticEffect(new ConditionalEffect(
                 new AnOpponentLifeAtMost(10),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD,

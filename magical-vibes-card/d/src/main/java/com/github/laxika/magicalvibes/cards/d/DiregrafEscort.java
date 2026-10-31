@@ -26,7 +26,7 @@ public class DiregrafEscort extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new SoulbondPairWithEnteringEffect());
 
         // While paired, both creatures have protection from Zombies (every Zombie source, not just creatures).
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
                 new GrantEffectEffect(new ProtectionFromSubtypesEffect(Set.of(CardSubtype.ZOMBIE)),
                         GrantScope.SELF_AND_PAIRED)));

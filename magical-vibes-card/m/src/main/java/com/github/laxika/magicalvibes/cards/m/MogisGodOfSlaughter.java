@@ -26,7 +26,7 @@ import java.util.Set;
 public class MogisGodOfSlaughter extends Card {
 
     public MogisGodOfSlaughter() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorsAtLeast(
                         Set.of(ManaColor.BLACK, ManaColor.RED), 7)),
                 new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));

@@ -26,7 +26,7 @@ public class GalazethPrismari extends Card {
                 List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.INSTANT_SORCERY_ONLY)),
                 "{T}: Add one mana of any color. Spend this mana only to cast an instant or sorcery spell."
         );
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 artifactManaAbility,
                 GrantScope.OWN_PERMANENTS,
                 new PermanentIsArtifactPredicate()

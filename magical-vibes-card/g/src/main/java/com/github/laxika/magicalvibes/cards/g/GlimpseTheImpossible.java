@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnA
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SLZ", collectorNumber = "58")
@@ -33,7 +32,7 @@ public class GlimpseTheImpossible extends Card {
             Set.of(),
             false,
             false,
-            Map.of(),
+            List.of(),
             List.of(new ActivatedAbility(
                     false,
                     null,

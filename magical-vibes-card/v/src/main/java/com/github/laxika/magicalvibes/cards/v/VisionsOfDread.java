@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongOwnedCommandersInPlay;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnFlashbackCostEffect;
@@ -23,7 +22,7 @@ public class VisionsOfDread extends Card {
                 "Target must be an opponent"
         )).addSpellEffect(new TargetOpponentChoosesCardFromGraveyardEffect(new CardTypePredicate(CardType.CREATURE)));
 
-        addEffect(EffectSlot.STATIC, new ReduceOwnFlashbackCostEffect(new GreatestManaValueAmongOwnedCommandersInPlay()));
+        addStaticEffect(new ReduceOwnFlashbackCostEffect(new GreatestManaValueAmongOwnedCommandersInPlay()));
         addCastingOption(new FlashbackCast("{8}{B}{B}"));
     }
 }

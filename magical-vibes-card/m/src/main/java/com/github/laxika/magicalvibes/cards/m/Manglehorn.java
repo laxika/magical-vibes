@@ -21,6 +21,6 @@ public class Manglehorn extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new MayEffect(new DestroyTargetPermanentEffect(), "Destroy target artifact?"));
 
-        addEffect(EffectSlot.STATIC, new EnterPermanentsOfTypesTappedEffect(Set.of(CardType.ARTIFACT), true));
+        addStaticEffect(new EnterPermanentsOfTypesTappedEffect(Set.of(CardType.ARTIFACT), true));
     }
 }

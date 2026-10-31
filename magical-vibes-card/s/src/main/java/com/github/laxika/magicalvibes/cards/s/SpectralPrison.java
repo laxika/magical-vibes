@@ -13,7 +13,7 @@ public class SpectralPrison extends Card {
     public SpectralPrison() {
         target(TargetFilters.creature())
                 // Enchanted creature doesn't untap during its controller's untap step.
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted())
+                .addStaticEffect(DoesntUntapEffect.enchanted())
                 // When enchanted creature becomes the target of a spell, sacrifice this Aura.
                 .addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL, new SacrificeSelfEffect());
     }

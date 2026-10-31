@@ -26,7 +26,7 @@ public class Drought extends Card {
 
         // Spells / activated abilities cost an additional "Sacrifice a Swamp" for each black
         // mana symbol in their mana / activation costs.
-        addEffect(EffectSlot.STATIC, new AdditionalSacrificePerManaSymbolEffect(
+        addStaticEffect(new AdditionalSacrificePerManaSymbolEffect(
                 ManaColor.BLACK,
                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP),
                 "a Swamp",

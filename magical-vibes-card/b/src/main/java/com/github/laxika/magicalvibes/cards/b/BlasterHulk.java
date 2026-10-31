@@ -26,9 +26,8 @@ import java.util.List;
 public class BlasterHulk extends Card {
 
     public BlasterHulk() {
-        addEffect(EffectSlot.STATIC,
-                new ReduceOwnCastCostEffect(new EnergyCountersPaidOrLostThisTurn()));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF));
+        addStaticEffect(new ReduceOwnCastCostEffect(new EnergyCountersPaidOrLostThisTurn()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF));
         var damage = new DealDividedDamageEffect(
                 new Fixed(8), null, DivisionMode.CHOSEN, new PermanentIsCreaturePredicate(),
                 8, false, false, true);

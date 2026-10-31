@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class GuulDrazSpecter extends Card {
 
     public GuulDrazSpecter() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AnOpponentHandEmpty(), new StaticBoostEffect(3, 3, GrantScope.SELF)));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, false));

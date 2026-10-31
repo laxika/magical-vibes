@@ -18,12 +18,12 @@ public class MyChampionStandsSupreme extends Card {
         PermanentIsCommanderPredicate commander = new PermanentIsCommanderPredicate(true);
 
         // Your commander has ward {2}.
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(2), GrantScope.ALL_PERMANENTS, commander));
 
         // Whenever your commander attacks, put two +1/+1 counters on it.
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 new PutCountersOnSourceEffect(1, 1, 2), GrantScope.ALL_CREATURES, commander));
 

@@ -205,7 +205,7 @@ class BattlefieldPlacementServiceTest {
         Card land = new Card();
         land.setName("Dragonskull Summit");
         land.setType(CardType.LAND);
-        land.addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        land.addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCountAtMost(0, predicate), new EntersTappedEffect()));
         Permanent entering = new Permanent(land);
 
@@ -222,7 +222,7 @@ class BattlefieldPlacementServiceTest {
         Card land = new Card();
         land.setName("Dragonskull Summit");
         land.setType(CardType.LAND);
-        land.addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        land.addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCountAtMost(0, predicate), new EntersTappedEffect()));
         Permanent entering = new Permanent(land);
 
@@ -331,7 +331,7 @@ class BattlefieldPlacementServiceTest {
     void cantHaveCountersPreventsEntersWithCounters() {
         Permanent entering = enteringWithEffect(
                 new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(3)));
-        TestCards.mutableCard(entering).addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
+        TestCards.mutableCard(entering).addStaticEffect(new CantHaveCountersEffect());
         when(gameQueryService.cantHaveCountersForController(gd, entering, player1Id)).thenReturn(true);
 
         putPermanentOntoBattlefield(service, gd, player1Id, entering);
@@ -352,7 +352,7 @@ class BattlefieldPlacementServiceTest {
         sourceCard.setName("Conditional Counter Source");
         sourceCard.setType(CardType.CREATURE);
         sourceCard.setSubtypes(List.of(CardSubtype.VAMPIRE));
-        sourceCard.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        sourceCard.addStaticEffect(new ConditionalEffect(
                 new OpponentLostLifeThisTurn(1),
                 new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.VAMPIRE, 1)));
         gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
@@ -377,8 +377,7 @@ class BattlefieldPlacementServiceTest {
         Card sourceCard = new Card();
         sourceCard.setName("Dynamic Counter Source");
         sourceCard.setType(CardType.ENCHANTMENT);
-        sourceCard.addEffect(EffectSlot.STATIC,
-                new ControlledPermanentsEnterWithAdditionalCountersByAmountEffect(
+        sourceCard.addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersByAmountEffect(
                         new PermanentIsCreaturePredicate(), new LandsEnteredBattlefieldThisTurn()));
         gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
 
@@ -528,7 +527,7 @@ class BattlefieldPlacementServiceTest {
             Card xenograftCard = new Card();
             xenograftCard.setName("Xenograft");
             xenograftCard.setType(CardType.ENCHANTMENT);
-            xenograftCard.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            xenograftCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
             Permanent xenograft = new Permanent(xenograftCard);
             lookaheadGameData.playerBattlefields.get(playerId).add(xenograft);
 
@@ -544,16 +543,14 @@ class BattlefieldPlacementServiceTest {
             Card counterSourceCard = new Card();
             counterSourceCard.setName("Counter Source");
             counterSourceCard.setType(CardType.CREATURE);
-            counterSourceCard.addEffect(EffectSlot.STATIC,
-                    new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WIZARD, 1));
+            counterSourceCard.addStaticEffect(new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WIZARD, 1));
             Permanent counterSource = new Permanent(counterSourceCard);
             lookaheadGameData.playerBattlefields.get(playerId).add(counterSource);
 
             Card subtypeSourceCard = new Card();
             subtypeSourceCard.setName("Subtype Source");
             subtypeSourceCard.setType(CardType.ENCHANTMENT);
-            subtypeSourceCard.addEffect(EffectSlot.STATIC,
-                    new GrantSubtypeEffect(CardSubtype.WIZARD, GrantScope.OWN_CREATURES));
+            subtypeSourceCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.WIZARD, GrantScope.OWN_CREATURES));
             Permanent subtypeSource = new Permanent(subtypeSourceCard);
             lookaheadGameData.playerBattlefields.get(playerId).add(subtypeSource);
 
@@ -572,8 +569,7 @@ class BattlefieldPlacementServiceTest {
             Card counterSourceCard = new Card();
             counterSourceCard.setName("Chosen Counter Source");
             counterSourceCard.setType(CardType.CREATURE);
-            counterSourceCard.addEffect(EffectSlot.STATIC,
-                    ControlledCreaturesEnterWithAdditionalCountersEffect.ofChosenSubtype(1));
+            counterSourceCard.addStaticEffect(ControlledCreaturesEnterWithAdditionalCountersEffect.ofChosenSubtype(1));
             Permanent counterSource = new Permanent(counterSourceCard);
             counterSource.setChosenSubtype(CardSubtype.BEAR);
             lookaheadGameData.playerBattlefields.get(playerId).add(counterSource);
@@ -593,8 +589,7 @@ class BattlefieldPlacementServiceTest {
             Card counterSourceCard = new Card();
             counterSourceCard.setName("Chosen Counter Source");
             counterSourceCard.setType(CardType.CREATURE);
-            counterSourceCard.addEffect(EffectSlot.STATIC,
-                    ControlledCreaturesEnterWithAdditionalCountersEffect.ofChosenSubtype(1));
+            counterSourceCard.addStaticEffect(ControlledCreaturesEnterWithAdditionalCountersEffect.ofChosenSubtype(1));
             lookaheadGameData.playerBattlefields.get(playerId).add(new Permanent(counterSourceCard));
 
             Permanent bear = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
@@ -609,22 +604,19 @@ class BattlefieldPlacementServiceTest {
             Card firstSourceCard = new Card();
             firstSourceCard.setName("First Counter Source");
             firstSourceCard.setType(CardType.CREATURE);
-            firstSourceCard.addEffect(EffectSlot.STATIC,
-                    new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WIZARD, 1));
+            firstSourceCard.addStaticEffect(new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WIZARD, 1));
             lookaheadGameData.playerBattlefields.get(playerId).add(new Permanent(firstSourceCard));
 
             Card secondSourceCard = new Card();
             secondSourceCard.setName("Second Counter Source");
             secondSourceCard.setType(CardType.CREATURE);
-            secondSourceCard.addEffect(EffectSlot.STATIC,
-                    new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WIZARD, 2));
+            secondSourceCard.addStaticEffect(new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WIZARD, 2));
             lookaheadGameData.playerBattlefields.get(playerId).add(new Permanent(secondSourceCard));
 
             Card subtypeSourceCard = new Card();
             subtypeSourceCard.setName("Subtype Source");
             subtypeSourceCard.setType(CardType.ENCHANTMENT);
-            subtypeSourceCard.addEffect(EffectSlot.STATIC,
-                    new GrantSubtypeEffect(CardSubtype.WIZARD, GrantScope.OWN_CREATURES));
+            subtypeSourceCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.WIZARD, GrantScope.OWN_CREATURES));
             lookaheadGameData.playerBattlefields.get(playerId).add(new Permanent(subtypeSourceCard));
 
             Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
@@ -640,7 +632,7 @@ class BattlefieldPlacementServiceTest {
             Card xenograftCard = new Card();
             xenograftCard.setName("Xenograft");
             xenograftCard.setType(CardType.ENCHANTMENT);
-            xenograftCard.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            xenograftCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
             Permanent xenograft = new Permanent(xenograftCard);
             lookaheadGameData.playerBattlefields.get(opponentId).add(xenograft);
 
@@ -656,7 +648,7 @@ class BattlefieldPlacementServiceTest {
             Card conspiracyCard = new Card();
             conspiracyCard.setName("Conspiracy");
             conspiracyCard.setType(CardType.ENCHANTMENT);
-            conspiracyCard.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.ALL_CREATURES));
+            conspiracyCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.ALL_CREATURES));
             Permanent conspiracy = new Permanent(conspiracyCard);
             lookaheadGameData.playerBattlefields.get(opponentId).add(conspiracy);
 
@@ -672,7 +664,7 @@ class BattlefieldPlacementServiceTest {
             Card maskCard = new Card();
             maskCard.setName("Maskwood Nexus");
             maskCard.setType(CardType.ARTIFACT);
-            maskCard.addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.CHANGELING, GrantScope.OWN_CREATURES));
+            maskCard.addStaticEffect(new GrantKeywordEffect(Keyword.CHANGELING, GrantScope.OWN_CREATURES));
             Permanent mask = new Permanent(maskCard);
             lookaheadGameData.playerBattlefields.get(playerId).add(mask);
 
@@ -690,7 +682,7 @@ class BattlefieldPlacementServiceTest {
             Card xenograftCard = new Card();
             xenograftCard.setName("Xenograft");
             xenograftCard.setType(CardType.ENCHANTMENT);
-            xenograftCard.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            xenograftCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
             Permanent xenograft = new Permanent(xenograftCard);
             lookaheadGameData.playerBattlefields.get(playerId).add(xenograft);
 
@@ -706,7 +698,7 @@ class BattlefieldPlacementServiceTest {
             Card xenograftCard = new Card();
             xenograftCard.setName("Xenograft");
             xenograftCard.setType(CardType.ENCHANTMENT);
-            xenograftCard.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            xenograftCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
             Permanent preExistingXenograft = new Permanent(xenograftCard);
             lookaheadGameData.playerBattlefields.get(playerId).add(preExistingXenograft);
 
@@ -753,7 +745,7 @@ class BattlefieldPlacementServiceTest {
             Card badCard = new Card();
             badCard.setName("Bad Enchantment");
             badCard.setType(CardType.ENCHANTMENT);
-            badCard.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            badCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
             lookaheadGameData.playerBattlefields.get(playerId).add(new Permanent(badCard));
 
             Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
@@ -838,7 +830,7 @@ class BattlefieldPlacementServiceTest {
             Card essenceCard = new Card();
             essenceCard.setName("Essence Source");
             essenceCard.setType(CardType.CREATURE);
-            essenceCard.addEffect(EffectSlot.STATIC, new CreaturesEnterAsCopyOfSourceEffect());
+            essenceCard.addStaticEffect(new CreaturesEnterAsCopyOfSourceEffect());
             Permanent essence = new Permanent(essenceCard);
             lookaheadGameData.playerBattlefields.get(playerId).add(essence);
 
@@ -876,8 +868,7 @@ class BattlefieldPlacementServiceTest {
             Card sourceCard = new Card();
             sourceCard.setName("Counter Source");
             sourceCard.setType(CardType.CREATURE);
-            sourceCard.addEffect(EffectSlot.STATIC,
-                    new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WARRIOR, 1));
+            sourceCard.addStaticEffect(new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.WARRIOR, 1));
             return new Permanent(sourceCard);
         }
 
@@ -894,7 +885,7 @@ class BattlefieldPlacementServiceTest {
             Card badCard = new Card();
             badCard.setName("Bad Enchantment");
             badCard.setType(CardType.ENCHANTMENT);
-            badCard.addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            badCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
             Permanent thrower = new Permanent(badCard);
 
             List<Permanent> battlefield = lookaheadGameData.playerBattlefields.get(playerId);
@@ -919,7 +910,7 @@ class BattlefieldPlacementServiceTest {
         Card card = new Card();
         card.setName("X-dependent Permanent");
         card.setType(CardType.ARTIFACT);
-        card.addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        card.addStaticEffect(new ConditionalReplacementEffect(
                 new NotCondition(new SpellXAtLeast(3)), new EntersTappedEffect()));
 
         Permanent enteringAtTwo = new Permanent(card);

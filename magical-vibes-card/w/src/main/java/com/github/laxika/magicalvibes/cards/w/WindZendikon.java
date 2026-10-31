@@ -19,9 +19,9 @@ public class WindZendikon extends Card {
 
     public WindZendikon() {
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesCreatureEffect(
+                .addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(
                         2, 2, CardColor.BLUE, List.of(CardSubtype.ELEMENTAL)))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+                .addStaticEffect(new GrantKeywordEffect(
                         Keyword.FLYING, GrantScope.ENCHANTED_PERMANENT));
 
         addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,

@@ -13,7 +13,7 @@ public class PolarKraken extends Card {
 
     public PolarKraken() {
         // Trample is auto-loaded from Scryfall.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         // Cumulative upkeep—Sacrifice a land.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 CumulativeUpkeepEffect.sacrifice(new PermanentIsLandPredicate()));

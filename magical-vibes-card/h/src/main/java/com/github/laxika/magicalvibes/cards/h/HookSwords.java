@@ -24,7 +24,7 @@ public class HookSwords extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new LivingWeaponEffect(new CreateTokenEffect("Ally", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.ALLY), Set.of(), Set.of())));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new StaticBoostEffect(1, 1, Set.of(Keyword.FIRST_STRIKE), GrantScope.EQUIPPED_CREATURE)));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

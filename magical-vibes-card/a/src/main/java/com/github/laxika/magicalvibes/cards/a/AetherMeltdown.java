@@ -25,6 +25,6 @@ public class AetherMeltdown extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
                 "Target must be a creature or Vehicle"))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnergyCountersEffect(2))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(-4, 0, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(-4, 0, GrantScope.ENCHANTED_CREATURE));
     }
 }

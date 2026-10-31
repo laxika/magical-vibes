@@ -29,10 +29,10 @@ public class OniPossession extends Card {
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificePermanentsEffect(
                         1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER))
                 // Enchanted creature gets +3/+3 and has trample.
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+                .addStaticEffect(new StaticBoostEffect(
                         3, 3, Set.of(Keyword.TRAMPLE), GrantScope.ENCHANTED_CREATURE))
                 // Enchanted creature is a Demon Spirit (type-replacing, not additive).
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesTypeEffect(
+                .addStaticEffect(new EnchantedPermanentBecomesTypeEffect(
                         List.of(CardSubtype.DEMON, CardSubtype.SPIRIT)));
     }
 }

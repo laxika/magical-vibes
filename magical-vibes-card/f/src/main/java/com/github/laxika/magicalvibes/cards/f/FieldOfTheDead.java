@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class FieldOfTheDead extends Card {
 
     public FieldOfTheDead() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
 

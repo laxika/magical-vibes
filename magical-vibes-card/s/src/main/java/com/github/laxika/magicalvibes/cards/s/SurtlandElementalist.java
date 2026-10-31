@@ -16,7 +16,7 @@ import java.util.List;
 public class SurtlandElementalist extends Card {
 
     public SurtlandElementalist() {
-        addEffect(EffectSlot.STATIC, new IncreaseOwnCastCostUnlessRevealSubtypeEffect(2, CardSubtype.GIANT));
+        addStaticEffect(new IncreaseOwnCastCostUnlessRevealSubtypeEffect(2, CardSubtype.GIANT));
         addEffect(EffectSlot.ON_ATTACK, new MayCastAnySpellFromHandWithoutPayingManaCostEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),

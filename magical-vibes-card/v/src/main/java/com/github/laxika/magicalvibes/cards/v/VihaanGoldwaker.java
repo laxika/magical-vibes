@@ -31,7 +31,7 @@ public class VihaanGoldwaker extends Card {
 
     public VihaanGoldwaker() {
         // Other outlaws you control have vigilance and haste.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 0,
+        addStaticEffect(new StaticBoostEffect(0, 0,
                 Set.of(Keyword.VIGILANCE, Keyword.HASTE), GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES)));
 

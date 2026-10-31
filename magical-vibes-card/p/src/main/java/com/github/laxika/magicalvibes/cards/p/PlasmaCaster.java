@@ -27,7 +27,7 @@ import java.util.List;
 public class PlasmaCaster extends Card {
 
     public PlasmaCaster() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK, new EnergyCountersEffect(2));
 
         var blockingEquippedCreature = new PermanentAllOfPredicate(List.of(

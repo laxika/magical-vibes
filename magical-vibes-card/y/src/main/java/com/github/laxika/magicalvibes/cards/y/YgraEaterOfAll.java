@@ -23,11 +23,9 @@ import java.util.List;
 public class YgraEaterOfAll extends Card {
 
     public YgraEaterOfAll() {
-        addEffect(EffectSlot.STATIC,
-                new GrantCardTypeEffect(CardType.ARTIFACT, GrantScope.ALL_CREATURES));
-        addEffect(EffectSlot.STATIC,
-                new GrantSubtypeEffect(CardSubtype.FOOD, GrantScope.ALL_CREATURES));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantCardTypeEffect(CardType.ARTIFACT, GrantScope.ALL_CREATURES));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.FOOD, GrantScope.ALL_CREATURES));
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         "{2}",

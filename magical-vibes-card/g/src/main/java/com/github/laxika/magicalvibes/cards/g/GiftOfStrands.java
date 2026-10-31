@@ -13,7 +13,7 @@ public class GiftOfStrands extends Card {
 
     public GiftOfStrands() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(2));
     }
 }

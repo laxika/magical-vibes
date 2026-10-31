@@ -18,7 +18,7 @@ public class RuneforgeChampion extends Card {
                 new SearchLibraryAndOrGraveyardForCardToHandEffect(
                         new CardSubtypePredicate(CardSubtype.RUNE)),
                 "Search your library and/or graveyard for a Rune card?"));
-        addEffect(EffectSlot.STATIC, new AlternativeCostForSpellsEffect(
+        addStaticEffect(new AlternativeCostForSpellsEffect(
                 "{1}", new CardSubtypePredicate(CardSubtype.RUNE)));
     }
 }

@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromExileTransformedEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "233")
@@ -49,7 +48,7 @@ public class MastersGuideMural extends Card {
                 Set.of(CardType.ARTIFACT),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

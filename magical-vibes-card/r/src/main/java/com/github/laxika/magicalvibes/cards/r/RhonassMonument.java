@@ -31,7 +31,7 @@ public class RhonassMonument extends Card {
 
     public RhonassMonument() {
         // Green creature spells you cast cost {1} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardAllOfPredicate(List.of(
                         new CardColorPredicate(CardColor.GREEN),
                         new CardTypePredicate(CardType.CREATURE)

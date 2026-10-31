@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -36,7 +35,7 @@ public class IshkanahBroodmother extends Card {
 
     public IshkanahBroodmother() {
         // Other Spiders you control get +1/+2.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 2, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SPIDER)));
 
         // {1}{B/G}, Exile two cards from your graveyard: Draft a card from Ishkanah,

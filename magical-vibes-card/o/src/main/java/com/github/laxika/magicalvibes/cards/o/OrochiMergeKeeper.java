@@ -17,7 +17,7 @@ public class OrochiMergeKeeper extends Card {
 
     public OrochiMergeKeeper() {
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null,
                         List.of(new AwardManaEffect(ManaColor.GREEN, 2)),
                         "{T}: Add {G}{G}."),

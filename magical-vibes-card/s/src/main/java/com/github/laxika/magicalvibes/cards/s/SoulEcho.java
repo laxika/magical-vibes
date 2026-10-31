@@ -17,7 +17,7 @@ public class SoulEcho extends Card {
 
     public SoulEcho() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.ECHO, new XValue()));
-        addEffect(EffectSlot.STATIC, new CantLoseGameFromLifeEffect());
+        addStaticEffect(new CantLoseGameFromLifeEffect());
 
         // The sacrifice clause is checked on resolution, not as an intervening-if, so the trigger
         // targets an opponent every upkeep even when no echo counters remain.

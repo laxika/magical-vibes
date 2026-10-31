@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.n.NightscapeFamiliar;
 import com.github.laxika.magicalvibes.cards.s.SeaSnidd;
 import com.github.laxika.magicalvibes.cards.t.ThornscapeFamiliar;
 import com.github.laxika.magicalvibes.cards.t.Terminate;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
@@ -87,7 +86,7 @@ class AmphibiousKavuTest extends BaseCardTest {
     @DisplayName("Amphibious Kavu gets only one boost when blocking multiple matching creatures")
     void multipleMatchingAttackersBoostOnce() {
         AmphibiousKavu card = new AmphibiousKavu();
-        card.addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        card.addStaticEffect(new CanBlockAnyNumberOfCreaturesEffect());
         Permanent kavu = addCreatureReady(player2, card);
         Permanent seaSnidd = addCreatureReady(player1, new SeaSnidd());
         Permanent nightscapeFamiliar = addCreatureReady(player1, new NightscapeFamiliar());

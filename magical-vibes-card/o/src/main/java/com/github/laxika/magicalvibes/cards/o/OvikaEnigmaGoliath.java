@@ -28,7 +28,7 @@ public class OvikaEnigmaGoliath extends Card {
         CreateTokenEffect phyrexianGoblin = new CreateTokenEffect(
                 CardType.CREATURE, new EventValue(), "Phyrexian Goblin", 1, 1, CardColor.RED, null,
                 List.of(CardSubtype.PHYREXIAN, CardSubtype.GOBLIN), Set.of(), Set.of(), false, false,
-                java.util.Map.of(), List.of(), false, false, false, 0, Set.of(Keyword.HASTE));
+                List.of(), List.of(), false, false, false, 0, Set.of(Keyword.HASTE));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),

@@ -18,7 +18,7 @@ public class Farmstead extends Card {
 
     public Farmstead() {
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.UPKEEP_TRIGGERED,
                         new MayPayManaEffect("{W}{W}", new GainLifeEffect(1),
                                 "Pay {W}{W} to gain 1 life?"),

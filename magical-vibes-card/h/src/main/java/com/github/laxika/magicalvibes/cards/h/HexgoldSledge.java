@@ -24,7 +24,7 @@ public class HexgoldSledge extends Card {
                         List.of(CardSubtype.REBEL), Set.of(), Set.of())));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConjureCardNamedOntoBattlefieldEffect("SOM", "92"));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

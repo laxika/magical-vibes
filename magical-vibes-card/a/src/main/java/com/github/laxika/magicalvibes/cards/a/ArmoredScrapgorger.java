@@ -29,7 +29,7 @@ public class ArmoredScrapgorger extends Card {
                                 new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD),
                                 new PutCountersOnSelfEffect(CounterType.OIL))));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.OIL),
                 new StaticBoostEffect(3, 0, GrantScope.SELF)));
     }

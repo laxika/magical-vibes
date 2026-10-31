@@ -19,7 +19,7 @@ public class MantleOfTheWolf extends Card {
 
     public MantleOfTheWolf() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(4, 4, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(4, 4, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                         new CreateTokenEffect(2, "Wolf", 2, 2, CardColor.GREEN,
                                 List.of(CardSubtype.WOLF), Set.of(), Set.of()));

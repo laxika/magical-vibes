@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class CynicalLoner extends Card {
 
     public CynicalLoner() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.GLIMMER)));
         addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, new SurvivalTriggerEffect(
                 new ConditionalEffect(

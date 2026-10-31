@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "BRO", collectorNumber = "70")
@@ -31,7 +30,7 @@ public class UrzasCommand extends Card {
         CreateTokenEffect constructToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Construct", 0, 0, null, null,
                 List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT), false, true,
-                Map.of(EffectSlot.STATIC, new BoostSelfEffect(artifactsYouControl, artifactsYouControl)), List.of(),
+                List.of(StaticAbility.of(new BoostSelfEffect(artifactsYouControl, artifactsYouControl))), List.of(),
                 false, false, false, 0, Set.of());
 
         addSpellEffect(new ChooseOneEffect(List.of(

@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class NimbleBrigand extends Card {
 
     public NimbleBrigand() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new CommittedCrimeThisTurn(),
                 new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect());

@@ -30,7 +30,7 @@ public class FrostcliffSiege extends Card {
                         false,
                         true));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceHasChosenMode("Temur"),
                 new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.OWN_CREATURES)));
     }

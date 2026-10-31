@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PerpetuallyReduceCreatureCast
 public class FountainportCharmer extends Card {
 
     public FountainportCharmer() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}", false));
+        addStaticEffect(new KickerEffect("{2}", false));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new Kicked(),
                         new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));

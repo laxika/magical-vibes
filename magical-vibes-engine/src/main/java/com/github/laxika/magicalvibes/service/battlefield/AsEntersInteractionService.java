@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessFormChoiceEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayReturnPermanentToHandAndEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayAnyAmountOfLifeOnEnterEffect;
@@ -178,7 +177,7 @@ public class AsEntersInteractionService {
             return;
         }
 
-        boolean exchangesTextOnEntry = card.getEffects(EffectSlot.STATIC).stream()
+        boolean exchangesTextOnEntry = card.getStaticEffects().stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.ExchangeTextBoxesEffect.class::isInstance);
         if (exchangesTextOnEntry && enteringPermanent.getChosenPermanentId() == null) {
             List<UUID> choices = gameData.playerBattlefields.values().stream().flatMap(List::stream)
@@ -224,7 +223,7 @@ public class AsEntersInteractionService {
         // Tribute is chosen by an opponent as the creature enters. The choice is presented after
         // the permanent is placed so the shared may-ability interaction can carry it, but before
         // any ETB trigger is collected.
-        TributeEffect tribute = card.getEffects(EffectSlot.STATIC).stream()
+        TributeEffect tribute = card.getStaticEffects().stream()
                 .filter(e -> e instanceof TributeEffect)
                 .map(TributeEffect.class::cast)
                 .findFirst().orElse(null);

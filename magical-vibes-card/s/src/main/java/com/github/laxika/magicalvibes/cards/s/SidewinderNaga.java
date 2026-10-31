@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
@@ -28,10 +27,10 @@ public class SidewinderNaga extends Card {
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
                 new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))
         ));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 desertCondition,
                 new StaticBoostEffect(1, 0, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 desertCondition,
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
     }

@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class RevenantPatriarch extends Card {
 
     public RevenantPatriarch() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "KTK", collectorNumber = "72")
@@ -25,7 +24,7 @@ public class EmptyThePits extends Card {
                 List.of(CardSubtype.ZOMBIE),
                 Set.of(), Set.of(),
                 false, true,
-                Map.of(), List.of(),
+                List.of(), List.of(),
                 false, false, false, 0, Set.of()));
     }
 }

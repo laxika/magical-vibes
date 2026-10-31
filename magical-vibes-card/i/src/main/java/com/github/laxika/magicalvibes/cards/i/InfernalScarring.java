@@ -16,9 +16,8 @@ public class InfernalScarring extends Card {
 
     public InfernalScarring() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                                 EffectSlot.ON_DEATH,
                                 new DrawCardEffect(1),
                                 GrantScope.ENCHANTED_CREATURE));

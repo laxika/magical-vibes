@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -680,7 +679,7 @@ public class ValidTargetService {
                         AmountContext.forCasting(controllerId, announced, card)))
                 .orElse(announced);
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof CastTimeXValueModifierEffect modifier
                         && modifier.appliesTo(card, controllerId, controllerId)) {
                     effectiveXValue = modifier.modifyCastTimeXValue(effectiveXValue);

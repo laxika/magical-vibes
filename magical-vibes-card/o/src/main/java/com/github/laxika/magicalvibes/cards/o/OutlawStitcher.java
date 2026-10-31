@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenPutCountersEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OTJ", collectorNumber = "59")
@@ -34,7 +33,7 @@ public class OutlawStitcher extends Card {
                 CardColor.BLUE, Set.of(CardColor.BLUE, CardColor.BLACK),
                 List.of(CardSubtype.ZOMBIE, CardSubtype.ROGUE), Set.of(), Set.of(),
                 false, false,
-                Map.of(),
+                List.of(),
                 List.of(), false, false, false, 0, Set.of());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenThenPutCountersEffect(
                 zombieRogue, CounterType.PLUS_ONE_PLUS_ONE, countersForSpellsAfterFirst));

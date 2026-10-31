@@ -23,7 +23,7 @@ import java.util.Set;
 public class DancingSword extends Card {
 
     public DancingSword() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
 
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new MayEffect(
                 SequenceEffect.of(new BecomeCreatureEffect(2, 1, List.of(CardSubtype.CONSTRUCT),

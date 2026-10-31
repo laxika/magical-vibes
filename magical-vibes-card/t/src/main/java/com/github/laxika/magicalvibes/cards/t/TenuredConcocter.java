@@ -21,7 +21,7 @@ public class TenuredConcocter extends Card {
                 new MayEffect(new DrawCardEffect(), "Draw a card?"));
 
         // Infusion — This creature gets +2/+0 as long as you gained life this turn.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GainedLifeThisTurn(),
                 new StaticBoostEffect(2, 0, GrantScope.SELF)));
     }

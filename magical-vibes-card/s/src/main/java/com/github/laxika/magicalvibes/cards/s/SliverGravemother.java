@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EncoreEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantEncoreToCreatureCardsOfSubtypeEffect;
@@ -19,8 +18,8 @@ import java.util.List;
 public class SliverGravemother extends Card {
 
     public SliverGravemother() {
-        addEffect(EffectSlot.STATIC, new IgnoreLegendRuleForControlledSubtypeEffect(CardSubtype.SLIVER));
-        addEffect(EffectSlot.STATIC, new GrantEncoreToCreatureCardsOfSubtypeEffect(CardSubtype.SLIVER));
+        addStaticEffect(new IgnoreLegendRuleForControlledSubtypeEffect(CardSubtype.SLIVER));
+        addStaticEffect(new GrantEncoreToCreatureCardsOfSubtypeEffect(CardSubtype.SLIVER));
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}",

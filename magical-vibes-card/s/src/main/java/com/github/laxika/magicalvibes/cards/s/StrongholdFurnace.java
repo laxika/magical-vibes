@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 public class StrongholdFurnace extends Card {
 
     public StrongholdFurnace() {
-        addEffect(EffectSlot.STATIC, new DoubleDamageEffect());
+        addStaticEffect(new DoubleDamageEffect());
         addEffect(EffectSlot.CHAOS_TRIGGERED, new DealDamageToAnyTargetEffect(1));
     }
 }

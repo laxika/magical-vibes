@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class AcademyJourneymage extends Card {
 
     public AcademyJourneymage() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.WIZARD)),
                 new ReduceOwnCastCostEffect(new Fixed(1))));
         target(TargetFilters.creatureAnOpponentControls())

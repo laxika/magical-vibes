@@ -10,7 +10,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>The <em>continuous</em> / anthem case ("creatures you control have trample" for as long as the
  * source is on the battlefield) is <strong>not</strong> represented here — that is expressed by
- * placing the {@link GrantKeywordEffect} in {@code EffectSlot.STATIC}, where the static handler
+ * adding the {@link GrantKeywordEffect} as a static ability, where the static handler
  * recomputes it on the fly and ignores this enum.
  */
 public enum GrantDuration {

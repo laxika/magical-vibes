@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class AncientAdamantoise extends Card {
 
     public AncientAdamantoise() {
-        addEffect(EffectSlot.STATIC, new DamageNotRemovedDuringCleanupEffect());
-        addEffect(EffectSlot.STATIC, new RedirectPlayerDamageToSelfEffect(true));
+        addStaticEffect(new DamageNotRemovedDuringCleanupEffect());
+        addStaticEffect(new RedirectPlayerDamageToSelfEffect(true));
         addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(
                 new ExileSourceCardFromGraveyardEffect(),
                 CreateTokenEffect.ofTreasureToken(new Fixed(10), true)));

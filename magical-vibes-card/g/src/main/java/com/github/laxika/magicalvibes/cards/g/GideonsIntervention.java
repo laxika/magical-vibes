@@ -14,8 +14,8 @@ public class GideonsIntervention extends Card {
     public GideonsIntervention() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameOnEnterEffect());
         // Your opponents can't cast spells with the chosen name (opponents-only).
-        addEffect(EffectSlot.STATIC, new SpellsWithChosenNameCantBeCastEffect(true));
+        addStaticEffect(new SpellsWithChosenNameCantBeCastEffect(true));
         // Prevent all damage to you and permanents you control by sources with the chosen name.
-        addEffect(EffectSlot.STATIC, new PreventDamageFromChosenNameEffect());
+        addStaticEffect(new PreventDamageFromChosenNameEffect());
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
@@ -17,7 +16,7 @@ public class IllusionSpinners extends Card {
 
     public IllusionSpinners() {
         setFlashCastCondition(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.FAERIE)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
     }

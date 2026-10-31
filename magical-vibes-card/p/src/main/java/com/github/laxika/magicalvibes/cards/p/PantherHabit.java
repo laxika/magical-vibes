@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddPlusCountersEffect;
 
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddPlusCounte
 public class PantherHabit extends Card {
 
     public PantherHabit() {
-        addEffect(EffectSlot.STATIC, new PreventDamageAndAddPlusCountersEffect());
+        addStaticEffect(new PreventDamageAndAddPlusCountersEffect());
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

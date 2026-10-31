@@ -16,8 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class KorvoldGleefulGlutton extends Card {
 
     public KorvoldGleefulGlutton() {
-        addEffect(EffectSlot.STATIC,
-                new ReduceOwnCastCostEffect(new CardTypesAmongPermanentsSacrificedThisTurn()));
+        addStaticEffect(new ReduceOwnCastCostEffect(new CardTypesAmongPermanentsSacrificedThisTurn()));
 
         PermanentTypesAmongCardsInGraveyard permanentTypes = new PermanentTypesAmongCardsInGraveyard();
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, SequenceEffect.of(

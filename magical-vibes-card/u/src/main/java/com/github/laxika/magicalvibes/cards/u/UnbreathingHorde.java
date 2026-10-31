@@ -32,6 +32,6 @@ public class UnbreathingHorde extends Card {
 
         // If damage would be dealt to Unbreathing Horde, prevent that damage and
         // remove a +1/+1 counter from it.
-        addEffect(EffectSlot.STATIC, new PreventDamageAndRemovePlusOnePlusOneCountersEffect(true));
+        addStaticEffect(new PreventDamageAndRemovePlusOnePlusOneCountersEffect(true));
     }
 }

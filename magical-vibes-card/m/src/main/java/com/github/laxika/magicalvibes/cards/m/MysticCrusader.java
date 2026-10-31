@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -18,12 +17,12 @@ import java.util.Set;
 public class MysticCrusader extends Card {
 
     public MysticCrusader() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.RED)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.RED)));
 
         var threshold = new GraveyardCardThreshold(7, null);
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new StaticBoostEffect(1, 1, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
     }
 }

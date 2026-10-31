@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
@@ -15,7 +14,7 @@ import java.util.List;
 public class SymbioticDeployment extends Card {
 
     public SymbioticDeployment() {
-        addEffect(EffectSlot.STATIC, new SkipDrawStepEffect());
+        addStaticEffect(new SkipDrawStepEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

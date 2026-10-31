@@ -18,7 +18,7 @@ public class RhoxPummeler extends Card {
     public RhoxPummeler() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.SHIELD),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
     }

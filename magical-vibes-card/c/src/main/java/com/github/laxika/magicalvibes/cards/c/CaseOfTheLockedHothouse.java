@@ -23,7 +23,7 @@ import java.util.Set;
 public class CaseOfTheLockedHothouse extends Card {
 
     public CaseOfTheLockedHothouse() {
-        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect(1));
+        addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ConditionalEffect(
@@ -33,12 +33,9 @@ public class CaseOfTheLockedHothouse extends Card {
                         )),
                         new SolveSourceEffect()));
 
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new SourceIsSolved(), new LookAtTopCardOfOwnLibraryEffect()));
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new SourceIsSolved(), new PlayLandsFromTopOfLibraryEffect()));
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new SourceIsSolved(), new AllowCastFromTopOfLibraryEffect(
+        addStaticEffect(new ConditionalEffect(new SourceIsSolved(), new LookAtTopCardOfOwnLibraryEffect()));
+        addStaticEffect(new ConditionalEffect(new SourceIsSolved(), new PlayLandsFromTopOfLibraryEffect()));
+        addStaticEffect(new ConditionalEffect(new SourceIsSolved(), new AllowCastFromTopOfLibraryEffect(
                         Set.of(CardType.CREATURE, CardType.ENCHANTMENT))));
     }
 }

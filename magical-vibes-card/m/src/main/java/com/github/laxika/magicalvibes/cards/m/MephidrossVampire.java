@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 public class MephidrossVampire extends Card {
 
     public MephidrossVampire() {
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.VAMPIRE, GrantScope.ALL_OWN_CREATURES));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.VAMPIRE, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
                 new PutCountersOnSourceEffect(1, 1, 1),
                 GrantScope.ALL_OWN_CREATURES));

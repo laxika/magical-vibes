@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEf
 public class NemesisMask extends Card {
 
     public NemesisMask() {
-        addEffect(EffectSlot.STATIC, new MustBeBlockedByAllCreaturesEffect());
+        addStaticEffect(new MustBeBlockedByAllCreaturesEffect());
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

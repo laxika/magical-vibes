@@ -29,7 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 public class TempleOfTriumph extends Card {
 
     public TempleOfTriumph() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(1));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));

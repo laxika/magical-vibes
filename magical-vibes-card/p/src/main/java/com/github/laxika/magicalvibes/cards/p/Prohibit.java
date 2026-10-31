@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -17,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 public class Prohibit extends Card {
 
     public Prohibit() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
+        addStaticEffect(new KickerEffect("{2}"));
         // Any spell may be targeted; the mana value is checked as the spell resolves.
         addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),

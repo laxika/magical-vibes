@@ -33,7 +33,7 @@ public class Marjhan extends Card {
 
     public Marjhan() {
         // "This creature doesn't untap during your untap step."
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // "{U}{U}, Sacrifice a creature: Untap this creature. Activate only during your upkeep."
         addActivatedAbility(new ActivatedAbility(
@@ -44,7 +44,7 @@ public class Marjhan extends Card {
                 ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP));
 
         // "This creature can't attack unless defending player controls an Island."
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new DefendingPlayerControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 "an Island"));
 

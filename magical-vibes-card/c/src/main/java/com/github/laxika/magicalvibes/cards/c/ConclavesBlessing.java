@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -28,7 +27,7 @@ public class ConclavesBlessing extends Card {
                 )),
                 CountScope.CONTROLLER);
 
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        target(TargetFilters.creature()).addStaticEffect(new AttachedBoostEffect(
                 new Fixed(0), new Scaled(otherCreaturesYouControl, 2),
                 GrantScope.ENCHANTED_CREATURE));
     }

@@ -24,13 +24,13 @@ public class HelmOfTheGhastlord extends Card {
         target(TargetFilters.creature())
                 // As long as enchanted creature is blue, it gets +1/+1 and has
                 // "Whenever this creature deals damage to an opponent, draw a card."
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE, blue))
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE, blue))
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_DAMAGE_TO_OPPONENT, new DrawCardEffect(), GrantScope.ENCHANTED_CREATURE, blue))
                 // As long as enchanted creature is black, it gets +1/+1 and has
                 // "Whenever this creature deals damage to an opponent, that player discards a card."
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE, black))
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE, black))
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_DAMAGE_TO_OPPONENT,
                         new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, false),
                         GrantScope.ENCHANTED_CREATURE, black));

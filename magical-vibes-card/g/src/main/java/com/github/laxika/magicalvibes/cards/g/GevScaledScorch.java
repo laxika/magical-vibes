@@ -25,8 +25,7 @@ public class GevScaledScorch extends Card {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysLifeEffect(new Fixed(2)));
 
-        addEffect(EffectSlot.STATIC,
-                ControlledCreaturesEnterWithAdditionalCountersEffect.forAllCreatures(
+        addStaticEffect(ControlledCreaturesEnterWithAdditionalCountersEffect.forAllCreatures(
                         new OpponentsWhoLostLifeThisTurn()));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(

@@ -24,7 +24,7 @@ public class ExitSpecialist extends Card {
         addMorph("{1}{U}");
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new ConditionalEffect(new SourceIsFaceDown(), new CounterUnlessPaysEffect(2)));
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtLeastPredicate(3)));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

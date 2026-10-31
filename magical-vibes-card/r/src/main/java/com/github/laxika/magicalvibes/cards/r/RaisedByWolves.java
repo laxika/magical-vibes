@@ -27,7 +27,7 @@ public class RaisedByWolves extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                         2, "Wolf", 2, 2, CardColor.GREEN,
                         List.of(CardSubtype.WOLF), Set.of(), Set.of()))
-                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                .addStaticEffect(new AttachedBoostEffect(
                         wolves, wolves, GrantScope.ENCHANTED_CREATURE));
     }
 }

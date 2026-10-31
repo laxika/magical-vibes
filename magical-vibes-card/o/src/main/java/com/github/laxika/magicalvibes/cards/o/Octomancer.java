@@ -25,7 +25,7 @@ import java.util.Set;
 public class Octomancer extends Card {
 
     public Octomancer() {
-        addEffect(EffectSlot.STATIC, new GiftEffect());
+        addStaticEffect(new GiftEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new GiftPromised(),
                 TargetOpponentCreatesTokenEffect.gift(octopusToken())));
 

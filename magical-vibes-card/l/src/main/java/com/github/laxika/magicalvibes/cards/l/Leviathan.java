@@ -31,8 +31,8 @@ public class Leviathan extends Card {
         PermanentHasSubtypePredicate islands = new PermanentHasSubtypePredicate(CardSubtype.ISLAND);
 
         // Enters tapped and doesn't untap during your untap step
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(new EntersTappedEffect());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // At the beginning of your upkeep, you may sacrifice two Islands. If you do, untap Leviathan.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
@@ -46,8 +46,8 @@ public class Leviathan extends Card {
 
         // Leviathan can't attack unless you sacrifice two Islands (paid as attackers are declared):
         // the legality gate (control enough to pay) plus the actual sacrifice cost.
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new ControlsPermanentCount(2, islands), "you sacrifice two Islands"));
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessSacrificeEffect(2, islands, "two Islands"));
+        addStaticEffect(new CantAttackUnlessSacrificeEffect(2, islands, "two Islands"));
     }
 }

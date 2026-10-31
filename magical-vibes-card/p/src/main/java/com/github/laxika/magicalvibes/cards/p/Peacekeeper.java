@@ -24,8 +24,7 @@ public class Peacekeeper extends Card {
                         true));
         // Creatures can't attack. Expressed as a global attack lock with an exemption
         // predicate that no creature can ever match.
-        addEffect(EffectSlot.STATIC,
-                new CreaturesCantAttackUnlessPredicateEffect(
+        addStaticEffect(new CreaturesCantAttackUnlessPredicateEffect(
                         new PermanentNotPredicate(new PermanentTruePredicate())));
     }
 }

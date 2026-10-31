@@ -24,7 +24,7 @@ public class CaptainOfTheWatch extends Card {
 
     public CaptainOfTheWatch() {
         // Other Soldier creatures you control get +1/+1 and have vigilance.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE), GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE), GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SOLDIER))));
 
         // When Captain of the Watch enters the battlefield, create three 1/1 white Soldier creature tokens.

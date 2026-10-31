@@ -17,8 +17,8 @@ public class TishanaVoiceOfThunder extends Card {
 
     public TishanaVoiceOfThunder() {
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
+        addStaticEffect(new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
+        addStaticEffect(new NoMaximumHandSizeEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DrawCardEffect(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
     }

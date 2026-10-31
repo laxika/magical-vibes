@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -19,7 +18,7 @@ public class BlackbloomRogue extends Card {
         setBackFaceCard(new BlackbloomBog());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new OpponentGraveyardAtLeast(8),
                 new StaticBoostEffect(3, 0, GrantScope.SELF)));
         addSpellEffect(new ChooseOneEffect(List.of(

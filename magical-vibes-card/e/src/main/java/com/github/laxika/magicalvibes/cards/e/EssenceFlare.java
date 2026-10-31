@@ -16,7 +16,7 @@ public class EssenceFlare extends Card {
     public EssenceFlare() {
         target(TargetFilters.creature())
                 // Enchanted creature gets +2/+0.
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.ENCHANTED_CREATURE))
 
                 // At the beginning of the upkeep of enchanted creature's controller,
                 // put a -0/-1 counter on that creature.

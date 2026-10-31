@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.Ability;
@@ -938,7 +939,7 @@ public class BattlefieldPlacementService {
         if (request.unleashChoice() != null || permanent.isFaceDown()) {
             return false;
         }
-        boolean unleash = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean unleash = permanent.getCard().getStaticEffects().stream()
                 .anyMatch(e -> e instanceof UnleashEffect)
                 || gameQueryService.getGrantedEffects(gameData, permanent, controllerId).stream()
                 .anyMatch(e -> e instanceof UnleashEffect);
@@ -968,7 +969,7 @@ public class BattlefieldPlacementService {
         boolean creature = permanent.getCard().hasType(CardType.CREATURE);
         int ownRiot = creature && !permanent.isFaceDown()
                 && !gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent)
-                ? (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                ? (int) permanent.getCard().getStaticEffects().stream()
                 .filter(RiotEffect.class::isInstance).count() : 0;
         int battlefieldRiot = creature && !permanent.getCard().isToken()
                 ? (int) gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
@@ -1250,7 +1251,7 @@ public class BattlefieldPlacementService {
             return null;
         }
         ConditionContext ctx = ConditionContext.forPermanent(permanent, controllerId);
-        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        return permanent.getCard().getStaticEffects().stream()
                 .filter(e -> e instanceof ConditionalReplacementEffect conditional
                         && conditional.upgradedEffect() instanceof RevealSubtypeOrEntersTappedEffect
                         && conditionEvaluationService.isMet(gameData, conditional.condition(), ctx))
@@ -1265,7 +1266,7 @@ public class BattlefieldPlacementService {
             return;
         }
         RevealSubtypeOrEntersTappedEffect effect = null;
-        for (CardEffect staticEffect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect staticEffect : permanent.getCard().getStaticEffects()) {
             if (staticEffect instanceof RevealSubtypeOrEntersTappedEffect revealEffect) {
                 effect = revealEffect;
                 break;
@@ -1305,7 +1306,7 @@ public class BattlefieldPlacementService {
         if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             return null;
         }
-        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        return permanent.getCard().getStaticEffects().stream()
                 .filter(RevealSubtypeOrEntersTappedEffect.class::isInstance)
                 .map(RevealSubtypeOrEntersTappedEffect.class::cast)
                 .findFirst().orElse(null);
@@ -1329,7 +1330,7 @@ public class BattlefieldPlacementService {
     private RevealSubtypeOrEntersWithCountersEffect findActiveConditionalRevealWithCountersEffect(
             GameData gameData, UUID controllerId, Permanent permanent) {
         ConditionContext ctx = ConditionContext.forPermanent(permanent, controllerId);
-        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        return permanent.getCard().getStaticEffects().stream()
                 .filter(e -> e instanceof ConditionalReplacementEffect conditional
                         && conditional.upgradedEffect() instanceof RevealSubtypeOrEntersWithCountersEffect
                         && conditionEvaluationService.isMet(gameData, conditional.condition(), ctx))
@@ -1342,7 +1343,7 @@ public class BattlefieldPlacementService {
             GameData gameData, UUID controllerId, Permanent permanent,
             RevealSubtypeOrEntersWithCountersEffect activeConditionalEffect) {
         RevealSubtypeOrEntersWithCountersEffect effect = null;
-        for (CardEffect staticEffect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect staticEffect : permanent.getCard().getStaticEffects()) {
             if (staticEffect instanceof RevealSubtypeOrEntersWithCountersEffect revealEffect) {
                 effect = revealEffect;
                 break;
@@ -1385,7 +1386,7 @@ public class BattlefieldPlacementService {
         if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
             return;
         }
-        MayPayLifeOrEntersTappedEffect effect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        MayPayLifeOrEntersTappedEffect effect = permanent.getCard().getStaticEffects().stream()
                 .filter(e -> e instanceof MayPayLifeOrEntersTappedEffect)
                 .map(MayPayLifeOrEntersTappedEffect.class::cast)
                 .findFirst().orElse(null);
@@ -1455,7 +1456,7 @@ public class BattlefieldPlacementService {
         if (battlefield == null) return candidates;
 
         for (Permanent source : battlefield) {
-            CreaturesEnterAsCopyOfSourceEffect effect = source.getCard().getEffects(EffectSlot.STATIC).stream()
+            CreaturesEnterAsCopyOfSourceEffect effect = source.getCard().getStaticEffects().stream()
                     .filter(e -> e instanceof CreaturesEnterAsCopyOfSourceEffect)
                     .map(e -> (CreaturesEnterAsCopyOfSourceEffect) e)
                     .findFirst().orElse(null);
@@ -1531,6 +1532,16 @@ public class BattlefieldPlacementService {
         // Repeated grants of the same ability are separate instances (CR 113.2c): top the permanent up to
         // the number of grants instead of collapsing equal abilities into one.
         for (Ability ability : new java.util.LinkedHashSet<>(grants)) {
+            if (ability instanceof StaticAbility statik) {
+                for (CardEffect effect : new java.util.LinkedHashSet<>(statik.effects())) {
+                    long granted = LegacySlots.staticEffectsIn(grants).stream().filter(effect::equals).count();
+                    long present = permanent.getPersistentStaticEffects().stream().filter(effect::equals).count();
+                    for (long i = present; i < granted; i++) {
+                        permanent.addPersistentAbility(new StaticAbility(List.of(effect), statik.zones()));
+                    }
+                }
+                continue;
+            }
             EffectSlot slot = LegacySlots.slotOf(ability);
             for (CardEffect effect : new java.util.LinkedHashSet<>(LegacySlots.effectsOf(ability))) {
                 long granted = LegacySlots.effectsIn(grants, slot).stream().filter(effect::equals).count();
@@ -1585,7 +1596,7 @@ public class BattlefieldPlacementService {
             }
         });
         if (gameData.planechase != null) {
-            gameData.planechase.faceUp.forEach(planar -> planar.getCard().getEffects(EffectSlot.STATIC).stream()
+            gameData.planechase.faceUp.forEach(planar -> planar.getCard().getStaticEffects().stream()
                     .filter(EnterPermanentsOfTypesTappedEffect.class::isInstance)
                     .map(EnterPermanentsOfTypesTappedEffect.class::cast)
                     .filter(enterTapped -> !enterTapped.opponentsOnly() && !enterTapped.castOnly())
@@ -1765,7 +1776,7 @@ public class BattlefieldPlacementService {
         if (losesNonManaAbilitiesAsLandEnters(gameData, permanent)) {
             return;
         }
-        boolean present = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean present = permanent.getCard().getStaticEffects().stream()
                 .anyMatch(SacrificeOtherPermanentsWithSameNameOnEnterEffect.class::isInstance);
         if (!present) {
             return;
@@ -1798,13 +1809,13 @@ public class BattlefieldPlacementService {
             if (losesAbilities[0] || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
                 return;
             }
-            losesAbilities[0] = source.getCard().getEffects(EffectSlot.STATIC).stream()
+            losesAbilities[0] = source.getCard().getStaticEffects().stream()
                     .filter(LosesAllNonManaAbilitiesEffect.class::isInstance)
                     .map(LosesAllNonManaAbilitiesEffect.class::cast)
                     .anyMatch(effect -> effect.scope() == GrantScope.ALL_LANDS
                             || effect.scope() == GrantScope.ALL_LANDS_INCLUDING_SELF)
                     || (!permanent.getCard().getSupertypes().contains(CardSupertype.BASIC)
-                    && source.getCard().getEffects(EffectSlot.STATIC).stream()
+                    && source.getCard().getStaticEffects().stream()
                     .anyMatch(NonbasicLandsBecomeTypeEffect.class::isInstance));
         });
         return losesAbilities[0];
@@ -1829,7 +1840,7 @@ public class BattlefieldPlacementService {
         if (permanent.isEntryCostResolved()) {
             return true;
         }
-        EntryCostReplacementEffect effect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        EntryCostReplacementEffect effect = permanent.getCard().getStaticEffects().stream()
                 .filter(EntryCostReplacementEffect.class::isInstance)
                 .map(EntryCostReplacementEffect.class::cast)
                 .findFirst().orElse(null);
@@ -2023,7 +2034,7 @@ public class BattlefieldPlacementService {
         if (gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, enteringPermanent)) {
             return;
         }
-        boolean entersTapped = enteringPermanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean entersTapped = enteringPermanent.getCard().getStaticEffects().stream()
                 .anyMatch(e -> e instanceof EntersTappedEffect);
         if (entersTapped) {
             enteringPermanent.tap();
@@ -2042,7 +2053,7 @@ public class BattlefieldPlacementService {
         if (gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, enteringPermanent)) {
             return;
         }
-        for (CardEffect effect : enteringPermanent.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : enteringPermanent.getCard().getStaticEffects()) {
             if (effect instanceof ConditionalReplacementEffect conditional
                     && conditional.upgradedEffect() instanceof EntersTappedEffect) {
                 ConditionContext ctx = ConditionContext.forPermanent(enteringPermanent, controllerId).withXValue(xValue);
@@ -2089,7 +2100,7 @@ public class BattlefieldPlacementService {
             List<CardEffect> entryEffects = new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
             // A perpetual "this creature enters with ..." grant is stored as a static effect on
             // the runtime card so it survives zone changes.
-            entryEffects.addAll(card.getEffects(EffectSlot.STATIC));
+            entryEffects.addAll(card.getStaticEffects());
             for (CardEffect effect : entryEffects) {
                 EnterWithCountersEffect enterWith;
                 if (effect instanceof AmplifyEffect amplify) {
@@ -2235,7 +2246,7 @@ public class BattlefieldPlacementService {
             return;
         }
         List<CardEffect> entryEffects = new ArrayList<>(permanent.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
-        entryEffects.addAll(permanent.getCard().getEffects(EffectSlot.STATIC));
+        entryEffects.addAll(permanent.getCard().getStaticEffects());
         for (CardEffect effect : entryEffects) {
             entryReplacementHandlerRegistry.apply(gameData, controllerId, permanent, effect, xValue, kicked,
                     repeatedAdditionalCosts);
@@ -2624,7 +2635,7 @@ public class BattlefieldPlacementService {
         if (graveyard == null || graveyard.isEmpty()) return;
 
         List<GraveyardEnterWithAdditionalCountersEffect> effects = graveyard.stream()
-                .flatMap(card -> card.getEffects(EffectSlot.STATIC).stream())
+                .flatMap(card -> card.getStaticEffects().stream())
                 .filter(GraveyardEnterWithAdditionalCountersEffect.class::isInstance)
                 .map(GraveyardEnterWithAdditionalCountersEffect.class::cast)
                 .toList();

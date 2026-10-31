@@ -12,6 +12,6 @@ public class ProfessionalWrestler extends Card {
 
     public ProfessionalWrestler() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofTreasureToken(1));
-        addEffect(EffectSlot.STATIC, new CanBeBlockedByAtMostNCreaturesEffect(1));
+        addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));
     }
 }

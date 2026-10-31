@@ -18,7 +18,7 @@ public class SurgicalMetamorph extends Card {
 
     public SurgicalMetamorph() {
         // If you weren't the starting player, this spell costs {1} less to cast.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerIsNotStartingPlayer(), new ReduceOwnCastCostEffect(new Fixed(1))));
 
         // You may have Surgical Metamorph enter as a copy of any permanent on the battlefield,

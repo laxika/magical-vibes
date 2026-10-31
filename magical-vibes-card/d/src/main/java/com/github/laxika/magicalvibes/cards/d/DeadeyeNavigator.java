@@ -36,7 +36,7 @@ public class DeadeyeNavigator extends Card {
                 List.of(FlickerEffect.flickerSelfUnderYourControl()),
                 "{1}{U}: Exile this creature, then return it to the battlefield under your control."
         );
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
                 new GrantActivatedAbilityEffect(flicker, GrantScope.SELF_AND_PAIRED)));
     }

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 public class FearOfInfinity extends Card {
 
     public FearOfInfinity() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
 
         MayEffect returnToHand = new MayEffect(
                 ReturnCardFromGraveyardEffect.builder()

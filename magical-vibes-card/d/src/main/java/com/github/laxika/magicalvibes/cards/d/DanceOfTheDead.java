@@ -35,8 +35,8 @@ public class DanceOfTheDead extends Card {
                 .build());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReanimateEnchantedCreatureCardEffect(true));
         // "Enchanted creature gets +1/+1 and doesn't untap during its controller's untap step."
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(DoesntUntapEffect.enchanted());
         // "When this Aura leaves the battlefield, that creature's controller sacrifices it."
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new SacrificeEnchantedCreatureOnLeaveEffect());
         // "At the beginning of the upkeep of enchanted creature's controller, that player may

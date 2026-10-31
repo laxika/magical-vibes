@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
@@ -14,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetC
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 
 @CardRegistration(set = "IKO", collectorNumber = "58")
 public class MythosOfIlluna extends Card {
@@ -24,7 +24,7 @@ public class MythosOfIlluna extends Card {
                 new SourceIsCreature(), new EnteringCreatureFightsTargetCreatureEffect());
         CreateTokenCopyOfTargetPermanentEffect enhancedCopy =
                 CreateTokenCopyOfTargetPermanentEffect.withAdditionalEffects(
-                        false, Map.of(EffectSlot.ON_ENTER_BATTLEFIELD, List.of(fightEffect)));
+                        false, List.of(LegacySlots.triggered(EffectSlot.ON_ENTER_BATTLEFIELD, List.of(fightEffect))));
 
         target(TargetFilters.permanent()).addSpellEffect(new ConditionalReplacementEffect(
                 new AllConditions(List.of(

@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "40K", collectorNumber = "150")
@@ -31,7 +30,7 @@ public class CanoptekScarabSwarm extends Card {
         CreateTokenEffect scarab = new CreateTokenEffect(
                 CardType.CREATURE, new EventValue(), "Insect", 1, 1, null, null,
                 List.of(CardSubtype.INSECT), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT),
-                false, false, Map.of(), List.of(), false, false, false, 0, Set.of());
+                false, false, List.of(), List.of(), false, false, false, 0, Set.of());
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),

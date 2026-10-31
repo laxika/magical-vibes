@@ -26,10 +26,10 @@ import java.util.Set;
 public class VerdelothTheAncient extends Card {
 
     public VerdelothTheAncient() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{X}"));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
+        addStaticEffect(new KickerEffect("{X}"));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SAPROLING, CardSubtype.TREEFOLK))));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.SELF,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.SELF,
                 new PermanentHasSubtypePredicate(CardSubtype.SAPROLING)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenEffect(new XValue(), "Saproling", 1, 1, CardColor.GREEN,

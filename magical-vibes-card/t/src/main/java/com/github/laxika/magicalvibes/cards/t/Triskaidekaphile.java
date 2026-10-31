@@ -21,7 +21,7 @@ import java.util.List;
 public class Triskaidekaphile extends Card {
 
     public Triskaidekaphile() {
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
+        addStaticEffect(new NoMaximumHandSizeEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new AllOf(List.of(new CardsInHandAtLeast(13), new CardsInHandAtMost(13))),
                 new WinGameEffect()));

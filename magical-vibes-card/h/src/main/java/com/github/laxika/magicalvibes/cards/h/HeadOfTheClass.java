@@ -19,8 +19,7 @@ import java.util.List;
 public class HeadOfTheClass extends Card {
 
     public HeadOfTheClass() {
-        addEffect(EffectSlot.STATIC,
-                new ReduceColoredCastCostForFirstSpellTargetingCreatureEachTurnEffect(new ManaCost("{W}{B}")));
+        addStaticEffect(new ReduceColoredCastCostForFirstSpellTargetingCreatureEachTurnEffect(new ManaCost("{W}{B}")));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),

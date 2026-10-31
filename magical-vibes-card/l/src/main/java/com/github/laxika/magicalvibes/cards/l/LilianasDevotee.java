@@ -20,7 +20,7 @@ public class LilianasDevotee extends Card {
 
     public LilianasDevotee() {
         // Zombies you control get +1/+0.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
 
         // At the beginning of your end step, if a creature died this turn, you may pay {1}{B}.

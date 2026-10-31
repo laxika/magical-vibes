@@ -13,6 +13,6 @@ public class InnerSanctum extends Card {
         // "Cumulative upkeep—Pay 2 life."
         addEffect(EffectSlot.UPKEEP_TRIGGERED, CumulativeUpkeepEffect.life(2));
         // "Prevent all damage that would be dealt to creatures you control."
-        addEffect(EffectSlot.STATIC, PreventDamageToCreaturesEffect.youControl(false));
+        addStaticEffect(PreventDamageToCreaturesEffect.youControl(false));
     }
 }

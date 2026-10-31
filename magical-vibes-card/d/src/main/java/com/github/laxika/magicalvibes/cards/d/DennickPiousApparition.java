@@ -18,7 +18,7 @@ public class DennickPiousApparition extends Card {
                 investigateOncePerTurn());
 
         // If Dennick would be put into a graveyard from anywhere, exile it instead.
-        addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect());
+        addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 
     private OncePerTurnTriggerEffect investigateOncePerTurn() {

@@ -21,7 +21,6 @@ public class TheMasterOfKeys extends Card {
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MillEffect(new Scaled(new XValue(), 2), MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.STATIC,
-                new GrantEscapeToGraveyardCardsEffect(new CardTypePredicate(CardType.ENCHANTMENT)));
+        addStaticEffect(new GrantEscapeToGraveyardCardsEffect(new CardTypePredicate(CardType.ENCHANTMENT)));
     }
 }

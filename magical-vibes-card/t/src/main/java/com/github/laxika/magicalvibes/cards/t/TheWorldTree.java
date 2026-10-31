@@ -29,10 +29,10 @@ import java.util.List;
 public class TheWorldTree extends Card {
 
     public TheWorldTree() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(6, new PermanentIsLandPredicate()),
                 new GrantActivatedAbilityEffect(ManaAbilities.tapForAnyColor(), GrantScope.OWN_LANDS)));
 

@@ -30,7 +30,7 @@ public class SecurityBlockade extends Card {
                 List.of(CardSubtype.KNIGHT), Set.of(Keyword.VIGILANCE), Set.of()));
 
         // Enchanted land has "{T}: Prevent the next 1 damage that would be dealt to you this turn."
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null,
                         List.of(PreventDamageEffect.nextToController(1)),
                         "{T}: Prevent the next 1 damage that would be dealt to you this turn."),

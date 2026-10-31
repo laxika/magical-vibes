@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * it any time a sorcery couldn't have been cast, the controller of the permanent it becomes
  * sacrifices it at the beginning of the next cleanup step."
  *
- * <p>Declared in {@link com.github.laxika.magicalvibes.model.EffectSlot#STATIC} on the card itself
+ * <p>Added as a static ability on the card itself
  * (it is read from the hand, before the permanent exists). Two engine touch points:
  * <ul>
  *   <li>{@code CastingPermissionService.canCastWithTiming} lets the card be cast whenever its

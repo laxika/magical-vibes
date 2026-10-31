@@ -29,8 +29,7 @@ public class ClockworkSwarm extends Card {
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ZERO, new Fixed(4)));
 
         // This creature can't be blocked by Walls.
-        addEffect(EffectSlot.STATIC,
-                new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.WALL)));
 
         // At end of combat, if this creature attacked or blocked this combat, remove a +1/+0 counter

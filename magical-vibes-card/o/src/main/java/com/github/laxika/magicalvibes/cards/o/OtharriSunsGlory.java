@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ONC", collectorNumber = "3")
@@ -33,7 +32,7 @@ public class OtharriSunsGlory extends Card {
                         new ControllerExperienceCounters(),
                         "Rebel", 2, 2, CardColor.RED, null,
                         List.of(CardSubtype.REBEL), Set.of(), Set.of(),
-                        true, false, Map.of(), List.of(), false, false, false, 0, Set.of())));
+                        true, false, List.of(), List.of(), false, false, false, 0, Set.of())));
 
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,

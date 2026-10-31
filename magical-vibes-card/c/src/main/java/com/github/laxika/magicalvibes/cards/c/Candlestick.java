@@ -18,8 +18,8 @@ import java.util.List;
 public class Candlestick extends Card {
 
     public Candlestick() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK, new SurveilEffect(2), GrantScope.EQUIPPED_CREATURE));
 
         addActivatedAbility(new ActivatedAbility(

@@ -107,7 +107,7 @@ public class SpecializeKlementEffectHandler implements NormalEffectHandlerBean {
                 specialized.setToughness(4);
                 specialized.addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                         new CreateTokenEffect(CardType.CREATURE, 1, "Ox", 4, 4, CardColor.GREEN, null,
-                                List.of(CardSubtype.OX), Set.of(), Set.of(), false, false, java.util.Map.of(),
+                                List.of(CardSubtype.OX), Set.of(), Set.of(), false, false, List.of(),
                                 List.of(), false, false, false, 0, Set.of()));
             }
             default -> throw new IllegalStateException("Unsupported Klement specialization color: "

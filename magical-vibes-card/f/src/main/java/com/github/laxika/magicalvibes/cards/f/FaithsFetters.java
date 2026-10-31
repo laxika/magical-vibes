@@ -23,7 +23,7 @@ public class FaithsFetters extends Card {
     public FaithsFetters() {
         target(TargetFilters.permanent())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(4))
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentCantActivateAbilitiesEffect());
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
+                .addStaticEffect(new EnchantedPermanentCantActivateAbilitiesEffect());
     }
 }

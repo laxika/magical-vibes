@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "67")
@@ -34,7 +33,7 @@ public class RevengeOfTheRats extends Card {
                 Set.of(),
                 false,
                 true,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

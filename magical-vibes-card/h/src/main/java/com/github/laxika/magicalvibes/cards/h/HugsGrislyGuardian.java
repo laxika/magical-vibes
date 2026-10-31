@@ -13,6 +13,6 @@ public class HugsGrislyGuardian extends Card {
     public HugsGrislyGuardian() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileTopCardsMayPlayUntilNextTurnEffect(new XValue()));
-        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect(1));
+        addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
     }
 }

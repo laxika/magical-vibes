@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MSC", collectorNumber = "114")
@@ -37,7 +36,7 @@ public class ShurisFabricator extends Card {
             Set.of(),
             false,
             true,
-            Map.of(),
+            List.of(),
             List.of(new ActivatedAbility(
                     true,
                     null,

@@ -18,7 +18,7 @@ public class NeglectedHeirloom extends Card {
     public NeglectedHeirloom() {
         setBackFaceCard(new AshmouthBlade());
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
 
         // When equipped creature transforms, transform this Equipment.
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_TRANSFORMS, new TransformSelfEffect());

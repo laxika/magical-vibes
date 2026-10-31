@@ -373,7 +373,7 @@ assertions a `switch` merge needs: `CourtlyProvocateurTest.abilitiesImposeOnlyTh
 `EmergentGrowthTest.resolvingBoostsAndSetsMustBeBlocked`.
 
 **Do NOT merge** the non-`ThisTurn` siblings `MustBeBlockedIfAbleEffect` /
-`MustBeBlockedByAllCreaturesEffect`: those are **static abilities** read off `EffectSlot.STATIC` at
+`MustBeBlockedByAllCreaturesEffect`: those are **static abilities** read off `addStaticEffect` at
 block-legality time (`CombatBlockService:804,1421`; `GameQueryService:3493`), not one-shot flag
 stamps. Different mechanism and lifetime. Still true after the merge.
 

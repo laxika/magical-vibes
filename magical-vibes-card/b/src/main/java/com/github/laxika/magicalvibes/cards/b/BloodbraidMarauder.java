@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 public class BloodbraidMarauder extends Card {
 
     public BloodbraidMarauder() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_SELF_CAST, ConditionalEffect.atTriggerTime(new Delirium(), new CascadeEffect()));
     }
 }

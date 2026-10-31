@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -100,7 +99,7 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
         Card sourceCard = sourcePermanent != null
                 ? sourcePermanent.getCard() : entry.getTargetingCard();
         List<PersistentPermission> persistentPermissions = sourceCard
-                .getEffects(EffectSlot.STATIC).stream()
+                .getStaticEffects().stream()
                 .map(ExileTopCardsToSourceEffectHandler::persistentPermission)
                 .filter(java.util.Objects::nonNull)
                 .toList();

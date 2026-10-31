@@ -22,7 +22,7 @@ import java.util.List;
 public class HunterSliver extends Card {
 
     public HunterSliver() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 new MayEffect(
                         SequenceEffect.of(

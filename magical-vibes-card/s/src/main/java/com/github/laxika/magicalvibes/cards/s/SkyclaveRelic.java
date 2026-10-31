@@ -17,7 +17,7 @@ import java.util.List;
 public class SkyclaveRelic extends Card {
 
     public SkyclaveRelic() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}"));
+        addStaticEffect(new KickerEffect("{3}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new Kicked(), CreateTokenCopyOfSourceEffect.tapped(2)));
         addActivatedAbility(new ActivatedAbility(

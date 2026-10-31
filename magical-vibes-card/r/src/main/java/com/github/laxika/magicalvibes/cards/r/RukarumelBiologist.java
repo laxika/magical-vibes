@@ -24,14 +24,14 @@ public class RukarumelBiologist extends Card {
     public RukarumelBiologist() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
 
-        addEffect(EffectSlot.STATIC, new GrantChosenSubtypeToOwnCreaturesEffect(
+        addStaticEffect(new GrantChosenSubtypeToOwnCreaturesEffect(
                 true,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                         new PermanentHasSubtypePredicate(CardSubtype.SLIVER)
                 ))));
-        addEffect(EffectSlot.STATIC, new GrantChosenSubtypeToOwnCreaturesEffect(
+        addStaticEffect(new GrantChosenSubtypeToOwnCreaturesEffect(
                 false,
                 GrantScope.OWN_PERMANENTS,
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));

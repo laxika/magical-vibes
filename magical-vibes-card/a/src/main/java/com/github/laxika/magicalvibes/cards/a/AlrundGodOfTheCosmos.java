@@ -25,7 +25,7 @@ public class AlrundGodOfTheCosmos extends Card {
         var count = new Sum(
                 new CardsInHand(CountScope.CONTROLLER),
                 new ForetoldCardsInExile(CountScope.CONTROLLER));
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(count, count));
+        addStaticEffect(new BoostSelfEffect(count, count));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new RevealTopCardsOfChosenTypeToHandRestEffect(2));
         addSpellEffect(new ChooseOneEffect(List.of(

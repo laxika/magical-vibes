@@ -38,7 +38,7 @@ public class MjLnirHammerOfThor extends Card {
     public MjLnirHammerOfThor() {
         target(TargetFilters.creature(), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToTargetCreatureEffect(4));
-        addEffect(EffectSlot.STATIC, new DoubleDamageFromEquippedCreatureEffect());
+        addStaticEffect(new DoubleDamageFromEquippedCreatureEffect());
         addActivatedAbility(new EquipActivatedAbility("{1}", WORTHY_CREATURE,
                 "Target must be a worthy creature"));
         addHandActivatedAbility(new ActivatedAbility(

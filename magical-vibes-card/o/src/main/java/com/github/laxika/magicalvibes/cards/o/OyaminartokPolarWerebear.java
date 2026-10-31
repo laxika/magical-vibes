@@ -44,7 +44,7 @@ public class OyaminartokPolarWerebear extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("M21", "60"));
 
     public OyaminartokPolarWerebear() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new SourceHasDealtDamage()),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, CreateTokenEffect.ofFoodToken(1));

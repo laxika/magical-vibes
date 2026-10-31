@@ -14,8 +14,8 @@ public class AugustaDeanOfOrder extends Card {
 
     public AugustaDeanOfOrder() {
         PermanentIsCreaturePredicate creature = new PermanentIsCreaturePredicate();
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.OWN_TAPPED_CREATURES));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 1, GrantScope.OWN_UNTAPPED_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_TAPPED_CREATURES));
+        addStaticEffect(new StaticBoostEffect(0, 1, GrantScope.OWN_UNTAPPED_CREATURES));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, SequenceEffect.of(
                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED, creature),
                 new TapAnyNumberPermanentsEffect(creature)));

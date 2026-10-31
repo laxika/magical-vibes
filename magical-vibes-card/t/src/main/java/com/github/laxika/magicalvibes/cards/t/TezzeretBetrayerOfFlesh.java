@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
@@ -36,7 +35,7 @@ public class TezzeretBetrayerOfFlesh extends Card {
             "Whenever an artifact you control becomes tapped, draw a card.";
 
     public TezzeretBetrayerOfFlesh() {
-        addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+        addStaticEffect(new ReduceActivatedAbilityCostEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentControlledBySourceControllerPredicate(),

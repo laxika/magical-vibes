@@ -20,7 +20,7 @@ public class Necrogoyf extends Card {
     public Necrogoyf() {
         CardsInGraveyard creaturesInAllGraveyards =
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 creaturesInAllGraveyards, new Fixed(4)));
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new DiscardEffect(1, DiscardRecipient.ACTIVE_PLAYER));

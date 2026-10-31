@@ -4,11 +4,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAsAuraEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -98,7 +98,7 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
         copy.setToughness(null);
         if (retainedAbility != null || losesOtherAbilities) {
             boolean keepsStaticEffects = retainedAbility == null && auraStaticEffect == null;
-            copy.removeSlotEffectsIf((slot, effect) -> !keepsStaticEffects || slot != EffectSlot.STATIC);
+            copy.removeAbilityEffectsIf((ability, effect) -> !keepsStaticEffects || !(ability instanceof StaticAbility));
             copy.getActivatedAbilities().clear();
             copy.getGraveyardActivatedAbilities().clear();
             copy.getHandActivatedAbilities().clear();
@@ -108,7 +108,7 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
                 copy.addActivatedAbility(retainedAbility);
             }
             if (auraStaticEffect != null) {
-                copy.addEffect(EffectSlot.STATIC, auraStaticEffect);
+                copy.addStaticEffect(auraStaticEffect);
             }
         }
         copy.clearRuntimeSpellTargets();

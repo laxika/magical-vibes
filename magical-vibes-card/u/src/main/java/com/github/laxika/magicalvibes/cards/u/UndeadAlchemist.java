@@ -19,7 +19,7 @@ public class UndeadAlchemist extends Card {
     public UndeadAlchemist() {
         // If a Zombie you control would deal combat damage to a player, instead that
         // player mills that many cards.
-        addEffect(EffectSlot.STATIC, new ReplaceCombatDamageWithMillEffect(
+        addStaticEffect(new ReplaceCombatDamageWithMillEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)
         ));
 

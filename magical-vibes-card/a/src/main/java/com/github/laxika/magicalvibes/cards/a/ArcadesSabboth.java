@@ -31,7 +31,7 @@ public class ArcadesSabboth extends Card {
                         List.of(new SacrificeSelfEffect()),
                         true));
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 0,
                 2,
                 GrantScope.ALL_OWN_CREATURES,

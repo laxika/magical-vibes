@@ -24,7 +24,7 @@ public class BedlamReveler extends Card {
 
     public BedlamReveler() {
         // This spell costs {1} less to cast for each instant and sorcery card in your graveyard.
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new CardsInGraveyard(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))), CountScope.CONTROLLER)));

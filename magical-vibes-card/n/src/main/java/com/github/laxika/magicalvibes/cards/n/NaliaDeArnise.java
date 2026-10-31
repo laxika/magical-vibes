@@ -24,8 +24,8 @@ import java.util.List;
 public class NaliaDeArnise extends Card {
 
     public NaliaDeArnise() {
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(new CardAnyOfPredicate(List.of(
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new AllowCastFromTopOfLibraryEffect(new CardAnyOfPredicate(List.of(
                 new CardSubtypePredicate(CardSubtype.CLERIC),
                 new CardSubtypePredicate(CardSubtype.ROGUE),
                 new CardSubtypePredicate(CardSubtype.WARRIOR),

@@ -3,13 +3,9 @@ package com.github.laxika.magicalvibes.cards.x;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantAttackCardOwnerEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SourcePermanentControllerLosesLifeEffect;
 import java.util.List;
@@ -24,9 +20,9 @@ import java.util.List;
 public class XantchaSleeperAgent extends Card {
 
     public XantchaSleeperAgent() {
-        addEffect(EffectSlot.STATIC, new ChooseOpponentGainsControlOfSourceEffect());
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
-        addEffect(EffectSlot.STATIC, new CantAttackCardOwnerEffect());
+        addStaticEffect(new ChooseOpponentGainsControlOfSourceEffect());
+        addStaticEffect(new MustAttackEffect());
+        addStaticEffect(new CantAttackCardOwnerEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}",

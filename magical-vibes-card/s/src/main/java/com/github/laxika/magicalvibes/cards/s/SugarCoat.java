@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -33,15 +32,11 @@ public class SugarCoat extends Card {
                 )),
                 "Target must be a creature or Food"
         ))
-                .addEffect(EffectSlot.STATIC,
-                        new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.ENCHANTED_PERMANENT))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantSubtypeEffect(CardSubtype.FOOD, GrantScope.ENCHANTED_PERMANENT, true))
-                .addEffect(EffectSlot.STATIC,
-                        new BecomeColorlessEffect(GrantScope.ENCHANTED_PERMANENT))
-                .addEffect(EffectSlot.STATIC,
-                        new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT))
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.FOOD, GrantScope.ENCHANTED_PERMANENT, true))
+                .addStaticEffect(new BecomeColorlessEffect(GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 true,
                                 "{2}",

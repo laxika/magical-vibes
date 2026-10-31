@@ -17,6 +17,6 @@ public class SustainingSpirit extends Card {
 
         // Damage that would reduce your life total to less than 1 reduces it to 1 instead.
         // Unconditional, unlike Worship — the floor holds even if this stops being a creature.
-        addEffect(EffectSlot.STATIC, new DamageLifeFloorEffect(1, LifeFloorCondition.ALWAYS));
+        addStaticEffect(new DamageLifeFloorEffect(1, LifeFloorCondition.ALWAYS));
     }
 }

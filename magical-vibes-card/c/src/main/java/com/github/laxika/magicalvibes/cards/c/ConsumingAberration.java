@@ -23,7 +23,7 @@ public class ConsumingAberration extends Card {
 
     public ConsumingAberration() {
         CardsInGraveyard opponentGraveyards = new CardsInGraveyard(null, CountScope.OPPONENTS);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(opponentGraveyards, opponentGraveyards));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(opponentGraveyards, opponentGraveyards));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 null,

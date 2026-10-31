@@ -26,7 +26,7 @@ public class BontusMonument extends Card {
 
     public BontusMonument() {
         // Black creature spells you cast cost {1} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardAllOfPredicate(List.of(
                         new CardColorPredicate(CardColor.BLACK),
                         new CardTypePredicate(CardType.CREATURE)

@@ -12,7 +12,7 @@ public class VisionsOfBrutality extends Card {
 
     public VisionsOfBrutality() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new CantBlockEffect())
+                .addStaticEffect(new CantBlockEffect())
                 .addEffect(EffectSlot.ON_ENCHANTED_CREATURE_DEALS_DAMAGE,
                         new DamageSourceControllerLosesLifeEffect());
     }

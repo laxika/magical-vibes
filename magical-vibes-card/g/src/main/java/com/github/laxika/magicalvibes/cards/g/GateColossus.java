@@ -23,9 +23,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 public class GateColossus extends Card {
 
     public GateColossus() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.GATE), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtMostPredicate(2)));
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.GATE),

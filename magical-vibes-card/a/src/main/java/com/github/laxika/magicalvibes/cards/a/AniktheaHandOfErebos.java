@@ -34,7 +34,7 @@ public class AniktheaHandOfErebos extends Card {
                 new CardTypePredicate(CardType.ENCHANTMENT),
                 new CardNotPredicate(new CardIsAuraPredicate())));
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.MENACE,
                 GrantScope.OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(

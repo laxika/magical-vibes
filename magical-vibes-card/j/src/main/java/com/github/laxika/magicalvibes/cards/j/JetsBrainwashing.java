@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
@@ -21,7 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class JetsBrainwashing extends Card {
 
     public JetsBrainwashing() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}"));
+        addStaticEffect(new KickerEffect("{3}"));
         target(TargetFilters.creature())
                 .addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.TARGET))
                 .addSpellEffect(new ConditionalEffect(new Kicked(),

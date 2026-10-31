@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesOpponentsControlEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorForActivatedAbilitiesEffect;
@@ -18,13 +17,13 @@ import java.util.List;
 public class DranaAndLinvala extends Card {
 
     public DranaAndLinvala() {
-        addEffect(EffectSlot.STATIC, new ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect(
+        addStaticEffect(new ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 ))
         ));
-        addEffect(EffectSlot.STATIC, new GainActivatedAbilitiesOfCreaturesOpponentsControlEffect());
-        addEffect(EffectSlot.STATIC, new SpendManaAsAnyColorForActivatedAbilitiesEffect());
+        addStaticEffect(new GainActivatedAbilitiesOfCreaturesOpponentsControlEffect());
+        addStaticEffect(new SpendManaAsAnyColorForActivatedAbilitiesEffect());
     }
 }

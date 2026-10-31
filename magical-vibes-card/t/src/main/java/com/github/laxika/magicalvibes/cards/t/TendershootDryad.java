@@ -23,7 +23,7 @@ import java.util.Set;
 public class TendershootDryad extends Card {
 
     public TendershootDryad() {
-        addEffect(EffectSlot.STATIC, new AscendEffect());
+        addStaticEffect(new AscendEffect());
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new CreateTokenEffect(
                 "Saproling",
                 1,
@@ -33,7 +33,7 @@ public class TendershootDryad extends Card {
                 Set.of(),
                 Set.of()
         ));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerHasCityBlessing(),
+        addStaticEffect(new ConditionalEffect(new ControllerHasCityBlessing(),
                 new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SAPROLING)))));
     }

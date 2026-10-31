@@ -23,7 +23,7 @@ public class EmrakulThePromisedEnd extends Card {
 
     public EmrakulThePromisedEnd() {
         // This spell costs {1} less to cast for each card type among cards in your graveyard.
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new CardTypesAmongCardsInGraveyard()));
+        addStaticEffect(new ReduceOwnCastCostEffect(new CardTypesAmongCardsInGraveyard()));
 
         // When you cast this spell, you gain control of target opponent during that player's next
         // turn. After that turn, that player takes an extra turn.
@@ -33,6 +33,6 @@ public class EmrakulThePromisedEnd extends Card {
         )).addEffect(EffectSlot.ON_SELF_CAST, new ControlTargetPlayerNextTurnEffect(true));
 
         // Flying, trample from Scryfall keywords; protection from instants is typed protection.
-        addEffect(EffectSlot.STATIC, new ProtectionFromCardTypesEffect(Set.of(CardType.INSTANT)));
+        addStaticEffect(new ProtectionFromCardTypesEffect(Set.of(CardType.INSTANT)));
     }
 }

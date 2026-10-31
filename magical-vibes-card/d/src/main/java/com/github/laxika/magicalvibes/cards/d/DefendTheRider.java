@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndSaddleEff
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DFT", collectorNumber = "157")
@@ -37,7 +36,7 @@ public class DefendTheRider extends Card {
                                 List.of(CardSubtype.PILOT),
                                 Set.of(),
                                 Set.of(),
-                                Map.of(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2)))
+                                List.of(StaticAbility.of(new PowerBoostForCrewAndSaddleEffect(2))))
                 ))));
     }
 }

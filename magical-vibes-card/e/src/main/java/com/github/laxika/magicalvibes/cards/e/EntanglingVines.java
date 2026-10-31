@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,6 +20,6 @@ public class EntanglingVines extends Card {
                         new PermanentIsTappedPredicate()
                 )),
                 "Target must be a tapped creature"
-        )).addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+        )).addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

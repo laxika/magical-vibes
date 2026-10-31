@@ -13,8 +13,8 @@ public class AngelicEnforcer extends Card {
 
     public AngelicEnforcer() {
         ControllerLifeTotal life = new ControllerLifeTotal();
-        addEffect(EffectSlot.STATIC, new GrantControllerKeywordEffect(Keyword.HEXPROOF));
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(life, life));
+        addStaticEffect(new GrantControllerKeywordEffect(Keyword.HEXPROOF));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(life, life));
         addEffect(EffectSlot.ON_ATTACK, new SetLifeTotalEffect(new Sum(life, life)));
     }
 }

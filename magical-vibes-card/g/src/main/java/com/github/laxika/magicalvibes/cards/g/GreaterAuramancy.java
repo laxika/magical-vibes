@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -18,12 +17,12 @@ public class GreaterAuramancy extends Card {
     public GreaterAuramancy() {
         // Other enchantments you control have shroud. The source permanent is excluded from
         // static bonus computation, so OWN_PERMANENTS models the "other" wording.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.OWN_PERMANENTS,
+        addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.OWN_PERMANENTS,
                 new PermanentIsEnchantmentPredicate()));
 
         // Enchanted creatures you control have shroud. The oracle has no "other", so this includes the
         // source when it is an enchanted creature.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsEnchantedPredicate()));
     }
 }

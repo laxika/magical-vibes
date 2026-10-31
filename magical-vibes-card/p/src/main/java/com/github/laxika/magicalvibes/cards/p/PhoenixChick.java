@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 public class PhoenixChick extends Card {
 
     public PhoenixChick() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
 
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK,
                 new ConditionalEffect(new MinimumAttackers(3), new MayPayManaEffect("{R}{R}",

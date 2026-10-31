@@ -25,7 +25,7 @@ import java.util.Set;
 public class AthreosGodOfPassage extends Card {
 
     public AthreosGodOfPassage() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorsAtLeast(Set.of(ManaColor.WHITE, ManaColor.BLACK), 7)),
                 new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
         target(new PlayerPredicateTargetFilter(

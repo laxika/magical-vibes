@@ -17,7 +17,7 @@ public class BaneOfHanweir extends Card {
 
     public BaneOfHanweir() {
         // Bane of Hanweir attacks each combat if able.
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
 
         // At the beginning of each upkeep, if a player cast two or more spells last turn, transform Bane of Hanweir.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,

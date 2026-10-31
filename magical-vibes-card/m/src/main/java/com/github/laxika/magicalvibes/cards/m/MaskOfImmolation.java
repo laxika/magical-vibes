@@ -26,7 +26,7 @@ public class MaskOfImmolation extends Card {
                         "Elemental", 1, 1, CardColor.RED,
                         List.of(CardSubtype.ELEMENTAL), Set.of(), Set.of())));
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
                         null,

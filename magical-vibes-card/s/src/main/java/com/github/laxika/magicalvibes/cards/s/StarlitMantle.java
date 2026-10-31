@@ -14,8 +14,7 @@ public class StarlitMantle extends Card {
 
     public StarlitMantle() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ENCHANTED_CREATURE));
     }

@@ -20,7 +20,7 @@ public class Necrosynthesis extends Card {
 
     public Necrosynthesis() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ANY_CREATURE_DIES,
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         GrantScope.ENCHANTED_CREATURE))

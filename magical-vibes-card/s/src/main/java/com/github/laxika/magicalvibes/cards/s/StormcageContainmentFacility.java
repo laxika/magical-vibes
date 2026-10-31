@@ -14,8 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class StormcageContainmentFacility extends Card {
 
     public StormcageContainmentFacility() {
-        addEffect(EffectSlot.STATIC,
-                new GrantEscapeToGraveyardCardsEffect(new CardTypePredicate(CardType.CREATURE)));
+        addStaticEffect(new GrantEscapeToGraveyardCardsEffect(new CardTypePredicate(CardType.CREATURE)));
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.CHAOS_TRIGGERED, new LockTargetPermanentEffect(
                         true, true, true, EffectDuration.UNTIL_YOUR_NEXT_TURN));

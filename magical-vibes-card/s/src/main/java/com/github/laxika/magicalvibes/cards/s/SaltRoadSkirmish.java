@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtE
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TDM", collectorNumber = "88")
@@ -24,7 +23,7 @@ public class SaltRoadSkirmish extends Card {
                 .addSpellEffect(new CreateTokenEffect(
                         CardType.CREATURE, 2, "Warrior", 1, 1, CardColor.RED, null,
                         List.of(CardSubtype.WARRIOR), Set.of(), Set.of(), false, false,
-                        Map.of(), List.of(), false, false, false, 0, Set.of(Keyword.HASTE)))
+                        List.of(), List.of(), false, false, false, 0, Set.of(Keyword.HASTE)))
                 .addSpellEffect(new SacrificeCreatedPermanentsAtEndStepEffect());
     }
 }

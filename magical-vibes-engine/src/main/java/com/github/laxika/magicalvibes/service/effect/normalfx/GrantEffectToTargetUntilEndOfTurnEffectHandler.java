@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
@@ -73,11 +74,11 @@ public class GrantEffectToTargetUntilEndOfTurnEffectHandler implements NormalEff
                     null, false, false, gameData.turnNumber, null, target.getId()));
             return;
         }
-        target.addTemporaryTriggeredEffect(e.slot(), e.grantedEffect());
+        target.addTemporaryAbility(e.grantedAbility());
 
         
-        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" grants a temporary " + e.slot().name() + " ability to ").card(target.getCard()).text(" until end of turn.").build());
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" grants a temporary " + LegacySlots.label(e.grantedAbility()) + " ability to ").card(target.getCard()).text(" until end of turn.").build());
         log.info("Game {} - {} grants temporary {} effect to {}", gameData.id,
-                entry.getCard().getName(), e.slot().name(), target.getCard().getName());
+                entry.getCard().getName(), LegacySlots.label(e.grantedAbility()), target.getCard().getName());
     }
 }

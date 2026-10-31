@@ -18,6 +18,6 @@ public class ForethoughtAmulet extends Card {
                 new PayManaCost("{3}"),
                 List.of(new SacrificeSelfEffect()),
                 true));
-        addEffect(EffectSlot.STATIC, new ReplaceInstantOrSorceryDamageToControllerEffect(3, 2));
+        addStaticEffect(new ReplaceInstantOrSorceryDamageToControllerEffect(3, 2));
     }
 }

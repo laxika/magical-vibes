@@ -18,10 +18,10 @@ public class VoltaicWhip extends Card {
 
     public VoltaicWhip() {
         // Equipped creature gets +2/+0.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
 
         // Equipped creature has "Whenever this creature attacks alone, you draw a card and lose 1 life."
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 new ConditionalEffect(new AttacksAlone(),
                         SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))),

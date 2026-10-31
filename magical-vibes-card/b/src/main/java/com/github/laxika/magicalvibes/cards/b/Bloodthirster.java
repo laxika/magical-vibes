@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class Bloodthirster extends Card {
 
     public Bloodthirster() {
-        addEffect(EffectSlot.STATIC, new CantAttackPlayerAlreadyAttackedThisTurnEffect());
+        addStaticEffect(new CantAttackPlayerAlreadyAttackedThisTurnEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, SequenceEffect.of(
                 new UntapPermanentsEffect(TapUntapScope.SELF), new AdditionalCombatPhaseEffect(1)));
     }

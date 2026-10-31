@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "186")
@@ -34,7 +33,7 @@ public class GrowthSpasm extends Card {
             Set.of(),
             false,
             false,
-            Map.of(),
+            List.of(),
             List.of(new ActivatedAbility(
                     false,
                     null,

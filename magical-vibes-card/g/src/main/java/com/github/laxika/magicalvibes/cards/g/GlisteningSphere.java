@@ -16,7 +16,7 @@ import java.util.List;
 public class GlisteningSphere extends Card {
 
     public GlisteningSphere() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ProliferateEffect());
 
         addActivatedAbility(new ActivatedAbility(

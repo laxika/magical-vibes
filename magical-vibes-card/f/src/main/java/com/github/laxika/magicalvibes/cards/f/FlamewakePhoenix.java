@@ -25,7 +25,7 @@ public class FlamewakePhoenix extends Card {
         var mayPay = new MayPayManaEffect("{R}",
                 returnToBattlefield,
                 "Pay {R} to return Flamewake Phoenix from your graveyard to the battlefield?");
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
         addEffect(EffectSlot.GRAVEYARD_BEGINNING_OF_COMBAT_TRIGGERED,
                 new ConditionalEffect(ferocious, mayPay));
     }

@@ -45,7 +45,7 @@ public class ExperimentalPilot extends Card {
                 "{U}, Discard two cards: Draft a card from Experimental Pilot's spellbook."
         ));
 
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new GrantEffectEffect(
                 new PowerBoostForCrewAndSaddleEffect(2, true), GrantScope.SELF));
     }
 }

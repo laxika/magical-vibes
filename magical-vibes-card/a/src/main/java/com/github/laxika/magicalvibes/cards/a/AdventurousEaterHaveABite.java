@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.h.HaveABite;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 
 /**
@@ -20,7 +19,7 @@ public class AdventurousEaterHaveABite extends Card {
         setBackFaceCard(new HaveABite());
 
         // This creature enters prepared.
-        addEffect(EffectSlot.STATIC, new BecomePreparedEffect());
+        addStaticEffect(new BecomePreparedEffect());
     }
 
     @Override

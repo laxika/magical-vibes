@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "12")
@@ -56,7 +55,7 @@ public class WarpingWail extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(new ActivatedAbility(
                         false,
                         null,

@@ -18,7 +18,7 @@ import java.util.Set;
 public class QuintoriusFieldHistorian extends Card {
 
     public QuintoriusFieldHistorian() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)));
 
         addEffect(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, new CreateTokenEffect(

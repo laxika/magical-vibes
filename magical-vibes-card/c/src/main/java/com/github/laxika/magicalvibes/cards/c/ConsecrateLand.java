@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
@@ -18,9 +17,7 @@ public class ConsecrateLand extends Card {
 
     public ConsecrateLand() {
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_PERMANENT))
-                .addEffect(EffectSlot.STATIC,
-                        new AttachedPermanentRestrictionEffect(new CantBeEnchantedByOtherAurasEffect()));
+                .addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new AttachedPermanentRestrictionEffect(new CantBeEnchantedByOtherAurasEffect()));
     }
 }

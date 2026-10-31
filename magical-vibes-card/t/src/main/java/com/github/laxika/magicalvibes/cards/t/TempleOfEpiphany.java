@@ -34,7 +34,7 @@ import java.util.List;
 public class TempleOfEpiphany extends Card {
 
     public TempleOfEpiphany() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(1));
 
         addActivatedAbility(new ActivatedAbility(

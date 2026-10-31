@@ -22,6 +22,6 @@ public class KolaghanForerunners extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnSelfToHandIfDashCostPaidEffect());
 
         PermanentCount creaturesYouControl = new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(creaturesYouControl, new Fixed(3)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(creaturesYouControl, new Fixed(3)));
     }
 }

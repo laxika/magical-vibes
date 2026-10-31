@@ -16,7 +16,7 @@ import java.util.List;
 public class CaptainsClaws extends Card {
 
     public CaptainsClaws() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK,
                 new CreateTokenEffect(1, "Kor Ally", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.KOR, CardSubtype.ALLY), true));

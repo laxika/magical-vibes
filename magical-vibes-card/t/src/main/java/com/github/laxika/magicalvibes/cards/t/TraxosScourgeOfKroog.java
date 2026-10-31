@@ -20,8 +20,8 @@ public class TraxosScourgeOfKroog extends Card {
 
     public TraxosScourgeOfKroog() {
         // Traxos enters tapped and doesn't untap during your untap step.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(new EntersTappedEffect());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // Whenever you cast a historic spell, untap Traxos.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(

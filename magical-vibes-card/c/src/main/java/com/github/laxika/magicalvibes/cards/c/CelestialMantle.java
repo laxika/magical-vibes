@@ -13,7 +13,7 @@ public class CelestialMantle extends Card {
 
     public CelestialMantle() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                         new DoubleEnchantedCreatureControllerLifeEffect());
     }

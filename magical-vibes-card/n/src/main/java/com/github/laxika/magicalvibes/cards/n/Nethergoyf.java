@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
@@ -19,7 +18,7 @@ public class Nethergoyf extends Card {
     public Nethergoyf() {
         CardTypesAmongCardsInGraveyard cardTypes =
                 new CardTypesAmongCardsInGraveyard(CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 cardTypes, new Sum(cardTypes, new Fixed(1))));
 
         addCastingOption(new GraveyardCast(null, "{2}{B}", List.of(

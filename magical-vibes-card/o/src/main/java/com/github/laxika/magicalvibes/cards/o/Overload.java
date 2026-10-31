@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -28,7 +27,7 @@ public class Overload extends Card {
                 new PermanentIsArtifactPredicate(),
                 new PermanentMaxManaValuePredicate(5)));
 
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
+        addStaticEffect(new KickerEffect("{2}"));
         target(TargetFilters.artifact()).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new ConditionalEffect(new TargetPermanentMatches(artifactWithManaValueTwoOrLess),

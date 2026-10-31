@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FreeCastKickerOffer;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -387,7 +386,7 @@ public class ExileFreeCastSupport {
         if (!offer.completeInput() || gameData.freeCastKickerDecidedIds.contains(exileCardId)) {
             return false;
         }
-        KickerEffect kicker = card.getEffects(EffectSlot.STATIC).stream()
+        KickerEffect kicker = card.getStaticEffects().stream()
                 .filter(KickerEffect.class::isInstance)
                 .map(KickerEffect.class::cast)
                 .findFirst()

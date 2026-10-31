@@ -13,7 +13,6 @@ public class BlurOfHeroism extends Card {
 
     public BlurOfHeroism() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
-        addEffect(EffectSlot.STATIC,
-                new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.HERO)));
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.HERO)));
     }
 }

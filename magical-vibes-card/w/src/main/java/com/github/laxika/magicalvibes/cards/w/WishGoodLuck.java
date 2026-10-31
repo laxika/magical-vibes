@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "YDFT", collectorNumber = "28")
@@ -48,7 +47,7 @@ public class WishGoodLuck extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(new ActivatedAbility(
                         false,
                         null,

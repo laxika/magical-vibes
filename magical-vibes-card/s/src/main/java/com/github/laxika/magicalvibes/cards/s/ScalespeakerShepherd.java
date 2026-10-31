@@ -34,7 +34,7 @@ public class ScalespeakerShepherd extends Card {
 
     public ScalespeakerShepherd() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DraftCardFromSpellbookEffect(SPELLBOOK));
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.DINOSAUR), 1, CostModificationScope.SELF));
     }
 }

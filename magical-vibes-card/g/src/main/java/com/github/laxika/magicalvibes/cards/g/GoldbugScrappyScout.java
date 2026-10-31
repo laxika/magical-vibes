@@ -26,10 +26,10 @@ public class GoldbugScrappyScout extends Card {
 
     public GoldbugScrappyScout() {
         // Living metal: during your turn, this Vehicle is also a creature.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ControllerSpellsCantBeCounteredEffect(
+        addStaticEffect(new ControllerSpellsCantBeCounteredEffect(
                 new CardSubtypePredicate(CardSubtype.HUMAN)));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, ConditionalEffect.atTriggerTime(
                 new AllOf(List.of(

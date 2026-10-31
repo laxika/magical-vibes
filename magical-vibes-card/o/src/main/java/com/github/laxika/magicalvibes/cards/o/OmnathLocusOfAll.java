@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplaceManaDrainWithColorless
 public class OmnathLocusOfAll extends Card {
 
     public OmnathLocusOfAll() {
-        addEffect(EffectSlot.STATIC, new ReplaceManaDrainWithColorlessEffect(ManaColor.BLACK));
+        addStaticEffect(new ReplaceManaDrainWithColorlessEffect(ManaColor.BLACK));
         addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED,
                 new LookAtTopCardMayRevealForManaAndPutIntoHandEffect());
     }

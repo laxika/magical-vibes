@@ -31,7 +31,7 @@ public class TempestraDameOfGames extends Card {
                                 List.of(), Set.of(), null, null, Map.of(),
                                 true, false, true, false,
                                 false, false, null, Set.of(),
-                                false, Map.of(), List.of(), false, true,
+                                false, List.of(), List.of(), false, true,
                                 new Fixed(1), false, Set.of(), false)
                 ),
                 "{2}{R}, {T}, Sacrifice an artifact: Create a token that's a copy of another target creature "

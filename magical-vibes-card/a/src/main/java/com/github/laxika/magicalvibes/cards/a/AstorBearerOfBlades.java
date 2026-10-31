@@ -27,12 +27,12 @@ public class AstorBearerOfBlades extends Card {
                                 new CardSubtypePredicate(CardSubtype.EQUIPMENT),
                                 new CardSubtypePredicate(CardSubtype.VEHICLE)))));
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new EquipActivatedAbility("{1}"),
                 GrantScope.OWN_PERMANENTS,
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT)));
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
                         null,

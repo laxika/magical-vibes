@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleForControlledCreaturesEffect;
@@ -176,7 +175,7 @@ class LegendRuleServiceTest {
 
         private Card exemptLegend() {
             Card card = createLegendaryCreature("Brothers Yamazaki");
-            card.addEffect(EffectSlot.STATIC, new IgnoreLegendRuleWhenExactlyTwoSameNameEffect());
+            card.addStaticEffect(new IgnoreLegendRuleWhenExactlyTwoSameNameEffect());
             return card;
         }
 
@@ -217,7 +216,7 @@ class LegendRuleServiceTest {
         private Card globalExemption() {
             Card card = createCreature("Mirror Gallery");
             card.setType(CardType.ARTIFACT);
-            card.addEffect(EffectSlot.STATIC, new IgnoreLegendRuleEffect());
+            card.addStaticEffect(new IgnoreLegendRuleEffect());
             return card;
         }
 
@@ -253,7 +252,7 @@ class LegendRuleServiceTest {
         @DisplayName("Protects duplicate legendary creatures")
         void protectsDuplicateLegendaryCreatures() {
             Card source = createCreature("Council of Reeds");
-            source.addEffect(EffectSlot.STATIC, new IgnoreLegendRuleForControlledCreaturesEffect());
+            source.addStaticEffect(new IgnoreLegendRuleForControlledCreaturesEffect());
             addPermanent(player1Id, source);
             addPermanent(player1Id, createLegendaryCreature("Test Legend"));
             addPermanent(player1Id, createLegendaryCreature("Test Legend"));
@@ -272,7 +271,7 @@ class LegendRuleServiceTest {
         @DisplayName("Protects duplicate legendary tokens")
         void protectsDuplicateLegendaryTokens() {
             Card source = createCreature("Cadric, Soul Kindler");
-            source.addEffect(EffectSlot.STATIC, new IgnoreLegendRuleForControlledTokensEffect());
+            source.addStaticEffect(new IgnoreLegendRuleForControlledTokensEffect());
             addPermanent(player1Id, source);
 
             Card firstToken = createLegendaryCreature("Test Legend");

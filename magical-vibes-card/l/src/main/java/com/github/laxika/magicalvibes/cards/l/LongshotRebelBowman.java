@@ -19,7 +19,7 @@ public class LongshotRebelBowman extends Card {
 
     public LongshotRebelBowman() {
         // Noncreature spells you cast cost {1} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 1,
                 CostModificationScope.SELF));

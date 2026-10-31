@@ -26,7 +26,7 @@ public class VeiledAscension extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutCounterOnEachControlledPermanentEffect(
                 CounterType.FLYING, 1, faceDownCreature));
-        addEffect(EffectSlot.STATIC, new ControlledPermanentsEnterWithAdditionalCountersEffect(
+        addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersEffect(
                 faceDownCreature, CounterType.FLYING, 1));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
                 new CloakTopCardOfControllerLibraryEffect(),

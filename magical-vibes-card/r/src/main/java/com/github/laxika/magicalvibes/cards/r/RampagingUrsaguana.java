@@ -14,7 +14,6 @@ public class RampagingUrsaguana extends Card {
         addMorph("{2}{G}{G}");
         // Ward {2}. While face down (disguised) the engine grants ward {2} to the permanent.
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.STATIC,
-                BoostByAttackCountEffect.forEachAttackThisGame(2, 2, GrantScope.SELF));
+        addStaticEffect(BoostByAttackCountEffect.forEachAttackThisGame(2, 2, GrantScope.SELF));
     }
 }

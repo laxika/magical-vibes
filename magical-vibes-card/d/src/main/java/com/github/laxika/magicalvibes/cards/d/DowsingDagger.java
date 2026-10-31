@@ -39,7 +39,7 @@ public class DowsingDagger extends Card {
         ));
 
         // Equipped creature gets +2/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature deals combat damage to a player, you may transform
         // Dowsing Dagger.

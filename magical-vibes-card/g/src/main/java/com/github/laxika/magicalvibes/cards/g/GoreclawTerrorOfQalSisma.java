@@ -34,7 +34,7 @@ public class GoreclawTerrorOfQalSisma extends Card {
 
     public GoreclawTerrorOfQalSisma() {
         // Creature spells you cast with power 4 or greater cost {2} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardPowerAtLeastPredicate(4)

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageBySelfToCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 public class GoblinFurrier extends Card {
 
     public GoblinFurrier() {
-        addEffect(EffectSlot.STATIC, new PreventDamageBySelfToCreaturesEffect(
+        addStaticEffect(new PreventDamageBySelfToCreaturesEffect(
                 new PermanentHasSupertypePredicate(CardSupertype.SNOW)));
     }
 }

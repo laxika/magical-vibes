@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class RazorkinNeedlehead extends Card {
 
     public RazorkinNeedlehead() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_OPPONENT_DRAWS,
                 new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER));

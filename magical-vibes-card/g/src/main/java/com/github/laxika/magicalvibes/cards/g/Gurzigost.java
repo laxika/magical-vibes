@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -29,9 +30,7 @@ public class Gurzigost extends Card {
                 List.of(
                         new DiscardCardTypeCost(null, null),
                         new MayEffect(
-                                new GrantEffectToSourceUntilEndOfTurnEffect(
-                                        EffectSlot.STATIC,
-                                        new AssignCombatDamageAsThoughUnblockedEffect()),
+                                new GrantEffectToSourceUntilEndOfTurnEffect(StaticAbility.of(new AssignCombatDamageAsThoughUnblockedEffect())),
                                 "Have Gurzigost assign its combat damage as though it weren't blocked?")),
                 "{G}{G}, Discard a card: You may have Gurzigost assign its combat damage this turn as "
                         + "though it weren't blocked."

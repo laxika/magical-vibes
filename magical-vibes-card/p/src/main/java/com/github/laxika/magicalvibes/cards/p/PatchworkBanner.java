@@ -16,7 +16,7 @@ public class PatchworkBanner extends Card {
 
     public PatchworkBanner() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenSubtypeEffect(1, 1));
+        addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(1, 1));
         addActivatedAbility(ManaAbilities.tapForAnyColor());
     }
 }

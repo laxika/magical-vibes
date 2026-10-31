@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SplashLasher extends Card {
 
     public SplashLasher() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{U}"));
+        addStaticEffect(new KickerEffect("{1}{U}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)), TriggerMode.INDEPENDENT);
         target(TargetFilters.creature(), 0, 1)

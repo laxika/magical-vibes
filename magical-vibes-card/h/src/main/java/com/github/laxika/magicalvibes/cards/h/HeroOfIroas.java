@@ -20,7 +20,7 @@ import java.util.List;
 public class HeroOfIroas extends Card {
 
     public HeroOfIroas() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.AURA), 1, CostModificationScope.SELF));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 null,

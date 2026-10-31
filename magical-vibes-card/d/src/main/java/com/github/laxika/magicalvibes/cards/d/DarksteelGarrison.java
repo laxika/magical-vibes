@@ -18,8 +18,7 @@ import java.util.List;
 public class DarksteelGarrison extends Card {
 
     public DarksteelGarrison() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_PERMANENT));
+        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_PERMANENT));
         addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, new BoostTargetCreatureEffect(1, 1));
 
         addActivatedAbility(new ActivatedAbility(

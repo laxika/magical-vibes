@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
@@ -34,7 +33,7 @@ public class HuntingWilds extends Card {
                 3, 3, List.of(), Set.of(Keyword.HASTE), CardColor.GREEN, Set.of(),
                 GrantScope.OWN_PERMANENTS, EffectDuration.PERMANENT);
 
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}{G}"));
+        addStaticEffect(new KickerEffect("{3}{G}"));
         addSpellEffect(new ConditionalReplacementEffect(new Kicked(),
                 new SearchLibraryEffect(new Fixed(2), forestFilter, LibrarySearchDestination.BATTLEFIELD_TAPPED),
                 new SearchLibraryEffect(new Fixed(2), forestFilter,

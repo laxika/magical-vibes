@@ -32,7 +32,7 @@ public class DefilerOfVigor extends Card {
 
     public DefilerOfVigor() {
         CardAllOfPredicate greenPermanentFilter = greenPermanentSpell();
-        addEffect(EffectSlot.STATIC, new PayLifeToReduceColoredCastCostEffect(
+        addStaticEffect(new PayLifeToReduceColoredCastCostEffect(
                 greenPermanentFilter, "{G}", 2, CostModificationScope.SELF));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 greenPermanentFilter,

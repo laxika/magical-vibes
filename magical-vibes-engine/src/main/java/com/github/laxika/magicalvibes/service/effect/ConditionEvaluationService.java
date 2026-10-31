@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DayNight;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -513,7 +512,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.room.RoomNameSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
@@ -2800,7 +2798,7 @@ public class ConditionEvaluationService {
     private boolean partyIsAlwaysFull(GameData gameData, UUID controllerId) {
         if (controllerId == null) return false;
         return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
-                .anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(permanent -> permanent.getCard().getStaticEffects().stream()
                         .anyMatch(PartyAlwaysFullEffect.class::isInstance));
     }
 

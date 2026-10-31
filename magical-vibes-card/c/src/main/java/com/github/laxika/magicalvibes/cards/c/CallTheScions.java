@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "165")
@@ -30,7 +29,7 @@ public class CallTheScions extends Card {
             Set.of(),
             false,
             false,
-            Map.of(),
+            List.of(),
             List.of(new ActivatedAbility(
                     false,
                     null,

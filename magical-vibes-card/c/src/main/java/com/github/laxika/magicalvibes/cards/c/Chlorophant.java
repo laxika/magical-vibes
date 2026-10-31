@@ -20,7 +20,7 @@ public class Chlorophant extends Card {
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 "Put a +1/+1 counter on Chlorophant?"));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new GraveyardCardThreshold(7, null),
+        addStaticEffect(new ConditionalEffect(new GraveyardCardThreshold(7, null),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.UPKEEP_TRIGGERED,
                         new MayEffect(new PutCountersOnSourceEffect(1, 1, 1),

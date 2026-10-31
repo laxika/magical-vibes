@@ -14,7 +14,7 @@ public class AnvilOfBogardan extends Card {
 
     public AnvilOfBogardan() {
         // Players have no maximum hand size.
-        addEffect(EffectSlot.STATIC, new PlayersHaveNoMaximumHandSizeEffect());
+        addStaticEffect(new PlayersHaveNoMaximumHandSizeEffect());
 
         // At the beginning of each player's draw step, that player draws an additional card,
         // then discards a card.

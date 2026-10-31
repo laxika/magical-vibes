@@ -33,7 +33,7 @@ public class CloudKey extends Card {
                 CardType.DUNGEON,
                 CardType.VANGUARD
         )));
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardHasSourceChosenCardTypePredicate(), 1, CostModificationScope.SELF));
     }
 }

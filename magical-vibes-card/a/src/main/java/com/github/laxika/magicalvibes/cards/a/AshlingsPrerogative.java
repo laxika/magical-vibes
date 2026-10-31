@@ -15,8 +15,8 @@ public class AshlingsPrerogative extends Card {
         // "As this enchantment enters, choose odd or even. (Zero is even.)"
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseManaValueParityOnEnterEffect());
         // "Each creature with mana value of the chosen quality has haste."
-        addEffect(EffectSlot.STATIC, new GrantKeywordToCreaturesOfChosenParityEffect(Keyword.HASTE));
+        addStaticEffect(new GrantKeywordToCreaturesOfChosenParityEffect(Keyword.HASTE));
         // "Each creature without mana value of the chosen quality enters tapped."
-        addEffect(EffectSlot.STATIC, new CreaturesOfUnchosenParityEnterTappedEffect());
+        addStaticEffect(new CreaturesOfUnchosenParityEnterTappedEffect());
     }
 }

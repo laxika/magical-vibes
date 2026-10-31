@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -38,7 +38,6 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
-import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -1035,7 +1034,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         // applies a final safety net if it can't.
         if (attackerIndices.size() == 1) {
             Permanent sole = battlefield.get(attackerIndices.getFirst());
-            if (sole.getCard().getEffects(EffectSlot.STATIC).stream()
+            if (sole.getCard().getStaticEffects().stream()
                     .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance)) {
                 List<Integer> others = new ArrayList<>(availableIndices);
                 others.removeAll(attackerIndices);
@@ -1240,7 +1239,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         }
         if (uniqueBlockerIndices.size() == 1) {
             Permanent sole = battlefield.get(uniqueBlockerIndices.iterator().next());
-            if (sole.getCard().getEffects(EffectSlot.STATIC).stream()
+            if (sole.getCard().getStaticEffects().stream()
                     .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance)) {
                 assignments.clear();
             }
@@ -1304,7 +1303,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     private boolean hasUnmetBlockPartnerRequirement(GameData gameData, List<Permanent> battlefield,
                                                     Set<Integer> selectedBlockers, int blockerIdx) {
         Permanent blocker = battlefield.get(blockerIdx);
-        for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : blocker.getCard().getStaticEffects()) {
             if (effect instanceof CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect) {
                 int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
                 boolean hasGreaterPowerPartner = selectedBlockers.stream()
@@ -1330,7 +1329,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     private int teamMaxBlockersPerAttacker(List<Permanent> opponentBattlefield) {
         int maximum = Integer.MAX_VALUE;
         for (Permanent permanent : opponentBattlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction) {
                     maximum = Math.min(maximum, restriction.maxBlockers());
                 }
@@ -1390,7 +1389,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             Permanent attacker = opponentBattlefield.get(i);
             if (!attacker.isAttacking()) continue;
             boolean hasLure = attacker.isMustBeBlockedByAllThisTurn()
-                    || attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                    || attacker.getCard().getStaticEffects().stream()
                     .anyMatch(MustBeBlockedByAllCreaturesEffect.class::isInstance)
                     || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedByAllCreaturesEffect.class);
             if (hasLure) {
@@ -1406,7 +1405,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             Permanent attacker = opponentBattlefield.get(i);
             if (!attacker.isAttacking()) continue;
             boolean mustBeBlocked = attacker.isMustBeBlockedThisTurn()
-                    || attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                    || attacker.getCard().getStaticEffects().stream()
                         .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance)
                     || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
             if (mustBeBlocked) {

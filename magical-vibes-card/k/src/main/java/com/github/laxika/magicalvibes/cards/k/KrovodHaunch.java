@@ -21,7 +21,7 @@ import java.util.Set;
 public class KrovodHaunch extends Card {
 
     public KrovodHaunch() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",

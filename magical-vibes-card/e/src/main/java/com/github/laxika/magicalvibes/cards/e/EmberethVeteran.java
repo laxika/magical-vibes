@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -25,7 +26,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "127")
@@ -64,12 +64,13 @@ public class EmberethVeteran extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                List.of(
+                        StaticAbility.of(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ATTACK,
                         new ConditionalEffect(
                                 new NotCondition(new SourceToughnessAtLeast(4)),
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
-                        GrantScope.ENCHANTED_CREATURE)),
+                        GrantScope.ENCHANTED_CREATURE))),
                 List.of(),
                 false,
                 false,

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDestroyCreatureDealingCombatDamageToPlaneswalkerEffect;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "RTR", collectorNumber = "208")
@@ -44,7 +44,7 @@ public class VraskaTheUnseen extends Card {
                 3, "Assassin", 1, 1,
                 CardColor.BLACK, List.of(CardSubtype.ASSASSIN),
                 Set.of(), Set.of(),
-                Map.of(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new TargetPlayerLosesGameEffect(null))
+                List.of(LegacySlots.triggered(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new TargetPlayerLosesGameEffect(null)))
         );
         addActivatedAbility(new ActivatedAbility(
                 -7,

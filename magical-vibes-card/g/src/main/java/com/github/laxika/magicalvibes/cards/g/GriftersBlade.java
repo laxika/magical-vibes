@@ -13,7 +13,7 @@ public class GriftersBlade extends Card {
 
     public GriftersBlade() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseEquipmentAttachmentOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

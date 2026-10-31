@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
@@ -18,6 +17,6 @@ public class HordeOfBoggarts extends Card {
     public HordeOfBoggarts() {
         PermanentCount redPermanentsYouControl =
                 new PermanentCount(new PermanentColorInPredicate(Set.of(CardColor.RED)), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(redPermanentsYouControl, redPermanentsYouControl));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(redPermanentsYouControl, redPermanentsYouControl));
     }
 }

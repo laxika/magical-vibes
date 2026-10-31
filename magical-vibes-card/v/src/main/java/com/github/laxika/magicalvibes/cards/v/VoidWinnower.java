@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsMatchingPredicateEffect;
@@ -22,12 +21,10 @@ import java.util.List;
 public class VoidWinnower extends Card {
 
     public VoidWinnower() {
-        addEffect(EffectSlot.STATIC,
-                new OpponentsCantCastSpellsMatchingPredicateEffect(
+        addStaticEffect(new OpponentsCantCastSpellsMatchingPredicateEffect(
                         new CardManaValueParityPredicate(ManaValueParity.EVEN)));
 
-        addEffect(EffectSlot.STATIC,
-                new MatchingCreaturesCantBlockMatchingCreaturesEffect(
+        addStaticEffect(new MatchingCreaturesCantBlockMatchingCreaturesEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentManaValueParityPredicate(ManaValueParity.EVEN),

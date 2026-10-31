@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -76,7 +75,7 @@ class FuzzInvariantsTest {
 
     private static Card brothersYamazaki() {
         Card c = legendaryCreature("Brothers Yamazaki");
-        c.addEffect(EffectSlot.STATIC, new IgnoreLegendRuleWhenExactlyTwoSameNameEffect());
+        c.addStaticEffect(new IgnoreLegendRuleWhenExactlyTwoSameNameEffect());
         return c;
     }
 
@@ -227,7 +226,7 @@ class FuzzInvariantsTest {
     void globalLegendRuleExemptionMakesDuplicateLegendariesLegal() {
         Card mirrorGallery = creature("Mirror Gallery", 0, 0);
         mirrorGallery.setType(CardType.ARTIFACT);
-        mirrorGallery.addEffect(EffectSlot.STATIC, new IgnoreLegendRuleEffect());
+        mirrorGallery.addStaticEffect(new IgnoreLegendRuleEffect());
         harness.addToBattlefield(player2, mirrorGallery);
         harness.addToBattlefield(player1, legendaryCreature("Test Legend"));
         harness.addToBattlefield(player1, legendaryCreature("Test Legend"));

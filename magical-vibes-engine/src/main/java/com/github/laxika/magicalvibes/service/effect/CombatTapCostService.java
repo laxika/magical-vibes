@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CombatTapCostEffect;
@@ -151,7 +150,7 @@ public class CombatTapCostService {
     }
 
     private int requiredTapCount(GameData gameData, Permanent permanent) {
-        int required = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        int required = permanent.getCard().getStaticEffects().stream()
                 .filter(CombatTapCostEffect.class::isInstance)
                 .map(CombatTapCostEffect.class::cast)
                 .mapToInt(CombatTapCostEffect::tapCount)

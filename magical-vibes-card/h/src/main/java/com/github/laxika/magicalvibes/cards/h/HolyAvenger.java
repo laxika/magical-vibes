@@ -15,8 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoEquippedCr
 public class HolyAvenger extends Card {
 
     public HolyAvenger() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
                 new MayEffect(
                         new PutAuraFromHandOntoEquippedCreatureEffect(),

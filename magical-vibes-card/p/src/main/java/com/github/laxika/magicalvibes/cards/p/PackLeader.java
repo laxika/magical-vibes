@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class PackLeader extends Card {
 
     public PackLeader() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.DOG)));
         addEffect(EffectSlot.ON_ATTACK, PreventDamageEffect.allCombatToControlledMatchingPermanents(
                 new PermanentHasSubtypePredicate(CardSubtype.DOG)));

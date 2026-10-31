@@ -22,7 +22,7 @@ public class DecayingSoil extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ExileGraveyardCardsEffect(1, GraveyardExileScope.OWN));
 
         var threshold = new GraveyardCardThreshold(7, null);
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
                         new TriggeringCardConditionalEffect(new CardNotPredicate(new CardIsTokenPredicate()),

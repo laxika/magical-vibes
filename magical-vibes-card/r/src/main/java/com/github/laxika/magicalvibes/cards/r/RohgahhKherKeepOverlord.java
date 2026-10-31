@@ -23,7 +23,7 @@ public class RohgahhKherKeepOverlord extends Card {
 
     public RohgahhKherKeepOverlord() {
         // Other Kobolds you control get +2/+2.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.KOBOLD)));
 
         // Whenever you cast a Kobold spell, you may pay {2}. If you do, create a 4/4 red Dragon

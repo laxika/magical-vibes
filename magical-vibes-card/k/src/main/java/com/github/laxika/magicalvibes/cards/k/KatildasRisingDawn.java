@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -29,13 +28,13 @@ public class KatildasRisingDawn extends Card {
                         new PermanentIsEnchantmentPredicate())),
                 CountScope.CONTROLLER);
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+                .addStaticEffect(new GrantKeywordEffect(
                         Set.of(Keyword.FLYING, Keyword.LIFELINK), GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+                .addStaticEffect(new GrantEffectEffect(
                         new ProtectionFromSubtypesEffect(Set.of(CardSubtype.VAMPIRE)),
                         GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                .addStaticEffect(new AttachedBoostEffect(
                         spiritsOrEnchantments, spiritsOrEnchantments, GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect());
+        addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 }

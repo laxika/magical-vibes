@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
@@ -17,14 +17,13 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DFT", collectorNumber = "261")
 public class RockyRoads extends Card {
 
     public RockyRoads() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCountAtMost(0,
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MOUNT, CardSubtype.VEHICLE))),
                 new EntersTappedEffect()));
@@ -45,7 +44,7 @@ public class RockyRoads extends Card {
                                 List.of(CardSubtype.PILOT),
                                 Set.of(),
                                 Set.of(),
-                                Map.of(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2)))
+                                List.of(StaticAbility.of(new PowerBoostForCrewAndSaddleEffect(2))))
                 ),
                 "{1}{R}, {T}, Sacrifice this land: Create a 1/1 colorless Pilot creature token with "
                         + "\"This token saddles Mounts and crews Vehicles as though its power were 2 greater.\" "

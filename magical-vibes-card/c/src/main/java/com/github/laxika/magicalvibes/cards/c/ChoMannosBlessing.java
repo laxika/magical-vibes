@@ -14,7 +14,6 @@ public class ChoMannosBlessing extends Card {
     public ChoMannosBlessing() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect())
-                .addEffect(EffectSlot.STATIC,
-                        new ProtectionFromChosenColorEffect(GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new ProtectionFromChosenColorEffect(GrantScope.ENCHANTED_CREATURE));
     }
 }

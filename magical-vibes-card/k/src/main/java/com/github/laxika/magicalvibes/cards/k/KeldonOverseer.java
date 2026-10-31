@@ -21,7 +21,7 @@ public class KeldonOverseer extends Card {
 
     public KeldonOverseer() {
         // Kicker {3}{R}
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}{R}"));
+        addStaticEffect(new KickerEffect("{3}{R}"));
 
         // When this creature enters, if it was kicked, gain control of target creature
         // until end of turn. Untap that creature. It gains haste until end of turn.

@@ -18,7 +18,7 @@ public class SnoopingNewsie extends Card {
 
     public SnoopingNewsie() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(2, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new DistinctManaValuesAmongCardsInGraveyardAtLeast(5),
                 new StaticBoostEffect(1, 1, Set.of(Keyword.LIFELINK), GrantScope.SELF)));
     }

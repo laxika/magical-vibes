@@ -20,8 +20,8 @@ import java.util.List;
 public class MudbuttonCursetosser extends Card {
 
     public MudbuttonCursetosser() {
-        addEffect(EffectSlot.STATIC, new IncreaseOwnCastCostUnlessRevealSubtypeEffect(2, CardSubtype.GOBLIN, true));
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new IncreaseOwnCastCostUnlessRevealSubtypeEffect(2, CardSubtype.GOBLIN, true));
+        addStaticEffect(new CantBlockEffect());
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

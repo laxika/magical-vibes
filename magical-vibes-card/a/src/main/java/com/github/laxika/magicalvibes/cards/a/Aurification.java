@@ -28,11 +28,9 @@ public class Aurification extends Card {
 
         addEffect(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
                 new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING, CounterType.GOLD));
-        addEffect(EffectSlot.STATIC,
-                new GrantSubtypeEffect(CardSubtype.WALL, GrantScope.ALL_CREATURES_INCLUDING_SELF, false,
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.WALL, GrantScope.ALL_CREATURES_INCLUDING_SELF, false,
                         goldCounterBearer));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.DEFENDER, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+        addStaticEffect(new GrantKeywordEffect(Keyword.DEFENDER, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                         goldCounterBearer));
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                 new RemoveAllCountersFromMatchingPermanentsEffect(CounterType.GOLD,

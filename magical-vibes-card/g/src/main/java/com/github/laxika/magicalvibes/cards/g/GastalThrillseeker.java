@@ -28,7 +28,7 @@ public class GastalThrillseeker extends Card {
                 new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(1));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new MaxSpeed(),
+        addStaticEffect(new ConditionalEffect(new MaxSpeed(),
                 new GrantKeywordEffect(Set.of(Keyword.DEATHTOUCH, Keyword.HASTE), GrantScope.SELF)));
     }
 }

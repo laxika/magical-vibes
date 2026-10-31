@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
@@ -20,7 +19,7 @@ public class OverwhelmingDenial extends Card {
                 List.of(new ManaCastingCost("{U}{U}")),
                 new ControllerCastAnotherSpellThisTurn(new CardTruePredicate()),
                 false));
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         addSpellEffect(new CounterSpellEffect());
     }
 }

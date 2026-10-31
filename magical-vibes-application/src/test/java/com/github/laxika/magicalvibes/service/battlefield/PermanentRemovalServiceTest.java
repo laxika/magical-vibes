@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
@@ -13,8 +12,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreaturesYouControlToHandInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
@@ -228,7 +225,7 @@ class PermanentRemovalServiceTest {
         card.setType(CardType.ARTIFACT);
         card.setManaCost("{2}");
         card.setSubtypes(List.of(CardSubtype.EQUIPMENT));
-        card.addEffect(EffectSlot.STATIC, new SacrificeOnUnattachEffect());
+        card.addStaticEffect(new SacrificeOnUnattachEffect());
         return card;
     }
 
@@ -444,8 +441,7 @@ class PermanentRemovalServiceTest {
         void returnsEnchantedCreatureToHandInsteadOfGraveyard() {
             Permanent bears = addPermanent(player1Id, createCreature("Grizzly Bears"));
             Card magemark = createEnchantment("Necromancer's Magemark");
-            magemark.addEffect(EffectSlot.STATIC,
-                    new ReturnEnchantedCreaturesYouControlToHandInsteadOfDyingEffect());
+            magemark.addStaticEffect(new ReturnEnchantedCreaturesYouControlToHandInsteadOfDyingEffect());
             addPermanent(player1Id, magemark);
             when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
             when(gameQueryService.isEnchanted(gd, bears)).thenReturn(true);

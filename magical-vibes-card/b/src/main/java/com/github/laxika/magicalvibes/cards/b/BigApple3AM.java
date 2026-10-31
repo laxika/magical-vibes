@@ -21,7 +21,7 @@ import java.util.Set;
 public class BigApple3AM extends Card {
 
     public BigApple3AM() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,

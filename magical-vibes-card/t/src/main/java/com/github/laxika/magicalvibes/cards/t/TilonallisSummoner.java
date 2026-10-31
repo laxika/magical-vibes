@@ -18,7 +18,7 @@ import java.util.List;
 public class TilonallisSummoner extends Card {
 
     public TilonallisSummoner() {
-        addEffect(EffectSlot.STATIC, new AscendEffect());
+        addStaticEffect(new AscendEffect());
 
         CreateTokenEffect elementalToken = new CreateTokenEffect(
                 1, "Elemental", 1, 1, CardColor.RED, List.of(CardSubtype.ELEMENTAL), true);

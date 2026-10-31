@@ -22,7 +22,7 @@ public class StormSkreelix extends Card {
             new CardTypePredicate(CardType.SORCERY)));
 
     public StormSkreelix() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 INSTANT_OR_SORCERY, 1, CostModificationScope.SELF));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(INSTANT_OR_SORCERY, List.of(new BoostSelfEffect(2, 0))));

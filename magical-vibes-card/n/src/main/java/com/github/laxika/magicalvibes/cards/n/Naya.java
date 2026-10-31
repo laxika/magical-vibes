@@ -23,7 +23,7 @@ import java.util.Set;
 public class Naya extends Card {
 
     public Naya() {
-        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect(Integer.MAX_VALUE - 1));
+        addStaticEffect(new PlaysAdditionalLandEachTurnEffect(Integer.MAX_VALUE - 1));
 
         PermanentPredicate targetFilter = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

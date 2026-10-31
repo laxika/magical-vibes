@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -23,7 +22,7 @@ public class KefnetTheMindful extends Card {
         // Flying, indestructible — auto-loaded from Scryfall.
 
         // Kefnet the Mindful can't attack or block unless you have seven or more cards in hand.
-        addEffect(EffectSlot.STATIC, new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(new CantAttackOrBlockUnlessEffect(
                 new CardsInHandAtLeast(7),
                 "you have seven or more cards in hand"
         ));

@@ -12,7 +12,7 @@ public class PiousInterdiction extends Card {
 
     public PiousInterdiction() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(2));
     }
 }

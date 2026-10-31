@@ -17,7 +17,7 @@ import java.util.List;
 public class FlubsTheFool extends Card {
 
     public FlubsTheFool() {
-        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect(1));
+        addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
         addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND, drawOrDiscard());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(null, List.of(drawOrDiscard())));

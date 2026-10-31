@@ -17,6 +17,6 @@ public class Scourgemark extends Card {
                 // When this Aura enters, draw a card.
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
                 // Enchanted creature gets +1/+0.
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ENCHANTED_CREATURE));
     }
 }

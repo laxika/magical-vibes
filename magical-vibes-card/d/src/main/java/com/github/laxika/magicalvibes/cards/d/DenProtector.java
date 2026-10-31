@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 public class DenProtector extends Card {
 
     public DenProtector() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesWithLessPowerEffect());
+        addStaticEffect(new CantBeBlockedByCreaturesWithLessPowerEffect());
         addMorph("{1}{G}");
         addEffect(EffectSlot.ON_TURNED_FACE_UP, new PutCountersOnTurnFaceUpEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, false));
 

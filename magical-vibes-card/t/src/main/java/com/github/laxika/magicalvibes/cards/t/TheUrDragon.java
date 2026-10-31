@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -35,8 +37,8 @@ public class TheUrDragon extends Card {
                 new CardNotPredicate(new CardIsSelfPredicate())));
         var dragonSpellReduction = new ReduceCastCostForMatchingSpellsEffect(
                 otherDragonSpell, 1, CostModificationScope.SELF);
-        addEffect(EffectSlot.STATIC, dragonSpellReduction);
-        addEffect(EffectSlot.COMMAND_ZONE_STATIC, dragonSpellReduction);
+        // Eminence: one static ability that functions in the command zone and on the battlefield.
+        addStaticEffect(AbilityZones.of(Zone.BATTLEFIELD, Zone.COMMAND), dragonSpellReduction);
 
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ConditionalEffect(
                 new MinimumMatchingAttackers(1, new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class SaltRoadPackbeast extends Card {
 
     public SaltRoadPackbeast() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
     }

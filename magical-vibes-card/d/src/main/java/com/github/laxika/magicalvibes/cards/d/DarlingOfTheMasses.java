@@ -17,7 +17,7 @@ import java.util.Set;
 public class DarlingOfTheMasses extends Card {
 
     public DarlingOfTheMasses() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.CITIZEN))));
         addEffect(EffectSlot.ON_ATTACK, new CreateTokenEffect("Citizen", 1, 1, CardColor.GREEN,
                 Set.of(CardColor.GREEN, CardColor.WHITE), List.of(CardSubtype.CITIZEN)));

@@ -28,7 +28,7 @@ public class AzulaCunningUsurper extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new TargetPlayerExilesCardFromGraveyardEffect(
                                 0, new CardNotPredicate(new CardTypePredicate(CardType.LAND)), true));
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 true, null, false, true, 0, null, false, false, false, false, true));
     }
 }

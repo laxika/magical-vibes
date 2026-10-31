@@ -24,8 +24,7 @@ import java.util.Set;
 public class BladewingsThrall extends Card {
 
     public BladewingsThrall() {
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
                         new StaticBoostEffect(0, 0, Set.of(Keyword.FLYING), GrantScope.SELF)));
 

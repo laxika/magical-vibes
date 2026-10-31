@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
@@ -22,6 +21,6 @@ public class WalkerOfTheWastes extends Card {
                         new PermanentIsLandPredicate(),
                         new PermanentNamedPredicate("Wastes"))),
                 CountScope.CONTROLLER, false, false);
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(wastes, wastes, GrantScope.SELF));
+        addStaticEffect(new DynamicStaticBoostEffect(wastes, wastes, GrantScope.SELF));
     }
 }

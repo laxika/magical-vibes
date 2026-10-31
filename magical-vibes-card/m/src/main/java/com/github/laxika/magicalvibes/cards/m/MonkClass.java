@@ -27,7 +27,7 @@ import java.util.List;
 public class MonkClass extends Card {
 
     public MonkClass() {
-        addEffect(EffectSlot.STATIC, new ReduceSecondSpellCastCostEffect(1));
+        addStaticEffect(new ReduceSecondSpellCastCostEffect(1));
 
         var nonlandPermanent = TargetFilters.nonlandPermanent();
         var returnToHand = ReturnToHandEffect.target(nonlandPermanent.predicate());

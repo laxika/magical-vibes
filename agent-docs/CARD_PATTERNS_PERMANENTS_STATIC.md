@@ -1,3 +1,11 @@
+> `STATIC` in this file means a static ability (CR 113.3d), written `addStaticEffect(e)`, or
+> `target(f).addStaticEffect(e)` for an Aura's enchant ability. It functions from the zones its effect's
+> rule names (`CardEffect.staticAbilityZones()`): the battlefield, the stack for kicker, buyback, gift,
+> "can't be countered" and "costs less to cast", and the hand for splice. An ability that states its
+> zones, such as Eminence, is written `addStaticEffect(AbilityZones.of(...), e)`. In a token's or a
+> copy's ability list it is `StaticAbility.of(e)`, next to `LegacySlots.triggered(EffectSlot.X, e)` for
+> a trigger. Readers use `getStaticEffects()`. There is no `EffectSlot.STATIC`.
+
 ﻿# Card Patterns: Static Permanents & Auras
 | ETB draw + combat damage stack rule | `s/StackOfPaperwork.java` | ON_ENTER_BATTLEFIELD `DrawCardEffect()` + STATIC `CombatDamageUsesStackEffect()` |
 | Permanent subtype gains exalted | `m/MerchantOfTruth.java` | STATIC `GrantKeywordEffect(EXALTED, OWN_PERMANENTS, PermanentHasSubtypePredicate(CLUE))` — Clues you control have exalted; granted exalted instances trigger separately when a creature attacks alone |

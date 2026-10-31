@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "93")
@@ -35,7 +34,7 @@ public class GraveBirthing extends Card {
             Set.of(),
             false,
             false,
-            Map.of(),
+            List.of(),
             List.of(new ActivatedAbility(
                     false,
                     null,

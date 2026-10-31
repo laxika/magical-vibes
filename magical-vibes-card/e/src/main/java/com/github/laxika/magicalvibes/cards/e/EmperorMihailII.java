@@ -21,9 +21,8 @@ import java.util.Set;
 public class EmperorMihailII extends Card {
 
     public EmperorMihailII() {
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC,
-                new AllowCastFromTopOfLibraryEffect(new CardSubtypePredicate(CardSubtype.MERFOLK)));
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new AllowCastFromTopOfLibraryEffect(new CardSubtypePredicate(CardSubtype.MERFOLK)));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardSubtypePredicate(CardSubtype.MERFOLK),

@@ -17,8 +17,8 @@ public class FealtyToTheRealm extends Card {
     public FealtyToTheRealm() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeMonarchEffect())
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect(true))
-                .addEffect(EffectSlot.STATIC, new MustAttackEffect())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackPlayerEffect());
+                .addStaticEffect(new ControlEnchantedCreatureEffect(true))
+                .addStaticEffect(new MustAttackEffect())
+                .addStaticEffect(new EnchantedCreatureCantAttackPlayerEffect());
     }
 }

@@ -23,8 +23,7 @@ public class FootChopper extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new LivingWeaponEffect(new CreateTokenEffect("Ninja", 1, 1, CardColor.BLACK,
                         List.of(CardSubtype.NINJA), Set.of(), Set.of())));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
                 new MayEffect(
                         new SacrificeEquippedCreatureThenDrawPowerEffect(),

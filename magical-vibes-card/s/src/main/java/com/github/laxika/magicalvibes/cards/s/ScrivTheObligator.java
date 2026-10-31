@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect;
@@ -19,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SOC", collectorNumber = "9")
@@ -47,11 +47,12 @@ public class ScrivTheObligator extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(EffectSlot.ON_ATTACK, SequenceEffect.of(
+                List.of(
+                        LegacySlots.triggered(EffectSlot.ON_ATTACK, SequenceEffect.of(
                         new ConditionalEffect(new AttackedTargetIsOpponent(),
                                 new BoostSelfOrEnchantedCreatureUntilEndOfTurnEffect(2, 0)),
                         new ConditionalEffect(new NotCondition(new AttackedTargetIsOpponent()),
-                                new EnchantedCreatureControllerLosesLifeEffect(2)))),
+                                new EnchantedCreatureControllerLosesLifeEffect(2))))),
                 List.of(),
                 false,
                 false,

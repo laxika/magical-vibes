@@ -21,7 +21,7 @@ import java.util.List;
 public class LosheelClockworkScholar extends Card {
 
     public LosheelClockworkScholar() {
-        addEffect(EffectSlot.STATIC, new PreventCombatDamageToAttackingCreaturesYouControlEffect(
+        addStaticEffect(new PreventCombatDamageToAttackingCreaturesYouControlEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate()))));

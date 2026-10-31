@@ -29,7 +29,7 @@ public class NamorTheSubMariner extends Card {
     public NamorTheSubMariner() {
         PermanentCount merfolkYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.MERFOLK), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(merfolkYouControl, new Fixed(4)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(merfolkYouControl, new Fixed(4)));
 
         CardAllOfPredicate noncreatureSpellWithBlueManaSymbol = new CardAllOfPredicate(List.of(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),

@@ -14,9 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffe
 public class GlowcapLantern extends Card {
 
     public GlowcapLantern() {
-        addEffect(EffectSlot.STATIC,
-                new GrantEffectEffect(new LookAtTopCardOfOwnLibraryEffect(), GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantEffectEffect(new LookAtTopCardOfOwnLibraryEffect(), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 new ExploreEffect(),
                 GrantScope.EQUIPPED_CREATURE));

@@ -13,7 +13,7 @@ public class LumberingBattlement extends Card {
 
     public LumberingBattlement() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileOwnNontokenCreaturesUntilSourceLeavesEffect());
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(
+        addStaticEffect(new BoostSelfEffect(
                 new Scaled(new CardsExiledWithSource(), 2),
                 new Scaled(new CardsExiledWithSource(), 2)));
     }

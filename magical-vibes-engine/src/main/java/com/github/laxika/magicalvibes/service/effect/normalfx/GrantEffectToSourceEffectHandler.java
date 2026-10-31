@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -36,12 +37,12 @@ public class GrantEffectToSourceEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        source.addPersistentTriggeredEffect(grant.slot(), grant.grantedEffect());
+        source.addPersistentAbility(grant.grantedAbility());
         gameLogService.append(gameData, GameLog.builder()
                 .card(source.getCard())
                 .text(" gains a permanent ability.")
                 .build());
         log.info("Game {} - {} gains permanent {} effect", gameData.id,
-                source.getCard().getName(), grant.slot().name());
+                source.getCard().getName(), LegacySlots.label(grant.grantedAbility()));
     }
 }

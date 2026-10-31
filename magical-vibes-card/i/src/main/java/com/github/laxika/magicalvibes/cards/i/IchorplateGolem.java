@@ -18,8 +18,7 @@ public class IchorplateGolem extends Card {
                 new EnteringCreatureHasCountersConditionalEffect(
                         CounterType.OIL,
                         new PutCountersOnEnteringCreatureEffect(CounterType.OIL, 1, false, CounterType.OIL)));
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasCountersPredicate(CounterType.OIL)));
     }
 }

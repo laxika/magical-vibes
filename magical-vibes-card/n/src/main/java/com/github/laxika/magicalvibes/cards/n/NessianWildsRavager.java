@@ -19,7 +19,7 @@ import java.util.List;
 public class NessianWildsRavager extends Card {
 
     public NessianWildsRavager() {
-        addEffect(EffectSlot.STATIC, new TributeEffect(6));
+        addStaticEffect(new TributeEffect(6));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

@@ -12,7 +12,7 @@ public class OrysaTideChoreographer extends Card {
 
     public OrysaTideChoreographer() {
         // This spell costs {3} less to cast if creatures you control have total toughness 10 or greater.
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new FixedIfControlledCreaturesTotalToughnessAtLeast(10, 3)));
 
         // When Orysa enters, draw two cards.

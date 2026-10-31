@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
@@ -11,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 public class Squawkroaster extends Card {
 
     public Squawkroaster() {
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(new ColorsAmongControlledPermanents(), new Fixed(4)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(new ColorsAmongControlledPermanents(), new Fixed(4)));
     }
 }

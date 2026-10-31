@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -16,14 +16,13 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "40K", collectorNumber = "114")
 public class CyberneticaDatasmith extends Card {
 
     public CyberneticaDatasmith() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromSubtypesEffect(Set.of(CardSubtype.ROBOT)));
+        addStaticEffect(new ProtectionFromSubtypesEffect(Set.of(CardSubtype.ROBOT)));
         PlayerPredicateTargetFilter playerTarget = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player");
@@ -36,7 +35,7 @@ public class CyberneticaDatasmith extends Card {
                 List.of(CardSubtype.ROBOT),
                 Set.of(),
                 Set.of(CardType.ARTIFACT),
-                Map.of(EffectSlot.STATIC, new CantBlockEffect()));
+                List.of(StaticAbility.of(new CantBlockEffect())));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

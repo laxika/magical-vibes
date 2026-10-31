@@ -28,10 +28,10 @@ public class IchorSynthesizer extends Card {
         ));
 
         SourceCounterThreshold oilThreshold = new SourceCounterThreshold(4, CounterType.OIL);
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 oilThreshold,
                 new StaticBoostEffect(2, 0, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 oilThreshold,
                 new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
     }

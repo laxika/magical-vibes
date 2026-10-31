@@ -23,7 +23,7 @@ public class HonoredHierarch extends Card {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new RenownEffect(1));
 
         // As long as Honored Hierarch is renowned, it has vigilance ...
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceIsRenowned(), new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
 
         // ... and "{T}: Add one mana of any color."

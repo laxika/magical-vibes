@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class WellRested extends Card {
 
     public WellRested() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        target(TargetFilters.creature()).addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_SELF_BECOMES_UNTAPPED,
                 OncePerTurnTriggerEffect.perGrant(SequenceEffect.of(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),

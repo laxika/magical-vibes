@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 
@@ -62,6 +63,12 @@ public record ConditionalEffect(Condition condition, CardEffect wrapped, boolean
     public boolean hasAbilityResolutionCondition() {
         return condition instanceof NthAbilityResolutionThisTurn
                 || wrapped.hasAbilityResolutionCondition();
+    }
+
+    /** A conditional static ability functions where the ability it conditions does. */
+    @Override
+    public AbilityZones staticAbilityZones() {
+        return wrapped.staticAbilityZones();
     }
 
     @Override

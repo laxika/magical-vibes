@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 public class DesertWereWorm extends Card {
 
     public DesertWereWorm() {
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(
+        addStaticEffect(new BoostSelfEffect(
                 new Scaled(new PermanentCount(
                         new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), CountScope.CONTROLLER), 2),
                 new Fixed(0)));

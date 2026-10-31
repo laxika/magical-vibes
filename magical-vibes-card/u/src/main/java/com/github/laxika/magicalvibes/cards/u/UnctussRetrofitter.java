@@ -23,6 +23,6 @@ public class UnctussRetrofitter extends Card {
                         new AnimatePermanentsEffect(
                                 4, 4, List.of(), Set.of(), null, Set.of(),
                                 GrantScope.TARGET, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD));
-        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
+        addStaticEffect(new ToxicEffect(1));
     }
 }

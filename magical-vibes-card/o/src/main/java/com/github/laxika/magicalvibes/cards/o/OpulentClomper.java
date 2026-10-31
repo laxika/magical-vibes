@@ -20,8 +20,7 @@ public class OpulentClomper extends Card {
 
     public OpulentClomper() {
         ColorsAmongControlledPermanents colorsAmongControlledPermanents = new ColorsAmongControlledPermanents();
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(colorsAmongControlledPermanents, colorsAmongControlledPermanents));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(colorsAmongControlledPermanents, colorsAmongControlledPermanents));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new NotCondition(new AllOf(Arrays.stream(CardColor.values())

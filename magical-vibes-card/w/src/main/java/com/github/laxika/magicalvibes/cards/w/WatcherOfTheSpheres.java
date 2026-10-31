@@ -20,7 +20,7 @@ public class WatcherOfTheSpheres extends Card {
 
     public WatcherOfTheSpheres() {
         // Creature spells with flying you cast cost {1} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardKeywordPredicate(Keyword.FLYING)

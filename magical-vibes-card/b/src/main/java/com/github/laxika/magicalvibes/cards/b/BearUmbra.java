@@ -21,9 +21,9 @@ public class BearUmbra extends Card {
 
     public BearUmbra() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new TotemArmorEffect())
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(EffectSlot.ON_ATTACK,
+                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new TotemArmorEffect())
+                .addStaticEffect(new GrantTriggeredAbilityEffect(EffectSlot.ON_ATTACK,
                         new UntapPermanentsEffect(
                         TapUntapScope.CONTROLLED,
                         new PermanentIsLandPredicate()), GrantScope.ENCHANTED_CREATURE));

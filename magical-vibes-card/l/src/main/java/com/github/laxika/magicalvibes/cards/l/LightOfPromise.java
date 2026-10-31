@@ -16,7 +16,7 @@ public class LightOfPromise extends Card {
 
     public LightOfPromise() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_CONTROLLER_GAINS_LIFE,
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue()),
                         GrantScope.ENCHANTED_CREATURE));

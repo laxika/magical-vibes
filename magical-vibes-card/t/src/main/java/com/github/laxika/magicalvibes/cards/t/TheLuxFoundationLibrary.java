@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class TheLuxFoundationLibrary extends Card {
 
     public TheLuxFoundationLibrary() {
-        addEffect(EffectSlot.STATIC, new PlayersHaveNoMaximumHandSizeEffect());
+        addStaticEffect(new PlayersHaveNoMaximumHandSizeEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(null,
                         new MayEffect(new DrawCardEffect(1), "Draw a card?")));

@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -17,15 +18,14 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DSC", collectorNumber = "361")
 public class YouExistOnlyToAmuse extends Card {
 
     public YouExistOnlyToAmuse() {
-        Map<EffectSlot, CardEffect> devilTokenEffects =
-                Map.of(EffectSlot.ON_DEATH, new DealDamageToAnyTargetEffect(1));
+        List<Ability> devilTokenEffects =
+                List.of(LegacySlots.triggered(EffectSlot.ON_DEATH, new DealDamageToAnyTargetEffect(1)));
         CreateTokenEffect createDevils = new CreateTokenEffect(
                 3, "Devil", 1, 1, CardColor.RED,
                 List.of(CardSubtype.DEVIL), Set.of(), Set.of(), devilTokenEffects);

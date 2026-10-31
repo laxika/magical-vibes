@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayVoteAdditionalTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.TheValeyardEffect;
 
@@ -13,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TheValeyardEffect;
 public class TheValeyard extends Card {
 
     public TheValeyard() {
-        addEffect(EffectSlot.STATIC, new TheValeyardEffect());
-        addEffect(EffectSlot.STATIC, new MayVoteAdditionalTimeEffect());
+        addStaticEffect(new TheValeyardEffect());
+        addStaticEffect(new MayVoteAdditionalTimeEffect());
     }
 }

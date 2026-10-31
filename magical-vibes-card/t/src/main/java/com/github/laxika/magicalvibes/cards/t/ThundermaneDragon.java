@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
@@ -20,8 +19,8 @@ import java.util.Set;
 public class ThundermaneDragon extends Card {
 
     public ThundermaneDragon() {
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, AllowCastFromTopOfLibraryEffect.grantingKeywords(
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(AllowCastFromTopOfLibraryEffect.grantingKeywords(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardPowerAtLeastPredicate(4)

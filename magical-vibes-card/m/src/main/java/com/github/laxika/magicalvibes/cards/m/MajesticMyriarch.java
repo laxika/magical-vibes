@@ -43,7 +43,7 @@ public class MajesticMyriarch extends Card {
         // P/T = twice the number of creatures you control (counts itself → at least 2/2).
         Scaled twiceCreatures = new Scaled(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER), 2);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(twiceCreatures, twiceCreatures));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(twiceCreatures, twiceCreatures));
 
         // At the beginning of each combat, gain each listed keyword UEOT if you control a
         // creature with that keyword. One ability; each keyword checked at resolution.

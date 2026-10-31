@@ -26,7 +26,6 @@ public class Ixidron extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsFaceDownPredicate()));
         PermanentCount faceDownCreatureCount = new PermanentCount(faceDownCreatures, CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(faceDownCreatureCount, faceDownCreatureCount));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(faceDownCreatureCount, faceDownCreatureCount));
     }
 }

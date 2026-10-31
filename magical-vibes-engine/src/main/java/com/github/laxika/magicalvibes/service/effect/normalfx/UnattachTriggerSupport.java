@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -75,7 +74,7 @@ public class UnattachTriggerSupport {
     }
 
     private boolean hasStaticEffect(Permanent equipment, Class<? extends CardEffect> effectType) {
-        for (CardEffect effect : equipment.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : equipment.getCard().getStaticEffects()) {
             if (effectType.isInstance(effect)) {
                 return true;
             }

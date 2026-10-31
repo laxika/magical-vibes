@@ -10,7 +10,7 @@ public class HaukensInsight extends Card {
 
     public HaukensInsight() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ExileTopCardsToSourceEffect(1));
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, null, false, true, 0, null, true, false, true,
                 ExileAccessScope.CONTROLLER, false, false, false, false, false, null, false, false,
                 false, false, true));

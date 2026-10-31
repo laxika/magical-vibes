@@ -15,7 +15,7 @@ import java.util.List;
 public class TheLordOfPain extends Card {
 
     public TheLordOfPain() {
-        addEffect(EffectSlot.STATIC, new OpponentsCantGainLifeEffect());
+        addStaticEffect(new OpponentsCantGainLifeEffect());
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
                 new FirstSpellCastTriggerEffect(List.of(
                         new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER))));

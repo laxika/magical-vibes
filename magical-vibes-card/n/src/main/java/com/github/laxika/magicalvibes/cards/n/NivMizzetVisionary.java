@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 public class NivMizzetVisionary extends Card {
 
     public NivMizzetVisionary() {
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
+        addStaticEffect(new NoMaximumHandSizeEffect());
         addEffect(EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE,
                 new DrawCardEffect(new EventValue()));
     }

@@ -28,7 +28,7 @@ import java.util.Set;
 public class RestlessRidgeline extends Card {
 
     public RestlessRidgeline() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

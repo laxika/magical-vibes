@@ -36,6 +36,6 @@ public class HaroldAndBobFirstNumens extends Card {
         addEffect(EffectSlot.ON_DEATH, new DyingPermanentWasCreatureConditionalEffect(
                 ReturnSourceAsAuraEffect.losingOtherAbilities(forestYouControl, forestMana)));
 
-        addEffect(EffectSlot.STATIC, forestMana);
+        addStaticEffect(forestMana);
     }
 }

@@ -23,7 +23,7 @@ import java.util.List;
 public class SzarelGenesisShepherd extends Card {
 
     public SzarelGenesisShepherd() {
-        addEffect(EffectSlot.STATIC, new PlayLandsFromGraveyardEffect());
+        addStaticEffect(new PlayLandsFromGraveyardEffect());
 
         PermanentPredicate anotherNontokenPermanent = new PermanentAllOfPredicate(List.of(
                 new PermanentNotPredicate(new PermanentIsTokenPredicate()),

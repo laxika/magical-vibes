@@ -24,7 +24,7 @@ public class ThunderingMightmare extends Card {
                         "Pair Thundering Mightmare with another unpaired creature you control?"));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new SoulbondPairWithEnteringEffect());
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_OPPONENT_CASTS_SPELL,

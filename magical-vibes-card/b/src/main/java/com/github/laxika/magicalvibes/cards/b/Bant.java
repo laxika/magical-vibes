@@ -25,7 +25,7 @@ import java.util.Set;
 public class Bant extends Card {
 
     public Bant() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.EXALTED, GrantScope.ALL_CREATURES_INCLUDING_SELF));
 
         PermanentAllOfPredicate eligibleCreature = new PermanentAllOfPredicate(List.of(

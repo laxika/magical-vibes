@@ -16,7 +16,7 @@ import java.util.List;
 public class StarWhale extends Card {
 
     public StarWhale() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(2),
                 GrantScope.OWN_CREATURES));

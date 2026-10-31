@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.MirrormindCrownEffect;
 
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MirrormindCrownEffect;
 public class MirrormindCrown extends Card {
 
     public MirrormindCrown() {
-        addEffect(EffectSlot.STATIC, new MirrormindCrownEffect());
+        addStaticEffect(new MirrormindCrownEffect());
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

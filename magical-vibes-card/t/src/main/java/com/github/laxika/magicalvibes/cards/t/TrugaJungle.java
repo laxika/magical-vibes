@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class TrugaJungle extends Card {
 
     public TrugaJungle() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(), GrantScope.ALL_LANDS));
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new RevealTopCardsMatchingToHandRestToBottomEffect(

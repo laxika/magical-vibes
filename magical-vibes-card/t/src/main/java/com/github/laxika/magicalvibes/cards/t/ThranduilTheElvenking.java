@@ -24,7 +24,7 @@ public class ThranduilTheElvenking extends Card {
 
     public ThranduilTheElvenking() {
         CardPredicate elf = new CardSubtypePredicate(CardSubtype.ELF);
-        addEffect(EffectSlot.STATIC, new GainActivatedAbilitiesOfCardsInControllerGraveyardEffect(elf));
+        addStaticEffect(new GainActivatedAbilitiesOfCardsInControllerGraveyardEffect(elf));
 
         addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(

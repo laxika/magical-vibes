@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 public class DragonlordOjutai extends Card {
 
     public DragonlordOjutai() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
 

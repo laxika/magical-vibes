@@ -13,7 +13,7 @@ public class CorpseweaverProdigy extends Card {
 
     public CorpseweaverProdigy() {
         // If a creature an opponent controls would die, exile it instead.
-        addEffect(EffectSlot.STATIC, new ExileOpponentCreaturesInsteadOfDyingEffect());
+        addStaticEffect(new ExileOpponentCreaturesInsteadOfDyingEffect());
 
         // Infusion — At the beginning of your second main phase, if you gained life this turn,
         // conjure a card named Bridge from Below into your graveyard.

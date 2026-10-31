@@ -17,7 +17,7 @@ public class CagedSun extends Card {
 
     public CagedSun() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenColorEffect(1, 1));
+        addStaticEffect(new BoostCreaturesOfChosenColorEffect(1, 1));
         addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new AddExtraManaOfChosenColorOnLandTapEffect());
     }
 }

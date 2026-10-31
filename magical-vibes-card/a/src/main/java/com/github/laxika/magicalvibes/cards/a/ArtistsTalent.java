@@ -53,13 +53,13 @@ public class ArtistsTalent extends Card {
                         new NotCondition(new SourceClassLevelAtLeast(3)))),
                 "This Class must be level 2."));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceClassLevelAtLeast(2),
                 new ReduceCastCostForMatchingSpellsEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                         1,
                         CostModificationScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceClassLevelAtLeast(3),
                 new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(2, true)));
     }

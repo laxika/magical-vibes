@@ -20,8 +20,7 @@ public class BasaltGolem extends Card {
 
     public BasaltGolem() {
         // This creature can't be blocked by artifact creatures.
-        addEffect(EffectSlot.STATIC,
-                new CantBeBlockedByCreaturesMatchingPredicateEffect(new PermanentIsArtifactPredicate()));
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(new PermanentIsArtifactPredicate()));
 
         // Whenever this creature becomes blocked by a creature, that creature's controller sacrifices
         // it at end of combat. If the player does, they create a 0/2 colorless Wall artifact creature

@@ -14,7 +14,7 @@ public class AnjesRavager extends Card {
 
     public AnjesRavager() {
         // This creature attacks each combat if able.
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
 
         // Whenever this creature attacks, discard your hand, then draw three cards.
         addEffect(EffectSlot.ON_ATTACK, new DiscardOwnHandThenDrawEffect(new Fixed(3)));

@@ -23,7 +23,7 @@ import java.util.List;
 public class WizardClass extends Card {
 
     public WizardClass() {
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
+        addStaticEffect(new NoMaximumHandSizeEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

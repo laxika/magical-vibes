@@ -15,7 +15,7 @@ public class LockeTreasureHunter extends Card {
 
     public LockeTreasureHunter() {
         // Locke can't be blocked by creatures with greater power.
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentNotPredicate(new PermanentPowerAtMostSourcePowerPredicate())));
 
         // Mug — Each player mills a card. If a land card was milled this way, create a Treasure

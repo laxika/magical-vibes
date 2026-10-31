@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class CragplateBaloth extends Card {
 
     public CragplateBaloth() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{G}"));
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new KickerEffect("{2}{G}"));
+        addStaticEffect(new CantBeCounteredEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4))));
     }

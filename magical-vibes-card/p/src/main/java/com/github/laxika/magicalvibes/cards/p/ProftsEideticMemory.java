@@ -26,7 +26,7 @@ public class ProftsEideticMemory extends Card {
 
     public ProftsEideticMemory() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
+        addStaticEffect(new NoMaximumHandSizeEffect());
 
         PermanentPredicateTargetFilter targetCreatureYouControl = new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

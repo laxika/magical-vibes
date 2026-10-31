@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
@@ -23,8 +22,8 @@ import java.util.Set;
 public class GroomsFinery extends Card {
 
     public GroomsFinery() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new ConditionalEffect(
                 new AnyPlayerControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                         new PermanentNamedPredicate("Bride's Gown"),

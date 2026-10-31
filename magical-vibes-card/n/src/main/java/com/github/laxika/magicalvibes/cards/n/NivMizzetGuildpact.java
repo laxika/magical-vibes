@@ -29,7 +29,7 @@ public class NivMizzetGuildpact extends Card {
 
     public NivMizzetGuildpact() {
         removeKeyword(Keyword.HEXPROOF);
-        addEffect(EffectSlot.STATIC, TargetingRestrictionEffect.hexproofFromMulticolored());
+        addStaticEffect(TargetingRestrictionEffect.hexproofFromMulticolored());
         // X is determined once as the trigger resolves, so the damage dealt to a color-pair permanent
         // cannot reduce the draw or life gain (CR 608.2h).
         DeterminedOnce colorPairs = new DeterminedOnce(new DistinctColorPairsAmongControlledPermanents());

@@ -25,7 +25,7 @@ import java.util.Set;
 public class RestlessReef extends Card {
 
     public RestlessReef() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

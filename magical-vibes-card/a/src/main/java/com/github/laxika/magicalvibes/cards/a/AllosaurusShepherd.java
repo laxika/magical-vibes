@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -20,8 +19,8 @@ import java.util.List;
 public class AllosaurusShepherd extends Card {
 
     public AllosaurusShepherd() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.STATIC, new ControllerSpellsCantBeCounteredEffect(
+        addStaticEffect(new CantBeCounteredEffect());
+        addStaticEffect(new ControllerSpellsCantBeCounteredEffect(
                 new CardColorPredicate(CardColor.GREEN)));
 
         PermanentHasSubtypePredicate elves = new PermanentHasSubtypePredicate(CardSubtype.ELF);

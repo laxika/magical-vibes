@@ -18,9 +18,9 @@ public class StormsurgeKraken extends Card {
 
     public StormsurgeKraken() {
         var lieutenant = new ControllerControlsOwnCommander();
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(lieutenant,
+        addStaticEffect(new ConditionalEffect(lieutenant,
                 new StaticBoostEffect(2, 2, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(lieutenant,
+        addStaticEffect(new ConditionalEffect(lieutenant,
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_BECOMES_BLOCKED,
                         new MayEffect(new DrawCardEffect(2), "Draw two cards?"),

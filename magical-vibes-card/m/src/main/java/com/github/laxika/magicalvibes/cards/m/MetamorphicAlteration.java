@@ -20,6 +20,6 @@ public class MetamorphicAlteration extends Card {
                 // As this Aura enters, choose a creature.
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCreatureOnEnterEffect())
                 // Enchanted creature is a copy of the chosen creature.
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureIsCopyOfChosenCreatureEffect());
+                .addStaticEffect(new EnchantedCreatureIsCopyOfChosenCreatureEffect());
     }
 }

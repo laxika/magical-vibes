@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -23,7 +22,7 @@ import java.util.Set;
 public class LongRiversPull extends Card {
 
     public LongRiversPull() {
-        addEffect(EffectSlot.STATIC, new GiftEffect());
+        addStaticEffect(new GiftEffect());
         addSpellEffect(new ConditionalEffect(
                 new GiftPromised(), new EachOtherPlayerDrawsCardEffect(1)));
         target(new StackEntryPredicateTargetFilter(

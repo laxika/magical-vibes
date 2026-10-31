@@ -31,8 +31,7 @@ public class TheWanderingMinstrel extends Card {
             CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN);
 
     public TheWanderingMinstrel() {
-        addEffect(EffectSlot.STATIC,
-                new ControlledPermanentsEnterUntappedEffect(new PermanentIsLandPredicate()));
+        addStaticEffect(new ControlledPermanentsEnterUntappedEffect(new PermanentIsLandPredicate()));
 
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
                 new ControlsPermanentCount(5, new PermanentHasSubtypePredicate(CardSubtype.TOWN)),

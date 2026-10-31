@@ -19,7 +19,7 @@ public class UnquestionedAuthority extends Card {
     public UnquestionedAuthority() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+                .addStaticEffect(new GrantEffectEffect(
                         new ProtectionFromCardTypesEffect(Set.of(CardType.CREATURE)),
                         GrantScope.ENCHANTED_CREATURE));
     }

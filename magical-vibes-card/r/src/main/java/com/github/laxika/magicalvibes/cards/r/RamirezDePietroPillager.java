@@ -33,7 +33,7 @@ public class RamirezDePietroPillager extends Card {
                         false,
                         true));
 
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                 false, false, 0, null, false, false, false, true));
     }

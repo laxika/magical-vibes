@@ -20,7 +20,7 @@ import java.util.List;
 public class CecilyHauntedMage extends Card {
 
     public CecilyHauntedMage() {
-        addEffect(EffectSlot.STATIC, new SetControllerMaximumHandSizeEffect(11));
+        addStaticEffect(new SetControllerMaximumHandSizeEffect(11));
         addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
                 new DrawCardEffect(1),
                 new LoseLifeEffect(1),

@@ -20,7 +20,7 @@ public class SukiKyoshiWarrior extends Card {
     public SukiKyoshiWarrior() {
         PermanentCount creaturesYouControl =
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(creaturesYouControl, new Fixed(4)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(creaturesYouControl, new Fixed(4)));
         addEffect(EffectSlot.ON_ATTACK,
                 new CreateTokenEffect(1, "Ally", 1, 1, CardColor.WHITE, List.of(CardSubtype.ALLY), true));
     }

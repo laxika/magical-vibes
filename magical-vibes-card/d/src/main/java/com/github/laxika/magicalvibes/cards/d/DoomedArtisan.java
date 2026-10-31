@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "C19", collectorNumber = "3")
@@ -26,7 +26,7 @@ public class DoomedArtisan extends Card {
         PermanentCount sculpturesYouControl = new PermanentCount(sculpture, CountScope.CONTROLLER);
 
         // Sculptures you control can't attack or block.
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesCantAttackOrBlockEffect(
+        addStaticEffect(new MatchingCreaturesCantAttackOrBlockEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentControlledBySourceControllerPredicate(), sculpture)),
                 "Sculptures you control can't attack or block"));
@@ -36,8 +36,7 @@ public class DoomedArtisan extends Card {
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new CreateTokenEffect(
                 CardType.CREATURE, 1, "Sculpture", 0, 0, null, null,
                 List.of(CardSubtype.SCULPTURE), Set.of(), Set.of(CardType.ARTIFACT), false, false,
-                Map.of(EffectSlot.STATIC,
-                        new SetPowerToughnessToAmountEffect(sculpturesYouControl, sculpturesYouControl)),
+                List.of(StaticAbility.of(new SetPowerToughnessToAmountEffect(sculpturesYouControl, sculpturesYouControl))),
                 List.of(), false, false, false, 0, Set.of()));
     }
 }

@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class LlanowarElite extends Card {
 
     public LlanowarElite() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{8}"));
+        addStaticEffect(new KickerEffect("{8}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5))));
     }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.NonCreatureSubtypesAmongCardsInGraveyard;
@@ -16,7 +15,7 @@ public class Subgoyf extends Card {
     public Subgoyf() {
         NonCreatureSubtypesAmongCardsInGraveyard subtypes =
                 new NonCreatureSubtypesAmongCardsInGraveyard(CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 subtypes, new Sum(subtypes, new Fixed(1))));
     }
 }

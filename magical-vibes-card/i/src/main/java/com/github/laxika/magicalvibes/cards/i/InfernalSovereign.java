@@ -17,7 +17,7 @@ public class InfernalSovereign extends Card {
 
     public InfernalSovereign() {
         // Skip your draw step.
-        addEffect(EffectSlot.STATIC, new SkipDrawStepEffect());
+        addStaticEffect(new SkipDrawStepEffect());
 
         // Whenever you play a land or cast a spell, you draw a card and you lose 1 life.
         addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND,

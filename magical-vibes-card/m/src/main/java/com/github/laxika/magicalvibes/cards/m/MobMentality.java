@@ -29,7 +29,7 @@ public class MobMentality extends Card {
         target(TargetFilters.creature());
 
         // Enchanted creature has trample.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE));
 
         // Whenever all non-Wall creatures you control attack, enchanted creature gets +X/+0 until
         // end of turn, where X is the number of attacking creatures.

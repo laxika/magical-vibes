@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -21,7 +20,7 @@ import java.util.Set;
 public class MercenaryInformer extends Card {
 
     public MercenaryInformer() {
-        addEffect(EffectSlot.STATIC, TargetingRestrictionEffect.fromSourceColors(Set.of(CardColor.BLACK)));
+        addStaticEffect(TargetingRestrictionEffect.fromSourceColors(Set.of(CardColor.BLACK)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

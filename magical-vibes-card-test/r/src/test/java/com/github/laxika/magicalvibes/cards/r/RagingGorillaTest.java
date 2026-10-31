@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.p.PhyrexianWalker;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
@@ -75,7 +74,7 @@ class RagingGorillaTest extends BaseCardTest {
         secondAttacker.setAttacking(true);
 
         RagingGorilla card = new RagingGorilla();
-        card.addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        card.addStaticEffect(new CanBlockAnyNumberOfCreaturesEffect());
         Permanent gorilla = addCreatureReady(player2, card);
 
         prepareDeclareBlockers();

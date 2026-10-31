@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -21,8 +20,8 @@ public class Candletrap extends Card {
 
     public Candletrap() {
         target(TargetFilters.creature());
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.DEFENDER, GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC, new PreventAllDamageDealtByEnchantedCreatureEffect(true));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DEFENDER, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new PreventAllDamageDealtByEnchantedCreatureEffect(true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

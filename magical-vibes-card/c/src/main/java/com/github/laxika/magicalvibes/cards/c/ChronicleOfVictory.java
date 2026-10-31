@@ -21,8 +21,8 @@ public class ChronicleOfVictory extends Card {
 
     public ChronicleOfVictory() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenSubtypeEffect(2, 2));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(2, 2));
+        addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE),
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSourceChosenSubtypePredicate()));

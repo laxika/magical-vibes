@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "39")
@@ -49,7 +49,7 @@ public class ThousandMoonsSmithy extends Card {
                 List.of(CardSubtype.GNOME, CardSubtype.SOLDIER),
                 Set.of(),
                 Set.of(CardType.ARTIFACT),
-                Map.of(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(artifactsOrCreatures, artifactsOrCreatures)));
+                List.of(StaticAbility.of(new SetPowerToughnessToAmountEffect(artifactsOrCreatures, artifactsOrCreatures))));
     }
 
     private static PermanentAnyOfPredicate artifactsOrCreatures() {

@@ -19,7 +19,7 @@ public class RingOfKalonia extends Card {
 
     public RingOfKalonia() {
         // Equipped creature has trample.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
 
         // At the beginning of your upkeep, put a +1/+1 counter on equipped creature if it's green.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCounterOnReferencedPermanentEffect(

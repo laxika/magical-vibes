@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DFT", collectorNumber = "80")
@@ -34,7 +33,7 @@ public class CryptcallerChariot extends Card {
                         Set.of(),
                         false,
                         true,
-                        Map.of(),
+                        List.of(),
                         List.of(),
                         false,
                         false,

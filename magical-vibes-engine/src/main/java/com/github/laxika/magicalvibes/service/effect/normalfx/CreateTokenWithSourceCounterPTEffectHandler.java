@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -11,7 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.EnumMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -37,11 +39,11 @@ public class CreateTokenWithSourceCounterPTEffectHandler implements NormalEffect
         CountersOnLinkedPermanent linkedCounters =
                 new CountersOnLinkedPermanent(create.counterType(), sourceId);
         CreateTokenEffect template = create.tokenTemplate();
-        var tokenEffects = new EnumMap<EffectSlot, CardEffect>(EffectSlot.class);
+        List<Ability> tokenEffects = new ArrayList<>();
         if (template.tokenEffects() != null) {
-            tokenEffects.putAll(template.tokenEffects());
+            tokenEffects.addAll(template.tokenEffects());
         }
-        tokenEffects.put(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(linkedCounters, linkedCounters));
+        tokenEffects.add(StaticAbility.of(new SetPowerToughnessToAmountEffect(linkedCounters, linkedCounters)));
 
         var linkedTemplate = template.withTokenEffects(tokenEffects);
         var createdIds = permanentControlSupport.applyCreateToken(

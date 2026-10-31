@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -36,13 +37,13 @@ public class GrantEffectToSourceUntilEndOfTurnEffectHandler implements NormalEff
             return;
         }
 
-        source.addTemporaryTriggeredEffect(e.slot(), e.grantedEffect());
+        source.addTemporaryAbility(e.grantedAbility());
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(source.getCard())
                 .text(" gains a temporary ability until end of turn.")
                 .build());
         log.info("Game {} - {} gains temporary {} effect until end of turn",
-                gameData.id, source.getCard().getName(), e.slot().name());
+                gameData.id, source.getCard().getName(), LegacySlots.label(e.grantedAbility()));
     }
 }

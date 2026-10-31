@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -22,7 +21,7 @@ public class UrborgRepossession extends Card {
         CardTypePredicate creature = new CardTypePredicate(CardType.CREATURE);
         CardIsPermanentPredicate permanent = new CardIsPermanentPredicate();
 
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{G}"));
+        addStaticEffect(new KickerEffect("{1}{G}"));
 
         target(new GraveyardCardPredicateTargetFilter(
                 creature, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))

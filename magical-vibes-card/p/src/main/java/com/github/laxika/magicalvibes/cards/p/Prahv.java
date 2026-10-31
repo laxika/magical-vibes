@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 public class Prahv extends Card {
 
     public Prahv() {
-        addEffect(EffectSlot.STATIC, new ControllerCantAttackIfCastSpellThisTurnEffect());
-        addEffect(EffectSlot.STATIC, new ControllerCantCastSpellsIfAttackedThisTurnEffect());
+        addStaticEffect(new ControllerCantAttackIfCastSpellThisTurnEffect());
+        addStaticEffect(new ControllerCantCastSpellsIfAttackedThisTurnEffect());
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new GainLifeEffect(new CardsInHand(CountScope.CONTROLLER)));
     }

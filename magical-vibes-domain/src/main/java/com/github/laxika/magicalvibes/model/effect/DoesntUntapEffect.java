@@ -9,10 +9,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * <ul>
  *   <li>{@link #self()} — {@code SELF}+{@code ALWAYS}: the source permanent never untaps (a
  *       continuous static effect read during the untap step; Colossus of Sardia, Traxos, Grimgrin,
- *       Elaborate Firecannon). Placed in {@code EffectSlot.STATIC}.</li>
+ *       Elaborate Firecannon). Added as a static ability.</li>
  *   <li>{@link #enchanted()} — {@code ENCHANTED}+{@code ALWAYS}: the permanent the source aura or
  *       equipment is attached to never untaps (Claustrophobia, Dehydration, Numbing Dose, Heavy
- *       Arbalest). Placed in {@code EffectSlot.STATIC} on the aura and read via aura lookup during
+ *       Arbalest). Added as a static ability on the aura and read via aura lookup during
  *       the untap step.</li>
  *   <li>{@link #targetWhileSourceOnBattlefield()} — {@code TARGET}+{@code WHILE_SOURCE_ON_BATTLEFIELD}:
  *       the chosen target doesn't untap while the source stays on the battlefield (Dungeon Geists,

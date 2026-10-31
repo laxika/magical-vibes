@@ -22,8 +22,8 @@ public class SquiresDevotion extends Card {
         // Enchant creature
         target(TargetFilters.creature())
                 // Enchanted creature gets +1/+1 and has lifelink.
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ENCHANTED_CREATURE))
                 // When this Aura enters, create a 1/1 white Vampire creature token with lifelink.
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                         "Vampire", 1, 1, CardColor.WHITE, List.of(CardSubtype.VAMPIRE),

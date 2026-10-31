@@ -28,7 +28,7 @@ public class LostMonarchOfIfnir extends Card {
         addEffect(EffectSlot.ON_BECOMES_BLOCKED,
                 new LoseLifeEffect(3, LoseLifeRecipient.DEFENDING_PLAYER));
 
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_BLOCKED,
                 new LoseLifeEffect(3, LoseLifeRecipient.DEFENDING_PLAYER),
                 GrantScope.OWN_CREATURES,

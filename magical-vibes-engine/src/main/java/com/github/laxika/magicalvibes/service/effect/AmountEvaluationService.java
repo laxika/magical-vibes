@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PartyAlwaysFullEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -1127,7 +1126,7 @@ public class AmountEvaluationService {
     }
 
     private int stationPowerBonus(GameData gameData, Permanent permanent) {
-        int bonus = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        int bonus = permanent.getCard().getStaticEffects().stream()
                 .filter(StationPowerModifierEffect.class::isInstance)
                 .mapToInt(effect -> ((StationPowerModifierEffect) effect).powerBonus())
                 .sum();
@@ -1149,7 +1148,7 @@ public class AmountEvaluationService {
                 !permanent.isFaceDown()
                         && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
                         && !gameQueryService.computeStaticBonus(gameData, permanent).losesAllAbilities()
-                        && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        && permanent.getCard().getStaticEffects().stream()
                         .anyMatch(effect -> effect instanceof StationPowerModifierEffect modifier
                                 && modifier.usesToughnessInsteadOfPower()));
     }
@@ -1428,7 +1427,7 @@ public class AmountEvaluationService {
      * in any zone (CR 604.3). Negative values are kept for callers that copy the number as a characteristic.
      */
     public int rawCharacteristicPowerForController(GameData gameData, Card card, UUID controllerId) {
-        for (var effect : card.getEffects(EffectSlot.STATIC)) {
+        for (var effect : card.getStaticEffects()) {
             if (effect instanceof SetPowerToughnessToAmountEffect cda) {
                 return evaluate(gameData, cda.power(),
                         AmountContext.forStaticEffect(new Permanent(card), controllerId));
@@ -1443,7 +1442,7 @@ public class AmountEvaluationService {
      * in any zone (CR 604.3).
      */
     public int rawCharacteristicToughnessForController(GameData gameData, Card card, UUID controllerId) {
-        for (var effect : card.getEffects(EffectSlot.STATIC)) {
+        for (var effect : card.getStaticEffects()) {
             if (effect instanceof SetPowerToughnessToAmountEffect cda) {
                 return evaluate(gameData, cda.toughness(),
                         AmountContext.forStaticEffect(new Permanent(card), controllerId));
@@ -2144,7 +2143,7 @@ public class AmountEvaluationService {
         if (sourceCard == null) {
             return 0;
         }
-        for (var effect : sourceCard.getEffects(EffectSlot.STATIC)) {
+        for (var effect : sourceCard.getStaticEffects()) {
             if (effect instanceof SetPowerToughnessToAmountEffect cda) {
                 return Math.max(0, evaluate(gameData, cda.power(), ctx));
             }
@@ -2161,7 +2160,7 @@ public class AmountEvaluationService {
         // characteristics and ordinary predicate evaluation continue to use the original card.
         return switch (filter) {
             case CardNamedPredicate named -> named.cardName().equals(card.getName())
-                    || gameQueryService.getEffectiveGraveyardEffects(gameData, card, EffectSlot.STATIC).stream()
+                    || gameQueryService.getEffectiveGraveyardStaticEffects(gameData, card).stream()
                     .anyMatch(effect -> effect instanceof CountAsNamedCardForSpellEffect countAs
                             && countAs.spellName().equals(spellName)
                             && countAs.cardName().equals(named.cardName()));
@@ -2839,7 +2838,7 @@ public class AmountEvaluationService {
             creatureTypes.add(types);
         }
         boolean partyIsEveryCreature = battlefield.stream()
-                .anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(permanent -> permanent.getCard().getStaticEffects().stream()
                         .anyMatch(PartyAlwaysFullEffect.class::isInstance));
         if (partyIsEveryCreature) {
             return creatureTypes.size();

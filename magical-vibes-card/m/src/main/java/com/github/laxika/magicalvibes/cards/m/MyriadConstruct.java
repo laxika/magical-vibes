@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ZNR", collectorNumber = "246")
@@ -34,7 +33,7 @@ public class MyriadConstruct extends Card {
                 new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))
         ));
 
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}"));
+        addStaticEffect(new KickerEffect("{3}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
                         new PermanentCount(nonbasicLand, CountScope.OPPONENTS))));
@@ -42,6 +41,6 @@ public class MyriadConstruct extends Card {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_SPELL, new CreateTokenEffect(
                 CardType.CREATURE, new SourcePower(), "Construct", 1, 1, null, null,
                 List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT),
-                false, false, Map.of(), List.of(), false, false, false, 0, Set.of()));
+                false, false, List.of(), List.of(), false, false, false, 0, Set.of()));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerMayDrawUpToNCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
 
@@ -12,8 +11,7 @@ import java.util.List;
 public class ShahOfNaarIsle extends Card {
 
     public ShahOfNaarIsle() {
-        addEffect(EffectSlot.STATIC,
-                new RegisterEchoAtNextUpkeepEffect("{0}",
+        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{0}",
                         List.of(new EachOtherPlayerMayDrawUpToNCardsEffect(3))));
     }
 }

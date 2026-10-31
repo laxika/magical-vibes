@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>Unlike {@link DoesntUntapEffect#self()} / {@link DoesntUntapEffect#enchanted()} (which lock a
  * single, specific permanent), this locks an open-ended set selected by a predicate across all
  * players — e.g. Marble Titan: "Creatures with power 3 or greater don't untap during their
- * controllers' untap steps" ({@code PermanentPowerAtLeastPredicate(3)}). Placed in
- * {@code EffectSlot.STATIC}.
+ * controllers' untap steps" ({@code PermanentPowerAtLeastPredicate(3)}). Added as a
+ * static ability.
  *
  * @param filter selects which permanents are prevented from untapping
  */

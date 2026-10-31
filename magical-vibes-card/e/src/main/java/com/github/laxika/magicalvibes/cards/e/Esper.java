@@ -25,7 +25,7 @@ import java.util.Set;
 public class Esper extends Card {
 
     public Esper() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTypePredicate(CardType.ARTIFACT), 1, CostModificationScope.ALL));
 
         PermanentAllOfPredicate coloredCreature = new PermanentAllOfPredicate(List.of(

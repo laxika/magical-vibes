@@ -61,7 +61,7 @@ public class InspiritFlagshipVessel extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE),
                 GrantScope.OWN_PERMANENTS,
                 new PermanentAllOfPredicate(List.of(

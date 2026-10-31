@@ -24,7 +24,6 @@ public class DreadhordeTwins extends Card {
         PermanentPredicate zombieToken = new PermanentAllOfPredicate(List.of(
                 new PermanentIsTokenPredicate(),
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, zombieToken));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, zombieToken));
     }
 }

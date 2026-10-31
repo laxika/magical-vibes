@@ -34,7 +34,7 @@ public class KotoriPilotProdigy extends Card {
     ));
 
     public KotoriPilotProdigy() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
                         null,

@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "101")
@@ -30,7 +29,7 @@ public class TheFinalDays extends Card {
         CreateTokenEffect flashbackTokens = new CreateTokenEffect(
                 CardType.CREATURE, creatureCards, "Horror", 2, 2, CardColor.BLACK, null,
                 List.of(CardSubtype.HORROR), Set.of(), Set.of(), false, true,
-                Map.of(), List.of(), false, false, false, 0, Set.of());
+                List.of(), List.of(), false, false, false, 0, Set.of());
 
         addSpellEffect(new ConditionalReplacementEffect(
                 new CastFromZone(Zone.GRAVEYARD), normalTokens, flashbackTokens));

@@ -19,6 +19,6 @@ public class VoiceOfVictory extends Card {
                 2, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true
         ));
         addEffect(EffectSlot.ON_ATTACK, new SacrificeCreatedPermanentsAtEndStepEffect());
-        addEffect(EffectSlot.STATIC, new OpponentsCantCastOrActivateDuringYourTurnEffect(false));
+        addStaticEffect(new OpponentsCantCastOrActivateDuringYourTurnEffect(false));
     }
 }

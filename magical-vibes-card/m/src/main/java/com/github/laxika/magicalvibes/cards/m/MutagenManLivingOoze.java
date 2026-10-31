@@ -40,7 +40,7 @@ public class MutagenManLivingOoze extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofArtifactToken(
                 new XValue(), "Mutagen", List.of(), List.of(mutagenAbility)));
-        addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+        addStaticEffect(new ReduceActivatedAbilityCostEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsTokenPredicate(),

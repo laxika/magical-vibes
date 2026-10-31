@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "INR", collectorNumber = "170")
@@ -43,7 +42,7 @@ public class SeizeTheStorm extends Card {
                 1, "Elemental", 0, 0,
                 CardColor.RED, List.of(CardSubtype.ELEMENTAL),
                 Set.of(Keyword.TRAMPLE), Set.of(),
-                Map.of(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(powerToughness, powerToughness))
+                List.of(StaticAbility.of(new SetPowerToughnessToAmountEffect(powerToughness, powerToughness)))
         ));
         addCastingOption(new FlashbackCast("{6}{R}"));
     }

@@ -35,7 +35,7 @@ public class TaigamOjutaiMaster extends Card {
                 new CardTypePredicate(CardType.SORCERY)));
 
         // Instant, sorcery, and Dragon spells you control can't be countered.
-        addEffect(EffectSlot.STATIC, new ControllerSpellsCantBeCounteredEffect(instantSorceryOrDragon));
+        addStaticEffect(new ControllerSpellsCantBeCounteredEffect(instantSorceryOrDragon));
 
         // Whenever you cast an instant or sorcery spell from your hand, if Taigam attacked this
         // turn, that spell gains rebound.

@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class DoctorStrangeSurgeon extends Card {
 
     public DoctorStrangeSurgeon() {
-        addEffect(EffectSlot.STATIC, new DoubleLifeGainEffect());
+        addStaticEffect(new DoubleLifeGainEffect());
         addEffect(EffectSlot.EACH_BEGINNING_OF_COMBAT_TRIGGERED,
                 new ConditionalEffect(
                         new ControllerLifeAtLeast(10, true),

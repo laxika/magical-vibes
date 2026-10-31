@@ -22,7 +22,7 @@ import java.util.List;
 public class TheAetherspark extends Card {
 
     public TheAetherspark() {
-        addEffect(EffectSlot.STATIC, new CantBeAttackedWhileAttachedToCreatureEffect());
+        addStaticEffect(new CantBeAttackedWhileAttachedToCreatureEffect());
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE,
                 new ConditionalEffect(new ControllerTurn(),
                         new PutCountersOnSelfEffect(CounterType.LOYALTY, new EventValue())));

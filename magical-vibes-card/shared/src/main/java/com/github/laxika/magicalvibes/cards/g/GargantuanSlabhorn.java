@@ -24,9 +24,9 @@ public class GargantuanSlabhorn extends Card {
                 new PermanentIsTransformedPredicate(),
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
         ));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE, GrantScope.OWN_PERMANENTS, otherTransformedPermanent));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(2),
                 GrantScope.OWN_PERMANENTS,

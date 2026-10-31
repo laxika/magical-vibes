@@ -22,7 +22,7 @@ import java.util.List;
 public class SaprazzanSkerry extends Card {
 
     public SaprazzanSkerry() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.DEPLETION, new Fixed(2)));
 

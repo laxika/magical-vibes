@@ -20,7 +20,7 @@ public class FallFromFavor extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new TapPermanentsEffect(TapUntapScope.ENCHANTED))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeMonarchEffect())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentControlledByMonarchPredicate(),
                         null,
                         DoesntUntapEffect.enchanted()));

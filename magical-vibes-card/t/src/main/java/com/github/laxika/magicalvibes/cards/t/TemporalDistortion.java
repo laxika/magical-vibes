@@ -32,7 +32,7 @@ public class TemporalDistortion extends Card {
         addEffect(EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED,
                 new TriggeringPermanentConditionalEffect(CREATURE_OR_LAND, hourglassCounter));
 
-        addEffect(EffectSlot.STATIC, new MatchingPermanentsDoesntUntapEffect(
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(
                 new PermanentHasCountersPredicate(CounterType.HOURGLASS)));
 
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new RemoveCounterFromEachMatchingPermanentEffect(

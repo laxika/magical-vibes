@@ -84,11 +84,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Aura slot for player-enchanting Curses: "Whenever a nontoken creature enchanted player controls dies".
      *  Fires once per matching Curse attached to the dying creature's controller. */
     ON_ENCHANTED_PLAYER_NONTOKEN_CREATURE_DIES,
-    STATIC,
     /** Marker for abilities that observe cards as they are put into exile without using the stack. */
     ON_ANY_CARD_EXILED,
-    /** Static cost-modifying effects of cards in the controller's command zone (Eminence). */
-    COMMAND_ZONE_STATIC,
     /** Triggers when the source controller's commander is put into the command zone. */
     ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE,
     ON_SACRIFICE,
@@ -803,6 +800,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers once when one or more creatures the controller controls are declared as attackers.
      *  Unlike ON_ATTACK (which fires per creature), this fires exactly once per combat. */
     ON_ALLY_CREATURES_ATTACK,
+    /** "Whenever a creature you control attacking causes a triggered ability of that creature to
+     *  trigger", including enlist ("whenever this creature enlists a creature"). Each collector checks
+     *  which attacking creature and which ability it watches. */
+    ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS,
     /** Command-zone mirror of {@link #ON_ALLY_CREATURES_ATTACK} for Eminence abilities. */
     COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK,
     /** Triggers once for each player directly attacked by one or more creatures the controller

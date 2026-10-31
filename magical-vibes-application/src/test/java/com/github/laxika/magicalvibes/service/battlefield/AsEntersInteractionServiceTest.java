@@ -95,7 +95,7 @@ class AsEntersInteractionServiceTest {
         UUID opponentId = UUID.randomUUID();
         gameData.orderedPlayerIds.add(opponentId);
         Card card = creature("Tribute Creature");
-        card.addEffect(EffectSlot.STATIC, new TributeEffect(2));
+        card.addStaticEffect(new TributeEffect(2));
         gameData.playerBattlefields.get(controllerId).add(new Permanent(card));
         when(gameQueryService.getOpponentId(gameData, controllerId)).thenReturn(opponentId);
 

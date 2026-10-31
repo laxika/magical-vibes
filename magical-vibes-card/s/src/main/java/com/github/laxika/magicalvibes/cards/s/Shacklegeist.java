@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
@@ -22,7 +21,7 @@ import java.util.List;
 public class Shacklegeist extends Card {
 
     public Shacklegeist() {
-        addEffect(EffectSlot.STATIC, new CanBlockOnlyIfAttackerMatchesPredicateEffect(
+        addStaticEffect(new CanBlockOnlyIfAttackerMatchesPredicateEffect(
                 new PermanentHasKeywordPredicate(Keyword.FLYING),
                 "creatures with flying"
         ));

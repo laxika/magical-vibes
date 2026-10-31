@@ -27,8 +27,8 @@ public class NaturalEmergence extends Card {
                 )),
                 "red or green enchantment"
         ));
-        addEffect(EffectSlot.STATIC, new AllLandsAreCreaturesEffect(
+        addStaticEffect(new AllLandsAreCreaturesEffect(
                 2, 2, null, null, GrantScope.OWN_LANDS));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_LANDS));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_LANDS));
     }
 }

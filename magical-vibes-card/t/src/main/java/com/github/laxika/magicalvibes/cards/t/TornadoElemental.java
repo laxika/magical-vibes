@@ -17,6 +17,6 @@ public class TornadoElemental extends Card {
     public TornadoElemental() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MassDamageEffect(6, false, false, new PermanentHasKeywordPredicate(Keyword.FLYING)));
-        addEffect(EffectSlot.STATIC, new AssignCombatDamageAsThoughUnblockedEffect());
+        addStaticEffect(new AssignCombatDamageAsThoughUnblockedEffect());
     }
 }

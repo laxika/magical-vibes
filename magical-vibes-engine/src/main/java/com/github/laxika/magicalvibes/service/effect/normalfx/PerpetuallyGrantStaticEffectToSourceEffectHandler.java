@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -35,8 +34,7 @@ public class PerpetuallyGrantStaticEffectToSourceEffectHandler implements Normal
         }
 
         var copy = source.getCard().createRuntimeCopy();
-        copy.addEffect(EffectSlot.STATIC,
-                ((PerpetuallyGrantStaticEffectToSourceEffect) effect).staticEffect());
+        copy.addStaticEffect(((PerpetuallyGrantStaticEffectToSourceEffect) effect).staticEffect());
         source.exchangeCard(copy);
     }
 

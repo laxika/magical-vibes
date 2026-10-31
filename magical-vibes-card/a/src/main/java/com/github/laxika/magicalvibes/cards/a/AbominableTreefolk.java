@@ -19,8 +19,7 @@ public class AbominableTreefolk extends Card {
     public AbominableTreefolk() {
         PermanentCount snowPermanentsYouControl = new PermanentCount(
                 new PermanentHasSupertypePredicate(CardSupertype.SNOW), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(snowPermanentsYouControl, snowPermanentsYouControl));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(snowPermanentsYouControl, snowPermanentsYouControl));
 
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.TARGET))

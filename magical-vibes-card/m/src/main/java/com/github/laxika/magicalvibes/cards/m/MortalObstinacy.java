@@ -17,7 +17,7 @@ public class MortalObstinacy extends Card {
     public MortalObstinacy() {
         // Enchant creature you control. Enchanted creature gets +1/+1.
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
 
         // Whenever enchanted creature deals combat damage to a player, you may sacrifice this Aura.
         // If you do, destroy target enchantment.

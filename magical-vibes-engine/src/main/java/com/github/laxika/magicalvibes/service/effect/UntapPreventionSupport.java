@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -43,7 +42,7 @@ public class UntapPreventionSupport {
                 || !(gameQueryService == null
                         ? permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()
                         : gameQueryService.hasLostPrintedAbilities(gameData, permanent))
-                && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                && permanent.getCard().getStaticEffects().stream()
                 .anyMatch(effect -> hasActiveSelfDoesntUntap(gameData, permanent, controllerId, effect));
     }
 

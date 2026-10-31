@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -21,6 +20,6 @@ public class YavimayaEnchantress extends Card {
         // Yavimaya Enchantress gets +1/+1 for each enchantment on the battlefield.
         PermanentCount enchantmentsOnBattlefield =
                 new PermanentCount(new PermanentIsEnchantmentPredicate(), CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(enchantmentsOnBattlefield, enchantmentsOnBattlefield));
+        addStaticEffect(new BoostSelfEffect(enchantmentsOnBattlefield, enchantmentsOnBattlefield));
     }
 }

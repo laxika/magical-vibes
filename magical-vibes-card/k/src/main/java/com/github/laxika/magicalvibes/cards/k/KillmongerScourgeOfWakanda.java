@@ -38,7 +38,7 @@ public class KillmongerScourgeOfWakanda extends Card {
                         "another creature"),
                 "Sacrifice another creature?"));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(2, new CardTypePredicate(CardType.CREATURE)),
                 new StaticBoostEffect(2, 1, GrantScope.SELF)));
     }

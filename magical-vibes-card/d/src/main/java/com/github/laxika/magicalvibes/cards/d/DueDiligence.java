@@ -25,7 +25,7 @@ public class DueDiligence extends Card {
     public DueDiligence() {
         // Enchant creature — enchanted creature gets +2/+2 and has vigilance.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+                .addStaticEffect(new StaticBoostEffect(
                         2, 2, Set.of(Keyword.VIGILANCE), GrantScope.ENCHANTED_CREATURE));
 
         // When this Aura enters, another creature you control gets +2/+2 and gains vigilance until

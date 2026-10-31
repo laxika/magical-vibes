@@ -27,7 +27,7 @@ public class RollingHamsphere extends Card {
                 List.of(new CrewCost(3), AnimatePermanentsEffect.crew()), "Crew 3"));
         PermanentCount hamsters = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.HAMSTER), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(hamsters, hamsters));
+        addStaticEffect(new BoostSelfEffect(hamsters, hamsters));
 
         addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
                 new CreateTokenEffect(3, "Hamster", 1, 1, CardColor.RED,

@@ -29,7 +29,7 @@ public class GrantTriggeredAbilityToCreatedPermanentsEffectHandler implements No
         for (UUID permanentId : entry.getCreatedPermanentIds()) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent != null) {
-                permanent.addPersistentTriggeredEffect(grant.slot(), grant.grantedEffect());
+                permanent.addPersistentAbility(grant.grantedAbility());
             }
         }
     }

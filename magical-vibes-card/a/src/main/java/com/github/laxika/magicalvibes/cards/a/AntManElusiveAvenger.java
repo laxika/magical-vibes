@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePow
 public class AntManElusiveAvenger extends Card {
 
     public AntManElusiveAvenger() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentNotPredicate(new PermanentPowerAtMostSourcePowerPredicate())));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 CreateTokenEffect.ofTreasureToken(new EventValue()));

@@ -31,6 +31,6 @@ public class DoorOfDestinies extends Card {
         ));
 
         // Creatures you control of the chosen type get +1/+1 for each charge counter on Door of Destinies.
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenSubtypeEffect(1, 1, CounterType.CHARGE));
+        addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(1, 1, CounterType.CHARGE));
     }
 }

@@ -25,7 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class CrownOfGondor extends Card {
 
     public CrownOfGondor() {
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                 GrantScope.EQUIPPED_CREATURE));

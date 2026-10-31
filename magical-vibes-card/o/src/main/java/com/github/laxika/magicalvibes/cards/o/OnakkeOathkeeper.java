@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
@@ -19,7 +18,7 @@ public class OnakkeOathkeeper extends Card {
 
     public OnakkeOathkeeper() {
         // Creatures attacking a planeswalker you control cost its controller {1} per creature.
-        addEffect(EffectSlot.STATIC, RequirePaymentToAttackEffect.planeswalkersOnly(1));
+        addStaticEffect(RequirePaymentToAttackEffect.planeswalkersOnly(1));
 
         // {4}{W}{W}, Exile this card from your graveyard: Return target planeswalker card
         // from your graveyard to the battlefield.

@@ -18,8 +18,7 @@ import java.util.Set;
 public class Grixis extends Card {
 
     public Grixis() {
-        addEffect(EffectSlot.STATIC,
-                new GrantUnearthEqualToManaCostToColoredCreatureCardsEffect(
+        addStaticEffect(new GrantUnearthEqualToManaCostToColoredCreatureCardsEffect(
                         Set.of(CardColor.BLUE, CardColor.BLACK, CardColor.RED)));
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 ReturnCardFromGraveyardEffect.builder()

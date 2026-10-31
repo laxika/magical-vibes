@@ -17,7 +17,7 @@ public class KusariGama extends Card {
 
     public KusariGama() {
         // Equipped creature has "{2}: This creature gets +1/+0 until end of turn."
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
                         "{2}",

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -86,7 +85,7 @@ class DrawServiceTest {
     @Test
     void drawFromBottomReplacementUsesTheControllerBottomOfLibrary() {
         Card lantern = createCard("Lantern of Undersight", CardType.ARTIFACT);
-        lantern.addEffect(EffectSlot.STATIC, new DrawFromBottomOfLibraryEffect());
+        lantern.addStaticEffect(new DrawFromBottomOfLibraryEffect());
         gd.playerBattlefields.get(player1Id).add(new Permanent(lantern));
         Card top = createCard("Top", CardType.CREATURE);
         Card bottom = createCard("Bottom", CardType.CREATURE);
@@ -102,7 +101,7 @@ class DrawServiceTest {
     @Test
     void anotherPlayersDrawInstructionWaitsBehindCurrentReplacement() {
         Card abundance = createCard("Abundance", CardType.ENCHANTMENT);
-        abundance.addEffect(EffectSlot.STATIC, new AbundanceDrawReplacementEffect());
+        abundance.addStaticEffect(new AbundanceDrawReplacementEffect());
         gd.playerBattlefields.get(player1Id).add(new Permanent(abundance));
         Card first = createCard("First", CardType.CREATURE);
         Card second = createCard("Second", CardType.CREATURE);
@@ -119,7 +118,7 @@ class DrawServiceTest {
     @Test
     void multipleDrawsWaitForEachReplacementChoice() {
         Card abundance = createCard("Abundance", CardType.ENCHANTMENT);
-        abundance.addEffect(EffectSlot.STATIC, new AbundanceDrawReplacementEffect());
+        abundance.addStaticEffect(new AbundanceDrawReplacementEffect());
         gd.playerBattlefields.get(player1Id).add(new Permanent(abundance));
         Card first = createCard("First", CardType.CREATURE);
         Card second = createCard("Second", CardType.CREATURE);
@@ -148,7 +147,7 @@ class DrawServiceTest {
     void opponentMultiCardDrawIsReplacedWithOneCardForEachPlayer() {
         when(gameQueryService.getOpponentId(gd, player2Id)).thenReturn(player1Id);
         Card almsCollector = createCard("Alms Collector", CardType.CREATURE);
-        almsCollector.addEffect(EffectSlot.STATIC, new OpponentDrawTwoOrMoreReplacedEffect());
+        almsCollector.addStaticEffect(new OpponentDrawTwoOrMoreReplacedEffect());
         gd.playerBattlefields.get(player1Id).add(new Permanent(almsCollector));
         gd.playerHands.put(player1Id, new ArrayList<>());
         gd.playerHands.put(player2Id, new ArrayList<>());
@@ -417,7 +416,7 @@ class DrawServiceTest {
     @Test
     void conditionalDoubleDrawReplacementOnlyAppliesWhenConditionIsMet() {
         Card sourceCard = createCard("Vnwxt, Verbose Host", CardType.CREATURE);
-        sourceCard.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        sourceCard.addStaticEffect(new ConditionalEffect(
                 new MaxSpeed(), new DoubleDrawReplacementEffect()));
         gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
 
@@ -436,7 +435,7 @@ class DrawServiceTest {
     @Test
     void quantumRiddlerAddsOneCardToTheWholeDrawInstruction() {
         Card sourceCard = createCard("Quantum Riddler", CardType.CREATURE);
-        sourceCard.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        sourceCard.addStaticEffect(new ConditionalEffect(
                 new CardsInHandAtMost(1), new QuantumRiddlerDrawReplacementEffect()));
         gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
 
@@ -456,7 +455,7 @@ class DrawServiceTest {
     @Test
     void firstNonDrawStepReplacementAppliesOnlyOncePerTurn() {
         Card sourceCard = createCard("Reed Richards, Smartest Man", CardType.CREATURE);
-        sourceCard.addEffect(EffectSlot.STATIC, new FirstNonDrawStepDrawFourReplacementEffect());
+        sourceCard.addStaticEffect(new FirstNonDrawStepDrawFourReplacementEffect());
         gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
 
         Card firstCard = createCard("First card", CardType.CREATURE);
@@ -479,7 +478,7 @@ class DrawServiceTest {
     @Test
     void emptyLibraryDrawReplacementOnlySkipsControllerDraw() {
         Card sourceCard = createCard("Living Conundrum", CardType.CREATURE);
-        sourceCard.addEffect(EffectSlot.STATIC, new LivingConundrumDrawReplacementEffect());
+        sourceCard.addStaticEffect(new LivingConundrumDrawReplacementEffect());
         gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
         gd.playerDecks.put(player1Id, new ArrayList<>());
         gd.playerHands.put(player1Id, new ArrayList<>());

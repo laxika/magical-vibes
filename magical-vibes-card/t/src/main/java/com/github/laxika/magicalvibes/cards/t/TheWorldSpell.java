@@ -23,7 +23,7 @@ public class TheWorldSpell extends Card {
                 new CardNotPredicate(new CardSubtypePredicate(CardSubtype.SAGA))
         ));
 
-        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
+        addStaticEffect(new ReadAheadEffect(false));
         addEffect(EffectSlot.SAGA_CHAPTER_I,
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(7, nonSagaPermanent));
         addEffect(EffectSlot.SAGA_CHAPTER_II,

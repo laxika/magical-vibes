@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class UnderworldBreach extends Card {
 
     public UnderworldBreach() {
-        addEffect(EffectSlot.STATIC, new GrantEscapeToGraveyardCardsEffect(
+        addStaticEffect(new GrantEscapeToGraveyardCardsEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
         addEffect(EffectSlot.END_STEP_TRIGGERED, new SacrificeSelfEffect());
     }

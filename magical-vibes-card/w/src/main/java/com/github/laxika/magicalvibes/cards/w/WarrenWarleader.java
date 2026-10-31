@@ -22,7 +22,7 @@ import java.util.Set;
 public class WarrenWarleader extends Card {
 
     public WarrenWarleader() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}", false));
+        addStaticEffect(new KickerEffect("{2}", false));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new ChooseOneEffect(List.of(

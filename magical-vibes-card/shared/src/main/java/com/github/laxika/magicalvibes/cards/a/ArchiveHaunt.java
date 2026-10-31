@@ -14,6 +14,6 @@ public class ArchiveHaunt extends Card {
         addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
                 new DrawCardEffect(1),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
-        addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect());
+        addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 }

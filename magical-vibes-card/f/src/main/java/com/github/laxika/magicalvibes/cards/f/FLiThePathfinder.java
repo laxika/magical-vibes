@@ -26,8 +26,8 @@ import java.util.Set;
 public class FLiThePathfinder extends Card {
 
     public FLiThePathfinder() {
-        addEffect(EffectSlot.STATIC, new StoriedEffect());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new StoriedEffect());
+        addStaticEffect(new ConditionalEffect(
                 new ControllerHasEnduringStory(),
                 new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES)));
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,

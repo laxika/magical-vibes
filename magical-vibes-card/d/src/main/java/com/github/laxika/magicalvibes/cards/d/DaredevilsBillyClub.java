@@ -19,8 +19,8 @@ public class DaredevilsBillyClub extends Card {
         addSimultaneousEffects(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DealDamageToAnyTargetEffect(2),
                 new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

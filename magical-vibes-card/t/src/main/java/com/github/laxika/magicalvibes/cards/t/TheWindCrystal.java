@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DoubleLifeGainEffect;
@@ -21,9 +20,9 @@ import java.util.Set;
 public class TheWindCrystal extends Card {
 
     public TheWindCrystal() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardColorPredicate(CardColor.WHITE), 1, CostModificationScope.SELF));
-        addEffect(EffectSlot.STATIC, new DoubleLifeGainEffect());
+        addStaticEffect(new DoubleLifeGainEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}{W}{W}",

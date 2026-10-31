@@ -22,8 +22,8 @@ public class IAmUntouchable extends Card {
 
     public IAmUntouchable() {
         // You and permanents you control have hexproof.
-        addEffect(EffectSlot.STATIC, new GrantControllerKeywordEffect(Keyword.HEXPROOF));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS));
+        addStaticEffect(new GrantControllerKeywordEffect(Keyword.HEXPROOF));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS));
 
         // When combat damage is dealt to you, create a 4/4 colorless Scarecrow artifact creature
         // token with vigilance, then abandon this scheme.

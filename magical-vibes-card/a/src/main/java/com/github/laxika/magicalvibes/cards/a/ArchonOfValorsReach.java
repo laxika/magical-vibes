@@ -26,7 +26,7 @@ public class ArchonOfValorsReach extends Card {
                 CardType.DUNGEON,
                 CardType.VANGUARD
         )));
-        addEffect(EffectSlot.STATIC, new PlayersCantCastSpellsMatchingPredicateEffect(
+        addStaticEffect(new PlayersCantCastSpellsMatchingPredicateEffect(
                 new CardHasSourceChosenCardTypePredicate()));
     }
 }

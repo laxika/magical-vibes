@@ -19,7 +19,7 @@ import java.util.List;
 public class TaigamSidisisHand extends Card {
 
     public TaigamSidisisHand() {
-        addEffect(EffectSlot.STATIC, new SkipDrawStepEffect());
+        addStaticEffect(new SkipDrawStepEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 LookAtTopCardsEffect.chooseExactlyNToHandRestToGraveyard(3, 1));
 

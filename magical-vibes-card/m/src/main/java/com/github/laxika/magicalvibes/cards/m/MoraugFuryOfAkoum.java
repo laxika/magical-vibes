@@ -17,8 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class MoraugFuryOfAkoum extends Card {
 
     public MoraugFuryOfAkoum() {
-        addEffect(EffectSlot.STATIC,
-                new BoostByAttackCountEffect(1, 0, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new BoostByAttackCountEffect(1, 0, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
                 new ConditionalEffect(new ControllerMainPhase(),
                         new AdditionalCombatPhasesAfterMainEffect(1,

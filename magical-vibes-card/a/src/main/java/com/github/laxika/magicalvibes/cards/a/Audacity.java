@@ -17,8 +17,7 @@ public class Audacity extends Card {
 
     public Audacity() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(2, 0, Set.of(Keyword.TRAMPLE), GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(2, 0, Set.of(Keyword.TRAMPLE), GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, new DrawCardEffect(1));
     }
 }

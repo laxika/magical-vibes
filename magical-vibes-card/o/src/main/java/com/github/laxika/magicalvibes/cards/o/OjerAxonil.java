@@ -13,7 +13,7 @@ public class OjerAxonil extends Card {
 
     public OjerAxonil() {
         setBackFaceCard(new TempleOfPower());
-        addEffect(EffectSlot.STATIC, new OjerAxonilDamageReplacementEffect());
+        addStaticEffect(new OjerAxonilDamageReplacementEffect());
         addEffect(EffectSlot.ON_DEATH, new ReturnSourceTransformedFromGraveyardEffect(true, true));
     }
 

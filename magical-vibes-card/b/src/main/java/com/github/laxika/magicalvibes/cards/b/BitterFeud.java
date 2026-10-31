@@ -12,6 +12,6 @@ public class BitterFeud extends Card {
 
     public BitterFeud() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseTwoPlayersOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new DoubleDamageBetweenChosenPlayersEffect());
+        addStaticEffect(new DoubleDamageBetweenChosenPlayersEffect());
     }
 }

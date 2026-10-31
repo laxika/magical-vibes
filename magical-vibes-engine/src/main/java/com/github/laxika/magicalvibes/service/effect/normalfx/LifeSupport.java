@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.replacement.LifeGainEvent;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.LichDuelMasteryLifeLossReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainReplacementEffect;
@@ -570,7 +569,7 @@ public class LifeSupport {
             return false;
         }
         for (Permanent angel : battlefield) {
-            boolean hasReplacement = angel.getCard().getEffects(EffectSlot.STATIC).stream()
+            boolean hasReplacement = angel.getCard().getStaticEffects().stream()
                     .anyMatch(EnduringAngelLifeTotalReplacementEffect.class::isInstance);
             if (hasReplacement && animationSupport.transformToBackFace(gameData, angel)) {
                 return applySetLifeTotal(gameData, playerId, 3);

@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 public class YarusRoarOfTheOldGods extends Card {
 
     public YarusRoarOfTheOldGods() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER, new AllyCombatDamageTriggerEffect(
                 new PermanentIsFaceDownPredicate(), new DrawCardEffect(1), false, true));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(

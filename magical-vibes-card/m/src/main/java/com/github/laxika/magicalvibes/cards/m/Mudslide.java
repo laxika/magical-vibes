@@ -24,7 +24,7 @@ public class Mudslide extends Card {
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
 
         // Creatures without flying don't untap during their controllers' untap steps.
-        addEffect(EffectSlot.STATIC, new MatchingPermanentsDoesntUntapEffect(creatureWithoutFlying));
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(creatureWithoutFlying));
 
         // At the beginning of each player's upkeep, that player may choose any number of tapped
         // creatures without flying they control and pay {2} for each creature chosen this way.

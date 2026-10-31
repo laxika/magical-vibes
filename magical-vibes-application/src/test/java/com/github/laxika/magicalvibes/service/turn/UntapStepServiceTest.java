@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -122,7 +121,7 @@ class UntapStepServiceTest {
     @Test
     void lostPrintedAbilitiesRemoveUntapLimit() {
         Card card = createCardWithName("Untap Limiter");
-        card.addEffect(EffectSlot.STATIC, new StaticOrbEffect());
+        card.addStaticEffect(new StaticOrbEffect());
         Permanent source = addPermanent(player1Id, card);
         for (int i = 0; i < 3; i++) {
             addPermanent(player1Id, createCardWithName("Tapped Permanent")).tap();
@@ -136,8 +135,7 @@ class UntapStepServiceTest {
     @DisplayName("A face-up plane untaps permanents on both battlefields during each player's untap step")
     void planarEffectUntapsAllPermanentsDuringEachUntapStep() {
         Card horizonBoughs = createCardWithName("Horizon Boughs");
-        horizonBoughs.addEffect(EffectSlot.STATIC,
-                new AllPermanentsUntapDuringEachPlayersUntapStepEffect());
+        horizonBoughs.addStaticEffect(new AllPermanentsUntapDuringEachPlayersUntapStepEffect());
         gd.planechase = new PlanechaseState();
         gd.planechase.faceUp.add(new PlanarObject(horizonBoughs, gd.nextTimestamp()));
 
@@ -246,7 +244,7 @@ class UntapStepServiceTest {
         @DisplayName("Permanent with self-scoped DoesntUntapEffect stays tapped")
         void doesntUntapWithStaticEffect() {
             Card card = createCardWithName("Colossus of Sardia");
-            card.addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+            card.addStaticEffect(DoesntUntapEffect.self());
             Permanent perm = addPermanent(player1Id, card);
             perm.tap();
 
@@ -259,7 +257,7 @@ class UntapStepServiceTest {
         @DisplayName("Permanent with DoesntUntapWithCounterEffect stays tapped while it has such a counter")
         void doesntUntapWhileCounterPresent() {
             Card card = createCardWithName("Land Cap");
-            card.addEffect(EffectSlot.STATIC, new DoesntUntapWithCounterEffect(CounterType.DEPLETION));
+            card.addStaticEffect(new DoesntUntapWithCounterEffect(CounterType.DEPLETION));
             Permanent perm = addPermanent(player1Id, card);
             perm.tap();
             perm.setCounterCount(CounterType.DEPLETION, 1);
@@ -273,7 +271,7 @@ class UntapStepServiceTest {
         @DisplayName("Permanent with DoesntUntapWithCounterEffect untaps once the counter is gone")
         void untapsWhenCounterAbsent() {
             Card card = createCardWithName("Land Cap");
-            card.addEffect(EffectSlot.STATIC, new DoesntUntapWithCounterEffect(CounterType.DEPLETION));
+            card.addStaticEffect(new DoesntUntapWithCounterEffect(CounterType.DEPLETION));
             Permanent perm = addPermanent(player1Id, card);
             perm.tap();
 
@@ -288,8 +286,7 @@ class UntapStepServiceTest {
             Permanent creature = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
             creature.tap();
             Card auraCard = createCardWithName("Cocoon");
-            auraCard.addEffect(EffectSlot.STATIC,
-                    DoesntUntapWithCounterEffect.enchanted(CounterType.PUPA));
+            auraCard.addStaticEffect(DoesntUntapWithCounterEffect.enchanted(CounterType.PUPA));
             Permanent aura = addPermanent(player1Id, auraCard);
             aura.setAttachedTo(creature.getId());
             aura.setCounterCount(CounterType.PUPA, 1);
@@ -306,8 +303,7 @@ class UntapStepServiceTest {
             creature.tap();
             creature.setCounterCount(CounterType.SLEEP, 1);
             Card auraCard = createCardWithName("Venarian Gold");
-            auraCard.addEffect(EffectSlot.STATIC,
-                    DoesntUntapWithCounterEffect.enchantedWithCounterOnEnchantedPermanent(CounterType.SLEEP));
+            auraCard.addStaticEffect(DoesntUntapWithCounterEffect.enchantedWithCounterOnEnchantedPermanent(CounterType.SLEEP));
             Permanent aura = addPermanent(player1Id, auraCard);
             aura.setAttachedTo(creature.getId());
 
@@ -401,7 +397,7 @@ class UntapStepServiceTest {
         @DisplayName("Permanent with self-scoped DoesntUntapEffect still clears summoning sickness")
         void clearsSummoningSicknessEvenWhenDoesntUntap() {
             Card card = createCardWithName("Colossus of Sardia");
-            card.addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+            card.addStaticEffect(DoesntUntapEffect.self());
             Permanent perm = addPermanent(player1Id, card);
             perm.tap();
             perm.setSummoningSick(true);
@@ -420,7 +416,7 @@ class UntapStepServiceTest {
         @DisplayName("Tapped permanent with MayNotUntapDuringUntapStepEffect queues a PendingMayAbility")
         void queuesPendingMayAbility() {
             Card card = createCardWithName("Verity Circle Target");
-            card.addEffect(EffectSlot.STATIC, new MayNotUntapDuringUntapStepEffect());
+            card.addStaticEffect(new MayNotUntapDuringUntapStepEffect());
             Permanent perm = addPermanent(player1Id, card);
             perm.tap();
 
@@ -443,8 +439,7 @@ class UntapStepServiceTest {
         @DisplayName("Self-scoped effect untaps only its source during an opponent's untap step")
         void selfScopedEffectOnlyUntapsSource() {
             Card waterskinCard = createCardWithName("Bender's Waterskin");
-            waterskinCard.addEffect(EffectSlot.STATIC,
-                    new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
+            waterskinCard.addStaticEffect(new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
                             TurnStep.UNTAP, null, TapUntapScope.SELF));
             Permanent waterskin = addPermanent(player2Id, waterskinCard);
             waterskin.tap();
@@ -462,8 +457,7 @@ class UntapStepServiceTest {
         void untapsNonActivePlayerWithSeedbornMuse() {
             // Player 2 controls Seedborn Muse
             Card museCard = createCardWithName("Seedborn Muse");
-            museCard.addEffect(EffectSlot.STATIC,
-                    new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP));
+            museCard.addStaticEffect(new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP));
             addPermanent(player2Id, museCard);
 
             // Player 2 also has a tapped creature
@@ -482,8 +476,7 @@ class UntapStepServiceTest {
             // Player 2 controls a permanent with a filtered untap effect
             PermanentPredicate filter = new PermanentTruePredicate();
             Card effectCard = createCardWithName("Filtered Untapper");
-            effectCard.addEffect(EffectSlot.STATIC,
-                    new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP, filter));
+            effectCard.addStaticEffect(new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP, filter));
             addPermanent(player2Id, effectCard);
 
             // Player 2 has two tapped creatures — only one matches the filter
@@ -511,8 +504,7 @@ class UntapStepServiceTest {
         void sourceRelativeFilterOnlyUntapsSource() {
             PermanentPredicate filter = new PermanentIsSourcePermanentPredicate();
             Card effectCard = createCardWithName("Source Untapper");
-            effectCard.addEffect(EffectSlot.STATIC,
-                    new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP, filter));
+            effectCard.addStaticEffect(new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP, filter));
             Permanent source = addPermanent(player2Id, effectCard);
             source.tap();
 
@@ -533,8 +525,7 @@ class UntapStepServiceTest {
         void activePlayerSeedbornMuseDoesNotUntapOpponent() {
             // Player 1 (active) controls Seedborn Muse
             Card museCard = createCardWithName("Seedborn Muse");
-            museCard.addEffect(EffectSlot.STATIC,
-                    new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP));
+            museCard.addStaticEffect(new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP));
             addPermanent(player1Id, museCard);
 
             // Player 2 has a tapped creature
@@ -557,7 +548,7 @@ class UntapStepServiceTest {
         @DisplayName("Applies when an untapped Storage Matrix is out and the active player has a tapped permanent")
         void appliesWithUntappedMatrixAndTappedPermanent() {
             Card matrixCard = createCardWithName("Storage Matrix");
-            matrixCard.addEffect(EffectSlot.STATIC, new StorageMatrixEffect());
+            matrixCard.addStaticEffect(new StorageMatrixEffect());
             Permanent matrix = addPermanent(player1Id, matrixCard);
             when(gameQueryService.hasActiveStaticEffect(gd, matrix, StorageMatrixEffect.class)).thenReturn(true);
             addPermanent(player1Id, createCardWithName("Grizzly Bears")).tap();
@@ -569,7 +560,7 @@ class UntapStepServiceTest {
         @DisplayName("Does not apply when the Storage Matrix is tapped")
         void doesNotApplyWhenMatrixTapped() {
             Card matrixCard = createCardWithName("Storage Matrix");
-            matrixCard.addEffect(EffectSlot.STATIC, new StorageMatrixEffect());
+            matrixCard.addStaticEffect(new StorageMatrixEffect());
             addPermanent(player1Id, matrixCard).tap();
             addPermanent(player1Id, createCardWithName("Grizzly Bears")).tap();
 
@@ -580,7 +571,7 @@ class UntapStepServiceTest {
         @DisplayName("Does not apply when the active player has nothing tapped")
         void doesNotApplyWithNothingTapped() {
             Card matrixCard = createCardWithName("Storage Matrix");
-            matrixCard.addEffect(EffectSlot.STATIC, new StorageMatrixEffect());
+            matrixCard.addStaticEffect(new StorageMatrixEffect());
             addPermanent(player1Id, matrixCard);
 
             assertThat(sut.storageMatrixRestrictionApplies(gd, player1Id)).isFalse();

@@ -17,8 +17,7 @@ public class IntruderAlarm extends Card {
 
     public IntruderAlarm() {
         // Creatures don't untap during their controllers' untap steps.
-        addEffect(EffectSlot.STATIC,
-                new MatchingPermanentsDoesntUntapEffect(new PermanentIsCreaturePredicate()));
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(new PermanentIsCreaturePredicate()));
 
         // Whenever a creature enters, untap all creatures.
         addEffect(EffectSlot.ON_ANY_CREATURE_ENTERS_BATTLEFIELD,

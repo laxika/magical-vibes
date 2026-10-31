@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ZEN", collectorNumber = "155")
@@ -37,7 +36,7 @@ public class ZektarShrineExpedition extends Card {
                                 CardType.CREATURE, 1, "Elemental", 7, 1,
                                 CardColor.RED, null, List.of(CardSubtype.ELEMENTAL),
                                 Set.of(Keyword.TRAMPLE, Keyword.HASTE), Set.of(),
-                                false, false, Map.of(), List.of(),
+                                false, false, List.of(), List.of(),
                                 false, true, false, 0, Set.of())
                 ),
                 "Remove three quest counters from Zektar Shrine Expedition and sacrifice it: "

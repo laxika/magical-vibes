@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TLE", collectorNumber = "4")
@@ -47,7 +46,7 @@ public class LitaMechanicalEngineer extends Card {
                         Set.of(),
                         false,
                         false,
-                        Map.of(),
+                        List.of(),
                         List.of(new ActivatedAbility(
                                 false,
                                 null,

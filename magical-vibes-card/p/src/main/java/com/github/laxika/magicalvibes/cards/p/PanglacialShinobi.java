@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LibraryNinjutsuEffect;
 public class PanglacialShinobi extends Card {
 
     public PanglacialShinobi() {
-        addEffect(EffectSlot.STATIC, new LibraryNinjutsuEffect("{1}{U}"));
+        addStaticEffect(new LibraryNinjutsuEffect("{1}{U}"));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(1));
     }
 }

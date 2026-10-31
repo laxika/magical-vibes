@@ -17,9 +17,8 @@ public class RuneOfSustenance extends Card {
     public RuneOfSustenance() {
         target(TargetFilters.permanent())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+                .addStaticEffect(new GrantKeywordEffect(
                         Keyword.LIFELINK, GrantScope.ENCHANTED_PERMANENT, new PermanentIsCreaturePredicate()))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect(Keyword.LIFELINK));
+                .addStaticEffect(new GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect(Keyword.LIFELINK));
     }
 }

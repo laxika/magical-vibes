@@ -686,8 +686,8 @@ public class StateBasedActionService {
                 continue;
             }
             List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects = new ArrayList<>(
-                    permanent.getCard().getEffects(EffectSlot.STATIC));
-            effects.addAll(permanent.getTemporaryTriggeredEffects(EffectSlot.STATIC));
+                    permanent.getCard().getStaticEffects());
+            effects.addAll(permanent.getTemporaryStaticEffects());
             for (com.github.laxika.magicalvibes.model.effect.CardEffect effect : effects) {
                 if (!(effect instanceof CounterLimitEffect limit)
                         || permanent.isStaticEffectSuppressed(effect.getClass())) {
@@ -916,7 +916,7 @@ public class StateBasedActionService {
                 || gameQueryService.computeStaticBonus(gameData, p).losesAllAbilities()) {
             return true;
         }
-        boolean requiresSingleSource = p.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean requiresSingleSource = p.getCard().getStaticEffects().stream()
                 .anyMatch(CantBeDestroyedByLethalDamageUnlessSingleSourceEffect.class::isInstance);
         if (!requiresSingleSource) {
             return true;

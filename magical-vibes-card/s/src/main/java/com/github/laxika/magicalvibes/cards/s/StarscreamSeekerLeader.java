@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 public class StarscreamSeekerLeader extends Card {
 
     public StarscreamSeekerLeader() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new ConditionalEffect(

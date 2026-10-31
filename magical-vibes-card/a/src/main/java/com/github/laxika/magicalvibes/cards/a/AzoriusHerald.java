@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 public class AzoriusHerald extends Card {
 
     public AzoriusHerald() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(4), TriggerMode.INDEPENDENT);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ConditionalEffect.unless(
                 new NotCondition(new ColorSpentToCast(ManaColor.BLUE)), new SacrificeSelfEffect()), TriggerMode.INDEPENDENT);

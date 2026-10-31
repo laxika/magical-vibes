@@ -13,7 +13,7 @@ public class OverbeingOfMyth extends Card {
 
     public OverbeingOfMyth() {
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
         addEffect(EffectSlot.DRAW_TRIGGERED, new DrawCardEffect(1));
     }
 }

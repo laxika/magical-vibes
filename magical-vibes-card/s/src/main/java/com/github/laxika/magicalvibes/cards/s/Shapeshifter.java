@@ -26,7 +26,7 @@ public class Shapeshifter extends Card {
                 new MayEffect(new ChooseNumberEffect(0, 7), "Choose a number between 0 and 7?"));
         // "Shapeshifter's power is equal to the last chosen number and its toughness is equal to
         // 7 minus that number." — characteristic-defining P/T (power = N, toughness = 7 − N).
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new ChosenNumberOnSource(),
                 new Sum(new Fixed(7), new Scaled(new ChosenNumberOnSource(), -1))));
     }

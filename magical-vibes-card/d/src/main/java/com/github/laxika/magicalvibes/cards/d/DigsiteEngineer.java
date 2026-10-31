@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "C21", collectorNumber = "15")
@@ -30,8 +30,7 @@ public class DigsiteEngineer extends Card {
                         List.of(new MayPayManaEffect("{2}", new CreateTokenEffect(
                                 1, "Construct", 0, 0,
                                 null, List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT),
-                                Map.of(EffectSlot.STATIC,
-                                        new BoostSelfEffect(artifactsYouControl, artifactsYouControl))),
+                                List.of(StaticAbility.of(new BoostSelfEffect(artifactsYouControl, artifactsYouControl)))),
                                 "Pay {2} to create a 0/0 colorless Construct artifact creature token?")),
                         (String) null));
     }

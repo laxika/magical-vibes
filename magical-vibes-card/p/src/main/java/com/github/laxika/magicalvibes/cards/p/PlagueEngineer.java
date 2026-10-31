@@ -17,7 +17,7 @@ public class PlagueEngineer extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
 
         // Creatures of the chosen type your opponents control get -1/-1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, -1, GrantScope.OPPONENT_CREATURES,
+        addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.OPPONENT_CREATURES,
                 new PermanentHasSourceChosenSubtypePredicate()));
     }
 }

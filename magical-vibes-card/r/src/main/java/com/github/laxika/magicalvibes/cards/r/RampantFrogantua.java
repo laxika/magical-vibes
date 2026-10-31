@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPutMilled
 public class RampantFrogantua extends Card {
 
     public RampantFrogantua() {
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 new Scaled(new PlayersWhoLostGame(), 10),
                 new Scaled(new PlayersWhoLostGame(), 10),
                 GrantScope.SELF));

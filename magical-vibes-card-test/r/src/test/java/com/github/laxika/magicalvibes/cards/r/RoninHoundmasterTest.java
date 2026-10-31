@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -81,7 +80,7 @@ class RoninHoundmasterTest extends BaseCardTest {
         addCreatureReady(player1, new WanderingOnes());
         addCreatureReady(player1, new WanderingOnes());
         RoninHoundmaster card = new RoninHoundmaster();
-        card.addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        card.addStaticEffect(new CanBlockAnyNumberOfCreaturesEffect());
         Permanent houndmaster = addCreatureReady(player2, card);
 
         declareAttackersAndPrepareBlockers(List.of(0, 1));

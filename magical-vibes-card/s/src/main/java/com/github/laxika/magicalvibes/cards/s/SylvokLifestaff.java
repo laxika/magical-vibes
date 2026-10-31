@@ -14,7 +14,7 @@ public class SylvokLifestaff extends Card {
 
     public SylvokLifestaff() {
         // Equipped creature gets +1/+0
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature dies, you gain 3 life
         addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new GainLifeEffect(3));

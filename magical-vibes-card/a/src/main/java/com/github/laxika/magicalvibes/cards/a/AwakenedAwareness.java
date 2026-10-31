@@ -29,7 +29,7 @@ public class AwakenedAwareness extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new PutCountersOnEnchantedCreatureEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, new XValue()))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
                         new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
                         null));

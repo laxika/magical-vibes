@@ -19,7 +19,7 @@ public class RiveteersRequisitioner extends Card {
     public RiveteersRequisitioner() {
         addCastingOption(AlternateHandCast.blitz("{2}{R}"));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_DEATH, CreateTokenEffect.ofTreasureToken(1));
         addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(

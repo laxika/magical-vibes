@@ -16,7 +16,6 @@ public class SkywardSpider extends Card {
     public SkywardSpider() {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(2));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF, new PermanentIsModifiedPredicate()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF, new PermanentIsModifiedPredicate()));
     }
 }

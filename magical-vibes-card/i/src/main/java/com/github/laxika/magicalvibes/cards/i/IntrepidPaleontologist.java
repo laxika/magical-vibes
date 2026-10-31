@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -30,7 +29,7 @@ public class IntrepidPaleontologist extends Card {
                 "{2}: Exile target card from a graveyard."
         ));
 
-        addEffect(EffectSlot.STATIC, AllowCastFromCardsExiledWithSourceEffect.withEntryCounter(
+        addStaticEffect(AllowCastFromCardsExiledWithSourceEffect.withEntryCounter(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSubtypePredicate(CardSubtype.DINOSAUR))),

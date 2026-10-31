@@ -18,7 +18,7 @@ import java.util.Set;
 public class KorFirewalker extends Card {
 
     public KorFirewalker() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.RED)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.RED)));
 
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new MayEffect(
                 new SpellCastTriggerEffect(new CardColorPredicate(CardColor.RED), List.of(new GainLifeEffect(1))),

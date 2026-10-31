@@ -57,15 +57,15 @@ public class HishOfTheSnakeCult extends Card {
                 Set.of(CardSubtype.NAGA, CardSubtype.SERPENT));
         var snakes = new PermanentHasSubtypePredicate(CardSubtype.SNAKE);
 
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(
+        addStaticEffect(new GrantSubtypeEffect(
                 CardSubtype.SNAKE, GrantScope.ALL_OWN_CREATURES, true, nagasOrSerpents));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.DEATHTOUCH, Keyword.POISONOUS), GrantScope.ALL_OWN_CREATURES, snakes));
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new GrantEffectEffect(
                 new CantBeBlockedByCreaturesMatchingPredicateEffect(new PermanentPowerAtMostPredicate(2)),
                 GrantScope.ALL_OWN_CREATURES,
                 snakes));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER),
                 GrantScope.ALL_OWN_CREATURES,

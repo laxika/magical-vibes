@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -21,7 +22,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "191")
@@ -40,8 +40,9 @@ public class GarrukCursedHuntsman extends Card {
                         CardType.CREATURE, 2, "Wolf", 2, 2, CardColor.BLACK,
                         Set.of(CardColor.BLACK, CardColor.GREEN), List.of(CardSubtype.WOLF), Set.of(), Set.of(),
                         false, false,
-                        Map.of(EffectSlot.ON_DEATH, new PutCounterOnEachControlledPermanentEffect(
-                                CounterType.LOYALTY, 1, new PermanentHasSubtypePredicate(CardSubtype.GARRUK))),
+                        List.of(
+                                LegacySlots.triggered(EffectSlot.ON_DEATH, new PutCounterOnEachControlledPermanentEffect(
+                                CounterType.LOYALTY, 1, new PermanentHasSubtypePredicate(CardSubtype.GARRUK)))),
                         List.of(), false, false, false, 0, Set.of()
                 )),
                 "0: Create two 2/2 black and green Wolf creature tokens with \"When this token dies, "

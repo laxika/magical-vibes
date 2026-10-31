@@ -20,7 +20,7 @@ import java.util.List;
 public class LiberatorUrzasBattlethopter extends Card {
 
     public LiberatorUrzasBattlethopter() {
-        addEffect(EffectSlot.STATIC, new GrantFlashToCardTypeEffect(new CardAnyOfPredicate(List.of(
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardAnyOfPredicate(List.of(
                 new CardIsColorlessPredicate(),
                 new CardTypePredicate(CardType.ARTIFACT)
         ))));

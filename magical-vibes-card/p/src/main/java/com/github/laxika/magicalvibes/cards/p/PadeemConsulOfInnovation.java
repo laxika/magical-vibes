@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class PadeemConsulOfInnovation extends Card {
 
     public PadeemConsulOfInnovation() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS, new PermanentIsArtifactPredicate()));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasGreatestManaValueAmongAllArtifactsPredicate()),

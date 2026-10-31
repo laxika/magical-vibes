@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasKickerPredicate;
 public class MurasaSproutling extends Card {
 
     public MurasaSproutling() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{G}"));
+        addStaticEffect(new KickerEffect("{1}{G}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)

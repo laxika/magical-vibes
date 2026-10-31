@@ -23,7 +23,7 @@ public class GeistTrappers extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new SoulbondPairWithEnteringEffect());
 
         // As long as this creature is paired with another creature, both creatures have reach.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
                 new GrantKeywordEffect(Keyword.REACH, GrantScope.SELF_AND_PAIRED)));
     }

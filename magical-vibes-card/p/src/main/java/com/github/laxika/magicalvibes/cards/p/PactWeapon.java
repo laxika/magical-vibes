@@ -21,7 +21,7 @@ import java.util.List;
 public class PactWeapon extends Card {
 
     public PactWeapon() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceIsAttached(), new CantLoseGameFromLifeEffect()));
 
         addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(

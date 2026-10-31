@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 public class BrushfireElemental extends Card {
 
     public BrushfireElemental() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtMostPredicate(2)));
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new BoostSelfEffect(2, 2));
     }

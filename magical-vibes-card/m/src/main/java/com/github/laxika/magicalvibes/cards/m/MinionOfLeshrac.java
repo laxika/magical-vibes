@@ -24,7 +24,7 @@ public class MinionOfLeshrac extends Card {
 
     public MinionOfLeshrac() {
         // Protection from black
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
 
         // At the beginning of your upkeep, this creature deals 5 damage to you unless you sacrifice
         // a creature other than this creature. If this creature deals damage to you this way, tap it.

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
@@ -16,6 +15,6 @@ public class NamelessOne extends Card {
         addMorph("{2}{U}");
         PermanentCount wizardCount = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.WIZARD), CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(wizardCount, wizardCount));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(wizardCount, wizardCount));
     }
 }

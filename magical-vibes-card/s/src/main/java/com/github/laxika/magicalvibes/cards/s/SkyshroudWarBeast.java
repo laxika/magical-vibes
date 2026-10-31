@@ -26,7 +26,6 @@ public class SkyshroudWarBeast extends Card {
                 new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))
         ));
         PermanentCount opponentNonbasicLands = new PermanentCount(nonbasicLand, CountScope.CHOSEN_PLAYER);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(opponentNonbasicLands, opponentNonbasicLands));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(opponentNonbasicLands, opponentNonbasicLands));
     }
 }

@@ -11,6 +11,6 @@ public class StackOfPaperwork extends Card {
 
     public StackOfPaperwork() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
-        addEffect(EffectSlot.STATIC, new CombatDamageUsesStackEffect());
+        addStaticEffect(new CombatDamageUsesStackEffect());
     }
 }

@@ -19,7 +19,7 @@ public class TeferisMoat extends Card {
 
     public TeferisMoat() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new CreaturesCantAttackControllerUnlessPredicateEffect(
+        addStaticEffect(new CreaturesCantAttackControllerUnlessPredicateEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentHasKeywordPredicate(Keyword.FLYING),
                         new PermanentNotPredicate(new PermanentHasSourceChosenColorPredicate())))));

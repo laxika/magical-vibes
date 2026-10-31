@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 public class MorskaUnderseaSleuth extends Card {
 
     public MorskaUnderseaSleuth() {
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
+        addStaticEffect(new NoMaximumHandSizeEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, CreateTokenEffect.ofClueToken(1));
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));

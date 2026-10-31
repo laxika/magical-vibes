@@ -36,11 +36,11 @@ public class Vampirism extends Card {
                 CountScope.CONTROLLER);
 
         // Enchanted creature gets +1/+1 for each other creature you control.
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 otherCreaturesYouControl, otherCreaturesYouControl, GrantScope.ENCHANTED_CREATURE));
 
         // Other creatures you control get -1/-1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, -1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.OWN_CREATURES,
                 new PermanentNotPredicate(new PermanentIsHostOfSourceAuraPredicate())));
     }
 }

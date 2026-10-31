@@ -18,7 +18,7 @@ import java.util.List;
 public class TophTheFirstMetalbender extends Card {
 
     public TophTheFirstMetalbender() {
-        addEffect(EffectSlot.STATIC, new GrantCardTypeEffect(
+        addStaticEffect(new GrantCardTypeEffect(
                 CardType.LAND,
                 GrantScope.OWN_PERMANENTS,
                 new PermanentAllOfPredicate(List.of(

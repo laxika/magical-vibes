@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -19,8 +18,7 @@ public class StillmoonCavalier extends Card {
 
     public StillmoonCavalier() {
         // Protection from white and from black.
-        addEffect(EffectSlot.STATIC,
-                new ProtectionFromColorsEffect(Set.of(CardColor.WHITE, CardColor.BLACK)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE, CardColor.BLACK)));
 
         // {W/B}: This creature gains flying until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{W/B}",

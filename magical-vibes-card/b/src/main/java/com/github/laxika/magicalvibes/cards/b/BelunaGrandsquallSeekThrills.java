@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.s.SeekThrills;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -20,7 +19,7 @@ public class BelunaGrandsquallSeekThrills extends Card {
     public BelunaGrandsquallSeekThrills() {
         setBackFaceCard(new SeekThrills());
         addCastingOption(new AdventureCast("{2}{G}{U}{R}"));
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardAllOfPredicate(List.of(
                         new CardIsPermanentPredicate(),
                         new CardHasAdventurePredicate())),

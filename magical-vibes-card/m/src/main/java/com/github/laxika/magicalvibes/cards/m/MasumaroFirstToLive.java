@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -13,6 +12,6 @@ public class MasumaroFirstToLive extends Card {
 
     public MasumaroFirstToLive() {
         Scaled twiceHandSize = new Scaled(new CardsInHand(CountScope.CONTROLLER), 2);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(twiceHandSize, twiceHandSize));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(twiceHandSize, twiceHandSize));
     }
 }

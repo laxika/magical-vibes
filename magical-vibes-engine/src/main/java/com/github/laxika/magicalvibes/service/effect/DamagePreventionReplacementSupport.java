@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageByRemovingCountersOrSacrificeEffect;
@@ -66,7 +65,7 @@ public class DamagePreventionReplacementSupport {
         if (gameQueryService.hasActiveStaticEffect(gameData, permanent,
                 PreventDamageToControllerAndPutCounterOnSelfEffect.class)) {
             PreventDamageToControllerAndPutCounterOnSelfEffect printedEffect = permanent.getCard()
-                    .getEffects(EffectSlot.STATIC).stream()
+                    .getStaticEffects().stream()
                     .filter(PreventDamageToControllerAndPutCounterOnSelfEffect.class::isInstance)
                     .map(PreventDamageToControllerAndPutCounterOnSelfEffect.class::cast)
                     .findFirst()
@@ -112,7 +111,7 @@ public class DamagePreventionReplacementSupport {
                 gameData, permanent, PreventDamageByRemovingCountersOrSacrificeEffect.class)) {
             return null;
         }
-        return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        return permanent.getCard().getStaticEffects().stream()
                 .filter(PreventDamageByRemovingCountersOrSacrificeEffect.class::isInstance)
                 .map(PreventDamageByRemovingCountersOrSacrificeEffect.class::cast)
                 .findFirst()

@@ -563,7 +563,7 @@ public class CombatBlockService {
                         + " creature" + (maxBlockers == 1 ? "" : "s"));
             }
             for (CardEffect effect : gameQueryService.hasLostAllAbilities(gameData, attacker)
-                    ? List.<CardEffect>of() : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+                    ? List.<CardEffect>of() : attacker.getCard().getStaticEffects()) {
                 if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction
                         && blockerCount < restriction.minBlockers()) {
                     throw new IllegalStateException(attacker.getCard().getName()
@@ -1549,7 +1549,7 @@ public class CombatBlockService {
         return gameData.playerBattlefields.values().stream()
                 .flatMap(Collection::stream)
                 .filter(permanent -> !gameQueryService.hasLostAllAbilities(gameData, permanent))
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .anyMatch(BlockerDeclarationControlEffect.class::isInstance);
     }
 
@@ -2720,7 +2720,7 @@ public class CombatBlockService {
             if (gameQueryService.hasLostAllAbilities(gameData, p)) {
                 continue;
             }
-            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : p.getCard().getStaticEffects()) {
                 CardEffect effectiveEffect = staticEffectConditionResolver.resolve(gameData, p,
                         gameQueryService.findPermanentController(gameData, p.getId()), effect);
                 if (effectiveEffect == null) {
@@ -3400,7 +3400,7 @@ public class CombatBlockService {
 
         int minimumBlockers = gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) ? 2 : 1;
         for (CardEffect effect : gameQueryService.hasLostAllAbilities(gameData, attacker)
-                ? List.<CardEffect>of() : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+                ? List.<CardEffect>of() : attacker.getCard().getStaticEffects()) {
             if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction) {
                 minimumBlockers = Math.max(minimumBlockers, restriction.minBlockers());
             }
@@ -3454,7 +3454,7 @@ public class CombatBlockService {
         }
 
         int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
-        for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : blocker.getCard().getStaticEffects()) {
             if (effect instanceof CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect
                     && !hasGreaterPowerAdditionalBlocker(
                     gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
@@ -3608,7 +3608,7 @@ public class CombatBlockService {
             GameData gameData, Permanent attacker, List<Permanent> attackerBattlefield) {
         int maximumBlockers = Integer.MAX_VALUE;
         for (Permanent permanent : attackerBattlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction
                         && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)
                         && (restriction.affectedCreatureFilter() == null
@@ -3643,7 +3643,7 @@ public class CombatBlockService {
         return gameData.playerBattlefields.values().stream()
                 .flatMap(Collection::stream)
                 .filter(permanent -> !gameQueryService.hasLostAllAbilities(gameData, permanent))
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .anyMatch(GlobalMustBlockEachCombatEffect.class::isInstance);
     }
 
@@ -3683,7 +3683,7 @@ public class CombatBlockService {
         }
         for (int idx : uniqueBlockerIndices) {
             Permanent restricted = defenderBattlefield.get(idx);
-            boolean hasRestriction = restricted.getCard().getEffects(EffectSlot.STATIC).stream()
+            boolean hasRestriction = restricted.getCard().getStaticEffects().stream()
                     .anyMatch(CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect.class::isInstance)
                     && !gameQueryService.hasLostPrintedAbilities(gameData, restricted);
             if (!hasRestriction) {
@@ -3715,7 +3715,7 @@ public class CombatBlockService {
         for (int idx : uniqueBlockerIndices) {
             Permanent restricted = defenderBattlefield.get(idx);
             if (gameQueryService.hasLostPrintedAbilities(gameData, restricted)) continue;
-            restricted.getCard().getEffects(EffectSlot.STATIC).stream()
+            restricted.getCard().getStaticEffects().stream()
                     .filter(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::isInstance)
                     .map(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::cast)
                     .findFirst()

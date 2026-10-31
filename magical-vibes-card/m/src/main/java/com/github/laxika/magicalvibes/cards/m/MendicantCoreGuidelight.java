@@ -19,7 +19,7 @@ public class MendicantCoreGuidelight extends Card {
     public MendicantCoreGuidelight() {
         PermanentCount artifactsYouControl = new PermanentCount(
                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(artifactsYouControl, new Fixed(3)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(artifactsYouControl, new Fixed(3)));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 CopyControllerCastSpellOnSpellCastEffect.tokenCopy(
                         new CardTypePredicate(CardType.ARTIFACT), "{1}", new MaxSpeed()));

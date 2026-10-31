@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
@@ -29,7 +28,7 @@ public class TheGrandGoatnapper extends Card {
 
     public TheGrandGoatnapper() {
         // Spells you cast have affinity for Goats.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTruePredicate(),
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.GOAT), CountScope.CONTROLLER),
                 CostModificationScope.SELF));

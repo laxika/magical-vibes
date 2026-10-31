@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DIS", collectorNumber = "143")
@@ -39,7 +38,7 @@ public class Dovescape extends Card {
                                 Set.of(),
                                 false,
                                 false,
-                                Map.of(),
+                                List.of(),
                                 List.of(),
                                 false,
                                 false,

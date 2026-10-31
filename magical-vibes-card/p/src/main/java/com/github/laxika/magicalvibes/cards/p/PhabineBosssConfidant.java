@@ -18,7 +18,7 @@ import java.util.List;
 public class PhabineBosssConfidant extends Card {
 
     public PhabineBosssConfidant() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(

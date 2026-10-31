@@ -19,7 +19,7 @@ public class TophGreatestEarthbender extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new EarthbendTargetLandEffect(new ManaSpentToCast()));
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.DOUBLE_STRIKE, GrantScope.OWN_LANDS, new PermanentIsCreaturePredicate()));
     }
 }

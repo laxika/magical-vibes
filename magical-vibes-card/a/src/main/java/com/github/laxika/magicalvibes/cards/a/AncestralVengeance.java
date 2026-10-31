@@ -17,7 +17,7 @@ public class AncestralVengeance extends Card {
 
         // Enchanted creature gets -1/-1.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, -1, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.ENCHANTED_CREATURE));
 
         // When this Aura enters, put a +1/+1 counter on target creature you control.
         target(TargetFilters.creatureYouControl())

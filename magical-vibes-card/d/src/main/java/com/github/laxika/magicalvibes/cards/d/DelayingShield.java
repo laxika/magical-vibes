@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DelayingShieldUpkeepEffect;
 public class DelayingShield extends Card {
 
     public DelayingShield() {
-        addEffect(EffectSlot.STATIC, new DamageToControllerCounterReplacementEffect(CounterType.DELAY));
+        addStaticEffect(new DamageToControllerCounterReplacementEffect(CounterType.DELAY));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new DelayingShieldUpkeepEffect());
     }
 }

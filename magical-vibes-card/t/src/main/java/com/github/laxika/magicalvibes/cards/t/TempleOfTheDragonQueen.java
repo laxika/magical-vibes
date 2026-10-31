@@ -21,7 +21,7 @@ public class TempleOfTheDragonQueen extends Card {
     public TempleOfTheDragonQueen() {
         PermanentHasAnySubtypePredicate dragon = new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.DRAGON));
 
-        addEffect(EffectSlot.STATIC, new RevealSubtypeOrEntersTappedEffect(
+        addStaticEffect(new RevealSubtypeOrEntersTappedEffect(
                 CardSubtype.DRAGON, new ControlsPermanent(dragon)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
         addActivatedAbility(new ActivatedAbility(

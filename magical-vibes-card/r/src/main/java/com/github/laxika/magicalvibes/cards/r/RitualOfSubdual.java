@@ -16,6 +16,6 @@ public class RitualOfSubdual extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{2}"));
 
         // If a land is tapped for mana, it produces colorless mana instead of any other type.
-        addEffect(EffectSlot.STATIC, new ReplaceLandManaWithColorEffect(ManaColor.COLORLESS));
+        addStaticEffect(new ReplaceLandManaWithColorEffect(ManaColor.COLORLESS));
     }
 }

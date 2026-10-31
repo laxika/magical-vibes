@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -21,7 +20,7 @@ public class GeralfsMasterpiece extends Card {
 
     public GeralfsMasterpiece() {
         Scaled minusOnePerCardInHand = new Scaled(new CardsInHand(CountScope.CONTROLLER), -1);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(minusOnePerCardInHand, minusOnePerCardInHand));
+        addStaticEffect(new BoostSelfEffect(minusOnePerCardInHand, minusOnePerCardInHand));
 
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,

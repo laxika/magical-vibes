@@ -20,11 +20,11 @@ public class TheFleshIsWeak extends Card {
     public TheFleshIsWeak() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.STATIC, new GrantCardTypeEffect(
+        addStaticEffect(new GrantCardTypeEffect(
                 CardType.ARTIFACT,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 -1, -1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentNotPredicate(new PermanentIsArtifactPredicate())));
     }

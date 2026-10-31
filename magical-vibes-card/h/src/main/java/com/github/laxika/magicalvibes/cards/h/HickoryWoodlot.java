@@ -22,7 +22,7 @@ import java.util.List;
 public class HickoryWoodlot extends Card {
 
     public HickoryWoodlot() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.DEPLETION, new Fixed(2)));
 

@@ -21,8 +21,8 @@ import java.util.Set;
 public class SwordOfHearthAndHome extends Card {
 
     public SwordOfHearthAndHome() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new ProtectionFromColorsEffect(
                 Set.of(CardColor.GREEN, CardColor.WHITE), GrantScope.EQUIPPED_CREATURE));
 
         target(new OwnedPermanentPredicateTargetFilter(

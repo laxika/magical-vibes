@@ -31,7 +31,7 @@ public class GoblinRabblemaster extends Card {
 
     public GoblinRabblemaster() {
         // Other Goblin creatures you control attack each combat if able.
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesMustAttackEffect(
+        addStaticEffect(new MatchingCreaturesMustAttackEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),

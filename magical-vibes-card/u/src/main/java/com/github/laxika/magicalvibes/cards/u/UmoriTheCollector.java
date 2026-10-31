@@ -16,7 +16,7 @@ public class UmoriTheCollector extends Card {
 
     public UmoriTheCollector() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardTypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardHasSourceChosenCardTypePredicate(), 1, CostModificationScope.SELF));
     }
 }

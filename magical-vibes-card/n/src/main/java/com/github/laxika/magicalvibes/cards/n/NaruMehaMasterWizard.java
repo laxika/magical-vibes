@@ -33,7 +33,7 @@ public class NaruMehaMasterWizard extends Card {
         ));
 
         // Other Wizards you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1, 1,
                 GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.WIZARD))

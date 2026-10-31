@@ -55,6 +55,16 @@ public final class SpellTarget {
     }
 
     /**
+     * Adds a static ability made of {@code effect} and binds it to this group, as an Aura's enchant
+     * ability defines the Aura spell's target (CR 303.4a).
+     */
+    public SpellTarget addStaticEffect(CardEffect effect) {
+        card.addStaticEffect(effect);
+        card.registerEffectTargetIndex(effect, this.index);
+        return this;
+    }
+
+    /**
      * Adds an effect to {@code slot} and binds it to this group. The effect is registered on the
      * card's abilities and mapped to this group's index for resolution.
      */

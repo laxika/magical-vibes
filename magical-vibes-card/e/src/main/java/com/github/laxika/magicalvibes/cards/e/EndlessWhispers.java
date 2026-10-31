@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCre
 public class EndlessWhispers extends Card {
 
     public EndlessWhispers() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_DEATH,
                 RegisterDelayedReturnDyingCreatureUnderControlEffect.forOpponent(),
                 GrantScope.ALL_CREATURES_INCLUDING_SELF));

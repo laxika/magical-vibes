@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -58,7 +57,7 @@ public class SeekLibraryAndPerpetuallyReduceSoughtCardEffectHandler implements N
         library.removeIf(card -> card.getId().equals(sought.getId()));
 
         Card modified = sought.createRuntimeCopy();
-        modified.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new Fixed(1)));
+        modified.addStaticEffect(new ReduceOwnCastCostEffect(new Fixed(1)));
         gameData.addCardToHand(controllerId, modified);
         triggerCollectionService.checkControllerCardPutIntoHandFromLibraryTriggers(
                 gameData, controllerId, modified);

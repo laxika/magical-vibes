@@ -27,7 +27,7 @@ public class SerraBestiary extends Card {
                                 true))
                 // Enchanted creature can't attack or block, and its activated abilities with {T} in
                 // their costs can't be activated.
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateTapAbilitiesEffect());
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
+                .addStaticEffect(new EnchantedCreatureCantActivateTapAbilitiesEffect());
     }
 }

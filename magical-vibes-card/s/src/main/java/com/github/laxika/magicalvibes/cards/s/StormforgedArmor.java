@@ -20,7 +20,7 @@ import java.util.List;
 public class StormforgedArmor extends Card {
 
     public StormforgedArmor() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 SequenceEffect.of(
                         new ConjureCardToBattlefieldEffect("DRK", "57"),

@@ -15,7 +15,7 @@ public class FlopsieBumisBuddy extends Card {
     public FlopsieBumisBuddy() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.STATIC, new EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect(
+        addStaticEffect(new EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect(
                 1, new PermanentPowerAtLeastPredicate(4)));
     }
 }

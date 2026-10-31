@@ -14,6 +14,6 @@ public class InspirationalAntelope extends Card {
         addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
                 new ChooseLegacyWordEffect(),
                 "Choose a keyword or ability word for Inspirational Antelope?"));
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForChosenLegacyWordSpellsEffect(1));
+        addStaticEffect(new ReduceCastCostForChosenLegacyWordSpellsEffect(1));
     }
 }

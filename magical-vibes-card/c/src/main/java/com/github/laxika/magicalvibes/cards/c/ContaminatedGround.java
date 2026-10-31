@@ -14,8 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ContaminatedGround extends Card {
 
     public ContaminatedGround() {
-        target(TargetFilters.land()).addEffect(EffectSlot.STATIC,
-                new EnchantedPermanentBecomesTypeEffect(CardSubtype.SWAMP));
+        target(TargetFilters.land()).addStaticEffect(new EnchantedPermanentBecomesTypeEffect(CardSubtype.SWAMP));
         addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED,
                 new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
     }

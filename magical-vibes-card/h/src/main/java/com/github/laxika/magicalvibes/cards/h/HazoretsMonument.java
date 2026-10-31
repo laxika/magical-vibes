@@ -24,7 +24,7 @@ public class HazoretsMonument extends Card {
 
     public HazoretsMonument() {
         // Red creature spells you cast cost {1} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardAllOfPredicate(List.of(
                         new CardColorPredicate(CardColor.RED),
                         new CardTypePredicate(CardType.CREATURE)

@@ -23,7 +23,7 @@ import java.util.Set;
 public class HallOfStormGiants extends Card {
 
     public HallOfStormGiants() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCount(2, new PermanentIsLandPredicate()),
                 new EntersTappedEffect()));
 

@@ -27,7 +27,7 @@ import java.util.List;
 public class TempleOfMalady extends Card {
 
     public TempleOfMalady() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(1));
 
         addActivatedAbility(new ActivatedAbility(

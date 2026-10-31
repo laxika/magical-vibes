@@ -24,7 +24,7 @@ public class SagesReverie extends Card {
 
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(aurasAttachedToCreatures))
-                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                .addStaticEffect(new AttachedBoostEffect(
                         aurasAttachedToCreatures, aurasAttachedToCreatures, GrantScope.ENCHANTED_CREATURE));
     }
 }

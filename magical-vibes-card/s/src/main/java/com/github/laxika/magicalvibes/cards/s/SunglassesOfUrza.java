@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SpendWhiteManaAsRedEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -15,6 +14,6 @@ public class SunglassesOfUrza extends Card {
 
     public SunglassesOfUrza() {
         // "You may spend white mana as though it were red mana."
-        addEffect(EffectSlot.STATIC, new SpendWhiteManaAsRedEffect());
+        addStaticEffect(new SpendWhiteManaAsRedEffect());
     }
 }

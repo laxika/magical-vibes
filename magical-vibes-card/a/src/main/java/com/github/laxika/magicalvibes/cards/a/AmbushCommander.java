@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -26,7 +25,7 @@ import java.util.Set;
 public class AmbushCommander extends Card {
 
     public AmbushCommander() {
-        addEffect(EffectSlot.STATIC, new AnimatePermanentsEffect(
+        addStaticEffect(new AnimatePermanentsEffect(
                 new Fixed(1), new Fixed(1), List.of(CardSubtype.ELF), Set.of(), null,
                 Set.of(), GrantScope.ALL_PERMANENTS, EffectDuration.CONTINUOUS,
                 new PermanentAllOfPredicate(List.of(

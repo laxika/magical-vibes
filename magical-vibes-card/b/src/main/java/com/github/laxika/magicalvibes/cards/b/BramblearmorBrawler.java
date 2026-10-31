@@ -16,7 +16,7 @@ import java.util.List;
 public class BramblearmorBrawler extends Card {
 
     public BramblearmorBrawler() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL,
                 new SpellCastTriggerEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),

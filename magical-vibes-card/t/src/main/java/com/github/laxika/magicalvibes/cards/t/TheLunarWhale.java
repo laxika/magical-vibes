@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -20,10 +19,10 @@ import java.util.Set;
 public class TheLunarWhale extends Card {
 
     public TheLunarWhale() {
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new ConditionalEffect(
                 new SourceAttackedThisTurn(), new PlayLandsFromTopOfLibraryEffect()));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceAttackedThisTurn(), new AllowCastFromTopOfLibraryEffect(Set.of(
                         CardType.CREATURE,
                         CardType.ENCHANTMENT,

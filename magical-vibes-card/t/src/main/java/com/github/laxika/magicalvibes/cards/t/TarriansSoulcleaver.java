@@ -22,7 +22,7 @@ import java.util.List;
 public class TarriansSoulcleaver extends Card {
 
     public TarriansSoulcleaver() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardAnyOfPredicate(List.of(

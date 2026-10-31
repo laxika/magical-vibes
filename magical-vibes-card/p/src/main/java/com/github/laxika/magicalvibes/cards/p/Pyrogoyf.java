@@ -22,7 +22,7 @@ public class Pyrogoyf extends Card {
     public Pyrogoyf() {
         CardTypesAmongCardsInGraveyard cardTypes =
                 new CardTypesAmongCardsInGraveyard(CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 cardTypes, new Sum(cardTypes, new Fixed(1))));
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.LHURGOYF),

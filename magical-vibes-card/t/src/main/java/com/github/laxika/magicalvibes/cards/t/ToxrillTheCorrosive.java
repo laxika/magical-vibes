@@ -39,8 +39,7 @@ public class ToxrillTheCorrosive extends Card {
         addEffect(EffectSlot.END_STEP_TRIGGERED,
                 new PutCounterOnEachMatchingPermanentEffect(
                         CounterType.SLIME, 1, opponentsCreatures, EachPermanentScope.ALL_PLAYERS));
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(-1, -1, GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.ALL_CREATURES,
                         opponentsCreatures, CounterType.SLIME, true));
         addEffect(EffectSlot.ON_OPPONENT_CREATURE_DIES,
                 new CreateTokenIfDyingSourceHadCounterEffect(

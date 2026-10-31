@@ -16,10 +16,10 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class KeldonStrikeTeam extends Card {
 
     public KeldonStrikeTeam() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{W}"));
+        addStaticEffect(new KickerEffect("{1}{W}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new Kicked(), CreateTokenEffect.whiteSoldier(2)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceEnteredBattlefieldThisTurn(),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)));
     }

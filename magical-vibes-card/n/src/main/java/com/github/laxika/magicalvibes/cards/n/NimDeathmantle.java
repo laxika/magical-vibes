@@ -22,12 +22,12 @@ public class NimDeathmantle extends Card {
 
     public NimDeathmantle() {
         // Equipped creature gets +2/+2
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
         // Equipped creature has intimidate
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.EQUIPPED_CREATURE));
         // Equipped creature is a black Zombie (replaces existing colors and creature subtypes per CR 205.1a)
-        addEffect(EffectSlot.STATIC, new GrantColorEffect(CardColor.BLACK, GrantScope.EQUIPPED_CREATURE, true));
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.ZOMBIE, GrantScope.EQUIPPED_CREATURE, true));
+        addStaticEffect(new GrantColorEffect(CardColor.BLACK, GrantScope.EQUIPPED_CREATURE, true));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ZOMBIE, GrantScope.EQUIPPED_CREATURE, true));
 
         // Whenever a nontoken creature is put into your graveyard from the battlefield,
         // you may pay {4}. If you do, return that card to the battlefield and attach

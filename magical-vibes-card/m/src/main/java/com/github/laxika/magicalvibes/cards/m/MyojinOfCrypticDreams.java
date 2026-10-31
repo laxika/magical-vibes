@@ -33,7 +33,7 @@ public class MyojinOfCrypticDreams extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new CastFromZone(Zone.HAND),
                 new EnterWithCountersEffect(CounterType.INDESTRUCTIBLE, new Fixed(1))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.INDESTRUCTIBLE),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
 

@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 public class TheHowlingAbomination extends Card {
 
     public TheHowlingAbomination() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerCastThreeOrMoreSpellsThisTurn(new CardTruePredicate()),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
 

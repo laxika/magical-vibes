@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SHM", collectorNumber = "207")
@@ -34,7 +33,7 @@ public class Giantbaiting extends Card {
                 Set.of(),
                 false,  // tappedAndAttacking
                 false,  // tapped
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,  // exileAtEndOfCombat
                 true,   // exileAtEndStep

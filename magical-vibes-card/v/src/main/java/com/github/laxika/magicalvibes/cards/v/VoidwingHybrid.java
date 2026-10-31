@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 public class VoidwingHybrid extends Card {
 
     public VoidwingHybrid() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
+        addStaticEffect(new ToxicEffect(1));
         addEffect(EffectSlot.GRAVEYARD_ON_CONTROLLER_PROLIFERATES,
                 new ReturnSourceCardFromGraveyardToOwnerHandEffect());
     }

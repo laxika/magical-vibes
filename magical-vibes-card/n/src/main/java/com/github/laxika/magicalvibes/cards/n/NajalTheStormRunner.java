@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class NajalTheStormRunner extends Card {
 
     public NajalTheStormRunner() {
-        addEffect(EffectSlot.STATIC,
-                new GrantFlashToCardTypeEffect(new CardTypePredicate(CardType.SORCERY)));
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardTypePredicate(CardType.SORCERY)));
         addEffect(EffectSlot.ON_ATTACK, new MayPayManaEffect(
                 "{2}",
                 new CopyNextInstantOrSorceryCastThisTurnEffect(),

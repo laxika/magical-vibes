@@ -22,7 +22,6 @@ public class VolcanoHellion extends Card {
                         new DealDamageToTargetCreatureEffect(new ChosenNumberOnSource(), true));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DealDamageToPlayersEffect(new ChosenNumberOnSource(), DamageRecipient.CONTROLLER, true));
-        addEffect(EffectSlot.STATIC,
-                new RegisterEchoAtNextUpkeepEffect(new ControllerLifeTotal()));
+        addStaticEffect(new RegisterEchoAtNextUpkeepEffect(new ControllerLifeTotal()));
     }
 }

@@ -19,7 +19,7 @@ public class MasterOfCruelties extends Card {
 
     public MasterOfCruelties() {
         // This creature can only attack alone.
-        addEffect(EffectSlot.STATIC, new CanOnlyAttackAloneEffect());
+        addStaticEffect(new CanOnlyAttackAloneEffect());
 
         // Whenever this creature attacks a player and isn't blocked, that player's life total
         // becomes 1. This creature assigns no combat damage this combat. The defending player is

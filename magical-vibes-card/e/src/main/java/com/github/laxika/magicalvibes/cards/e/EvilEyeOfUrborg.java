@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class EvilEyeOfUrborg extends Card {
 
     public EvilEyeOfUrborg() {
-        addEffect(EffectSlot.STATIC, new ControlledCreaturesCantAttackUnlessPredicateEffect(
+        addStaticEffect(new ControlledCreaturesCantAttackUnlessPredicateEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.EYE)));
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new DestroyCombatOpponentEffect(false),
                 TriggerMode.PER_BLOCKER);

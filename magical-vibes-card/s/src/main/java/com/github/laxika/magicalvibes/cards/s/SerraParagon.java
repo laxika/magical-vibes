@@ -19,7 +19,7 @@ import java.util.List;
 public class SerraParagon extends Card {
 
     public SerraParagon() {
-        addEffect(EffectSlot.STATIC, new PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
+        addStaticEffect(new PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
                 new CardAllOfPredicate(List.of(
                         new CardIsPermanentPredicate(),
                         new CardMaxManaValuePredicate(3))),

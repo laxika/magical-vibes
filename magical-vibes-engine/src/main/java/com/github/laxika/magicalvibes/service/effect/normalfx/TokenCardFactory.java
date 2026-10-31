@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.carddata.CardPrintingRegistry;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -8,6 +9,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BandsWithOtherEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -16,7 +19,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.EnumSet;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -90,26 +92,29 @@ final class TokenCardFactory {
             tokenCard.setSupertypes(supertypes);
         }
         if (token.tokenEffects() != null) {
-            for (Map.Entry<EffectSlot, CardEffect> tokenEffect : token.tokenEffects().entrySet()) {
-                if (tokenEffect.getKey() == EffectSlot.STATIC
-                        && tokenEffect.getValue() instanceof SequenceEffect sequence) {
-                    // Token blueprints use a sequence to carry multiple static abilities through
-                    // the one-effect-per-slot blueprint map; live token cards keep each ability
-                    // as an ordinary static effect for the layered and combat queries.
-                    for (CardEffect step : sequence.steps()) {
-                        tokenCard.addEffect(EffectSlot.STATIC, step);
+            for (Ability ability : token.tokenEffects()) {
+                if (ability instanceof StaticAbility statik) {
+                    // Token blueprints may use a sequence to carry several static abilities in one;
+                    // live token cards keep each ability as an ordinary static effect for the
+                    // layered and combat queries.
+                    for (CardEffect effect : statik.effects()) {
+                        java.util.List<CardEffect> steps = effect instanceof SequenceEffect sequence
+                                ? sequence.steps() : java.util.List.of(effect);
+                        steps.forEach(step -> tokenCard.addStaticEffect(statik.zones(), step));
                     }
                 } else {
-                    tokenCard.addEffect(tokenEffect.getKey(), tokenEffect.getValue());
+                    tokenCard.addAbility(ability);
                 }
             }
         }
-        if (token.tokenEffects() != null && token.tokenEffects().containsKey(EffectSlot.ON_ATTACK)
+        if (token.tokenEffects() != null
+                && token.tokenEffects().stream().anyMatch(ability -> LegacySlots.slotOf(ability) == EffectSlot.ON_ATTACK)
                 && token.subtypes() != null && token.subtypes().contains(CardSubtype.AURA)) {
             tokenCard.setAttackTriggerOwnedByAura(true);
         }
         if (token.tokenEffects() != null) {
-            token.tokenEffects().values().stream()
+            token.tokenEffects().stream()
+                    .flatMap(ability -> LegacySlots.effectsOf(ability).stream())
                     .filter(BandsWithOtherEffect.class::isInstance)
                     .map(BandsWithOtherEffect.class::cast)
                     .findFirst()

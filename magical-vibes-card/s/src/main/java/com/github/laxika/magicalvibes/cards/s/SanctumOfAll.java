@@ -22,8 +22,7 @@ public class SanctumOfAll extends Card {
                                 new CardSubtypePredicate(CardSubtype.SHRINE)),
                         "Search your library and/or graveyard for a Shrine card and put it onto the battlefield?"));
 
-        addEffect(EffectSlot.STATIC,
-                new AdditionalTriggeredAbilityEffect(
+        addStaticEffect(new AdditionalTriggeredAbilityEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.SHRINE),
                         new ControlsPermanentCount(6, new PermanentHasSubtypePredicate(CardSubtype.SHRINE))));
     }

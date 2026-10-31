@@ -77,8 +77,8 @@ public class SliverWeftwinder extends Card {
         PermanentHasSubtypePredicate sliverCreature = new PermanentHasSubtypePredicate(CardSubtype.SLIVER);
 
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}"))));
-        addEffect(EffectSlot.STATIC, AlternativeCostForSpellsEffect.warp("{3}", sliverCard));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(AlternativeCostForSpellsEffect.warp("{3}", sliverCard));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 SequenceEffect.of(randomSliverConjure(), new DrawCardEffect(1)),
                 GrantScope.ALL_OWN_CREATURES,

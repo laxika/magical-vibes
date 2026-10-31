@@ -20,7 +20,7 @@ import java.util.List;
 public class BloodfeatherPhoenix extends Card {
 
     public BloodfeatherPhoenix() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE,
                 new MayPayManaEffect("{R}",
                         ReturnCardFromGraveyardEffect.builder()

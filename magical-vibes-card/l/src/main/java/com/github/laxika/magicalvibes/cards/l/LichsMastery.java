@@ -16,10 +16,10 @@ public class LichsMastery extends Card {
 
     public LichsMastery() {
         // "Hexproof"
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF));
 
         // "You can't lose the game."
-        addEffect(EffectSlot.STATIC, new CantLoseGameEffect(false));
+        addStaticEffect(new CantLoseGameEffect(false));
 
         // "Whenever you gain life, draw that many cards."
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new DrawCardsEqualToLifeGainedEffect());

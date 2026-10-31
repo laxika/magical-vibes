@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OTJ", collectorNumber = "228")
@@ -29,9 +29,7 @@ public class RoxanneStarfallSavant extends Card {
             Set.of(),
             false,
             true,
-            Map.of(
-                    EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(2)
-            ),
+            List.of(LegacySlots.triggered(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(2))),
             List.of(ManaAbilities.tapForAnyColor()),
             false,
             false,

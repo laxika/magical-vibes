@@ -17,6 +17,6 @@ public class CaptureSphere extends Card {
     public CaptureSphere() {
         target(TargetFilters.creature());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED));
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+        addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

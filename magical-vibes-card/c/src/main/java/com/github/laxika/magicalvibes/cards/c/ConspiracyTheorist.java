@@ -22,7 +22,7 @@ public class ConspiracyTheorist extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_DISCARD_EVENT, new MayEffect(
                 new ExileOneOfDiscardedCardsFromGraveyardEffect(),
                 "Exile one of the discarded nonland cards?"));
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                 false, false, 0, null, false, true, false));
     }

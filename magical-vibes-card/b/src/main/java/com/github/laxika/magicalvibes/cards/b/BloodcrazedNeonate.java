@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 public class BloodcrazedNeonate extends Card {
 
     public BloodcrazedNeonate() {
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

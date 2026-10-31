@@ -24,8 +24,7 @@ import java.util.Set;
 public class EchoingAssault extends Card {
 
     public EchoingAssault() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES,
                         new PermanentIsTokenPredicate()));
 
         target(new PermanentPredicateTargetFilter(

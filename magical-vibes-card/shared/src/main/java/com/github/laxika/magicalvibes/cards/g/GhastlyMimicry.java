@@ -15,6 +15,6 @@ public class GhastlyMimicry extends Card {
     public GhastlyMimicry() {
         target(TargetFilters.creature()).addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new CreateTokenCopyOfEnchantedPermanentEffect(List.of(CardSubtype.SPIRIT)));
-        addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect());
+        addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 }

@@ -15,8 +15,7 @@ public class DirectorNickFury extends Card {
 
     public DirectorNickFury() {
         CardSubtypePredicate hero = new CardSubtypePredicate(CardSubtype.HERO);
-        addEffect(EffectSlot.STATIC,
-                new ReduceCastCostForMatchingSpellsEffect(hero, 1, CostModificationScope.SELF));
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(hero, 1, CostModificationScope.SELF));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(4, hero));
     }

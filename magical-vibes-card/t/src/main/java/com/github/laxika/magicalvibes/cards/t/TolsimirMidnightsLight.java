@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MKM", collectorNumber = "236")
@@ -28,7 +27,7 @@ public class TolsimirMidnightsLight extends Card {
                 CardType.CREATURE, 1, "Voja Fenstalker", 5, 5,
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.WHITE),
                 List.of(CardSubtype.WOLF), Set.of(Keyword.TRAMPLE), Set.of(), false, false,
-                Map.of(), List.of(), false, false, true, 0, Set.of()));
+                List.of(), List.of(), false, false, true, 0, Set.of()));
 
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,

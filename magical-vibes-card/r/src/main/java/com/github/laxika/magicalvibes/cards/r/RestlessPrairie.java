@@ -22,7 +22,7 @@ import java.util.Set;
 public class RestlessPrairie extends Card {
 
     public RestlessPrairie() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ATTACK, new BoostAllOwnCreaturesEffect(
                 1, 1, new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
         addActivatedAbility(new ActivatedAbility(

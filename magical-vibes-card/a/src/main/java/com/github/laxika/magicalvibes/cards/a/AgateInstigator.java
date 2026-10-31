@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class AgateInstigator extends Card {
 
     public AgateInstigator() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{R}"));
+        addStaticEffect(new KickerEffect("{1}{R}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,

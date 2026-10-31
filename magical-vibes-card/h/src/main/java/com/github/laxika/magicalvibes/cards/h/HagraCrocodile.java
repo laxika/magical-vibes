@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 public class HagraCrocodile extends Card {
 
     public HagraCrocodile() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new BoostSelfEffect(2, 2));
     }
 }

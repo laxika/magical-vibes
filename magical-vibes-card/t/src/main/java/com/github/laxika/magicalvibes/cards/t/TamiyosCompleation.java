@@ -32,8 +32,7 @@ public class TamiyosCompleation extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new TapPermanentsEffect(TapUntapScope.ENCHANTED))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new UnattachEnchantedEquipmentEffect())
-                .addEffect(EffectSlot.STATIC,
-                        new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT))
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

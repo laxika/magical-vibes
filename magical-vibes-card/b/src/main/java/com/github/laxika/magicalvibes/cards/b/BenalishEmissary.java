@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class BenalishEmissary extends Card {
 
     public BenalishEmissary() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{G}"));
+        addStaticEffect(new KickerEffect("{1}{G}"));
         target(TargetFilters.land()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new Kicked(), new DestroyTargetPermanentEffect()));
     }

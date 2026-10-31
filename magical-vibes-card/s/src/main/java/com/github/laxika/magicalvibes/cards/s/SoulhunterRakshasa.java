@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class SoulhunterRakshasa extends Card {
 
     public SoulhunterRakshasa() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

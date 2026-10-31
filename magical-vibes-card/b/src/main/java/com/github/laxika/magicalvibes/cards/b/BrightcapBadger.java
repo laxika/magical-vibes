@@ -25,7 +25,7 @@ public class BrightcapBadger extends Card {
         setBackFaceCard(new FungusFrolic());
         addCastingOption(new AdventureCast("{2}{G}"));
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapFor(ManaColor.GREEN),
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.FUNGUS, CardSubtype.SAPROLING))));

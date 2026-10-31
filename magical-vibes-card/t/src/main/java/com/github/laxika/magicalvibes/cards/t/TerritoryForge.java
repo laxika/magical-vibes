@@ -27,6 +27,6 @@ public class TerritoryForge extends Card {
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new WasCast(true), new ExileTargetPermanentAndTrackWithSourceEffect()));
 
-        addEffect(EffectSlot.STATIC, new GainActivatedAbilitiesOfExiledCardsEffect());
+        addStaticEffect(new GainActivatedAbilitiesOfExiledCardsEffect());
     }
 }

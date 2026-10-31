@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DMC", collectorNumber = "42")
@@ -32,7 +31,7 @@ public class StanggEchoWarrior extends Card {
                 Set.of(),
                 true,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

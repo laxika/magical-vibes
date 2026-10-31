@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -23,10 +22,10 @@ import java.util.List;
 public class ErebosGodOfTheDead extends Card {
 
     public ErebosGodOfTheDead() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorAtLeast(ManaColor.BLACK, 5)),
                 new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new OpponentsCantGainLifeEffect());
+        addStaticEffect(new OpponentsCantGainLifeEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B}",

@@ -18,7 +18,7 @@ import java.util.List;
 public class PublicThoroughfare extends Card {
 
     public PublicThoroughfare() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayPayTapPermanentsEffect(
                 new TapMultiplePermanentsCost(1, new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),

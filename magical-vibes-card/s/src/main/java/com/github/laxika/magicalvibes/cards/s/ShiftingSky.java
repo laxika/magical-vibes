@@ -14,6 +14,6 @@ public class ShiftingSky extends Card {
         // As this enchantment enters, choose a color.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
         // All nonland permanents are the chosen color.
-        addEffect(EffectSlot.STATIC, new AllNonlandPermanentsAreChosenColorEffect());
+        addStaticEffect(new AllNonlandPermanentsAreChosenColorEffect());
     }
 }

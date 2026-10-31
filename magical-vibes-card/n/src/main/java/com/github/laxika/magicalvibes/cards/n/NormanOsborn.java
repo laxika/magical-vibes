@@ -20,7 +20,7 @@ public class NormanOsborn extends Card {
         setBackFaceCard(new GreenGoblin());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawDiscardAndConniveEffect());
 
         addActivatedAbility(new ActivatedAbility(

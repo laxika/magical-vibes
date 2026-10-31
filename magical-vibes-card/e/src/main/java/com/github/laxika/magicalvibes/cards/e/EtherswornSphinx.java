@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class EtherswornSphinx extends Card {
 
     public EtherswornSphinx() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
         addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());
     }

@@ -14,12 +14,12 @@ public class VampiricSliver extends Card {
 
     public VampiricSliver() {
         // All Sliver creatures have the ability to grow when a creature they damaged dies.
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_DAMAGED_CREATURE_DIES,
                 new PutCountersOnSourceEffect(1, 1, 1),
                 GrantScope.ALL_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_DAMAGED_CREATURE_DIES,
                 new PutCountersOnSourceEffect(1, 1, 1),
                 GrantScope.SELF,

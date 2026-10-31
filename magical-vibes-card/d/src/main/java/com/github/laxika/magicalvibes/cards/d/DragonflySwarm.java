@@ -29,8 +29,7 @@ public class DragonflySwarm extends Card {
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))
         )), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(noncreatureNonlandCards, new Fixed(3)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(noncreatureNonlandCards, new Fixed(3)));
 
         addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
                 new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.LESSON)),

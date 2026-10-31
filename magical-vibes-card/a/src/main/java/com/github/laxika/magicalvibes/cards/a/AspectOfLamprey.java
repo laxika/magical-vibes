@@ -28,8 +28,7 @@ public class AspectOfLamprey extends Card {
                         new PermanentControlledBySourceControllerPredicate()
                 )),
                 "Target must be a creature you control"
-        )).addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ENCHANTED_CREATURE));
+        )).addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ENCHANTED_CREATURE));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

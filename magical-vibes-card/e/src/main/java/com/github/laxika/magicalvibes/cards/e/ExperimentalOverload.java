@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "218")
@@ -33,7 +32,7 @@ public class ExperimentalOverload extends Card {
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, new Fixed(1), "Weird", instantSorceryCount, instantSorceryCount,
                 CardColor.BLUE, Set.of(CardColor.BLUE, CardColor.RED), List.of(CardSubtype.WEIRD), Set.of(), Set.of(),
-                false, false, Map.of(), List.of(), false, false, false, 0, Set.of()));
+                false, false, List.of(), List.of(), false, false, false, 0, Set.of()));
 
         addSpellEffect(new MayEffect(
                 ReturnCardFromGraveyardEffect.builder()

@@ -16,10 +16,10 @@ public class ColfenorsPlans extends Card {
         // When this enchantment enters, exile the top seven cards of your library face down.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTopCardsToSourceEffect(7));
         // You may look at / play lands and cast spells from among the cards exiled with it.
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(false));
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(false));
         // Skip your draw step.
-        addEffect(EffectSlot.STATIC, new SkipDrawStepEffect());
+        addStaticEffect(new SkipDrawStepEffect());
         // You can't cast more than one spell each turn.
-        addEffect(EffectSlot.STATIC, new LimitSpellsPerTurnEffect(1, SpellLimitScope.CONTROLLER));
+        addStaticEffect(new LimitSpellsPerTurnEffect(1, SpellLimitScope.CONTROLLER));
     }
 }

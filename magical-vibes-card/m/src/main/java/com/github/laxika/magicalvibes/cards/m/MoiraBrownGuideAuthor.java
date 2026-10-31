@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 import java.util.List;
-import java.util.Map;
 
 @CardRegistration(set = "PIP", collectorNumber = "110")
 @CardRegistration(set = "PIP", collectorNumber = "420")
@@ -36,12 +36,11 @@ public class MoiraBrownGuideAuthor extends Card {
                         "Wasteland Survival Guide",
                         List.of(CardSubtype.BOOK, CardSubtype.EQUIPMENT),
                         List.of(new EquipActivatedAbility("{1}")))
-                .withTokenEffects(Map.of(
-                        EffectSlot.STATIC,
-                        new AttachedBoostEffect(
+                .withTokenEffects(List.of(
+                        StaticAbility.of(new AttachedBoostEffect(
                                 questCountersAmongPermanentsYouControl,
                                 questCountersAmongPermanentsYouControl,
-                                GrantScope.EQUIPPED_CREATURE)));
+                                GrantScope.EQUIPPED_CREATURE))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, wastelandSurvivalGuide);
 
         target(new ControlledPermanentPredicateTargetFilter(

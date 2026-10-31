@@ -17,9 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class FeedingGrounds extends Card {
 
     public FeedingGrounds() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardColorPredicate(CardColor.RED), 1, CostModificationScope.ALL));
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardColorPredicate(CardColor.GREEN), 1, CostModificationScope.ALL));
         target(TargetFilters.creature()).addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new TargetManaValue()));

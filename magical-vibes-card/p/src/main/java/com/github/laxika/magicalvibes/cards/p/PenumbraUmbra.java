@@ -47,7 +47,7 @@ public class PenumbraUmbra extends Card {
 
     public PenumbraUmbra() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.STATIC, new TotemArmorEffect())
+                .addStaticEffect(new TotemArmorEffect())
                 .addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                         new CreateTokenCopyOfEnchantedPermanentEffect(
                                 new CreateTokenCopyOfTargetPermanentEffect(

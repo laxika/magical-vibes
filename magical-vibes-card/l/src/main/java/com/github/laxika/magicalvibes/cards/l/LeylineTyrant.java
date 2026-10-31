@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 public class LeylineTyrant extends Card {
 
     public LeylineTyrant() {
-        addEffect(EffectSlot.STATIC, new PreventManaDrainEffect(ManaColor.RED));
+        addStaticEffect(new PreventManaDrainEffect(ManaColor.RED));
         addEffect(EffectSlot.ON_DEATH,
                 new PayAnyAmountOfColorManaToDealDamageToAnyTargetEffect(ManaColor.RED));
     }

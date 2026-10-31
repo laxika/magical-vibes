@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 public class KodamaOfTheWestTree extends Card {
 
     public KodamaOfTheWestTree() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES, new PermanentIsModifiedPredicate()));
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(

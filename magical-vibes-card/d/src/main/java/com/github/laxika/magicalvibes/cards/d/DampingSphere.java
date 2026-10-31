@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 
@@ -11,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColo
 public class DampingSphere extends Card {
 
     public DampingSphere() {
-        addEffect(EffectSlot.STATIC, new ReplaceLandExcessManaWithColorlessEffect());
-        addEffect(EffectSlot.STATIC, new IncreaseEachPlayerCastCostPerSpellThisTurnEffect(1));
+        addStaticEffect(new ReplaceLandExcessManaWithColorlessEffect());
+        addStaticEffect(new IncreaseEachPlayerCastCostPerSpellThisTurnEffect(1));
     }
 }

@@ -21,7 +21,7 @@ public class HalimarTidecaller extends Card {
                 .filter(new CardHasAwakenPredicate())
                 .targetGraveyard(true)
                 .build(), "Return target card with awaken from your graveyard to your hand?"));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.FLYING, GrantScope.OWN_LANDS, new PermanentIsCreaturePredicate()));
     }
 }

@@ -28,7 +28,7 @@ public class AncientCellarspawn extends Card {
                 new CardSubtypePredicate(CardSubtype.NIGHTMARE)
         ));
 
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 demonHorrorOrNightmare, 1, CostModificationScope.SELF));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(

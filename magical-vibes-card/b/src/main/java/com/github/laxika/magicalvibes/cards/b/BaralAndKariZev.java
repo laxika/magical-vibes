@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "218")
@@ -35,7 +34,7 @@ public class BaralAndKariZev extends Card {
             Set.of(),
             false,
             false,
-            Map.of(),
+            List.of(),
             List.of(),
             false,
             false,

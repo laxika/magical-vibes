@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEf
 public class TreeshakerChimera extends Card {
 
     public TreeshakerChimera() {
-        addEffect(EffectSlot.STATIC, new MustBeBlockedByAllCreaturesEffect());
+        addStaticEffect(new MustBeBlockedByAllCreaturesEffect());
         addEffect(EffectSlot.ON_DEATH, new DrawCardEffect(3));
     }
 }

@@ -20,7 +20,7 @@ public class RunedCrown extends Card {
                 new SearchLibraryAndOrGraveyardForCardToBattlefieldEffect(
                         new CardSubtypePredicate(CardSubtype.RUNE), true, true),
                 "Search your library, hand, and/or graveyard for a Rune card?"));
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 new Fixed(1), new Fixed(1), GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

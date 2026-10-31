@@ -16,7 +16,7 @@ public class RisingWaters extends Card {
 
     public RisingWaters() {
         // Lands don't untap during their controllers' untap steps.
-        addEffect(EffectSlot.STATIC, new MatchingPermanentsDoesntUntapEffect(new PermanentIsLandPredicate()));
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(new PermanentIsLandPredicate()));
 
         // At the beginning of each player's upkeep, that player untaps a land they control.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new UntapChosenPermanentEffect(

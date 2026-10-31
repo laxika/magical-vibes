@@ -23,7 +23,7 @@ public class ForsakenCrossroads extends Card {
 
     public ForsakenCrossroads() {
         // Forsaken Crossroads enters the battlefield tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // As Forsaken Crossroads enters the battlefield, choose a color.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());

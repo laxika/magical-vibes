@@ -11,6 +11,6 @@ public class LavabrinkVenturer extends Card {
 
     public LavabrinkVenturer() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseManaValueParityOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new ProtectionFromManaValueParityEffect());
+        addStaticEffect(new ProtectionFromManaValueParityEffect());
     }
 }

@@ -11,6 +11,6 @@ public class MultanisAcolyte extends Card {
 
     public MultanisAcolyte() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
-        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{G}{G}"));
+        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{G}{G}"));
     }
 }

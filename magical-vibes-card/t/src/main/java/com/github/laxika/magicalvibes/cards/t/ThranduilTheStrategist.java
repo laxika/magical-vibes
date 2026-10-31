@@ -24,7 +24,7 @@ public class ThranduilTheStrategist extends Card {
 
     public ThranduilTheStrategist() {
         // Other Elves you control have "{T}: Add {G} or {U}."
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,

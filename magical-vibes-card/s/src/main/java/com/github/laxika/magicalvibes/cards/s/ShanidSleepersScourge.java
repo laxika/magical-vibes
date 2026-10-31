@@ -30,8 +30,7 @@ public class ShanidSleepersScourge extends Card {
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
         ));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES, otherLegendaryCreature));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES, otherLegendaryCreature));
 
         CardSupertypePredicate legendaryCard = new CardSupertypePredicate(CardSupertype.LEGENDARY);
         SequenceEffect drawAndLoseLife = SequenceEffect.of(new DrawCardEffect(), new LoseLifeEffect(1));

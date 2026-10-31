@@ -15,7 +15,6 @@ public class GrislyTransformation extends Card {
     public GrislyTransformation() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.ENCHANTED_CREATURE));
     }
 }

@@ -18,7 +18,7 @@ public class MemorialToWar extends Card {
 
     public MemorialToWar() {
         // Memorial to War enters the battlefield tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         // {T}: Add {R}.
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.RED));
         // {4}{R}, {T}, Sacrifice Memorial to War: Destroy target land.

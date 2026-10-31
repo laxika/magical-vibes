@@ -24,7 +24,7 @@ public class WrathOfMaritLage extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.RED))));
 
         // Red creatures don't untap during their controllers' untap steps.
-        addEffect(EffectSlot.STATIC, new MatchingPermanentsDoesntUntapEffect(
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentColorInPredicate(Set.of(CardColor.RED))))));

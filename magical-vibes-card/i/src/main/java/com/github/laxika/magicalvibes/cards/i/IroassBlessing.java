@@ -23,7 +23,7 @@ public class IroassBlessing extends Card {
 
     public IroassBlessing() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
 
         PermanentPredicate targetRestriction = new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(

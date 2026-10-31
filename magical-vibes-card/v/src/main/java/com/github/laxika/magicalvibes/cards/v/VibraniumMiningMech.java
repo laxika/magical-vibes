@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MSC", collectorNumber = "117")
@@ -36,7 +35,7 @@ public class VibraniumMiningMech extends Card {
             Set.of(),
             false,
             true,
-            Map.of(),
+            List.of(),
             List.of(new ActivatedAbility(
                     true,
                     null,

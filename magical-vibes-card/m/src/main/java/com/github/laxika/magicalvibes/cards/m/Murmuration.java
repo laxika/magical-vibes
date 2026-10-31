@@ -21,7 +21,7 @@ import java.util.Set;
 public class Murmuration extends Card {
 
     public Murmuration() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1, 1, Set.of(Keyword.VIGILANCE), GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.BIRD)));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,

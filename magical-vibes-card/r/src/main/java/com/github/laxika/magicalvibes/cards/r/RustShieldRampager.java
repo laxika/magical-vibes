@@ -14,10 +14,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 public class RustShieldRampager extends Card {
 
     public RustShieldRampager() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}", false));
+        addStaticEffect(new KickerEffect("{2}", false));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtMostPredicate(2)));
     }
 }

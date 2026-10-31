@@ -30,7 +30,7 @@ public class PiratesCutlass extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AttachSourceEquipmentToTargetCreatureEffect());
 
         // Equipped creature gets +2/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

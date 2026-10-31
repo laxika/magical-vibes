@@ -21,8 +21,7 @@ public class AeveProgenitorOoze extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.OOZE), CountScope.CONTROLLER, true);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, otherOozes));
-        addEffect(EffectSlot.STATIC,
-                new com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect(
+        addStaticEffect(new com.github.laxika.magicalvibes.model.effect.PermanentsMatchingLoseSupertypeEffect(
                         new com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate(List.of(
                                 new com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate(),
                                 new com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate())),

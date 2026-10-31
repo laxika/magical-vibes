@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class AllStarKicker extends Card {
 
     public AllStarKicker() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}"));
+        addStaticEffect(new KickerEffect("{3}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 SequenceEffect.of(
                         new BoostAllOwnCreaturesEffect(1, 1),

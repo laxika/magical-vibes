@@ -23,6 +23,6 @@ public class WildwoodEscort extends Card {
                         new CardTypePredicate(CardType.BATTLE))))
                 .targetGraveyard(true)
                 .build());
-        addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect(true));
+        addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect(true));
     }
 }

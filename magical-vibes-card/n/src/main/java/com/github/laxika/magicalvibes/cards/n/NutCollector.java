@@ -26,7 +26,7 @@ public class NutCollector extends Card {
                         Set.of(), Set.of()),
                 "Create a 1/1 green Squirrel creature token?"));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
                 new StaticBoostEffect(2, 2, GrantScope.ALL_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL))));

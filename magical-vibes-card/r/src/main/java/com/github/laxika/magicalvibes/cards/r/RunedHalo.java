@@ -14,6 +14,6 @@ public class RunedHalo extends Card {
 
     public RunedHalo() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new PlayerHasProtectionFromChosenNameEffect());
+        addStaticEffect(new PlayerHasProtectionFromChosenNameEffect());
     }
 }

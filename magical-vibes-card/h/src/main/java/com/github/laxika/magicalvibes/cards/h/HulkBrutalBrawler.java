@@ -21,7 +21,7 @@ public class HulkBrutalBrawler extends Card {
             new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
 
     public HulkBrutalBrawler() {
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
         addEffect(EffectSlot.ON_ATTACK, new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES));
     }

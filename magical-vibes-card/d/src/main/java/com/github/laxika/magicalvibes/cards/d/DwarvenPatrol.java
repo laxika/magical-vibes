@@ -17,7 +17,7 @@ import java.util.List;
 public class DwarvenPatrol extends Card {
 
     public DwarvenPatrol() {
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardColorPredicate(CardColor.RED)),
                 List.of(new UntapPermanentsEffect(TapUntapScope.SELF))));

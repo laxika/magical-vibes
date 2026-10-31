@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerThenIfMilledEff
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "200")
@@ -51,7 +50,7 @@ public class LoreholdExcavation extends Card {
                                 Set.of(),
                                 false,
                                 true,
-                                Map.of(),
+                                List.of(),
                                 List.of(),
                                 false,
                                 false,

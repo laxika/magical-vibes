@@ -130,7 +130,7 @@ Explicit graveyard targets are retained on the spell entry before paying delve c
 
 `Permanent.transformationSequence` changes whenever its face changes and is copied into source snapshots. `TransformSelfEffectHandler` compares the live sequence against the ability's snapshot to reject obsolete transformation instructions. Departure also records effective toughness before battlefield removal for damaged-creature death triggers.
 
-Use `EnterWithCountersEffect` in a battlefield entry request for reanimation with counters, then collect entry triggers after the entire simultaneous batch has entered. Intrinsic Echo registration belongs in `STATIC` and runs during placement. `ChooseOpponentGainsControlOfSourceEffect` in `STATIC` changes the entering controller; its normal triggered form remains available. Fabricate uses `MayEffect` with counters on the source and token creation as its alternative, chosen during resolution.
+Use `EnterWithCountersEffect` in a battlefield entry request for reanimation with counters, then collect entry triggers after the entire simultaneous batch has entered. Intrinsic Echo registration is added with `addStaticEffect` and runs during placement. `ChooseOpponentGainsControlOfSourceEffect` as a static ability (`addStaticEffect`) changes the entering controller; its normal triggered form remains available. Fabricate uses `MayEffect` with counters on the source and token creation as its alternative, chosen during resolution.
 
 ## Nested games
 

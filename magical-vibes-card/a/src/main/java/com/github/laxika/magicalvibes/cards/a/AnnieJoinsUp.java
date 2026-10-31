@@ -39,8 +39,7 @@ public class AnnieJoinsUp extends Card {
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(5, opponentCreatureOrPlaneswalker));
 
-        addEffect(EffectSlot.STATIC,
-                new AdditionalTriggeredAbilityEffect(new PermanentAllOfPredicate(List.of(
+        addStaticEffect(new AdditionalTriggeredAbilityEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)
                 )), null, true, false));

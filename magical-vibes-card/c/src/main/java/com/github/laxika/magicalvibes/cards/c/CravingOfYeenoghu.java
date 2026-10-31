@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -23,10 +22,9 @@ public class CravingOfYeenoghu extends Card {
         // Enchant creature you control
         target(TargetFilters.creatureYouControl())
                 // Enchanted creature gets +3/+2, has haste, and attacks each combat if able.
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 2, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new MustAttackEffect());
+                .addStaticEffect(new StaticBoostEffect(3, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new MustAttackEffect());
 
         // {R}: Return this card from your graveyard to the battlefield attached to target creature you
         // control. Craving of Yeenoghu perpetually gains "Enchanted creature gets -1/-1." Activate only

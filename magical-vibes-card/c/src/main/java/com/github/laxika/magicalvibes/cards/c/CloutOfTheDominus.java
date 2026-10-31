@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -19,13 +18,13 @@ public class CloutOfTheDominus extends Card {
     public CloutOfTheDominus() {
         target(TargetFilters.creature())
                 // As long as enchanted creature is blue, it gets +1/+1 and has shroud.
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.BLUE)),
                         new StaticBoostEffect(1, 1, Set.of(Keyword.SHROUD), GrantScope.ENCHANTED_CREATURE),
                         null
                 ))
                 // As long as enchanted creature is red, it gets +1/+1 and has haste.
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.RED)),
                         new StaticBoostEffect(1, 1, Set.of(Keyword.HASTE), GrantScope.ENCHANTED_CREATURE),
                         null

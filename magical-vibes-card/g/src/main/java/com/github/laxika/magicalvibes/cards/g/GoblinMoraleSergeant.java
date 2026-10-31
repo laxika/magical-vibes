@@ -10,6 +10,6 @@ public class GoblinMoraleSergeant extends Card {
 
     public GoblinMoraleSergeant() {
         // Haste and Enlist are loaded from Scryfall; the enlist continuation is handled by combat.
-        addEffect(EffectSlot.STATIC, new ConjureDuplicateOfEnlistedNontokenCreatureEffect());
+        addEffect(EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS, new ConjureDuplicateOfEnlistedNontokenCreatureEffect());
     }
 }

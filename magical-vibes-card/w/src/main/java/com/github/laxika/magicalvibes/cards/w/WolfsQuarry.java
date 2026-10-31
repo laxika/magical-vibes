@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "184")
@@ -43,7 +43,7 @@ public class WolfsQuarry extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(EffectSlot.ON_DEATH, FOOD_TOKEN),
+                List.of(LegacySlots.triggered(EffectSlot.ON_DEATH, FOOD_TOKEN)),
                 List.of(),
                 false,
                 false,

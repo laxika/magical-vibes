@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 public class SpiderVerse extends Card {
 
     public SpiderVerse() {
-        addEffect(EffectSlot.STATIC, new IgnoreLegendRuleForControlledSubtypeEffect(CardSubtype.SPIDER));
+        addStaticEffect(new IgnoreLegendRuleForControlledSubtypeEffect(CardSubtype.SPIDER));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, OncePerTurnTriggerEffect.markOnAcceptance(
                 new MayEffect(
                         CopyControllerCastSpellOnSpellCastEffect.fromOutsideHandWithPermanentSpellHaste(null),

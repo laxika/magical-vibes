@@ -14,7 +14,7 @@ public class SpreadingSeas extends Card {
 
     public SpreadingSeas() {
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesTypeEffect(CardSubtype.ISLAND));
+                .addStaticEffect(new EnchantedPermanentBecomesTypeEffect(CardSubtype.ISLAND));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
     }
 }

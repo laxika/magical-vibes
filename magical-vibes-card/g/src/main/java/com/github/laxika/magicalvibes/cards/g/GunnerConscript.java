@@ -24,7 +24,7 @@ public class GunnerConscript extends Card {
 
     public GunnerConscript() {
         Scaled onePerAttachment = new Scaled(new AttachmentsOnSource(true, true), 1);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(onePerAttachment, onePerAttachment));
+        addStaticEffect(new BoostSelfEffect(onePerAttachment, onePerAttachment));
 
         addEffect(EffectSlot.ON_DEATH, new TriggeringPermanentConditionalEffect(
                 new PermanentIsEnchantedPredicate(), junkToken()));

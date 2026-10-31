@@ -30,7 +30,7 @@ public class TheOddAcornGang extends Card {
         PermanentPredicate squirrelCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(), squirrel));
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,

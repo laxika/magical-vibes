@@ -59,7 +59,7 @@ class DeckValidationServiceTest {
     @Test void recognizesLegendaryCreaturesDefinedOutsideTheBattlefield() {
         Card grist = card("Grist", CardType.PLANESWALKER);
         grist.setSupertypes(Set.of(CardSupertype.LEGENDARY));
-        grist.addEffect(EffectSlot.STATIC, new com.github.laxika.magicalvibes.model.effect.BecomeCreatureOutsideBattlefieldEffect(
+        grist.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.BecomeCreatureOutsideBattlefieldEffect(
                 1, 1, List.of(CardSubtype.INSECT)));
         assertThat(validator.eligibleCommander(grist)).isTrue();
     }

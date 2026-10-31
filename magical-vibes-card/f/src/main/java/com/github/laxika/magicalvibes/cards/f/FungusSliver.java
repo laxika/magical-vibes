@@ -23,6 +23,6 @@ public class FungusSliver extends Card {
                 GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 sliver);
 
-        addEffect(EffectSlot.STATIC, damagedSliverGetsCounter);
+        addStaticEffect(damagedSliverGetsCounter);
     }
 }

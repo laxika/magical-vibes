@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -28,6 +27,6 @@ public class ThrabenDoomsayer extends Card {
                 "{T}: Create a 1/1 white Human creature token."));
 
         // Fateful hour — As long as you have 5 or less life, other creatures you control get +2/+2.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerLifeAtMost(5), new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES)));
+        addStaticEffect(new ConditionalEffect(new ControllerLifeAtMost(5), new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES)));
     }
 }

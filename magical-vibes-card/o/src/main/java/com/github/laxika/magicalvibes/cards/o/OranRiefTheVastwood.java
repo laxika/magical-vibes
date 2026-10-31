@@ -32,7 +32,7 @@ import java.util.Set;
 public class OranRiefTheVastwood extends Card {
 
     public OranRiefTheVastwood() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
         addActivatedAbility(new ActivatedAbility(
                 true,

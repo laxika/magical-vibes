@@ -12,7 +12,7 @@ public class HomuraHumanAscendant extends Card {
     public HomuraHumanAscendant() {
         setBackFaceCard(new HomurasEssence());
 
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_DEATH, new ReturnSourceTransformedFromGraveyardEffect());
     }
 

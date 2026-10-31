@@ -3,13 +3,11 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
-import java.util.List;
 
 @CardRegistration(set = "SOK", collectorNumber = "56")
 public class ShiftingBorders extends Card {
@@ -21,6 +19,6 @@ public class ShiftingBorders extends Card {
                 .addSpellEffect(new ExchangeControlOfTargetPermanentsEffect(
                         new PermanentIsLandPredicate(), false, false));
 
-        addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{3}{U}"));
+        addStaticEffect(new SpliceEffect(CardSubtype.ARCANE, "{3}{U}"));
     }
 }

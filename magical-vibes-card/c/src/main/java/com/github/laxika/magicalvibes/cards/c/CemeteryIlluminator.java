@@ -17,8 +17,8 @@ public class CemeteryIlluminator extends Card {
                 new ExileAnyGraveyardCardAndImprintOnSourceEffect());
         addEffect(EffectSlot.ON_ATTACK,
                 new ExileAnyGraveyardCardAndImprintOnSourceEffect());
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new AllowCastFromTopOfLibraryEffect(
                 new CardSharesCardTypeWithImprintedCardPredicate(true), true));
     }
 }

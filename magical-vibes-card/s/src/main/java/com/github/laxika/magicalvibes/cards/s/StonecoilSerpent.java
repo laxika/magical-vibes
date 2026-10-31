@@ -17,6 +17,6 @@ public class StonecoilSerpent extends Card {
     public StonecoilSerpent() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
-        addEffect(EffectSlot.STATIC, new ProtectionFromMulticoloredEffect());
+        addStaticEffect(new ProtectionFromMulticoloredEffect());
     }
 }

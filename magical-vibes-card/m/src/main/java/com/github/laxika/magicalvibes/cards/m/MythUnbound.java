@@ -11,8 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCommanderCastCostEffect
 public class MythUnbound extends Card {
 
     public MythUnbound() {
-        addEffect(EffectSlot.STATIC,
-                new ReduceCommanderCastCostEffect(new CommanderCastsFromCommandZoneThisGame()));
+        addStaticEffect(new ReduceCommanderCastCostEffect(new CommanderCastsFromCommandZoneThisGame()));
         addEffect(EffectSlot.ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE, new DrawCardEffect(1));
     }
 }

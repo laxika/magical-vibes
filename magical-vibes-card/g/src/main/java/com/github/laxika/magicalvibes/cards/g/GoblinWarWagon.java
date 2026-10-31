@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 public class GoblinWarWagon extends Card {
 
     public GoblinWarWagon() {
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayPayManaEffect(
                 "{2}",
                 new UntapPermanentsEffect(TapUntapScope.SELF),

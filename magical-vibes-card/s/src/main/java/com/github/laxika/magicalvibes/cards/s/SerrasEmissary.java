@@ -11,6 +11,6 @@ public class SerrasEmissary extends Card {
 
     public SerrasEmissary() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardTypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect());
+        addStaticEffect(new GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect());
     }
 }

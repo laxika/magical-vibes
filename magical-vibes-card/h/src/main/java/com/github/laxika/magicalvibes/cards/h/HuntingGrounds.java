@@ -20,7 +20,7 @@ import java.util.List;
 public class HuntingGrounds extends Card {
 
     public HuntingGrounds() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_OPPONENT_CASTS_SPELL,

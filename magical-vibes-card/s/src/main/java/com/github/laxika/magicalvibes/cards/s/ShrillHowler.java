@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.h.HowlingChorus;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesWithLessPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
@@ -20,7 +19,7 @@ public class ShrillHowler extends Card {
         setBackFaceCard(new HowlingChorus());
 
         // Creatures with power less than this creature's power can't block it.
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesWithLessPowerEffect());
+        addStaticEffect(new CantBeBlockedByCreaturesWithLessPowerEffect());
 
         // {5}{G}: Transform this creature.
         addActivatedAbility(new ActivatedAbility(

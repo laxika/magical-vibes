@@ -31,7 +31,7 @@ public class PassionateArchaeologist extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentOwnedBySourceControllerPredicate()));
 
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(
                         null,

@@ -16,7 +16,6 @@ public class Cloudform extends Card {
 
     public Cloudform() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeAuraManifestTopCardEffect());
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.HEXPROOF), GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.HEXPROOF), GrantScope.ENCHANTED_CREATURE));
     }
 }

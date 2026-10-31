@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 public class YavimayaGranger extends Card {
 
     public YavimayaGranger() {
-        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{2}{G}"));
+        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{2}{G}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED),
                         "Search your library for a basic land card?"));

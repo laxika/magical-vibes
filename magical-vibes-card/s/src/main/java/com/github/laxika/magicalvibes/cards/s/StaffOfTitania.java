@@ -24,7 +24,7 @@ public class StaffOfTitania extends Card {
     public StaffOfTitania() {
         PermanentCount forests = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.FOREST), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 forests, forests, GrantScope.EQUIPPED_CREATURE));
 
         addEffect(EffectSlot.ON_ATTACK, new CreateTokenEffect(

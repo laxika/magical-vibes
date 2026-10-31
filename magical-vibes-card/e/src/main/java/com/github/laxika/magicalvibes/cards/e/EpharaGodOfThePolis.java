@@ -22,7 +22,7 @@ import java.util.Set;
 public class EpharaGodOfThePolis extends Card {
 
     public EpharaGodOfThePolis() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorsAtLeast(
                         Set.of(ManaColor.WHITE, ManaColor.BLUE), 7)),
                 new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));

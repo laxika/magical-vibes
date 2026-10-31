@@ -23,7 +23,7 @@ public class CrestedSunmare extends Card {
 
     public CrestedSunmare() {
         // Other Horses you control have indestructible.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 0, Set.of(Keyword.INDESTRUCTIBLE),
+        addStaticEffect(new StaticBoostEffect(0, 0, Set.of(Keyword.INDESTRUCTIBLE),
                 GrantScope.OWN_CREATURES, new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.HORSE))));
 
         // At the beginning of each end step, if you gained life this turn, create a 5/5 white Horse creature token.

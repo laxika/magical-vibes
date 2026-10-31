@@ -13,7 +13,7 @@ public class DeckValidationService {
     public DeckValidationService(DeckLegalityRegistry legalities) { this.legalities = legalities; }
 
     public boolean eligibleCommander(Card card) {
-        return ((card.hasType(CardType.CREATURE) || card.getEffects(EffectSlot.STATIC).stream()
+        return ((card.hasType(CardType.CREATURE) || card.getStaticEffects().stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.BecomeCreatureOutsideBattlefieldEffect.class::isInstance))
                 && card.getSupertypes().contains(CardSupertype.LEGENDARY))
                 || text(card).contains("can be your commander");

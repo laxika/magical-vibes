@@ -14,8 +14,7 @@ import java.util.Set;
 public class FearMyAuthority extends Card {
 
     public FearMyAuthority() {
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(2, 2, Set.of(Keyword.FEAR), GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(2, 2, Set.of(Keyword.FEAR), GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new AbandonSchemeUnlessDiscardOrPayLifeEffect(3));
     }
 }

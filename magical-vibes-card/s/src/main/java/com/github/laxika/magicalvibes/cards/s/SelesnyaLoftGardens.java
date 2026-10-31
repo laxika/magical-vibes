@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 public class SelesnyaLoftGardens extends Card {
 
     public SelesnyaLoftGardens() {
-        addEffect(EffectSlot.STATIC, new MultiplyTokenCreationEffect(2));
-        addEffect(EffectSlot.STATIC, new DoubleCountersOnAllPermanentsEffect());
+        addStaticEffect(new MultiplyTokenCreationEffect(2));
+        addStaticEffect(new DoubleCountersOnAllPermanentsEffect());
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new GrantStaticEffectToPlayerUntilEndOfTurnEffect(
                         new AddOneOfEachManaTypeProducedByLandEffect(true)));

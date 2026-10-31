@@ -17,10 +17,10 @@ public class HoardingBroodlord extends Card {
     public HoardingBroodlord() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new SearchLibraryForCardsToExileFaceDownPileEffect(1));
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, null, false, false, 0, null, false, false, false, ExileAccessScope.EXILER,
                 false, false, true, false, false, null, false, false, false, false));
-        addEffect(EffectSlot.STATIC, GrantSpellCastingAbilityToSpellsEffect.fromZone(
+        addStaticEffect(GrantSpellCastingAbilityToSpellsEffect.fromZone(
                 Keyword.CONVOKE, null, Zone.EXILE));
     }
 }

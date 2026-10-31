@@ -23,7 +23,7 @@ public class PontiffOfBlight extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, extort());
         // "Other creatures you control have extort" — OWN_CREATURES excludes the source, which
         // already has its own printed extort above. Each instance triggers separately.
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_CONTROLLER_CASTS_SPELL, extort(), GrantScope.OWN_CREATURES));
     }
 

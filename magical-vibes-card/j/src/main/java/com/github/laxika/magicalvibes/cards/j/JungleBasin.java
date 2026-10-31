@@ -29,7 +29,7 @@ public class JungleBasin extends Card {
 
     public JungleBasin() {
         // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // When this land enters, sacrifice it unless you return an untapped Forest you control to
         // its owner's hand.

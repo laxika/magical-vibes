@@ -18,8 +18,8 @@ public class CloakAndDagger extends Card {
 
     public CloakAndDagger() {
         // Equipped creature gets +2/+0 and has shroud.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever a Rogue creature enters, you may attach this Equipment to it.
         addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,

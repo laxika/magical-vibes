@@ -878,7 +878,7 @@ public class CombatSimulator {
 
     private boolean hasLureEffect(GameData gameData, Permanent attacker) {
         if (attacker.isMustBeBlockedByAllThisTurn()) return true;
-        boolean hasOnCard = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean hasOnCard = attacker.getCard().getStaticEffects().stream()
                 .anyMatch(MustBeBlockedByAllCreaturesEffect.class::isInstance);
         if (hasOnCard) return true;
         return gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedByAllCreaturesEffect.class);
@@ -886,7 +886,7 @@ public class CombatSimulator {
 
     private boolean hasMustBeBlockedIfAbleEffect(GameData gameData, Permanent attacker) {
         if (attacker.isMustBeBlockedThisTurn()) return true;
-        boolean hasOnCard = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean hasOnCard = attacker.getCard().getStaticEffects().stream()
                 .anyMatch(MustBeBlockedIfAbleEffect.class::isInstance);
         if (hasOnCard) return true;
         return gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedIfAbleEffect.class);
@@ -1028,7 +1028,7 @@ public class CombatSimulator {
     }
 
     private boolean isCantBeBlockedDueToHistoricCast(GameData gameData, Permanent attacker, UUID controllerId) {
-        return attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+        return attacker.getCard().getStaticEffects().stream()
                 .anyMatch(CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect.class::isInstance)
                 && controllerId != null
                 && gameQueryService.playerCastHistoricSpellThisTurn(gameData, controllerId);

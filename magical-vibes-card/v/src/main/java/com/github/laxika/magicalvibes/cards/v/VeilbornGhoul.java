@@ -17,7 +17,7 @@ public class VeilbornGhoul extends Card {
 
     public VeilbornGhoul() {
         // Veilborn Ghoul can't block.
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
 
         // Whenever a Swamp you control enters, you may return this card from your graveyard to your hand.
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD,

@@ -21,7 +21,7 @@ public class LumraBellowOfTheWoods extends Card {
     public LumraBellowOfTheWoods() {
         PermanentCount landsYouControl = new PermanentCount(
                 new PermanentIsLandPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 new MillEffect(4, MillRecipient.CONTROLLER),
                 ReturnCardFromGraveyardEffect.builder()

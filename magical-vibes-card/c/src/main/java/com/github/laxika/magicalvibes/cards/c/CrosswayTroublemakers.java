@@ -27,7 +27,7 @@ public class CrosswayTroublemakers extends Card {
             2, new DrawCardEffect(), "Pay 2 life to draw a card?");
 
     public CrosswayTroublemakers() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK),
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(

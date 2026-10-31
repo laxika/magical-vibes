@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class PrismaticWard extends Card {
 
     public PrismaticWard() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new PreventColorDamageToEnchantedCreatureEffect());
+        target(TargetFilters.creature()).addStaticEffect(new PreventColorDamageToEnchantedCreatureEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
     }
 }

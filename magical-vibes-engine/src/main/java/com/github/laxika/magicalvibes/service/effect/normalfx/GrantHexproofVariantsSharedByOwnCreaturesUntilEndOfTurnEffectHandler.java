@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -46,7 +45,7 @@ public class GrantHexproofVariantsSharedByOwnCreaturesUntilEndOfTurnEffectHandle
         for (Permanent creature : creatures) {
             GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, creature);
             if (!bonus.losesAllAbilities()) {
-                for (CardEffect staticEffect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect staticEffect : creature.getCard().getStaticEffects()) {
                     addIfVariant(staticEffect, variants);
                 }
             }

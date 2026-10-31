@@ -19,7 +19,7 @@ public class ArchangelOfStrife extends Card {
     public ArchangelOfStrife() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseModeOnEnterEffect(List.of(WAR, PEACE), true));
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenPlayerModeEffect(WAR, 3, 0));
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenPlayerModeEffect(PEACE, 0, 3));
+        addStaticEffect(new BoostCreaturesOfChosenPlayerModeEffect(WAR, 3, 0));
+        addStaticEffect(new BoostCreaturesOfChosenPlayerModeEffect(PEACE, 0, 3));
     }
 }

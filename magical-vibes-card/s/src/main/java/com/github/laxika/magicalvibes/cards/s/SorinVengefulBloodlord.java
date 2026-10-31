@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
@@ -32,11 +31,11 @@ public class SorinVengefulBloodlord extends Card {
             new PermanentIsPlaneswalkerPredicate()));
 
     public SorinVengefulBloodlord() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerTurn(),
                 new GrantKeywordEffect(Set.of(Keyword.LIFELINK), GrantScope.OWN_PERMANENTS,
                         CREATURE_OR_PLANESWALKER)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)));
 

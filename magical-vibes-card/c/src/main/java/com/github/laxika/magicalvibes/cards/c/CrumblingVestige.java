@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 public class CrumblingVestige extends Card {
 
     public CrumblingVestige() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AwardAnyColorManaEffect());
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
     }

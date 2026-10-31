@@ -18,10 +18,9 @@ public class EnergyStorm extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{1}"));
 
         // Prevent all damage that would be dealt by instant and sorcery spells.
-        addEffect(EffectSlot.STATIC, new PreventDamageFromInstantAndSorcerySpellsEffect());
+        addStaticEffect(new PreventDamageFromInstantAndSorcerySpellsEffect());
 
         // Creatures with flying don't untap during their controllers' untap steps.
-        addEffect(EffectSlot.STATIC,
-                new MatchingPermanentsDoesntUntapEffect(new PermanentHasKeywordPredicate(Keyword.FLYING)));
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(new PermanentHasKeywordPredicate(Keyword.FLYING)));
     }
 }

@@ -20,7 +20,7 @@ public class MarchesaTheBlackRose extends Card {
 
     public MarchesaTheBlackRose() {
         // Other creatures you control have dethrone.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.DETHRONE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DETHRONE, GrantScope.OWN_CREATURES));
 
         // Whenever a creature you control with a +1/+1 counter on it dies, return that card to the
         // battlefield under your control at the beginning of the next end step.

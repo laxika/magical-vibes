@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -1023,13 +1022,13 @@ public class LibrarySearchSupport {
 
     /** Returns whether {@code card} carries a permission to be cast during its owner's library search. */
     public boolean isLibrarySearchCastableCard(Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .anyMatch(LibrarySearchCastPermission.class::isInstance);
     }
 
     /** Returns the library-ninjutsu permission carried by {@code card}, if any. */
     public LibraryNinjutsuEffect libraryNinjutsuEffect(Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .filter(LibraryNinjutsuEffect.class::isInstance)
                 .map(LibraryNinjutsuEffect.class::cast)
                 .findFirst()
@@ -1072,7 +1071,7 @@ public class LibrarySearchSupport {
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                boolean isOppositionAgent = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                boolean isOppositionAgent = permanent.getCard().getStaticEffects().stream()
                         .anyMatch(OppositionAgentEffect.class::isInstance)
                         && !gameQueryService.hasLostAllAbilities(gameData, permanent);
                 if (isOppositionAgent && permanent.getTimestamp() >= newestTimestamp) {

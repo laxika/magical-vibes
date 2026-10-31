@@ -20,8 +20,7 @@ import java.util.List;
 public class KratosGodOfWar extends Card {
 
     public KratosGodOfWar() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_CREATURES_INCLUDING_SELF));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_CREATURES_INCLUDING_SELF));
         addEffect(EffectSlot.END_STEP_TRIGGERED, new DealDamageToEndStepPlayerEffect(
                 new PermanentCount(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

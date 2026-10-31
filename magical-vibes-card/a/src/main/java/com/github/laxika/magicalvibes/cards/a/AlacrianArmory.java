@@ -25,8 +25,7 @@ import java.util.Set;
 public class AlacrianArmory extends Card {
 
     public AlacrianArmory() {
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(0, 1, Set.of(Keyword.VIGILANCE), GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(0, 1, Set.of(Keyword.VIGILANCE), GrantScope.OWN_CREATURES));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

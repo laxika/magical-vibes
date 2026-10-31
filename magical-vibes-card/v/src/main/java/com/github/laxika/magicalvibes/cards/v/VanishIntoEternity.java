@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -12,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class VanishIntoEternity extends Card {
 
     public VanishIntoEternity() {
-        addEffect(EffectSlot.STATIC, new IncreaseOwnCastCostIfTargetingPermanentEffect(
+        addStaticEffect(new IncreaseOwnCastCostIfTargetingPermanentEffect(
                 new PermanentIsCreaturePredicate(), 3));
 
         target(TargetFilters.nonlandPermanent()).addSpellEffect(new ExileTargetPermanentEffect());

@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 public class ShatterskullCharger extends Card {
 
     public ShatterskullCharger() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}"));
+        addStaticEffect(new KickerEffect("{2}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,

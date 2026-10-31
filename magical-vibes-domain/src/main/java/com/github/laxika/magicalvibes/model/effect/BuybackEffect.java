@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -15,6 +16,12 @@ public record BuybackEffect(String cost, PermanentPredicate sacrificePredicate, 
                             String sacrificeDescription,
                             int discardCount, boolean randomDiscard, PayLifeCost lifeCost)
         implements CardEffect {
+
+    /** Buyback functions while the spell is on the stack (CR 702.27a). */
+    @Override
+    public AbilityZones staticAbilityZones() {
+        return AbilityZones.STACK;
+    }
 
     public BuybackEffect(String cost) {
         this(cost, null, 0, null, 0, false, null);

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureAndCreateTokenCopyEffect;
@@ -34,7 +35,7 @@ public class BrenardGingerSculptor extends Card {
     );
 
     public BrenardGingerSculptor() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 2,
                 2,
                 Set.of(Keyword.TRAMPLE),
@@ -63,9 +64,10 @@ public class BrenardGingerSculptor extends Card {
                 null,
                 Set.of(),
                 false,
-                Map.of(EffectSlot.STATIC, List.of(
+                List.of(
+                        StaticAbility.of(List.of(
                         new GrantActivatedAbilityEffect(FOOD_GOLEM_ABILITY, GrantScope.SELF)
-                )),
+                ))),
                 List.of(),
                 false,
                 false,

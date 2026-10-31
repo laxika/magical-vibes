@@ -20,7 +20,7 @@ import java.util.Set;
 public class MyrelShieldOfArgive extends Card {
 
     public MyrelShieldOfArgive() {
-        addEffect(EffectSlot.STATIC, new OpponentsCantCastOrActivateDuringYourTurnEffect());
+        addStaticEffect(new OpponentsCantCastOrActivateDuringYourTurnEffect());
         addEffect(EffectSlot.ON_ATTACK, new CreateTokenEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SOLDIER), CountScope.CONTROLLER),
                 "Soldier", 1, 1, null, List.of(CardSubtype.SOLDIER), Set.of(), Set.of(CardType.ARTIFACT)));

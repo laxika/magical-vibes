@@ -16,7 +16,7 @@ public class SmolderingSpires extends Card {
 
     public SmolderingSpires() {
         // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // When this land enters, target creature can't block this turn.
         target(TargetFilters.creature())

@@ -16,7 +16,7 @@ import java.util.List;
 public class NullhideFerox extends Card {
 
     public NullhideFerox() {
-        addEffect(EffectSlot.STATIC, new NoncreatureSpellsCantBeCastEffect(0, false, false));
+        addStaticEffect(new NoncreatureSpellsCantBeCastEffect(0, false, false));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",

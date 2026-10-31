@@ -13,7 +13,7 @@ public class Cunning extends Card {
 
     public Cunning() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_ATTACK, new SacrificeSelfAtNextCleanupEffect())
                 .addEffect(EffectSlot.ON_BLOCK, new SacrificeSelfAtNextCleanupEffect());
     }

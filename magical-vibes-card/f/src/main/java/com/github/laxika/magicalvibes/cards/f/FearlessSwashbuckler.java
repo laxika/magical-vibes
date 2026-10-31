@@ -22,7 +22,7 @@ import java.util.List;
 public class FearlessSwashbuckler extends Card {
 
     public FearlessSwashbuckler() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE,
                 GrantScope.OWN_PERMANENTS,
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)

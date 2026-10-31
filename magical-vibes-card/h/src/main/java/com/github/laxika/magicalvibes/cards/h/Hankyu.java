@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -21,7 +20,7 @@ public class Hankyu extends Card {
     public Hankyu() {
         // Equipped creature has "{T}: Put an aim counter on Hankyu." The counters go on the
         // Equipment, not on the creature activating the ability.
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,
@@ -34,7 +33,7 @@ public class Hankyu extends Card {
         // Equipped creature has "{T}, Remove all aim counters from Hankyu: This creature deals
         // damage to any target equal to the number of aim counters removed this way." The removal
         // is an additional cost that snapshots the count into X; the damage source is the creature.
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,

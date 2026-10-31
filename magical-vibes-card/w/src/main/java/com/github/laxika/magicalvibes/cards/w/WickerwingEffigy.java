@@ -20,8 +20,8 @@ import java.util.Set;
 public class WickerwingEffigy extends Card {
 
     public WickerwingEffigy() {
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(Set.of(CardType.CREATURE)));
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new AllowCastFromTopOfLibraryEffect(Set.of(CardType.CREATURE)));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new CastFromLibraryTriggerEffect(List.of(
                 new GrantKeywordsToCastSpellEffect(Set.of(Keyword.FLYING)),
                 new ModifyCastSpellCharacteristicsEffect(CardColor.BLACK, CardSubtype.BIRD, 1, 1)

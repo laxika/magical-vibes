@@ -26,7 +26,7 @@ public class WintermoorCommander extends Card {
     public WintermoorCommander() {
         PermanentCount knightsYouControl =
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.KNIGHT), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(new Fixed(2), knightsYouControl));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(new Fixed(2), knightsYouControl));
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

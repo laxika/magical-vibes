@@ -21,7 +21,7 @@ public class KarnLegacyReforged extends Card {
 
     public KarnLegacyReforged() {
         PermanentIsArtifactPredicate artifact = new PermanentIsArtifactPredicate();
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new GreatestManaValueAmongControlled(artifact),
                 new GreatestManaValueAmongControlled(artifact)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new AwardRestrictedManaEffect(

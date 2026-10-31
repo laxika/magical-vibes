@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -19,7 +18,7 @@ import java.util.Set;
 public class DauntlessDismantler extends Card {
 
     public DauntlessDismantler() {
-        addEffect(EffectSlot.STATIC, new EnterPermanentsOfTypesTappedEffect(Set.of(CardType.ARTIFACT), true));
+        addStaticEffect(new EnterPermanentsOfTypesTappedEffect(Set.of(CardType.ARTIFACT), true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -15,7 +15,7 @@ public class Warbringer extends Card {
 
     public Warbringer() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{R}"))));
-        addEffect(EffectSlot.STATIC, new ReduceDashCostEffect(2));
+        addStaticEffect(new ReduceDashCostEffect(2));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnSelfToHandIfDashCostPaidEffect());
     }
 }

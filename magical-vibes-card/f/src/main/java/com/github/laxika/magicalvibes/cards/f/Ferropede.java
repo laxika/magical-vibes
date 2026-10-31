@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Ferropede extends Card {
 
     public Ferropede() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
 
         target(TargetFilters.permanent()).addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new MayEffect(new RemoveChosenCountersFromTargetPermanentEffect(1),

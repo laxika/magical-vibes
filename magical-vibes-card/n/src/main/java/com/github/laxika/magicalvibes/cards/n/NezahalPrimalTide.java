@@ -23,8 +23,8 @@ import java.util.List;
 public class NezahalPrimalTide extends Card {
 
     public NezahalPrimalTide() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
+        addStaticEffect(new CantBeCounteredEffect());
+        addStaticEffect(new NoMaximumHandSizeEffect());
 
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),

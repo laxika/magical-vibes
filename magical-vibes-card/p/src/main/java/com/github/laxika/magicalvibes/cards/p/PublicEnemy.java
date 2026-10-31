@@ -12,7 +12,7 @@ public class PublicEnemy extends Card {
 
     public PublicEnemy() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new CreaturesMustAttackEnchantedCreatureControllerEffect());
+                .addStaticEffect(new CreaturesMustAttackEnchantedCreatureControllerEffect());
         addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new DrawCardEffect());
     }
 }

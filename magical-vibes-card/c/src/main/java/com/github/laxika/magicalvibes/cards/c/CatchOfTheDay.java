@@ -39,11 +39,11 @@ public class CatchOfTheDay extends Card {
                 List.of(SCRY, GOAD, TAP),
                 List.of(SIX_TWO, FOUR_FOUR, TWO_SIX))));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceHasChosenMode(VIGILANCE),
+        addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(VIGILANCE),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceHasChosenMode(WARD),
+        addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(WARD),
                 new GrantKeywordEffect(Keyword.WARD, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceHasChosenMode(ISLANDWALK),
+        addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(ISLANDWALK),
                 new GrantKeywordEffect(Keyword.ISLANDWALK, GrantScope.SELF)));
 
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
@@ -60,11 +60,11 @@ public class CatchOfTheDay extends Card {
                         new ConditionalEffect(new SourceHasChosenMode(TAP),
                                 new TapPermanentsEffect(TapUntapScope.TARGET, opponentCreature.predicate())));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceHasChosenMode(SIX_TWO),
+        addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(SIX_TWO),
                 new SetBasePowerToughnessEffect(6, 2, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceHasChosenMode(FOUR_FOUR),
+        addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(FOUR_FOUR),
                 new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceHasChosenMode(TWO_SIX),
+        addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(TWO_SIX),
                 new SetBasePowerToughnessEffect(2, 6, GrantScope.SELF)));
     }
 }

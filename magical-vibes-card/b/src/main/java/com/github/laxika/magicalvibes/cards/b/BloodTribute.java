@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -20,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class BloodTribute extends Card {
 
     public BloodTribute() {
-        addEffect(EffectSlot.STATIC, KickerEffect.tap(
+        addStaticEffect(KickerEffect.tap(
                 new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE), "an untapped Vampire"));
 
         target(new PlayerPredicateTargetFilter(

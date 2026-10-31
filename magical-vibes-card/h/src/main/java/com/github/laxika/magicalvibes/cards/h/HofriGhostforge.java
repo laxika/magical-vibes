@@ -17,7 +17,7 @@ import java.util.Set;
 public class HofriGhostforge extends Card {
 
     public HofriGhostforge() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1,
+        addStaticEffect(new StaticBoostEffect(1, 1,
                 Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)));
 

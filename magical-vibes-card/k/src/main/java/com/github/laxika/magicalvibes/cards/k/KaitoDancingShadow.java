@@ -1,14 +1,15 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -24,7 +25,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ONE", collectorNumber = "204")
@@ -58,12 +58,10 @@ public class KaitoDancingShadow extends Card {
                 "0: Draw a card."
         ));
 
-        Map<EffectSlot, CardEffect> tokenEffects = Map.of(
-                EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
-                SequenceEffect.of(
+        List<Ability> tokenEffects = List.of(
+                LegacySlots.triggered(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, SequenceEffect.of(
                         new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
-                        new GainLifeEffect(2))
-        );
+                        new GainLifeEffect(2))));
         addActivatedAbility(new ActivatedAbility(
                 -2,
                 List.of(new CreateTokenEffect(

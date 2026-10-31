@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class KavuMonarch extends Card {
 
     public KavuMonarch() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasSubtypePredicate(CardSubtype.KAVU)));
         addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,

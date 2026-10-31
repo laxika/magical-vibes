@@ -34,7 +34,7 @@ public class SwordOfTheSqueak extends Card {
                         new PermanentIsCreaturePredicate(),
                         basePowerOrToughnessOne)),
                 CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 qualifyingCreatures, qualifyingCreatures, GrantScope.EQUIPPED_CREATURE));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,

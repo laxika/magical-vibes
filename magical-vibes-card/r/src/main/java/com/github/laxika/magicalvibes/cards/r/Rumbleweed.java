@@ -23,7 +23,7 @@ import java.util.Set;
 public class Rumbleweed extends Card {
 
     public Rumbleweed() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new CardsInGraveyard(new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER)));
 
         PermanentPredicate otherCreature = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());

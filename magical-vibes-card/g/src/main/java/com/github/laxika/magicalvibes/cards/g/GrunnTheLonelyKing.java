@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class GrunnTheLonelyKing extends Card {
 
     public GrunnTheLonelyKing() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}"));
+        addStaticEffect(new KickerEffect("{3}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5))));
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(new AttacksAlone(), new DoubleSelfPowerToughnessEffect()));

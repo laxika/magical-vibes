@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeCost;
@@ -22,6 +21,6 @@ public class CallerOfTheHunt extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentHasSourceChosenSubtypePredicate()));
         PermanentCount matchingCreatures = new PermanentCount(creaturesOfChosenType, CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(matchingCreatures, matchingCreatures));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(matchingCreatures, matchingCreatures));
     }
 }

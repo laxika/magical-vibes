@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 public class DaxosOfMeletis extends Card {
 
     public DaxosOfMeletis() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtLeastPredicate(3)));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new ExileTopCardOfDamagedPlayerLibraryGainLifeAndMayCastThisTurnEffect());

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -17,8 +16,8 @@ import java.util.List;
 public class RocksteadyCrashCourser extends Card {
 
     public RocksteadyCrashCourser() {
-        addEffect(EffectSlot.STATIC, new CanBeBlockedByAtMostNCreaturesEffect(1));
-        addEffect(EffectSlot.STATIC, new EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect(
+        addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));
+        addStaticEffect(new EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect(
                 1, new PermanentHasSubtypePredicate(CardSubtype.BOAR)));
 
         addHandActivatedAbility(new ActivatedAbility(

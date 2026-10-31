@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 public class JurinLeadingTheCharge extends Card {
 
     public JurinLeadingTheCharge() {
-        addEffect(EffectSlot.STATIC, new MustBeBlockedIfAbleEffect());
+        addStaticEffect(new MustBeBlockedIfAbleEffect());
 
         addEffect(EffectSlot.ON_ATTACK, new BoostOwnCreaturesAttackingPlayersByDefendingPlayerCreatureCountEffect());
     }

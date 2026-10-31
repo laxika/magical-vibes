@@ -25,7 +25,7 @@ import java.util.List;
 public class ThievingSkydiver extends Card {
 
     public ThievingSkydiver() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{X}"));
+        addStaticEffect(new KickerEffect("{X}"));
         setMinimumXValue(1);
         targetWhenKicked(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

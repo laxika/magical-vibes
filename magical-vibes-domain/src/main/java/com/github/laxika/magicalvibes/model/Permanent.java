@@ -17,7 +17,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -2067,8 +2066,33 @@ public class Permanent {
         return combined;
     }
 
+    /**
+     * The effects of the static abilities granted until end of turn, end of combat or next upkeep, in
+     * that order.
+     */
+    public List<CardEffect> getTemporaryStaticEffects() {
+        List<CardEffect> effects = LegacySlots.staticEffectsIn(temporaryAbilities);
+        List<CardEffect> untilEndOfCombat = LegacySlots.staticEffectsIn(combatAbilities);
+        List<CardEffect> untilNextUpkeep = new ArrayList<>();
+        untilNextUpkeepAbilities.values().forEach(abilities -> untilNextUpkeep.addAll(LegacySlots.staticEffectsIn(abilities)));
+        if (untilEndOfCombat.isEmpty() && untilNextUpkeep.isEmpty()) {
+            return effects;
+        }
+        List<CardEffect> combined = new ArrayList<>(effects.size()
+                + untilEndOfCombat.size() + untilNextUpkeep.size());
+        combined.addAll(effects);
+        combined.addAll(untilEndOfCombat);
+        combined.addAll(untilNextUpkeep);
+        return combined;
+    }
+
     public void addCombatTriggeredEffect(EffectSlot slot, CardEffect effect) {
-        combatAbilities.add(LegacySlots.ability(slot, effect));
+        addCombatAbility(LegacySlots.ability(slot, effect));
+    }
+
+    /** Grants {@code ability} until end of combat. */
+    public void addCombatAbility(Ability ability) {
+        combatAbilities.add(ability);
     }
 
     public void setTransformed(boolean transformed) {
@@ -2106,10 +2130,26 @@ public class Permanent {
         return LegacySlots.effectsIn(persistentAbilities, slot);
     }
 
+    /** The effects of the static abilities granted indefinitely. */
+    public List<CardEffect> getPersistentStaticEffects() {
+        return LegacySlots.staticEffectsIn(persistentAbilities);
+    }
+
+    /** Removes the indefinitely granted static abilities whose effect matches {@code filter}. */
+    public void removePersistentStaticEffectsIf(Predicate<CardEffect> filter) {
+        persistentAbilities.removeIf(ability -> ability instanceof StaticAbility statik
+                && statik.effects().stream().anyMatch(filter));
+    }
+
     public void addUntilNextUpkeepTriggeredEffect(UUID expiryPlayerId, EffectSlot slot, CardEffect effect) {
+        addUntilNextUpkeepAbility(expiryPlayerId, LegacySlots.ability(slot, effect));
+    }
+
+    /** Grants {@code ability} until the next upkeep of {@code expiryPlayerId}. */
+    public void addUntilNextUpkeepAbility(UUID expiryPlayerId, Ability ability) {
         untilNextUpkeepAbilities
                 .computeIfAbsent(expiryPlayerId, ignored -> new ArrayList<>())
-                .add(LegacySlots.ability(slot, effect));
+                .add(ability);
     }
 
     private List<CardEffect> getUntilNextUpkeepTriggeredEffects(EffectSlot slot) {

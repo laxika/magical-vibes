@@ -25,7 +25,7 @@ public class SaibaSyphoner extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new CardsInHandMatchingAtLeast(1, instantOrSorcery)),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
 
@@ -35,6 +35,6 @@ public class SaibaSyphoner extends Card {
                 .targetGraveyard(true)
                 .build());
 
-        addEffect(EffectSlot.STATIC, new ShuffleIntoLibraryInsteadOfDyingEffect());
+        addStaticEffect(new ShuffleIntoLibraryInsteadOfDyingEffect());
     }
 }

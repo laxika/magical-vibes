@@ -19,7 +19,7 @@ public class IronManModernMarvel extends Card {
 
     public IronManModernMarvel() {
         // Other artifact creatures you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentIsArtifactPredicate()));
 
         // Whenever Iron Man attacks, if you control another artifact creature, draw a card.

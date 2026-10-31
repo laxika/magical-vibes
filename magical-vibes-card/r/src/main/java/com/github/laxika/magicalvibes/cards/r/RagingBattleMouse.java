@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class RagingBattleMouse extends Card {
 
     public RagingBattleMouse() {
-        addEffect(EffectSlot.STATIC, new ReduceSecondSpellCastCostEffect(1));
+        addStaticEffect(new ReduceSecondSpellCastCostEffect(1));
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                 new ConditionalEffect(
                         new PermanentEnteredThisTurn(

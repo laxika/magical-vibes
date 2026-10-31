@@ -23,7 +23,7 @@ public class VexyrIchTekiksHeir extends Card {
                 List.of(CardSubtype.PHYREXIAN, CardSubtype.GOLEM), Set.of(), Set.of(CardType.ARTIFACT));
 
         addEffect(EffectSlot.ON_CONTROLLER_SEEKS, golemToken);
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.VIGILANCE, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.GOLEM)));
     }

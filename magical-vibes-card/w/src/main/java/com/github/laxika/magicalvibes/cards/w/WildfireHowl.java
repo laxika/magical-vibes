@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -23,7 +22,7 @@ import java.util.List;
 public class WildfireHowl extends Card {
 
     public WildfireHowl() {
-        addEffect(EffectSlot.STATIC, new GiftEffect(0));
+        addStaticEffect(new GiftEffect(0));
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new EachOtherPlayerDrawsCardEffect(1)));
         ConditionalEffect giftTargetDamage = new ConditionalEffect(new GiftPromised(),

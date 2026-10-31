@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class VerduranEmissary extends Card {
 
     public VerduranEmissary() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{R}"));
+        addStaticEffect(new KickerEffect("{1}{R}"));
         target(TargetFilters.artifact()).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new Kicked(), new DestroyTargetPermanentEffect(true)));
     }

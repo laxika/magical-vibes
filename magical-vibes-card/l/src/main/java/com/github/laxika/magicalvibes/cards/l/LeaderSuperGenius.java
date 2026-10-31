@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class LeaderSuperGenius extends Card {
 
     public LeaderSuperGenius() {
-        addEffect(EffectSlot.STATIC, new DrawBeforeConniveReplacementEffect());
+        addStaticEffect(new DrawBeforeConniveReplacementEffect());
 
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new DrawDiscardAndConniveEffect(true));

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 public class LurkingRoper extends Card {
 
     public LurkingRoper() {
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
                 new UntapPermanentsEffect(TapUntapScope.SELF));
     }

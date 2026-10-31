@@ -19,7 +19,7 @@ public class GorillaPack extends Card {
 
     public GorillaPack() {
         // "This creature can't attack unless defending player controls a Forest."
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new DefendingPlayerControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.FOREST)),
                 "a Forest"
         ));

@@ -29,7 +29,7 @@ public class GiftOfWrath extends Card {
         target(new PermanentPredicateTargetFilter(
                 artifactOrCreature,
                 "Target must be an artifact or creature"))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
                         new StaticBoostEffect(2, 2, Set.of(Keyword.MENACE), GrantScope.ENCHANTED_CREATURE),
                         null));

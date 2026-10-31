@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NEC", collectorNumber = "22")
@@ -41,11 +41,10 @@ public class SmokeSpiritsAid extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(
-                        EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
-                        SequenceEffect.of(
+                List.of(
+                        LegacySlots.triggered(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, SequenceEffect.of(
                                 DealDamageToEnchantedPermanentControllerEffect.dealtByEnchantedPermanent(1),
-                                CreateTokenEffect.ofTreasureToken(1))),
+                                CreateTokenEffect.ofTreasureToken(1)))),
                 List.of(),
                 false,
                 false,

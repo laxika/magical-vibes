@@ -25,7 +25,7 @@ public class NogiDracoZealot extends Card {
 
     public NogiDracoZealot() {
         // Dragon spells you cast cost {1} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.DRAGON), 1, CostModificationScope.SELF));
 
         // Whenever Nogi attacks, if you control three or more Dragons, until end of turn, Nogi

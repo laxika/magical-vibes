@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "M3C", collectorNumber = "68")
@@ -36,11 +35,12 @@ public class TarmogoyfNest extends Card {
                 List.of(CardSubtype.LHURGOYF),
                 Set.of(),
                 Set.of(),
-                Map.of(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
-                        cardTypes, new Sum(cardTypes, new Fixed(1))))).withManaCost("{1}{G}");
+                List.of(
+                        StaticAbility.of(new SetPowerToughnessToAmountEffect(
+                        cardTypes, new Sum(cardTypes, new Fixed(1)))))).withManaCost("{1}{G}");
 
         // Enchanted land has "{1}{G}, {T}: Create a Tarmogoyf token."
-        target(TargetFilters.land()).addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        target(TargetFilters.land()).addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         "{1}{G}",

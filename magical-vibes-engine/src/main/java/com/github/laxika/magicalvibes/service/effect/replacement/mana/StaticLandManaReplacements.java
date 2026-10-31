@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.replacement.mana;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -131,7 +130,7 @@ class StaticLandManaReplacements extends LandManaCandidateSource {
                 if (gameQueryService.hasLostAllAbilities(gameData, source)) {
                     continue;
                 }
-                List<CardEffect> statics = source.getCard().getEffects(EffectSlot.STATIC);
+                List<CardEffect> statics = source.getCard().getStaticEffects();
                 for (int i = 0; i < statics.size(); i++) {
                     CardEffect effect = statics.get(i);
                     if (effect instanceof LandManaProducesFixedColorEffect

@@ -19,7 +19,7 @@ public class GlisteningOil extends Card {
     public GlisteningOil() {
         target(TargetFilters.creature())
         // Enchanted creature has infect.
-        .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.INFECT, GrantScope.ENCHANTED_CREATURE))
+        .addStaticEffect(new GrantKeywordEffect(Keyword.INFECT, GrantScope.ENCHANTED_CREATURE))
 
         // At the beginning of your upkeep, put a -1/-1 counter on enchanted creature.
         .addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCounterOnReferencedPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE));

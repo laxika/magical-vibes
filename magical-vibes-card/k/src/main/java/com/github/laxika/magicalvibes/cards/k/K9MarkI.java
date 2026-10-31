@@ -30,7 +30,7 @@ public class K9MarkI extends Card {
         PermanentHasSupertypePredicate legendary = new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY);
 
         // As long as K-9 is untapped, other legendary creatures you control have ward {1}.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,

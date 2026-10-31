@@ -15,9 +15,9 @@ public class DaggerOfTheWorthy extends Card {
 
     public DaggerOfTheWorthy() {
         // Equipped creature gets +2/+0
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
 
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(EffectSlot.ON_BECOMES_BLOCKED,
+        addStaticEffect(new GrantTriggeredAbilityEffect(EffectSlot.ON_BECOMES_BLOCKED,
                 new LoseLifeEffect(1, LoseLifeRecipient.DEFENDING_PLAYER), GrantScope.EQUIPPED_CREATURE));
 
         // Equip {2}

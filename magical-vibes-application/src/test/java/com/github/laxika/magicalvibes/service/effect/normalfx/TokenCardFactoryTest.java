@@ -79,7 +79,7 @@ class TokenCardFactoryTest {
         CreateTokenEffect blueprint = new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Vehicle", 3, 2, null, null,
                 List.of(CardSubtype.VEHICLE), Set.of(), Set.of(), false, false,
-                Map.of(), List.of(), false, false, false, 0, Set.of());
+                List.of(), List.of(), false, false, false, 0, Set.of());
 
         Card token = TokenCardFactory.create(blueprint, 3, 2, PREFERRED);
 

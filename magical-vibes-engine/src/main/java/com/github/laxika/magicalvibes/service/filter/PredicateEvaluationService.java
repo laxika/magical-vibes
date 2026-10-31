@@ -30,11 +30,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayerDirection;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -426,7 +424,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -514,7 +511,7 @@ public class PredicateEvaluationService {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent source : battlefield) {
                 if (!source.isAttached() || !permanent.getId().equals(source.getAttachedTo())) continue;
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : source.getCard().getStaticEffects()) {
                     if (effect instanceof GrantKeywordEffect grant
                             && grant.keywords().contains(keyword)
                             && (grant.scope() == GrantScope.ENCHANTED_CREATURE
@@ -668,7 +665,7 @@ public class PredicateEvaluationService {
             }
             case CardKeywordPredicate p -> {
                 if (p.restriction() != null) {
-                    yield card.getEffects(EffectSlot.STATIC).stream()
+                    yield card.getStaticEffects().stream()
                             .filter(TargetingRestrictionEffect.class::isInstance)
                             .map(TargetingRestrictionEffect.class::cast)
                             .anyMatch(restriction -> restriction.hexproofLike()
@@ -710,7 +707,7 @@ public class PredicateEvaluationService {
                             .flatMap(battlefield -> battlefield.getValue().stream()
                                     .filter(permanent -> !permanent.isFaceDown()
                                             && !gameQueryService.hasLostPrintedAbilities(gameData, permanent))
-                                    .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                                    .flatMap(permanent -> permanent.getCard().getStaticEffects().stream()
                                             .filter(GrantFlashToCardTypeEffect.class::isInstance)
                                             .map(GrantFlashToCardTypeEffect.class::cast)
                                             .filter(grant -> grant.grantsKeyword()
@@ -820,7 +817,7 @@ public class PredicateEvaluationService {
             case CardHasForetellPredicate ignored ->
                     card.getCastingOption(ForetellCast.class).isPresent();
             case CardHasKickerPredicate ignored ->
-                    card.getEffects(EffectSlot.STATIC).stream().anyMatch(KickerEffect.class::isInstance)
+                    card.getStaticEffects().stream().anyMatch(KickerEffect.class::isInstance)
                             || card.getCastingCosts().stream()
                             .filter(RepeatableAdditionalManaCost.class::isInstance)
                             .map(RepeatableAdditionalManaCost.class::cast)
@@ -1521,7 +1518,7 @@ public class PredicateEvaluationService {
                     hasManaAbility(gameData, permanent);
             case PermanentHasStaticEffectPredicate hasStatic ->
                     gameData == null
-                            ? permanent.getCard().getEffects(EffectSlot.STATIC).contains(hasStatic.effect())
+                            ? permanent.getCard().getStaticEffects().contains(hasStatic.effect())
                             : gameQueryService.getActiveStaticEffects(gameData, permanent).contains(hasStatic.effect())
                             || gameQueryService.computeStaticBonus(gameData, permanent).grantedEffects()
                             .contains(hasStatic.effect());
@@ -3917,7 +3914,7 @@ public class PredicateEvaluationService {
         if (layered != null) {
             return layered.hasProtectionColor(color);
         }
-        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : permanent.getCard().getStaticEffects()) {
             if (effect instanceof ProtectionGrantingEffect protection
                     && protection.protectionScope() == null
                     && protection.protectionFromColors().contains(color)) {
@@ -4667,6 +4664,9 @@ public class PredicateEvaluationService {
                 || !permanent.getUntilNextTurnActivatedAbilities().isEmpty()) {
             return true;
         }
+        if (!permanent.getPersistentStaticEffects().isEmpty() || !permanent.getTemporaryStaticEffects().isEmpty()) {
+            return true;
+        }
         for (EffectSlot slot : EffectSlot.values()) {
             if (!permanent.getPersistentTriggeredEffects(slot).isEmpty()
                     || !permanent.getTemporaryTriggeredEffects(slot).isEmpty()) {
@@ -4721,7 +4721,7 @@ public class PredicateEvaluationService {
                 || !card.getStackActivatedAbilities().isEmpty()) {
             return true;
         }
-        return java.util.Arrays.stream(EffectSlot.values())
+        return !card.getStaticEffects().isEmpty() || java.util.Arrays.stream(EffectSlot.values())
                 .anyMatch(slot -> !card.getEffects(slot).isEmpty());
     }
 
@@ -4737,7 +4737,7 @@ public class PredicateEvaluationService {
                 || !card.getStackActivatedAbilities().isEmpty()) {
             return true;
         }
-        return java.util.Arrays.stream(EffectSlot.values())
+        return !card.getStaticEffects().isEmpty() || java.util.Arrays.stream(EffectSlot.values())
                 .anyMatch(slot -> !card.getEffects(slot).isEmpty());
     }
 
@@ -4749,7 +4749,7 @@ public class PredicateEvaluationService {
                 || !card.getStackActivatedAbilities().isEmpty()) {
             return true;
         }
-        return java.util.Arrays.stream(EffectSlot.values())
+        return !card.getStaticEffects().isEmpty() || java.util.Arrays.stream(EffectSlot.values())
                 .anyMatch(slot -> !card.getEffects(slot).isEmpty());
     }
 

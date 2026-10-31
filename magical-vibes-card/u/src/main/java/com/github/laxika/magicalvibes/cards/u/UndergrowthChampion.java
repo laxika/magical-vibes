@@ -11,8 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 public class UndergrowthChampion extends Card {
 
     public UndergrowthChampion() {
-        addEffect(EffectSlot.STATIC,
-                new PreventDamageAndRemovePlusOnePlusOneCountersEffect(true, null, false, true));
+        addStaticEffect(new PreventDamageAndRemovePlusOnePlusOneCountersEffect(true, null, false, true));
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }

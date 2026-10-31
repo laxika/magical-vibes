@@ -36,7 +36,7 @@ public class PhyrexianIngester extends Card {
                 ));
         // Phyrexian Ingester gets +X/+Y, where X is the exiled creature card's power
         // and Y is its toughness.
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(
+        addStaticEffect(new BoostSelfEffect(
                 new ImprintedCreaturePower(), new ImprintedCreatureToughness()));
     }
 }

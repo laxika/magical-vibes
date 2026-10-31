@@ -14,9 +14,8 @@ public class SanctuaryBlade extends Card {
 
     public SanctuaryBlade() {
         addEffect(EffectSlot.ON_EQUIPMENT_ATTACHED, new ChooseColorForSourceEffect());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new ProtectionFromChosenColorEffect(GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new ProtectionFromChosenColorEffect(GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Hylderblade extends Card {
 
     public Hylderblade() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 1, GrantScope.EQUIPPED_CREATURE));
 
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ConditionalEffect(new VoidCondition(), new AttachSourceEquipmentToTargetCreatureEffect()));

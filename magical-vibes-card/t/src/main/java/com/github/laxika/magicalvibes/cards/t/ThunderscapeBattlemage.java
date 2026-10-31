@@ -26,7 +26,7 @@ import java.util.List;
 public class ThunderscapeBattlemage extends Card {
 
     public ThunderscapeBattlemage() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{B}"));
+        addStaticEffect(new KickerEffect("{1}{B}"));
         // "Kicker {1}{B} and/or {G}": paying the {G} kicker is a multikicker payment, so it kicks the spell.
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{G}"), true, 1));
 

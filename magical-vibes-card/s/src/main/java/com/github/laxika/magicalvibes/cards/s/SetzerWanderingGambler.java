@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FIC", collectorNumber = "93")
@@ -45,7 +44,7 @@ public class SetzerWanderingGambler extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(new ActivatedAbility(
                         false,
                         null,

@@ -32,7 +32,7 @@ public class HalvarGodOfBattle extends Card {
         setBackFaceCard(new SwordOfTheRealms());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.DOUBLE_STRIKE,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentAnyOfPredicate(List.of(

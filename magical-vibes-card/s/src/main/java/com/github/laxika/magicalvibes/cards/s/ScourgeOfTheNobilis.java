@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
@@ -23,13 +22,13 @@ public class ScourgeOfTheNobilis extends Card {
     public ScourgeOfTheNobilis() {
         target(TargetFilters.creature())
                 // As long as enchanted creature is red, it gets +1/+1...
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.RED)),
                         new StaticBoostEffect(1, 1, Set.of(), GrantScope.ENCHANTED_CREATURE),
                         null
                 ))
                 // ...and has "{R/W}: This creature gets +1/+0 until end of turn."
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.RED)),
                         new GrantActivatedAbilityEffect(
                                 new ActivatedAbility(
@@ -43,7 +42,7 @@ public class ScourgeOfTheNobilis extends Card {
                         null
                 ))
                 // As long as enchanted creature is white, it gets +1/+1 and has lifelink.
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE)),
                         new StaticBoostEffect(1, 1, Set.of(Keyword.LIFELINK), GrantScope.ENCHANTED_CREATURE),
                         null

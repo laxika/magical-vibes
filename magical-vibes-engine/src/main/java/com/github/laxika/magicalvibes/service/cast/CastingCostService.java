@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.BestowCast;
@@ -9,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
 import com.github.laxika.magicalvibes.model.DiscardXCardsCastingCost;
 import com.github.laxika.magicalvibes.model.CastingCost;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.ExileCardFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
@@ -176,7 +176,7 @@ public class CastingCostService {
             List<Card> commandZone = gameData.playerCommandZones.get(pid);
             if (commandZone == null) continue;
             for (Card card : List.copyOf(commandZone)) {
-                for (CardEffect effect : card.getEffects(EffectSlot.COMMAND_ZONE_STATIC)) {
+                for (CardEffect effect : card.getStaticEffects(Zone.COMMAND)) {
                     CostModificationHandlerBean handler = costModificationHandlerRegistry.getBattlefieldHandler(effect);
                     if (handler != null) {
                         modifiers.add(new CollectedCostModifier(handler, effect,
@@ -197,7 +197,7 @@ public class CastingCostService {
         if (gameData.planechase != null) {
             UUID controllerId = gameData.planechase.controllerId;
             for (var planar : gameData.planechase.faceUp) {
-                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     CostModificationHandlerBean handler = costModificationHandlerRegistry.getBattlefieldHandler(effect);
                     if (handler != null) {
                         modifiers.add(new CollectedCostModifier(handler, effect,
@@ -570,7 +570,7 @@ public class CastingCostService {
                 collectEvidenceCostPaid, kicked, null, false, List.of(), gameData.castCostMinimumManaOffset);
         UUID commanderId = playerId.equals(gameData.commandCastPlayerId) ? gameData.commandCastCardId : card.getId();
         int delta = (sourceZone == Zone.COMMAND || playerId.equals(gameData.commandCastPlayerId))
-                && card.getEffects(EffectSlot.STATIC).stream().noneMatch(PayLifeInsteadOfCommanderTaxEffect.class::isInstance)
+                && card.getStaticEffects().stream().noneMatch(PayLifeInsteadOfCommanderTaxEffect.class::isInstance)
                 ? gameData.commanderTaxByCardId.getOrDefault(commanderId, 0) : 0;
         delta -= PerpetualCardCastCostSupport.reductionFor(gameData, card);
         delta += PerpetualCardCastCostSupport.increaseFor(gameData, card);
@@ -582,7 +582,7 @@ public class CastingCostService {
                 && !playerId.equals(exilePlayCostModifier.sourceControllerId())) {
             delta += exilePlayCostModifier.amount();
         }
-        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             if (plottingFromHand && !(effect instanceof ReduceCastCostForMatchingSpellsEffect reduce
                     && reduce.plotFromHandOnly())) {
                 continue;
@@ -707,7 +707,7 @@ public class CastingCostService {
                 gameData, playerId, card, flashbackCost, targetIds);
         ManaCost effectiveCost = cost.increasedBy(
                 gameData.perpetualManaCostIncreases.get(card.getId()));
-        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(effect);
             if (handler != null) {
                 ManaCost increase = handler.coloredManaCostIncrease(
@@ -724,7 +724,7 @@ public class CastingCostService {
                 effectiveCost = effectiveCost.increasedBy(increase);
             }
         }
-        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof ReduceOwnCastCostIfTargetingStackEntryEffect stackReduction
                     && stackReduction.coloredManaReduction() != null && !targetIds.isEmpty()) {
                 StackEntry target = gameQueryService.findStackEntryByCardId(gameData, targetIds.getFirst());
@@ -795,7 +795,7 @@ public class CastingCostService {
         }
         CostModificationContext context = new CostModificationContext(gameData, playerId, card, flashbackCost);
         ManaCost reduced = cost;
-        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(effect);
             if (handler != null) {
                 ManaCost reduction = handler.coloredManaCostReduction(context, effect, CostModificationSource.SPELL_ITSELF);
@@ -867,7 +867,7 @@ public class CastingCostService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 List<CardEffect> effects = new ArrayList<>(gameQueryService.hasLostPrintedAbilities(gameData, perm)
-                        ? List.of() : perm.getCard().getEffects(EffectSlot.STATIC));
+                        ? List.of() : perm.getCard().getStaticEffects());
                 effects.addAll(gameQueryService.getGrantedEffects(gameData, perm));
                 for (CardEffect effect : effects) {
                     CardEffect activeEffect = effect;
@@ -997,7 +997,7 @@ public class CastingCostService {
                 if (gameQueryService.hasLostAllAbilities(gameData, source)) {
                     continue;
                 }
-                List<CardEffect> effects = new ArrayList<>(source.getCard().getEffects(EffectSlot.STATIC));
+                List<CardEffect> effects = new ArrayList<>(source.getCard().getStaticEffects());
                 effects.addAll(gameQueryService.getGrantedEffects(gameData, source));
                 for (CardEffect effect : effects) {
                     CardEffect activeEffect = effect;
@@ -1026,7 +1026,7 @@ public class CastingCostService {
                 .filter(controllerId -> !controllerId.equals(casterId))
                 .flatMap(controllerId -> gameData.playerBattlefields
                         .getOrDefault(controllerId, List.of()).stream())
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .filter(PerTargetCastCostIncreaseEffect.class::isInstance)
                 .map(PerTargetCastCostIncreaseEffect.class::cast)
                 .mapToInt(effect -> effect.amount() * targetCount)
@@ -1053,7 +1053,7 @@ public class CastingCostService {
         if (target == null) {
             return 0;
         }
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .filter(IncreaseOwnCastCostIfTargetingPermanentEffect.class::isInstance)
                 .map(IncreaseOwnCastCostIfTargetingPermanentEffect.class::cast)
                 .filter(effect -> predicateEvaluationService.matchesPermanentPredicate(
@@ -1077,7 +1077,7 @@ public class CastingCostService {
                 if (gameQueryService.hasLostAllAbilities(gameData, source)) {
                     continue;
                 }
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : source.getCard().getStaticEffects()) {
                     if (!(effect instanceof ReduceOpponentCostForTargetingControlledPermanentEffect reduceEffect)) {
                         continue;
                     }
@@ -1116,7 +1116,7 @@ public class CastingCostService {
         for (UUID tid : allTargetIds) {
             StackEntry entry = gameQueryService.findStackEntryByCardId(gameData, tid);
             if (entry == null || entry.getCard() == null) continue;
-            for (CardEffect effect : entry.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : entry.getCard().getStaticEffects()) {
                 if (effect instanceof IncreaseCostOfSpellsTargetingThisSpellEffect taxEffect) {
                     tax += taxEffect.amount();
                 }
@@ -1139,7 +1139,7 @@ public class CastingCostService {
         if (firstTarget == null) {
             return 0;
         }
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .filter(TargetBasedCastCostIncreaseEffect.class::isInstance)
                 .map(TargetBasedCastCostIncreaseEffect.class::cast)
                 .filter(effect -> predicateEvaluationService.matchesPermanentPredicate(
@@ -1163,7 +1163,7 @@ public class CastingCostService {
     }
 
     public boolean hasTargetBasedCostIncrease(Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .anyMatch(TargetBasedCastCostIncreaseEffect.class::isInstance);
     }
 
@@ -1258,7 +1258,7 @@ public class CastingCostService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     LoyaltyAbilityCostIncreasingEffect costEffect = null;
                     if (effect instanceof LoyaltyAbilityCostIncreasingEffect direct) {
                         costEffect = direct;
@@ -1416,7 +1416,7 @@ public class CastingCostService {
         return battlefield.stream()
                 .filter(permanent -> !permanent.isFaceDown()
                         && !gameQueryService.hasLostAllAbilities(gameData, permanent))
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .anyMatch(effect -> effect instanceof FreeEquipEffect
                         && (!(effect instanceof FreeEquipWhileEnduringStoryEffect)
                         || gameData.playersWithEnduringStory.contains(activatingPlayerId)));
@@ -1437,7 +1437,7 @@ public class CastingCostService {
         return battlefield.stream()
                 .filter(permanent -> !permanent.isFaceDown()
                         && !gameQueryService.hasLostAllAbilities(gameData, permanent))
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .anyMatch(FreePowerUpEffect.class::isInstance);
     }
 
@@ -1460,7 +1460,7 @@ public class CastingCostService {
         int reduction = 0;
         for (Permanent permanent : battlefield) {
             if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof CyclingCostReducingEffect reducer) {
                     reduction += reducer.genericCostReduction();
                 }
@@ -1488,7 +1488,7 @@ public class CastingCostService {
             if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
                 continue;
             }
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof NinjutsuCostReducingEffect reducer) {
                     reduction += reducer.genericCostReduction();
                 }
@@ -1579,7 +1579,7 @@ public class CastingCostService {
         if (battlefield == null) return;
 
         for (Permanent reducingPermanent : battlefield) {
-            for (CardEffect effect : reducingPermanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : reducingPermanent.getCard().getStaticEffects()) {
                 ActivatedAbilityCostReducingEffect reducer = activeActivatedAbilityCostReducer(
                         gameData, effect, reducingPermanent, activatingPlayerId);
                 if (!(reducer instanceof FirstActivatedAbilityCostReducingEffect first)
@@ -2013,7 +2013,7 @@ public class CastingCostService {
     }
 
     private FreeCastSource findCardSelfFreeCastSource(Card card, Zone sourceZone) {
-        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             if (!(effect instanceof AlternativeCostForSpellsEffect altCost)
                     || !altCost.appliesToSpellItself()
                     || altCost.oncePerTurn()
@@ -2232,7 +2232,7 @@ public class CastingCostService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return null;
         for (Permanent permanent : battlefield) {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof WebSlingingEffect webSlinging
                         && predicateEvaluationService.matchesCardPredicate(card, webSlinging.filter(), null)) {
                     return webSlinging;
@@ -2265,7 +2265,7 @@ public class CastingCostService {
         if (battlefield == null) return null;
         for (Permanent permanent : battlefield) {
             if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof AlternativeCostForSpellsEffect alternative
                         && alternative.nonManaCost() instanceof CollectEvidenceCost collectEvidence
                         && matchesAlternativeCostPredicate(gameData, playerId, card, alternative.filter())) {
@@ -2607,20 +2607,20 @@ public class CastingCostService {
             return 0;
         }
 
-        int targetCountReduction = card.getEffects(EffectSlot.STATIC).stream()
+        int targetCountReduction = card.getStaticEffects().stream()
                 .filter(TargetCountCastCostReductionEffect.class::isInstance)
                 .map(TargetCountCastCostReductionEffect.class::cast)
                 .mapToInt(effect -> (int) targetIds.stream().distinct().count() * effect.amount())
                 .sum();
         targetCountReduction += gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .filter(TargetCountCastCostReductionEffect.class::isInstance)
                 .map(TargetCountCastCostReductionEffect.class::cast)
                 .mapToInt(effect -> (int) targetIds.stream().distinct().count() * effect.amount())
                 .sum();
 
         int attachedPermanentReduction = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .mapToInt(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .mapToInt(permanent -> permanent.getCard().getStaticEffects().stream()
                         .filter(BattlefieldTargetCastCostReducingEffect.class::isInstance)
                         .map(BattlefieldTargetCastCostReducingEffect.class::cast)
                         .filter(effect -> effect.appliesTo(
@@ -2639,7 +2639,7 @@ public class CastingCostService {
                             || !targetIds.contains(enchantedPlayer)) {
                         return 0;
                     }
-                    return permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    return permanent.getCard().getStaticEffects().stream()
                             .filter(ReduceOwnCastCostIfTargetingEnchantedPlayerEffect.class::isInstance)
                             .mapToInt(effect -> ((ReduceOwnCastCostIfTargetingEnchantedPlayerEffect) effect).amount())
                             .sum();
@@ -2650,12 +2650,12 @@ public class CastingCostService {
         }
 
         List<PerTargetCastCostReductionEffect> perTargetEffects = new ArrayList<>();
-        card.getEffects(EffectSlot.STATIC).stream()
+        card.getStaticEffects().stream()
                 .filter(PerTargetCastCostReductionEffect.class::isInstance)
                 .map(PerTargetCastCostReductionEffect.class::cast)
                 .forEach(perTargetEffects::add);
         gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .filter(PerTargetCastCostReductionEffect.class::isInstance)
                 .map(PerTargetCastCostReductionEffect.class::cast)
                 .forEach(perTargetEffects::add);
@@ -2679,7 +2679,7 @@ public class CastingCostService {
         }
 
         int battlefieldReduction = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .mapToInt(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .mapToInt(permanent -> permanent.getCard().getStaticEffects().stream()
                         .filter(ReduceOwnCastCostIfTargetingPermanentEffect.class::isInstance)
                         .map(ReduceOwnCastCostIfTargetingPermanentEffect.class::cast)
                         .mapToInt(effect -> targetIds.stream()
@@ -2696,7 +2696,7 @@ public class CastingCostService {
                                 ? effect.amount() : 0)
                         .sum())
                 .sum();
-        int ownPermanentReduction = card.getEffects(EffectSlot.STATIC).stream()
+        int ownPermanentReduction = card.getStaticEffects().stream()
                 .filter(ReduceOwnCastCostIfTargetingPermanentEffect.class::isInstance)
                 .map(ReduceOwnCastCostIfTargetingPermanentEffect.class::cast)
                 .mapToInt(effect -> (effect.targetIndex() < 0 ? targetIds.stream()
@@ -2719,7 +2719,7 @@ public class CastingCostService {
         UUID firstTargetId = targetIds.getFirst();
         Card firstTargetCard = gameQueryService.findCardInGraveyardById(gameData, firstTargetId);
         if (firstTargetCard != null) {
-            GraveyardCardTargetCostReductionEffect graveyardEffect = card.getEffects(EffectSlot.STATIC).stream()
+            GraveyardCardTargetCostReductionEffect graveyardEffect = card.getStaticEffects().stream()
                     .filter(GraveyardCardTargetCostReductionEffect.class::isInstance)
                     .map(GraveyardCardTargetCostReductionEffect.class::cast)
                     .findFirst().orElse(null);
@@ -2737,7 +2737,7 @@ public class CastingCostService {
             return 0;
         }
 
-        ReduceOwnCastCostIfTargetingStackEntryEffect stackEffect = card.getEffects(EffectSlot.STATIC).stream()
+        ReduceOwnCastCostIfTargetingStackEntryEffect stackEffect = card.getStaticEffects().stream()
                 .filter(ReduceOwnCastCostIfTargetingStackEntryEffect.class::isInstance)
                 .map(ReduceOwnCastCostIfTargetingStackEntryEffect.class::cast)
                 .findFirst().orElse(null);
@@ -2754,7 +2754,7 @@ public class CastingCostService {
     }
 
     public boolean hasTargetBasedCastCostReduction(Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .anyMatch(e -> e instanceof ReduceOwnCastCostIfTargetingPermanentEffect
                         || e instanceof ReduceOwnCastCostIfTargetingStackEntryEffect
                         || e instanceof PerTargetCastCostReductionEffect
@@ -2764,16 +2764,16 @@ public class CastingCostService {
 
     public boolean hasBattlefieldTargetBasedCastCostReduction(GameData gameData, UUID playerId) {
         return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .anyMatch(effect -> effect instanceof ReduceOwnCastCostIfTargetingPermanentEffect
                         || effect instanceof BattlefieldTargetCastCostReducingEffect);
     }
 
     public boolean hasPerTargetCastCostReduction(GameData gameData, UUID playerId, Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .anyMatch(PerTargetCastCostReductionEffect.class::isInstance)
                 || gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .anyMatch(PerTargetCastCostReductionEffect.class::isInstance);
     }
 
@@ -2782,7 +2782,7 @@ public class CastingCostService {
                 .filter(controllerId -> !controllerId.equals(playerId))
                 .flatMap(controllerId -> gameData.playerBattlefields
                         .getOrDefault(controllerId, List.of()).stream())
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .anyMatch(PerTargetCastCostIncreaseEffect.class::isInstance);
     }
 
@@ -2791,10 +2791,10 @@ public class CastingCostService {
     }
 
     public boolean hasTargetCountCastCostReduction(GameData gameData, UUID playerId, Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .anyMatch(TargetCountCastCostReductionEffect.class::isInstance)
                 || gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .anyMatch(TargetCountCastCostReductionEffect.class::isInstance);
     }
 
@@ -2802,7 +2802,7 @@ public class CastingCostService {
         return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .anyMatch(permanent -> permanent.getAttachedTo() != null
                         && gameData.playerIds.contains(permanent.getAttachedTo())
-                        && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        && permanent.getCard().getStaticEffects().stream()
                         .anyMatch(ReduceOwnCastCostIfTargetingEnchantedPlayerEffect.class::isInstance));
     }
 
@@ -2920,7 +2920,7 @@ public class CastingCostService {
         }
         return defenderBattlefield.stream()
                 .filter(perm -> !gameQueryService.hasLostAllAbilities(gameData, perm))
-                .flatMap(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(perm -> perm.getCard().getStaticEffects().stream())
                 .filter(DefenderAttackCostEffect.class::isInstance)
                 .map(DefenderAttackCostEffect.class::cast)
                 .anyMatch(tax -> attackingBattlefield.stream()

@@ -23,6 +23,6 @@ public class InfiniteReflection extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new OtherNontokenCreaturesBecomeCopyOfEnchantedCreatureEffect())
                 // Nontoken creatures you control enter as a copy of enchanted creature.
-                .addEffect(EffectSlot.STATIC, new CreaturesEnterAsCopyOfSourceEffect(true, true));
+                .addStaticEffect(new CreaturesEnterAsCopyOfSourceEffect(true, true));
     }
 }

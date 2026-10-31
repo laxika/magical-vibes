@@ -32,7 +32,7 @@ public class GlacierwoodSiege extends Card {
                         List.of(new MillEffect(4, MillRecipient.TARGET_PLAYER))
                 )));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceHasChosenMode("Sultai"),
                 new PlayLandsFromGraveyardEffect()));
     }

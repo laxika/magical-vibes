@@ -24,7 +24,7 @@ import java.util.List;
 public class BesiegedVikingVillage extends Card {
 
     public BesiegedVikingVillage() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
                         "{1}",

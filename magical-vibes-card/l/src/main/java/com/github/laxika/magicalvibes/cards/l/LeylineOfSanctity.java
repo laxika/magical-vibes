@@ -20,6 +20,6 @@ public class LeylineOfSanctity extends Card {
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with " + "Leyline of Sanctity" + " on the battlefield?"
         ));
-        addEffect(EffectSlot.STATIC, new GrantControllerKeywordEffect(Keyword.HEXPROOF));
+        addStaticEffect(new GrantControllerKeywordEffect(Keyword.HEXPROOF));
     }
 }

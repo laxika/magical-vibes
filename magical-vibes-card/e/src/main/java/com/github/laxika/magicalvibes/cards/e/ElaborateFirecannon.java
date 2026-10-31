@@ -16,7 +16,7 @@ public class ElaborateFirecannon extends Card {
 
     public ElaborateFirecannon() {
         // Elaborate Firecannon doesn't untap during your untap step.
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // {4}, {T}: Elaborate Firecannon deals 2 damage to any target.
         addActivatedAbility(new ActivatedAbility(

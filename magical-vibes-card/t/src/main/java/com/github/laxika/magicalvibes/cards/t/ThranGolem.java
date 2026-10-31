@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,7 +19,7 @@ import java.util.Set;
 public class ThranGolem extends Card {
 
     public ThranGolem() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Enchanted(),
+        addStaticEffect(new ConditionalEffect(new Enchanted(),
                 new StaticBoostEffect(2, 2,
                         Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.TRAMPLE),
                         GrantScope.SELF)));

@@ -28,8 +28,8 @@ import java.util.Set;
 public class SwordOfLightAndShadow extends Card {
 
     public SwordOfLightAndShadow() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new ProtectionFromColorsEffect(
                 Set.of(CardColor.WHITE, CardColor.BLACK), GrantScope.EQUIPPED_CREATURE));
         // One ability: if the chosen graveyard target is illegal on resolution it does nothing at all,
         // including the life gain (CR 608.2b).

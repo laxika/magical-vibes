@@ -21,7 +21,7 @@ import java.util.List;
 public class Akoum extends Card {
 
     public Akoum() {
-        addEffect(EffectSlot.STATIC, new GrantFlashToCardTypeEffect(
+        addStaticEffect(new GrantFlashToCardTypeEffect(
                 new CardTypePredicate(CardType.ENCHANTMENT), true));
 
         PermanentPredicate nonEnchantedCreature = new PermanentAllOfPredicate(List.of(

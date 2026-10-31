@@ -28,19 +28,24 @@ class GrantedAbilitiesTest {
     private static final CardEffect GAIN_ONE = new GainLifeEffect(1);
 
     @Test
-    void aSlotAndAnEffectStandForTheAbilityOfTheirKind() {
-        assertThat(LegacySlots.ability(EffectSlot.STATIC, DRAW_ONE)).isEqualTo(new StaticAbility(List.of(DRAW_ONE)));
-        assertThat(LegacySlots.ability(EffectSlot.COMMAND_ZONE_STATIC, DRAW_ONE))
-                .isEqualTo(new StaticAbility(List.of(DRAW_ONE), AbilityZones.COMMAND));
+    void aSlotAndAnEffectStandForATriggeredAbility() {
         Ability death = LegacySlots.ability(EffectSlot.ON_DEATH, DRAW_ONE);
         assertThat(death).isInstanceOf(TriggeredAbility.class);
         assertThat(((TriggeredAbility) death).conditions().getFirst().trigger())
                 .isEqualTo(new LegacySlotTrigger(EffectSlot.ON_DEATH));
-        for (EffectSlot slot : List.of(EffectSlot.STATIC, EffectSlot.COMMAND_ZONE_STATIC, EffectSlot.ON_DEATH)) {
-            Ability ability = LegacySlots.ability(slot, DRAW_ONE);
-            assertThat(LegacySlots.slotOf(ability)).isEqualTo(slot);
-            assertThat(LegacySlots.effectsOf(ability)).containsExactly(DRAW_ONE);
-        }
+        assertThat(LegacySlots.slotOf(death)).isEqualTo(EffectSlot.ON_DEATH);
+        assertThat(LegacySlots.effectsOf(death)).containsExactly(DRAW_ONE);
+    }
+
+    @Test
+    void aStaticAbilityIsInNoSlot() {
+        StaticAbility statik = new StaticAbility(List.of(DRAW_ONE), AbilityZones.COMMAND);
+
+        assertThat(LegacySlots.slotOf(statik)).isNull();
+        assertThat(LegacySlots.effectsOf(statik)).containsExactly(DRAW_ONE);
+        assertThat(LegacySlots.label(statik)).isEqualTo("STATIC");
+        assertThat(LegacySlots.withEffect(statik, GAIN_ONE))
+                .isEqualTo(new StaticAbility(List.of(GAIN_ONE), AbilityZones.COMMAND));
     }
 
     @Test
@@ -61,11 +66,11 @@ class GrantedAbilitiesTest {
     void slotViewsListOnlyTheirSlotsEffectsInOrder() {
         List<Ability> abilities = List.of(
                 LegacySlots.ability(EffectSlot.ON_DEATH, DRAW_ONE),
-                LegacySlots.ability(EffectSlot.STATIC, GAIN_ONE),
+                StaticAbility.of(GAIN_ONE),
                 LegacySlots.ability(EffectSlot.ON_DEATH, DRAW_TWO));
 
         assertThat(LegacySlots.effectsIn(abilities, EffectSlot.ON_DEATH)).containsExactly(DRAW_ONE, DRAW_TWO);
-        assertThat(LegacySlots.effectsIn(abilities, EffectSlot.STATIC)).containsExactly(GAIN_ONE);
+        assertThat(LegacySlots.staticEffectsIn(abilities)).containsExactly(GAIN_ONE);
         assertThat(LegacySlots.effectsIn(abilities, EffectSlot.ON_ATTACK)).isEmpty();
     }
 
@@ -92,11 +97,11 @@ class GrantedAbilitiesTest {
         card.addSpellEffect(DRAW_ONE);
 
         card.addAbility(new SpellAbility(List.of(new EffectRegistration(DRAW_TWO))));
-        card.addAbility(LegacySlots.ability(EffectSlot.STATIC, GAIN_ONE));
+        card.addAbility(StaticAbility.of(GAIN_ONE));
 
         assertThat(card.getSpellEffects()).containsExactly(DRAW_ONE, DRAW_TWO);
         assertThat(card.getAbilities()).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC)).containsExactly(GAIN_ONE);
+        assertThat(card.getStaticEffects()).containsExactly(GAIN_ONE);
     }
 
     @Test
@@ -116,6 +121,41 @@ class GrantedAbilitiesTest {
         permanent.clearCombatState();
 
         assertThat(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_DEATH)).containsExactly(DRAW_ONE);
+    }
+
+    @Test
+    void aPermanentsStaticGrantsAreReadApartFromItsTriggers() {
+        Permanent permanent = new Permanent(new Card());
+        UUID expiryPlayer = UUID.randomUUID();
+        permanent.addTemporaryAbility(StaticAbility.of(DRAW_ONE));
+        permanent.addCombatAbility(StaticAbility.of(DRAW_TWO));
+        permanent.addUntilNextUpkeepAbility(expiryPlayer, StaticAbility.of(GAIN_ONE));
+        permanent.addPersistentAbility(StaticAbility.of(DRAW_ONE));
+        permanent.addPersistentAbility(StaticAbility.of(GAIN_ONE));
+        permanent.addTemporaryTriggeredEffect(EffectSlot.ON_DEATH, GAIN_ONE);
+
+        assertThat(permanent.getTemporaryStaticEffects()).containsExactly(DRAW_ONE, DRAW_TWO, GAIN_ONE);
+        assertThat(permanent.getPersistentStaticEffects()).containsExactly(DRAW_ONE, GAIN_ONE);
+        assertThat(permanent.getTemporaryTriggeredEffects(EffectSlot.ON_DEATH)).containsExactly(GAIN_ONE);
+
+        permanent.removePersistentStaticEffectsIf(GAIN_ONE::equals);
+        permanent.clearUntilNextUpkeepTriggeredEffects(expiryPlayer);
+        permanent.clearCombatState();
+
+        assertThat(permanent.getPersistentStaticEffects()).containsExactly(DRAW_ONE);
+        assertThat(permanent.getTemporaryStaticEffects()).containsExactly(DRAW_ONE);
+    }
+
+    @Test
+    void perpetualStaticGrantsAreReadApartFromTriggers() {
+        GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "owner");
+        UUID cardId = UUID.randomUUID();
+        gameData.grantPerpetualAbility(cardId, StaticAbility.of(DRAW_ONE));
+        gameData.grantPerpetualAbility(cardId, EffectSlot.ON_DEATH, GAIN_ONE);
+        gameData.grantPerpetualAbility(cardId, StaticAbility.of(DRAW_ONE));
+
+        assertThat(gameData.perpetualStaticEffects(cardId)).containsExactly(DRAW_ONE, DRAW_ONE);
+        assertThat(gameData.perpetualAbilityEffects(cardId, EffectSlot.ON_DEATH)).containsExactly(GAIN_ONE);
     }
 
     @Test

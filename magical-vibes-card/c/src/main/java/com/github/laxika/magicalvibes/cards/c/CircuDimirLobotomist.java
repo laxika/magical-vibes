@@ -34,6 +34,6 @@ public class CircuDimirLobotomist extends Card {
                 List.of(new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_PLAYER)),
                 null,
                 anyPlayer));
-        addEffect(EffectSlot.STATIC, new CantCastSpellsWithSameNameAsExiledCardEffect(true));
+        addStaticEffect(new CantCastSpellsWithSameNameAsExiledCardEffect(true));
     }
 }

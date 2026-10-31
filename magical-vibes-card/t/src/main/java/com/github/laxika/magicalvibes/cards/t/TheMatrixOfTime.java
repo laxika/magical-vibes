@@ -19,7 +19,7 @@ public class TheMatrixOfTime extends Card {
     public TheMatrixOfTime() {
         addEffect(EffectSlot.PLANESWALK_TO_TRIGGERED,
                 new ExileTopCardOfEachPlayersLibraryWithPlanarSourceEffect());
-        addEffect(EffectSlot.STATIC, new AllowPlayCardsExiledWithPlanarSourceEffect());
+        addStaticEffect(new AllowPlayCardsExiledWithPlanarSourceEffect());
 
         CardEffect playedCardFollowUp = SequenceEffect.of(
                 new LoseLifeEffect(3, LoseLifeRecipient.TRIGGERING_PLAYER),

@@ -24,9 +24,9 @@ public class MetallicMimic extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
 
         // This creature is the chosen type in addition to its other types.
-        addEffect(EffectSlot.STATIC, GrantChosenSubtypeToOwnCreaturesEffect.toSelf());
+        addStaticEffect(GrantChosenSubtypeToOwnCreaturesEffect.toSelf());
 
         // Each other creature you control of the chosen type enters with an additional +1/+1 counter on it.
-        addEffect(EffectSlot.STATIC, ControlledCreaturesEnterWithAdditionalCountersEffect.ofChosenSubtype(1));
+        addStaticEffect(ControlledCreaturesEnterWithAdditionalCountersEffect.ofChosenSubtype(1));
     }
 }

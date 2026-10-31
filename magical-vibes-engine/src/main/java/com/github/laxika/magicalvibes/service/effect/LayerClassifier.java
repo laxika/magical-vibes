@@ -214,8 +214,8 @@ public final class LayerClassifier {
 
         /**
          * @param fromOwnStaticSlot {@code true} when the effect affects its own source
-         *                          (source == affected) and comes from the object's own
-         *                          {@code EffectSlot.STATIC} — the CDA criterion (CR 604.3)
+         *                          (source == affected) and comes from one of the object's own
+         *                          static abilities — the CDA criterion (CR 604.3)
          */
         LayerClassification classify(CardEffect effect, boolean fromOwnStaticSlot);
     }
@@ -232,7 +232,7 @@ public final class LayerClassifier {
      * Classifies one continuous effect into the layer(s) it contributes to.
      *
      * @param fromOwnStaticSlot {@code true} when the effect affects its own source and comes
-     *                          from that object's own {@code EffectSlot.STATIC} (see {@link Rule})
+     *                          from one of that object's own static abilities (see {@link Rule})
      * @throws IllegalArgumentException for effect types with no registered classification
      */
     public static LayerClassification classify(CardEffect effect, boolean fromOwnStaticSlot) {

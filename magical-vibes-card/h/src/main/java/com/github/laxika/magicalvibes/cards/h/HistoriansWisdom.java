@@ -31,6 +31,6 @@ public class HistoriansWisdom extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentHasGreatestPowerAmongAllCreaturesPredicate()),
                         new DrawCardEffect()))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.ENCHANTED_CREATURE));
     }
 }

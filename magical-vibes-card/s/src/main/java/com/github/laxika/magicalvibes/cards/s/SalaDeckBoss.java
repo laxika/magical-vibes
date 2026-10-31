@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasExhaustAbilityPre
 public class SalaDeckBoss extends Card {
 
     public SalaDeckBoss() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasExhaustAbilityPredicate()));

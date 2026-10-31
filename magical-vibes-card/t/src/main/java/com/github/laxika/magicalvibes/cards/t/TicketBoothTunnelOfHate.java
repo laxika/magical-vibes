@@ -37,7 +37,7 @@ public class TicketBoothTunnelOfHate extends Card {
         PermanentAllOfPredicate attackingCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsAttackingPredicate()));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ALLY_CREATURES_ATTACK,

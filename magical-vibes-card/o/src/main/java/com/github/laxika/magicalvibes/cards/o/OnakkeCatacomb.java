@@ -16,8 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class OnakkeCatacomb extends Card {
 
     public OnakkeCatacomb() {
-        addEffect(EffectSlot.STATIC, new GrantColorEffect(CardColor.BLACK, GrantScope.ALL_CREATURES, true));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_CREATURES));
+        addStaticEffect(new GrantColorEffect(CardColor.BLACK, GrantScope.ALL_CREATURES, true));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_CREATURES));
         addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
                 new BoostAllOwnCreaturesEffect(1, 0),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES)));

@@ -23,7 +23,7 @@ public class QuestForRenewal extends Card {
                 new PermanentIsCreaturePredicate(),
                 new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
                         "Put a quest counter on Quest for Renewal?")));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.QUEST),
                 new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
                         TurnStep.UNTAP, new PermanentIsCreaturePredicate(), TapUntapScope.CONTROLLED)));

@@ -20,8 +20,8 @@ public class ParasiticImpetus extends Card {
         setAttackTriggerOwnedByAura(true);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GoadEquippedCreatureEffect());
+                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GoadEquippedCreatureEffect());
 
         addEffect(EffectSlot.ON_ATTACK, new EnchantedCreatureControllerLosesLifeEffect(2));
         addEffect(EffectSlot.ON_ATTACK, new GainLifeEffect(2));

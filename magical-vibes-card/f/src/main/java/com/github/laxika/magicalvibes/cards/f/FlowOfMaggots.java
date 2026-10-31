@@ -15,7 +15,7 @@ public class FlowOfMaggots extends Card {
         // Cumulative upkeep {1}
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{1}"));
         // This creature can't be blocked by non-Wall creatures.
-        addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(
+        addStaticEffect(new CanBeBlockedOnlyByFilterEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.WALL),
                 "Walls"));
     }

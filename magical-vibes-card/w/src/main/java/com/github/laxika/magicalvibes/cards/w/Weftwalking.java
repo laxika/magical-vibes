@@ -20,6 +20,6 @@ public class Weftwalking extends Card {
                         new ShuffleControllerHandAndGraveyardIntoLibraryEffect(),
                         new DrawCardEffect(7))));
 
-        addEffect(EffectSlot.STATIC, AlternativeCostForSpellsEffect.firstSpellOfEachPlayersTurnForFree());
+        addStaticEffect(AlternativeCostForSpellsEffect.firstSpellOfEachPlayersTurnForFree());
     }
 }

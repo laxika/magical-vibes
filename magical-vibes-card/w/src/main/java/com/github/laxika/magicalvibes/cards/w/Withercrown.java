@@ -19,8 +19,7 @@ public class Withercrown extends Card {
 
     public Withercrown() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new SetBasePowerToughnessEffect(0, null, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new SetBasePowerToughnessEffect(0, null, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
                         ForcedCostOrElseEffect.enchantedControllerMayPay(
                                 new SacrificePermanentCost(

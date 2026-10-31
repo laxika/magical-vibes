@@ -15,7 +15,7 @@ public class CephalidInkmage extends Card {
 
     public CephalidInkmage() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SurveilEffect(3));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
                 new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
     }

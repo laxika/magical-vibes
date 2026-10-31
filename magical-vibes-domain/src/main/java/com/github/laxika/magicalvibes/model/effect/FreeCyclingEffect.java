@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * (New Perspectives). This is an alternative cost per CR 118.9; only the mana cost is replaced —
  * the "discard this card" cost of cycling is still paid.
  *
- * <p>Placed on {@code EffectSlot.STATIC} and read directly at cycling activation
+ * <p>Added as a static ability and read directly at cycling activation
  * ({@code AbilityActivationService}), mirroring how {@link AlternativeCostForSpellsEffect} is
  * consulted for spells. Lets that consumer ask the fact "does this permanent grant free cycling"
  * without knowing the concrete effect type. The card being cycled still counts toward the threshold.

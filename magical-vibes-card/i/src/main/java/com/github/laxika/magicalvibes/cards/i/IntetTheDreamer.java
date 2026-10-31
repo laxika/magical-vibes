@@ -22,7 +22,7 @@ public class IntetTheDreamer extends Card {
 
         // You may play that card without paying its mana cost for as long as Intet remains on the
         // battlefield.
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, null, false, false, 0, null, false, false, true, ExileAccessScope.EXILER,
                 false, false, false, false, false, null, false, false, false, false));
     }

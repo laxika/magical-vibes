@@ -17,7 +17,7 @@ public class AlteredEgo extends Card {
 
     public AlteredEgo() {
         // This spell can't be countered.
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         // You may have this creature enter as a copy of any creature on the battlefield,
         // except it enters with X additional +1/+1 counters on it.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CopyPermanentOnEnterEffect(

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -40,7 +41,7 @@ public class ChandraFlameshaper extends Card {
                 List.of(new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(), Set.of(), null, null, Map.of(), false, false, false, false, false, false,
                         null, Set.of(Keyword.HASTE), false,
-                        Map.of(EffectSlot.END_STEP_TRIGGERED, List.<CardEffect>of(new SacrificeSelfEffect())))),
+                        List.of(LegacySlots.triggered(EffectSlot.END_STEP_TRIGGERED, List.<CardEffect>of(new SacrificeSelfEffect()))))),
                 "+1: Create a token that's a copy of target creature you control, except it has haste and \"At the beginning of the end step, sacrifice this token.\"",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

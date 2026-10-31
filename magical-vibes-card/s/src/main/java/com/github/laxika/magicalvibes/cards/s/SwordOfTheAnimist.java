@@ -27,7 +27,7 @@ public class SwordOfTheAnimist extends Card {
 
     public SwordOfTheAnimist() {
         // Equipped creature gets +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature attacks, you may search your library for a basic land card,
         // put it onto the battlefield tapped, then shuffle.

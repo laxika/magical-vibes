@@ -22,7 +22,7 @@ import java.util.Set;
 public class KirriTalentedSprout extends Card {
 
     public KirriTalentedSprout() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.PLANT, CardSubtype.TREEFOLK))));
 
         addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED, ReturnCardFromGraveyardEffect.builder()

@@ -21,7 +21,7 @@ public class ArcboundSlasher extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
 
-        addEffect(EffectSlot.STATIC, new RiotEffect());
+        addStaticEffect(new RiotEffect());
 
         addEffect(EffectSlot.ON_DEATH,
                 new PutCounterOnTargetForEachDyingSourceCounterEffect(

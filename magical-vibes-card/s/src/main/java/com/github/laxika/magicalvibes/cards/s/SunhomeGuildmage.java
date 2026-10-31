@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "GTC", collectorNumber = "200")
@@ -36,7 +35,7 @@ public class SunhomeGuildmage extends Card {
                 List.of(new CreateTokenEffect(CardType.CREATURE, 1, "Soldier", 1, 1,
                         CardColor.RED, Set.of(CardColor.RED, CardColor.WHITE),
                         List.of(CardSubtype.SOLDIER), Set.of(Keyword.HASTE), Set.of(),
-                        false, false, Map.of(), List.of(), false, false, false, 0, Set.of())),
+                        false, false, List.of(), List.of(), false, false, false, 0, Set.of())),
                 "{2}{R}{W}: Create a 1/1 red and white Soldier creature token with haste."
         ));
     }

@@ -15,7 +15,7 @@ public class Sluggishness extends Card {
 
     public Sluggishness() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new CantBlockEffect())
+                .addStaticEffect(new CantBlockEffect())
                 .addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -24,7 +23,6 @@ public class DauthiWarlord extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasKeywordPredicate(Keyword.SHADOW))),
                 CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(shadowCreaturesOnBattlefield, new Fixed(1)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(shadowCreaturesOnBattlefield, new Fixed(1)));
     }
 }

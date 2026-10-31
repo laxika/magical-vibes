@@ -15,7 +15,7 @@ import java.util.Set;
 public class AuriokChampion extends Card {
 
     public AuriokChampion() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.RED)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.RED)));
         addEffect(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
                 new MayEffect(new GainLifeEffect(1), "Gain 1 life?"));
     }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
@@ -14,7 +13,7 @@ import java.util.List;
 public class ShangChiMasterOfKungFu extends Card {
 
     public ShangChiMasterOfKungFu() {
-        addEffect(EffectSlot.STATIC, new ActivateCreatureAbilitiesAsThoughHasteEffect());
+        addStaticEffect(new ActivateCreatureAbilitiesAsThoughHasteEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

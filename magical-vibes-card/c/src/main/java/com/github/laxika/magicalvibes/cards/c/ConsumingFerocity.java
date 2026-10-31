@@ -28,7 +28,7 @@ public class ConsumingFerocity extends Card {
                 "Target must be a non-Wall creature"))
 
         // Enchanted creature gets +1/+0.
-        .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.ENCHANTED_CREATURE))
+        .addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ENCHANTED_CREATURE))
 
         // At the beginning of your upkeep, put a +1/+0 counter on enchanted creature. If that creature
         // has three or more +1/+0 counters on it, it deals damage equal to its power to its controller,

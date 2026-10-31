@@ -38,7 +38,7 @@ public class IcebreakerKraken extends Card {
             new PermanentIsCreaturePredicate()));
 
     public IcebreakerKraken() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(SNOW_LAND, CountScope.CONTROLLER)));
 
         target(new PlayerPredicateTargetFilter(

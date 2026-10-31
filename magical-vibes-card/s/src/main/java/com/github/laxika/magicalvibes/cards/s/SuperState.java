@@ -17,10 +17,8 @@ public class SuperState extends Card {
 
     public SuperState() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.STATIC,
-                        new SetBasePowerToughnessEffect(9, 9, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(
+                .addStaticEffect(new SetBasePowerToughnessEffect(9, 9, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(
                                 Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.TRAMPLE, Keyword.HASTE),
                                 GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,

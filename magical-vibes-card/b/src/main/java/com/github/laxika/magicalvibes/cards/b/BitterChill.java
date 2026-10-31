@@ -18,7 +18,7 @@ public class BitterChill extends Card {
     public BitterChill() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+                .addStaticEffect(DoesntUntapEffect.enchanted());
         addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                 new MayPayManaEffect("{1}",
                         SequenceEffect.of(new ScryEffect(1), new DrawCardEffect(1)),

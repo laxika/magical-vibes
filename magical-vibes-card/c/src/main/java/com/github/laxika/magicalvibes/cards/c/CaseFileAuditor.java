@@ -17,6 +17,6 @@ public class CaseFileAuditor extends Card {
                 6, new CardTypePredicate(CardType.ENCHANTMENT));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, caseSearch);
         addEffect(EffectSlot.ON_ALLY_CASE_SOLVES, caseSearch);
-        addEffect(EffectSlot.STATIC, new SpendAnyManaTypeToCastSubtypeEffect(CardSubtype.CASE));
+        addStaticEffect(new SpendAnyManaTypeToCastSubtypeEffect(CardSubtype.CASE));
     }
 }

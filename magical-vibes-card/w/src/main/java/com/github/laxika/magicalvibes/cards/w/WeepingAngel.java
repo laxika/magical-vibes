@@ -29,6 +29,6 @@ public class WeepingAngel extends Card {
 
         // If Weeping Angel would deal combat damage to a creature, prevent that damage and shuffle
         // that creature into its owner's library.
-        addEffect(EffectSlot.STATIC, new PreventCombatDamageBySelfToCreaturesAndShuffleEffect());
+        addStaticEffect(new PreventCombatDamageBySelfToCreaturesAndShuffleEffect());
     }
 }

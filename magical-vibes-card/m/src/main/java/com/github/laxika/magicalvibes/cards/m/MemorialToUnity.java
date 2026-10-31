@@ -18,7 +18,7 @@ import java.util.List;
 public class MemorialToUnity extends Card {
 
     public MemorialToUnity() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
         // {2}{G}, {T}, Sacrifice Memorial to Unity: Look at the top five cards of your library.
         // You may reveal a creature card from among them and put it into your hand.

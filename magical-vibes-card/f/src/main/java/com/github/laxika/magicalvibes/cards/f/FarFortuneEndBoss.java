@@ -14,7 +14,7 @@ public class FarFortuneEndBoss extends Card {
 
     public FarFortuneEndBoss() {
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new MaxSpeed(),
+        addStaticEffect(new ConditionalEffect(new MaxSpeed(),
                 new AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect(1)));
     }
 }

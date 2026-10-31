@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.NoncombatDamageToOpponentCreaturesAsMinusCountersEffect;
 
 
@@ -16,6 +15,6 @@ public class SoulScarMage extends Card {
     public SoulScarMage() {
         // If a source you control would deal noncombat damage to a creature an opponent controls,
         // put that many -1/-1 counters on that creature instead.
-        addEffect(EffectSlot.STATIC, new NoncombatDamageToOpponentCreaturesAsMinusCountersEffect());
+        addStaticEffect(new NoncombatDamageToOpponentCreaturesAsMinusCountersEffect());
     }
 }

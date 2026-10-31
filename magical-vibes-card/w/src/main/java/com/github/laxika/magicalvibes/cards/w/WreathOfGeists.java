@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
@@ -18,7 +17,7 @@ public class WreathOfGeists extends Card {
         // Enchant creature
         target(TargetFilters.creature())
         // Enchanted creature gets +X/+X, where X is the number of creature cards in your graveyard
-        .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        .addStaticEffect(new AttachedBoostEffect(
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
                 GrantScope.ENCHANTED_CREATURE

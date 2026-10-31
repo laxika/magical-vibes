@@ -16,6 +16,6 @@ public class NakedSingularity extends Card {
 
         // If tapped for mana, Plains produce {R}, Islands produce {G}, Swamps produce {W},
         // Mountains produce {U}, and Forests produce {B} instead of any other type.
-        addEffect(EffectSlot.STATIC, new NakedSingularityManaEffect());
+        addStaticEffect(new NakedSingularityManaEffect());
     }
 }

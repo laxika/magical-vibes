@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDyingSourcePow
 public class ConclaveMentor extends Card {
 
     public ConclaveMentor() {
-        addEffect(EffectSlot.STATIC, new AddOnePlusOneCountersEffect());
+        addStaticEffect(new AddOnePlusOneCountersEffect());
         addEffect(EffectSlot.ON_DEATH, new GainLifeEqualToDyingSourcePowerEffect());
     }
 }

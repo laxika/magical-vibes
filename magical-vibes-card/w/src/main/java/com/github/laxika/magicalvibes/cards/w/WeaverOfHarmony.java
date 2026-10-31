@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CopyTargetActivatedOrTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -23,8 +22,7 @@ import java.util.Set;
 public class WeaverOfHarmony extends Card {
 
     public WeaverOfHarmony() {
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, new PermanentIsEnchantmentPredicate()));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, new PermanentIsEnchantmentPredicate()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

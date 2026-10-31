@@ -30,13 +30,13 @@ public class SkeletalSwarming extends Card {
 
     public SkeletalSwarming() {
         PermanentPredicate skeleton = new PermanentHasSubtypePredicate(CardSubtype.SKELETON);
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, skeleton));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, skeleton));
 
         PermanentCount otherSkeletons = new PermanentCount(skeleton, CountScope.CONTROLLER, true);
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 otherSkeletons, new Fixed(0), GrantScope.OWN_CREATURES, skeleton, true));
 
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesMustAttackEffect(new PermanentAllOfPredicate(List.of(
+        addStaticEffect(new MatchingCreaturesMustAttackEffect(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 skeleton,
                 new PermanentControlledBySourceControllerPredicate()))));

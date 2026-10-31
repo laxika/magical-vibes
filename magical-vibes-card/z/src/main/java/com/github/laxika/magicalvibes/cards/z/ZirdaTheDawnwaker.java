@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceNonManaActivatedAbilityCostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -18,7 +17,7 @@ import java.util.List;
 public class ZirdaTheDawnwaker extends Card {
 
     public ZirdaTheDawnwaker() {
-        addEffect(EffectSlot.STATIC, new ReduceNonManaActivatedAbilityCostEffect(2));
+        addStaticEffect(new ReduceNonManaActivatedAbilityCostEffect(2));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

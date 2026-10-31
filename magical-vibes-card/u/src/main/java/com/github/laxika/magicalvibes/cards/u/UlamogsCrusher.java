@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class UlamogsCrusher extends Card {
 
     public UlamogsCrusher() {
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
         addEffect(EffectSlot.ON_ATTACK, new SacrificePermanentsEffect(
                 2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
     }

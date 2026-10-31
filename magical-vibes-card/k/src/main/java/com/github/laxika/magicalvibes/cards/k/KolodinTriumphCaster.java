@@ -22,7 +22,7 @@ import java.util.Set;
 public class KolodinTriumphCaster extends Card {
 
     public KolodinTriumphCaster() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE,
                 GrantScope.OWN_PERMANENTS,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MOUNT, CardSubtype.VEHICLE))));

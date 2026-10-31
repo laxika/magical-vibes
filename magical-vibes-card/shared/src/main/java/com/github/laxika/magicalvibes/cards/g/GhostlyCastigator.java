@@ -18,6 +18,6 @@ public class GhostlyCastigator extends Card {
                         "Shuffle the targeted cards into your library?"));
 
         // If Ghostly Castigator would be put into a graveyard from anywhere, exile it instead.
-        addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect());
+        addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 }

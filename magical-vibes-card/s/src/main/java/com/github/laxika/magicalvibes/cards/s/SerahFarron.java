@@ -29,7 +29,7 @@ public class SerahFarron extends Card {
     public SerahFarron() {
         setBackFaceCard(new CrystallizedSerah());
 
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForFirstMatchingSpellEachTurnEffect(
+        addStaticEffect(new ReduceCastCostForFirstMatchingSpellEachTurnEffect(
                 legendaryCreatureSpell(), 2));
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
                 new AllOf(List.of(new ControlsOtherPermanentCount(2, new PermanentAllOfPredicate(List.of(

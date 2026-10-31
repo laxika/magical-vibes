@@ -19,7 +19,7 @@ import java.util.List;
 public class ChandrasIncinerator extends Card {
 
     public ChandrasIncinerator() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new NoncombatDamageDealtToOpponentsThisTurn()));
 
         target(new PermanentPredicateTargetFilter(

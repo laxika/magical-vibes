@@ -20,12 +20,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class Gigantiform extends Card {
 
     public Gigantiform() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{4}"));
+        addStaticEffect(new KickerEffect("{4}"));
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new SetBasePowerToughnessEffect(8, 8, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new SetBasePowerToughnessEffect(8, 8, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new MayEffect(
                         new SearchLibraryEffect(new CardNamedPredicate("Gigantiform"),

@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 public class CuriosityCrafter extends Card {
 
     public CuriosityCrafter() {
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
+        addStaticEffect(new NoMaximumHandSizeEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(new PermanentIsTokenPredicate(), new DrawCardEffect(1)));
     }

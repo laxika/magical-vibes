@@ -25,7 +25,7 @@ public class TheaterOfHorrors extends Card {
     public TheaterOfHorrors() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ExileTopCardsToSourceEffect(1, false));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new OpponentLostLifeThisTurn(1),
                 new AllowCastFromCardsExiledWithSourceEffect(false, null, false, true, 0)));
 

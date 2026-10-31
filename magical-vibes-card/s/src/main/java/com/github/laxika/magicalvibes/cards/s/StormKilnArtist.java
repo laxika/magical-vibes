@@ -30,7 +30,7 @@ public class StormKilnArtist extends Card {
     public StormKilnArtist() {
         PermanentCount artifactsYouControl =
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(artifactsYouControl, new Fixed(0)));
+        addStaticEffect(new BoostSelfEffect(artifactsYouControl, new Fixed(0)));
 
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),

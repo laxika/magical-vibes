@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class SoaringThoughtThief extends Card {
 
     public SoaringThoughtThief() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new OpponentGraveyardAtLeast(8),
                 new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.ROGUE))));

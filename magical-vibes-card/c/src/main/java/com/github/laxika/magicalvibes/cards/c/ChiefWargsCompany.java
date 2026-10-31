@@ -18,7 +18,7 @@ import java.util.Set;
 public class ChiefWargsCompany extends Card {
 
     public ChiefWargsCompany() {
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new ControlsOtherPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.WOLF)),
                 "you control two or more other Wolves"
         ));

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -146,7 +145,7 @@ public final class TextChangeTransformer {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                if (permanent.getChosenColor() != null && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                if (permanent.getChosenColor() != null && permanent.getCard().getStaticEffects().stream()
                         .anyMatch(AllColorWordsBecomeChosenColorEffect.class::isInstance)) {
                     sources.add(permanent);
                 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -29,8 +28,8 @@ public class Aluren extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 new CardMaxManaValuePredicate(3)));
 
-        addEffect(EffectSlot.STATIC, new AlternativeCostForSpellsEffect(
+        addStaticEffect(new AlternativeCostForSpellsEffect(
                 "{0}", smallCreatureSpell, null, false, false, true));
-        addEffect(EffectSlot.STATIC, new GrantFlashToCardTypeEffect(smallCreatureSpell, true, true));
+        addStaticEffect(new GrantFlashToCardTypeEffect(smallCreatureSpell, true, true));
     }
 }

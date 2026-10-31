@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
@@ -28,7 +27,7 @@ public class DalakosCrafterOfWonders extends Card {
                 "{T}: Add {C}{C}. Spend this mana only to cast artifact spells or activate abilities of artifacts."
         ));
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.FLYING, Keyword.HASTE),
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsEquippedPredicate()));

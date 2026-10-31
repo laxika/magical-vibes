@@ -15,7 +15,7 @@ public class Mindwhisker extends Card {
 
     public Mindwhisker() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new SurveilEffect(1));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, new CardTruePredicate()),
                 new StaticBoostEffect(-1, 0, GrantScope.OPPONENT_CREATURES)));
     }

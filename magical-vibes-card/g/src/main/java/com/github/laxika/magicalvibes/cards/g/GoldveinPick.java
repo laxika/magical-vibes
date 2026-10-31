@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class GoldveinPick extends Card {
 
     public GoldveinPick() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, CreateTokenEffect.ofTreasureToken(1));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }

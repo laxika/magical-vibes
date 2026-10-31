@@ -16,6 +16,6 @@ public class StewardOfTheHarvest extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileCardsFromGraveyardEffect(3, new CardTypePredicate(CardType.LAND),
                         true, true, true));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilitiesOfLandCardsExiledWithSourceEffect());
+        addStaticEffect(new GrantActivatedAbilitiesOfLandCardsExiledWithSourceEffect());
     }
 }

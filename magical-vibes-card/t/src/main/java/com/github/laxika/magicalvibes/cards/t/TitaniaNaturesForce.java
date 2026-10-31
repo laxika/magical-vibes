@@ -24,8 +24,7 @@ import java.util.Set;
 public class TitaniaNaturesForce extends Card {
 
     public TitaniaNaturesForce() {
-        addEffect(EffectSlot.STATIC,
-                new PlayLandsFromGraveyardEffect(new CardSubtypePredicate(CardSubtype.FOREST)));
+        addStaticEffect(new PlayLandsFromGraveyardEffect(new CardSubtypePredicate(CardSubtype.FOREST)));
 
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(

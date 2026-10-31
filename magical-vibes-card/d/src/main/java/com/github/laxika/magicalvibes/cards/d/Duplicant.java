@@ -47,11 +47,10 @@ public class Duplicant extends Card {
                 "Exile target nontoken creature?"
         ));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ImprintedCardMatches(new CardTypePredicate(CardType.CREATURE), "a creature card"),
                 new SetPowerToughnessToAmountEffect(
                         new ImprintedCreaturePower(), new ImprintedCreatureToughness())));
-        addEffect(EffectSlot.STATIC,
-                new SetCreatureTypesToImprintedCreatureEffect(CardSubtype.SHAPESHIFTER));
+        addStaticEffect(new SetCreatureTypesToImprintedCreatureEffect(CardSubtype.SHAPESHIFTER));
     }
 }

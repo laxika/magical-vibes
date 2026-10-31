@@ -16,7 +16,7 @@ public class FlamespeakersWill extends Card {
 
     public FlamespeakersWill() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
 
         target(TargetFilters.artifact())
                 .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(

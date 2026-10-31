@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 public class SurrakElusiveHunter extends Card {
 
     public SurrakElusiveHunter() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURE_OR_CREATURE_SPELL_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
                 new DrawCardEffect());
     }

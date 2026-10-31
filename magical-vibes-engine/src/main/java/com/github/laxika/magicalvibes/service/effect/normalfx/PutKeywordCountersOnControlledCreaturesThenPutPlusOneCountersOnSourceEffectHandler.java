@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -120,7 +119,7 @@ public class PutKeywordCountersOnControlledCreaturesThenPutPlusOneCountersOnSour
                     Set.of(counterType.hexproofFromColor()));
             return graveyard.stream()
                     .filter(card -> card.hasType(CardType.CREATURE))
-                    .anyMatch(card -> card.getEffects(EffectSlot.STATIC).contains(hexproofFromColor));
+                    .anyMatch(card -> card.getStaticEffects().contains(hexproofFromColor));
         }
         return graveyard.stream()
                 .filter(card -> card.hasType(CardType.CREATURE))

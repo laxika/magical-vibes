@@ -60,7 +60,7 @@ public class OverlordOfTheBalemurk extends Card {
                         new CastForAlternateCost(),
                         new SourceCounterThreshold(1, CounterType.TIME))),
                 new RemoveCounterFromSourceEffect(CounterType.TIME, 1)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new CastForAlternateCost(),
                         new SourceCounterThreshold(1, CounterType.TIME))),

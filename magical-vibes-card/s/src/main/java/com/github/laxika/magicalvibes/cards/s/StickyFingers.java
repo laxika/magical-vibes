@@ -18,7 +18,7 @@ public class StickyFingers extends Card {
 
     public StickyFingers() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.MENACE, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new CreateTokenForTriggeringPlayerEffect(CreateTokenEffect.ofTreasureToken(1)))
                 .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, new DrawCardEffect());
     }

@@ -13,7 +13,7 @@ public class LairwatchGiant extends Card {
 
     public LairwatchGiant() {
         // This creature can block an additional creature each combat.
-        addEffect(EffectSlot.STATIC, new GrantAdditionalBlockEffect(1));
+        addStaticEffect(new GrantAdditionalBlockEffect(1));
         // Whenever this creature blocks two or more creatures, it gains first strike until end of turn.
         addEffect(EffectSlot.ON_BLOCKS_MULTIPLE_CREATURES,
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF));

@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class ShorelineLooter extends Card {
 
     public ShorelineLooter() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, SequenceEffect.of(
                 new DrawCardEffect(1),
                 ConditionalEffect.unless(

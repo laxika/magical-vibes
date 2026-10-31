@@ -21,7 +21,7 @@ import java.util.Set;
 public class TheSkullsporeNexus extends Card {
 
     public TheSkullsporeNexus() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new GreatestPowerAmongControlled()));
+        addStaticEffect(new ReduceOwnCastCostEffect(new GreatestPowerAmongControlled()));
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES,
                 new CreateTokenWithTotalDyingCreaturesPowerEffect(
                         new CreateTokenEffect("Fungus Dinosaur", 0, 0, CardColor.GREEN,

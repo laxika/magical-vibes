@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -24,7 +24,7 @@ public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
         Set<CardSubtype> additionalSubtypesOverride,
         Set<Keyword> additionalKeywordsOverride,
         EffectSlot retainedEffectSlot,
-        Map<EffectSlot, List<CardEffect>> additionalSlotEffectsOverride
+        List<Ability> additionalAbilitiesOverride
 ) implements TemporaryCopyEffect {
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect {
@@ -36,10 +36,8 @@ public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
                 ? Set.of() : Set.copyOf(additionalSubtypesOverride);
         additionalKeywordsOverride = additionalKeywordsOverride == null
                 ? Set.of() : Set.copyOf(additionalKeywordsOverride);
-        additionalSlotEffectsOverride = additionalSlotEffectsOverride == null
-                ? Map.of() : additionalSlotEffectsOverride.entrySet().stream()
-                .collect(java.util.stream.Collectors.toUnmodifiableMap(
-                        Map.Entry::getKey, entry -> List.copyOf(entry.getValue())));
+        additionalAbilitiesOverride = additionalAbilitiesOverride == null
+                ? List.of() : List.copyOf(additionalAbilitiesOverride);
     }
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
@@ -48,13 +46,13 @@ public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
             Set<CardType> additionalTypesOverride, Set<CardSubtype> additionalSubtypesOverride,
             Set<Keyword> additionalKeywordsOverride) {
         this(nameOverride, additionalSupertypesOverride, powerOverride, toughnessOverride,
-                additionalTypesOverride, additionalSubtypesOverride, additionalKeywordsOverride, null, Map.of());
+                additionalTypesOverride, additionalSubtypesOverride, additionalKeywordsOverride, null, List.of());
     }
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
             String nameOverride, Set<CardSupertype> additionalSupertypesOverride) {
         this(nameOverride, additionalSupertypesOverride, null, null,
-                Set.of(), Set.of(), Set.of(), null, Map.of());
+                Set.of(), Set.of(), Set.of(), null, List.of());
     }
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
@@ -62,16 +60,16 @@ public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
             Set<CardType> additionalTypesOverride, Set<CardSubtype> additionalSubtypesOverride,
             Set<Keyword> additionalKeywordsOverride) {
         this(null, Set.of(), powerOverride, toughnessOverride, additionalTypesOverride,
-                additionalSubtypesOverride, additionalKeywordsOverride, null, Map.of());
+                additionalSubtypesOverride, additionalKeywordsOverride, null, List.of());
     }
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect() {
-        this(null, Set.of(), null, null, Set.of(), Set.of(), Set.of(), null, Map.of());
+        this(null, Set.of(), null, null, Set.of(), Set.of(), Set.of(), null, List.of());
     }
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
-            Map<EffectSlot, List<CardEffect>> additionalSlotEffectsOverride) {
-        this(null, Set.of(), null, null, Set.of(), Set.of(), Set.of(), null, additionalSlotEffectsOverride);
+            List<Ability> additionalAbilitiesOverride) {
+        this(null, Set.of(), null, null, Set.of(), Set.of(), Set.of(), null, additionalAbilitiesOverride);
     }
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
@@ -81,7 +79,7 @@ public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
             Set<Keyword> additionalKeywordsOverride, EffectSlot retainedEffectSlot) {
         this(nameOverride, additionalSupertypesOverride, powerOverride, toughnessOverride,
                 additionalTypesOverride, additionalSubtypesOverride, additionalKeywordsOverride,
-                retainedEffectSlot, Map.of());
+                retainedEffectSlot, List.of());
     }
 
     @Override

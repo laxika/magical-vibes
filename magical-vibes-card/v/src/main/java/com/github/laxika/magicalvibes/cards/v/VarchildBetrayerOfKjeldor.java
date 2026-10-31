@@ -34,10 +34,10 @@ public class VarchildBetrayerOfKjeldor extends Card {
                 new CreateTokenForTargetPlayerEffect(new CreateTokenEffect(
                         new EventValue(), "Survivor", 1, 1, CardColor.RED,
                         List.of(CardSubtype.SURVIVOR), Set.of(), Set.of())));
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesCantBlockMatchingCreaturesEffect(
+        addStaticEffect(new MatchingCreaturesCantBlockMatchingCreaturesEffect(
                 opposingSurvivors, new PermanentTruePredicate(),
                 "Survivors your opponents control can't block"));
-        addEffect(EffectSlot.STATIC, new CreaturesCantAttackControllerUnlessPredicateEffect(
+        addStaticEffect(new CreaturesCantAttackControllerUnlessPredicateEffect(
                 new PermanentNotPredicate(opposingSurvivors), true));
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                 new GainControlOfAllPermanentsMatchingEffect(

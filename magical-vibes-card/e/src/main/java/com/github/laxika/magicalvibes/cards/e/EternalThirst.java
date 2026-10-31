@@ -17,10 +17,8 @@ public class EternalThirst extends Card {
 
     public EternalThirst() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                                 EffectSlot.ON_OPPONENT_CREATURE_DIES,
                                 new PutCountersOnSourceEffect(1, 1, 1),
                                 GrantScope.ENCHANTED_CREATURE));

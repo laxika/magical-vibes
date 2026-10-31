@@ -37,7 +37,7 @@ public class Jihad extends Card {
 
         // White creatures get +2/+1 while the chosen player controls a matching nontoken permanent.
         // In the two-player engine, the chosen player is the single opponent.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ChosenPlayerControlsPermanent(NONTOKEN_PERMANENT_OF_CHOSEN_COLOR),
                 new StaticBoostEffect(2, 1, GrantScope.ALL_CREATURES,
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE)))));

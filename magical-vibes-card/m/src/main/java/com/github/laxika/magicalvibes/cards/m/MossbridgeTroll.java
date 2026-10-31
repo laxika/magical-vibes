@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.RegeneratesIfWouldBeDestroyedEffect;
@@ -15,7 +14,7 @@ public class MossbridgeTroll extends Card {
 
     public MossbridgeTroll() {
         // "If this creature would be destroyed, regenerate it." — always-on intrinsic regeneration.
-        addEffect(EffectSlot.STATIC, new RegeneratesIfWouldBeDestroyedEffect());
+        addStaticEffect(new RegeneratesIfWouldBeDestroyedEffect());
 
         // "Tap any number of untapped creatures you control other than this creature with total
         // power 10 or greater: This creature gets +20/+20 until end of turn."

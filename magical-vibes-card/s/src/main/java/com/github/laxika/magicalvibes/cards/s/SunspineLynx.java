@@ -21,8 +21,8 @@ import java.util.List;
 public class SunspineLynx extends Card {
 
     public SunspineLynx() {
-        addEffect(EffectSlot.STATIC, new PlayersCantGainLifeEffect());
-        addEffect(EffectSlot.STATIC, new DamageCantBePreventedEffect());
+        addStaticEffect(new PlayersCantGainLifeEffect());
+        addStaticEffect(new DamageCantBePreventedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToPlayersEffect(
                 new PermanentCount(
                         new PermanentAllOfPredicate(List.of(

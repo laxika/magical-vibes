@@ -14,7 +14,7 @@ public class GreatbowDoyen extends Card {
 
     public GreatbowDoyen() {
         // Other Archer creatures you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ARCHER)));
 
         // Whenever an Archer you control deals damage to a creature, that Archer deals that much

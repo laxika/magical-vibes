@@ -28,7 +28,7 @@ public class AyeshaTanakaArmorer extends Card {
                                 new CardManaValueAtMostSourcePowerPredicate())),
                         4,
                         false));
-        addEffect(EffectSlot.STATIC, new CantBeBlockedIfDefenderControlsMatchingPermanentEffect(
+        addStaticEffect(new CantBeBlockedIfDefenderControlsMatchingPermanentEffect(
                 new PermanentNotPredicate(new PermanentControllerControlsPermanentCountAtMostPredicate(
                         2, new PermanentIsArtifactPredicate()))));
     }

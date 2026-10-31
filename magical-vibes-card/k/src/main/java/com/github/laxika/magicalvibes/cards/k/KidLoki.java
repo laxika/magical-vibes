@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentReceivedPlusOnePlusO
 public class KidLoki extends Card {
 
     public KidLoki() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HEXPROOF,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate(true)));

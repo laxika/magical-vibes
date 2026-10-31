@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -22,13 +21,13 @@ public class BurdenOfProof extends Card {
 
     public BurdenOfProof() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.DETECTIVE),
                                 new PermanentControlledBySourceControllerPredicate())),
                         new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE),
                         new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE)))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.DETECTIVE),
                                 new PermanentControlledBySourceControllerPredicate())),

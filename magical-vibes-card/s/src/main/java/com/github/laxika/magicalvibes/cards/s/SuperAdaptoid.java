@@ -36,8 +36,7 @@ public class SuperAdaptoid extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
                 CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(legendaryCreaturesYouControl, new Fixed(2)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(legendaryCreaturesYouControl, new Fixed(2)));
 
         PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

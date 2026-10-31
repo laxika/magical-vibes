@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -16,7 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class MuldrothaTheGravetide extends Card {
 
     public MuldrothaTheGravetide() {
-        addEffect(EffectSlot.STATIC, new PlayLandsFromGraveyardEffect(null, true));
-        addEffect(EffectSlot.STATIC, new CastPermanentSpellsFromGraveyardEffect());
+        addStaticEffect(new PlayLandsFromGraveyardEffect(null, true));
+        addStaticEffect(new CastPermanentSpellsFromGraveyardEffect());
     }
 }

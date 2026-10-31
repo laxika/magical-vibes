@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentsEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DFT", collectorNumber = "196")
@@ -44,7 +44,7 @@ public class CloudspireCoordinator extends Card {
                         Set.of(),
                         false,
                         false,
-                        Map.of(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2)),
+                        List.of(StaticAbility.of(new PowerBoostForCrewAndSaddleEffect(2))),
                         List.of(),
                         false,
                         false,

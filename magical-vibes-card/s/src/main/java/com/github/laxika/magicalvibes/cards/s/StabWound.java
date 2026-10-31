@@ -20,7 +20,7 @@ public class StabWound extends Card {
     public StabWound() {
         target(TargetFilters.creature())
                 // Enchanted creature gets -2/-2.
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(-2, -2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(-2, -2, GrantScope.ENCHANTED_CREATURE))
 
                 // At the beginning of the upkeep of enchanted creature's controller,
                 // that player loses 2 life.

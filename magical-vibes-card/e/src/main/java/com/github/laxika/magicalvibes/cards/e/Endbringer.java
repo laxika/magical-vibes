@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
@@ -20,7 +19,7 @@ import java.util.List;
 public class Endbringer extends Card {
 
     public Endbringer() {
-        addEffect(EffectSlot.STATIC, new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
+        addStaticEffect(new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
                 TurnStep.UNTAP, null, TapUntapScope.SELF));
 
         addActivatedAbility(new ActivatedAbility(true, null,

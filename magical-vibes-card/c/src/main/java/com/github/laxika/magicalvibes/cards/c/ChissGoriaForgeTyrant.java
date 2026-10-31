@@ -24,7 +24,7 @@ public class ChissGoriaForgeTyrant extends Card {
     public ChissGoriaForgeTyrant() {
         PermanentCount artifactsYouControl = new PermanentCount(
                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(artifactsYouControl));
+        addStaticEffect(new ReduceOwnCastCostEffect(artifactsYouControl));
         addEffect(EffectSlot.ON_ATTACK, SequenceEffect.of(
                 new ExileTopCardsToSourceEffect(5, false),
                 MayCastCardExiledWithSourceEffect.normalCost(

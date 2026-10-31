@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterEchoAtNextUpkeepEffect;
 
@@ -14,7 +13,7 @@ import java.util.List;
 public class HenchfiendOfUkor extends Card {
 
     public HenchfiendOfUkor() {
-        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{1}{B}"));
+        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{1}{B}"));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B/R}",

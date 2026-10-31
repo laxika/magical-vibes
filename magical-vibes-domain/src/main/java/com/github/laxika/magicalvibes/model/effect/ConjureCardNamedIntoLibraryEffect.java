@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Ability;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * "Conjure … cards named … into your library": conjures copies of the given printing into the
@@ -14,23 +12,20 @@ public record ConjureCardNamedIntoLibraryEffect(
         String setCode,
         String collectorNumber,
         int count,
-        Map<EffectSlot, List<CardEffect>> additionalEffects
+        List<Ability> additionalAbilities
 ) implements CardEffect {
 
     public ConjureCardNamedIntoLibraryEffect(String setCode, String collectorNumber, int count) {
-        this(setCode, collectorNumber, count, Map.of());
+        this(setCode, collectorNumber, count, List.of());
     }
 
     public ConjureCardNamedIntoLibraryEffect {
         if (count < 0) {
             throw new IllegalArgumentException("count cannot be negative");
         }
-        if (additionalEffects == null) {
-            throw new IllegalArgumentException("additionalEffects must not be null");
+        if (additionalAbilities == null) {
+            throw new IllegalArgumentException("additionalAbilities must not be null");
         }
-        additionalEffects = additionalEffects.entrySet().stream()
-                .collect(Collectors.toUnmodifiableMap(
-                        Map.Entry::getKey,
-                        entry -> List.copyOf(entry.getValue())));
+        additionalAbilities = List.copyOf(additionalAbilities);
     }
 }

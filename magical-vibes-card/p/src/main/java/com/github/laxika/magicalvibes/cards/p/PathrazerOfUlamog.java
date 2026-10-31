@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class PathrazerOfUlamog extends Card {
 
     public PathrazerOfUlamog() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByFewerThanNCreaturesEffect(3));
+        addStaticEffect(new CantBeBlockedByFewerThanNCreaturesEffect(3));
         addEffect(EffectSlot.ON_ATTACK, new SacrificePermanentsEffect(
                 3, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));
     }

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ROE", collectorNumber = "10")
@@ -22,7 +21,7 @@ public class SkitteringInvasion extends Card {
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 5, "Eldrazi Spawn", 0, 1, null, null,
                 List.of(CardSubtype.ELDRAZI, CardSubtype.SPAWN), Set.of(), Set.of(), false, false,
-                Map.of(), List.of(new ActivatedAbility(
+                List.of(), List.of(new ActivatedAbility(
                         false,
                         null,
                         List.of(new SacrificeSelfCost(), new AwardManaEffect(ManaColor.COLORLESS)),

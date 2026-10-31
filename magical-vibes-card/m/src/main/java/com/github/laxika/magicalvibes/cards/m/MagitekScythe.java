@@ -29,7 +29,7 @@ public class MagitekScythe extends Card {
                                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET),
                                         new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_BE_BLOCKED)))),
                         "Attach Magitek Scythe to target creature you control?"));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

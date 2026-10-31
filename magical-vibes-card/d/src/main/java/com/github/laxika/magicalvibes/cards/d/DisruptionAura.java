@@ -17,7 +17,7 @@ public class DisruptionAura extends Card {
 
     public DisruptionAura() {
         target(TargetFilters.artifact())
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.UPKEEP_TRIGGERED,
                         new ForcedCostOrElseEffect(
                                 PayManaCost.forSourceManaCost(),

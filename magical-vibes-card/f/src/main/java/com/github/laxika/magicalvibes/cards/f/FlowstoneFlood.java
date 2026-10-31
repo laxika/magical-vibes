@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -15,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class FlowstoneFlood extends Card {
 
     public FlowstoneFlood() {
-        addEffect(EffectSlot.STATIC, new BuybackEffect(new PayLifeCost(3), 1, true));
+        addStaticEffect(new BuybackEffect(new PayLifeCost(3), 1, true));
         target(TargetFilters.land()).addSpellEffect(new DestroyTargetPermanentEffect());
         addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }

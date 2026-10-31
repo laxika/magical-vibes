@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class FirebladeCharger extends Card {
 
     public FirebladeCharger() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new Equipped(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_DEATH, new DealDamageToAnyTargetEffect(new EventValue()));
     }

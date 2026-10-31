@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedBySourceInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -15,6 +14,6 @@ public class KumanosBlessing extends Card {
         // exile it instead — PermanentRemovalService reads this STATIC effect from Auras attached
         // to the damaging permanent (same replacement as Frostwielder / Kumano's Pupils).
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new ExileCreaturesDamagedBySourceInsteadOfDyingEffect());
+                .addStaticEffect(new ExileCreaturesDamagedBySourceInsteadOfDyingEffect());
     }
 }

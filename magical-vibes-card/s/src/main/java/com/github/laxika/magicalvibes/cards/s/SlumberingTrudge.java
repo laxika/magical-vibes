@@ -20,7 +20,7 @@ public class SlumberingTrudge extends Card {
     public SlumberingTrudge() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(
                 CounterType.STUN, new Sum(new Fixed(3), new Scaled(new XValue(), -1))));
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new NotCondition(new SpellXAtLeast(3)), new EntersTappedEffect()));
     }
 }

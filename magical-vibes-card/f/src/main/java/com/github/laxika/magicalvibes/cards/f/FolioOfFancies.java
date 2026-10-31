@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -20,7 +19,7 @@ import java.util.List;
 public class FolioOfFancies extends Card {
 
     public FolioOfFancies() {
-        addEffect(EffectSlot.STATIC, new PlayersHaveNoMaximumHandSizeEffect());
+        addStaticEffect(new PlayersHaveNoMaximumHandSizeEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

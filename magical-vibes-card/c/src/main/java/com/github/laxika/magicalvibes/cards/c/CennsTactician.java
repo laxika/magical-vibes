@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -34,7 +33,7 @@ public class CennsTactician extends Card {
                         "Target must be a Soldier creature")));
 
         // Each creature you control with a +1/+1 counter on it can block an additional creature each combat.
-        addEffect(EffectSlot.STATIC, new GrantAdditionalBlockEffect(1, new PermanentAllOfPredicate(List.of(
+        addStaticEffect(new GrantAdditionalBlockEffect(1, new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentControlledBySourceControllerPredicate(),
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)))));

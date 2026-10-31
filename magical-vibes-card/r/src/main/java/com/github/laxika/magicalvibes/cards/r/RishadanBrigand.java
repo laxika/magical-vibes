@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 public class RishadanBrigand extends Card {
 
     public RishadanBrigand() {
-        addEffect(EffectSlot.STATIC, new CanBlockOnlyIfAttackerMatchesPredicateEffect(
+        addStaticEffect(new CanBlockOnlyIfAttackerMatchesPredicateEffect(
                 new PermanentHasKeywordPredicate(Keyword.FLYING), "creatures with flying"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EachOpponentSacrificesPermanentUnlessPaysEffect("{3}"));

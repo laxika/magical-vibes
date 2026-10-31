@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -16,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class StrengthOfTheCoalition extends Card {
 
     public StrengthOfTheCoalition() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{W}"));
+        addStaticEffect(new KickerEffect("{2}{W}"));
         target(TargetFilters.creatureYouControl())
                 .addSpellEffect(new BoostTargetCreatureEffect(2, 2));
         addSpellEffect(new ConditionalEffect(new Kicked(),

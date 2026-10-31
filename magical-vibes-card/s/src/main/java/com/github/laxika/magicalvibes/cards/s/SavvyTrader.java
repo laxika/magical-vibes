@@ -15,6 +15,6 @@ public class SavvyTrader extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileTargetCardFromGraveyardMayPlayWhileExiledEffect(
                         new CardIsPermanentPredicate(), true));
-        addEffect(EffectSlot.STATIC, new ReduceNonHandSpellCastCostEffect(1));
+        addStaticEffect(new ReduceNonHandSpellCastCostEffect(1));
     }
 }

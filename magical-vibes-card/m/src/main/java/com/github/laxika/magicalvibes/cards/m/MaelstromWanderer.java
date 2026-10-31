@@ -20,7 +20,7 @@ public class MaelstromWanderer extends Card {
 
     public MaelstromWanderer() {
         // Creatures you control have haste, including Maelstrom Wanderer.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
 
         // Maelstrom Wanderer has cascade twice.
         addEffect(EffectSlot.ON_SELF_CAST, new CascadeEffect());

@@ -12,7 +12,7 @@ public class BardHeirOfGirion extends Card {
 
     public BardHeirOfGirion() {
         // Other creatures you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
 
         // Whenever you attack, draw a card.
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new DrawCardEffect());

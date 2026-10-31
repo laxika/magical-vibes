@@ -35,7 +35,7 @@ public class KeyToTheArchive extends Card {
             new DraftFromSpellbookEffect.SpellbookCard("TMP", "97"));
 
     public KeyToTheArchive() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 new DraftCardFromSpellbookEffect(SPELLBOOK),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER)));

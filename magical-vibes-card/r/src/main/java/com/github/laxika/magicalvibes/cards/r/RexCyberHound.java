@@ -29,7 +29,7 @@ public class RexCyberHound extends Card {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, SequenceEffect.of(
                 new MillEffect(2, MillRecipient.TARGET_PLAYER),
                 new EnergyCountersEffect(2)));
-        addEffect(EffectSlot.STATIC, new GainActivatedAbilitiesOfCardsExiledWithBrainCountersEffect());
+        addStaticEffect(new GainActivatedAbilitiesOfCardsExiledWithBrainCountersEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

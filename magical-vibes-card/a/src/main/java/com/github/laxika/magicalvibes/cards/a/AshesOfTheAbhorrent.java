@@ -15,8 +15,8 @@ public class AshesOfTheAbhorrent extends Card {
 
     public AshesOfTheAbhorrent() {
         // Players can't cast spells from graveyards or activate abilities of cards in graveyards.
-        addEffect(EffectSlot.STATIC, new PlayersCantCastSpellsFromZonesEffect(Set.of(Zone.GRAVEYARD)));
-        addEffect(EffectSlot.STATIC, new PlayersCantActivateAbilitiesOfGraveyardCardsEffect());
+        addStaticEffect(new PlayersCantCastSpellsFromZonesEffect(Set.of(Zone.GRAVEYARD)));
+        addStaticEffect(new PlayersCantActivateAbilitiesOfGraveyardCardsEffect());
 
         // Whenever a creature dies, you gain 1 life.
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new GainLifeEffect(1));

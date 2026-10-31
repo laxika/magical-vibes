@@ -25,6 +25,6 @@ public class IxalansBinding extends Card {
                 "Target must be a nonland permanent an opponent controls"
         ))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentUntilSourceLeavesEffect(true))
-                .addEffect(EffectSlot.STATIC, new CantCastSpellsWithSameNameAsExiledCardEffect(true));
+                .addStaticEffect(new CantCastSpellsWithSameNameAsExiledCardEffect(true));
     }
 }

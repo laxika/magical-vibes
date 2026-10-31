@@ -36,7 +36,7 @@ public class KrothussLordOfTheDeep extends Card {
         ));
         CreateTokenCopyOfTargetPermanentEffect copy = new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), null, null, Map.of(), false, false, false, true,
-                false, false, null, Set.of(), false, Map.of(), List.of(), false, false,
+                false, false, null, Set.of(), false, List.of(), List.of(), false, false,
                 new FixedIfTargetMatches(seaMonster, 2, 1), false, Set.of(), true);
 
         target(new PermanentPredicateTargetFilter(

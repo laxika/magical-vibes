@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AdditionalControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -22,7 +21,7 @@ public class PyromancersGauntlet extends Card {
     public PyromancersGauntlet() {
         // If a red instant or sorcery spell you control or a red planeswalker you control would
         // deal damage to a permanent or player, it deals that much damage plus 2 instead.
-        addEffect(EffectSlot.STATIC, new AdditionalControllerDamageEffect(2,
+        addStaticEffect(new AdditionalControllerDamageEffect(2,
                 new StackEntryAnyOfPredicate(List.of(
                         new StackEntryAllOfPredicate(List.of(
                                 new StackEntryTypeInPredicate(Set.of(

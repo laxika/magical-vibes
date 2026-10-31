@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -86,7 +85,7 @@ public class MorphicTideAuraEffectHandler implements NormalEffectHandlerBean {
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, aura);
         battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, auraCard, null, false);
 
-        if (target != null && auraCard.getEffects(EffectSlot.STATIC).stream()
+        if (target != null && auraCard.getStaticEffects().stream()
                 .anyMatch(ControlEnchantedCreatureEffect.class::isInstance)) {
             creatureControlService.applyControlEffect(gameData, controllerId, target,
                     new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,

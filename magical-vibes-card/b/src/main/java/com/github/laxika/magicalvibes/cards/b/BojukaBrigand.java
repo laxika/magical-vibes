@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class BojukaBrigand extends Card {
 
     public BojukaBrigand() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ALLY),
                         new MayEffect(new PutCountersOnSourceEffect(1, 1, 1),

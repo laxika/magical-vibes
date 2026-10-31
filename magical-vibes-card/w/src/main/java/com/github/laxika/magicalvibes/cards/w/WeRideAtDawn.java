@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OTC", collectorNumber = "12")
@@ -29,7 +28,7 @@ import java.util.Set;
 public class WeRideAtDawn extends Card {
 
     public WeRideAtDawn() {
-        addEffect(EffectSlot.STATIC, new GrantSpellCastingAbilityToSpellsEffect(
+        addStaticEffect(new GrantSpellCastingAbilityToSpellsEffect(
                 Keyword.CONVOKE,
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
@@ -37,7 +36,7 @@ public class WeRideAtDawn extends Card {
 
         CreateTokenEffect mercenaryToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Mercenary", 1, 1, CardColor.RED, null,
-                List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, Map.of(),
+                List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, List.of(),
                 List.of(new ActivatedAbility(
                         true,
                         null,

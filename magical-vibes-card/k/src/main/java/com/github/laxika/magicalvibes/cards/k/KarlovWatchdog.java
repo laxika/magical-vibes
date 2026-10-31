@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsPermanentsCantBeTurn
 public class KarlovWatchdog extends Card {
 
     public KarlovWatchdog() {
-        addEffect(EffectSlot.STATIC, new OpponentsPermanentsCantBeTurnedFaceUpEffect());
+        addStaticEffect(new OpponentsPermanentsCantBeTurnedFaceUpEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,
                 new ConditionalEffect(new MinimumAttackers(3), new BoostAllOwnCreaturesEffect(1, 1)));
     }

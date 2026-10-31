@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ONE", collectorNumber = "34")
@@ -40,8 +40,9 @@ public class SkrelvsHive extends Card {
                         Set.of(CardType.ARTIFACT),
                         false,
                         false,
-                        Map.of(EffectSlot.STATIC, SequenceEffect.of(
-                                new CantBlockEffect(), new ToxicEffect(1))),
+                        List.of(
+                                StaticAbility.of(SequenceEffect.of(
+                                new CantBlockEffect(), new ToxicEffect(1)))),
                         List.of(),
                         false,
                         false,
@@ -50,7 +51,7 @@ public class SkrelvsHive extends Card {
                         Set.of()
                 )));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new OpponentPoisoned(3),
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES,
                         new PermanentHasKeywordPredicate(Keyword.TOXIC))));

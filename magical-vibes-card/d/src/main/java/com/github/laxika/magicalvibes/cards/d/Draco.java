@@ -18,8 +18,7 @@ public class Draco extends Card {
 
     public Draco() {
         // Domain — This spell costs {2} less to cast for each basic land type among lands you control.
-        addEffect(EffectSlot.STATIC,
-                new ReduceOwnCastCostEffect(new Scaled(new BasicLandTypesAmongControlledLands(), 2)));
+        addStaticEffect(new ReduceOwnCastCostEffect(new Scaled(new BasicLandTypesAmongControlledLands(), 2)));
 
         // Domain — At the beginning of your upkeep, sacrifice this creature unless you pay {10}.
         // This cost is reduced by {2} for each basic land type among lands you control.

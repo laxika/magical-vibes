@@ -15,7 +15,7 @@ public class Dwindle extends Card {
     public Dwindle() {
         target(TargetFilters.creature());
         // Enchanted creature gets -6/-0.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-6, 0, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(-6, 0, GrantScope.ENCHANTED_CREATURE));
         // When enchanted creature blocks, destroy it.
         addEffect(EffectSlot.ON_BLOCK, new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
     }

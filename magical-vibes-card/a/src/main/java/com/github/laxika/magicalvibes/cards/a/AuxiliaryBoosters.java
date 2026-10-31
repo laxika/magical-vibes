@@ -28,8 +28,8 @@ public class AuxiliaryBoosters extends Card {
                                 List.of(CardSubtype.ROBOT), Set.of(), Set.of(CardType.ARTIFACT)),
                         new AttachMatchingEquipmentToCreatedPermanentEffect(
                                 new PermanentIsSourcePermanentPredicate())));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

@@ -86,8 +86,7 @@ public class SpecializeShadowheartEffectHandler implements NormalEffectHandlerBe
                 specialized.setColorIdentity(List.of(CardColor.BLACK, CardColor.GREEN));
                 specialized.setColor(CardColor.GREEN);
                 specialized.setCardText("Deathtouch\nShadowheart, Cleric of Twilight can't be blocked by creatures with power 2 or less.\nAt the beginning of your end step, Shadowheart deals 1 damage to each player.\nWhenever you lose life during your turn, put a +1/+1 counter on Shadowheart.");
-                specialized.addEffect(EffectSlot.STATIC,
-                        new CantBeBlockedByCreaturesMatchingPredicateEffect(new PermanentPowerAtMostPredicate(2)));
+                specialized.addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(new PermanentPowerAtMostPredicate(2)));
             }
             default -> throw new IllegalStateException("Unsupported Shadowheart specialization color: "
                     + specialize.color());

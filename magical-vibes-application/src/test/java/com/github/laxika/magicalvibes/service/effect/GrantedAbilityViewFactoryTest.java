@@ -87,8 +87,7 @@ class GrantedAbilityViewFactoryTest {
     @DisplayName("Chosen and temporary protection are shown while printed protection is omitted")
     void projectsOnlyProtectionBeyondPrintedText() {
         Card card = creatureCard("Voice");
-        card.addEffect(EffectSlot.STATIC,
-                new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
+        card.addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
         card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ProtectionFromChosenColorEffect());
         Permanent permanent = new Permanent(card);

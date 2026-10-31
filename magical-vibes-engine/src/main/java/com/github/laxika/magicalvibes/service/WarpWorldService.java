@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
@@ -101,7 +100,7 @@ public class WarpWorldService {
             batch.add(permanent);
 
             if (placement.attachmentTargetId() != null) {
-                CardEffect controlEffect = card.getEffects(EffectSlot.STATIC).stream()
+                CardEffect controlEffect = card.getStaticEffects().stream()
                         .filter(e -> e instanceof ControlEnchantedCreatureEffect)
                         .findFirst()
                         .orElse(null);

@@ -17,7 +17,7 @@ import java.util.List;
 public class WolverineBestThereIs extends Card {
 
     public WolverineBestThereIs() {
-        addEffect(EffectSlot.STATIC, new DoubleDamageFromSelfEffect());
+        addStaticEffect(new DoubleDamageFromSelfEffect());
         addEffect(EffectSlot.END_STEP_TRIGGERED,
                 new ConditionalEffect(new SelfDealtDamageToCreatureThisTurn(),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.AttackDirection;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CombatAttackTarget;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -47,7 +46,6 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.combat.CombatHelper;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -140,7 +138,7 @@ public class AttackLegalityService {
      */
     private boolean canAttackAsThoughHasteFromOwnStatic(GameData gameData, Permanent creature) {
         if (gameQueryService.hasLostAllAbilities(gameData, creature)) return false;
-        boolean hasPermission = creature.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean hasPermission = creature.getCard().getStaticEffects().stream()
                 .anyMatch(CanAttackAsThoughHasteUnlessEnteredThisTurnEffect.class::isInstance);
         if (!hasPermission) return false;
         return gameData.permanentsEnteredBattlefieldThisTurn.values().stream()
@@ -185,7 +183,7 @@ public class AttackLegalityService {
         if (!attackingPlayers.contains(targetId)) {
             return false;
         }
-        return creature.getCard().getEffects(EffectSlot.STATIC).stream()
+        return creature.getCard().getStaticEffects().stream()
                 .filter(NoDefenderAttackPermissionEffect.class::isInstance)
                 .map(NoDefenderAttackPermissionEffect.class::cast)
                 .anyMatch(NoDefenderAttackPermissionEffect::
@@ -196,7 +194,7 @@ public class AttackLegalityService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
         if (controllerId == null) return false;
 
-        for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : creature.getCard().getStaticEffects()) {
             if (effect instanceof NoDefenderAttackPermissionEffect permission
                     && permission.grantsCarrierAttackAsThoughNoDefender()) {
                 return true;
@@ -249,7 +247,7 @@ public class AttackLegalityService {
                 if (grantor.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, grantor)) {
                     continue;
                 }
-                for (CardEffect effect : grantor.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : grantor.getCard().getStaticEffects()) {
                     if (effect instanceof NoDefenderAttackPermissionEffect grant
                             && grant.noDefenderAttackMatcher() != null
                             && predicateEvaluationService.matchesPermanentPredicate(
@@ -272,7 +270,7 @@ public class AttackLegalityService {
         if (controllerId == null || gameQueryService.hasLostAllAbilities(gameData, creature)) {
             return false;
         }
-        boolean hasPermission = creature.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean hasPermission = creature.getCard().getStaticEffects().stream()
                 .anyMatch(CanAttackPlayersWhoAttackedControllerLastTurnAsThoughNoDefenderEffect.class::isInstance);
         if (!hasPermission) {
             return false;
@@ -296,7 +294,7 @@ public class AttackLegalityService {
             return false;
         }
         ConditionContext ctx = null;
-        List<CardEffect> restrictionSources = new ArrayList<>(creature.getCard().getEffects(EffectSlot.STATIC));
+        List<CardEffect> restrictionSources = new ArrayList<>(creature.getCard().getStaticEffects());
         restrictionSources.addAll(gameQueryService.getGrantedEffects(gameData, creature));
         for (CardEffect effect : restrictionSources) {
             Condition condition = null;
@@ -351,7 +349,7 @@ public class AttackLegalityService {
         if (targetIsPlayer
                 && !gameData.playersWhoActedDuringTheirLastTurn.contains(targetId)
                 && gameData.anyPermanentMatches(permanent -> !permanent.isFaceDown()
-                && LayerSystemService.currentCard(gameData, permanent).getEffects(EffectSlot.STATIC).stream()
+                && LayerSystemService.currentCard(gameData, permanent).getStaticEffects().stream()
                 .anyMatch(CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect.class::isInstance)
                 && !gameQueryService.hasLostPrintedAbilities(gameData, permanent))) {
             return false;
@@ -449,7 +447,7 @@ public class AttackLegalityService {
                 || gameQueryService.hasLostAllAbilities(gameData, attacker)) {
             return false;
         }
-        boolean hasPermission = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean hasPermission = attacker.getCard().getStaticEffects().stream()
                 .anyMatch(CanAttackPlayersWhoAttackedControllerLastTurnAsThoughNoDefenderEffect.class::isInstance);
         if (!hasPermission) {
             return false;
@@ -617,7 +615,7 @@ public class AttackLegalityService {
     private CantAttackCardOwnerEffect findCantAttackCardOwnerEffect(GameData gameData, Permanent attacker) {
         if (!attacker.isFaceDown()
                 && !gameQueryService.computeStaticBonus(gameData, attacker).losesAllAbilities()) {
-            for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : attacker.getCard().getStaticEffects()) {
                 if (effect instanceof CantAttackCardOwnerEffect restriction) {
                     return restriction;
                 }
@@ -639,7 +637,7 @@ public class AttackLegalityService {
         if (attachedTo == null || !gameQueryService.isCreature(gameData, attachedTo)) {
             return false;
         }
-        return target.getCard().getEffects(EffectSlot.STATIC).stream()
+        return target.getCard().getStaticEffects().stream()
                 .filter(AttackTargetRestrictionEffect.class::isInstance)
                 .map(AttackTargetRestrictionEffect.class::cast)
                 .anyMatch(AttackTargetRestrictionEffect::preventsBeingAttacked);
@@ -709,7 +707,7 @@ public class AttackLegalityService {
             if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                 return;
             }
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof CreaturesCantAttackUnlessPredicateEffect restriction) {
                     if (!predicateEvaluationService.matchesPermanentPredicate(gameData, creature, restriction.exemptionPredicate())) {
                         restricted[0] = true;
@@ -751,7 +749,7 @@ public class AttackLegalityService {
                 FilterContext context = FilterContext.of(gameData)
                         .withSourceControllerId(planarController)
                         .withSourceCardId(planar.getCard().getId());
-                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     if (effect instanceof CreaturesCantAttackUnlessPredicateEffect restriction
                             && !predicateEvaluationService.matchesPermanentPredicate(
                             gameData, creature, restriction.exemptionPredicate())) {
@@ -808,7 +806,7 @@ public class AttackLegalityService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (effect instanceof OpponentsCantAttackIfCastSpellThisTurnEffect) {
                         return true;
                     }
@@ -821,7 +819,7 @@ public class AttackLegalityService {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                if (permanent.getCard().getStaticEffects().stream()
                         .anyMatch(effect -> effect instanceof ControllerTurnRestrictionEffect restriction
                                 && restriction.preventsAttackingAfterSpellCast())) {
                     return true;
@@ -830,7 +828,7 @@ public class AttackLegalityService {
         }
         if (gameData.planechase != null && playerId.equals(gameData.planechase.controllerId)) {
             for (var planar : gameData.planechase.faceUp) {
-                if (planar.getCard().getEffects(EffectSlot.STATIC).stream()
+                if (planar.getCard().getStaticEffects().stream()
                         .anyMatch(effect -> effect instanceof ControllerTurnRestrictionEffect restriction
                                 && restriction.preventsAttackingAfterSpellCast())) {
                     return true;
@@ -854,7 +852,7 @@ public class AttackLegalityService {
         UUID selfControllerId = gameQueryService.findPermanentController(gameData, creature.getId());
         List<CardEffect> printedEffects = creature.isFaceDown()
                 || gameQueryService.hasLostPrintedAbilities(gameData, creature)
-                ? List.of() : creature.getCard().getEffects(EffectSlot.STATIC);
+                ? List.of() : creature.getCard().getStaticEffects();
         for (CardEffect effect : printedEffects) {
             if (effect instanceof MustAttackEffect mustAttack && mustAttack.scope() == null) {
                 count[0]++;
@@ -908,7 +906,7 @@ public class AttackLegalityService {
         gameData.forEachPermanent((playerId, permanent) -> {
             if (permanent.isAttached()
                     && permanent.getAttachedTo().equals(creature.getId())) {
-                count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                count[0] += (int) permanent.getCard().getStaticEffects().stream()
                         .filter(e -> e instanceof MustAttackEffect mae && mae.scope() == null)
                         .count();
             }
@@ -917,7 +915,7 @@ public class AttackLegalityService {
             if (creatureControllerId != null && creatureControllerId.equals(playerId)
                     && !permanent.isFaceDown()) {
                 int imposed = (int) LayerSystemService.currentCard(gameData, permanent)
-                        .getEffects(EffectSlot.STATIC).stream()
+                        .getStaticEffects().stream()
                         .filter(e -> e instanceof MustAttackEffect mae
                                 && (mae.scope() == GrantScope.ALL_OWN_CREATURES
                                         || (mae.scope() == GrantScope.OWN_CREATURES
@@ -930,7 +928,7 @@ public class AttackLegalityService {
             // Check for curses on the creature's controller (e.g. Curse of the Nightly Hunt)
             if (permanent.isAttached()
                     && permanent.getAttachedTo().equals(creatureControllerId)) {
-                count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                count[0] += (int) permanent.getCard().getStaticEffects().stream()
                         .filter(e -> e instanceof MustAttackEffect mae
                                 && mae.scope() == GrantScope.ENCHANTED_PLAYER_CREATURES)
                         .count();
@@ -942,7 +940,7 @@ public class AttackLegalityService {
                     .withSourceCardId(permanent.getOriginalCard().getId())
                     .withSourceControllerId(playerId)
                     .withSourcePermanentId(permanent.getId());
-            count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+            count[0] += (int) permanent.getCard().getStaticEffects().stream()
                     .filter(CombatAttackRequirementEffect.class::isInstance)
                     .map(CombatAttackRequirementEffect.class::cast)
                     .filter(e -> isCombatAttackRequirementApplicable(
@@ -1023,7 +1021,7 @@ public class AttackLegalityService {
                     .withSourceCardId(sourcePermanent.getOriginalCard().getId())
                     .withSourceControllerId(sourceControllerId)
                     .withSourcePermanentId(sourcePermanent.getId());
-            for (CardEffect effect : sourcePermanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : sourcePermanent.getCard().getStaticEffects()) {
                 if (!(effect instanceof CombatAttackRequirementEffect requirement)
                         || !isCombatAttackRequirementApplicable(
                         gameData, creature, sourcePermanent, requirement, context)) {
@@ -1112,7 +1110,7 @@ public class AttackLegalityService {
                 FilterContext context = FilterContext.of(gameData)
                         .withSourceCardId(sourcePermanent.getOriginalCard().getId())
                         .withSourceControllerId(sourceControllerId);
-                for (CardEffect effect : sourcePermanent.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : sourcePermanent.getCard().getStaticEffects()) {
                     if (!(effect instanceof CombatAttackRequirementEffect requirement)
                             || !requirement.requiresAttackAtOtherPlayerIfAble()
                             || !isCombatAttackRequirementApplicable(
@@ -1159,7 +1157,7 @@ public class AttackLegalityService {
                     .withSourceCardId(sourcePermanent.getOriginalCard().getId())
                     .withSourceControllerId(sourceControllerId)
                     .withSourcePermanentId(sourcePermanent.getId());
-            for (CardEffect effect : sourcePermanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : sourcePermanent.getCard().getStaticEffects()) {
                 if (!(effect instanceof CombatAttackRequirementEffect requirement)
                         || !requirement.requiresAttackAtOtherPlayerIfAble()
                         || !isCombatAttackRequirementApplicable(
@@ -1293,7 +1291,7 @@ public class AttackLegalityService {
         if (attacker.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, attacker)) {
             return false;
         }
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : attacker.getCard().getStaticEffects()) {
             if (!(effect instanceof AttackerTargetRestrictionEffect restriction)
                     || attacker.isStaticEffectSuppressed(effect.getClass())) {
                 continue;

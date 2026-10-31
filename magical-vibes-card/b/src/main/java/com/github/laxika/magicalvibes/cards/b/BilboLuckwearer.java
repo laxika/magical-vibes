@@ -16,7 +16,7 @@ public class BilboLuckwearer extends Card {
     public BilboLuckwearer() {
         setBackFaceCard(new BurglarPlot());
         addCastingOption(new AdventureCast("{4}{U}"));
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, SequenceEffect.of(
                 new DrawCardEffect(1),
                 new DiscardEffect(1, DiscardRecipient.CONTROLLER)));

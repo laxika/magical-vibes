@@ -18,7 +18,7 @@ public class AnthemOfRakdos extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS, SequenceEffect.of(
                 new BoostTargetCreatureEffect(2, 0),
                 new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerHandEmpty(), new DoubleControllerDamageEffect(null, true)));
     }
 }

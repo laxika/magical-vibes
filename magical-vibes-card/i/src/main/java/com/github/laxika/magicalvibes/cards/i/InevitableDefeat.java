@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -14,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class InevitableDefeat extends Card {
 
     public InevitableDefeat() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         target(TargetFilters.nonlandPermanent())
                 .addSpellEffect(new ExileTargetPermanentEffect())
                 .addSpellEffect(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER))

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -46,17 +47,17 @@ public class GrantEffectToOwnCreaturesUntilEndOfTurnEffectHandler implements Nor
                         FilterContext.of(gameData).withSourcePermanentId(entry.getSourcePermanentId()))) {
                     continue;
                 }
-                permanent.addTemporaryTriggeredEffect(e.slot(), e.grantedEffect());
+                permanent.addTemporaryAbility(e.grantedAbility());
                 count++;
             }
         }
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
-                .text(" grants a temporary " + e.slot().name() + " ability to " + count
+                .text(" grants a temporary " + LegacySlots.label(e.grantedAbility()) + " ability to " + count
                         + " creature(s) until end of turn.")
                 .build());
         log.info("Game {} - {} grants temporary {} effect to {} own creature(s)",
-                gameData.id, entry.getCard().getName(), e.slot().name(), count);
+                gameData.id, entry.getCard().getName(), LegacySlots.label(e.grantedAbility()), count);
     }
 }

@@ -28,7 +28,7 @@ public class Paralyze extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED))
 
                 // Enchanted creature doesn't untap during its controller's untap step.
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted())
+                .addStaticEffect(DoesntUntapEffect.enchanted())
 
                 // At the beginning of the upkeep of enchanted creature's controller, that player
                 // may pay {4}. If the player does, untap the creature.

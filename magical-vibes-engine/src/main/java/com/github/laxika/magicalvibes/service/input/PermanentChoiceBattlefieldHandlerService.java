@@ -59,7 +59,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
@@ -3242,7 +3241,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         entering.setChosenPermanentId(chosenCreatureId);
-        if (entering.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(
+        if (entering.getCard().getStaticEffects().stream().anyMatch(
                 com.github.laxika.magicalvibes.model.effect.ExchangeTextBoxesEffect.class::isInstance)) {
             gameData.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
                     entering.getCard(), context.controllerId(),
@@ -3615,10 +3614,10 @@ public class PermanentChoiceBattlefieldHandlerService {
                 }
             }
 
-            boolean hasControlEffect = enchantTarget != null && auraCard.getEffects(EffectSlot.STATIC).stream()
+            boolean hasControlEffect = enchantTarget != null && auraCard.getStaticEffects().stream()
                     .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
             if (hasControlEffect) {
-                boolean monarchBound = auraCard.getEffects(EffectSlot.STATIC).stream()
+                boolean monarchBound = auraCard.getStaticEffects().stream()
                         .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect control
                                 && control.controlledByMonarch());
                 if (!monarchBound) {

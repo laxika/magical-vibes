@@ -22,11 +22,11 @@ public class StormWindrider extends Card {
 
     public StormWindrider() {
         // Creatures with flying can't attack you.
-        addEffect(EffectSlot.STATIC, new CreaturesCantAttackControllerUnlessPredicateEffect(
+        addStaticEffect(new CreaturesCantAttackControllerUnlessPredicateEffect(
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
 
         // Creatures with flying can't block creatures you control.
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesCantBlockMatchingCreaturesEffect(
+        addStaticEffect(new MatchingCreaturesCantBlockMatchingCreaturesEffect(
                 new PermanentHasKeywordPredicate(Keyword.FLYING),
                 new PermanentControlledBySourceControllerPredicate(),
                 "Creatures with flying can't block creatures you control"));

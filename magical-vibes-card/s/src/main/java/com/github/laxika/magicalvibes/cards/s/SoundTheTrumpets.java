@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "HOB", collectorNumber = "55")
@@ -34,7 +33,7 @@ public class SoundTheTrumpets extends Card {
                                 null,
                                 new CreateTokenEffect(CardType.CREATURE, 1, "Soldier", 1, 1, CardColor.WHITE, null,
                                         List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of(),
-                                        false, false, Map.of(), List.of(), false, false, false, 0, Set.of()),
+                                        false, false, List.of(), List.of(), false, false, false, 0, Set.of()),
                                 "a card",
                                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                                 false, null, null, DiscardRecipient.CONTROLLER, true))));

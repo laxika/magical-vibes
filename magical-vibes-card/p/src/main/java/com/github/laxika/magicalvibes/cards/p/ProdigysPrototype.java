@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.MinimumMatchingAttackers;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -14,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndSaddleEff
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NEO", collectorNumber = "231")
@@ -32,7 +32,7 @@ public class ProdigysPrototype extends Card {
                         List.of(CardSubtype.PILOT),
                         Set.of(),
                         Set.of(),
-                        Map.of(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2, true)))));
+                        List.of(StaticAbility.of(new PowerBoostForCrewAndSaddleEffect(2, true))))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

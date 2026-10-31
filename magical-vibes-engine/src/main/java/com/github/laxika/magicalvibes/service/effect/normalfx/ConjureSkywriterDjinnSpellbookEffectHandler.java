@@ -63,7 +63,6 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -185,7 +184,7 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
                 "Create a 0/3 blue Crab creature token. Investigate.");
         card.addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, 1, "Crab", 0, 3, CardColor.BLUE, Set.of(CardColor.BLUE),
-                List.of(CardSubtype.CRAB), Set.of(), Set.of(), false, false, Map.of(), List.of(),
+                List.of(CardSubtype.CRAB), Set.of(), Set.of(), false, false, List.of(), List.of(),
                 false, false, false, 0, Set.of()));
         card.addSpellEffect(CreateTokenEffect.ofClueToken(1));
         return freeze(card);
@@ -264,7 +263,7 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
                 "This spell costs {2} less to cast if it targets an attacking creature. Put target creature into its owner's library second from the top.");
         PermanentPredicate attackingCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(), new PermanentIsAttackingPredicate()));
-        card.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(attackingCreature, 2));
+        card.addStaticEffect(new ReduceOwnCastCostIfTargetingPermanentEffect(attackingCreature, 2));
         card.target(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),
                 "Target must be a creature"))
                 .addSpellEffect(new PutTargetPermanentIntoLibraryNFromTopEffect(1));

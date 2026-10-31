@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class WaryZoneGuard extends Card {
 
     public WaryZoneGuard() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         addEffect(EffectSlot.POSTCOMBAT_MAIN_TRIGGERED,
                 new SurvivalTriggerEffect(new ConditionalEffect(

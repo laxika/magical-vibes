@@ -18,7 +18,7 @@ import java.util.List;
 public class Terrarion extends Card {
 
     public Terrarion() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -25,6 +25,6 @@ public class AsForetold extends Card {
 
         // Once each turn, you may pay {0} rather than pay the mana cost for a spell you cast with
         // mana value X or less, where X is the number of time counters on As Foretold.
-        addEffect(EffectSlot.STATIC, new AlternativeCostForSpellsEffect("{0}", null, CounterType.TIME, true));
+        addStaticEffect(new AlternativeCostForSpellsEffect("{0}", null, CounterType.TIME, true));
     }
 }

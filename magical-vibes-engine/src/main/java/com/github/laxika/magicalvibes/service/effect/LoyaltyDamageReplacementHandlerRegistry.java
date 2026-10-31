@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -32,7 +31,7 @@ public class LoyaltyDamageReplacementHandlerRegistry {
         int[] result = {damage};
         gameData.forEachBattlefield((controllerId, battlefield) -> {
             for (Permanent source : battlefield) {
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : source.getCard().getStaticEffects()) {
                     LoyaltyDamageReplacementHandler handler = handlers.get(effect.getClass());
                     if (handler == null || source.isStaticEffectSuppressed(effect.getClass())
                             || gameQueryService.hasLostAllAbilities(gameData, source)) continue;

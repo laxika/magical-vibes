@@ -18,7 +18,7 @@ public class KrovikanWhispers extends Card {
     public KrovikanWhispers() {
         target(TargetFilters.creature())
                 // You control enchanted creature.
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect())
+                .addStaticEffect(new ControlEnchantedCreatureEffect())
                 // Cumulative upkeep {U} or {B}.
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{U/B}"));
 

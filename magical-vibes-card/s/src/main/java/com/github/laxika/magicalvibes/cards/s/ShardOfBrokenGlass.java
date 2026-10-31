@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class ShardOfBrokenGlass extends Card {
 
     public ShardOfBrokenGlass() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK,
                 new MayEffect(new MillEffect(2, MillRecipient.CONTROLLER), "Mill two cards?"));
         addActivatedAbility(new EquipActivatedAbility("{1}"));

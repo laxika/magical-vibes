@@ -18,7 +18,7 @@ public class SoaringHope extends Card {
 
     public SoaringHope() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3));
 
         addActivatedAbility(new ActivatedAbility(false, "{W}", List.of(PutTargetOnTopOfLibraryEffect.self()),

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSourcesEffect;
@@ -21,7 +20,7 @@ import java.util.List;
 public class HeartShapedHerb extends Card {
 
     public HeartShapedHerb() {
-        addEffect(EffectSlot.STATIC, new PreventDamageFromOpponentSourcesEffect(1));
+        addStaticEffect(new PreventDamageFromOpponentSourcesEffect(1));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

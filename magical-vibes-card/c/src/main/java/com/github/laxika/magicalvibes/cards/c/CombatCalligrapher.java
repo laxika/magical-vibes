@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SOC", collectorNumber = "141")
@@ -24,7 +23,7 @@ import java.util.Set;
 public class CombatCalligrapher extends Card {
 
     public CombatCalligrapher() {
-        addEffect(EffectSlot.STATIC, new CreaturesCantAttackControllerUnlessPredicateEffect(
+        addStaticEffect(new CreaturesCantAttackControllerUnlessPredicateEffect(
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.INKLING)), true));
 
         addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
@@ -32,7 +31,7 @@ public class CombatCalligrapher extends Card {
                 new CreateTokenForTriggeringPlayerEffect(new CreateTokenEffect(
                         CardType.CREATURE, 1, "Inkling", 2, 1, CardColor.WHITE,
                         Set.of(CardColor.WHITE, CardColor.BLACK), List.of(CardSubtype.INKLING),
-                        Set.of(Keyword.FLYING), Set.of(), true, false, Map.of(), List.of(),
+                        Set.of(Keyword.FLYING), Set.of(), true, false, List.of(), List.of(),
                         false, false, false, 0, Set.of()), true)));
     }
 }

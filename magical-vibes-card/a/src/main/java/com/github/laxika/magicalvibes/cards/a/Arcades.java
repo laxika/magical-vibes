@@ -24,12 +24,10 @@ public class Arcades extends Card {
                 new TriggeringPermanentConditionalEffect(
                         new PermanentHasKeywordPredicate(Keyword.DEFENDER),
                         new DrawCardEffect(1)));
-        addEffect(EffectSlot.STATIC,
-                new AssignCombatDamageWithToughnessEffect(
+        addStaticEffect(new AssignCombatDamageWithToughnessEffect(
                         GrantScope.ALL_OWN_CREATURES,
                         new PermanentHasKeywordPredicate(Keyword.DEFENDER)));
-        addEffect(EffectSlot.STATIC,
-                new MatchingCreaturesCanAttackAsThoughNoDefenderEffect(
+        addStaticEffect(new MatchingCreaturesCanAttackAsThoughNoDefenderEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentControlledBySourceControllerPredicate(),
                                 new PermanentHasKeywordPredicate(Keyword.DEFENDER)))));

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CastSpellFromGraveyardOncePerYourTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
@@ -37,7 +36,7 @@ public class ArcadeGannon extends Card {
                         new PutCountersOnSelfEffect(CounterType.QUEST)),
                 "{T}: Draw a card, then discard a card. Put a quest counter on Arcade Gannon."));
 
-        addEffect(EffectSlot.STATIC, new CastSpellFromGraveyardOncePerYourTurnEffect(
+        addStaticEffect(new CastSpellFromGraveyardOncePerYourTurnEffect(
                 new CardAllOfPredicate(List.of(
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                         new CardAnyOfPredicate(List.of(

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddFrogTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -18,7 +17,7 @@ import java.util.List;
 public class QuinaQuGourmet extends Card {
 
     public QuinaQuGourmet() {
-        addEffect(EffectSlot.STATIC, new AddFrogTokenToTokenCreationEffect());
+        addStaticEffect(new AddFrogTokenToTokenCreationEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

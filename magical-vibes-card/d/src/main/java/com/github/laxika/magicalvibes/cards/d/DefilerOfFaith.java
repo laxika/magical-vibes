@@ -30,7 +30,7 @@ public class DefilerOfFaith extends Card {
 
     public DefilerOfFaith() {
         CardAllOfPredicate whitePermanentFilter = whitePermanentSpell();
-        addEffect(EffectSlot.STATIC, new PayLifeToReduceColoredCastCostEffect(
+        addStaticEffect(new PayLifeToReduceColoredCastCostEffect(
                 whitePermanentFilter, "{W}", 2, CostModificationScope.SELF));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 whitePermanentFilter, List.of(CreateTokenEffect.whiteSoldier(1))));

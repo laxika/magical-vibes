@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ThranduilsCompany extends Card {
 
     public ThranduilsCompany() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.ELF)),
                 new PlaysAdditionalLandEachTurnEffect(1)));
 

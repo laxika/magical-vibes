@@ -34,7 +34,7 @@ public class SongOfStupefaction extends Card {
                 "Target must be a creature or Vehicle"))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new MayEffect(new MillEffect(2, MillRecipient.CONTROLLER), "Mill two cards?"))
-                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                .addStaticEffect(new AttachedBoostEffect(
                         new Scaled(permanentCardsInGraveyard, -1),
                         new Fixed(0),
                         GrantScope.ENCHANTED_PERMANENT));

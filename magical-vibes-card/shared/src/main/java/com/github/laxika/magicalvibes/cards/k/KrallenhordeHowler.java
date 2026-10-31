@@ -20,7 +20,7 @@ public class KrallenhordeHowler extends Card {
 
     public KrallenhordeHowler() {
         // Creature spells you cast cost {1} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTypePredicate(CardType.CREATURE), 1, CostModificationScope.SELF));
 
         // At the beginning of each upkeep, if a player cast two or more spells last turn, transform this creature.

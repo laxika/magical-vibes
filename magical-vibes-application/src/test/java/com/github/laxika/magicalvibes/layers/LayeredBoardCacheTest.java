@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -104,7 +103,7 @@ class LayeredBoardCacheTest extends BaseCardTest {
         Card mutableBear = TestCards.mutableCard(bear);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
 
-        mutableBear.addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+        mutableBear.addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
 
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
     }
@@ -114,11 +113,11 @@ class LayeredBoardCacheTest extends BaseCardTest {
         // The card keeps the same number of abilities, so only their identities show the change.
         Permanent bear = add(player1, new GrizzlyBears());
         Card mutableBear = TestCards.mutableCard(bear);
-        mutableBear.addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+        mutableBear.addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
 
         mutableBear.removeEffectsIf(GrantKeywordEffect.class::isInstance);
-        mutableBear.addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
+        mutableBear.addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
 
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();

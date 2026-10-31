@@ -1,4 +1,12 @@
 # Card Patterns: Artifacts, Vehicles & Equipment
+
+> `STATIC` in this file means a static ability (CR 113.3d), written `addStaticEffect(e)`, or
+> `target(f).addStaticEffect(e)` for an Aura's enchant ability. It functions from the zones its effect's
+> rule names (`CardEffect.staticAbilityZones()`): the battlefield, the stack for kicker, buyback, gift,
+> "can't be countered" and "costs less to cast", and the hand for splice. An ability that states its
+> zones, such as Eminence, is written `addStaticEffect(AbilityZones.of(...), e)`. In a token's or a
+> copy's ability list it is `StaticAbility.of(e)`, next to `LegacySlots.triggered(EffectSlot.X, e)` for
+> a trigger. Readers use `getStaticEffects()`. There is no `EffectSlot.STATIC`.
 - As-enters creature imprint + temporary Vehicle copy: `d/Dermotaxi.java` — `ExileCardFromGraveyardOnEnterEffect(CardTypePredicate(CREATURE), ALL_GRAVEYARDS)` + `TapMultiplePermanentsCost(2, PermanentIsCreaturePredicate())` + `BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect({ARTIFACT}, {VEHICLE})`
 
 Conditional boost, indestructible, and all-damage prevention Equipment: `c/CaduceusStaffOfHermes.java` uses lifelink on the equipped creature plus two `ConditionalEffect(new ControllerLifeAtLeast(30), ...)` static effects for `StaticBoostEffect(5, 5, INDESTRUCTIBLE, EQUIPPED_CREATURE)` and `PreventAllDamageToAttachedCreatureEffect`, followed by `EquipActivatedAbility("{W}{W}")`.
@@ -36,9 +44,9 @@ All paths relative to `cards/`.
 | Artifact/enchantment graveyard life trigger | `s/Scrapheap.java` | `ON_PERMANENT_PUT_INTO_YOUR_GRAVEYARD_FROM_BATTLEFIELD` with `TriggeringCardConditionalEffect(CardAnyOfPredicate(ARTIFACT, ENCHANTMENT), GainLifeEffect(1))` |
 | Static permission to look at opposing face-down creatures | `k/KeeperOfTheLens.java` | `STATIC LookAtFaceDownCreaturesEffect()`; the projection privately reveals current face-down creatures not controlled by the source controller while the artifact creature remains on the battlefield |
 | Hand-reveal imprint + matching spell-cast damage | `t/ThoughtPrison.java` | ON_ENTER_BATTLEFIELD `MayEffect(ChooseCardsFromTargetHandEffect(1, [LAND], EXILE, true))` + ON_ANY_PLAYER_CASTS_SPELL `SpellCastTriggerEffect` gated by `StackEntrySharesColorOrManaValueWithImprintedCardPredicate` and dealing 2 damage to the triggering player |
-| Static coin-flip replacement artifact | `k/KrarksThumb.java` | `EffectSlot.STATIC` + `KrarksThumbEffect`; route every logical coin flip through the shared coin-flip service |
-| Static planar-die replacement artifact | `i/IchorElixir.java` | `EffectSlot.STATIC` + `RollPlanarDieWithAdvantageEffect`; the planar-die service rolls one extra result and prompts the rolling player to ignore one, while ignored rolls produce no triggers |
-| First coin-flip replacement creature | `e/EdgarKingOfFigaro.java` | `EffectSlot.STATIC` + `EdgarKingOfFigaroEffect`; the shared coin-flip service forces the first coin-flip event of its controller's turn to heads, including all coins flipped at once |
+| Static coin-flip replacement artifact | `k/KrarksThumb.java` | `addStaticEffect` + `KrarksThumbEffect`; route every logical coin flip through the shared coin-flip service |
+| Static planar-die replacement artifact | `i/IchorElixir.java` | `addStaticEffect` + `RollPlanarDieWithAdvantageEffect`; the planar-die service rolls one extra result and prompts the rolling player to ignore one, while ignored rolls produce no triggers |
+| First coin-flip replacement creature | `e/EdgarKingOfFigaro.java` | `addStaticEffect` + `EdgarKingOfFigaroEffect`; the shared coin-flip service forces the first coin-flip event of its controller's turn to heads, including all coins flipped at once |
 | Mana rock with a mulligan-time hand replacement | `s/SerumPowder.java` | `ManaAbilities.tapFor(ManaColor.COLORLESS)` plus `EffectSlot.MULLIGAN_ACTION` `SerumPowderEffect`; the mulligan service offers the special action before the normal mulligan |
 | Imprint + matching land-tap mana bonus | `e/ExtraplanarLens.java` | ON_ENTER_BATTLEFIELD `MayEffect(ExileTargetPermanentAndImprintEffect)` on `TargetFilters.landYouControl()` + ON_ANY_PLAYER_TAPS_LAND `AddOneOfEachManaTypeProducedByLandEffect(false, true)` |
 | Enters tapped + colored mana + next-spell convoke | `w/WandOfTheWorldsoul.java` | STATIC `EntersTappedEffect` + `ManaAbilities.tapFor(ManaColor.WHITE)` + tap ability with `GrantConvokeToNextSpellThisTurnEffect()` |

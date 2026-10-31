@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.EmpowerNextCreatureSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextSpellOfTypeThisTurnEffect;
@@ -19,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextSpellOfTypeTh
 public class SavageSummoning extends Card {
 
     public SavageSummoning() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         addSpellEffect(new GrantFlashToNextSpellOfTypeThisTurnEffect(CardType.CREATURE));
         addSpellEffect(new EmpowerNextCreatureSpellThisTurnEffect(true, 1));
     }

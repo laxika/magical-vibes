@@ -22,6 +22,6 @@ public class CaradoraHeartOfAlacria extends Card {
                                 new CardSubtypePredicate(CardSubtype.MOUNT),
                                 new CardSubtypePredicate(CardSubtype.VEHICLE)))),
                         "Search your library for a Mount or Vehicle card?"));
-        addEffect(EffectSlot.STATIC, new AddOnePlusOneCountersToCreaturesAndVehiclesEffect());
+        addStaticEffect(new AddOnePlusOneCountersToCreaturesAndVehiclesEffect());
     }
 }

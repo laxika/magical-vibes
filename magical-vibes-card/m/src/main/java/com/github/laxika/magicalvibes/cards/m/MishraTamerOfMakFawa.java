@@ -19,7 +19,7 @@ import java.util.List;
 public class MishraTamerOfMakFawa extends Card {
 
     public MishraTamerOfMakFawa() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessSacrificesEffect(),
                 GrantScope.OWN_PERMANENTS));
@@ -40,6 +40,6 @@ public class MishraTamerOfMakFawa extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         );
 
-        addEffect(EffectSlot.STATIC, new GrantGraveyardAbilityToArtifactCardsEffect(unearth));
+        addStaticEffect(new GrantGraveyardAbilityToArtifactCardsEffect(unearth));
     }
 }

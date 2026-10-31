@@ -24,6 +24,6 @@ public class DevastatingOnslaught extends Card {
                 "Target must be an artifact or creature you control"))
                 .addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(), Set.of(), null, null, Map.of(), true, false, true, false,
-                        false, false, null, Set.of(), false, Map.of(), List.of(), false, new XValue()));
+                        false, false, null, Set.of(), false, List.of(), List.of(), false, new XValue()));
     }
 }

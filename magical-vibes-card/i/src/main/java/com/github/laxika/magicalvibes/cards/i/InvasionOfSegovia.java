@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "63")
@@ -20,7 +19,7 @@ public class InvasionOfSegovia extends Card {
         setBackFaceCard(new CaetusSeaTyrantOfSegovia());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 2, "Kraken", 1, 1, CardColor.BLUE, List.of(CardSubtype.KRAKEN),
-                Set.of(Keyword.TRAMPLE), Set.of(), Map.of()));
+                Set.of(Keyword.TRAMPLE), Set.of(), List.of()));
     }
 
     @Override

@@ -20,7 +20,7 @@ public class VadmirNewBlood extends Card {
     public VadmirNewBlood() {
         addEffect(EffectSlot.ON_CONTROLLER_COMMITS_CRIME,
                 new OncePerTurnTriggerEffect(new PutCountersOnSourceEffect(1, 1, 1)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.LIFELINK), GrantScope.SELF)));
     }

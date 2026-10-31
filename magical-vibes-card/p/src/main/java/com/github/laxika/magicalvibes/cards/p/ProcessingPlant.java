@@ -53,7 +53,7 @@ public class ProcessingPlant extends Card {
     }
 
     public ProcessingPlant() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
                 new PutOpponentOwnedExiledCardIntoGraveyardEffect(),

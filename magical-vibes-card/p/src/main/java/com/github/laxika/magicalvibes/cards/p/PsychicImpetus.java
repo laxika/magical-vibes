@@ -16,8 +16,8 @@ public class PsychicImpetus extends Card {
     public PsychicImpetus() {
         setAttackTriggerOwnedByAura(true);
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GoadEquippedCreatureEffect())
+                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GoadEquippedCreatureEffect())
                 .addEffect(EffectSlot.ON_ATTACK, new ScryEffect(2));
     }
 }

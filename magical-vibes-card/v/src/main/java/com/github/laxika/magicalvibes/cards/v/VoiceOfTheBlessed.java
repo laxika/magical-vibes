@@ -21,15 +21,15 @@ public class VoiceOfTheBlessed extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new PutCountersOnSourceEffect(1, 1, 1));
 
         // As long as this creature has four or more +1/+1 counters on it, it has flying and vigilance.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
 
         // As long as this creature has ten or more +1/+1 counters on it, it has indestructible.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(10, CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
     }

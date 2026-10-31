@@ -30,7 +30,7 @@ public class ThePandorica extends Card {
             new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
 
     public ThePandorica() {
-        addEffect(EffectSlot.STATIC, new MayNotUntapDuringUntapStepEffect());
+        addStaticEffect(new MayNotUntapDuringUntapStepEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

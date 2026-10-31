@@ -23,7 +23,7 @@ public class JudithTheScourgeDiva extends Card {
             new TriggeringCardConditionalEffect(new CardNotPredicate(new CardIsTokenPredicate()), DEATH_DAMAGE);
 
     public JudithTheScourgeDiva() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, NON_TOKEN_DEATH_DAMAGE);
         addEffect(EffectSlot.ON_DEATH, NON_TOKEN_DEATH_DAMAGE);
     }

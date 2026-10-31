@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -52,7 +51,7 @@ public class StoriedEffectHandler implements NormalEffectHandlerBean {
         Card sourceCard = battlefield.stream()
                 .filter(permanent -> !gameQueryService.hasLostPrintedAbilities(gameData, permanent))
                 .map(Permanent::getCard)
-                .filter(card -> card.getEffects(EffectSlot.STATIC).stream().anyMatch(StoriedEffect.class::isInstance))
+                .filter(card -> card.getStaticEffects().stream().anyMatch(StoriedEffect.class::isInstance))
                 .findFirst()
                 .orElse(null);
         if (sourceCard != null) {
@@ -67,7 +66,7 @@ public class StoriedEffectHandler implements NormalEffectHandlerBean {
                 .filter(permanent -> !permanent.isFaceDown())
                 .filter(permanent -> !gameQueryService.hasLostPrintedAbilities(gameData, permanent))
                 .map(Permanent::getCard)
-                .anyMatch(card -> card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(card -> card.getStaticEffects().stream()
                         .anyMatch(StoriedEffect.class::isInstance));
     }
 

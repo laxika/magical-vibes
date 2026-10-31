@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -27,10 +26,10 @@ public class BludgeonBrawl extends Card {
         ));
 
         // Each noncreature, non-Equipment artifact is an Equipment
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(
+        addStaticEffect(new GrantSubtypeEffect(
                 CardSubtype.EQUIPMENT, GrantScope.ALL_PERMANENTS, false, filter));
 
         // ...with equip {X} and "Equipped creature gets +X/+0," where X is that artifact's mana value
-        addEffect(EffectSlot.STATIC, new GrantEquipByManaValueEffect(filter));
+        addStaticEffect(new GrantEquipByManaValueEffect(filter));
     }
 }

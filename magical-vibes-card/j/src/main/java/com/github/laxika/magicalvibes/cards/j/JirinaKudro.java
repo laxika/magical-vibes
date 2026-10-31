@@ -28,7 +28,7 @@ public class JirinaKudro extends Card {
                 List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()));
 
         // Other Humans you control get +2/+0.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.ALL_OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())

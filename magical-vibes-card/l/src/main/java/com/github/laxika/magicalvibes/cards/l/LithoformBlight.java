@@ -24,12 +24,12 @@ public class LithoformBlight extends Card {
         target(TargetFilters.land());
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
-        addEffect(EffectSlot.STATIC, new LoseAllLandTypesEffect(GrantScope.ENCHANTED_PERMANENT, null));
-        addEffect(EffectSlot.STATIC, new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new LoseAllLandTypesEffect(GrantScope.ENCHANTED_PERMANENT, null));
+        addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT));
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapFor(ManaColor.COLORLESS),
                 GrantScope.ENCHANTED_PERMANENT));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,

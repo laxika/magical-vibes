@@ -16,9 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class TheZephyrMaze extends Card {
 
     public TheZephyrMaze() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.ALL_CREATURES,
                 new PermanentHasKeywordPredicate(Keyword.FLYING)));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-2, 0, GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(-2, 0, GrantScope.ALL_CREATURES,
                 new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
         target(TargetFilters.creature()).addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));

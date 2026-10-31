@@ -31,7 +31,7 @@ public class LordOfTheNazgL extends Card {
         PermanentHasSubtypePredicate wraiths = new PermanentHasSubtypePredicate(CardSubtype.WRAITH);
 
         // Wraiths you control have protection from Ring-bearers.
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new GrantEffectEffect(
                 new ProtectionFromRingBearersEffect(), GrantScope.ALL_OWN_CREATURES, wraiths));
 
         // Whenever you cast an instant or sorcery spell, create a 3/3 black Wraith creature token

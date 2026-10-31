@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.MeliraPoisonReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardOnDeathThisTurnEffect;
@@ -21,7 +20,7 @@ import java.util.List;
 public class MeliraTheLivingCure extends Card {
 
     public MeliraTheLivingCure() {
-        addEffect(EffectSlot.STATIC, new MeliraPoisonReplacementEffect());
+        addStaticEffect(new MeliraPoisonReplacementEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

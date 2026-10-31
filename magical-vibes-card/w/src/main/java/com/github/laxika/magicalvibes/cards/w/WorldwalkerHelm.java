@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddMapTokenToArtifactTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -17,7 +16,7 @@ import java.util.List;
 public class WorldwalkerHelm extends Card {
 
     public WorldwalkerHelm() {
-        addEffect(EffectSlot.STATIC, new AddMapTokenToArtifactTokenCreationEffect());
+        addStaticEffect(new AddMapTokenToArtifactTokenCreationEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{U}",

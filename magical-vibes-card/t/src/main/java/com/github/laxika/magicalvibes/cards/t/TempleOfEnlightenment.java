@@ -33,7 +33,7 @@ import java.util.List;
 public class TempleOfEnlightenment extends Card {
 
     public TempleOfEnlightenment() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(1));
 
         addActivatedAbility(new ActivatedAbility(

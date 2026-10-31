@@ -29,7 +29,7 @@ import java.util.List;
 public class EmryLurkerOfTheLoch extends Card {
 
     public EmryLurkerOfTheLoch() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(4, MillRecipient.CONTROLLER));
         addActivatedAbility(new ActivatedAbility(

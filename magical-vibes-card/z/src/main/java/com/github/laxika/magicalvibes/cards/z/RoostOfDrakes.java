@@ -22,7 +22,7 @@ public class RoostOfDrakes extends Card {
             "Drake", 2, 2, CardColor.BLUE, List.of(CardSubtype.DRAKE), Set.of(Keyword.FLYING), Set.of());
 
     public RoostOfDrakes() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{U}"));
+        addStaticEffect(new KickerEffect("{2}{U}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(), DRAKE_TOKEN));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new KickedSpellCastTriggerEffect(List.of(DRAKE_TOKEN)));

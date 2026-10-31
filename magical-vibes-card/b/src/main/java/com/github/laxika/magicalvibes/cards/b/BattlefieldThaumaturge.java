@@ -20,7 +20,7 @@ import java.util.List;
 public class BattlefieldThaumaturge extends Card {
 
     public BattlefieldThaumaturge() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostPerTargetEffect(
+        addStaticEffect(new ReduceOwnCastCostPerTargetEffect(
                 new PermanentIsCreaturePredicate(), 1,
                 new CardAnyOfPredicate(List.of(new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)))));

@@ -23,7 +23,7 @@ import java.util.List;
 public class TheMoonbase extends Card {
 
     public TheMoonbase() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
                         "{2}",

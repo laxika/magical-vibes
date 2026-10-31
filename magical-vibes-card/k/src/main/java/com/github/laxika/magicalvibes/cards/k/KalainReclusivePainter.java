@@ -13,7 +13,7 @@ public class KalainReclusivePainter extends Card {
 
     public KalainReclusivePainter() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofTreasureToken(1));
-        addEffect(EffectSlot.STATIC, new ControlledPermanentsEnterWithAdditionalCountersForTreasureManaEffect(
+        addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersForTreasureManaEffect(
                 new PermanentIsCreaturePredicate()));
     }
 }

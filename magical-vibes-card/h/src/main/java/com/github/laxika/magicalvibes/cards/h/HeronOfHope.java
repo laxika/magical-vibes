@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AdditionalLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -16,7 +15,7 @@ import java.util.List;
 public class HeronOfHope extends Card {
 
     public HeronOfHope() {
-        addEffect(EffectSlot.STATIC, new AdditionalLifeGainEffect(1));
+        addStaticEffect(new AdditionalLifeGainEffect(1));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{W}",

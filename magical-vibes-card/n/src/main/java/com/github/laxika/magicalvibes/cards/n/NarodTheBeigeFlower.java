@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -39,7 +38,6 @@ public class NarodTheBeigeFlower extends Card {
     }
 
     public NarodTheBeigeFlower() {
-        addEffect(EffectSlot.STATIC,
-                new AssignCombatDamageWithManaValueEffect(GrantScope.ALL_CREATURES));
+        addStaticEffect(new AssignCombatDamageWithManaValueEffect(GrantScope.ALL_CREATURES));
     }
 }

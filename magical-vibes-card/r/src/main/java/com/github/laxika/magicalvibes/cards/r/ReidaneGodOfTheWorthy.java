@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.v.ValkmiraProtectorsShield;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
@@ -27,12 +26,12 @@ public class ReidaneGodOfTheWorthy extends Card {
         setBackFaceCard(new ValkmiraProtectorsShield());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.STATIC, EnterPermanentsOfTypesTappedEffect.matching(
+        addStaticEffect(EnterPermanentsOfTypesTappedEffect.matching(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.SNOW))),
                 true));
-        addEffect(EffectSlot.STATIC, new IncreaseSpellCostEffect(
+        addStaticEffect(new IncreaseSpellCostEffect(
                 new CardAllOfPredicate(List.of(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                         new CardMinManaValuePredicate(4, true))),

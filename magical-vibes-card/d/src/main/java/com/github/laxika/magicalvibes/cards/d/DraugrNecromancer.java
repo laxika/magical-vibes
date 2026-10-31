@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithIceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
 
@@ -11,9 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInstead
 public class DraugrNecromancer extends Card {
 
     public DraugrNecromancer() {
-        addEffect(EffectSlot.STATIC,
-                ExileOpponentCreaturesInsteadOfDyingEffect.withIceCounter());
-        addEffect(EffectSlot.STATIC,
-                new AllowCastFromCardsExiledWithIceCountersEffect(true));
+        addStaticEffect(ExileOpponentCreaturesInsteadOfDyingEffect.withIceCounter());
+        addStaticEffect(new AllowCastFromCardsExiledWithIceCountersEffect(true));
     }
 }

@@ -20,7 +20,7 @@ import java.util.List;
 public class CadricSoulKindler extends Card {
 
     public CadricSoulKindler() {
-        addEffect(EffectSlot.STATIC, new IgnoreLegendRuleForControlledTokensEffect());
+        addStaticEffect(new IgnoreLegendRuleForControlledTokensEffect());
         addEffect(EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(

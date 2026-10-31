@@ -14,7 +14,7 @@ import java.util.List;
 public class NightMarket extends Card {
 
     public NightMarket() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
         addActivatedAbility(new ActivatedAbility(true, null,
                 List.of(new AwardChosenColorManaEffect()),

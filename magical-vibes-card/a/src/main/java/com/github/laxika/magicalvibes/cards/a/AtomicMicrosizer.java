@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class AtomicMicrosizer extends Card {
 
     public AtomicMicrosizer() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
         target(TargetFilters.creature(), 0, 1)
                 .addEffect(EffectSlot.ON_ATTACK, new MakeCreatureUnblockableEffect())
                 .addEffect(EffectSlot.ON_ATTACK, new SetBasePowerToughnessEffect(1, 1));

@@ -17,6 +17,6 @@ public class CarryAway extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 "Target must be an Equipment"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new UnattachEnchantedEquipmentEffect())
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+                .addStaticEffect(new ControlEnchantedCreatureEffect());
     }
 }

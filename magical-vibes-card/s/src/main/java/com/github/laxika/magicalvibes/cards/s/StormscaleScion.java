@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class StormscaleScion extends Card {
 
     public StormscaleScion() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.DRAGON)));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect(true, false));
     }

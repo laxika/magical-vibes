@@ -24,7 +24,7 @@ public class SalvationEngine extends Card {
                 List.of(new CrewCost(6), AnimatePermanentsEffect.crew()),
                 "Crew 6"));
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
                 new PermanentIsArtifactPredicate()));
 
         addEffect(EffectSlot.ON_ATTACK, ReturnCardFromGraveyardEffect.builder()

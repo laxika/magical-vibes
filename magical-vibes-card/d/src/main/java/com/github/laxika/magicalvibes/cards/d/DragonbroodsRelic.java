@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,8 +10,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TDM", collectorNumber = "140")
@@ -35,8 +35,8 @@ public class DragonbroodsRelic extends Card {
                 "{T}, Tap an untapped creature you control: Add one mana of any color."
         ));
 
-        Map<EffectSlot, CardEffect> dragonTokenEffects =
-                Map.of(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(3));
+        List<Ability> dragonTokenEffects =
+                List.of(LegacySlots.triggered(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(3)));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{W}{U}{B}{R}{G}",

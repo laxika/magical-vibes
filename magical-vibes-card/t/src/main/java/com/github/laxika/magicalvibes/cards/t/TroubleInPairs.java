@@ -18,7 +18,7 @@ import java.util.List;
 public class TroubleInPairs extends Card {
 
     public TroubleInPairs() {
-        addEffect(EffectSlot.STATIC, new OpponentExtraTurnSkipReplacementEffect());
+        addStaticEffect(new OpponentExtraTurnSkipReplacementEffect());
 
         addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
                 new ConditionalEffect(new OpponentAttacksWithAtLeastCreatures(2, false), new DrawCardEffect()));

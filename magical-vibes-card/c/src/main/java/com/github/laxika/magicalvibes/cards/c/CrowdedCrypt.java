@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MIC", collectorNumber = "17")
@@ -50,8 +50,7 @@ public class CrowdedCrypt extends Card {
                                 Set.of(),
                                 false,
                                 false,
-                                Map.of(
-                                        EffectSlot.STATIC, new CantBlockEffect()),
+                                List.of(StaticAbility.of(new CantBlockEffect())),
                                 List.of(),
                                 false,
                                 false,

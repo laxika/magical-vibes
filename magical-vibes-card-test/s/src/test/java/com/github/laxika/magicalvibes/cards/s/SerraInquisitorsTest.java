@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BeastWalkers;
 import com.github.laxika.magicalvibes.cards.t.TimmerianFiends;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
@@ -102,7 +101,7 @@ class SerraInquisitorsTest extends BaseCardTest {
         Permanent secondAttacker = addCreatureReady(player1, new TimmerianFiends());
         secondAttacker.setAttacking(true);
         SerraInquisitors card = new SerraInquisitors();
-        card.addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        card.addStaticEffect(new CanBlockAnyNumberOfCreaturesEffect());
         Permanent inquisitors = addCreatureReady(player2, card);
 
         prepareDeclareBlockers();
@@ -160,7 +159,7 @@ class SerraInquisitorsTest extends BaseCardTest {
         Permanent secondAttacker = addCreatureReady(player1, new TimmerianFiends());
         secondAttacker.setAttacking(true);
         SerraInquisitors card = new SerraInquisitors();
-        card.addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        card.addStaticEffect(new CanBlockAnyNumberOfCreaturesEffect());
         Permanent inquisitors = addCreatureReady(player2, card);
 
         prepareDeclareBlockers();

@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class CrackInTime extends Card {
 
     public CrackInTime() {
-        addEffect(EffectSlot.STATIC, new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
         ExileTargetPermanentUntilSourceLeavesEffect exileEffect =
                 new ExileTargetPermanentUntilSourceLeavesEffect();

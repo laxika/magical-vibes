@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -307,20 +306,20 @@ class PredicateEvaluationServiceTest {
         card.setName(name);
         card.setType(CardType.ENCHANTMENT);
         card.setSubtypes(List.of(CardSubtype.AURA));
-        card.addEffect(EffectSlot.STATIC, staticEffect);
+        card.addStaticEffect(staticEffect);
         return card;
     }
 
     private static Card createEnchantmentWithStaticEffect(String name, CardEffect effect) {
         Card card = createEnchantment(name);
-        card.addEffect(EffectSlot.STATIC, effect);
+        card.addStaticEffect(effect);
         return card;
     }
 
     private static Card createMirranCrusader() {
         Card card = createCreature("Mirran Crusader", 2, 2, CardColor.WHITE);
         card.setKeywords(EnumSet.of(Keyword.DOUBLE_STRIKE));
-        card.addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(EnumSet.of(CardColor.BLACK, CardColor.GREEN)));
+        card.addStaticEffect(new ProtectionFromColorsEffect(EnumSet.of(CardColor.BLACK, CardColor.GREEN)));
         return card;
     }
 
@@ -403,7 +402,7 @@ class PredicateEvaluationServiceTest {
         @Test
         void matchesCardsWithKickerEffect() {
             Card kickerCard = new Card();
-            kickerCard.addEffect(EffectSlot.STATIC, new KickerEffect("{1}{G}"));
+            kickerCard.addStaticEffect(new KickerEffect("{1}{G}"));
             Card multikickerCard = new Card();
             multikickerCard.addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{1}{G}")));
             Card ordinary = new Card();

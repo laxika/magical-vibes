@@ -22,7 +22,7 @@ import java.util.List;
 public class LotusField extends Card {
 
     public LotusField() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificePermanentsEffect(
                 2, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER));

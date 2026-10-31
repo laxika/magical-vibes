@@ -22,7 +22,7 @@ import java.util.List;
 public class LazierGoblin extends Card {
 
     public LazierGoblin() {
-        addEffect(EffectSlot.STATIC, new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(new CantAttackOrBlockUnlessEffect(
                 new SourceIsMotivated(), "you have paid its motivate cost once"));
 
         addActivatedAbility(new ActivatedAbility(

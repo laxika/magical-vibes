@@ -20,7 +20,7 @@ import java.util.List;
 public class CapriciousHellraiser extends Card {
 
     public CapriciousHellraiser() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(9, null), new ReduceOwnCastCostEffect(new Fixed(3))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ExileRandomCardsFromGraveyardAndChooseCopyEffect(3, eligibleCopyFilter()));

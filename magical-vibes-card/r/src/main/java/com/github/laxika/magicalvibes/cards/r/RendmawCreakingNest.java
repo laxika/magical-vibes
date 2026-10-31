@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DSC", collectorNumber = "5")
@@ -47,7 +46,7 @@ public class RendmawCreakingNest extends Card {
                 List.of(CardSubtype.BIRD),
                 Set.of(Keyword.FLYING),
                 Set.of(),
-                Map.of())
+                List.of())
                 .withTapped(true);
     }
 

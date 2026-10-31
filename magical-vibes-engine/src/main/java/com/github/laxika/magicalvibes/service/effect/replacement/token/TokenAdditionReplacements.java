@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.token;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AcademyManufactorTokenReplacementEffect;
@@ -151,7 +150,7 @@ public class TokenAdditionReplacements implements ReplacementCandidateSource<Tok
             if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
                 continue;
             }
-            List<CardEffect> statics = permanent.getCard().getEffects(EffectSlot.STATIC);
+            List<CardEffect> statics = permanent.getCard().getStaticEffects();
             for (int i = 0; i < statics.size(); i++) {
                 CardEffect effect = statics.get(i);
                 Addition addition = Addition.of(effect);

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -298,7 +297,7 @@ public class CloneService {
         gameData.cloneOperation.additionalColorsOverride = Set.of();
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = copyEffect.additionalCreatureOnlyCharacteristics();
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
-        gameData.cloneOperation.additionalAbilities = LegacySlots.abilities(copyEffect.additionalSlotEffects());
+        gameData.cloneOperation.additionalAbilities = copyEffect.additionalAbilities();
         gameData.cloneOperation.reflexiveEffects = copyEffect.reflexiveEffects();
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent =
                 copyEffect.shieldCounterIfControllerControlsCopiedPermanent();

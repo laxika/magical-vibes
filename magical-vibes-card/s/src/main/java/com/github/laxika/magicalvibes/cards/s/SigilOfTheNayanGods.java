@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
@@ -17,7 +16,7 @@ public class SigilOfTheNayanGods extends Card {
     public SigilOfTheNayanGods() {
         target(TargetFilters.creature())
                 // Enchanted creature gets +1/+1 for each creature you control.
-                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                .addStaticEffect(new AttachedBoostEffect(
                         new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                         new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                         GrantScope.ENCHANTED_CREATURE));

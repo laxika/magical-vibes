@@ -17,7 +17,7 @@ public class AqueousForm extends Card {
         setAttackTriggerOwnedByAura(true);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new CantBeBlockedEffect())
+                .addStaticEffect(new CantBeBlockedEffect())
                 .addEffect(EffectSlot.ON_ATTACK, new ScryEffect(1));
     }
 }

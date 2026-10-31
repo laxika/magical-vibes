@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantForetellToNonlandCardsIn
 public class SingingTowersOfDarillium extends Card {
 
     public SingingTowersOfDarillium() {
-        addEffect(EffectSlot.STATIC, new GrantForetellToNonlandCardsInHandEffect());
+        addStaticEffect(new GrantForetellToNonlandCardsInHandEffect());
         addEffect(EffectSlot.CHAOS_TRIGGERED, new AllowCastForetoldCardThisTurnEffect());
     }
 }

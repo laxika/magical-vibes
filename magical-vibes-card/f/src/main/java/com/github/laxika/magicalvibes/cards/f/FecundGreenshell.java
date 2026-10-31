@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class FecundGreenshell extends Card {
 
     public FecundGreenshell() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(10, new PermanentIsLandPredicate()),
                 new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES)));
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,

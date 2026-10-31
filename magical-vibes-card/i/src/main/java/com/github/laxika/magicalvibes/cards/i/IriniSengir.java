@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -19,7 +18,7 @@ public class IriniSengir extends Card {
 
     public IriniSengir() {
         // Green enchantment spells and white enchantment spells cost {2} more to cast.
-        addEffect(EffectSlot.STATIC, new IncreaseSpellCostEffect(
+        addStaticEffect(new IncreaseSpellCostEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.ENCHANTMENT),
                         new CardAnyOfPredicate(List.of(

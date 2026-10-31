@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class GoblinBushwhacker extends Card {
 
     public GoblinBushwhacker() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{R}"));
+        addStaticEffect(new KickerEffect("{R}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new Kicked(), new BoostAllOwnCreaturesEffect(1, 0)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

@@ -18,7 +18,7 @@ import java.util.Set;
 public class MegafloraJungle extends Card {
 
     public MegafloraJungle() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ALL_CREATURES,
                 new PermanentMaxManaValuePredicate(2)));
         addEffect(EffectSlot.CHAOS_TRIGGERED, new CreateTokenEffect(
                 "Butterfly", 1, 1, CardColor.GREEN, List.of(CardSubtype.INSECT),

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 public class YuanTiMalison extends Card {
 
     public YuanTiMalison() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedIfAttackingAloneEffect());
+        addStaticEffect(new CantBeBlockedIfAttackingAloneEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new VentureIntoDungeonEffect());
     }
 }

@@ -22,8 +22,7 @@ public class UnderdarkBeholder extends Card {
     public UnderdarkBeholder() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.EYEBALL, new Fixed(10)));
-        addEffect(EffectSlot.STATIC,
-                new PreventDamageByRemovingCountersOrSacrificeEffect(CounterType.EYEBALL));
+        addStaticEffect(new PreventDamageByRemovingCountersOrSacrificeEffect(CounterType.EYEBALL));
         addEffect(EffectSlot.ON_ATTACK, new RevealUntilCardPredicateMayCastWithoutPayingManaEffect(
                 new CardAllOfPredicate(List.of(
                         new CardAnyOfPredicate(List.of(

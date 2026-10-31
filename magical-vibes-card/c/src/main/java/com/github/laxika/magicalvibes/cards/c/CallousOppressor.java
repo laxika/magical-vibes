@@ -21,7 +21,7 @@ public class CallousOppressor extends Card {
 
     public CallousOppressor() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect(true));
-        addEffect(EffectSlot.STATIC, new MayNotUntapDuringUntapStepEffect());
+        addStaticEffect(new MayNotUntapDuringUntapStepEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

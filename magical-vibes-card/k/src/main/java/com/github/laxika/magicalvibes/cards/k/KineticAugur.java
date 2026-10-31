@@ -22,7 +22,7 @@ public class KineticAugur extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)
         )), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(instantsAndSorceries, new Fixed(4)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(instantsAndSorceries, new Fixed(4)));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DiscardUpToThenDrawThatManyEffect(2));
     }

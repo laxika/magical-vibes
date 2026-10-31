@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndCh
 public class DarkstarAugur extends Card {
 
     public DarkstarAugur() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{B}"));
+        addStaticEffect(new KickerEffect("{B}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new RevealTopCardPutIntoHandAndChangeLifeEffect(false));

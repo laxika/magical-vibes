@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 public class PharagaxGiant extends Card {
 
     public PharagaxGiant() {
-        addEffect(EffectSlot.STATIC, new TributeEffect(2));
+        addStaticEffect(new TributeEffect(2));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TributeNotPaidEffect(
                 new DealDamageToPlayersEffect(5, DamageRecipient.EACH_OPPONENT)));
     }

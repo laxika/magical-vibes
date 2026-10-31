@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class Tazeem extends Card {
 
     public Tazeem() {
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesCantBlockMatchingCreaturesEffect(
+        addStaticEffect(new MatchingCreaturesCantBlockMatchingCreaturesEffect(
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsCreaturePredicate(),
                 "Creatures can't block"));

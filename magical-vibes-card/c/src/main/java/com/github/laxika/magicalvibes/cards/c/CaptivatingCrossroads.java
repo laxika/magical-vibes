@@ -18,7 +18,7 @@ import java.util.List;
 public class CaptivatingCrossroads extends Card {
 
     public CaptivatingCrossroads() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new AllConditions(List.of(
                         new ControllerIsStartingPlayer(),
                         new ControllerOwnTurnCountAtMost(3))),

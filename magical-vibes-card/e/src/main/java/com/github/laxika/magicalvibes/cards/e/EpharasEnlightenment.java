@@ -19,8 +19,7 @@ public class EpharasEnlightenment extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new MayEffect(ReturnToHandEffect.self(), "Return Ephara's Enlightenment to its owner's hand?"));

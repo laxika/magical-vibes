@@ -18,7 +18,7 @@ import java.util.List;
 public class DesertCenote extends Card {
 
     public DesertCenote() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControllerIsStartingPlayer(), new EntersTappedEffect()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseUpToTwoColorsFromHandOnEnterEffect());
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));

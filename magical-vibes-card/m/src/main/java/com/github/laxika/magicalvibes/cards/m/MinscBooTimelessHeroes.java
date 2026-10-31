@@ -27,7 +27,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "879")
@@ -39,7 +38,7 @@ public class MinscBooTimelessHeroes extends Card {
     private static final CreateTokenEffect BOO_TOKEN = new CreateTokenEffect(
             CardType.CREATURE, 1, "Boo", 1, 1, CardColor.RED, null,
             List.of(CardSubtype.HAMSTER), Set.of(Keyword.TRAMPLE, Keyword.HASTE), Set.of(),
-            false, false, Map.of(), List.of(), false, false, true, 0, Set.of(),
+            false, false, List.of(), List.of(), false, false, true, 0, Set.of(),
             Set.of(CardSupertype.LEGENDARY));
 
     public MinscBooTimelessHeroes() {

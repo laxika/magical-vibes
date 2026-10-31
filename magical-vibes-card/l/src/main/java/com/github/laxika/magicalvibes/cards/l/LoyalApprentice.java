@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "240")
@@ -43,7 +42,7 @@ public class LoyalApprentice extends Card {
                         Set.of(CardType.ARTIFACT),
                         false,
                         false,
-                        Map.of(),
+                        List.of(),
                         List.of(),
                         false,
                         false,

@@ -18,9 +18,9 @@ public class DemonOfWailingAgonies extends Card {
     public DemonOfWailingAgonies() {
         ControllerControlsOwnCommander lieutenant = new ControllerControlsOwnCommander();
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(lieutenant,
+        addStaticEffect(new ConditionalEffect(lieutenant,
                 new StaticBoostEffect(2, 2, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(lieutenant,
+        addStaticEffect(new ConditionalEffect(lieutenant,
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),

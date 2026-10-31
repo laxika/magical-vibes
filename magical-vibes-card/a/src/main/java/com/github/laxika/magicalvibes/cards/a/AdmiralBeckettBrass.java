@@ -22,7 +22,7 @@ public class AdmiralBeckettBrass extends Card {
 
     public AdmiralBeckettBrass() {
         // Other Pirates you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.PIRATE))));
 
         // At the beginning of your end step, gain control of target nonland permanent

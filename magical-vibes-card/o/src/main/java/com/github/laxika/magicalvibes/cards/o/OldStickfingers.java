@@ -23,6 +23,6 @@ public class OldStickfingers extends Card {
 
         CardsInGraveyard creatureCards = new CardsInGraveyard(
                 new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(creatureCards, creatureCards));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(creatureCards, creatureCards));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DralnuDamageReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
@@ -16,7 +15,7 @@ import java.util.Set;
 public class DralnuLichLord extends Card {
 
     public DralnuLichLord() {
-        addEffect(EffectSlot.STATIC, new DralnuDamageReplacementEffect());
+        addStaticEffect(new DralnuDamageReplacementEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

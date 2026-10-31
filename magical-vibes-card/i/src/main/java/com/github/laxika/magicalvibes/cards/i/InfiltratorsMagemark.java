@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
@@ -17,9 +16,8 @@ public class InfiltratorsMagemark extends Card {
 
     public InfiltratorsMagemark() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, new PermanentIsEnchantedPredicate()))
-                .addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, new PermanentIsEnchantedPredicate()))
+                .addStaticEffect(new GrantEffectEffect(
                         new CanBeBlockedOnlyByFilterEffect(
                                 new PermanentHasKeywordPredicate(Keyword.DEFENDER),
                                 "creatures with defender"),

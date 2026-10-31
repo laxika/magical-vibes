@@ -13,6 +13,6 @@ public class HulkAlwaysAngry extends Card {
     public HulkAlwaysAngry() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new DestroyAllPermanentsEffect(new PermanentIsArtifactPredicate()));
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
     }
 }

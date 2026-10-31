@@ -15,7 +15,7 @@ public class KabiraCrossroads extends Card {
 
     public KabiraCrossroads() {
         // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // When this land enters, you gain 2 life.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(2));

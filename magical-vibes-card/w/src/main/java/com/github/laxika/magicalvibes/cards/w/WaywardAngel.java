@@ -24,11 +24,11 @@ public class WaywardAngel extends Card {
     public WaywardAngel() {
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, new CardTruePredicate());
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new StaticBoostEffect(3, 3, Set.of(Keyword.TRAMPLE), GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new GrantColorEffect(CardColor.BLACK, GrantScope.SELF, true)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.UPKEEP_TRIGGERED,
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),

@@ -17,7 +17,7 @@ import java.util.Set;
 public class Ornitharch extends Card {
 
     public Ornitharch() {
-        addEffect(EffectSlot.STATIC, new TributeEffect(2));
+        addStaticEffect(new TributeEffect(2));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TributeNotPaidEffect(
                 new CreateTokenEffect(2, "Bird", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of())));

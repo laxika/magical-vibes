@@ -17,7 +17,7 @@ import java.util.List;
 public class BogSerpent extends Card {
 
     public BogSerpent() {
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new DefendingPlayerControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.SWAMP)),
                 "a Swamp"
         ));

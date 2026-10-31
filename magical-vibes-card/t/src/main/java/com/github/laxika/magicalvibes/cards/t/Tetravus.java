@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -14,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTetraviteTokensToPutCoun
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersToCreateTetraviteTokensEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "4ED", collectorNumber = "350")
@@ -32,7 +32,7 @@ public class Tetravus extends Card {
         // 1/1 colorless Tetravite artifact creature token with flying and "This token can't be enchanted."
         CreateTokenEffect tetravite = new CreateTokenEffect(1, "Tetravite", 1, 1, null,
                 List.of(), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT),
-                Map.of(EffectSlot.STATIC, new CantBeEnchantedByOtherAurasEffect()));
+                List.of(StaticAbility.of(new CantBeEnchantedByOtherAurasEffect())));
 
         // "At the beginning of your upkeep, you may remove any number of +1/+1 counters from this
         //  creature. If you do, create that many 1/1 colorless Tetravite artifact creature tokens.

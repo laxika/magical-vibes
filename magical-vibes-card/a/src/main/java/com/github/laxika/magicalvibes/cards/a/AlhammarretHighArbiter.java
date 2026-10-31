@@ -18,6 +18,6 @@ public class AlhammarretHighArbiter extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameOnEnterEffect(
                 List.of(CardType.LAND), ChooseCardNameOnEnterEffect.HandAccess.REVEAL_OPPONENT_HAND));
         // Your opponents can't cast spells with the chosen name (opponents-only).
-        addEffect(EffectSlot.STATIC, new SpellsWithChosenNameCantBeCastEffect(true));
+        addStaticEffect(new SpellsWithChosenNameCantBeCastEffect(true));
     }
 }

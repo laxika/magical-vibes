@@ -26,7 +26,7 @@ public class Saw extends Card {
             new PermanentNotPredicate(new PermanentIsTriggeringPermanentPredicate())));
 
     public Saw() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
                 new SacrificePermanentThenEffect(OTHER_PERMANENT, new DrawCardEffect(1), "a permanent", false, false),
                 "Sacrifice a permanent other than that creature or this Equipment?"));

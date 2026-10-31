@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -42,7 +41,7 @@ public class NissaSageAnimist extends Card {
                 List.of(new CreateTokenEffect(CardType.CREATURE, 1, "Ashaya, the Awoken World", 4, 4,
                         CardColor.GREEN, null, List.of(CardSubtype.ELEMENTAL),
                         Set.of(), Set.of(),
-                        false, false, Map.of(), List.of(), false, false, true, 0, Set.of())),
+                        false, false, List.of(), List.of(), false, false, true, 0, Set.of())),
                 "−2: Create Ashaya, the Awoken World, a legendary 4/4 green Elemental creature token."
         ));
 

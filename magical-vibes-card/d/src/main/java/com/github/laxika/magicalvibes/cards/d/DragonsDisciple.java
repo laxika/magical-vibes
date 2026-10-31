@@ -28,12 +28,12 @@ public class DragonsDisciple extends Card {
                 new ControlsPermanent(dragon),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
 
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCountAtMost(0, dragon),
                 new RevealSubtypeOrEntersWithCountersEffect(
                         CardSubtype.DRAGON, CounterType.PLUS_ONE_PLUS_ONE, 1)));
 
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
                 new TriggeringSpellOpponentControllerConditionalEffect(new CounterUnlessPaysEffect(1)),
                 GrantScope.ALL_OWN_CREATURES,

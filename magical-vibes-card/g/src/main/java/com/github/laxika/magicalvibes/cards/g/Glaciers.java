@@ -23,7 +23,6 @@ public class Glaciers extends Card {
                         true));
 
         // All Mountains are Plains.
-        addEffect(EffectSlot.STATIC,
-                new LandsOfSubtypeBecomeTypeEffect(CardSubtype.MOUNTAIN, CardSubtype.PLAINS));
+        addStaticEffect(new LandsOfSubtypeBecomeTypeEffect(CardSubtype.MOUNTAIN, CardSubtype.PLAINS));
     }
 }

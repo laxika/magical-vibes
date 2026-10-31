@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 public class FertileThicket extends Card {
 
     public FertileThicket() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
                 new LookAtTopCardsEffect(

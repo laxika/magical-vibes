@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
@@ -17,9 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 public class WizardsStaff extends Card {
 
     public WizardsStaff() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.PROWESS, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new AdditionalTriggeredAbilityEffect(
+        addStaticEffect(new GrantKeywordEffect(Keyword.PROWESS, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new AdditionalTriggeredAbilityEffect(
                         new PermanentHasAttachedPermanentPredicate(new PermanentIsSourcePermanentPredicate()),
                         null, false, true));
         addActivatedAbility(new EquipActivatedAbility(

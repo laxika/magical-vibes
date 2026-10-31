@@ -18,7 +18,7 @@ public class Domestication extends Card {
         // Enchant creature
         target(TargetFilters.creature())
                 // You control enchanted creature.
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect())
+                .addStaticEffect(new ControlEnchantedCreatureEffect())
                 // At the beginning of your end step, if enchanted creature's power is 4 or greater,
                 // sacrifice this Aura.
                 .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,

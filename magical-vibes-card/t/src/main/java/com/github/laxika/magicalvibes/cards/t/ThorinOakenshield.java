@@ -19,8 +19,8 @@ import java.util.List;
 public class ThorinOakenshield extends Card {
 
     public ThorinOakenshield() {
-        addEffect(EffectSlot.STATIC, new StoriedEffect());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new StoriedEffect());
+        addStaticEffect(new ConditionalEffect(
                 new ControllerHasEnduringStory(),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,

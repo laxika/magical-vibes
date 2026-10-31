@@ -22,7 +22,7 @@ public class GraspOfTheHieromancer extends Card {
         // Enchant creature
         target(TargetFilters.creature())
                 // Enchanted creature gets +1/+1
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
                 // ... and has "Whenever this creature attacks, tap target creature defending player
                 // controls." The aura's ON_ATTACK slot is scanned for the attacking creature by
                 // CombatTriggerService.checkAuraTriggersForCreature; the effect's own target

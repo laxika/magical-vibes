@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
@@ -22,8 +21,7 @@ public class SparkhunterMasticore extends Card {
 
     public SparkhunterMasticore() {
         addCastingCost(new DiscardCardTypeCost(null, null));
-        addEffect(EffectSlot.STATIC,
-                new ProtectionFromCardTypesEffect(Set.of(CardType.PLANESWALKER)));
+        addStaticEffect(new ProtectionFromCardTypesEffect(Set.of(CardType.PLANESWALKER)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

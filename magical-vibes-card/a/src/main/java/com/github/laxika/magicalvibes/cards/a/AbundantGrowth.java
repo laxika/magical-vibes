@@ -27,7 +27,7 @@ public class AbundantGrowth extends Card {
     public AbundantGrowth() {
         // Enchant land — grants "{T}: Add one mana of any color."
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         ManaAbilities.tapForAnyColor(),
                         GrantScope.ENCHANTED_PERMANENT
                 ))

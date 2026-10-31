@@ -17,7 +17,7 @@ public class NurturingPresence extends Card {
         // Enchanted creature has "Whenever a creature you control enters, this creature gets +1/+1
         // until end of turn."
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                         new BoostSelfEffect(1, 1),
                         GrantScope.ENCHANTED_CREATURE));

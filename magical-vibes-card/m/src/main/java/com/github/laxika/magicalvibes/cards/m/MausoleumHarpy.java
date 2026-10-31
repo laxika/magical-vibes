@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 public class MausoleumHarpy extends Card {
 
     public MausoleumHarpy() {
-        addEffect(EffectSlot.STATIC, new AscendEffect());
+        addStaticEffect(new AscendEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new ConditionalEffect(
                 new ControllerHasCityBlessing(), new PutCountersOnSourceEffect(1, 1, 1)));
     }

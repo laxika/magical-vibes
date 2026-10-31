@@ -22,7 +22,7 @@ import java.util.List;
 public class CathedralAcolyte extends Card {
 
     public CathedralAcolyte() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(1),
                 GrantScope.ALL_OWN_CREATURES,

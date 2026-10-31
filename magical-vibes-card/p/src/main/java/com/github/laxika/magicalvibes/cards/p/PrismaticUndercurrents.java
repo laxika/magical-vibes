@@ -19,6 +19,6 @@ public class PrismaticUndercurrents extends Card {
                         CardPredicateUtils.basicLand(),
                         LibrarySearchDestination.HAND));
 
-        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect(1));
+        addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
     }
 }

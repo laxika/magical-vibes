@@ -58,7 +58,7 @@ public final class HandCastCardCharacteristicsService {
                     gameData, source, GrantAdventureToCreatureCardsInHandEffect.class);
             boolean hasOffspringEffect = gameQueryService.hasActiveStaticEffect(
                     gameData, source, GrantOffspringToCreatureSpellsEffect.class);
-            for (var effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            for (var effect : source.getCard().getStaticEffects()) {
                 if (hasNamedCopyEffect && effect instanceof CastCreatureCardsAsNamedCardEffect castAs
                         && namedCopyFace == null) {
                     namedCopyFace = castAs.card();
@@ -83,10 +83,10 @@ public final class HandCastCardCharacteristicsService {
             }
             effective = copy;
         }
-        if (offspringCost != null && effective.getEffects(EffectSlot.STATIC).stream()
+        if (offspringCost != null && effective.getStaticEffects().stream()
                 .noneMatch(KickerEffect.class::isInstance)) {
             Card copy = effective.createRuntimeCopy();
-            copy.addEffect(EffectSlot.STATIC, new KickerEffect(offspringCost, false));
+            copy.addStaticEffect(new KickerEffect(offspringCost, false));
             copy.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                     new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
             effective = copy;

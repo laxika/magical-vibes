@@ -59,7 +59,7 @@ public class OrthionHeroOfLavabrink extends Card {
     private static CreateTokenCopyOfTargetPermanentEffect tokenCopyEffect(int amount) {
         return new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), null, null, Map.of(), true, false, true, false,
-                false, false, null, Set.of(), false, Map.of(), List.of(), false, false,
+                false, false, null, Set.of(), false, List.of(), List.of(), false, false,
                 new Fixed(amount), false, Set.of(), false);
     }
 }

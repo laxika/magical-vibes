@@ -25,8 +25,7 @@ public class SokkaTenaciousTactician extends Card {
         CardNotPredicate noncreatureSpell = new CardNotPredicate(new CardTypePredicate(CardType.CREATURE));
         PermanentHasSubtypePredicate ally = new PermanentHasSubtypePredicate(CardSubtype.ALLY);
 
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.PROWESS), GrantScope.OWN_CREATURES, ally));
+        addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.PROWESS), GrantScope.OWN_CREATURES, ally));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(noncreatureSpell, List.of(
                         new CreateTokenEffect("Ally", 1, 1, CardColor.WHITE,

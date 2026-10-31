@@ -31,7 +31,7 @@ public class WortTheRaidmother extends Card {
         ));
 
         // Each red or green instant or sorcery spell you cast has conspire.
-        addEffect(EffectSlot.STATIC, new GrantSpellCastingAbilityToSpellsEffect(Keyword.CONSPIRE, new CardAllOfPredicate(List.of(
+        addStaticEffect(new GrantSpellCastingAbilityToSpellsEffect(Keyword.CONSPIRE, new CardAllOfPredicate(List.of(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))),

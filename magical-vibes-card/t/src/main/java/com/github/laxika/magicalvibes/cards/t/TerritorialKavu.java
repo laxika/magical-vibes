@@ -18,7 +18,7 @@ public class TerritorialKavu extends Card {
 
     public TerritorialKavu() {
         BasicLandTypesAmongControlledLands domain = new BasicLandTypesAmongControlledLands();
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(domain, domain));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(domain, domain));
 
         addEffect(EffectSlot.ON_ATTACK, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

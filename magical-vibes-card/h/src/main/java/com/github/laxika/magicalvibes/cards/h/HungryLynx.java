@@ -32,7 +32,7 @@ public class HungryLynx extends Card {
     public HungryLynx() {
         PermanentHasSubtypePredicate cats = new PermanentHasSubtypePredicate(CardSubtype.CAT);
 
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new GrantEffectEffect(
                 new ProtectionFromSubtypesEffect(Set.of(CardSubtype.RAT)),
                 GrantScope.ALL_OWN_CREATURES,
                 cats));

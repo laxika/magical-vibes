@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -26,7 +25,6 @@ public class WildernessElemental extends Card {
                 new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))
         ));
         PermanentCount opponentNonbasicLands = new PermanentCount(nonbasicLand, CountScope.OPPONENTS);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(opponentNonbasicLands, new Fixed(3)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(opponentNonbasicLands, new Fixed(3)));
     }
 }

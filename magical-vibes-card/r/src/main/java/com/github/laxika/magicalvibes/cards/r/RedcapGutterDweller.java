@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
@@ -19,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "146")
@@ -30,7 +30,7 @@ public class RedcapGutterDweller extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new CreateTokenEffect(
                         2, "Rat", 1, 1, CardColor.BLACK, List.of(CardSubtype.RAT),
-                        Set.of(), Set.of(), Map.of(EffectSlot.STATIC, new CantBlockEffect())));
+                        Set.of(), Set.of(), List.of(StaticAbility.of(new CantBlockEffect()))));
 
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
                 new SacrificePermanentThenEffect(

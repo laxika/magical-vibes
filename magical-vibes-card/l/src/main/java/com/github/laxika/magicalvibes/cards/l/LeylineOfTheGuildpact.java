@@ -29,16 +29,15 @@ public class LeylineOfTheGuildpact extends Card {
 
         var nonlandPermanent = new PermanentNotPredicate(new PermanentIsLandPredicate());
         for (CardColor color : CardColor.values()) {
-            addEffect(EffectSlot.STATIC,
-                    new GrantColorEffect(color, GrantScope.OWN_PERMANENTS, false, nonlandPermanent));
+            addStaticEffect(new GrantColorEffect(color, GrantScope.OWN_PERMANENTS, false, nonlandPermanent));
         }
 
         for (CardSubtype basicLandType : List.of(CardSubtype.PLAINS, CardSubtype.ISLAND,
                 CardSubtype.SWAMP, CardSubtype.MOUNTAIN, CardSubtype.FOREST)) {
-            addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(basicLandType, GrantScope.OWN_LANDS));
+            addStaticEffect(new GrantSubtypeEffect(basicLandType, GrantScope.OWN_LANDS));
         }
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(),
                 GrantScope.OWN_PERMANENTS,
                 new PermanentIsLandPredicate()

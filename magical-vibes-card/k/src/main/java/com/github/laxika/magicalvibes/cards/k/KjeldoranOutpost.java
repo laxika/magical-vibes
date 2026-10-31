@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -21,7 +20,7 @@ public class KjeldoranOutpost extends Card {
     public KjeldoranOutpost() {
         // If Kjeldoran Outpost would enter, sacrifice a Plains instead. If you do, put this land onto
         // the battlefield. If you don't, put it into its owner's graveyard.
-        addEffect(EffectSlot.STATIC, new SacrificePermanentAsEntersOrGraveyardEffect(
+        addStaticEffect(new SacrificePermanentAsEntersOrGraveyardEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.PLAINS),
                 "a Plains"));
 

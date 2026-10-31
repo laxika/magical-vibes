@@ -18,7 +18,7 @@ import java.util.List;
 public class SolarTransformer extends Card {
 
     public SolarTransformer() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnergyCountersEffect(3));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));

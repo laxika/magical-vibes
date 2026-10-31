@@ -22,7 +22,7 @@ public class SigridGodFavored extends Card {
 
     public SigridGodFavored() {
         // Protection from God creatures (prevents their damage and stops them from blocking Sigrid).
-        addEffect(EffectSlot.STATIC, new ProtectionFromSubtypesEffect(Set.of(CardSubtype.GOD), true));
+        addStaticEffect(new ProtectionFromSubtypesEffect(Set.of(CardSubtype.GOD), true));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

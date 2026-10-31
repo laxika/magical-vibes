@@ -15,6 +15,6 @@ public class LeylineOfMutation extends Card {
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with Leyline of Mutation on the battlefield?"
         ));
-        addEffect(EffectSlot.STATIC, new AlternativeCostForSpellsEffect("{W}{U}{B}{R}{G}", null));
+        addStaticEffect(new AlternativeCostForSpellsEffect("{W}{U}{B}{R}{G}", null));
     }
 }

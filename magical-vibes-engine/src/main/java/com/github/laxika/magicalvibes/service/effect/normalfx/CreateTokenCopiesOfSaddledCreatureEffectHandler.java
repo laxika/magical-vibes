@@ -26,7 +26,7 @@ public class CreateTokenCopiesOfSaddledCreatureEffectHandler implements NormalEf
     private static final CreateTokenCopyOfTargetPermanentEffect TOKEN_PROFILE =
             new CreateTokenCopyOfTargetPermanentEffect(
                     List.of(), Set.of(), null, null, Map.of(), false, false, true, true,
-                    false, false, null, Set.of(), false, Map.of(), List.of(), false, false,
+                    false, false, null, Set.of(), false, List.of(), List.of(), false, false,
                     new Fixed(1), false, Set.of(), true);
 
     private final GameQueryService gameQueryService;

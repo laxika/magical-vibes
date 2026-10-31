@@ -88,7 +88,7 @@ public class AuraCopyService {
      * its chosen creature is known. No-op for permanents without the effect.
      */
     public void applyChosenCreatureCopy(GameData gameData, Permanent aura) {
-        boolean isCopyAura = aura.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean isCopyAura = aura.getCard().getStaticEffects().stream()
                 .anyMatch(EnchantedCreatureIsCopyOfChosenCreatureEffect.class::isInstance);
         if (!isCopyAura || !aura.isAttached() || aura.getChosenPermanentId() == null) {
             return;

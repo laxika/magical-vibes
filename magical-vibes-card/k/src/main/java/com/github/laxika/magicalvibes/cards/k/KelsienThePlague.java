@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -22,7 +21,7 @@ public class KelsienThePlague extends Card {
     public KelsienThePlague() {
         // Kelsien gets +1/+1 for each experience counter you have.
         ControllerExperienceCounters experienceCounters = new ControllerExperienceCounters();
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(experienceCounters, experienceCounters));
+        addStaticEffect(new BoostSelfEffect(experienceCounters, experienceCounters));
 
         // {T}: Kelsien deals 1 damage to target creature an opponent controls. When that creature
         // dies this turn, you get an experience counter.

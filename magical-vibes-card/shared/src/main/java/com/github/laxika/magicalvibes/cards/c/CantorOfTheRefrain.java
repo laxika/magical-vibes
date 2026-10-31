@@ -17,7 +17,7 @@ import java.util.List;
 public class CantorOfTheRefrain extends Card {
 
     public CantorOfTheRefrain() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
 
         // When you cast a spell for its warp cost, return this card from your graveyard to the
         // battlefield under its owner's control. It perpetually gets +1/+0.

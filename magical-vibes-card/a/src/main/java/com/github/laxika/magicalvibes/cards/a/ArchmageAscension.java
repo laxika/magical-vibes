@@ -18,6 +18,6 @@ public class ArchmageAscension extends Card {
                 new ControllerDrewAtLeastCardsThisTurn(2),
                 new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
                         "Put a quest counter on Archmage Ascension?")));
-        addEffect(EffectSlot.STATIC, new ArchmageAscensionDrawReplacementEffect());
+        addStaticEffect(new ArchmageAscensionDrawReplacementEffect());
     }
 }

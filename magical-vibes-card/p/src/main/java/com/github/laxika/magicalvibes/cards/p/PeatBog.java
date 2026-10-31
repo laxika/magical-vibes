@@ -22,7 +22,7 @@ import java.util.List;
 public class PeatBog extends Card {
 
     public PeatBog() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.DEPLETION, new Fixed(2)));
 

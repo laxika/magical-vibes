@@ -24,12 +24,12 @@ public class MorophonTheBoundless extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
 
         // Spells of the chosen type you cast cost {W}{U}{B}{R}{G} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceColoredCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceColoredCastCostForMatchingSpellsEffect(
                 new CardHasSourceChosenSubtypePredicate(false),
                 new ManaCost("{W}{U}{B}{R}{G}"),
                 CostModificationScope.SELF));
 
         // Other creatures you control of the chosen type get +1/+1.
-        addEffect(EffectSlot.STATIC, BoostCreaturesOfChosenSubtypeEffect.otherOwnCreatures(1, 1));
+        addStaticEffect(BoostCreaturesOfChosenSubtypeEffect.otherOwnCreatures(1, 1));
     }
 }

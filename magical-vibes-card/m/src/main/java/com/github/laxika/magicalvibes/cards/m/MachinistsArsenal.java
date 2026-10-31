@@ -29,10 +29,8 @@ public class MachinistsArsenal extends Card {
         PermanentCount artifactsYouControl =
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
         Scaled artifactBoost = new Scaled(artifactsYouControl, 2);
-        addEffect(EffectSlot.STATIC,
-                new AttachedBoostEffect(artifactBoost, artifactBoost, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantSubtypeEffect(CardSubtype.ARTIFICER, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new AttachedBoostEffect(artifactBoost, artifactBoost, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ARTIFICER, GrantScope.EQUIPPED_CREATURE));
 
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }

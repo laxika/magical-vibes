@@ -20,11 +20,11 @@ public class KaldraCompleat extends Card {
 
     public KaldraCompleat() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LivingWeaponEffect());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(5, 5, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new StaticBoostEffect(5, 5, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE, Keyword.HASTE),
                 GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE,
                 new ExileTargetPermanentEffect(), GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{7}"));

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 public class PatchworkBeastie extends Card {
 
     public PatchworkBeastie() {
-        addEffect(EffectSlot.STATIC, new CantAttackOrBlockUnlessEffect(
+        addStaticEffect(new CantAttackOrBlockUnlessEffect(
                 new Delirium(),
                 "there are four or more card types among cards in your graveyard"
         ));

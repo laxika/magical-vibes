@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class RoninWarclub extends Card {
 
     public RoninWarclub() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new AttachSourceEquipmentToEnteringCreatureEffect(false));
         addActivatedAbility(new EquipActivatedAbility("{5}"));

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardIfNoSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
@@ -23,7 +22,7 @@ import java.util.List;
 public class ConduitOfWorlds extends Card {
 
     public ConduitOfWorlds() {
-        addEffect(EffectSlot.STATIC, new PlayLandsFromGraveyardEffect());
+        addStaticEffect(new PlayLandsFromGraveyardEffect());
 
         CardAllOfPredicate nonlandPermanent = new CardAllOfPredicate(List.of(
                 new CardIsPermanentPredicate(),

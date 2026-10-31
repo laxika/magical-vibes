@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FDN", collectorNumber = "190")
@@ -29,7 +28,7 @@ public class BrasssBounty extends Card {
                 landsYouControl,
                 "Treasure", 0, 0, null, null,
                 List.of(CardSubtype.TREASURE), Set.of(), Set.of(),
-                false, false, Map.of(),
+                false, false, List.of(),
                 List.of(new ActivatedAbility(
                         true, null,
                         List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),

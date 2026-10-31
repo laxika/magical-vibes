@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -17,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "RIX", collectorNumber = "111")
@@ -39,7 +39,8 @@ public class RekindlingPhoenix extends Card {
                 // "Sacrifice this creature and return target card..." is one ability: if the token has
                 // already left the battlefield, the sacrifice is impossible but the return still happens
                 // (CR 609.3), so this is a sequence rather than a sacrifice-contingent "if you do".
-                Map.of(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
+                List.of(
+                        LegacySlots.triggered(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
                         new SacrificeSelfEffect(),
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
@@ -49,7 +50,7 @@ public class RekindlingPhoenix extends Card {
                                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)))
                                 .battlefieldEffectGrantDuration(EffectDuration.UNTIL_END_OF_TURN)
                                 .build()
-                ))
+                )))
         ));
     }
 }

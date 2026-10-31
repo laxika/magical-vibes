@@ -16,7 +16,7 @@ public class SongOfCreation extends Card {
 
     public SongOfCreation() {
         // You may play an additional land on each of your turns.
-        addEffect(EffectSlot.STATIC, new PlaysAdditionalLandEachTurnEffect(1));
+        addStaticEffect(new PlaysAdditionalLandEachTurnEffect(1));
 
         // Whenever you cast a spell, draw two cards.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,

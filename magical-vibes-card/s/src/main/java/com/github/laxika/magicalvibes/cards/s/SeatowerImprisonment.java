@@ -29,8 +29,8 @@ public class SeatowerImprisonment extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Target must be a creature or planeswalker you don't control"))
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateAbilitiesEffect())
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
+                .addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ConjureCardToBattlefieldEffect("HBG", "28"));
     }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
@@ -30,6 +29,6 @@ public class GoryosVengeance extends Card {
                 .grantHaste(true)
                 .exileAtEndStep(true)
                 .build());
-        addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{2}{B}"));
+        addStaticEffect(new SpliceEffect(CardSubtype.ARCANE, "{2}{B}"));
     }
 }

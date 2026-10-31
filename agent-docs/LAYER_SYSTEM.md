@@ -1,12 +1,20 @@
 # The CR 613 Layer System (`model/layer`)
 
+> `STATIC` in this file means a static ability (CR 113.3d), written `addStaticEffect(e)`, or
+> `target(f).addStaticEffect(e)` for an Aura's enchant ability. It functions from the zones its effect's
+> rule names (`CardEffect.staticAbilityZones()`): the battlefield, the stack for kicker, buyback, gift,
+> "can't be countered" and "costs less to cast", and the hand for splice. An ability that states its
+> zones, such as Eminence, is written `addStaticEffect(AbilityZones.of(...), e)`. In a token's or a
+> copy's ability list it is `StaticAbility.of(e)`, next to `LegacySlots.triggered(EffectSlot.X, e)` for
+> a trigger. Readers use `getStaticEffects()`. There is no `EffectSlot.STATIC`.
+
 Entry replacement checks use `LayerSystemService.beginPassWithEnteringPermanent` through `GameQueryService.hasLostPrintedAbilitiesAsEntering` to evaluate the entering permanent in a temporary layered board, without adding it to the battlefield or caching the prospective board. This allows ability-removal effects to suppress the permanent's own enters-tapped and enters-with-counters abilities.
 
 Dependency-trial operations for granted abilities use their effect and cost values, rather than allocation identity: handlers may construct equivalent ability objects independently in each trial. Materialized control-Aura effects retain the Aura's attachment timestamp so simultaneous attachment order is preserved.
 
 **Summary for card-implementation sessions.** Continuous effects are resolved by a
 whole-battlefield CR 613 layered pass, not stored on permanents: `LayerSystemService` builds one
-`CharacteristicState` per permanent and applies every continuous effect — `EffectSlot.STATIC`
+`CharacteristicState` per permanent and applies every continuous effect — the static abilities (`getStaticEffects()`)
 slots plus `GameData.floatingEffects` — in layer (L1 copy → L2 control → L3 text → L4 types →
 L5 colors → L6 abilities → 7a-7d P/T), CDA-first, timestamp (CR 613.7), and dependency
 (CR 613.8, layers 4-6) order; `GameQueryService.computeStaticBonus` assembles the finished
@@ -419,7 +427,7 @@ abilities after `applyCloneCopy`).
 
 Each source is classified into one or more layers:
 
-1. **Static abilities of battlefield permanents** — the existing `EffectSlot.STATIC` effects
+1. **Static abilities of battlefield permanents** — the existing `addStaticEffect` effects
    (anthems, lords, Blood Moon, Humility-likes, aura/equipment grants). See
    `STATIC_EFFECT_HANDLERS.md` for the current handler inventory that must be re-classified.
 2. **Emblems** (`GameData.emblems`).
@@ -457,7 +465,7 @@ continuous-effect type to the `Layer`s it contributes to:
 `classify(CardEffect, boolean fromOwnStaticSlot)` returns a `LayerClassification(layers,
 characteristicDefining, colorSetting)`; `possibleLayers(Class)` returns the per-type union for
 coverage checks. `fromOwnStaticSlot` means source == affected AND the effect comes from the
-object's own `EffectSlot.STATIC` — the CDA criterion. Consumed by `LayerSystemService`
+object's own static abilities — the CDA criterion. Consumed by `LayerSystemService`
 (currently for the layer-4 pass only; effect types that throw on classification are treated
 as legacy-only and skipped by the pass). **Every new static effect must be registered there** —
 `LayerClassifierTest` walks all `StaticEffectHandlerBean`s and fails on unclassified types.
@@ -1561,7 +1569,7 @@ and any deviations from this document.
     **Verification:** SevenLayerTest **100/100**, LayerDependencyTest 9/9,
     LayeredBoardCacheTest, FloatingEffectLifecycleTest, ModifierExplanationTest,
     LayerPassBenchmarkTest, the staticfx suite, PredicateEvaluationService, GameQueryService,
-    TargetFilters; plus **173 card tests** — every card whose source combines `EffectSlot.STATIC`
+    TargetFilters; plus **173 card tests** — every card whose source combines a static ability
     with one of the changed predicates, unioned with all 30 metalcraft cards — and a divergence
     batch (AwakenerDruid, WakerOfTheWilds, TezzeretAgentOfBolas, PermanentViewFactory,
     MirageMirror, EnchantedEvening, BludgeonBrawl, MoxOpal). All green; no card test needed a
@@ -1687,7 +1695,7 @@ and any deviations from this document.
     become unblocked" — before blockers are declared, changing power *does* change qualification).
     The engine already had the right convention: ~50 blocking/attacking/untap restriction effect
     types carry no `LayerClassifier` entry and no static handler, and are read straight off
-    `EffectSlot.STATIC` by `BlockLegalityService` / `AttackLegalityService` / `UntapStepService` via
+    `addStaticEffect` by `BlockLegalityService` / `AttackLegalityService` / `UntapStepService` via
     the fully layered `matchesPermanentPredicate`. A pool survey found 17 P/T-filtered STATIC-slot
     effects across 16 cards, of which Tetsuko was the **only** layer-classified one. **Change:** new
     `ControlledCreaturesMatchingCantBeBlockedEffect(PermanentPredicate filter)` (domain

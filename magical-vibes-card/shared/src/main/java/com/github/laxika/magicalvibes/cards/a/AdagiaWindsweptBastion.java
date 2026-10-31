@@ -27,7 +27,7 @@ import java.util.Set;
 public class AdagiaWindsweptBastion extends Card {
 
     public AdagiaWindsweptBastion() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.WHITE));
         addActivatedAbility(new ActivatedAbility(
                 false,

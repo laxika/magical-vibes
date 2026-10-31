@@ -11,6 +11,6 @@ public class SharedTriumph extends Card {
 
     public SharedTriumph() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenSubtypeEffect(1, 1, null, true));
+        addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(1, 1, null, true));
     }
 }

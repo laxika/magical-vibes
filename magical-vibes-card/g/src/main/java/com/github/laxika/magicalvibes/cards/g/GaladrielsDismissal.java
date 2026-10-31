@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -22,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class GaladrielsDismissal extends Card {
 
     public GaladrielsDismissal() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{W}"));
+        addStaticEffect(new KickerEffect("{2}{W}"));
         targetWhenKicked(
                 TargetFilters.creature(),
                 new PlayerPredicateTargetFilter(

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -29,7 +28,7 @@ import java.util.Set;
 public class WasteManagement extends Card {
 
     public WasteManagement() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}{B}"));
+        addStaticEffect(new KickerEffect("{3}{B}"));
         setMultiTargetConstraint(MultiTargetConstraint.SINGLE_GRAVEYARD);
 
         CardTypePredicate creatureCard = new CardTypePredicate(CardType.CREATURE);

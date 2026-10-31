@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllCreaturesMustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -11,8 +10,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class GrandMelee extends Card {
 
     public GrandMelee() {
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesMustAttackEffect(
+        addStaticEffect(new MatchingCreaturesMustAttackEffect(
                 new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.STATIC, new AllCreaturesMustBlockEachCombatEffect());
+        addStaticEffect(new AllCreaturesMustBlockEachCombatEffect());
     }
 }

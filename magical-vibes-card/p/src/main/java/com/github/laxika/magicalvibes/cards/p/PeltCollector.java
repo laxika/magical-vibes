@@ -28,8 +28,7 @@ public class PeltCollector extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, growWhenLarger);
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, growWhenLarger);
 
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                         new SourceCounterThreshold(3, CounterType.PLUS_ONE_PLUS_ONE),
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
     }

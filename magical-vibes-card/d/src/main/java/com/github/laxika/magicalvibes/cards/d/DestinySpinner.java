@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -24,7 +23,7 @@ import java.util.List;
 public class DestinySpinner extends Card {
 
     public DestinySpinner() {
-        addEffect(EffectSlot.STATIC, new ControllerSpellsCantBeCounteredEffect(
+        addStaticEffect(new ControllerSpellsCantBeCounteredEffect(
                 EnumSet.of(CardType.CREATURE, CardType.ENCHANTMENT)));
 
         PermanentCount enchantmentCount = new PermanentCount(

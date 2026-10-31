@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -22,8 +21,7 @@ import java.util.List;
 public class AssaultFormation extends Card {
 
     public AssaultFormation() {
-        addEffect(EffectSlot.STATIC,
-                new AssignCombatDamageWithToughnessEffect(GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new AssignCombatDamageWithToughnessEffect(GrantScope.ALL_OWN_CREATURES));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

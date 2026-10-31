@@ -58,7 +58,7 @@ playability previews and actual payment; ordinary hand casts are unaffected.
      the caster? (Use to skip opponent-only taxes when the caster controls the source, or to
      require self-control for own-cost reductions.)
    - `CostModificationSource.SPELL_ITSELF` (both fields null) is passed for `onSpellItself()`
-     handlers, which read the effect off the spell's own `EffectSlot.STATIC` effects.
+     handlers, which read the effect off the spell's own static effects (`getStaticEffects()`).
 5. **Spring registration only.** Annotate each handler `@Component`. `GameEngineConfig` collects
    all `CostModificationHandlerBean` components after singletons are created and registers them
    into `CostModificationHandlerRegistry` (routing by `onSpellItself()`).

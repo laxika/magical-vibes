@@ -15,6 +15,6 @@ public class IonaShieldOfEmeria extends Card {
 
     public IonaShieldOfEmeria() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new OpponentsCantCastSpellsOfChosenColorEffect());
+        addStaticEffect(new OpponentsCantCastSpellsOfChosenColorEffect());
     }
 }

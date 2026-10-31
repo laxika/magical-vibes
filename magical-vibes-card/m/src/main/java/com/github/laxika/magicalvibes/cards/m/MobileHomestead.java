@@ -23,7 +23,7 @@ import java.util.List;
 public class MobileHomestead extends Card {
 
     public MobileHomestead() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.MOUNT)),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
 

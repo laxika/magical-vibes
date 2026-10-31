@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class MesmericSliver extends Card {
 
     public MesmericSliver() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new FatesealEffect(1), "You may fateseal 1?"),
                 GrantScope.ALL_CREATURES_INCLUDING_SELF,

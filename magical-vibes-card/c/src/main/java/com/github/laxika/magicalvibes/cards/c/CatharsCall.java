@@ -25,10 +25,9 @@ public class CatharsCall extends Card {
         // Enchanted creature has vigilance and "At the beginning of your end step,
         // create a 1/1 white Human creature token."
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ENCHANTED_CREATURE))
                 // The granted ability is the creature's own, so its controller gets the token
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                         new CreateTokenEffect("Human", 1, 1,
                                 CardColor.WHITE, List.of(CardSubtype.HUMAN), Set.of(), Set.of()),

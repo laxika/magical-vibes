@@ -24,7 +24,7 @@ import java.util.List;
 public class SunscapeBattlemage extends Card {
 
     public SunscapeBattlemage() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{G}"));
+        addStaticEffect(new KickerEffect("{1}{G}"));
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{2}{U}"), true, 1));
 
         targetWhenKicked(new PermanentPredicateTargetFilter(

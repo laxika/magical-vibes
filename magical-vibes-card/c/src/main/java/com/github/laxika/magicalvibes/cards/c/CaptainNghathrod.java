@@ -26,7 +26,7 @@ public class CaptainNghathrod extends Card {
 
     public CaptainNghathrod() {
         // Horrors you control have menace.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.MENACE, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.HORROR)));
 

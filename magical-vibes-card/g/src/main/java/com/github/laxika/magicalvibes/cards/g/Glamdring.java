@@ -29,9 +29,9 @@ public class Glamdring extends Card {
                 new CardTypePredicate(CardType.SORCERY)));
         CardsInGraveyard instantsAndSorceries = new CardsInGraveyard(instantOrSorcery, CountScope.CONTROLLER);
 
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 instantsAndSorceries, new Fixed(0), GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new MayCastAnySpellFromHandWithoutPayingManaCostEffect(instantOrSorcery, new EventValue()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));

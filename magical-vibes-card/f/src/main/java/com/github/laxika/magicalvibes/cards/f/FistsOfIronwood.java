@@ -32,7 +32,7 @@ public class FistsOfIronwood extends Card {
                         Set.of(),
                         Set.of()
                 ))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+                .addStaticEffect(new GrantKeywordEffect(
                         Keyword.TRAMPLE,
                         GrantScope.ENCHANTED_CREATURE
                 ));

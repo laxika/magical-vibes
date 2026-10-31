@@ -15,7 +15,7 @@ public class DemonicAppetite extends Card {
 
     public DemonicAppetite() {
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER));
     }

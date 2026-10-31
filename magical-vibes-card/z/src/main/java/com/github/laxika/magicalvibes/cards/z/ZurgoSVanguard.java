@@ -21,7 +21,7 @@ public class ZurgoSVanguard extends Card {
     public ZurgoSVanguard() {
         PermanentCount creaturesYouControl =
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(creaturesYouControl, new Fixed(3)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(creaturesYouControl, new Fixed(3)));
         addEffect(EffectSlot.ON_ATTACK,
                 new CreateTokenEffect(1, "Warrior", 1, 1, CardColor.RED, List.of(CardSubtype.WARRIOR), true));
         addEffect(EffectSlot.ON_ATTACK, new SacrificeCreatedPermanentsAtEndStepEffect());

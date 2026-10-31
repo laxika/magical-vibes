@@ -17,8 +17,7 @@ public class DragonWings extends Card {
 
     public DragonWings() {
         target(TargetFilters.creature());
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
         addCycling("{1}{U}");
         addEffect(EffectSlot.GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(

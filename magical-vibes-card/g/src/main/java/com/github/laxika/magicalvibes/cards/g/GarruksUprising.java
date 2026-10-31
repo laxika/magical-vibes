@@ -36,7 +36,7 @@ public class GarruksUprising extends Card {
                         new PermanentPowerAtLeastPredicate(4)))),
                 new DrawCardEffect(1)));
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureMinPowerConditionalEffect(4, new DrawCardEffect(1)));

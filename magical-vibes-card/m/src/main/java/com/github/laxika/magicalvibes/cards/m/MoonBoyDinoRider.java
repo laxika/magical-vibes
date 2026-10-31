@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class MoonBoyDinoRider extends Card {
 
     public MoonBoyDinoRider() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.DINOSAUR), 1, CostModificationScope.SELF));
 
         addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(

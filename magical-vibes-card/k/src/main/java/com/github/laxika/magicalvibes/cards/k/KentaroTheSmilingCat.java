@@ -15,7 +15,7 @@ public class KentaroTheSmilingCat extends Card {
         addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(1));
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(1));
 
-        addEffect(EffectSlot.STATIC, AlternativeCostForSpellsEffect.genericEqualToManaValue(
+        addStaticEffect(AlternativeCostForSpellsEffect.genericEqualToManaValue(
                 new CardSubtypePredicate(CardSubtype.SAMURAI)));
     }
 }

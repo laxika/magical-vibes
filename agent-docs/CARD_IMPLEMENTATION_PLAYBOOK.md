@@ -54,11 +54,11 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/t/src/main/java/com/github/laxika/magicalvibes/cards/t/Twincast.java`
 
 - Static combat restriction on self:
-  - `addEffect(EffectSlot.STATIC, new CantBlockEffect())`
+  - `addStaticEffect(new CantBlockEffect())`
   - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/SpinelessThug.java`
 
 - Static "controller can't cast spells of specified types":
-  - `addEffect(EffectSlot.STATIC, new CantCastSpellTypeEffect(Set.of(CardType.CREATURE)))`
+  - `addStaticEffect(new CantCastSpellTypeEffect(Set.of(CardType.CREATURE)))`
   - Example: `magical-vibes-card/s/src/main/java/com/github/laxika/magicalvibes/cards/s/SteelGolem.java`
 
 - Aura with static effect:
@@ -99,20 +99,20 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/u/src/main/java/com/github/laxika/magicalvibes/cards/u/UnderworldDreams.java`
 
 - Conditional self cast-cost reduction ("this spell costs {N} less to cast if …"):
-  - wrap the single `ReduceOwnCastCostEffect` in a `ConditionalEffect`: `addEffect(EffectSlot.STATIC, new ConditionalEffect(new OpponentControlsMoreCreatures(M), new ReduceOwnCastCostEffect(new Fixed(N))))`
+  - wrap the single `ReduceOwnCastCostEffect` in a `ConditionalEffect`: `addStaticEffect(new ConditionalEffect(new OpponentControlsMoreCreatures(M), new ReduceOwnCastCostEffect(new Fixed(N))))`
   - reuse an existing `Condition` (Metalcraft, ControlsPermanent, OpponentControlsMoreCreatures, CardsLeftGraveyardThisTurn, …); "for each …" reductions instead pass a counting `DynamicAmount` directly to `ReduceOwnCastCostEffect`. **Never add a per-variant `ReduceOwnCastCostIf*`/`Per*` record** — see `COST_MODIFICATION_HANDLERS.md`.
   - Example: `magical-vibes-card/a/src/main/java/com/github/laxika/magicalvibes/cards/a/AvatarOfMight.java`
 
 - Attacker blocked-only-by-flying-or-subtype:
-  - prefer composed permanent predicates on attacker: `addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(new PermanentAnyOfPredicate(List.of(new PermanentHasKeywordPredicate(Keyword.FLYING), new PermanentHasSubtypePredicate(CardSubtype.X))), "creatures with flying or Xs"))`
+  - prefer composed permanent predicates on attacker: `addStaticEffect(new CanBeBlockedOnlyByFilterEffect(new PermanentAnyOfPredicate(List.of(new PermanentHasKeywordPredicate(Keyword.FLYING), new PermanentHasSubtypePredicate(CardSubtype.X))), "creatures with flying or Xs"))`
   - Example: `magical-vibes-card/e/src/main/java/com/github/laxika/magicalvibes/cards/e/ElvenRiders.java`
 
 - Equipment with static keyword + evasion:
-  - `addEffect(EffectSlot.STATIC, new CantBeBlockedEffect())` + `addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.X, GrantScope.EQUIPPED_CREATURE))` + equip ability
+  - `addStaticEffect(new CantBeBlockedEffect())` + `addStaticEffect(new GrantKeywordEffect(Keyword.X, GrantScope.EQUIPPED_CREATURE))` + equip ability
   - Example: `magical-vibes-card/w/src/main/java/com/github/laxika/magicalvibes/cards/w/WhispersilkCloak.java`
 
 - Creature land (manland) — enters tapped, taps for mana, animates:
-  - `addEffect(EffectSlot.STATIC, new EntersTappedEffect())` + `addEffect(EffectSlot.ON_TAP, new AwardManaEffect(...))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new AnimatePermanentsEffect(power, toughness, subtypes, keywords, color)), description))`
+  - `addStaticEffect(new EntersTappedEffect())` + `addEffect(EffectSlot.ON_TAP, new AwardManaEffect(...))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new AnimatePermanentsEffect(power, toughness, subtypes, keywords, color)), description))`
   - Example: `magical-vibes-card/f/src/main/java/com/github/laxika/magicalvibes/cards/f/FaerieConclave.java`
 
 - Kindred Enchantment with ETB token creation + activated token ability:
@@ -220,7 +220,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/m/src/main/java/com/github/laxika/magicalvibes/cards/m/MagmaPhoenix.java`
 
 - Shuffle-into-library replacement effect ("if would be put into graveyard from anywhere, shuffle into library instead"):
-  - `addEffect(EffectSlot.STATIC, new ShuffleIntoLibraryReplacementEffect())` — checked in `GraveyardService.addCardToGraveyard()`. Works for all zone transitions that route through graveyard: combat death, sacrifice, mill, discard, spell resolution. A dying creature's shuffle is a CR 616.1 option (`SHUFFLE_INTO_LIBRARY`) its controller picks among competing death replacements before it leaves.
+  - `addStaticEffect(new ShuffleIntoLibraryReplacementEffect())` — checked in `GraveyardService.addCardToGraveyard()`. Works for all zone transitions that route through graveyard: combat death, sacrifice, mill, discard, spell resolution. A dying creature's shuffle is a CR 616.1 option (`SHUFFLE_INTO_LIBRARY`) its controller picks among competing death replacements before it leaves.
   - Example: `magical-vibes-card/b/src/main/java/com/github/laxika/magicalvibes/cards/b/BlightsteelColossus.java`, `magical-vibes-card/l/src/main/java/com/github/laxika/magicalvibes/cards/l/LegacyWeapon.java`
 
 - Discard-to-battlefield replacement effect ("if opponent causes you to discard this card, put it onto the battlefield instead"):

@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MB2", collectorNumber = "279")
@@ -26,7 +25,7 @@ public class AGirlAndHerDogs extends Card {
 
     private static final CreateTokenEffect DOG_TOKEN = new CreateTokenEffect(
             CardType.CREATURE, 1, "Dog", 1, 1, CardColor.WHITE, null, List.of(CardSubtype.DOG),
-            Set.of(), Set.of(), false, false, Map.of(), List.of(), false, false, true, 0, Set.of(),
+            Set.of(), Set.of(), false, false, List.of(), List.of(), false, false, true, 0, Set.of(),
             Set.of(CardSupertype.LEGENDARY));
 
     public AGirlAndHerDogs() {

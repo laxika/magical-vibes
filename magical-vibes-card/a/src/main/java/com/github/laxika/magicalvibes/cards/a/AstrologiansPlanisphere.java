@@ -30,17 +30,14 @@ public class AstrologiansPlanisphere extends Card {
                 new LivingWeaponEffect(new CreateTokenEffect("Hero", 1, 1, null,
                         List.of(CardSubtype.HERO), Set.of(), Set.of())));
 
-        addEffect(EffectSlot.STATIC,
-                new GrantSubtypeEffect(CardSubtype.WIZARD, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.WIZARD, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                         new SpellCastTriggerEffect(
                                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                                 List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))),
                         GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_CONTROLLER_DRAWS,
                         new NthCardDrawTriggerEffect(3,
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),

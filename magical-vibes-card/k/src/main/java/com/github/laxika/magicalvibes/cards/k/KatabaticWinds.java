@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsCantActivateTapAbilitiesEffect;
@@ -21,8 +20,8 @@ public class KatabaticWinds extends Card {
 
     public KatabaticWinds() {
         PermanentHasKeywordPredicate flying = new PermanentHasKeywordPredicate(Keyword.FLYING);
-        addEffect(EffectSlot.STATIC, new MatchingCreaturesCantAttackOrBlockEffect(
+        addStaticEffect(new MatchingCreaturesCantAttackOrBlockEffect(
                 flying, "Creatures with flying can't attack or block"));
-        addEffect(EffectSlot.STATIC, new MatchingPermanentsCantActivateTapAbilitiesEffect(flying));
+        addStaticEffect(new MatchingPermanentsCantActivateTapAbilitiesEffect(flying));
     }
 }

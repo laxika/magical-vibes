@@ -16,10 +16,10 @@ public class GalvanicJuggernaut extends Card {
 
     public GalvanicJuggernaut() {
         // This creature attacks each combat if able.
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
 
         // This creature doesn't untap during your untap step.
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // Whenever another creature dies, untap this creature.
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new UntapPermanentsEffect(TapUntapScope.SELF));

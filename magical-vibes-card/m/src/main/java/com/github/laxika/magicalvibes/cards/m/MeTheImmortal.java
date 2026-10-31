@@ -29,7 +29,7 @@ public class MeTheImmortal extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "menace counter", new PutCountersOnSelfEffect(CounterType.MENACE))
         )));
-        addEffect(EffectSlot.STATIC, new PreserveCountersOnZoneChangeEffect());
+        addStaticEffect(new PreserveCountersOnZoneChangeEffect());
         addCastingOption(new GraveyardCast(List.of(new DiscardCardCastingCost(null, null, 2))));
     }
 }

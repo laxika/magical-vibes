@@ -14,7 +14,7 @@ public class MultiversalPassage extends Card {
 
     public MultiversalPassage() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseBasicLandTypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new MayPayLifeOrEntersTappedEffect(2));
-        addEffect(EffectSlot.STATIC, new SourceBecomesChosenBasicLandTypeEffect());
+        addStaticEffect(new MayPayLifeOrEntersTappedEffect(2));
+        addStaticEffect(new SourceBecomesChosenBasicLandTypeEffect());
     }
 }

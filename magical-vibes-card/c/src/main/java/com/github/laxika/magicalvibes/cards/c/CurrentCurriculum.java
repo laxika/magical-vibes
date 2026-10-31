@@ -23,7 +23,7 @@ public class CurrentCurriculum extends Card {
 
     public CurrentCurriculum() {
         // The first Merfolk spell you cast each turn has convoke.
-        addEffect(EffectSlot.STATIC, new GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
+        addStaticEffect(new GrantSpellCastingAbilityToFirstMatchingSpellEachTurnEffect(
                 Keyword.CONVOKE, new CardSubtypePredicate(CardSubtype.MERFOLK)));
 
         // At the beginning of your end step, if you control two or more tapped creatures,

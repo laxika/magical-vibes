@@ -23,16 +23,16 @@ public class HeroOfBretagard extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_CARDS_EXILED_FROM_HAND, counters);
         addEffect(EffectSlot.ON_CONTROLLER_SPELL_OR_ABILITY_EXILES_PERMANENT, counters);
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantSubtypeEffect(CardSubtype.ANGEL, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(10, CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(10, CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantSubtypeEffect(CardSubtype.GOD, GrantScope.SELF)));
     }

@@ -23,11 +23,11 @@ import java.util.List;
 public class TheMagicMirror extends Card {
 
     public TheMagicMirror() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new CardsInGraveyard(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
+        addStaticEffect(new NoMaximumHandSizeEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.KNOWLEDGE),
                 new DrawCardEffect(new CountersOnSource(CounterType.KNOWLEDGE))));

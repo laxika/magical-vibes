@@ -108,7 +108,6 @@ import com.github.laxika.magicalvibes.model.effect.AttackingCreaturesAwareEffect
 import com.github.laxika.magicalvibes.model.effect.AttackingPermanentSnapshot;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyRemoveKeywordEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -151,7 +150,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithCounterAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
@@ -382,7 +380,7 @@ public class CombatAttackService {
      * static ability or from an attached Aura.
      */
     public boolean canOnlyAttackAlone(GameData gameData, Permanent creature) {
-        boolean selfRestricted = creature.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean selfRestricted = creature.getCard().getStaticEffects().stream()
                 .anyMatch(CanOnlyAttackAloneEffect.class::isInstance);
         return selfRestricted || gameQueryService.hasAuraWithEffect(gameData, creature,
                 EnchantedCreatureCanOnlyAttackAloneEffect.class);
@@ -416,7 +414,7 @@ public class CombatAttackService {
         });
         if (gameData.planechase != null) {
             for (var planar : gameData.planechase.faceUp) {
-                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     if (effect instanceof CombatCreatureLimitEffect limit
                             && (!filterByAttackTarget
                             || limit.appliesToAttackTarget(gameData.planechase.controllerId,
@@ -504,7 +502,7 @@ public class CombatAttackService {
             return false;
         }
 
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : attacker.getCard().getStaticEffects()) {
             if (effect instanceof CantAttackOrBlockUnlessCountAlsoDoesEffect restriction
                     && attackerIndices.size() - 1 < restriction.otherCount()) {
                 return true;
@@ -562,7 +560,7 @@ public class CombatAttackService {
                 continue;
             }
             Permanent creature = battlefield.get(idx);
-            boolean conditional = creature.getCard().getEffects(EffectSlot.STATIC).stream()
+            boolean conditional = creature.getCard().getStaticEffects().stream()
                     .anyMatch(MustAttackIfAnotherCreatureAttacksEffect.class::isInstance);
             if (conditional && attackingIndices.stream().anyMatch(other -> other != idx)) {
                 mustAttack.add(idx);
@@ -615,7 +613,7 @@ public class CombatAttackService {
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                if (permanent.getCard().getStaticEffects().stream()
                         .anyMatch(OpponentCreaturesAttackTogetherEffect.class::isInstance)) {
                     return true;
                 }
@@ -628,7 +626,7 @@ public class CombatAttackService {
         Set<CounterType> counterTypes = EnumSet.noneOf(CounterType.class);
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     if (effect instanceof CreaturesWithCounterAttackTogetherEffect together) {
                         counterTypes.add(together.counterType());
                     }
@@ -4080,7 +4078,7 @@ public class CombatAttackService {
                         || gameQueryService.computeStaticBonus(gameData, perm).losesAllAbilities()) {
                     continue;
                 }
-                boolean requiresAttack = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                boolean requiresAttack = perm.getCard().getStaticEffects().stream()
                         .anyMatch(OpponentsMustAttackRequirementEffect.class::isInstance);
                 if (!requiresAttack) continue;
                 requiredTargetIds.add(pid);
@@ -4138,7 +4136,7 @@ public class CombatAttackService {
             }
             Permanent creature = battlefield.get(idx);
             boolean conditional = !gameQueryService.hasLostAllAbilities(gameData, creature)
-                    && creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                    && creature.getCard().getStaticEffects().stream()
                     .anyMatch(MustAttackIfAnotherCreatureAttacksEffect.class::isInstance);
             if (conditional && declaredAttackerIndices.stream().anyMatch(other -> other != idx)
                     && !canOnlyAttackAlone(gameData, creature)
@@ -4185,7 +4183,7 @@ public class CombatAttackService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         boolean sourceAttacks = declaredAttackerIndices.stream().map(battlefield::get)
                 .anyMatch(source -> !source.isFaceDown() && !gameQueryService.hasLostAllAbilities(gameData, source)
-                        && source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        && source.getCard().getStaticEffects().stream()
                         .anyMatch(OtherCreaturesMustAttackIfSourceAttacksEffect.class::isInstance));
         if (!sourceAttacks) return;
         if (declaredAttackerIndices.stream()
@@ -4306,7 +4304,7 @@ public class CombatAttackService {
     }
 
     private boolean hasGreaterPowerRestriction(Permanent creature) {
-        return creature.getCard().getEffects(EffectSlot.STATIC).stream()
+        return creature.getCard().getStaticEffects().stream()
                 .anyMatch(CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect.class::isInstance);
     }
 
@@ -4320,7 +4318,7 @@ public class CombatAttackService {
         for (int idx : attackerIndices) {
             Permanent restricted = battlefield.get(idx);
             if (gameQueryService.hasLostPrintedAbilities(gameData, restricted)) continue;
-            restricted.getCard().getEffects(EffectSlot.STATIC).stream()
+            restricted.getCard().getStaticEffects().stream()
                     .filter(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::isInstance)
                     .map(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::cast)
                     .findFirst()
@@ -4340,7 +4338,7 @@ public class CombatAttackService {
         for (int idx : attackerIndices) {
             Permanent restricted = battlefield.get(idx);
             if (gameQueryService.hasLostPrintedAbilities(gameData, restricted)) continue;
-            restricted.getCard().getEffects(EffectSlot.STATIC).stream()
+            restricted.getCard().getStaticEffects().stream()
                     .filter(MatchingAttackerRestrictionEffect.class::isInstance)
                     .map(MatchingAttackerRestrictionEffect.class::cast)
                     .findFirst()
@@ -4661,7 +4659,7 @@ public class CombatAttackService {
                         || usedGrantingPermanents.contains(source.getId())) {
                     continue;
                 }
-                boolean grantsEffect = source.getCard().getEffects(EffectSlot.STATIC).stream()
+                boolean grantsEffect = source.getCard().getStaticEffects().stream()
                         .anyMatch(e -> e instanceof GrantTriggeredAbilityEffect grant
                                 && grant.slot() == EffectSlot.ON_ATTACK
                                 && grant.grantedEffect().equals(effect));

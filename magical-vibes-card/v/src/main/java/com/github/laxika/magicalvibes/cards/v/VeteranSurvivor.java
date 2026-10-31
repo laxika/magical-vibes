@@ -25,10 +25,10 @@ public class VeteranSurvivor extends Card {
                                 1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
                                 null, null, false, true, false, null, false, true))));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceExiledCardsThreshold(3),
                 new BoostSelfEffect(3, 3)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceExiledCardsThreshold(3),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
     }

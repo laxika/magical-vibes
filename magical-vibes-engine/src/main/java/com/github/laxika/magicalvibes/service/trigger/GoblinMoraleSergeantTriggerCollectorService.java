@@ -27,7 +27,7 @@ public class GoblinMoraleSergeantTriggerCollectorService {
     private final GameLogService gameLogService;
 
     @CollectsTrigger(value = ConjureDuplicateOfEnlistedNontokenCreatureEffect.class,
-            slot = EffectSlot.STATIC)
+            slot = EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS)
     private boolean handleConjureTrigger(TriggerMatchContext match,
                                          ConjureDuplicateOfEnlistedNontokenCreatureEffect effect,
                                          TriggerContext context) {

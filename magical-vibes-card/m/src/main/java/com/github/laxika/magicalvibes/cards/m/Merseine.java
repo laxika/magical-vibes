@@ -22,8 +22,7 @@ public class Merseine extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new EnterWithCountersEffect(CounterType.NET, new Fixed(3)))
-                .addEffect(EffectSlot.STATIC,
-                        DoesntUntapWithCounterEffect.enchanted(CounterType.NET));
+                .addStaticEffect(DoesntUntapWithCounterEffect.enchanted(CounterType.NET));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

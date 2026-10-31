@@ -23,7 +23,7 @@ import java.util.List;
 public class RasputinDreamweaver extends Card {
 
     public RasputinDreamweaver() {
-        addEffect(EffectSlot.STATIC, new CounterLimitEffect(CounterType.DREAM, 7));
+        addStaticEffect(new CounterLimitEffect(CounterType.DREAM, 7));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.DREAM, new Fixed(7)));

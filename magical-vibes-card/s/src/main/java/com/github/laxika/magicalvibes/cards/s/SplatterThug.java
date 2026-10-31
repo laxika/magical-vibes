@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
@@ -22,8 +21,8 @@ import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
 public class SplatterThug extends Card {
 
     public SplatterThug() {
-        addEffect(EffectSlot.STATIC, new UnleashEffect());
-        addEffect(EffectSlot.STATIC, new CantBlockUnlessEffect(
+        addStaticEffect(new UnleashEffect());
+        addStaticEffect(new CantBlockUnlessEffect(
                 new NotCondition(new SourceCounterThreshold(1, CounterType.PLUS_ONE_PLUS_ONE)),
                 "it has no +1/+1 counters on it"));
     }

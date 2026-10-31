@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentManaValueSum;
@@ -32,7 +31,7 @@ public class MetalworkColossus extends Card {
                 new PermanentIsArtifactPredicate(),
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate())
         ));
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentManaValueSum(noncreatureArtifacts, CountScope.CONTROLLER)));
 
         addGraveyardActivatedAbility(new ActivatedAbility(

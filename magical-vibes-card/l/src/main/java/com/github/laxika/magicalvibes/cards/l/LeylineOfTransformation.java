@@ -17,6 +17,6 @@ public class LeylineOfTransformation extends Card {
                 "Begin the game with Leyline of Transformation on the battlefield?"
         ));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new GrantChosenSubtypeToOwnCreaturesEffect(true));
+        addStaticEffect(new GrantChosenSubtypeToOwnCreaturesEffect(true));
     }
 }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "AFR", collectorNumber = "64")
@@ -42,7 +41,7 @@ public class Mordenkainen extends Card {
                         1, "Dog Illusion", 0, 0,
                         CardColor.BLUE, List.of(CardSubtype.DOG, CardSubtype.ILLUSION),
                         Set.of(), Set.of(),
-                        Map.of(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(tokenSize, tokenSize))
+                        List.of(StaticAbility.of(new SetPowerToughnessToAmountEffect(tokenSize, tokenSize)))
                 )),
                 "\u22122: Create a blue Dog Illusion creature token with \"This token's power and toughness are each equal to twice the number of cards in your hand.\""
         ));

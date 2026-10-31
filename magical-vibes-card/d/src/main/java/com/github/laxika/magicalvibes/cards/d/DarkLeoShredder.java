@@ -35,8 +35,7 @@ public class DarkLeoShredder extends Card {
         var attackingNinjas = new PermanentAllOfPredicate(List.of(
                 new PermanentIsAttackingPredicate(),
                 new PermanentHasSubtypePredicate(CardSubtype.NINJA)));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, attackingNinjas));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, attackingNinjas));
 
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, SequenceEffect.of(
                 new CreateTokenEffect("Ninja", 1, 1, CardColor.BLACK,

@@ -22,7 +22,7 @@ import java.util.Set;
 public class SarkhanSoulAflame extends Card {
 
     public SarkhanSoulAflame() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.DRAGON), 1, CostModificationScope.SELF));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.DRAGON),

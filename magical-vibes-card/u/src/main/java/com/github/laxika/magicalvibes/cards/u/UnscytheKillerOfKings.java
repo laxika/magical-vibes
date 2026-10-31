@@ -17,8 +17,8 @@ public class UnscytheKillerOfKings extends Card {
 
     public UnscytheKillerOfKings() {
         // Equipped creature gets +3/+3 and has first strike.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever a creature dealt damage by equipped creature this turn dies, you may exile that
         // card. If you do, create a 2/2 black Zombie creature token.

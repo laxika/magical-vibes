@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class CoramTheUndertaker extends Card {
 
     public CoramTheUndertaker() {
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 new GreatestPowerAmongCardsInGraveyard(
                         new CardTypePredicate(CardType.CREATURE), CountScope.ANY_PLAYER),
                 new Fixed(0), GrantScope.SELF));
@@ -32,7 +32,6 @@ public class CoramTheUndertaker extends Card {
         addEffect(EffectSlot.ON_ATTACK, new MillEffect(1, MillRecipient.CONTROLLER));
         addEffect(EffectSlot.ON_ATTACK, new MillEffect(1, MillRecipient.EACH_OPPONENT));
 
-        addEffect(EffectSlot.STATIC,
-                new PlayLandAndCastSpellFromCardsPutIntoGraveyardsFromLibrariesThisTurnEffect());
+        addStaticEffect(new PlayLandAndCastSpellFromCardsPutIntoGraveyardsFromLibrariesThisTurnEffect());
     }
 }

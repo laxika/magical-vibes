@@ -28,7 +28,7 @@ public class NightOfTheSweetsRevenge extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.FOOD), CountScope.CONTROLLER);
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, foodToken());
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapFor(ManaColor.GREEN),
                 GrantScope.OWN_PERMANENTS,
                 new PermanentHasSubtypePredicate(CardSubtype.FOOD)

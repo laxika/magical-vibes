@@ -30,7 +30,6 @@ public class SingerOfSwiftRivers extends Card {
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PutCounterOnTargetPermanentEffect(CounterType.SHIELD));
 
-        addEffect(EffectSlot.STATIC,
-                new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.MERFOLK)));
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.MERFOLK)));
     }
 }

@@ -22,7 +22,7 @@ public class QuestForTheGoblinLord extends Card {
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.GOBLIN),
                         new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
                                 "Put a quest counter on Quest for the Goblin Lord?")));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.QUEST),
                 new StaticBoostEffect(2, 0, GrantScope.ALL_OWN_CREATURES)));
     }

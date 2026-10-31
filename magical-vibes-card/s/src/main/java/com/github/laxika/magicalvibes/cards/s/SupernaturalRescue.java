@@ -22,7 +22,7 @@ public class SupernaturalRescue extends Card {
 
         // Enchant creature you control. Enchanted creature gets +1/+2.
         target(TargetFilters.creatureYouControl())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 2, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.ENCHANTED_CREATURE));
 
         // When you cast this spell, tap up to two target creatures you don't control.
         target(TargetFilters.creatureAnOpponentControls(), 0, 2)

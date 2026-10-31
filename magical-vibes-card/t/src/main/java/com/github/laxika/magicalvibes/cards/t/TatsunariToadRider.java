@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -26,7 +27,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NEO", collectorNumber = "123")
@@ -49,11 +49,11 @@ public class TatsunariToadRider extends Card {
                         CardType.CREATURE, 1, "Keimi", 3, 3,
                         CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),
                         List.of(CardSubtype.FROG), Set.of(), Set.of(), false, false,
-                        Map.of(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
-                                new SpellCastTriggerEffect(
+                        List.of(
+                                LegacySlots.triggered(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                                         new CardTypePredicate(CardType.ENCHANTMENT),
                                         List.of(
-                                                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true)))),
+                                                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true))))),
                         List.of(), false, false, true, 0, Set.of())),
                 new NotCondition(new ControlsPermanent(KEIMI))));
 

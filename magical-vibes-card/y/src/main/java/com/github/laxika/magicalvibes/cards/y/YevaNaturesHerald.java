@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -20,7 +19,7 @@ import java.util.List;
 public class YevaNaturesHerald extends Card {
 
     public YevaNaturesHerald() {
-        addEffect(EffectSlot.STATIC, new GrantFlashToCardTypeEffect(new CardAllOfPredicate(List.of(
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),
                 new CardColorPredicate(CardColor.GREEN)))));
     }

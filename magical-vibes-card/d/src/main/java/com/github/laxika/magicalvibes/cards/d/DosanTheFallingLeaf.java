@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PlayersCanCastSpellsOnlyDuringOwnTurnEffect;
 
 /**
@@ -14,6 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCanCastSpellsOnlyDurin
 public class DosanTheFallingLeaf extends Card {
 
     public DosanTheFallingLeaf() {
-        addEffect(EffectSlot.STATIC, new PlayersCanCastSpellsOnlyDuringOwnTurnEffect());
+        addStaticEffect(new PlayersCanCastSpellsOnlyDuringOwnTurnEffect());
     }
 }

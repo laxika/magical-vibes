@@ -25,12 +25,12 @@ import java.util.List;
 public class Degavolver extends Card {
 
     public Degavolver() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{B}"));
+        addStaticEffect(new KickerEffect("{1}{B}"));
         addCastingCost(RepeatableAdditionalManaCost.singlePayment(List.of("{R}")));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Kicked(), new GrantActivatedAbilityEffect(
+        addStaticEffect(new ConditionalEffect(new Kicked(), new GrantActivatedAbilityEffect(
                 new ActivatedAbility(false, null,
                         List.of(new PayLifeCost(3), new RegenerateEffect()),
                         "Pay 3 life: Regenerate Degavolver."),
@@ -39,7 +39,7 @@ public class Degavolver extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{R}"),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new RepeatedAdditionalCostPaid("{R}"),
+        addStaticEffect(new ConditionalEffect(new RepeatedAdditionalCostPaid("{R}"),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
     }
 }

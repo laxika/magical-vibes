@@ -23,6 +23,6 @@ public class FearOfSleepParalysis extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, eerie)
                 .addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD, eerie)
                 .addEffect(EffectSlot.ON_ALLY_ROOM_FULLY_UNLOCKED, eerie);
-        addEffect(EffectSlot.STATIC, new StunCountersCantBeRemovedFromOpponentsPermanentsEffect());
+        addStaticEffect(new StunCountersCantBeRemovedFromOpponentsPermanentsEffect());
     }
 }

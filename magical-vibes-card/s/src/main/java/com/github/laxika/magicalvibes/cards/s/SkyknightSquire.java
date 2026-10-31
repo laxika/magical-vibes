@@ -25,10 +25,10 @@ public class SkyknightSquire extends Card {
 
         SourceCounterThreshold threePlusOnePlusOneCounters =
                 new SourceCounterThreshold(3, CounterType.PLUS_ONE_PLUS_ONE);
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 threePlusOnePlusOneCounters,
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 threePlusOnePlusOneCounters,
                 new GrantSubtypeEffect(CardSubtype.KNIGHT, GrantScope.SELF)));
     }

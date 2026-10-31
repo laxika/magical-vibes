@@ -35,7 +35,7 @@ public class CaythFamedMechanist extends Card {
     public CaythFamedMechanist() {
         // Fabricate's counter-or-Servo choice is made as the ability resolves
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, fabricateTrigger());
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 fabricateTrigger(),
                 GrantScope.OWN_CREATURES,

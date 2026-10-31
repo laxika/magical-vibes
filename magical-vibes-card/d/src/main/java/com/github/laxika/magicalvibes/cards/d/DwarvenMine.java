@@ -23,7 +23,7 @@ import java.util.Set;
 public class DwarvenMine extends Card {
 
     public DwarvenMine() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new NotCondition(new ControlsPermanentCount(3, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))),
                 new EntersTappedEffect()));
 

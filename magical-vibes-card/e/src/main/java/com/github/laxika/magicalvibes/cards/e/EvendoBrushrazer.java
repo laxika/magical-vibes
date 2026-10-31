@@ -28,8 +28,7 @@ public class EvendoBrushrazer extends Card {
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                         new ExileTopCardsToSourceEffect(1, false)));
 
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                         new ControllerSacrificedNontokenPermanentThisTurn(),
                         new AllowCastFromCardsExiledWithSourceEffect(false, null, false, true, 0)));
 

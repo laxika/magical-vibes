@@ -20,7 +20,7 @@ public class SageOfAncientLore extends Card {
         setBackFaceCard(new WerewolfOfAncientHunger());
 
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));

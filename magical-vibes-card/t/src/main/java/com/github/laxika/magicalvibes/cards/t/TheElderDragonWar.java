@@ -26,7 +26,7 @@ import java.util.Set;
 public class TheElderDragonWar extends Card {
 
     public TheElderDragonWar() {
-        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
+        addStaticEffect(new ReadAheadEffect(false));
 
         addEffect(EffectSlot.SAGA_CHAPTER_I, new DealDamageToEachMatchingPermanentEffect(
                 2, new PermanentIsCreaturePredicate(), EachPermanentScope.ALL_PLAYERS));

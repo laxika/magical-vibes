@@ -15,6 +15,6 @@ public class PaintersServant extends Card {
         // As this creature enters, choose a color.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
         // All permanents are the chosen color in addition to their other colors.
-        addEffect(EffectSlot.STATIC, new AllPermanentsGainChosenColorEffect());
+        addStaticEffect(new AllPermanentsGainChosenColorEffect());
     }
 }

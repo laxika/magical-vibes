@@ -21,7 +21,7 @@ public class RegisaurAlpha extends Card {
 
     public RegisaurAlpha() {
         // Other Dinosaurs you control have haste.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)));
 

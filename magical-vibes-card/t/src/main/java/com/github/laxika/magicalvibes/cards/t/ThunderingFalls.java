@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 public class ThunderingFalls extends Card {
 
     public ThunderingFalls() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SurveilEffect(1));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));

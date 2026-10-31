@@ -40,14 +40,14 @@ public class ClashOfRealities extends Card {
         MayEffect spiritAbility = new MayEffect(
                 new DealDamageToTargetCreatureEffect(3, NON_SPIRIT_CREATURE),
                 "Have this Spirit deal 3 damage to target non-Spirit creature?");
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 spiritAbility, GrantScope.ALL_PERMANENTS, SPIRIT));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 spiritAbility, GrantScope.SELF, SPIRIT));
 
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(
                         new DealDamageToTargetCreatureEffect(3, SPIRIT_CREATURE),

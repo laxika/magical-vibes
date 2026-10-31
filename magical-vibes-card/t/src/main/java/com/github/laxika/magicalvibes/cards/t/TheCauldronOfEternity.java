@@ -22,7 +22,7 @@ import java.util.List;
 public class TheCauldronOfEternity extends Card {
 
     public TheCauldronOfEternity() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new Scaled(new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER), 2)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect());

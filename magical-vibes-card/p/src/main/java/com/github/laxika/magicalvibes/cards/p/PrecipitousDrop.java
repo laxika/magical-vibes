@@ -16,8 +16,8 @@ public class PrecipitousDrop extends Card {
     public PrecipitousDrop() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new VentureIntoDungeonEffect())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(-2, -2, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                .addStaticEffect(new StaticBoostEffect(-2, -2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new ConditionalEffect(
                         new ControllerHasCompletedDungeon(),
                         new StaticBoostEffect(-3, -3, GrantScope.ENCHANTED_CREATURE)));
     }

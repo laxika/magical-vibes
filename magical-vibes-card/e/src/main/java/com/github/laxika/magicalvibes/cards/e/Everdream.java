@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 
@@ -11,6 +10,6 @@ public class Everdream extends Card {
 
     public Everdream() {
         addSpellEffect(new DrawCardEffect());
-        addEffect(EffectSlot.STATIC, SpliceEffect.ontoInstantOrSorcery("{2}{U}"));
+        addStaticEffect(SpliceEffect.ontoInstantOrSorcery("{2}{U}"));
     }
 }

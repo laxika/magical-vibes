@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -13,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ECC", collectorNumber = "135")
@@ -26,7 +26,7 @@ public class VernalSovereign extends Card {
                 CardType.CREATURE, 1, "Elemental", 0, 0,
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.WHITE),
                 List.of(CardSubtype.ELEMENTAL), Set.of(), Set.of(), false, false,
-                Map.of(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(creaturesYouControl, creaturesYouControl)),
+                List.of(StaticAbility.of(new SetPowerToughnessToAmountEffect(creaturesYouControl, creaturesYouControl))),
                 List.of(), false, false, false, 0, Set.of()
         );
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, tokenEffect);

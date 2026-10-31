@@ -14,7 +14,7 @@ public class UrbanUtopia extends Card {
 
     public UrbanUtopia() {
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         ManaAbilities.tapForAnyColor(),
                         GrantScope.ENCHANTED_PERMANENT
                 ))

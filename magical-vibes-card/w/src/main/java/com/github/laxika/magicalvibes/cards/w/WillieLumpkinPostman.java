@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 public class WillieLumpkinPostman extends Card {
 
     public WillieLumpkinPostman() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, SequenceEffect.of(
                 new DrawCardEffect(),
                 new DamagedPlayerMayDrawAndCantAttackControllerUntilNextTurnEffect()));

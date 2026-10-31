@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
@@ -18,10 +17,9 @@ import java.util.List;
 public class TheDarknessCrystal extends Card {
 
     public TheDarknessCrystal() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardColorPredicate(CardColor.BLACK), 1, CostModificationScope.SELF));
-        addEffect(EffectSlot.STATIC,
-                ExileOpponentCreaturesInsteadOfDyingEffect.withLifeGain(2));
+        addStaticEffect(ExileOpponentCreaturesInsteadOfDyingEffect.withLifeGain(2));
         addActivatedAbility(new ActivatedAbility(
                 true, "{4}{B}{B}",
                 List.of(ReturnCardExiledWithSourceToBattlefieldEffect.targetedCreature(true, 2)),

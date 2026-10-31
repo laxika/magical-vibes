@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OTJ", collectorNumber = "111")
@@ -32,7 +31,7 @@ public class UnfortunateAccident extends Card {
                         "Create a 1/1 red Mercenary creature token with \"{T}: Target creature you control gets +1/+0 until end of turn. Activate only as a sorcery.\"",
                         new CreateTokenEffect(
                                 CardType.CREATURE, 1, "Mercenary", 1, 1, CardColor.RED, null,
-                                List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, Map.of(),
+                                List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, List.of(),
                                 List.of(new ActivatedAbility(
                                         true,
                                         null,

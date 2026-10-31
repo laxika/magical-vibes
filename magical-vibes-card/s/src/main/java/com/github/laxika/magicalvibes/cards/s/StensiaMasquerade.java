@@ -21,7 +21,7 @@ public class StensiaMasquerade extends Card {
 
     public StensiaMasquerade() {
         // Attacking creatures you control have first strike.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES, new PermanentIsAttackingPredicate()));
 
         // Whenever a Vampire you control deals combat damage to a player, put a +1/+1 counter on it.

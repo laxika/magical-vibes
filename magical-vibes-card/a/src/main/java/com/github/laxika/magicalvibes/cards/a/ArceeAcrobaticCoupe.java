@@ -26,7 +26,7 @@ import java.util.List;
 public class ArceeAcrobaticCoupe extends Card {
 
     public ArceeAcrobaticCoupe() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
 

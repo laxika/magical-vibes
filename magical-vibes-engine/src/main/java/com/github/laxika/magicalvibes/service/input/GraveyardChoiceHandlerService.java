@@ -124,7 +124,7 @@ public class GraveyardChoiceHandlerService {
      */
     private void createGodPharaohsGiftZombieCopy(GameData gameData, StackEntry entry, Card exiledCard) {
         var zombieCopy = new CreateTokenCopyOfTargetPermanentEffect(List.of(), Set.of(), 4, 4, Map.of(), true,
-                false, false, false, false, false, CardColor.BLACK, Set.of(), false, Map.of(), List.of(), false,
+                false, false, false, false, false, CardColor.BLACK, Set.of(), false, List.of(), List.of(), false,
                 false, new Fixed(1), false, Set.of(), false, List.of(), null, false, true);
         tokenCopySupport.createTokenCopiesWithCopyException(gameData, entry, List.of(exiledCard), null,
                 entry.getControllerId(), zombieCopy,

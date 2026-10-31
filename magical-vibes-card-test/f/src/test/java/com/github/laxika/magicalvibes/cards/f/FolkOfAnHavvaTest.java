@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
@@ -59,7 +58,7 @@ class FolkOfAnHavvaTest extends BaseCardTest {
         secondAttacker.setAttacking(true);
 
         FolkOfAnHavva card = new FolkOfAnHavva();
-        card.addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        card.addStaticEffect(new CanBlockAnyNumberOfCreaturesEffect());
         Permanent folk = addCreatureReady(player2, card);
 
         prepareDeclareBlockers();

@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DFT", collectorNumber = "52")
@@ -29,7 +28,7 @@ public class MuYanlingWindRider extends Card {
     public MuYanlingWindRider() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Vehicle", 3, 2, null, null,
-                List.of(CardSubtype.VEHICLE), Set.of(), Set.of(), false, false, Map.of(),
+                List.of(CardSubtype.VEHICLE), Set.of(), Set.of(), false, false, List.of(),
                 List.of(new ActivatedAbility(
                         false,
                         null,
@@ -37,7 +36,7 @@ public class MuYanlingWindRider extends Card {
                         "Crew 1")),
                 false, false, false, 0, Set.of()));
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.FLYING,
                 GrantScope.OWN_PERMANENTS,
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));

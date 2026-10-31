@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class NullGroupBiologicalAssets extends Card {
 
     public NullGroupBiologicalAssets() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ATTACK,
                 new MayEffect(new DiscardAndDrawCardEffect(), "Discard a card to draw a card?"));

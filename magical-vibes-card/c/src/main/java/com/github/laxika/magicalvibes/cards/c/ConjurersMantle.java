@@ -16,8 +16,7 @@ import java.util.Set;
 public class ConjurersMantle extends Card {
 
     public ConjurersMantle() {
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE), GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK,
                 new LookAtTopCardsCreatureSharingTypeWithEquippedToHandEffect(6));
         addActivatedAbility(new EquipActivatedAbility("{1}"));

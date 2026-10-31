@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.HeadlessSimulationContext;
@@ -523,7 +524,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 case PUMP -> {
                     if (attackers.isEmpty()) break;
                     int totalBoost = 0;
-                    for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+                    for (CardEffect effect : card.getStaticEffects()) {
                         if (effect instanceof StaticCreatureBoostEffect boost && boost.powerBoost() > 0
                                 && (boost.scope() == GrantScope.OWN_CREATURES
                                     || boost.scope() == GrantScope.ALL_OWN_CREATURES)) {
@@ -680,7 +681,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
             // Check for static power boost effects (lord/anthem)
             int totalBoost = 0;
-            for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : card.getStaticEffects()) {
                 if (effect instanceof StaticCreatureBoostEffect boost && boost.powerBoost() > 0
                         && (boost.scope() == GrantScope.OWN_CREATURES
                             || boost.scope() == GrantScope.ALL_OWN_CREATURES)) {
@@ -915,7 +916,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (card.hasType(CardType.CREATURE)) {
             if (card.getKeywords().contains(Keyword.HASTE)) return CombatRelevance.HASTE_CREATURE;
 
-            for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : card.getStaticEffects()) {
                 if (effect instanceof StaticCreatureBoostEffect boost && boost.powerBoost() > 0
                         && (boost.scope() == GrantScope.OWN_CREATURES
                             || boost.scope() == GrantScope.ALL_OWN_CREATURES)) {
@@ -2678,7 +2679,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      */
     private boolean hasMustBeBlockedIfAbleRequirement(GameData gameData, Permanent attacker) {
         if (attacker.isMustBeBlockedThisTurn()) return true;
-        boolean hasMustBlock = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+        boolean hasMustBlock = attacker.getCard().getStaticEffects().stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect.class::isInstance);
         if (hasMustBlock) return true;
         return gameQueryService.hasAuraWithEffect(gameData, attacker,

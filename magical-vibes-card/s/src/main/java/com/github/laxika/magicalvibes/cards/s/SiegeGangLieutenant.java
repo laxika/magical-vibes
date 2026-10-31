@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "M3C", collectorNumber = "61")
@@ -41,7 +40,7 @@ public class SiegeGangLieutenant extends Card {
                         Set.of(),
                         false,
                         false,
-                        Map.of(),
+                        List.of(),
                         List.of(),
                         false,
                         false,

@@ -15,7 +15,6 @@ public class MahaItsFeathersNight extends Card {
         // an opponent controls, counter it unless that player discards a card.)
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessDiscardsEffect());
 
-        addEffect(EffectSlot.STATIC,
-                new SetBasePowerToughnessEffect(null, 1, GrantScope.OPPONENT_CREATURES));
+        addStaticEffect(new SetBasePowerToughnessEffect(null, 1, GrantScope.OPPONENT_CREATURES));
     }
 }

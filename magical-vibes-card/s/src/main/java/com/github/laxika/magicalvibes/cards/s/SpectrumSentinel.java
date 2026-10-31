@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 public class SpectrumSentinel extends Card {
 
     public SpectrumSentinel() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromMulticoloredEffect());
+        addStaticEffect(new ProtectionFromMulticoloredEffect());
         addEffect(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardNotPredicate(new CardSupertypePredicate(CardSupertype.BASIC)),

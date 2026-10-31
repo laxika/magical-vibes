@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class CanopyTactician extends Card {
 
     public CanopyTactician() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ELF)));
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN, 3));
     }

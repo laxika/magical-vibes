@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 public class GlissasRetriever extends Card {
 
     public GlissasRetriever() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtMostPredicate(2)));
         addEffect(EffectSlot.ON_DEATH, new ExileSourceCardFromGraveyardThenEffect(
                 ReturnTargetCardsFromGraveyardToHandEffect.forTriggeredAbility(

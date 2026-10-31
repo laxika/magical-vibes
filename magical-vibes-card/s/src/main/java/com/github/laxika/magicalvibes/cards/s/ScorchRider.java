@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class ScorchRider extends Card {
 
     public ScorchRider() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{R}"));
+        addStaticEffect(new KickerEffect("{1}{R}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
     }

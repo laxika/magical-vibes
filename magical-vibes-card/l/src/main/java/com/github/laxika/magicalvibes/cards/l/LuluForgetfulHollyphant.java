@@ -44,7 +44,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "HBG", collectorNumber = "3")
@@ -101,7 +100,7 @@ public class LuluForgetfulHollyphant extends Card {
                     new GainLifeEffect(new EventValue()));
             case RED -> new CreateTokenEffect(CardType.CREATURE, new EventValue(), "Soldier", 1, 1,
                     CardColor.WHITE, null, List.of(CardSubtype.SOLDIER), Set.of(), Set.of(),
-                    true, false, Map.of(), List.of(), false, false, false, 0, Set.of());
+                    true, false, List.of(), List.of(), false, false, false, 0, Set.of());
             default -> throw new IllegalStateException("Unsupported Lulu specialization color: " + color);
         };
         card.addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK,

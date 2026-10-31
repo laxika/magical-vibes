@@ -12,7 +12,7 @@ public class BogHoodlums extends Card {
 
     public BogHoodlums() {
         // This creature can't block.
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
 
         // When this creature enters, clash with an opponent. If you win, put a +1/+1 counter on it.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

@@ -24,6 +24,6 @@ public class Tidewalker extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
         CountersOnSource timeCounters = new CountersOnSource(CounterType.TIME);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(timeCounters, timeCounters));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(timeCounters, timeCounters));
     }
 }

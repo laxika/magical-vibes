@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -45,11 +46,9 @@ public class PutCounterOnCombatOpponentEffectHandler implements NormalEffectHand
         permanentCounterSupport.placeCounterOnPermanent(
                 gameData, entry, target, counterEffect.counterType(), counterEffect.amount());
         if (counterEffect.grantedStaticEffect() != null
-                && !target.getPersistentTriggeredEffects(EffectSlot.STATIC)
+                && !target.getPersistentStaticEffects()
                         .contains(counterEffect.grantedStaticEffect())) {
-            target.addPersistentTriggeredEffect(
-                    EffectSlot.STATIC,
-                    counterEffect.grantedStaticEffect());
+            target.addPersistentAbility(StaticAbility.of(counterEffect.grantedStaticEffect()));
         }
         if (counterEffect.grantedUpkeepEffect() != null) {
             target.addPersistentTriggeredEffect(

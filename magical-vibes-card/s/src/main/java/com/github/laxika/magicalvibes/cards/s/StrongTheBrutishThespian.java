@@ -19,7 +19,7 @@ public class StrongTheBrutishThespian extends Card {
         addEffect(EffectSlot.ON_DEALT_DAMAGE, SequenceEffect.of(
                 new GiveControllerRadCountersEffect(3),
                 new PutCountersOnSourceEffect(1, 1, 3)));
-        addEffect(EffectSlot.STATIC, new RadiationLifeGainReplacementEffect());
+        addStaticEffect(new RadiationLifeGainReplacementEffect());
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
     }
 }

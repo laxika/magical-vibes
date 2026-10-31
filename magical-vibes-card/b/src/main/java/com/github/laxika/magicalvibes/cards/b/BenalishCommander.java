@@ -20,8 +20,7 @@ public class BenalishCommander extends Card {
     public BenalishCommander() {
         PermanentCount soldiersYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.SOLDIER), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(soldiersYouControl, soldiersYouControl));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(soldiersYouControl, soldiersYouControl));
         addEffect(EffectSlot.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE,
                 CreateTokenEffect.whiteSoldier(1));
         addHandActivatedAbility(new ActivatedAbility(

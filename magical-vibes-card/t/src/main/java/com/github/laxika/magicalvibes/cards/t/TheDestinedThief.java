@@ -26,7 +26,7 @@ import java.util.List;
 public class TheDestinedThief extends Card {
 
     public TheDestinedThief() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -16,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class VinesOfVastwood extends Card {
 
     public VinesOfVastwood() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{G}"));
+        addStaticEffect(new KickerEffect("{G}"));
 
         target(TargetFilters.creature())
                 .addSpellEffect(new GrantTargetingRestrictionToTargetUntilEndOfTurnEffect(

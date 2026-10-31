@@ -19,8 +19,8 @@ import java.util.Set;
 public class AliriosEnraptured extends Card {
 
     public AliriosEnraptured() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new EntersTappedEffect());
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.REFLECTION)),
                 DoesntUntapEffect.self()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

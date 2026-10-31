@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 public class RaphaelNinjaDestroyer extends Card {
 
     public RaphaelNinjaDestroyer() {
-        addEffect(EffectSlot.STATIC, new MustBeBlockedIfAbleEffect());
+        addStaticEffect(new MustBeBlockedIfAbleEffect());
         addEffect(EffectSlot.ON_DEALT_DAMAGE,
                 new AwardPersistentManaEffect(ManaColor.RED, new EventValue()));
     }

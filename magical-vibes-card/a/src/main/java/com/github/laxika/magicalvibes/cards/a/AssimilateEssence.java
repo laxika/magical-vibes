@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "47")
@@ -35,7 +34,7 @@ public class AssimilateEssence extends Card {
         );
         return new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Incubator", 0, 0, null, null,
-                List.of(CardSubtype.INCUBATOR), Set.of(), Set.of(), false, false, Map.of(), List.of(transform),
+                List.of(CardSubtype.INCUBATOR), Set.of(), Set.of(), false, false, List.of(), List.of(transform),
                 false, false, false, 2, Set.of()
         );
     }

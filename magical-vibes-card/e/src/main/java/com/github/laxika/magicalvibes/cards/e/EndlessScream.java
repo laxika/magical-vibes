@@ -21,7 +21,6 @@ public class EndlessScream extends Card {
                 new EnterWithCountersEffect(CounterType.SCREAM, new XValue()));
 
         // Enchanted creature gets +1/+0 for each scream counter on this Aura.
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 0, GrantScope.ENCHANTED_CREATURE, CounterType.SCREAM));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ENCHANTED_CREATURE, CounterType.SCREAM));
     }
 }

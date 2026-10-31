@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 public class LegionLoyalty extends Card {
 
     public LegionLoyalty() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ATTACK,
                 CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad(),
                 GrantScope.ALL_OWN_CREATURES));

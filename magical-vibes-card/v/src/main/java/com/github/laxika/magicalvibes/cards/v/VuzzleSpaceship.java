@@ -23,12 +23,12 @@ public class VuzzleSpaceship extends Card {
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(6)));
 
         // Thrusters [6] → Flying.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(6, CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
         // If it would be dealt damage, remove that many +1/+1 counters instead.
-        addEffect(EffectSlot.STATIC, PreventDamageAndRemovePlusOnePlusOneCountersEffect.replacingDamageWithCounterRemoval());
+        addStaticEffect(PreventDamageAndRemovePlusOnePlusOneCountersEffect.replacingDamageWithCounterRemoval());
 
         // Lasers [3] → Whenever Vuzzle Spaceship attacks, it deals 1 damage to any target.
         addEffect(EffectSlot.ON_ATTACK, ConditionalEffect.atTriggerTime(

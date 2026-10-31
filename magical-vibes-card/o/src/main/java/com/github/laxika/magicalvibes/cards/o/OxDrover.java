@@ -23,7 +23,7 @@ public class OxDrover extends Card {
 
     public OxDrover() {
         // This creature can't be blocked by Oxen.
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.OX)));
 
         // Whenever this creature enters or attacks, target opponent creates a 2/4 white Ox

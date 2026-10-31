@@ -19,8 +19,7 @@ public class ValakutExploration extends Card {
     public ValakutExploration() {
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,
                 new ExileTopCardsToSourceEffect(1, false, false));
-        addEffect(EffectSlot.STATIC,
-                new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                         false, null, false, false, 0, null, false, false, false, true));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ConditionalEffect(

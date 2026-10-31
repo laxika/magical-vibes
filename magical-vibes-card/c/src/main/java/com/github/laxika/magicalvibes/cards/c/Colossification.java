@@ -16,7 +16,6 @@ public class Colossification extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new TapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(20, 20, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(20, 20, GrantScope.ENCHANTED_CREATURE));
     }
 }

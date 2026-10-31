@@ -1870,7 +1870,7 @@ public class CombatDamageService {
             if (damageDealt <= 0) continue;
             gameData.forEachPermanent((playerId, perm) -> {
                 if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
-                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    for (CardEffect effect : perm.getCard().getStaticEffects()) {
                         if (effect instanceof GainLifeEqualToDamageDealtEffect) {
                             lifeSupport.applyGainLife(gameData, playerId, damageDealt, perm.getCard().getName(),
                                     perm.getCard(), StackEntryType.TRIGGERED_ABILITY, playerId);
@@ -5506,7 +5506,7 @@ public class CombatDamageService {
             if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) {
                 continue;
             }
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 if (effect instanceof ReplaceCombatDamageWithMillEffect replacement
                         && predicateEvaluationService.matchesPermanentPredicate(
                         attacker,
@@ -5541,8 +5541,8 @@ public class CombatDamageService {
     }
 
     private List<CardEffect> combatDamageAssignmentEffects(GameData gameData, Permanent attacker) {
-        List<CardEffect> effects = new ArrayList<>(attacker.getCard().getEffects(EffectSlot.STATIC));
-        effects.addAll(attacker.getTemporaryTriggeredEffects(EffectSlot.STATIC));
+        List<CardEffect> effects = new ArrayList<>(attacker.getCard().getStaticEffects());
+        effects.addAll(attacker.getTemporaryStaticEffects());
         effects.addAll(gameQueryService.getGrantedEffects(gameData, attacker));
         UUID attackerControllerId = gameData.findControllerOf(attacker);
         if (attackerControllerId != null) {
@@ -5568,7 +5568,7 @@ public class CombatDamageService {
                     || gameQueryService.hasLostPrintedAbilities(gameData, attachment)) {
                 return;
             }
-            attachment.getCard().getEffects(EffectSlot.STATIC).stream()
+            attachment.getCard().getStaticEffects().stream()
                     .filter(AssignCombatDamageAsThoughUnblockedEffect.class::isInstance)
                     .forEach(effects::add);
         });

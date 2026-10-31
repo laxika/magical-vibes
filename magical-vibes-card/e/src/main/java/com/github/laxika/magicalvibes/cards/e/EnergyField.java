@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 public class EnergyField extends Card {
 
     public EnergyField() {
-        addEffect(EffectSlot.STATIC, PreventDamageFromOpponentSourcesEffect.allDamage());
+        addStaticEffect(PreventDamageFromOpponentSourcesEffect.allDamage());
         addEffect(EffectSlot.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, new SacrificeSelfEffect());
     }
 }

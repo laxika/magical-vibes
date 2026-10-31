@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 public class ForcefulCultivator extends Card {
 
     public ForcefulCultivator() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerHasNoLandCardsInHand(), new ReduceOwnCastCostEffect(new Fixed(2))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));

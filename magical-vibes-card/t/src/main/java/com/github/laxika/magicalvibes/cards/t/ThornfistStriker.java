@@ -21,7 +21,7 @@ public class ThornfistStriker extends Card {
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(1));
 
         // Infusion — Creatures you control get +1/+0 and have trample as long as you gained life this turn.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GainedLifeThisTurn(),
                 new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE), GrantScope.ALL_OWN_CREATURES)));
     }

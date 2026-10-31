@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class WitchsCottage extends Card {
 
     public WitchsCottage() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCountAtMost(2, new PermanentHasSubtypePredicate(CardSubtype.SWAMP)),
                 new EntersTappedEffect()));
 

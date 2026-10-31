@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PossessedPortalDrawReplacemen
 public class PossessedPortal extends Card {
 
     public PossessedPortal() {
-        addEffect(EffectSlot.STATIC, new PossessedPortalDrawReplacementEffect());
+        addStaticEffect(new PossessedPortalDrawReplacementEffect());
         addEffect(EffectSlot.END_STEP_TRIGGERED, new EachPlayerSacrificesPermanentUnlessDiscardEffect());
     }
 }

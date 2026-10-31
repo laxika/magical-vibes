@@ -11,6 +11,6 @@ public class ArcaneAdaptation extends Card {
 
     public ArcaneAdaptation() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new GrantChosenSubtypeToOwnCreaturesEffect(true));
+        addStaticEffect(new GrantChosenSubtypeToOwnCreaturesEffect(true));
     }
 }

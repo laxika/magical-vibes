@@ -32,7 +32,7 @@ public class StarryEyedSkyrider extends Card {
                 "Target must be another creature you control"
         )).addEffect(EffectSlot.ON_ATTACK, new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.FLYING,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(

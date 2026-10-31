@@ -16,7 +16,7 @@ import java.util.List;
 public class SevinneTheChronoclasm extends Card {
 
     public SevinneTheChronoclasm() {
-        addEffect(EffectSlot.STATIC, new PreventAllDamageEffect());
+        addStaticEffect(new PreventAllDamageEffect());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, CopyControllerCastSpellOnSpellCastEffect.firstFromZoneEachTurn(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),

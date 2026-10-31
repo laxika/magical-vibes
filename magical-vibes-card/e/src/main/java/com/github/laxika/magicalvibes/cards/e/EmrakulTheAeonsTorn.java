@@ -19,11 +19,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class EmrakulTheAeonsTorn extends Card {
 
     public EmrakulTheAeonsTorn() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
 
         addEffect(EffectSlot.ON_SELF_CAST, new ControllerExtraTurnEffect(1));
 
-        addEffect(EffectSlot.STATIC, new ProtectionFromColoredSpellsEffect());
+        addStaticEffect(new ProtectionFromColoredSpellsEffect());
 
         addEffect(EffectSlot.ON_ATTACK, new SacrificePermanentsEffect(
                 6, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER));

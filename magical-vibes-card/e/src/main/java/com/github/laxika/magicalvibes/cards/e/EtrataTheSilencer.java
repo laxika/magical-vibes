@@ -17,7 +17,7 @@ import java.util.List;
 public class EtrataTheSilencer extends Card {
 
     public EtrataTheSilencer() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

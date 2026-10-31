@@ -20,6 +20,6 @@ public class BrassHerald extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RevealTopCardsMatchingToHandRestToBottomEffect(4));
 
         // Creatures of the chosen type get +1/+1 (all controllers, including Brass Herald itself).
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenSubtypeEffect(1, 1, null, true));
+        addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(1, 1, null, true));
     }
 }

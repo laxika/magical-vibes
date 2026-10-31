@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class TheGreatForest extends Card {
 
     public TheGreatForest() {
-        addEffect(EffectSlot.STATIC, new AssignCombatDamageWithToughnessEffect(GrantScope.ALL_CREATURES));
+        addStaticEffect(new AssignCombatDamageWithToughnessEffect(GrantScope.ALL_CREATURES));
         addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
                 new BoostAllOwnCreaturesEffect(0, 2),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES)));

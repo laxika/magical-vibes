@@ -17,7 +17,7 @@ public class TivadarOfThorn extends Card {
 
     public TivadarOfThorn() {
         // Protection from red
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.RED)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.RED)));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),

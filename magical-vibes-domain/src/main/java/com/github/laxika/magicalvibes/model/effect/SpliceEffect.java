@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -35,6 +36,12 @@ import java.util.stream.Collectors;
  */
 public record SpliceEffect(SpliceHost host, List<CastingCost> costs,
                            List<CardEffect> splicedEffects, Set<Keyword> splicedKeywords) implements CardEffect {
+
+    /** Splice functions while the card is in your hand (CR 702.47a). */
+    @Override
+    public AbilityZones staticAbilityZones() {
+        return AbilityZones.HAND;
+    }
 
     public SpliceEffect {
         Objects.requireNonNull(host);

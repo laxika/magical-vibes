@@ -23,6 +23,6 @@ public class ShadowTheHedgehog extends Card {
                                 new CardKeywordPredicate(Keyword.FLASH),
                                 new CardKeywordPredicate(Keyword.HASTE))),
                         new DrawCardEffect(1)));
-        addEffect(EffectSlot.STATIC, new GrantSplitSecondToControllerSpellsUsingArtifactManaEffect());
+        addStaticEffect(new GrantSplitSecondToControllerSpellsUsingArtifactManaEffect());
     }
 }

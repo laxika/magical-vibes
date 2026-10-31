@@ -28,7 +28,7 @@ public class WalkInClosetForgottenCellar extends Card {
                         .withManaCost("{3}{G}{G}")
         )));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(0), new PlayLandsFromGraveyardEffect()));
         addEffect(EffectSlot.ON_SELF_ROOM_DOOR_UNLOCKED,
                 new TriggeringRoomDoorConditionalEffect(1, SequenceEffect.of(

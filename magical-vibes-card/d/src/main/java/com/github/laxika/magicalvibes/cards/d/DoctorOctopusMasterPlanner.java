@@ -24,9 +24,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class DoctorOctopusMasterPlanner extends Card {
 
     public DoctorOctopusMasterPlanner() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.VILLAIN)));
-        addEffect(EffectSlot.STATIC, new SetControllerMaximumHandSizeEffect(8));
+        addStaticEffect(new SetControllerMaximumHandSizeEffect(8));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
                 new CardsInHandAtMost(7),
                 new DrawCardEffect(new Max(

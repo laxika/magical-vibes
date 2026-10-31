@@ -19,7 +19,7 @@ public class RighteousAuthority extends Card {
         // ATTACHED_CONTROLLER (not CONTROLLER) — "its" is the enchanted creature, not the Aura.
         CardsInHand hand = new CardsInHand(CountScope.ATTACHED_CONTROLLER);
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                .addStaticEffect(new AttachedBoostEffect(
                         hand, hand, GrantScope.ENCHANTED_CREATURE))
                 // At the beginning of the draw step of enchanted creature's controller, that player
                 // draws an additional card. Slot bakes that player as targetId.

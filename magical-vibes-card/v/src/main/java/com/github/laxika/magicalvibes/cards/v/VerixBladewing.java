@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "149")
@@ -23,7 +22,7 @@ public class VerixBladewing extends Card {
 
     public VerixBladewing() {
         // Kicker {3}
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}"));
+        addStaticEffect(new KickerEffect("{3}"));
 
         // When Verix Bladewing enters, if it was kicked, create Karox Bladewing,
         // a legendary 4/4 red Dragon creature token with flying.
@@ -31,7 +30,7 @@ public class VerixBladewing extends Card {
                 new CreateTokenEffect(CardType.CREATURE, 1, "Karox Bladewing", 4, 4,
                         CardColor.RED, null, List.of(CardSubtype.DRAGON),
                         Set.of(Keyword.FLYING), Set.of(),
-                        false, false, Map.of(), List.of(), false, false, true, 0, Set.of())
+                        false, false, List.of(), List.of(), false, false, true, 0, Set.of())
         ));
     }
 }

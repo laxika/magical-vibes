@@ -24,7 +24,7 @@ public class DesperateSentry extends Card {
 
         // Delirium — This creature gets +3/+0 as long as there are four or more card types among
         // cards in your graveyard.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new Delirium(), new StaticBoostEffect(3, 0, GrantScope.SELF)));
     }
 }

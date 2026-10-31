@@ -30,17 +30,17 @@ public class GreymondAvacynsStalwart extends Card {
                 FIRST_STRIKE_VIGILANCE, FIRST_STRIKE_LIFELINK, VIGILANCE_LIFELINK)));
 
         PermanentHasSubtypePredicate human = new PermanentHasSubtypePredicate(CardSubtype.HUMAN);
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceHasChosenMode(FIRST_STRIKE_VIGILANCE),
+        addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(FIRST_STRIKE_VIGILANCE),
                 new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE),
                         GrantScope.ALL_OWN_CREATURES, human)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceHasChosenMode(FIRST_STRIKE_LIFELINK),
+        addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(FIRST_STRIKE_LIFELINK),
                 new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.LIFELINK),
                         GrantScope.ALL_OWN_CREATURES, human)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceHasChosenMode(VIGILANCE_LIFELINK),
+        addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(VIGILANCE_LIFELINK),
                 new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.LIFELINK),
                         GrantScope.ALL_OWN_CREATURES, human)));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(4, human),
                 new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES, human)));
     }

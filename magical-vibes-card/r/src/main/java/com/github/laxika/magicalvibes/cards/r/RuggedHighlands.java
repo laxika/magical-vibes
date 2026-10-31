@@ -30,7 +30,7 @@ import java.util.List;
 public class RuggedHighlands extends Card {
 
     public RuggedHighlands() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(1));
         addActivatedAbility(new ActivatedAbility(
                 true,

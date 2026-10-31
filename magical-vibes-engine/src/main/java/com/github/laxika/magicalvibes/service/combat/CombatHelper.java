@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.service.combat;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfAttackingAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect;
@@ -36,8 +36,8 @@ public final class CombatHelper {
                                                           List<Permanent> defenderBattlefield) {
         boolean landwalkIgnored = isLandwalkIgnoredForBlocking(gameData)
                 || isLandwalkIgnoredForBlocking(gameData, attacker.getId());
-        List<CardEffect> declaredStaticEffects = new java.util.ArrayList<>(attacker.getCard().getEffects(EffectSlot.STATIC));
-        declaredStaticEffects.addAll(attacker.getTemporaryTriggeredEffects(EffectSlot.STATIC));
+        List<CardEffect> declaredStaticEffects = new java.util.ArrayList<>(attacker.getCard().getStaticEffects());
+        declaredStaticEffects.addAll(attacker.getTemporaryStaticEffects());
         for (CardEffect effect : declaredStaticEffects) {
             if (effect instanceof BlockabilityRestrictionEffect restriction) {
                 if (hasUnmetSharedTypeCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
@@ -79,7 +79,7 @@ public final class CombatHelper {
                     || source.isAuraEffectsIgnoredFor(gameQueryService.findPermanentController(gameData, attacker.getId()))) {
                 return;
             }
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : source.getCard().getStaticEffects()) {
                 if (effect instanceof BlockabilityRestrictionEffect restriction) {
                     if (hasUnmetSharedTypeCondition(gameQueryService, gameData, defenderBattlefield, restriction)) {
                         result[0] = true;
@@ -125,7 +125,7 @@ public final class CombatHelper {
     public static boolean isLandwalkIgnoredForBlocking(GameData gameData) {
         boolean[] found = {false};
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (!found[0] && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+            if (!found[0] && permanent.getCard().getStaticEffects().stream()
                     .anyMatch(effect -> effect instanceof LandwalkIgnoredForBlockingEffect landwalkEffect
                             && landwalkEffect.ignoresAllLandwalk())) {
                 found[0] = true;
@@ -245,7 +245,7 @@ public final class CombatHelper {
         });
         if (gameData.planechase != null) {
             for (var planar : gameData.planechase.faceUp) {
-                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     validateMaximumAttackers(limitOrNull(effect), gameData.planechase.controllerId,
                             planar.getId(), attackerIndices, attackTargets);
                 }
@@ -260,7 +260,7 @@ public final class CombatHelper {
             if (gameData.faceDownCommandZoneCards.contains(card.getId())) {
                 continue;
             }
-            for (CardEffect effect : card.getEffects(EffectSlot.COMMAND_ZONE_STATIC)) {
+            for (CardEffect effect : card.getStaticEffects(Zone.COMMAND)) {
                 if (effect instanceof CombatAttackCountRestrictionEffect restriction
                         && !restriction.allowsAttackCount(attackerCount)) {
                     throw new IllegalStateException(restriction.restrictionViolationMessage());
@@ -303,14 +303,14 @@ public final class CombatHelper {
                                          StaticEffectConditionResolver conditionResolver) {
         int[] maximum = {Integer.MAX_VALUE};
         gameData.forEachPermanent((sourceControllerId, permanent) -> {
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 CardEffect activeEffect = conditionResolver == null ? effect
                         : conditionResolver.resolve(gameData, permanent, sourceControllerId, effect);
                 if (activeEffect instanceof CombatCreatureLimitEffect limit) {
                     maximum[0] = Math.min(maximum[0], limit.maxBlockers());
                 }
             }
-            for (CardEffect effect : permanent.getTemporaryTriggeredEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getTemporaryStaticEffects()) {
                 if (effect instanceof CombatCreatureLimitEffect limit) {
                     maximum[0] = Math.min(maximum[0], limit.maxBlockers());
                 }
@@ -318,7 +318,7 @@ public final class CombatHelper {
         });
         if (gameData.planechase != null) {
             for (var planar : gameData.planechase.faceUp) {
-                for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : planar.getCard().getStaticEffects()) {
                     if (effect instanceof CombatCreatureLimitEffect limit) {
                         maximum[0] = Math.min(maximum[0], limit.maxBlockers());
                     }

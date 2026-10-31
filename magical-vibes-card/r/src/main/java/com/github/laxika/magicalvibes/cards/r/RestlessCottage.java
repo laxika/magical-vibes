@@ -34,7 +34,7 @@ public class RestlessCottage extends Card {
             )));
 
     public RestlessCottage() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

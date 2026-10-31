@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SetControllerMaximumHandSizeE
 public class TheTenRings extends Card {
 
     public TheTenRings() {
-        addEffect(EffectSlot.STATIC, new SetControllerMaximumHandSizeEffect(10));
+        addStaticEffect(new SetControllerMaximumHandSizeEffect(10));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ConditionalEffect(
                 new CardsInHandAtMost(9),
                 new DrawCardEffect(new Max(

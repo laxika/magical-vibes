@@ -17,12 +17,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 public class BrotherhoodRegalia extends Card {
 
     public BrotherhoodRegalia() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(2), GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantSubtypeEffect(CardSubtype.ASSASSIN, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ASSASSIN, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new CantBeBlockedEffect());
 
         addActivatedAbility(new EquipActivatedAbility(
                 "{1}",

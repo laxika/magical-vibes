@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 public class GlintRaker extends Card {
 
     public GlintRaker() {
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 new GreatestManaValueAmongControlled(new PermanentIsArtifactPredicate()),
                 new Fixed(0), GrantScope.SELF));
 

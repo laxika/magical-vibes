@@ -31,9 +31,9 @@ public class GastalRaider extends Card {
                 List.of(CardType.INSTANT, CardType.SORCERY),
                 HandChoiceDestination.DISCARD
         ));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new MaxSpeed(),
+        addStaticEffect(new ConditionalEffect(new MaxSpeed(),
                 new StaticBoostEffect(1, 1, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new MaxSpeed(),
+        addStaticEffect(new ConditionalEffect(new MaxSpeed(),
                 new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)));
     }
 }

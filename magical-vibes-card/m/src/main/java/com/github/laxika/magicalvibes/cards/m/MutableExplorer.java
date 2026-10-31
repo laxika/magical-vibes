@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "186")
@@ -33,7 +33,7 @@ public class MutableExplorer extends Card {
                 Set.of(),
                 false,
                 true,
-                Map.of(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS)),
+                List.of(LegacySlots.triggered(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.COLORLESS))),
                 List.of(new ActivatedAbility(
                         false,
                         "{1}",

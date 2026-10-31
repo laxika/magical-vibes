@@ -32,8 +32,7 @@ public class TheThirdDoctor extends Card {
                         new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
                 CountScope.CONTROLLER);
 
-        addEffect(EffectSlot.STATIC,
-                new DynamicStaticBoostEffect(noncreatureTokens, noncreatureTokens, GrantScope.SELF));
+        addStaticEffect(new DynamicStaticBoostEffect(noncreatureTokens, noncreatureTokens, GrantScope.SELF));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a Clue token", CreateTokenEffect.ofClueToken(1)),

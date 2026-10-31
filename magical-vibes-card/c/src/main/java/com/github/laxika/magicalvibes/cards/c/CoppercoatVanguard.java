@@ -19,8 +19,8 @@ public class CoppercoatVanguard extends Card {
     public CoppercoatVanguard() {
         var humanFilter = new PermanentHasSubtypePredicate(CardSubtype.HUMAN);
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES, humanFilter));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES, humanFilter));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(1),
                 GrantScope.OWN_CREATURES,

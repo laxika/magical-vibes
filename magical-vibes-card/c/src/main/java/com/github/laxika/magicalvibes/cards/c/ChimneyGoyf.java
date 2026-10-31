@@ -18,7 +18,7 @@ public class ChimneyGoyf extends Card {
 
     public ChimneyGoyf() {
         CardTypesAmongCardsInGraveyard cardTypes = new CardTypesAmongCardsInGraveyard(CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 cardTypes, new Sum(cardTypes, new Fixed(1))));
 
         target(new PlayerPredicateTargetFilter(

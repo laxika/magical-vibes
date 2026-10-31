@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ECC", collectorNumber = "21")
@@ -50,7 +49,7 @@ public class WickersmithsTools extends Card {
                                 Set.of(CardType.ARTIFACT),
                                 false,
                                 true,
-                                Map.of(),
+                                List.of(),
                                 List.of(),
                                 false,
                                 false,

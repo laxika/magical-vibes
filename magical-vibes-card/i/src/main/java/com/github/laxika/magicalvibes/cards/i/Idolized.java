@@ -25,7 +25,7 @@ public class Idolized extends Card {
                 new PermanentNotPredicate(new PermanentIsLandPredicate()), CountScope.CONTROLLER);
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ATTACK,
                         new ConditionalEffect(new AttacksAlone(),
                                 new BoostSelfEffect(nonlandPermanents, nonlandPermanents)),

@@ -16,6 +16,6 @@ public class ManticoreEternal extends Card {
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new LoseLifeEffect(3, LoseLifeRecipient.DEFENDING_PLAYER));
 
         // This creature attacks each combat if able.
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
     }
 }

@@ -20,6 +20,6 @@ public class SublimeArchangel extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new ConditionalEffect(new AttacksAlone(), new BoostTargetCreatureEffect(1, 1)));
         // Other creatures you control have exalted; each granted instance is keyword-driven.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.EXALTED, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.EXALTED, GrantScope.OWN_CREATURES));
     }
 }

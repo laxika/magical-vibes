@@ -16,6 +16,6 @@ public class InfernalDarkness extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{B}", 1));
 
         // If a land is tapped for mana, it produces {B} instead of any other type.
-        addEffect(EffectSlot.STATIC, new ReplaceLandManaWithColorEffect(ManaColor.BLACK));
+        addStaticEffect(new ReplaceLandManaWithColorEffect(ManaColor.BLACK));
     }
 }

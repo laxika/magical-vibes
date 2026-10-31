@@ -22,7 +22,7 @@ public class SpiderHamPeterPorker extends Card {
 
     public SpiderHamPeterPorker() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, foodToken());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(
                         CardSubtype.SPIDER,
                         CardSubtype.BOAR,

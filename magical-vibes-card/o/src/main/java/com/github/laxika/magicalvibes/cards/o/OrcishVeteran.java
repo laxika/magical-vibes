@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -32,7 +31,7 @@ public class OrcishVeteran extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE)),
                 new PermanentPowerAtLeastPredicate(2)
         ));
-        addEffect(EffectSlot.STATIC, new CanBlockOnlyIfAttackerMatchesPredicateEffect(
+        addStaticEffect(new CanBlockOnlyIfAttackerMatchesPredicateEffect(
                 new PermanentNotPredicate(whiteCreatureWithPowerAtLeastTwo),
                 "creatures that aren't white creatures with power 2 or greater"
         ));

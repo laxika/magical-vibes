@@ -16,8 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect
 public class CourserOfKruphix extends Card {
 
     public CourserOfKruphix() {
-        addEffect(EffectSlot.STATIC, new PlayWithTopCardRevealedEffect());
-        addEffect(EffectSlot.STATIC, new PlayLandsFromTopOfLibraryEffect());
+        addStaticEffect(new PlayWithTopCardRevealedEffect());
+        addStaticEffect(new PlayLandsFromTopOfLibraryEffect());
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD, new GainLifeEffect(1));
     }
 }

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class ScytheOfTheWretched extends Card {
 
     public ScytheOfTheWretched() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_DAMAGED_CREATURE_DIES, new ReturnDyingCreatureToBattlefieldEffect(true));
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }

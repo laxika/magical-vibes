@@ -28,8 +28,7 @@ public class ArachnePsionicWeaver extends Card {
                         new PermanentIsCreaturePredicate(), new PermanentIsTappedPredicate()))))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseCardTypeOnEnterEffect(List.of(CardType.CREATURE), true));
-        addEffect(EffectSlot.STATIC,
-                new IncreaseSpellCostEffect(new CardHasSourceChosenCardTypePredicate(), 1,
+        addStaticEffect(new IncreaseSpellCostEffect(new CardHasSourceChosenCardTypePredicate(), 1,
                         CostModificationScope.ALL));
     }
 }

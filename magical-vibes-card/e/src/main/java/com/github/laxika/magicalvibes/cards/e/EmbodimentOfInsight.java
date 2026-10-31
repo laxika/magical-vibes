@@ -23,8 +23,7 @@ import java.util.Set;
 public class EmbodimentOfInsight extends Card {
 
     public EmbodimentOfInsight() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_PERMANENTS,
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_PERMANENTS,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsLandPredicate(),
                                 new PermanentIsCreaturePredicate()

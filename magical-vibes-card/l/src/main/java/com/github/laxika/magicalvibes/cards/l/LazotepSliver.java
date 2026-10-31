@@ -25,7 +25,7 @@ public class LazotepSliver extends Card {
 
     public LazotepSliver() {
         // Sliver creatures you control have afflict 2.
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_BLOCKED,
                 new LoseLifeEffect(2, LoseLifeRecipient.DEFENDING_PLAYER),
                 GrantScope.ALL_OWN_CREATURES,

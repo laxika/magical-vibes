@@ -16,10 +16,10 @@ public class DarkbladeAgent extends Card {
 
     public DarkbladeAgent() {
         ControllerSurveiledThisTurn surveiledThisTurn = new ControllerSurveiledThisTurn();
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 surveiledThisTurn,
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 surveiledThisTurn,
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,

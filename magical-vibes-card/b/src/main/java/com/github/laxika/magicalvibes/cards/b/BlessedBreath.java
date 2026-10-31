@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -14,6 +13,6 @@ public class BlessedBreath extends Card {
     public BlessedBreath() {
         target(TargetFilters.creatureYouControl())
                 .addSpellEffect(new GrantProtectionChoiceUntilEndOfTurnEffect());
-        addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{W}"));
+        addStaticEffect(new SpliceEffect(CardSubtype.ARCANE, "{W}"));
     }
 }

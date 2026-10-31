@@ -24,7 +24,7 @@ import java.util.List;
 public class FrostpyreArcanist extends Card {
 
     public FrostpyreArcanist() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentAnyOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.GIANT),
                         new PermanentHasSubtypePredicate(CardSubtype.WIZARD)))),

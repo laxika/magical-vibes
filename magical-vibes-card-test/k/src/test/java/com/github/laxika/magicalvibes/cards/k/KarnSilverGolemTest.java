@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.c.ClawsOfGix;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HoppingAutomaton;
 import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -189,7 +188,7 @@ class KarnSilverGolemTest extends BaseCardTest {
     @DisplayName("Blocking multiple creatures gives Karn -4/+4 only once")
     void blockingMultipleCreaturesGivesOneBoost() {
         KarnSilverGolem card = new KarnSilverGolem();
-        card.addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        card.addStaticEffect(new CanBlockAnyNumberOfCreaturesEffect());
         Permanent karn = addCreatureReady(player1, card);
         Permanent firstAttacker = addReadyHippo(player2);
         firstAttacker.setAttacking(true);

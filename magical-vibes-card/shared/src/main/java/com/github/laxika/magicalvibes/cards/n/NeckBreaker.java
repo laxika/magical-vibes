@@ -16,10 +16,8 @@ public class NeckBreaker extends Card {
     public NeckBreaker() {
         PermanentIsAttackingPredicate attacking = new PermanentIsAttackingPredicate();
 
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES, attacking));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES, attacking));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES, attacking));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES, attacking));
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), new TransformSelfEffect()));
     }

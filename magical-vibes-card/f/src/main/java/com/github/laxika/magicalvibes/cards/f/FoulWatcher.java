@@ -14,7 +14,7 @@ public class FoulWatcher extends Card {
 
     public FoulWatcher() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SurveilEffect(1));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new Delirium(), new StaticBoostEffect(1, 0, GrantScope.SELF)));
     }
 }

@@ -12,7 +12,7 @@ public class IllusoryGains extends Card {
 
     public IllusoryGains() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect())
+                .addStaticEffect(new ControlEnchantedCreatureEffect())
                 .addEffect(EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
                         new AttachSourceAuraToEnteringCreatureEffect(false));
     }

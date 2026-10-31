@@ -17,7 +17,7 @@ public class MadameHydraReanimated extends Card {
     public MadameHydraReanimated() {
         CardsInGraveyard creatureCards =
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(creatureCards, creatureCards));
+        addStaticEffect(new BoostSelfEffect(creatureCards, creatureCards));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(2, MillRecipient.CONTROLLER));
         addEffect(EffectSlot.ON_ATTACK, new MillEffect(2, MillRecipient.CONTROLLER));
     }

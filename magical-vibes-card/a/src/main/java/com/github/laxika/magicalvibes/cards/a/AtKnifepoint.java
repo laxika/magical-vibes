@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OTJ", collectorNumber = "193")
@@ -34,7 +33,7 @@ public class AtKnifepoint extends Card {
             CardSubtype.WARLOCK);
 
     public AtKnifepoint() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES,
                         new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES))));
@@ -46,7 +45,7 @@ public class AtKnifepoint extends Card {
     private static CreateTokenEffect mercenaryToken() {
         return new CreateTokenEffect(
                 CardType.CREATURE, 1, "Mercenary", 1, 1, CardColor.RED, null,
-                List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, Map.of(),
+                List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, List.of(),
                 List.of(new ActivatedAbility(
                         true,
                         null,

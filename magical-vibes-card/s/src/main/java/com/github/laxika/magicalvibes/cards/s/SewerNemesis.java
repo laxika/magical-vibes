@@ -23,8 +23,7 @@ public class SewerNemesis extends Card {
 
         CardsInGraveyard chosenPlayerGraveyard =
                 new CardsInGraveyard(null, CountScope.CHOSEN_PLAYER);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(chosenPlayerGraveyard, chosenPlayerGraveyard));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(chosenPlayerGraveyard, chosenPlayerGraveyard));
 
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,
                 new SpellCastTriggerEffect(

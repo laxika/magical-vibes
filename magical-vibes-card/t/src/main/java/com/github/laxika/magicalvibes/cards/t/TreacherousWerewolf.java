@@ -15,9 +15,9 @@ public class TreacherousWerewolf extends Card {
 
     public TreacherousWerewolf() {
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new StaticBoostEffect(2, 2, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new GrantTriggeredAbilityEffect(EffectSlot.ON_DEATH, new LoseLifeEffect(4), GrantScope.SELF)));
     }
 }

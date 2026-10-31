@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NEO", collectorNumber = "194")
@@ -30,7 +29,7 @@ public class JuganDefendsTheTemple extends Card {
         CreateTokenEffect humanMonk = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Human Monk", 1, 1, CardColor.GREEN, null,
                 List.of(CardSubtype.HUMAN, CardSubtype.MONK), Set.of(), Set.of(), false, false,
-                Map.of(), List.of(new ActivatedAbility(
+                List.of(), List.of(new ActivatedAbility(
                         true, null,
                         List.of(new AwardManaEffect(ManaColor.GREEN)),
                         "{T}: Add {G}."

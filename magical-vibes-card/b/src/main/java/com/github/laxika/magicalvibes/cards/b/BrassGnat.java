@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 public class BrassGnat extends Card {
 
     public BrassGnat() {
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayPayManaEffect(
                 "{1}",
                 new UntapPermanentsEffect(TapUntapScope.SELF),

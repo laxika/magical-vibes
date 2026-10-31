@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "BRO", collectorNumber = "203")
@@ -41,7 +40,7 @@ public class RootwireAmalgam extends Card {
                                 Set.of(CardType.ARTIFACT),
                                 false,
                                 false,
-                                Map.of(),
+                                List.of(),
                                 List.of(),
                                 false,
                                 false,

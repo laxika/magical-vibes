@@ -15,7 +15,7 @@ public class EdgeOfMalacol extends Card {
 
     public EdgeOfMalacol() {
         PermanentIsCreaturePredicate creatures = new PermanentIsCreaturePredicate();
-        addEffect(EffectSlot.STATIC, new PutCountersInsteadOfUntappingEffect(
+        addStaticEffect(new PutCountersInsteadOfUntappingEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 2, creatures));
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED, creatures));

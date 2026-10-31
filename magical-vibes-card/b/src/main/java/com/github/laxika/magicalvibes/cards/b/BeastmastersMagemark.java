@@ -17,7 +17,7 @@ public class BeastmastersMagemark extends Card {
 
     public BeastmastersMagemark() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                         new PermanentIsEnchantedPredicate()))
                 .addEffect(EffectSlot.ON_ALLY_CREATURE_BECOMES_BLOCKED,
                         new TriggeringPermanentConditionalEffect(new PermanentIsEnchantedPredicate(),

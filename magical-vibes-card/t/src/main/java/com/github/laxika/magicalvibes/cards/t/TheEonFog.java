@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 public class TheEonFog extends Card {
 
     public TheEonFog() {
-        addEffect(EffectSlot.STATIC, new PlayersSkipUntapStepEffect());
+        addStaticEffect(new PlayersSkipUntapStepEffect());
         addEffect(EffectSlot.CHAOS_TRIGGERED, new UntapPermanentsEffect(TapUntapScope.CONTROLLED));
     }
 }

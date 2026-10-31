@@ -26,7 +26,7 @@ import java.util.List;
 public class IdrisSoulOfTheTARDIS extends Card {
 
     public IdrisSoulOfTheTARDIS() {
-        addEffect(EffectSlot.STATIC, new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
+        addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
         PermanentPredicate artifactYouControl = new PermanentAllOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
@@ -35,8 +35,8 @@ public class IdrisSoulOfTheTARDIS extends Card {
                 new PermanentIsArtifactPredicate(), "Target must be an artifact you control"))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ExileTargetPermanentUntilSourceLeavesEffect(true, artifactYouControl));
-        addEffect(EffectSlot.STATIC, new GainActivatedAndTriggeredAbilitiesOfExiledCardsEffect());
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(
+        addStaticEffect(new GainActivatedAndTriggeredAbilitiesOfExiledCardsEffect());
+        addStaticEffect(new BoostSelfEffect(
                 new ImprintedCardManaValue(), new ImprintedCardManaValue()));
     }
 }

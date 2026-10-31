@@ -22,7 +22,7 @@ public class DisturbingConversion extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(2, MillRecipient.CONTROLLER))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(2, MillRecipient.EACH_OPPONENT))
-                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                .addStaticEffect(new AttachedBoostEffect(
                         new Scaled(attachedControllersGraveyard, -1),
                         new Fixed(0),
                         GrantScope.ENCHANTED_CREATURE));

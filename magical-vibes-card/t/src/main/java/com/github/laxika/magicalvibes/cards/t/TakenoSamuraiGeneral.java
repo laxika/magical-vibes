@@ -12,6 +12,6 @@ public class TakenoSamuraiGeneral extends Card {
     public TakenoSamuraiGeneral() {
         addEffect(EffectSlot.ON_BLOCK, new BushidoEffect(2));
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new BushidoEffect(2));
-        addEffect(EffectSlot.STATIC, new BoostByBushidoEffect());
+        addStaticEffect(new BoostByBushidoEffect());
     }
 }

@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "FUT", collectorNumber = "22")
@@ -38,7 +37,7 @@ public class GoldmeadowLookout extends Card {
                                 Set.of(),
                                 false,
                                 false,
-                                Map.of(),
+                                List.of(),
                                 List.of(new ActivatedAbility(
                                         true,
                                         "{W}",

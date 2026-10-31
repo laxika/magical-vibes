@@ -15,7 +15,7 @@ public class RaggedShortSpear extends Card {
     public RaggedShortSpear() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new DiscardAndDrawCardEffect(1, 2), "Discard a card to draw two cards?"));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

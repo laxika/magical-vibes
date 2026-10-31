@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
@@ -16,6 +15,6 @@ public class SlagFiend extends Card {
     public SlagFiend() {
         CardsInGraveyard artifactsInAllGraveyards =
                 new CardsInGraveyard(new CardTypePredicate(CardType.ARTIFACT), CountScope.ANY_PLAYER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(artifactsInAllGraveyards, artifactsInAllGraveyards));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(artifactsInAllGraveyards, artifactsInAllGraveyards));
     }
 }

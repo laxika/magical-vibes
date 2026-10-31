@@ -17,7 +17,6 @@ public class BoonOfTheSpiritRealm extends Card {
                 new PutCountersOnSelfEffect(CounterType.BLESSING));
         addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
                 new PutCountersOnSelfEffect(CounterType.BLESSING));
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES, CounterType.BLESSING));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES, CounterType.BLESSING));
     }
 }

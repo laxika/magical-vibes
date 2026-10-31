@@ -21,7 +21,7 @@ public class PurrajOfUrborg extends Card {
 
     public PurrajOfUrborg() {
         // Purraj has first strike as long as it's attacking.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceIsAttacking(),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
 

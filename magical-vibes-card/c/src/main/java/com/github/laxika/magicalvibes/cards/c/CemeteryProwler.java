@@ -13,6 +13,6 @@ public class CemeteryProwler extends Card {
     public CemeteryProwler() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileAnyGraveyardCardAndImprintOnSourceEffect());
         addEffect(EffectSlot.ON_ATTACK, new ExileAnyGraveyardCardAndImprintOnSourceEffect());
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostForEachSharedCardTypeWithExiledCardsEffect());
+        addStaticEffect(new ReduceOwnCastCostForEachSharedCardTypeWithExiledCardsEffect());
     }
 }

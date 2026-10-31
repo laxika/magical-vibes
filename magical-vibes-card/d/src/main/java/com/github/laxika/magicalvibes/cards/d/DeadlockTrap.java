@@ -24,7 +24,7 @@ import java.util.List;
 public class DeadlockTrap extends Card {
 
     public DeadlockTrap() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnergyCountersEffect(2));
 
         addActivatedAbility(new ActivatedAbility(

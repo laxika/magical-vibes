@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTwoCreaturesSharingTypeCost;
@@ -15,7 +14,7 @@ import java.util.List;
 public class WeightOfConscience extends Card {
 
     public WeightOfConscience() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect(true, false));
+        target(TargetFilters.creature()).addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect(true, false));
         addActivatedAbility(new ActivatedAbility(false, null,
                 List.of(new TapTwoCreaturesSharingTypeCost(), new ExileEnchantedCreatureEffect()),
                 "Tap two untapped creatures you control that share a creature type: Exile enchanted creature."));

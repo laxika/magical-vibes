@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
@@ -85,7 +84,7 @@ class DromosaurTest extends BaseCardTest {
     @DisplayName("When Dromosaur blocks multiple creatures, it gets +2/-2 only once")
     void blocksMultipleCreaturesGetsOneBoost() {
         Dromosaur card = new Dromosaur();
-        card.addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        card.addStaticEffect(new CanBlockAnyNumberOfCreaturesEffect());
         Permanent dromosaur = addCreatureReady(player2, card);
 
         Permanent firstAttacker = addCreatureReady(player1, new GorillaWarrior());

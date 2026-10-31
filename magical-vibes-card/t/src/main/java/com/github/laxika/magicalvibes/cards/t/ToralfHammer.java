@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -18,7 +17,7 @@ import java.util.List;
 public class ToralfHammer extends Card {
 
     public ToralfHammer() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         "{1}{R}",
@@ -32,7 +31,7 @@ public class ToralfHammer extends Card {
                 ),
                 GrantScope.EQUIPPED_CREATURE
         ));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 3, 0, GrantScope.EQUIPPED_CREATURE,
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
         addActivatedAbility(new EquipActivatedAbility("{1}{R}"));

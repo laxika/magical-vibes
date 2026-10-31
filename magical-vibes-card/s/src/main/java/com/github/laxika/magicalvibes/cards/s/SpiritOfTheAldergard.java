@@ -25,7 +25,7 @@ public class SpiritOfTheAldergard extends Card {
                 new CardAllOfPredicate(List.of(
                         new CardSupertypePredicate(CardSupertype.SNOW),
                         new CardTypePredicate(CardType.LAND)))));
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(
+        addStaticEffect(new BoostSelfEffect(
                 new PermanentCount(new PermanentHasSupertypePredicate(CardSupertype.SNOW), CountScope.CONTROLLER, true),
                 new Fixed(0)));
     }

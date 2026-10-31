@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class TheArgentEtchings extends Card {
@@ -44,7 +43,7 @@ public class TheArgentEtchings extends Card {
         );
         var incubator = new CreateTokenEffect(
                 CardType.ARTIFACT, 5, "Incubator", 0, 0, null, null,
-                List.of(), Set.of(), Set.of(), false, false, Map.of(), List.of(incubatorTransform),
+                List.of(), Set.of(), Set.of(), false, false, List.of(), List.of(incubatorTransform),
                 false, false, false, 2, Set.of()
         );
         var incubatorTokens = new PermanentAllOfPredicate(List.of(

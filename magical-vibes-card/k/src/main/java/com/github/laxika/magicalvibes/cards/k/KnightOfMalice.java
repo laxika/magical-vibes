@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -22,9 +21,9 @@ public class KnightOfMalice extends Card {
         removeKeyword(Keyword.HEXPROOF);
 
         // Hexproof from white
-        addEffect(EffectSlot.STATIC, TargetingRestrictionEffect.hexproofFromColors(Set.of(CardColor.WHITE)));
+        addStaticEffect(TargetingRestrictionEffect.hexproofFromColors(Set.of(CardColor.WHITE)));
 
         // This creature gets +1/+0 as long as any player controls a white permanent.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new AnyPlayerControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.WHITE))), new StaticBoostEffect(1, 0, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new AnyPlayerControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.WHITE))), new StaticBoostEffect(1, 0, GrantScope.SELF)));
     }
 }

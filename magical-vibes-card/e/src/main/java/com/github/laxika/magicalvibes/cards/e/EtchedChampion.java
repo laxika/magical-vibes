@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -16,7 +15,7 @@ import java.util.Set;
 public class EtchedChampion extends Card {
 
     public EtchedChampion() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Metalcraft(), 
+        addStaticEffect(new ConditionalEffect(new Metalcraft(), 
                 new ProtectionFromColorsEffect(Set.of(
                         CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN
                 ))

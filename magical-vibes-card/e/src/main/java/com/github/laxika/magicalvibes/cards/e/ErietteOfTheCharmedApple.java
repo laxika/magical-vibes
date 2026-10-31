@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class ErietteOfTheCharmedApple extends Card {
 
     public ErietteOfTheCharmedApple() {
-        addEffect(EffectSlot.STATIC, new CreaturesCantAttackControllerUnlessPredicateEffect(
+        addStaticEffect(new CreaturesCantAttackControllerUnlessPredicateEffect(
                 new PermanentNotPredicate(new PermanentIsEnchantedBySourceControllerAuraPredicate()),
                 true));
 

@@ -17,7 +17,7 @@ public class TyrannicalPitlord extends Card {
 
     public TyrannicalPitlord() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseAnotherCreatureOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 3, 3, Set.of(Keyword.FLYING), GrantScope.ALL_CREATURES,
                 new PermanentIsChosenPermanentPredicate()));
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,

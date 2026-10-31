@@ -14,8 +14,8 @@ import java.util.Set;
 public class HaktosTheUnscarred extends Card {
 
     public HaktosTheUnscarred() {
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseRandomNumberOnEnterEffect(2, 4));
-        addEffect(EffectSlot.STATIC, new ProtectionFromAllOtherManaValuesEffect(Set.of(2, 3, 4)));
+        addStaticEffect(new ProtectionFromAllOtherManaValuesEffect(Set.of(2, 3, 4)));
     }
 }

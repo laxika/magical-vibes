@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -59,7 +58,7 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
         Card sourceCard = source == null ? entry.getTargetingCard() : source.getCard();
         List<AllowCastFromCardsExiledWithSourceEffect> persistentPermissions = sourceCard == null
                 ? List.of()
-                : sourceCard.getEffects(EffectSlot.STATIC).stream()
+                : sourceCard.getStaticEffects().stream()
                 .filter(AllowCastFromCardsExiledWithSourceEffect.class::isInstance)
                 .map(AllowCastFromCardsExiledWithSourceEffect.class::cast)
                 .filter(AllowCastFromCardsExiledWithSourceEffect::persistsAfterSourceLeaves)

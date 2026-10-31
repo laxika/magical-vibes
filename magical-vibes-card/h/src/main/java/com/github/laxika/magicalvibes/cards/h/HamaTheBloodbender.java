@@ -25,8 +25,7 @@ public class HamaTheBloodbender extends Card {
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
 
-        addEffect(EffectSlot.STATIC,
-                AllowCastFromCardsExiledWithSourceEffect.forWaterbendManaValue(noncreatureNonland));
+        addStaticEffect(AllowCastFromCardsExiledWithSourceEffect.forWaterbendManaValue(noncreatureNonland));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

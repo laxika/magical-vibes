@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -24,8 +23,7 @@ import java.util.List;
 public class NicolBolasDragonGod extends Card {
 
     public NicolBolasDragonGod() {
-        addEffect(EffectSlot.STATIC,
-                new GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect());
+        addStaticEffect(new GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

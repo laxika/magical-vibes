@@ -26,7 +26,7 @@ public class JoGrant extends Card {
         ActivatedAbility cycling = new ActivatedAbility(false, "{2}{W}",
                 List.of(new DrawCardEffect(1)),
                 "Cycling {2}{W} ({2}{W}, Discard this card: Draw a card.)");
-        addEffect(EffectSlot.STATIC, new GrantHandActivatedAbilityToCardsEffect(
+        addStaticEffect(new GrantHandActivatedAbilityToCardsEffect(
                 cycling, new CardIsHistoricPredicate(), true));
     }
 }

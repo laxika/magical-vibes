@@ -11,6 +11,6 @@ public class AlloyGolem extends Card {
 
     public AlloyGolem() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new BecomeChosenColorEffect());
+        addStaticEffect(new BecomeChosenColorEffect());
     }
 }

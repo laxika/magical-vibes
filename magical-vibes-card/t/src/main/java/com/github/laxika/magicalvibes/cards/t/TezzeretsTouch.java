@@ -16,8 +16,7 @@ public class TezzeretsTouch extends Card {
     public TezzeretsTouch() {
         // Enchant artifact. Enchanted artifact is a 5/5 creature in addition to its other types.
         target(TargetFilters.artifact())
-                .addEffect(EffectSlot.STATIC,
-                        new EnchantedPermanentBecomesCreatureEffect(5, 5, null, List.of()))
+                .addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(5, 5, null, List.of()))
                 // When enchanted artifact is put into a graveyard, return that card to its owner's hand.
                 .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
                         new ReturnEnchantedCreatureToOwnerHandOnDeathEffect());

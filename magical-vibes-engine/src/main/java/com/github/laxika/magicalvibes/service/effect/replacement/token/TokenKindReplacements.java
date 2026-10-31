@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.replacement.token;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -102,7 +101,7 @@ public class TokenKindReplacements implements ReplacementCandidateSource<TokenCr
             if (permanent.isFaceDown() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
                 continue;
             }
-            List<CardEffect> statics = permanent.getCard().getEffects(EffectSlot.STATIC);
+            List<CardEffect> statics = permanent.getCard().getStaticEffects();
             for (int i = 0; i < statics.size(); i++) {
                 CardEffect effect = statics.get(i);
                 if (permanent.isStaticEffectSuppressed(effect.getClass())) {

@@ -23,8 +23,7 @@ public class VileAggregate extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsColorlessPredicate())),
                 CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(colorlessCreaturesYouControl, new Fixed(5)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(colorlessCreaturesYouControl, new Fixed(5)));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new ExileTopCardsOfDefendingPlayerLibraryEffect(1));
     }

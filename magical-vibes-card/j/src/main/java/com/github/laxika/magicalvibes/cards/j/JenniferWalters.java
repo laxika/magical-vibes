@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.t.TheSensationalSheHulk;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -19,7 +18,7 @@ public class JenniferWalters extends Card {
         setBackFaceCard(new TheSensationalSheHulk());
         setModalDoubleFaced(true);
 
-        addEffect(EffectSlot.STATIC, new OpponentsCantCastOrActivateDuringYourTurnEffect(false));
+        addStaticEffect(new OpponentsCantCastOrActivateDuringYourTurnEffect(false));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{G}{W}{W}",

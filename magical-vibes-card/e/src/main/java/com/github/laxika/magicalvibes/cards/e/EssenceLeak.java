@@ -21,7 +21,7 @@ public class EssenceLeak extends Card {
 
     public EssenceLeak() {
         target(TargetFilters.permanent())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.RED, CardColor.GREEN)),
                         new GrantTriggeredAbilityEffect(
                                 EffectSlot.UPKEEP_TRIGGERED,

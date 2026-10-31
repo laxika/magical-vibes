@@ -27,7 +27,7 @@ import java.util.List;
 public class SanwellAvengerAce extends Card {
 
     public SanwellAvengerAce() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate(),

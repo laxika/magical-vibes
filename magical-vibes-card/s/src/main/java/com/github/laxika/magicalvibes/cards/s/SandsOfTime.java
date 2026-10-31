@@ -23,7 +23,7 @@ public class SandsOfTime extends Card {
 
     public SandsOfTime() {
         // Each player skips their untap step (including phasing — CR 502.1).
-        addEffect(EffectSlot.STATIC, new PlayersSkipUntapStepEffect());
+        addStaticEffect(new PlayersSkipUntapStepEffect());
 
         // At the beginning of each player's upkeep, simultaneously flip tap states of that
         // player's artifacts, creatures, and lands.

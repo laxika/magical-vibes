@@ -19,8 +19,7 @@ import java.util.Set;
 public class CommandersAuthority extends Card {
 
     public CommandersAuthority() {
-        target(TargetFilters.creature()).addEffect(EffectSlot.STATIC,
-                new GrantTriggeredAbilityEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenEffect(
+        target(TargetFilters.creature()).addStaticEffect(new GrantTriggeredAbilityEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenEffect(
                         "Human", 1, 1, CardColor.WHITE, List.of(CardSubtype.HUMAN),
                         Set.<Keyword>of(), Set.<CardType>of()), GrantScope.ENCHANTED_CREATURE));
     }

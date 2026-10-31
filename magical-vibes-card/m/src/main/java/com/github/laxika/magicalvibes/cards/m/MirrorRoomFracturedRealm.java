@@ -35,8 +35,7 @@ public class MirrorRoomFracturedRealm extends Card {
                         new CreateTokenCopyOfTargetPermanentEffect(
                                 List.of(CardSubtype.REFLECTION), Set.of(), null, null, Map.of())));
 
-        addEffect(EffectSlot.STATIC,
-                new AdditionalTriggeredAbilityEffect(
+        addStaticEffect(new AdditionalTriggeredAbilityEffect(
                         new PermanentTruePredicate(), new SourceRoomDoorUnlocked(1), true, false));
     }
 }

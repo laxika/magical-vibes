@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -27,22 +29,20 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TDM", collectorNumber = "19")
 public class RallyTheMonastery extends Card {
 
     public RallyTheMonastery() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerCastAnotherSpellThisTurn(new CardTruePredicate()),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
 
-        Map<EffectSlot, CardEffect> monkTokenEffects = Map.of(
-                EffectSlot.ON_CONTROLLER_CASTS_SPELL,
-                new SpellCastTriggerEffect(
+        List<Ability> monkTokenEffects = List.of(
+                LegacySlots.triggered(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
-                        List.of(new BoostSelfEffect(1, 1))));
+                        List.of(new BoostSelfEffect(1, 1)))));
         CreateTokenEffect monkToken = new CreateTokenEffect(
                 CardType.CREATURE, 2, "Monk", 1, 1,
                 CardColor.WHITE, null, List.of(CardSubtype.MONK),

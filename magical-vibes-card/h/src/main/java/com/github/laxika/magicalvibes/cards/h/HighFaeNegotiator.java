@@ -21,7 +21,7 @@ import java.util.List;
 public class HighFaeNegotiator extends Card {
 
     public HighFaeNegotiator() {
-        addEffect(EffectSlot.STATIC, new KickerEffect(
+        addStaticEffect(new KickerEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate(),

@@ -17,8 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPr
 public class HawkeyesBow extends Card {
 
     public HawkeyesBow() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.REACH, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.EQUIPPED_CREATURE));
 
         TriggeringPermanentConditionalEffect damageTrigger = new TriggeringPermanentConditionalEffect(
                 new PermanentIsHostOfSourceAuraPredicate(),

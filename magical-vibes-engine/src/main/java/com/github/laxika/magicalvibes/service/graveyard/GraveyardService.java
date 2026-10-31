@@ -27,7 +27,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestructionReplacement;
 import com.github.laxika.magicalvibes.model.effect.DestructionReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureLibraryReplacementEffect;
@@ -549,7 +548,7 @@ public class GraveyardService {
             if (gameQueryService.hasLostPrintedAbilities(gameData, p)) {
                 continue;
             }
-            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : p.getCard().getStaticEffects()) {
                 if (effect instanceof DiscardToTopOfLibraryInsteadEffect replacement
                         && (!replacement.opponentCausedOnly() || gameData.discardCausedByOpponent)) {
                     return p.getCard();
@@ -1499,7 +1498,7 @@ public class GraveyardService {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent source : battlefield) {
                 boolean applies = !gameQueryService.hasLostPrintedAbilities(gameData, source)
-                        && source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        && source.getCard().getStaticEffects().stream()
                         .filter(DestructionReplacementEffect.class::isInstance)
                         .map(DestructionReplacementEffect.class::cast)
                         .anyMatch(effect -> effect.replacement() == replacement
@@ -1734,12 +1733,12 @@ public class GraveyardService {
     }
 
     private boolean hasExileWithEggCountersReplacementEffect(Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .anyMatch(e -> e instanceof ExileWithEggCountersInsteadOfDyingEffect);
     }
 
     private ExileWithEggCountersInsteadOfDyingEffect getExileWithEggCountersReplacementEffect(Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .filter(e -> e instanceof ExileWithEggCountersInsteadOfDyingEffect)
                 .map(e -> (ExileWithEggCountersInsteadOfDyingEffect) e)
                 .findFirst()
@@ -1747,7 +1746,7 @@ public class GraveyardService {
     }
 
     private DyingCreatureLibraryReplacementEffect getDyingCreatureLibraryReplacementEffect(Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .filter(DyingCreatureLibraryReplacementEffect.class::isInstance)
                 .map(DyingCreatureLibraryReplacementEffect.class::cast)
                 .filter(effect -> !effect.mayChoose())
@@ -1756,7 +1755,7 @@ public class GraveyardService {
     }
 
     private boolean hasShuffleIntoLibraryReplacementEffect(Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .anyMatch(e -> e instanceof ShuffleIntoLibraryReplacementEffect);
     }
 
@@ -1794,7 +1793,7 @@ public class GraveyardService {
     }
 
     private boolean hasExileAndTakeExtraTurnReplacementEffect(Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .anyMatch(ExileAndTakeExtraTurnReplacementEffect.class::isInstance);
     }
 
@@ -1803,7 +1802,7 @@ public class GraveyardService {
      * battlefield to a graveyard. Every variant covers dying, so no zone check is needed.
      */
     public static boolean hasExileInsteadOfGraveyardReplacementEffect(Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .anyMatch(e -> e instanceof ExileInsteadOfGraveyardReplacementEffect);
     }
 
@@ -1898,7 +1897,7 @@ public class GraveyardService {
     }
 
     private boolean exilesPermanentWithSource(GameData gameData, Permanent source, Permanent battlefieldSnapshot) {
-        for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : source.getCard().getStaticEffects()) {
             if (effect instanceof ExilePermanentsInsteadOfGraveyardEffect replacement
                     && replacement.trackWithSource()
                     && !(replacement.excludeSource() && source.getId().equals(battlefieldSnapshot.getId()))
@@ -1912,7 +1911,7 @@ public class GraveyardService {
 
     private boolean exilesPermanentPlainly(GameData gameData, Permanent source, Card sourceCard,
                                            Permanent battlefieldSnapshot) {
-        for (CardEffect effect : sourceCard.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : sourceCard.getStaticEffects()) {
             if (effect instanceof ExilePermanentsInsteadOfGraveyardEffect replacement
                     && !replacement.trackWithSource()
                     && !(replacement.excludeSource() && source.getId().equals(battlefieldSnapshot.getId()))
@@ -1930,7 +1929,7 @@ public class GraveyardService {
      * from the battlefield; the plain variant applies from anywhere.
      */
     private static boolean appliesExileInsteadOfGraveyard(Card card, Zone sourceZone) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .filter(ExileInsteadOfGraveyardReplacementEffect.class::isInstance)
                 .map(ExileInsteadOfGraveyardReplacementEffect.class::cast)
                 .anyMatch(e -> !e.dyingOnly() || sourceZone == Zone.BATTLEFIELD);
@@ -1985,7 +1984,7 @@ public class GraveyardService {
     }
 
     private static boolean exilesCardsOfColors(Card card, Set<CardColor> cardColors) {
-        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof GlobalColorGraveyardExileReplacement replacement
                     && cardColors.stream().anyMatch(replacement.colors()::contains)) {
                 return true;
@@ -1995,7 +1994,7 @@ public class GraveyardService {
     }
 
     public static boolean hasExilePermanentsInsteadOfGraveyardReplacementEffect(Card card) {
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .anyMatch(e -> e instanceof ExilePermanentsInsteadOfGraveyardEffect replacement
                         && replacement.filter() == null && !replacement.excludeSource());
     }
@@ -2048,7 +2047,7 @@ public class GraveyardService {
     private boolean bottomOfLibraryReplacementApplies(Permanent aura, UUID ownerId) {
         return aura.isAttached() && ownerId.equals(aura.getAttachedTo())
                 && !aura.isLosesAllAbilitiesUntilEndOfTurn()
-                && aura.getCard().getEffects(EffectSlot.STATIC).stream()
+                && aura.getCard().getStaticEffects().stream()
                 .anyMatch(RevealAndPutOnBottomOfLibraryInsteadOfGraveyardEffect.class::isInstance);
     }
 
@@ -2068,7 +2067,7 @@ public class GraveyardService {
                 || !battlefieldSnapshot.getCard().getId().equals(card.getId())) {
             return null;
         }
-        for (CardEffect effect : battlefieldSnapshot.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : battlefieldSnapshot.getCard().getStaticEffects()) {
             if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement
                     && exileReplacementApplies(replacement, battlefieldControllerId, cardControllerId)) {
                 return new OpponentExileReplacement(replacement, battlefieldSnapshot.getId());
@@ -2087,7 +2086,7 @@ public class GraveyardService {
                 if (p.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, p)) {
                     continue;
                 }
-                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : p.getCard().getStaticEffects()) {
                     if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement
                             && exileReplacementApplies(replacement, playerId, cardControllerId)) {
                         return new OpponentExileReplacement(replacement, p.getId());
@@ -2104,7 +2103,7 @@ public class GraveyardService {
                     || p.isFaceDown() || p.isLosesAllAbilitiesUntilEndOfTurn()) {
                 continue;
             }
-            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : p.getCard().getStaticEffects()) {
                 if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement
                         && exileReplacementApplies(replacement, dyingControllerId, cardControllerId)) {
                     return new OpponentExileReplacement(replacement, p.getId());
@@ -2161,7 +2160,7 @@ public class GraveyardService {
 
     private static void addOpponentGraveyardExileRiders(List<OpponentGraveyardExileRider> riders, Permanent source,
                                                         UUID sourceControllerId, UUID cardControllerId) {
-        for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : source.getCard().getStaticEffects()) {
             if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement
                     && (replacement.addVoidCounter() || replacement.trackWithSource())
                     && exileReplacementApplies(replacement, sourceControllerId, cardControllerId)) {
@@ -2252,7 +2251,7 @@ public class GraveyardService {
 
     private boolean applyBattlefieldExilePermanentsReplacement(GameData gameData, UUID ownerId, Card card,
                                                                Permanent p, Permanent battlefieldSnapshot) {
-        for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : p.getCard().getStaticEffects()) {
             if (!(effect instanceof ExilePermanentsInsteadOfGraveyardEffect replacement)) {
                 continue;
             }
@@ -2307,7 +2306,7 @@ public class GraveyardService {
         if (permanent.isFaceDown()) {
             return false;
         }
-        for (CardEffect effect : LayerSystemService.currentCard(gameData, permanent).getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : LayerSystemService.currentCard(gameData, permanent).getStaticEffects()) {
             if (!(effect instanceof OwnGraveyardExileReplacement replacement)) {
                 continue;
             }

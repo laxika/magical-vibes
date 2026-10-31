@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class RiverSong extends Card {
 
     public RiverSong() {
-        addEffect(EffectSlot.STATIC, new DrawFromBottomOfLibraryEffect());
+        addStaticEffect(new DrawFromBottomOfLibraryEffect());
 
         CardEffect trigger = SequenceEffect.of(
                 new PutCountersOnSourceEffect(1, 1, 1),

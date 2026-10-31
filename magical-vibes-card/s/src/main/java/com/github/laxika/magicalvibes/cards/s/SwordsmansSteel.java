@@ -20,7 +20,7 @@ public class SwordsmansSteel extends Card {
         PermanentCount equipmentYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT), CountScope.CONTROLLER);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(equipmentYouControl));
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 new Scaled(equipmentYouControl, 2),
                 new Scaled(equipmentYouControl, 2), GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{3}"));

@@ -15,7 +15,7 @@ import java.util.Set;
 public class EpharaEverSheltering extends Card {
 
     public EpharaEverSheltering() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsOtherPermanentCount(3, new PermanentIsEnchantmentPredicate()),
                 new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.INDESTRUCTIBLE), GrantScope.SELF)
         ));

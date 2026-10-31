@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -19,10 +18,10 @@ import java.util.List;
 public class CallapheBelovedOfTheSea extends Card {
 
     public CallapheBelovedOfTheSea() {
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new ColorManaSymbolsAmongControlledPermanents(ManaColor.BLUE), new Fixed(3)));
         // Each creature and enchantment has the tax ability, so it's paid once per protected target
-        addEffect(EffectSlot.STATIC, IncreaseOpponentCostForTargetingControlledPermanentEffect.perTargetedPermanent(
+        addStaticEffect(IncreaseOpponentCostForTargetingControlledPermanentEffect.perTargetedPermanent(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsEnchantmentPredicate())), 1));

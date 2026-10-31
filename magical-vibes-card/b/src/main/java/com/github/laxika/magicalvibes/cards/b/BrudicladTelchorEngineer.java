@@ -29,7 +29,7 @@ import java.util.Set;
 public class BrudicladTelchorEngineer extends Card {
 
     public BrudicladTelchorEngineer() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE, GrantScope.ALL_OWN_CREATURES, new PermanentIsTokenPredicate()));
         addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, SequenceEffect.of(
                 new CreateTokenEffect(

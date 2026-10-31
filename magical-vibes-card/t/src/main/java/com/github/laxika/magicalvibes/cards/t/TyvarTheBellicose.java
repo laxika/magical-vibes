@@ -24,7 +24,7 @@ public class TyvarTheBellicose extends Card {
     public TyvarTheBellicose() {
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new GrantKeywordToTriggeringAttackersEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.ELF), Keyword.DEATHTOUCH));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_SELF_MANA_ABILITY_RESOLVES,
                 OncePerTurnTriggerEffect.perGrant(new PutCountersOnSelfEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, new EventValue())),

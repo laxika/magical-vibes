@@ -19,8 +19,7 @@ public class DragonFangs extends Card {
 
     public DragonFangs() {
         target(TargetFilters.creature());
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardMinManaValuePredicate(6),

@@ -16,9 +16,9 @@ import java.util.Set;
 public class PetrifiedWoodKin extends Card {
 
     public PetrifiedWoodKin() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new DamageDealtToOpponentsThisTurn()));
-        addEffect(EffectSlot.STATIC, new ProtectionFromCardTypesEffect(Set.of(CardType.INSTANT)));
+        addStaticEffect(new ProtectionFromCardTypesEffect(Set.of(CardType.INSTANT)));
     }
 }

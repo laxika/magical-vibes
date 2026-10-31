@@ -18,8 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class Skybreen extends Card {
 
     public Skybreen() {
-        addEffect(EffectSlot.STATIC, PlayWithTopCardRevealedEffect.forAllPlayers());
-        addEffect(EffectSlot.STATIC, new CantCastSpellsSharingCardTypeWithTopCardEffect());
+        addStaticEffect(PlayWithTopCardRevealedEffect.forAllPlayers());
+        addStaticEffect(new CantCastSpellsSharingCardTypeWithTopCardEffect());
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"

@@ -23,7 +23,6 @@ public class Rattlechains extends Card {
                 "Target must be a Spirit"))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET));
-        addEffect(EffectSlot.STATIC,
-                new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.SPIRIT)));
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.SPIRIT)));
     }
 }

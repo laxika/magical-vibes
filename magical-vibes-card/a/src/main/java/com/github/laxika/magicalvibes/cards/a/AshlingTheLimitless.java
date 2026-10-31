@@ -21,7 +21,7 @@ import java.util.List;
 public class AshlingTheLimitless extends Card {
 
     public AshlingTheLimitless() {
-        addEffect(EffectSlot.STATIC, new GrantEvokeToSpellsEffect("{4}", new CardAllOfPredicate(List.of(
+        addStaticEffect(new GrantEvokeToSpellsEffect("{4}", new CardAllOfPredicate(List.of(
                 new CardIsPermanentPredicate(),
                 new CardSubtypePredicate(CardSubtype.ELEMENTAL)))));
 

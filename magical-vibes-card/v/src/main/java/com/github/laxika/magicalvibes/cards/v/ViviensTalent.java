@@ -30,7 +30,7 @@ public class ViviensTalent extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 new CardTypePredicate(CardType.LAND)));
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         +1,
                         List.of(LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(

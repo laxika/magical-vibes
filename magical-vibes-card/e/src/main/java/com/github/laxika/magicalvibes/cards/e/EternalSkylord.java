@@ -24,7 +24,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "49")
@@ -50,12 +49,11 @@ public class EternalSkylord extends Card {
                         new CreateTokenEffect(
                                 CardType.CREATURE, 1, "Zombie Army", 0, 0, CardColor.BLACK, null,
                                 List.of(CardSubtype.ZOMBIE, CardSubtype.ARMY), Set.of(), Set.of(),
-                                false, false, Map.of(), List.of(), false, false, false, 2, Set.of())));
+                                false, false, List.of(), List.of(), false, false, false, 2, Set.of())));
 
         PermanentPredicate zombieToken = new PermanentAllOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
                 new PermanentIsTokenPredicate()));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES, zombieToken));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES, zombieToken));
     }
 }

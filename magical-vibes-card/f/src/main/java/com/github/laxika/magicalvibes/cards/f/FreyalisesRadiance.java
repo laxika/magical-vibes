@@ -16,8 +16,7 @@ public class FreyalisesRadiance extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{2}"));
 
         // Snow permanents don't untap during their controllers' untap steps.
-        addEffect(EffectSlot.STATIC,
-                new MatchingPermanentsDoesntUntapEffect(
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(
                         new PermanentHasSupertypePredicate(CardSupertype.SNOW)));
     }
 }

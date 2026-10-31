@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -17,10 +16,10 @@ import java.util.Set;
 public class MaraudingKnight extends Card {
 
     public MaraudingKnight() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
 
         PermanentCount opponentPlains =
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.PLAINS), CountScope.OPPONENTS);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(opponentPlains, opponentPlains));
+        addStaticEffect(new BoostSelfEffect(opponentPlains, opponentPlains));
     }
 }

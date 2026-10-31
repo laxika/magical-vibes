@@ -14,7 +14,7 @@ public class SosukeSonOfSeshiro extends Card {
 
     public SosukeSonOfSeshiro() {
         // Other Snake creatures you control get +1/+0.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SNAKE)));
 
         // Whenever a Warrior you control deals combat damage to a creature, destroy that creature

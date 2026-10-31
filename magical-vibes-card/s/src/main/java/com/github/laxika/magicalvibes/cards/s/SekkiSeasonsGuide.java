@@ -25,7 +25,7 @@ public class SekkiSeasonsGuide extends Card {
     public SekkiSeasonsGuide() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(8)));
-        addEffect(EffectSlot.STATIC, new PreventDamageAndRemovePlusOnePlusOneCountersEffect(spiritToken()));
+        addStaticEffect(new PreventDamageAndRemovePlusOnePlusOneCountersEffect(spiritToken()));
 
         addGraveyardActivatedAbility(new ActivatedAbility(
                 false,

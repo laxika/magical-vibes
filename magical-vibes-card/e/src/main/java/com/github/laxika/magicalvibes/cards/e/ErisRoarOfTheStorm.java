@@ -28,7 +28,7 @@ public class ErisRoarOfTheStorm extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
 
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new Scaled(new DistinctManaValuesAmongCardsInGraveyard(
                         CountScope.CONTROLLER, false, instantOrSorcery), 2)));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, SpellCastTriggerEffect.nth(

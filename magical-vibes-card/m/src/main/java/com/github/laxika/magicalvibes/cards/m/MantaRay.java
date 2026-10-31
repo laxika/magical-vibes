@@ -23,13 +23,13 @@ public class MantaRay extends Card {
 
     public MantaRay() {
         // "This creature can't attack unless defending player controls an Island."
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new DefendingPlayerControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 "an Island"
         ));
 
         // "This creature can't be blocked except by blue creatures."
-        addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(
+        addStaticEffect(new CanBeBlockedOnlyByFilterEffect(
                 new PermanentColorInPredicate(Set.of(CardColor.BLUE)), "blue creatures"));
 
         // When you control no Islands, sacrifice this creature.

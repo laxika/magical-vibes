@@ -20,9 +20,9 @@ public class AlpineMoon extends Card {
         var chosenName = new PermanentHasSourceChosenNamePredicate();
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseCardNameOnEnterEffect(List.of(), ChooseCardNameOnEnterEffect.HandAccess.NONE, true));
-        addEffect(EffectSlot.STATIC, new LoseAllLandTypesEffect(GrantScope.OPPONENT_LANDS, chosenName));
-        addEffect(EffectSlot.STATIC, new LosesAllAbilitiesEffect(GrantScope.OPPONENT_LANDS, chosenName));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new LoseAllLandTypesEffect(GrantScope.OPPONENT_LANDS, chosenName));
+        addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.OPPONENT_LANDS, chosenName));
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(), GrantScope.OPPONENT_LANDS, chosenName));
     }
 }

@@ -19,8 +19,7 @@ public class ValeriaRichardsPrecocious extends Card {
 
     public ValeriaRichardsPrecocious() {
         CardNotPredicate noncreatureSpell = new CardNotPredicate(new CardTypePredicate(CardType.CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new ReduceCastCostForMatchingSpellsEffect(noncreatureSpell, 1, CostModificationScope.SELF));
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(noncreatureSpell, 1, CostModificationScope.SELF));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 SpellCastTriggerEffect.nth(1, noncreatureSpell, List.of(new DrawCardEffect())));
     }

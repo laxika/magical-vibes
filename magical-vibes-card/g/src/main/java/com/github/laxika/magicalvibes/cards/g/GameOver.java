@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtOrBelowHalfStartingLife;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
@@ -18,7 +17,7 @@ import java.util.List;
 public class GameOver extends Card {
 
     public GameOver() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AnyOf(List.of(
                         ControllerLifeAtMost.atHalfStartingLife(),
                         new AnOpponentLifeAtOrBelowHalfStartingLife())),

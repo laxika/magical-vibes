@@ -13,7 +13,6 @@ public class LimitedResources extends Card {
     public LimitedResources() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EachPlayerSacrificesDownToCountEffect(5, new PermanentIsLandPredicate()));
-        addEffect(EffectSlot.STATIC,
-                new PlayersCantPlayLandsIfPermanentCountEffect(10, new PermanentIsLandPredicate()));
+        addStaticEffect(new PlayersCantPlayLandsIfPermanentCountEffect(10, new PermanentIsLandPredicate()));
     }
 }

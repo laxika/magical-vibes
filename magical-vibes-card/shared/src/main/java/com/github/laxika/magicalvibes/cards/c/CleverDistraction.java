@@ -23,6 +23,6 @@ public class CleverDistraction extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ATTACK,
                         new TapPermanentsEffect(TapUntapScope.TARGET, DEFENDING_PLAYER_CREATURE));
-        addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect());
+        addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 }

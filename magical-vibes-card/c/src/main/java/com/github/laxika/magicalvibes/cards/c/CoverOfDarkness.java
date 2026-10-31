@@ -15,7 +15,7 @@ public class CoverOfDarkness extends Card {
 
     public CoverOfDarkness() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.FEAR,
                 GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasSourceChosenSubtypePredicate()));

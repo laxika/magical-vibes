@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -24,7 +23,7 @@ public class RunOver extends Card {
     public RunOver() {
         PermanentPredicate mountOrVehicle = new PermanentHasAnySubtypePredicate(
                 Set.of(CardSubtype.MOUNT, CardSubtype.VEHICLE));
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(mountOrVehicle, 1, true));
+        addStaticEffect(new ReduceOwnCastCostIfTargetingPermanentEffect(mountOrVehicle, 1, true));
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 public class SeafaringWerewolf extends Card {
 
     public SeafaringWerewolf() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect());
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new ConditionalEffect(new PreviousActivePlayerCastTwoOrMoreSpellsLastTurn(), new TransformSelfEffect()));

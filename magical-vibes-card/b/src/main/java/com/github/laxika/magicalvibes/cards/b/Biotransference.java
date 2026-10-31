@@ -21,10 +21,8 @@ import java.util.Set;
 public class Biotransference extends Card {
 
     public Biotransference() {
-        addEffect(EffectSlot.STATIC,
-                new GrantCardTypeEffect(CardType.ARTIFACT, GrantScope.ALL_OWN_CREATURES));
-        addEffect(EffectSlot.STATIC,
-                new GrantCardTypeToOwnCardsEffect(CardType.ARTIFACT,
+        addStaticEffect(new GrantCardTypeEffect(CardType.ARTIFACT, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantCardTypeToOwnCardsEffect(CardType.ARTIFACT,
                         new CardTypePredicate(CardType.CREATURE), false));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(

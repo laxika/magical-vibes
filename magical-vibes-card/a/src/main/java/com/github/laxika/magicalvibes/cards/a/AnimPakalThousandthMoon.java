@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "223")
@@ -37,7 +36,7 @@ public class AnimPakalThousandthMoon extends Card {
                 Set.of(CardType.ARTIFACT),
                 true,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

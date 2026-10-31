@@ -25,6 +25,11 @@ public record GrantEffectToOwnCreaturesUntilEndOfCombatEffect(
         this(slot, grantedEffect, null);
     }
 
+    /** The grant of {@code grantedAbility}, such as a static ability, which has no slot. */
+    public GrantEffectToOwnCreaturesUntilEndOfCombatEffect(Ability grantedAbility) {
+        this(grantedAbility, null);
+    }
+
     /** The slot of {@link #grantedAbility}, or {@code null} when there is none. */
     public EffectSlot slot() {
         return grantedAbility == null ? null : LegacySlots.slotOf(grantedAbility);

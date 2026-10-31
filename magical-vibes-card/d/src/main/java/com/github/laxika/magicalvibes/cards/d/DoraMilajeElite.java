@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MSC", collectorNumber = "12")
@@ -40,7 +39,7 @@ public class DoraMilajeElite extends Card {
             Set.of(),
             false,
             true,
-            Map.of(),
+            List.of(),
             List.of(new ActivatedAbility(
                     true,
                     null,

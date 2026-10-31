@@ -23,8 +23,7 @@ public class KestiaTheCultivator extends Card {
         addCastingOption(new BestowCast("{3}{G}{W}{U}"));
 
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(4, 4, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(4, 4, GrantScope.ENCHANTED_CREATURE));
 
         addEffect(EffectSlot.ON_ANY_CREATURE_ATTACKS,
                 new TriggeringPermanentControllerConditionalEffect(

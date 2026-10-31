@@ -228,7 +228,6 @@ import com.github.laxika.magicalvibes.model.condition.EnchantedCreatureDidntAtta
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.GrantedUpkeepEffectSupport;
@@ -263,8 +262,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.effect.ReboundCastFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -1803,7 +1800,7 @@ public class StepTriggerService {
                 boolean hasChosenPlayer = perm.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                         .anyMatch(effect -> effect instanceof RememberTargetPlayerEffect
                                 || effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect)
-                        || perm.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(
+                        || perm.getCard().getStaticEffects().stream().anyMatch(
                                 com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect.class::isInstance);
                 if (playerId.equals(activePlayerId) && !hasChosenPlayer) continue;
                 UUID chosenPlayerId = perm.getChosenPlayerIds().isEmpty()
@@ -2353,7 +2350,7 @@ public class StepTriggerService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (effect instanceof AllPermanentsUpkeepSacrificeUnlessPayEffect grant) {
                         grants.add(new GrantedUpkeepSacrifice(grant, perm.getId()));
                     }
@@ -3208,7 +3205,7 @@ public class StepTriggerService {
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {
             if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : perm.getCard().getStaticEffects()) {
                 if (effect instanceof SkipDrawStepEffect) {
                     return true;
                 }

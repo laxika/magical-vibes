@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -7,6 +8,13 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import java.util.UUID;
 
 public interface CardEffect {
+    /**
+     * The zones a static ability made of this effect functions from: the battlefield (CR 113.6),
+     * unless the rule for this kind of ability names other zones. {@code Card.addStaticEffect(effect)}
+     * and {@code StaticAbility.of} use it.
+     */
+    default AbilityZones staticAbilityZones() { return AbilityZones.BATTLEFIELD; }
+
     /** Whether paying for this effect is a special action that does not use the stack. */
     default boolean isSpecialAction() { return false; }
 

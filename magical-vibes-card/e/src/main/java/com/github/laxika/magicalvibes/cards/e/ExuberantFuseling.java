@@ -22,8 +22,7 @@ public class ExuberantFuseling extends Card {
 
     public ExuberantFuseling() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutCountersOnSelfEffect(CounterType.OIL));
-        addEffect(EffectSlot.STATIC,
-                new DynamicStaticBoostEffect(new CountersOnSource(CounterType.OIL),
+        addStaticEffect(new DynamicStaticBoostEffect(new CountersOnSource(CounterType.OIL),
                         new Fixed(0), GrantScope.SELF));
         addEffect(EffectSlot.ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                 new TriggeringPermanentConditionalEffect(

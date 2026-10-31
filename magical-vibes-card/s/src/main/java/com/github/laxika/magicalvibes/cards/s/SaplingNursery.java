@@ -25,7 +25,7 @@ import java.util.Set;
 public class SaplingNursery extends Card {
 
     public SaplingNursery() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.FOREST), CountScope.CONTROLLER)));
 
         addEffect(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD,

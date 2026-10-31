@@ -17,14 +17,14 @@ import java.util.List;
 public class SpiritualAsylum extends Card {
 
     public SpiritualAsylum() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.SHROUD,
                 GrantScope.OWN_PERMANENTS,
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsLandPredicate()))));
         // OWN_PERMANENTS never includes the source, so Spiritual Asylum covers itself while it is a creature.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.SHROUD, GrantScope.SELF, new PermanentIsCreaturePredicate()));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS, new SacrificeSelfEffect());
     }

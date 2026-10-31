@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OTJ", collectorNumber = "204")
@@ -22,7 +21,7 @@ public class FormAPosse extends Card {
     public FormAPosse() {
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, new XValue(), "Mercenary", 1, 1, CardColor.RED, null,
-                List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, Map.of(),
+                List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, List.of(),
                 List.of(new ActivatedAbility(
                         true,
                         null,

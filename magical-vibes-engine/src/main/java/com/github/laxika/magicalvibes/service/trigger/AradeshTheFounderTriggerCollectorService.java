@@ -30,7 +30,7 @@ public class AradeshTheFounderTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = AradeshTheFounderEffect.class, slot = EffectSlot.STATIC)
+    @CollectsTrigger(value = AradeshTheFounderEffect.class, slot = EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS)
     private boolean handleEnlistedCreature(TriggerMatchContext match, AradeshTheFounderEffect effect,
                                             TriggerContext context) {
         if (!(context instanceof TriggerContext.AttackingCreatureTriggeredAbility attack)

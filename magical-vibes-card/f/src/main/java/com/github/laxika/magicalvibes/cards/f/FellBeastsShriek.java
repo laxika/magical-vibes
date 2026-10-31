@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentChoosesCreatureToTapAndGoadEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
 
@@ -12,6 +11,6 @@ public class FellBeastsShriek extends Card {
 
     public FellBeastsShriek() {
         addSpellEffect(new EachOpponentChoosesCreatureToTapAndGoadEffect());
-        addEffect(EffectSlot.STATIC, SpliceEffect.ontoInstantOrSorcery("{2}{U}{R}"));
+        addStaticEffect(SpliceEffect.ontoInstantOrSorcery("{2}{U}{R}"));
     }
 }

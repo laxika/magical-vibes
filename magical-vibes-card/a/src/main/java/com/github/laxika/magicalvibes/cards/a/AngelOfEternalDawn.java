@@ -13,8 +13,8 @@ public class AngelOfEternalDawn extends Card {
 
     public AngelOfEternalDawn() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BecomeDayEffect());
-        addEffect(EffectSlot.STATIC, new CantBecomeNightEffect());
-        addEffect(EffectSlot.STATIC, new OpponentsCantCastSpellsWithManaValueGreaterThanEffect(
+        addStaticEffect(new CantBecomeNightEffect());
+        addStaticEffect(new OpponentsCantCastSpellsWithManaValueGreaterThanEffect(
                 new TurnsTakenByController()));
     }
 }

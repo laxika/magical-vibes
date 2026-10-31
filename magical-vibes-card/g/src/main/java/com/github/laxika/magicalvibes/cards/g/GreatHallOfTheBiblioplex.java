@@ -45,7 +45,7 @@ public class GreatHallOfTheBiblioplex extends Card {
                 "{T}, Pay 1 life: Add one mana of any color. Spend this mana only to cast an instant or sorcery spell."
         ));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceIsCreature(),
+        addStaticEffect(new ConditionalEffect(new SourceIsCreature(),
                 new GrantTriggeredAbilityEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                         new SpellCastTriggerEffect(INSTANT_OR_SORCERY, List.of(new BoostSelfEffect(1, 0))),
                         GrantScope.SELF)));

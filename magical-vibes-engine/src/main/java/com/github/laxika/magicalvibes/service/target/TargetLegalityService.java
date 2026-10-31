@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.target;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -2696,7 +2697,7 @@ public class TargetLegalityService {
         int declaredMax = kicked ? group.getKickedMaxTargets() : group.getMaxTargets();
         int max = group.isXScaled() ? Math.min(xValue, declaredMax) : declaredMax;
         if (!giftPromised) {
-            int giftMax = card.getEffects(EffectSlot.STATIC).stream()
+            int giftMax = card.getStaticEffects().stream()
                     .filter(GiftEffect.class::isInstance)
                     .map(GiftEffect.class::cast)
                     .mapToInt(GiftEffect::maxTargetsWithoutGift)
@@ -2716,7 +2717,7 @@ public class TargetLegalityService {
         if (giftPromised) {
             return maxTargets;
         }
-        int giftMax = card.getEffects(EffectSlot.STATIC).stream()
+        int giftMax = card.getStaticEffects().stream()
                 .filter(GiftEffect.class::isInstance)
                 .map(GiftEffect.class::cast)
                 .mapToInt(GiftEffect::maxTargetsWithoutGift)
@@ -4740,7 +4741,7 @@ public class TargetLegalityService {
     }
 
     private String nonColorSourceRestrictionMessage(Permanent target) {
-        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : target.getCard().getStaticEffects()) {
             if (effect instanceof TargetingRestrictionEffect r && r.mode() == TargetColorMode.ALLOWED_COLORS_ONLY) {
                 String colorName = r.colors().stream()
                         .map(c -> c.name().toLowerCase())
@@ -5493,7 +5494,7 @@ public class TargetLegalityService {
     }
 
     private SetPowerToughnessToAmountEffect stackCharacteristicDefiningEffect(StackEntry stackEntry) {
-        return stackEntry.getCard().getEffects(EffectSlot.STATIC).stream()
+        return stackEntry.getCard().getStaticEffects().stream()
                 .filter(SetPowerToughnessToAmountEffect.class::isInstance)
                 .map(SetPowerToughnessToAmountEffect.class::cast)
                 .findFirst()

@@ -11,6 +11,6 @@ public class AdvancingTheSpirit extends Card {
 
     public AdvancingTheSpirit() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect());
-        addEffect(EffectSlot.STATIC, new FirstPowerUpFreeEffect());
+        addStaticEffect(new FirstPowerUpFreeEffect());
     }
 }

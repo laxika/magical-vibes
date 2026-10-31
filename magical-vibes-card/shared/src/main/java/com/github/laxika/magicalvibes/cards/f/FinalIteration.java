@@ -27,7 +27,7 @@ public class FinalIteration extends Card {
 
     public FinalIteration() {
         // Wizards you control get +2/+1 and have flying.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 1, Set.of(Keyword.FLYING), GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 1, Set.of(Keyword.FLYING), GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.WIZARD)));
 
         // Whenever you cast an instant or sorcery spell, create a 1/1 blue Human Wizard creature token.

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
@@ -24,7 +25,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "78")
@@ -32,7 +32,7 @@ import java.util.Set;
 public class AshiokWickedManipulator extends Card {
 
     public AshiokWickedManipulator() {
-        addEffect(EffectSlot.STATIC, new ExileCardsFromLibraryInsteadOfLifePaymentEffect());
+        addStaticEffect(new ExileCardsFromLibraryInsteadOfLifePaymentEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 +1,
@@ -57,10 +57,10 @@ public class AshiokWickedManipulator extends Card {
                         Set.of(),
                         false,
                         false,
-                        Map.of(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
-                                new ConditionalEffect(
+                        List.of(
+                                LegacySlots.triggered(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, new ConditionalEffect(
                                         new CardPutIntoExileThisTurn(),
-                                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE))),
+                                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)))),
                         List.of(),
                         false,
                         false,

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
@@ -21,7 +20,7 @@ import java.util.List;
 public class TurbulentWilderness extends Card {
 
     public TurbulentWilderness() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new NotCondition(
                         new AnyPlayerControlsPermanentCount(8, new PermanentAllOfPredicate(List.of(
                                 new PermanentIsLandPredicate(),

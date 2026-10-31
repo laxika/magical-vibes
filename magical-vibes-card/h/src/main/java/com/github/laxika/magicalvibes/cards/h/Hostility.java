@@ -24,7 +24,7 @@ public class Hostility extends Card {
         // Haste is auto-loaded from Scryfall.
         // "If a spell you control would deal damage to an opponent, prevent that damage. Create a 3/1 red
         // Elemental Shaman creature token with haste for each 1 damage prevented this way."
-        addEffect(EffectSlot.STATIC, new PreventSpellDamageToOpponentAndCreateTokensEffect(
+        addStaticEffect(new PreventSpellDamageToOpponentAndCreateTokensEffect(
                 new CreateTokenEffect(1, "Elemental Shaman", 3, 1, CardColor.RED,
                         List.of(CardSubtype.ELEMENTAL, CardSubtype.SHAMAN), Set.of(Keyword.HASTE), Set.of())));
 

@@ -40,7 +40,7 @@ public class RatadrabikOfUrborg extends Card {
                     null,
                     Set.of(),
                     false,
-                    Map.of(),
+                    List.of(),
                     List.of(),
                     false,
                     true,
@@ -54,7 +54,7 @@ public class RatadrabikOfUrborg extends Card {
         // Ward {2}.
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.VIGILANCE,
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));

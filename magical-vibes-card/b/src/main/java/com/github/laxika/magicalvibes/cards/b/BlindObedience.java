@@ -24,7 +24,7 @@ import java.util.Set;
 public class BlindObedience extends Card {
 
     public BlindObedience() {
-        addEffect(EffectSlot.STATIC, new EnterPermanentsOfTypesTappedEffect(
+        addStaticEffect(new EnterPermanentsOfTypesTappedEffect(
                 Set.of(CardType.ARTIFACT, CardType.CREATURE), true));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 null, List.of(new MayPayManaEffect("{W/B}",

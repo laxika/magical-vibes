@@ -23,10 +23,8 @@ public class TwoStreamsFacility extends Card {
                 new EachPlayerChoosesPlanarModeEffect(MODES, false, false));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new EachPlayerChoosesPlanarModeEffect(MODES, true, false));
-        addEffect(EffectSlot.STATIC,
-                new PlayersWithChosenPlanarModePlayAdditionalLandEffect(GREEN_ANCHOR));
-        addEffect(EffectSlot.STATIC,
-                new BoostCreaturesOfChosenPlayerModeEffect(RED_WATERFALL, 2, 0, Set.of(Keyword.HASTE)));
+        addStaticEffect(new PlayersWithChosenPlanarModePlayAdditionalLandEffect(GREEN_ANCHOR));
+        addStaticEffect(new BoostCreaturesOfChosenPlayerModeEffect(RED_WATERFALL, 2, 0, Set.of(Keyword.HASTE)));
         addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new EachPlayerChoosesPlanarModeEffect(MODES, false, true));
     }

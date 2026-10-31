@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 public class TomikWielderOfLaw extends Card {
 
     public TomikWielderOfLaw() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsPlaneswalkerPredicate(), CountScope.CONTROLLER)));
         addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS, new ConditionalEffect(
                 new OpponentAttacksWithAtLeastCreatures(2, true, false),

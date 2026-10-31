@@ -19,10 +19,9 @@ public class GhoulishImpetus extends Card {
 
     public GhoulishImpetus() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GoadEquippedCreatureEffect())
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GoadEquippedCreatureEffect())
                 .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
                         new RegisterDelayedReturnSourceAuraToCreatureOnDeathEffect());
     }

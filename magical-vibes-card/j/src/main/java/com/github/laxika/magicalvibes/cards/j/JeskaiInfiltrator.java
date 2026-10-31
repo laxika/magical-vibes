@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 public class JeskaiInfiltrator extends Card {
 
     public JeskaiInfiltrator() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NoOtherPermanent(new PermanentIsCreaturePredicate()),
                 new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,

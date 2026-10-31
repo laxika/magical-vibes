@@ -19,7 +19,7 @@ public class StolenStrategy extends Card {
     public StolenStrategy() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.EACH_OPPONENT));
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 true,
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                 false, false, 0, null, false, true, false, true));

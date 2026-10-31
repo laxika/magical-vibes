@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostControlledCre
 public class LegionOfClay extends Card {
 
     public LegionOfClay() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD,
                 new PerpetuallyBoostControlledCreaturesEffect(1, 1));
     }

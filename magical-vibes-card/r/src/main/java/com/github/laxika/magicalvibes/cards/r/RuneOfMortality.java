@@ -17,9 +17,8 @@ public class RuneOfMortality extends Card {
     public RuneOfMortality() {
         target(TargetFilters.permanent())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+                .addStaticEffect(new GrantKeywordEffect(
                         Keyword.DEATHTOUCH, GrantScope.ENCHANTED_PERMANENT, new PermanentIsCreaturePredicate()))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect(Keyword.DEATHTOUCH));
+                .addStaticEffect(new GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect(Keyword.DEATHTOUCH));
     }
 }

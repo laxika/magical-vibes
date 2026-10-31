@@ -15,7 +15,7 @@ public class MoldervineCloak extends Card {
 
     public MoldervineCloak() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.GRAVEYARD_DRAW_REPLACEMENT, new DredgeEffect(2));
     }
 }

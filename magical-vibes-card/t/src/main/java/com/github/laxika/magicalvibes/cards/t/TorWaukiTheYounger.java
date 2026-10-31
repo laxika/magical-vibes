@@ -21,7 +21,7 @@ public class TorWaukiTheYounger extends Card {
             new CardTypePredicate(CardType.SORCERY)));
 
     public TorWaukiTheYounger() {
-        addEffect(EffectSlot.STATIC, new AdditionalControllerDamageEffect(1, null, true));
+        addStaticEffect(new AdditionalControllerDamageEffect(1, null, true));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 INSTANT_OR_SORCERY,
                 List.of(new DealDamageToAnyTargetEffect(2))));

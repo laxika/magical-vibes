@@ -18,7 +18,7 @@ public class NullProfusion extends Card {
 
     public NullProfusion() {
         // Skip your draw step.
-        addEffect(EffectSlot.STATIC, new SkipDrawStepEffect());
+        addStaticEffect(new SkipDrawStepEffect());
 
         // Whenever you play a card, draw a card.
         // "Play a card" = cast a spell or play a land, hence the two slots.
@@ -31,6 +31,6 @@ public class NullProfusion extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_PLAYS_LAND, new DrawCardEffect(1));
 
         // Your maximum hand size is two.
-        addEffect(EffectSlot.STATIC, new SetControllerMaximumHandSizeEffect(2));
+        addStaticEffect(new SetControllerMaximumHandSizeEffect(2));
     }
 }

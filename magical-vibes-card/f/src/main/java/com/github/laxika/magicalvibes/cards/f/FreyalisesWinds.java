@@ -23,6 +23,6 @@ public class FreyalisesWinds extends Card {
 
         // If a permanent with a wind counter on it would untap during its controller's untap step,
         // remove all wind counters from it instead.
-        addEffect(EffectSlot.STATIC, new RemoveCountersInsteadOfUntappingEffect(CounterType.WIND));
+        addStaticEffect(new RemoveCountersInsteadOfUntappingEffect(CounterType.WIND));
     }
 }

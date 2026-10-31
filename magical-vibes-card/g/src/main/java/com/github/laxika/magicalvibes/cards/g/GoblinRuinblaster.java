@@ -21,7 +21,7 @@ import java.util.List;
 public class GoblinRuinblaster extends Card {
 
     public GoblinRuinblaster() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{R}"));
+        addStaticEffect(new KickerEffect("{R}"));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

@@ -27,7 +27,7 @@ import java.util.Set;
 public class TheCrueltyOfGix extends Card {
 
     public TheCrueltyOfGix() {
-        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
+        addStaticEffect(new ReadAheadEffect(false));
 
         CardAnyOfPredicate creatureOrPlaneswalker = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),

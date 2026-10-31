@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TDC", collectorNumber = "30")
@@ -38,6 +37,6 @@ public class WelcomeTheDead extends Card {
         return new CreateTokenEffect(
                 CardType.CREATURE, amount, "Zombie Druid", 2, 2, CardColor.BLACK, null,
                 List.of(CardSubtype.ZOMBIE, CardSubtype.DRUID), Set.<Keyword>of(), Set.<CardType>of(), false, true,
-                Map.of(), List.of(), false, false, false, 0, Set.of());
+                List.of(), List.of(), false, false, false, 0, Set.of());
     }
 }

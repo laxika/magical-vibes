@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DescentsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -17,7 +18,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "235")
@@ -30,7 +30,7 @@ public class TheMycotyrant extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.FUNGUS, CardSubtype.SAPROLING)))),
                 CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(fungiAndSaprolings, fungiAndSaprolings));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(fungiAndSaprolings, fungiAndSaprolings));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new CreateTokenEffect(
                 CardType.CREATURE,
                 new DescentsThisTurn(),
@@ -44,7 +44,7 @@ public class TheMycotyrant extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(EffectSlot.STATIC, new CantBlockEffect()),
+                List.of(StaticAbility.of(new CantBlockEffect())),
                 List.of(),
                 false,
                 false,

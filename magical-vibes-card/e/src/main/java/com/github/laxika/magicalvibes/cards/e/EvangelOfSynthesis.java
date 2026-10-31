@@ -21,7 +21,7 @@ public class EvangelOfSynthesis extends Card {
     public EvangelOfSynthesis() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerDrewAtLeastCardsThisTurn(2),
                 new StaticBoostEffect(1, 0, Set.of(Keyword.MENACE), GrantScope.SELF)));
     }

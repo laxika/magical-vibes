@@ -20,7 +20,7 @@ public class PhantomNantuko extends Card {
     public PhantomNantuko() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2)));
-        addEffect(EffectSlot.STATIC, new PreventDamageAndRemovePlusOnePlusOneCountersEffect(true));
+        addStaticEffect(new PreventDamageAndRemovePlusOnePlusOneCountersEffect(true));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

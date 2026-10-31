@@ -20,7 +20,7 @@ import java.util.List;
 public class SunkenCitadel extends Card {
 
     public SunkenCitadel() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -21,7 +21,7 @@ public class LevelUp extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new PutCounterOnReferencedPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ATTACK,
                         SequenceEffect.of(
                                 new DoublePlusOneCountersOnSourceEffect(),

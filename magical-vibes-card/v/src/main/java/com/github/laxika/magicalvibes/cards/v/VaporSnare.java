@@ -13,7 +13,7 @@ public class VaporSnare extends Card {
 
     public VaporSnare() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+                .addStaticEffect(new ControlEnchantedCreatureEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new SacrificeUnlessReturnOwnPermanentTypeToHandEffect(CardType.LAND));
     }

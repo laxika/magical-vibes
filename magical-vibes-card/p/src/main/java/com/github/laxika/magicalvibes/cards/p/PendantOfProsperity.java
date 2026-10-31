@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -21,7 +20,7 @@ import java.util.List;
 public class PendantOfProsperity extends Card {
 
     public PendantOfProsperity() {
-        addEffect(EffectSlot.STATIC, new ChooseOpponentGainsControlOfSourceEffect());
+        addStaticEffect(new ChooseOpponentGainsControlOfSourceEffect());
 
         CardTypePredicate land = new CardTypePredicate(CardType.LAND);
         addActivatedAbility(new ActivatedAbility(

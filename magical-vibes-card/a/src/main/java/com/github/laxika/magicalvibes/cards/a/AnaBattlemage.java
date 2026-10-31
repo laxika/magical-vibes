@@ -31,7 +31,7 @@ import java.util.List;
 public class AnaBattlemage extends Card {
 
     public AnaBattlemage() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{U}"));
+        addStaticEffect(new KickerEffect("{2}{U}"));
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{1}{B}"), true, 1));
 
         targetWhenKicked(new PlayerPredicateTargetFilter(

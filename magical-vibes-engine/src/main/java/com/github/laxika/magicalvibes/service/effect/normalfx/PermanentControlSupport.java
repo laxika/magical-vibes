@@ -308,8 +308,10 @@ public class PermanentControlSupport {
         }
 
         boolean hasNativeDevour = tokenBlueprints.stream().anyMatch(blueprint ->
-                blueprint.tokenEffects() != null && blueprint.tokenEffects().get(EffectSlot.ON_ENTER_BATTLEFIELD)
-                        instanceof com.github.laxika.magicalvibes.model.effect.DevourEffect);
+                blueprint.tokenEffects() != null && blueprint.tokenEffects().stream()
+                        .filter(ability -> LegacySlots.slotOf(ability) == EffectSlot.ON_ENTER_BATTLEFIELD)
+                        .flatMap(ability -> LegacySlots.effectsOf(ability).stream())
+                        .anyMatch(com.github.laxika.magicalvibes.model.effect.DevourEffect.class::isInstance));
         List<com.github.laxika.magicalvibes.model.BattlefieldEntryCard> nativeEntries = new ArrayList<>();
         if (hasNativeDevour) {
             for (int index = 0; index < addedClueTokens; index++) {
@@ -441,7 +443,7 @@ public class PermanentControlSupport {
                 .filter(permanent -> permanent.isSolved()
                         && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
                         && !permanent.isStaticEffectSuppressed(AddClueTokenToTokenCreationEffect.class))
-                .flatMap(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
                 .filter(AddClueTokenToTokenCreationEffect.class::isInstance)
                 .count();
     }

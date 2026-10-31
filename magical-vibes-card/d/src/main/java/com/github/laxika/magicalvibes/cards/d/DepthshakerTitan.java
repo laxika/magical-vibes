@@ -29,7 +29,7 @@ public class DepthshakerTitan extends Card {
         PermanentPredicate artifactCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.MELEE, Keyword.TRAMPLE, Keyword.HASTE),
                 GrantScope.ALL_OWN_CREATURES, artifactCreature));
 

@@ -22,7 +22,7 @@ import java.util.List;
 public class StaticSnare extends Card {
 
     public StaticSnare() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new PermanentCount(
+        addStaticEffect(new ReduceOwnCastCostEffect(new PermanentCount(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsAttackingPredicate())),

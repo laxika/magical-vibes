@@ -18,7 +18,7 @@ public class WitchHunt extends Card {
         setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"));
-        addEffect(EffectSlot.STATIC, new PlayersCantGainLifeEffect());
+        addStaticEffect(new PlayersCantGainLifeEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new DealDamageToPlayersEffect(4, DamageRecipient.CONTROLLER));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,

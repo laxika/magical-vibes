@@ -17,7 +17,7 @@ import java.util.List;
 public class TalionsThroneguard extends Card {
 
     public TalionsThroneguard() {
-        addEffect(EffectSlot.STATIC, new KickerEffect(
+        addStaticEffect(new KickerEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate(),

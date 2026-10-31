@@ -35,7 +35,7 @@ import java.util.List;
 public class HeliodSunCrowned extends Card {
 
     public HeliodSunCrowned() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorAtLeast(ManaColor.WHITE, 5)),
                 new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));
 

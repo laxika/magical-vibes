@@ -34,9 +34,9 @@ public class RadagastWizardOfWilds extends Card {
         PermanentAnyOfPredicate beastOrBird = new PermanentAnyOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.BEAST),
                 new PermanentHasSubtypePredicate(CardSubtype.BIRD)));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.WARD, GrantScope.OWN_CREATURES, beastOrBird));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(1), GrantScope.OWN_CREATURES, beastOrBird));
 

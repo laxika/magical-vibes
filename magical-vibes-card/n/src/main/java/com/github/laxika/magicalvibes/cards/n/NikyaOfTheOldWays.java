@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEf
 public class NikyaOfTheOldWays extends Card {
 
     public NikyaOfTheOldWays() {
-        addEffect(EffectSlot.STATIC, new NoncreatureSpellsCantBeCastEffect(0, false, false));
+        addStaticEffect(new NoncreatureSpellsCantBeCastEffect(0, false, false));
         addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new AddOneOfEachManaTypeProducedByLandEffect(true));
     }
 }

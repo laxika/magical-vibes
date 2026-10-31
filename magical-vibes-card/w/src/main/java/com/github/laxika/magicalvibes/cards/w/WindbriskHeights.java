@@ -32,7 +32,7 @@ public class WindbriskHeights extends Card {
         // Hideaway 4 — when this enters, look at the top four cards, exile one face down, rest on bottom.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ImprintFromTopCardsEffect(4, true));
         // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         // {T}: Add {W}.
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.WHITE));
         // {W}, {T}: You may play the exiled card without paying its mana cost if you attacked with three or more creatures this turn.

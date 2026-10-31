@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -34,7 +33,7 @@ public class PrismaticOmen extends Card {
         List<CardSubtype> basicLandTypes = List.of(CardSubtype.PLAINS, CardSubtype.ISLAND,
                 CardSubtype.SWAMP, CardSubtype.MOUNTAIN, CardSubtype.FOREST);
         for (CardSubtype basicLandType : basicLandTypes) {
-            addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(basicLandType, GrantScope.OWN_LANDS));
+            addStaticEffect(new GrantSubtypeEffect(basicLandType, GrantScope.OWN_LANDS));
         }
 
         // The any-color ability stands in for the five intrinsic mana abilities, so it only applies
@@ -43,7 +42,7 @@ public class PrismaticOmen extends Card {
         List<PermanentPredicate> hasEveryBasicLandType = new ArrayList<>();
         hasEveryBasicLandType.add(new PermanentIsLandPredicate());
         basicLandTypes.forEach(type -> hasEveryBasicLandType.add(new PermanentHasSubtypePredicate(type)));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(),
                 GrantScope.OWN_PERMANENTS,
                 new PermanentAllOfPredicate(hasEveryBasicLandType)

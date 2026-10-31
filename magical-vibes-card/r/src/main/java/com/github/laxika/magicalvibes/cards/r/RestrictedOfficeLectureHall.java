@@ -39,7 +39,7 @@ public class RestrictedOfficeLectureHall extends Card {
                                 new PermanentPowerAtLeastPredicate(3)
                         )))));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS,
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))));

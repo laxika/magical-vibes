@@ -17,8 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SigardasAid extends Card {
 
     public SigardasAid() {
-        addEffect(EffectSlot.STATIC, new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.AURA)));
-        addEffect(EffectSlot.STATIC, new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.EQUIPMENT)));
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.AURA)));
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.EQUIPMENT)));
 
         target(TargetFilters.creatureYouControl()).addEffect(EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD,
                 new MayEffect(new AttachTriggeringEquipmentToTargetCreatureEffect(),

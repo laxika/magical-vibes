@@ -36,7 +36,7 @@ public class CourtOfLocthwain extends Card {
                                 new AllowCastCardsExiledWithSourceUntilEndOfTurnEffect(
                                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)), true))));
 
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 true, null, false, false, 0, null, false, false, false, true));
     }
 }

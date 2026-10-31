@@ -17,7 +17,7 @@ public class CoverOfWinter extends Card {
 
     public CoverOfWinter() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{S}"));
-        addEffect(EffectSlot.STATIC, new PreventXDamagePerSourceToControllerAndCreaturesEffect(
+        addStaticEffect(new PreventXDamagePerSourceToControllerAndCreaturesEffect(
                 new CountersOnSource(CounterType.AGE), true, true));
 
         addActivatedAbility(new ActivatedAbility(false, "{S}",

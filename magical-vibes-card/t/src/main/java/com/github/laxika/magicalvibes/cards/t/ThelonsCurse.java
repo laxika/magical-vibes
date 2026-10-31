@@ -22,7 +22,7 @@ public class ThelonsCurse extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentColorInPredicate(Set.of(CardColor.BLUE))));
 
-        addEffect(EffectSlot.STATIC, new MatchingPermanentsDoesntUntapEffect(blueCreature));
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(blueCreature));
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new PayManaPerTappedCreatureToUntapEffect("{U}", blueCreature));
     }

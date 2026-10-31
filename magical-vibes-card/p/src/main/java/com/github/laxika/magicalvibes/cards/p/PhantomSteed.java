@@ -41,7 +41,7 @@ public class PhantomSteed extends Card {
                 false, false, false, true,
                 false, false, null, Set.of(),
                 false,
-                Map.of(),
+                List.of(),
                 List.of(), false, false, new Fixed(1), false, Set.of(), false);
         addEffect(EffectSlot.ON_ATTACK,
                 new CreateTokenCopyOfExiledCreatureWithSourceEffect(tokenCopy, false, true));

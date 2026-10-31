@@ -42,11 +42,11 @@ public class GourmandsTalent extends Card {
                 List.of(new SacrificeSelfCost(), new GainLifeEffect(3)),
                 "{2}, {T}, Sacrifice this artifact: You gain 3 life."
         );
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantCardTypeEffect(CardType.ARTIFACT, GrantScope.OWN_PERMANENTS, ARTIFACT)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantSubtypeEffect(CardSubtype.FOOD, GrantScope.OWN_PERMANENTS, false, ARTIFACT)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantActivatedAbilityEffect(foodAbility, GrantScope.OWN_PERMANENTS, ARTIFACT)));
 
         addActivatedAbility(new ActivatedAbility(

@@ -25,9 +25,9 @@ public class Batterskull extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LivingWeaponEffect());
 
         // Equipped creature gets +4/+4 and has vigilance and lifelink
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(4, 4, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(4, 4, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.EQUIPPED_CREATURE));
 
         // {3}: Return Batterskull to its owner's hand
         addActivatedAbility(new ActivatedAbility(false, "{3}", List.of(ReturnToHandEffect.self()), "{3}: Return Batterskull to its owner's hand."));

@@ -15,7 +15,7 @@ import java.util.List;
 public class FiskTower extends Card {
 
     public FiskTower() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(1));
 
         addActivatedAbility(new ActivatedAbility(

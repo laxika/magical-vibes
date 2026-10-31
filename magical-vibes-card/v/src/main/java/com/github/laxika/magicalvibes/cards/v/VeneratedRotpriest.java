@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class VeneratedRotpriest extends Card {
 
     public VeneratedRotpriest() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
+        addStaticEffect(new ToxicEffect(1));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"

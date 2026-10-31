@@ -40,8 +40,7 @@ public class PipBoy3000 extends Card {
                         List.of(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS)),
                         TargetFilters.land(), null, 0, 2, false, null)
         )));
-        addEffect(EffectSlot.STATIC,
-                new GrantTriggeredAbilityEffect(EffectSlot.ON_ATTACK, attackChoice, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(EffectSlot.ON_ATTACK, attackChoice, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

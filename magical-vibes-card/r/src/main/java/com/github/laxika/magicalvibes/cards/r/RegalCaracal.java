@@ -20,7 +20,7 @@ public class RegalCaracal extends Card {
 
     public RegalCaracal() {
         // Other Cats you control get +1/+1 and have lifelink.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, Set.of(Keyword.LIFELINK), GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.LIFELINK), GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.CAT))));
 
         // When Regal Caracal enters, create two 1/1 white Cat creature tokens with lifelink.

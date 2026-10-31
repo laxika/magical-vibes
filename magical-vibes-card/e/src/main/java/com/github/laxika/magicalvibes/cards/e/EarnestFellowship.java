@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -15,11 +14,11 @@ import java.util.Set;
 public class EarnestFellowship extends Card {
 
     public EarnestFellowship() {
-        addEffect(EffectSlot.STATIC, protectionFromOwnColor(CardColor.WHITE));
-        addEffect(EffectSlot.STATIC, protectionFromOwnColor(CardColor.BLUE));
-        addEffect(EffectSlot.STATIC, protectionFromOwnColor(CardColor.BLACK));
-        addEffect(EffectSlot.STATIC, protectionFromOwnColor(CardColor.RED));
-        addEffect(EffectSlot.STATIC, protectionFromOwnColor(CardColor.GREEN));
+        addStaticEffect(protectionFromOwnColor(CardColor.WHITE));
+        addStaticEffect(protectionFromOwnColor(CardColor.BLUE));
+        addStaticEffect(protectionFromOwnColor(CardColor.BLACK));
+        addStaticEffect(protectionFromOwnColor(CardColor.RED));
+        addStaticEffect(protectionFromOwnColor(CardColor.GREEN));
     }
 
     private GrantEffectEffect protectionFromOwnColor(CardColor color) {

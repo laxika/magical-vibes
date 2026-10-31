@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
@@ -18,7 +17,7 @@ public class EmpyrialArmor extends Card {
         // "your" is the Aura's controller, so CONTROLLER (unlike Righteous Authority's ATTACHED_CONTROLLER).
         CardsInHand hand = new CardsInHand(CountScope.CONTROLLER);
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                .addStaticEffect(new AttachedBoostEffect(
                         hand, hand, GrantScope.ENCHANTED_CREATURE));
     }
 }

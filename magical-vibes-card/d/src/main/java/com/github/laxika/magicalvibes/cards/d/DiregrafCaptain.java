@@ -29,7 +29,7 @@ public class DiregrafCaptain extends Card {
         // Deathtouch is applied automatically from the Scryfall keyword.
 
         // Other Zombie creatures you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ZOMBIE))));
 
         // Whenever another Zombie you control dies, target opponent loses 1 life.

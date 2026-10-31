@@ -21,10 +21,8 @@ public class PoppetFactory extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsTokenPredicate()));
 
-        addEffect(EffectSlot.STATIC,
-                new LosesAllAbilitiesEffect(GrantScope.OWN_CREATURES, creatureToken));
-        addEffect(EffectSlot.STATIC,
-                new SetBasePowerToughnessEffect(3, 3, GrantScope.OWN_CREATURES, creatureToken));
+        addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.OWN_CREATURES, creatureToken));
+        addStaticEffect(new SetBasePowerToughnessEffect(3, 3, GrantScope.OWN_CREATURES, creatureToken));
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new MayEffect(new TransformSelfEffect(), "Transform Poppet Factory?"));
     }

@@ -14,6 +14,6 @@ public class TaintedWell extends Card {
     public TaintedWell() {
         target(TargetFilters.land())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesTypeEffect(CardSubtype.SWAMP));
+                .addStaticEffect(new EnchantedPermanentBecomesTypeEffect(CardSubtype.SWAMP));
     }
 }

@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SOC", collectorNumber = "12")
@@ -27,7 +26,7 @@ public class CeaselessConflict extends Card {
                 EachPermanentScope.ALL_PLAYERS,
                 new CreateTokenEffect(CardType.CREATURE, new EventValue(), "Spirit", 3, 2,
                         CardColor.RED, Set.of(CardColor.RED, CardColor.WHITE), List.of(CardSubtype.SPIRIT),
-                        Set.of(), Set.of(), false, false, Map.of(), List.of(), false, false, false, 0, Set.of()),
+                        Set.of(), Set.of(), false, false, List.of(), List.of(), false, false, false, 0, Set.of()),
                 false,
                 DestroyedPermanentCountScope.CONTROLLER_NONTOKEN));
     }

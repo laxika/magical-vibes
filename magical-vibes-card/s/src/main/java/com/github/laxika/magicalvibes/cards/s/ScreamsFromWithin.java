@@ -14,7 +14,7 @@ public class ScreamsFromWithin extends Card {
 
     public ScreamsFromWithin() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, -1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
                         new ReturnSourceAuraToCreatureOnDeathEffect());
     }

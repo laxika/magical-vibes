@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class RavensRun extends Card {
 
     public RavensRun() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.WITHER, GrantScope.ALL_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.WITHER, GrantScope.ALL_CREATURES));
 
         target(TargetFilters.creature()).addEffect(EffectSlot.CHAOS_TRIGGERED,
                 new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));

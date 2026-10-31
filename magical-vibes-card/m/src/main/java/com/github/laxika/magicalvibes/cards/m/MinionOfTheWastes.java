@@ -15,7 +15,7 @@ public class MinionOfTheWastes extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PayAnyAmountOfLifeOnEnterEffect());
         // "Minion of the Wastes's power and toughness are each equal to the life paid as it
         // entered." — characteristic-defining P/T reading the stored payment.
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new ChosenNumberOnSource(), new ChosenNumberOnSource()));
     }
 }

@@ -28,7 +28,7 @@ public class EsgarothGarrison extends Card {
     public EsgarothGarrison() {
         PermanentCount creaturesYouControl =
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(creaturesYouControl, new Fixed(5)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(creaturesYouControl, new Fixed(5)));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 SequenceEffect.of(

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
@@ -20,8 +19,7 @@ public class PortraitOfMichiko extends Card {
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate())),
                 CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC,
-                new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                         artifactsAndEnchantmentsYouControl, artifactsAndEnchantmentsYouControl, GrantScope.SELF));
     }
 }

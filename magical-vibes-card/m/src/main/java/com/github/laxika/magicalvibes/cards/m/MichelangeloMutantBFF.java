@@ -21,7 +21,7 @@ import java.util.List;
 public class MichelangeloMutantBFF extends Card {
 
     public MichelangeloMutantBFF() {
-        addEffect(EffectSlot.STATIC, new EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect(
+        addStaticEffect(new EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect(
                 1, new PermanentHasCountersPredicate(CounterType.ANY)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, mutagenToken());
         addEffect(EffectSlot.ON_ATTACK, mutagenToken());

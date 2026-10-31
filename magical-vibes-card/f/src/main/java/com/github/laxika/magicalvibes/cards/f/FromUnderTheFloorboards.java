@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "111")
@@ -45,6 +44,6 @@ public class FromUnderTheFloorboards extends Card {
         return new CreateTokenEffect(
                 CardType.CREATURE, amount, "Zombie", 2, 2, CardColor.BLACK, null,
                 List.of(CardSubtype.ZOMBIE), Set.<Keyword>of(), Set.<CardType>of(), false, true,
-                Map.of(), List.of(), false, false, false, 0, Set.of());
+                List.of(), List.of(), false, false, false, 0, Set.of());
     }
 }

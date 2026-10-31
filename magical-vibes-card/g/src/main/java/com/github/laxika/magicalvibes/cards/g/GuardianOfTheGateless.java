@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesE
 public class GuardianOfTheGateless extends Card {
 
     public GuardianOfTheGateless() {
-        addEffect(EffectSlot.STATIC, new CanBlockAnyNumberOfCreaturesEffect());
+        addStaticEffect(new CanBlockAnyNumberOfCreaturesEffect());
         addEffect(EffectSlot.ON_BLOCK, new BoostSelfEffect(
                 new CreaturesBlockedBySource(), new CreaturesBlockedBySource()), TriggerMode.ONCE_PER_BLOCK);
     }

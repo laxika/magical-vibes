@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -16,13 +15,9 @@ public class RetroMutation extends Card {
 
     public RetroMutation() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantSubtypeEffect(CardSubtype.TURTLE, GrantScope.ENCHANTED_CREATURE, true))
-                .addEffect(EffectSlot.STATIC,
-                        new SetBasePowerToughnessEffect(0, 1, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new EnchantedCreatureCantAttackOrBlockEffect(true, false));
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.TURTLE, GrantScope.ENCHANTED_CREATURE, true))
+                .addStaticEffect(new SetBasePowerToughnessEffect(0, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect(true, false));
     }
 }

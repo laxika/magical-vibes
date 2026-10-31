@@ -92,7 +92,7 @@ public class GutFanaticalPriestess extends Card {
             int amount, Integer power, Integer toughness, Set<Keyword> keywords) {
         return new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), power, toughness, Map.of(), true, false, true, false,
-                false, false, null, keywords, false, Map.of(), List.of(), false, false,
+                false, false, null, keywords, false, List.of(), List.of(), false, false,
                 new Fixed(amount), false, Set.of(), false);
     }
 

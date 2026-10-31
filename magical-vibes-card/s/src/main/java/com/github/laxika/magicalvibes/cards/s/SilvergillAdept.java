@@ -13,7 +13,7 @@ public class SilvergillAdept extends Card {
 
     public SilvergillAdept() {
         // As an additional cost to cast this spell, reveal a Merfolk card from your hand or pay {3}.
-        addEffect(EffectSlot.STATIC, new IncreaseOwnCastCostUnlessRevealSubtypeEffect(3, CardSubtype.MERFOLK));
+        addStaticEffect(new IncreaseOwnCastCostUnlessRevealSubtypeEffect(3, CardSubtype.MERFOLK));
 
         // When this creature enters, draw a card.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));

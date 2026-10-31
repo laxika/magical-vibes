@@ -18,9 +18,9 @@ public class AnointedPeacekeeper extends Card {
     public AnointedPeacekeeper() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameOnEnterEffect(
                 List.of(), ChooseCardNameOnEnterEffect.HandAccess.LOOK_AT_OPPONENT_HAND));
-        addEffect(EffectSlot.STATIC, new IncreaseSpellCostEffect(
+        addStaticEffect(new IncreaseSpellCostEffect(
                 new CardHasSourceChosenNamePredicate(), 2, CostModificationScope.OPPONENT));
-        addEffect(EffectSlot.STATIC, new IncreaseActivatedAbilityCostEffect(
+        addStaticEffect(new IncreaseActivatedAbilityCostEffect(
                 new PermanentHasSourceChosenNamePredicate(), 2, false, true));
     }
 }

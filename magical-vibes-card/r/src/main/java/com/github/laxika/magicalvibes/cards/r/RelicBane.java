@@ -13,7 +13,7 @@ public class RelicBane extends Card {
 
     public RelicBane() {
         target(TargetFilters.artifact())
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.UPKEEP_TRIGGERED,
                         new LoseLifeEffect(2),
                         GrantScope.ENCHANTED_PERMANENT));

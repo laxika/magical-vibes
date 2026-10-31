@@ -121,7 +121,7 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
                 e.additionalTypes() == null ? Set.of() : e.additionalTypes(),
                 e.powerOverride(), e.toughnessOverride(), Map.of(), e.grantHaste(), e.exileAtEndStep(),
                 e.sacrificeAtEndStep(), e.tappedAndAttacking(), false, false, e.colorOverride(),
-                e.additionalKeywords() == null ? Set.of() : e.additionalKeywords(), false, Map.of(), List.of(),
+                e.additionalKeywords() == null ? Set.of() : e.additionalKeywords(), false, List.of(), List.of(),
                 false, e.removeLegendary(), new Fixed(1), e.exileAtEndOfCombat(), Set.of(), false, List.of(),
                 null, false, false);
         List<UUID> attackTargetIds = null;

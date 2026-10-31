@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 
 /**
@@ -14,6 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLose
 public class BloodScrivener extends Card {
 
     public BloodScrivener() {
-        addEffect(EffectSlot.STATIC, new EmptyHandDrawExtraCardAndLoseLifeEffect());
+        addStaticEffect(new EmptyHandDrawExtraCardAndLoseLifeEffect());
     }
 }

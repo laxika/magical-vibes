@@ -30,7 +30,7 @@ public class DefilerOfInstinct extends Card {
 
     public DefilerOfInstinct() {
         CardAllOfPredicate redPermanentFilter = redPermanentSpell();
-        addEffect(EffectSlot.STATIC, new PayLifeToReduceColoredCastCostEffect(
+        addStaticEffect(new PayLifeToReduceColoredCastCostEffect(
                 redPermanentFilter, "{R}", 2, CostModificationScope.SELF));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 redPermanentFilter, List.of(new DealDamageToAnyTargetEffect(1))));

@@ -22,7 +22,7 @@ import java.util.List;
 public class VisitorFromPlanetQ extends Card {
 
     public VisitorFromPlanetQ() {
-        addEffect(EffectSlot.STATIC, new GrantCardTypeToOwnCardsEffect(
+        addStaticEffect(new GrantCardTypeToOwnCardsEffect(
                 CardType.INSTANT,
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),

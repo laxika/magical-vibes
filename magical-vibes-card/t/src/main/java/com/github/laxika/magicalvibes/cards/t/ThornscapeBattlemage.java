@@ -23,7 +23,7 @@ import java.util.List;
 public class ThornscapeBattlemage extends Card {
 
     public ThornscapeBattlemage() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{R}"));
+        addStaticEffect(new KickerEffect("{R}"));
         addCastingCost(RepeatableAdditionalManaCost.singlePayment(List.of("{W}")));
 
         targetWhenKicked(null, 0, 0, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

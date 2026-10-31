@@ -18,12 +18,11 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 public class MaceOfTheValiant extends Card {
 
     public MaceOfTheValiant() {
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 new CountersOnSource(CounterType.CHARGE),
                 new CountersOnSource(CounterType.CHARGE),
                 GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new PutCountersOnSelfEffect(CounterType.CHARGE));
         addActivatedAbility(new EquipActivatedAbility("{3}"));

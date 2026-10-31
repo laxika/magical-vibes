@@ -22,7 +22,7 @@ public class ApocalypseDemon extends Card {
 
         // Apocalypse Demon's power and toughness are each equal to the number of cards in your graveyard.
         CardsInGraveyard cardsInYourGraveyard = new CardsInGraveyard(null, CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(cardsInYourGraveyard, cardsInYourGraveyard));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(cardsInYourGraveyard, cardsInYourGraveyard));
 
         // At the beginning of your upkeep, tap this creature unless you sacrifice another creature.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,

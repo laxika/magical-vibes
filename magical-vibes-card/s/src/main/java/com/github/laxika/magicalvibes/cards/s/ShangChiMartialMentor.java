@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoublePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
@@ -14,7 +13,7 @@ import java.util.List;
 public class ShangChiMartialMentor extends Card {
 
     public ShangChiMartialMentor() {
-        addEffect(EffectSlot.STATIC, new DoublePlusOnePlusOneCountersEffect());
+        addStaticEffect(new DoublePlusOnePlusOneCountersEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

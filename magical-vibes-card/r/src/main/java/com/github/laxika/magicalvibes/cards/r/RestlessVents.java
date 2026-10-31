@@ -22,7 +22,7 @@ import java.util.Set;
 public class RestlessVents extends Card {
 
     public RestlessVents() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

@@ -20,7 +20,7 @@ public class NettleSentinel extends Card {
 
     public NettleSentinel() {
         // This creature doesn't untap during your untap step.
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // Whenever you cast a green spell, you may untap this creature.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(

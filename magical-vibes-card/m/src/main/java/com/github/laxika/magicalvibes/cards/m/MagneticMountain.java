@@ -26,7 +26,7 @@ public class MagneticMountain extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.BLUE))));
 
         // Blue creatures don't untap during their controllers' untap steps.
-        addEffect(EffectSlot.STATIC, new MatchingPermanentsDoesntUntapEffect(blueCreature));
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(blueCreature));
 
         // At the beginning of each player's upkeep, that player may choose any number of tapped
         // blue creatures they control and pay {4} for each creature chosen this way. If the player

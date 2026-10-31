@@ -19,7 +19,7 @@ public class WintersRest extends Card {
         target(TargetFilters.creature())
                 // When this Aura enters, tap enchanted creature.
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                .addStaticEffect(new ConditionalEffect(
                         new ControlsAnotherPermanent(new PermanentHasSupertypePredicate(CardSupertype.SNOW)),
                         DoesntUntapEffect.enchanted()));
     }

@@ -23,7 +23,7 @@ public class KorSpiritdancer extends Card {
     public KorSpiritdancer() {
         // This creature gets +2/+2 for each Aura attached to it.
         Scaled twicePerAura = new Scaled(new AttachmentsOnSource(true, false), 2);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(twicePerAura, twicePerAura));
+        addStaticEffect(new BoostSelfEffect(twicePerAura, twicePerAura));
 
         // Whenever you cast an Aura spell, you may draw a card.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new MayEffect(

@@ -36,7 +36,7 @@ public class DerelictAtticWidowsWalk extends Card {
                 new TriggeringRoomDoorConditionalEffect(0,
                         SequenceEffect.of(new DrawCardEffect(2), new LoseLifeEffect(2))));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ALLY_CREATURE_ATTACKS,

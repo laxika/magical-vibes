@@ -23,8 +23,7 @@ public class TrawlerDrake extends Card {
     public TrawlerDrake() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.OIL, new Fixed(1)));
-        addEffect(EffectSlot.STATIC,
-                new DynamicStaticBoostEffect(new CountersOnSource(CounterType.OIL),
+        addStaticEffect(new DynamicStaticBoostEffect(new CountersOnSource(CounterType.OIL),
                         new CountersOnSource(CounterType.OIL), GrantScope.SELF));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),

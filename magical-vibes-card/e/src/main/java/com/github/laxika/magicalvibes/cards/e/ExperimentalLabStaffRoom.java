@@ -38,7 +38,7 @@ public class ExperimentalLabStaffRoom extends Card {
                         new PutCountersOnChosenPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new PutCountersOnChosenPermanentEffect(CounterType.TRAMPLE, 1))));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,

@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 public class TheForetoldSoldier extends Card {
 
     public TheForetoldSoldier() {
-        addEffect(EffectSlot.STATIC, new MustBeBlockedIfAbleEffect());
-        addEffect(EffectSlot.STATIC, new CanBeBlockedByAtMostNCreaturesEffect(1));
+        addStaticEffect(new MustBeBlockedIfAbleEffect());
+        addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));
         addEffect(EffectSlot.ON_SELF_DEALS_DAMAGE, new ExileSelfAndBecomeForetoldEffect());
         addCastingOption(new ForetellCast("{1}{G}"));
     }

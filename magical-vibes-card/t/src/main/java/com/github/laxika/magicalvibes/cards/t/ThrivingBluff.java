@@ -23,7 +23,7 @@ import java.util.List;
 public class ThrivingBluff extends Card {
 
     public ThrivingBluff() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseColorOnEnterEffect(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.GREEN));
 

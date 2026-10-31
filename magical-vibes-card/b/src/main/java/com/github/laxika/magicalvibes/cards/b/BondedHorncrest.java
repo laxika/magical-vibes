@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -9,6 +8,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class BondedHorncrest extends Card {
 
     public BondedHorncrest() {
-        addEffect(EffectSlot.STATIC, new CantAttackOrBlockAloneEffect());
+        addStaticEffect(new CantAttackOrBlockAloneEffect());
     }
 }

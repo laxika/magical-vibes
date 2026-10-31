@@ -54,10 +54,10 @@ public class AdvancedFloralInvocations extends Card {
                 new SourceCounterThreshold(1, CounterType.LEVEL),
                 new PerpetuallyBoostCreatureCardsInGraveyardEffect(1, 1)), TriggerMode.INDEPENDENT);
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),
                 new PlayLandsFromGraveyardEffect()));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),
                 new CastSpellsFromGraveyardEffect(
                         new CardTypePredicate(CardType.CREATURE), List.of(), CounterType.FINALITY)));

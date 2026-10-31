@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -25,6 +24,6 @@ public class AysenCrusader extends Card {
                 new PermanentCount(
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SOLDIER, CardSubtype.WARRIOR)),
                         CountScope.CONTROLLER));
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(powerToughness, powerToughness));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(powerToughness, powerToughness));
     }
 }

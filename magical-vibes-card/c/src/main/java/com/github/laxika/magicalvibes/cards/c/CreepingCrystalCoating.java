@@ -22,10 +22,9 @@ public class CreepingCrystalCoating extends Card {
         // Enchant creature
         target(TargetFilters.creature())
                 // Enchanted creature gets +0/+3.
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(0, 3, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(0, 3, GrantScope.ENCHANTED_CREATURE))
                 // Whenever enchanted creature attacks, create a Food token.
-                .addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ATTACK, foodToken(), GrantScope.ENCHANTED_CREATURE));
     }
 

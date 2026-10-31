@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyard
 public class InfestingRadroach extends Card {
 
     public InfestingRadroach() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new GiveTargetPlayerRadCountersEffect(new EventValue()));
         addEffect(EffectSlot.GRAVEYARD_ON_OPPONENT_NONLAND_CARD_MILLED,

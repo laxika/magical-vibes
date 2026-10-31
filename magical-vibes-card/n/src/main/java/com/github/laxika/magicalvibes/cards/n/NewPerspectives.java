@@ -18,6 +18,6 @@ public class NewPerspectives extends Card {
         // As long as you have seven or more cards in hand, you may pay {0} rather than pay cycling
         // costs. Static alternative cost read at cycling activation (AbilityActivationService); the
         // card being cycled still counts toward the seven.
-        addEffect(EffectSlot.STATIC, new FreeCyclingWhileHandSizeEffect(7));
+        addStaticEffect(new FreeCyclingWhileHandSizeEffect(7));
     }
 }

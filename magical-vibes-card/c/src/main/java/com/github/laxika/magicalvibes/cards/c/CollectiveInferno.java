@@ -14,6 +14,6 @@ public class CollectiveInferno extends Card {
 
     public CollectiveInferno() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new DoubleDamageFromChosenSubtypeEffect());
+        addStaticEffect(new DoubleDamageFromChosenSubtypeEffect());
     }
 }

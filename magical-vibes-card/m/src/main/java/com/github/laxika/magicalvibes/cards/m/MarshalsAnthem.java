@@ -27,7 +27,7 @@ public class MarshalsAnthem extends Card {
 
     public MarshalsAnthem() {
         addCastingCost(RepeatableAdditionalManaCost.multikicker(List.of("{1}{W}")));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                 new CardTypePredicate(CardType.CREATURE), new RepeatedAdditionalCostCount("{1}{W}")));
     }

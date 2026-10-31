@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
@@ -16,10 +15,8 @@ public class AntiMagicAura extends Card {
     public AntiMagicAura() {
         target(TargetFilters.creature())
         // Enchanted creature can't be the target of spells (abilities can still target it).
-        .addEffect(EffectSlot.STATIC,
-                new AttachedPermanentRestrictionEffect(TargetingRestrictionEffect.spells()))
+        .addStaticEffect(new AttachedPermanentRestrictionEffect(TargetingRestrictionEffect.spells()))
         // Enchanted creature can't be enchanted by other Auras.
-        .addEffect(EffectSlot.STATIC,
-                new AttachedPermanentRestrictionEffect(new CantBeEnchantedByOtherAurasEffect()));
+        .addStaticEffect(new AttachedPermanentRestrictionEffect(new CantBeEnchantedByOtherAurasEffect()));
     }
 }

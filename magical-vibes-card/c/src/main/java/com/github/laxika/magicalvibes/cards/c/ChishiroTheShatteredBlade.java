@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "NEC", collectorNumber = "1")
@@ -29,7 +28,7 @@ public class ChishiroTheShatteredBlade extends Card {
         CreateTokenEffect spiritToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Spirit", 2, 2, CardColor.RED,
                 Set.of(CardColor.RED), List.of(CardSubtype.SPIRIT), Set.of(Keyword.MENACE), Set.of(),
-                false, false, Map.of(), List.of(), false, false, false, 0, Set.of());
+                false, false, List.of(), List.of(), false, false, false, 0, Set.of());
 
         addEffect(EffectSlot.ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardIsAuraPredicate(), spiritToken));

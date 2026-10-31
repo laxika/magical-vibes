@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "225")
@@ -55,7 +54,7 @@ public class GhaltaAndMavren extends Card {
                 Set.of(),
                 true,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -546,7 +545,7 @@ public class AuraAttachmentService {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent candidate : battlefield) {
                 if (!host.getId().equals(candidate.getAttachedTo())) continue;
-                boolean safe = candidate.getCard().getEffects(EffectSlot.STATIC).stream()
+                boolean safe = candidate.getCard().getStaticEffects().stream()
                         .anyMatch(effect -> effect instanceof ProtectionFromColorsEffect protection
                                 && protection.doesNotRemoveAuras());
                 if (safe) return true;
@@ -556,7 +555,7 @@ public class AuraAttachmentService {
     }
 
     private boolean grantsSelfExemptProtection(Permanent attachment) {
-        return attachment.getCard().getEffects(EffectSlot.STATIC).stream()
+        return attachment.getCard().getStaticEffects().stream()
                 .anyMatch(effect -> {
                     if (effect instanceof ProtectionFromChosenColorEffect chosenProtection) {
                         return chosenProtection.scope() == GrantScope.ENCHANTED_CREATURE;

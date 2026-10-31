@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSequenceCost;
@@ -22,7 +21,7 @@ import java.util.List;
 public class MondrakGloryDominus extends Card {
 
     public MondrakGloryDominus() {
-        addEffect(EffectSlot.STATIC, new MultiplyTokenCreationEffect(2));
+        addStaticEffect(new MultiplyTokenCreationEffect(2));
 
         PermanentPredicate otherArtifactOrCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(

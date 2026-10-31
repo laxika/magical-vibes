@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class VirulentSliver extends Card {
 
     public VirulentSliver() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER),
                 GrantScope.ALL_CREATURES_INCLUDING_SELF,

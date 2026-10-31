@@ -40,7 +40,7 @@ public class RogueClass extends Card {
                 new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
                 "this Class is level 1"));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
                 new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES)));
 
@@ -55,7 +55,7 @@ public class RogueClass extends Card {
                 new NotCondition(new SourceCounterThreshold(2, CounterType.LEVEL)))),
                 "this Class is level 2"));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),
                 new AllowCastFromCardsExiledWithSourceEffect(true)));
     }

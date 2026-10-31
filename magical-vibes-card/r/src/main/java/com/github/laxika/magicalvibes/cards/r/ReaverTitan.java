@@ -16,7 +16,7 @@ import java.util.List;
 public class ReaverTitan extends Card {
 
     public ReaverTitan() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromManaValueAtMostEffect(3));
+        addStaticEffect(new ProtectionFromManaValueAtMostEffect(3));
         addEffect(EffectSlot.ON_ATTACK, new DealDamageToPlayersEffect(5, DamageRecipient.EACH_OPPONENT));
 
         addActivatedAbility(new ActivatedAbility(

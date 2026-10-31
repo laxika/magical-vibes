@@ -15,7 +15,7 @@ public class NadaarSelflessPaladin extends Card {
     public NadaarSelflessPaladin() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new VentureIntoDungeonEffect());
         addEffect(EffectSlot.ON_ATTACK, new VentureIntoDungeonEffect());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerHasCompletedDungeon(),
+        addStaticEffect(new ConditionalEffect(new ControllerHasCompletedDungeon(),
                 new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES)));
     }
 }

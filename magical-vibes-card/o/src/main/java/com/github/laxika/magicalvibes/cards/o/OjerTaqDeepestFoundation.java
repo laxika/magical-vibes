@@ -14,7 +14,7 @@ public class OjerTaqDeepestFoundation extends Card {
     public OjerTaqDeepestFoundation() {
         setBackFaceCard(new TempleOfCivilization());
 
-        addEffect(EffectSlot.STATIC, new MultiplyTokenCreationEffect(3, true));
+        addStaticEffect(new MultiplyTokenCreationEffect(3, true));
         addEffect(EffectSlot.ON_DEATH, new ReturnSourceTransformedFromGraveyardEffect(true, true));
     }
 

@@ -14,7 +14,7 @@ public class MarkOfFury extends Card {
 
     public MarkOfFury() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.END_STEP_TRIGGERED, ReturnToHandEffect.self());
     }
 }

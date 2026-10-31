@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
@@ -24,9 +23,9 @@ public class BloodBaronOfVizkopa extends Card {
 
     public BloodBaronOfVizkopa() {
         // Protection from white and from black.
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.WHITE, CardColor.BLACK)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE, CardColor.BLACK)));
         // As long as you have 30 or more life and an opponent has 10 or less life, this creature gets +6/+6 and has flying.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AllConditions(List.of(new ControllerLifeAtLeast(30), new AnOpponentLifeAtMost(10))),
                 new StaticBoostEffect(6, 6, Set.of(Keyword.FLYING), GrantScope.SELF)));
     }

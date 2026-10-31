@@ -34,7 +34,7 @@ public class SternMentor extends Card {
                 List.of(new MillEffect(2, MillRecipient.TARGET_PLAYER)),
                 "{T}: Target player mills two cards."
         );
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
                 new GrantActivatedAbilityEffect(mill, GrantScope.SELF_AND_PAIRED)));
     }

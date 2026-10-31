@@ -17,7 +17,7 @@ import java.util.List;
 public class LouvaqTheAberrant extends Card {
 
     public LouvaqTheAberrant() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromModifiedCreaturesEffect());
+        addStaticEffect(new ProtectionFromModifiedCreaturesEffect());
 
         var activePlayerCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

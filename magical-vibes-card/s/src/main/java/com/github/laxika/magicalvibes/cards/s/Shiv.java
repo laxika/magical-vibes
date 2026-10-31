@@ -20,7 +20,7 @@ import java.util.Set;
 public class Shiv extends Card {
 
     public Shiv() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
                         "{R}",

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -22,6 +21,6 @@ public class SoullessOne extends Card {
         DynamicAmount zombieCount = new Sum(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE), CountScope.ANY_PLAYER),
                 new CardsInGraveyard(new CardSubtypePredicate(CardSubtype.ZOMBIE), CountScope.ANY_PLAYER));
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(zombieCount, zombieCount));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(zombieCount, zombieCount));
     }
 }

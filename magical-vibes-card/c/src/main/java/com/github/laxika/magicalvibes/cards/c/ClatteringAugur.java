@@ -18,7 +18,7 @@ public class ClatteringAugur extends Card {
 
     public ClatteringAugur() {
         // This creature can't block.
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
 
         // When this creature enters, you draw a card and you lose 1 life.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));

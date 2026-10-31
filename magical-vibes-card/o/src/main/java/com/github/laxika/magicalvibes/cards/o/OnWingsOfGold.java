@@ -21,7 +21,7 @@ import java.util.Set;
 public class OnWingsOfGold extends Card {
 
     public OnWingsOfGold() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING),
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING),
                 GrantScope.OWN_CREATURES, new PermanentAnyOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
                         new PermanentIsTokenPredicate()))));

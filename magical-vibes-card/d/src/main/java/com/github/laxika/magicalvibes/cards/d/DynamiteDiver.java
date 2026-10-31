@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndSaddleEff
 public class DynamiteDiver extends Card {
 
     public DynamiteDiver() {
-        addEffect(EffectSlot.STATIC, new PowerBoostForCrewAndSaddleEffect(2));
+        addStaticEffect(new PowerBoostForCrewAndSaddleEffect(2));
         addEffect(EffectSlot.ON_DEATH, new DealDamageToAnyTargetEffect(1));
     }
 }

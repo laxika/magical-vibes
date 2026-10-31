@@ -47,7 +47,7 @@ public class MishraEminentOne extends Card {
                                 null,
                                 Set.of(),
                                 false,
-                                Map.of(),
+                                List.of(),
                                 List.of(),
                                 false,
                                 false,

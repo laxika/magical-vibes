@@ -22,7 +22,7 @@ import java.util.List;
 public class EtrataDeadlyFugitive extends Card {
 
     public EtrataDeadlyFugitive() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
                         "{2}{U}{B}",

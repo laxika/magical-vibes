@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
@@ -21,16 +20,16 @@ public class VampireNocturnus extends Card {
 
     public VampireNocturnus() {
         // Play with the top card of your library revealed.
-        addEffect(EffectSlot.STATIC, new PlayWithTopCardRevealedEffect());
+        addStaticEffect(new PlayWithTopCardRevealedEffect());
         // As long as the top card of your library is black, Vampire Nocturnus and other
         // Vampire creatures you control each get +2/+1 and have flying.
         // Other Vampires only get the bonus while they remain Vampires...
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new TopCardOfLibraryColor(CardColor.BLACK),
+        addStaticEffect(new ConditionalEffect(new TopCardOfLibraryColor(CardColor.BLACK),
                 new StaticBoostEffect(2, 1, Set.of(Keyword.FLYING), GrantScope.OWN_CREATURES,
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.VAMPIRE)))));
         // ...but Vampire Nocturnus names itself, so it always gets the bonus even if it
         // loses the Vampire subtype (the self-reference isn't filtered by creature type).
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new TopCardOfLibraryColor(CardColor.BLACK),
+        addStaticEffect(new ConditionalEffect(new TopCardOfLibraryColor(CardColor.BLACK),
                 new StaticBoostEffect(2, 1, Set.of(Keyword.FLYING), GrantScope.SELF)));
     }
 }

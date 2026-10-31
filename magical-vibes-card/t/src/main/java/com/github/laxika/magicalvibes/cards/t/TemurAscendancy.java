@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class TemurAscendancy extends Card {
 
     public TemurAscendancy() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new EnteringCreatureMinPowerConditionalEffect(4,
                         new MayEffect(new DrawCardEffect(1), "Draw a card?")));

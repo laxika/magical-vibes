@@ -20,8 +20,8 @@ public class FalcoSparaPactweaver extends Card {
     public FalcoSparaPactweaver() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC, new AllowCastFromTopOfLibraryEffect(
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new AllowCastFromTopOfLibraryEffect(
                 Set.of(CardType.CREATURE, CardType.ARTIFACT, CardType.ENCHANTMENT, CardType.INSTANT,
                         CardType.SORCERY, CardType.PLANESWALKER, CardType.BATTLE, CardType.KINDRED),
                 List.of(new RemoveCountersFromControlledCreaturesCastingCost(1, CounterType.ANY))));

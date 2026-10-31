@@ -25,18 +25,18 @@ import java.util.List;
 public class Anavolver extends Card {
 
     public Anavolver() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{U}"));
+        addStaticEffect(new KickerEffect("{1}{U}"));
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{B}"), true, 1));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Kicked(), new GrantKeywordEffect(
+        addStaticEffect(new ConditionalEffect(new Kicked(), new GrantKeywordEffect(
                 Keyword.FLYING, GrantScope.SELF)));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{B}"),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new RepeatedAdditionalCostPaid("{B}"),
+        addStaticEffect(new ConditionalEffect(new RepeatedAdditionalCostPaid("{B}"),
                 new GrantActivatedAbilityEffect(
                         new ActivatedAbility(false, null,
                                 List.of(new PayLifeCost(3), new RegenerateEffect()),

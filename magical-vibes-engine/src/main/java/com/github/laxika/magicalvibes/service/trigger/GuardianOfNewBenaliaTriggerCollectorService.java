@@ -24,7 +24,7 @@ public class GuardianOfNewBenaliaTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = ScryWhenThisCreatureEnlistsEffect.class, slot = EffectSlot.STATIC)
+    @CollectsTrigger(value = ScryWhenThisCreatureEnlistsEffect.class, slot = EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS)
     private boolean handleScryTrigger(TriggerMatchContext match, ScryWhenThisCreatureEnlistsEffect effect,
                                       TriggerContext context) {
         if (!(context instanceof TriggerContext.AttackingCreatureTriggeredAbility attack)

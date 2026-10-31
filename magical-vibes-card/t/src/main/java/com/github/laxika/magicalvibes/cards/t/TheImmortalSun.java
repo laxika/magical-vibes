@@ -17,10 +17,10 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 public class TheImmortalSun extends Card {
 
     public TheImmortalSun() {
-        addEffect(EffectSlot.STATIC, new PlaneswalkerLoyaltyAbilitiesCantBeActivatedEffect());
+        addStaticEffect(new PlaneswalkerLoyaltyAbilitiesCantBeActivatedEffect());
         addEffect(EffectSlot.DRAW_TRIGGERED, new DrawCardEffect(1));
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTruePredicate(), 1, CostModificationScope.SELF));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
     }
 }

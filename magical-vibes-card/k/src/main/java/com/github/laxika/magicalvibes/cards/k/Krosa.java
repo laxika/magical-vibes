@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class Krosa extends Card {
 
     public Krosa() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ALL_CREATURES));
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ALL_CREATURES));
         addEffect(EffectSlot.CHAOS_TRIGGERED, new MayEffect(
                 SequenceEffect.of(
                         new AwardManaEffect(ManaColor.WHITE),

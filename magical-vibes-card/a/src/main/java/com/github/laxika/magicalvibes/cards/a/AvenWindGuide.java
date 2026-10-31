@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -18,7 +17,7 @@ public class AvenWindGuide extends Card {
         // Flying, vigilance are auto-loaded keywords; no engine wiring needed here.
 
         // Creature tokens you control have flying and vigilance.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE),
+        addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE),
                 GrantScope.OWN_CREATURES, new PermanentIsTokenPredicate()));
 
         // Embalm {4}{W}{U} ({4}{W}{U}, Exile this card from your graveyard: Create a token that's a copy

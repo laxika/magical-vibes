@@ -1,4 +1,12 @@
 # Card Patterns: Triggered Creatures
+
+> `STATIC` in this file means a static ability (CR 113.3d), written `addStaticEffect(e)`, or
+> `target(f).addStaticEffect(e)` for an Aura's enchant ability. It functions from the zones its effect's
+> rule names (`CardEffect.staticAbilityZones()`): the battlefield, the stack for kicker, buyback, gift,
+> "can't be countered" and "costs less to cast", and the hand for splice. An ability that states its
+> zones, such as Eminence, is written `addStaticEffect(AbilityZones.of(...), e)`. In a token's or a
+> copy's ability list it is `StaticAbility.of(e)`, next to `LegacySlots.triggered(EffectSlot.X, e)` for
+> a trigger. Readers use `getStaticEffects()`. There is no `EffectSlot.STATIC`.
 | Hideaway twice, then combat damage to a player offers one source-tracked exiled card for free play | `e/EvercoatUrsine.java` | `ON_ENTER_BATTLEFIELD` `SequenceEffect(ExileOneFromTopCardsFaceDownWithSourceEffect(3, true), ExileOneFromTopCardsFaceDownWithSourceEffect(3, true))` + `ON_COMBAT_DAMAGE_TO_PLAYER ConditionalEffect(SourceExiledCardsThreshold(1), MayPlayCardExiledWithSourceEffect())`; the free-play path includes lands |
 | Vehicle combat damage to player → put the damaged player's top cards onto the battlefield face down as Cybermen | `c/Cybership.java` | `ON_COMBAT_DAMAGE_TO_PLAYER PutTopCardsOfDamagedPlayerLibraryFaceDownAsCybermenEffect(2)`; the combat-damage context binds the damaged player's library, and the cards enter simultaneously under the trigger controller's control |
 | Attacking band size determines a temporary boost | `c/ChatzukMightyGuitarist.java` | `ON_ALLY_CREATURES_ATTACK` + `BoostCreaturesInAttackingBandsEffect()` - groups the controller's declared attacking bands and gives every creature in each band of at least two creatures +N/+N, where N is that band's size |

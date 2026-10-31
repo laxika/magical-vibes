@@ -26,7 +26,7 @@ public class GoblinPiledriver extends Card {
 
     public GoblinPiledriver() {
         // Protection from blue.
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLUE)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLUE)));
 
         // Whenever this creature attacks, it gets +2/+0 until end of turn for each other attacking Goblin.
         addEffect(EffectSlot.ON_ATTACK, new BoostSelfEffect(

@@ -61,7 +61,7 @@ public class EachOtherPlayerDrawsCardEffectHandler implements NormalEffectHandle
             playerInteractionSupport.applyDrawCards(gameData, playerId, amount);
         }
         if (entry.isGiftPromised()
-                && entry.getCard().getEffects(com.github.laxika.magicalvibes.model.EffectSlot.STATIC)
+                && entry.getCard().getStaticEffects()
                 .stream().anyMatch(GiftEffect.class::isInstance)) {
             triggerCollectionService.checkControllerGivesGiftTriggers(
                     gameData, entry.getControllerId());

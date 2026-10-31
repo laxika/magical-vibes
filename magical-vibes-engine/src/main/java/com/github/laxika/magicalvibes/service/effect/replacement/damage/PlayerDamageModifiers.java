@@ -1,17 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
-import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -127,7 +122,7 @@ class PlayerDamageModifiers extends PlayerDamageCandidateSource {
         Map<String, NumericInstance> reductions = new LinkedHashMap<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (gameQueryService.hasLostAllAbilities(gameData, permanent)) return;
-            List<CardEffect> statics = permanent.getCard().getEffects(EffectSlot.STATIC);
+            List<CardEffect> statics = permanent.getCard().getStaticEffects();
             for (int i = 0; i < statics.size(); i++) {
                 if (statics.get(i) instanceof ReduceSpellDamageEffect reduce && reduce.amount() > 0) {
                     reductions.put(permanent.getId() + "#" + i, new NumericInstance(

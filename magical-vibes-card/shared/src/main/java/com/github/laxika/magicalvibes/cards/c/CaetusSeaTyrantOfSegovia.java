@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class CaetusSeaTyrantOfSegovia extends Card {
 
     public CaetusSeaTyrantOfSegovia() {
-        addEffect(EffectSlot.STATIC, new GrantSpellCastingAbilityToSpellsEffect(
+        addStaticEffect(new GrantSpellCastingAbilityToSpellsEffect(
                 Keyword.CONVOKE, new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))));
         target(TargetFilters.creature(), 0, 4)
                 .addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,

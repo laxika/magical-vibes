@@ -26,7 +26,7 @@ public class GaladhrimBrigade extends Card {
                 new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{1}{G}")));
 
         // Other Elves you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ELF)));
     }
 }

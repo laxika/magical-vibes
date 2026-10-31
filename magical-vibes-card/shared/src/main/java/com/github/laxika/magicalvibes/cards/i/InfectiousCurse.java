@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class InfectiousCurse extends Card {
 
     public InfectiousCurse() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingEnchantedPlayerEffect(1));
+        addStaticEffect(new ReduceOwnCastCostIfTargetingEnchantedPlayerEffect(1));
         addEffect(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED, SequenceEffect.of(
                 new LoseLifeEffect(1, LoseLifeRecipient.ACTIVE_PLAYER),
                 new GainLifeEffect(1)));

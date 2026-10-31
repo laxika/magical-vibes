@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class ZurgoAndOjutai extends Card {
 
     public ZurgoAndOjutai() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceEnteredBattlefieldThisTurn(),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
 

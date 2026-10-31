@@ -27,15 +27,10 @@ public class KenrithsTransformation extends Card {
     public KenrithsTransformation() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC,
-                        new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantSubtypeEffect(CardSubtype.ELK, GrantScope.ENCHANTED_CREATURE, true))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantColorEffect(CardColor.GREEN, GrantScope.ENCHANTED_CREATURE, true))
-                .addEffect(EffectSlot.STATIC,
-                        new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new SetBasePowerToughnessEffect(3, 3, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.ELK, GrantScope.ENCHANTED_CREATURE, true))
+                .addStaticEffect(new GrantColorEffect(CardColor.GREEN, GrantScope.ENCHANTED_CREATURE, true))
+                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new SetBasePowerToughnessEffect(3, 3, GrantScope.ENCHANTED_CREATURE));
     }
 }

@@ -12,6 +12,6 @@ public class IntellectDevourer extends Card {
     public IntellectDevourer() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 EachOpponentExilesFromHandEffect.withReturnOnSourceLeave(1));
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(true));
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(true));
     }
 }

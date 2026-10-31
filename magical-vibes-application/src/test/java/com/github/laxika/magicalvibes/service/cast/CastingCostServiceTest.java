@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.DiscardXCardsCastingCost;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -193,8 +192,7 @@ class CastingCostServiceTest {
     @Test
     void enduringStoryFreeEquipRequiresDesignationAndFirstActivation() {
         Card source = new Card();
-        source.addEffect(EffectSlot.STATIC,
-                new com.github.laxika.magicalvibes.model.effect.FreeEquipWhileEnduringStoryEffect());
+        source.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.FreeEquipWhileEnduringStoryEffect());
         Permanent permanent = new Permanent(source);
         gd.playerBattlefields.get(player1Id).add(permanent);
         ActivatedAbility equip = new EquipActivatedAbility("{2}");
@@ -216,7 +214,7 @@ class CastingCostServiceTest {
         @Test
         void appliesRoomUnlockReductionToGenericManaOnly() {
             Card reducer = new Card();
-            reducer.addEffect(EffectSlot.STATIC, new ReduceRoomUnlockCostEffect(1));
+            reducer.addStaticEffect(new ReduceRoomUnlockCostEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
             Card room = new Card();
@@ -232,7 +230,7 @@ class CastingCostServiceTest {
         @DisplayName("Applies dash cost reduction only to the controller's dash casts")
         void appliesDashCostReductionOnlyToControllerDashCasts() {
             Card reducer = new Card();
-            reducer.addEffect(EffectSlot.STATIC, new ReduceDashCostEffect(2));
+            reducer.addStaticEffect(new ReduceDashCostEffect(2));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
             Card dashSpell = new Card();
@@ -252,8 +250,7 @@ class CastingCostServiceTest {
             Card taxCard = new Card();
             taxCard.setName("Thalia");
             taxCard.setType(CardType.CREATURE);
-            taxCard.addEffect(EffectSlot.STATIC,
-                    new IncreaseSpellCostEffect(instantOrSorcery(), 1, CostModificationScope.OPPONENT));
+            taxCard.addStaticEffect(new IncreaseSpellCostEffect(instantOrSorcery(), 1, CostModificationScope.OPPONENT));
             gd.playerBattlefields.get(player2Id).add(new Permanent(taxCard));
             evaluateCardTypePredicates();
 
@@ -281,7 +278,7 @@ class CastingCostServiceTest {
             Card crystal = new Card();
             crystal.setName("Memory Crystal");
             crystal.setType(CardType.ARTIFACT);
-            crystal.addEffect(EffectSlot.STATIC, new ReduceBuybackCostEffect(2));
+            crystal.addStaticEffect(new ReduceBuybackCostEffect(2));
             gd.playerBattlefields.get(player1Id).add(new Permanent(crystal));
 
             Card spell = new Card();
@@ -299,8 +296,7 @@ class CastingCostServiceTest {
             Card taxCard = new Card();
             taxCard.setName("Thalia");
             taxCard.setType(CardType.CREATURE);
-            taxCard.addEffect(EffectSlot.STATIC,
-                    new IncreaseSpellCostEffect(new CardTypePredicate(CardType.INSTANT), 1,
+            taxCard.addStaticEffect(new IncreaseSpellCostEffect(new CardTypePredicate(CardType.INSTANT), 1,
                             CostModificationScope.OPPONENT));
             gd.playerBattlefields.get(player1Id).add(new Permanent(taxCard));
             evaluateCardTypePredicates();
@@ -319,8 +315,7 @@ class CastingCostServiceTest {
             Card taxCard = new Card();
             taxCard.setName("Damping Sphere");
             taxCard.setType(CardType.ARTIFACT);
-            taxCard.addEffect(EffectSlot.STATIC,
-                    new IncreaseEachPlayerCastCostPerSpellThisTurnEffect(1));
+            taxCard.addStaticEffect(new IncreaseEachPlayerCastCostPerSpellThisTurnEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(taxCard));
             Card dummySpell = new Card();
             dummySpell.setName("Dummy");
@@ -343,8 +338,7 @@ class CastingCostServiceTest {
             Card taxCard = new Card();
             taxCard.setName("Damping Sphere");
             taxCard.setType(CardType.ARTIFACT);
-            taxCard.addEffect(EffectSlot.STATIC,
-                    new IncreaseEachPlayerCastCostPerSpellThisTurnEffect(1));
+            taxCard.addStaticEffect(new IncreaseEachPlayerCastCostPerSpellThisTurnEffect(1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(taxCard));
 
             Card instant = new Card();
@@ -361,8 +355,7 @@ class CastingCostServiceTest {
             Card reducer = new Card();
             reducer.setName("Heartless Summoning");
             reducer.setType(CardType.ENCHANTMENT);
-            reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
+            reducer.addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
                             new Fixed(2), CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
             evaluateCardTypePredicates();
@@ -391,8 +384,7 @@ class CastingCostServiceTest {
             Card reducer = new Card();
             reducer.setName("Dream Chisel");
             reducer.setType(CardType.ARTIFACT);
-            reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
+            reducer.addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
                             1, CostModificationScope.SELF, true));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
             evaluateCardTypePredicates();
@@ -409,13 +401,11 @@ class CastingCostServiceTest {
         @DisplayName("Applies morph cost modifiers with the correct player scope")
         void appliesMorphCostModifiersWithScope() {
             Card globalTax = new Card();
-            globalTax.addEffect(EffectSlot.STATIC,
-                    new ModifyMorphCostEffect(2, CostModificationScope.ALL));
+            globalTax.addStaticEffect(new ModifyMorphCostEffect(2, CostModificationScope.ALL));
             gd.playerBattlefields.get(player1Id).add(new Permanent(globalTax));
 
             Card ownReduction = new Card();
-            ownReduction.addEffect(EffectSlot.STATIC,
-                    new ModifyMorphCostEffect(-1, CostModificationScope.SELF));
+            ownReduction.addStaticEffect(new ModifyMorphCostEffect(-1, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(ownReduction));
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
@@ -430,8 +420,7 @@ class CastingCostServiceTest {
         @DisplayName("Applies a zone-scoped reduction only to spells cast from that zone")
         void appliesZoneScopedReductionOnlyToMatchingSourceZone() {
             Card reducer = new Card();
-            reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceCastCostForMatchingSpellsEffect(
+            reducer.addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                             new CardTruePredicate(), 1, CostModificationScope.SELF, Zone.GRAVEYARD));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
             when(predicateEvaluationService.matchesCardPredicate(
@@ -454,7 +443,7 @@ class CastingCostServiceTest {
         @DisplayName("Reduces spells cast from outside the hand but not spells cast from hand")
         void appliesNonHandReductionOnlyOutsideHand() {
             Card reducer = new Card();
-            reducer.addEffect(EffectSlot.STATIC, new ReduceNonHandSpellCastCostEffect(1));
+            reducer.addStaticEffect(new ReduceNonHandSpellCastCostEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
@@ -498,7 +487,7 @@ class CastingCostServiceTest {
             Card reducer = new Card();
             reducer.setName("Racers' Scoreboard");
             reducer.setType(CardType.ARTIFACT);
-            reducer.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+            reducer.addStaticEffect(new ConditionalEffect(
                     new MaxSpeed(),
                     new ReduceCastCostForMatchingSpellsEffect(
                             new CardTypePredicate(CardType.INSTANT), 1, CostModificationScope.SELF)));
@@ -521,8 +510,7 @@ class CastingCostServiceTest {
         @DisplayName("Flashback cost modification applies only to flashback costs")
         void flashbackCostModificationAppliesOnlyToFlashbackCosts() {
             Card stone = new Card();
-            stone.addEffect(EffectSlot.STATIC,
-                    new ModifyFlashbackCostEffect(-2, CostModificationScope.SELF));
+            stone.addStaticEffect(new ModifyFlashbackCostEffect(-2, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(stone));
 
             Card spell = new Card();
@@ -537,8 +525,7 @@ class CastingCostServiceTest {
         @DisplayName("Opponent-scoped flashback cost modification applies to the opponent")
         void opponentFlashbackCostModificationAppliesToOpponent() {
             Card stone = new Card();
-            stone.addEffect(EffectSlot.STATIC,
-                    new ModifyFlashbackCostEffect(2, CostModificationScope.OPPONENT));
+            stone.addStaticEffect(new ModifyFlashbackCostEffect(2, CostModificationScope.OPPONENT));
             gd.playerBattlefields.get(player1Id).add(new Permanent(stone));
 
             Card spell = new Card();
@@ -555,8 +542,7 @@ class CastingCostServiceTest {
             Card reducer = new Card();
             reducer.setName("Heartless Summoning");
             reducer.setType(CardType.ENCHANTMENT);
-            reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
+            reducer.addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
                             new Fixed(2), CostModificationScope.SELF));
             gd.playerBattlefields.get(player2Id).add(new Permanent(reducer));
             evaluateCardTypePredicates();
@@ -575,7 +561,7 @@ class CastingCostServiceTest {
             Card incubator = new Card();
             incubator.setName("Urza's Incubator");
             incubator.setType(CardType.ARTIFACT);
-            incubator.addEffect(EffectSlot.STATIC, new ReduceCastCostForChosenSubtypeSpellsEffect(2));
+            incubator.addStaticEffect(new ReduceCastCostForChosenSubtypeSpellsEffect(2));
             Permanent incubatorPermanent = new Permanent(incubator);
             incubatorPermanent.setChosenSubtype(CardSubtype.GIANT);
             gd.playerBattlefields.get(player1Id).add(incubatorPermanent);
@@ -600,7 +586,7 @@ class CastingCostServiceTest {
         @DisplayName("Chosen-name cost increase applies only to the enchanted player")
         void chosenNameCostIncreaseScopesToEnchantedPlayer() {
             Card curse = new Card();
-            curse.addEffect(EffectSlot.STATIC, new IncreaseCastCostForChosenNameSpellsEffect(2));
+            curse.addStaticEffect(new IncreaseCastCostForChosenNameSpellsEffect(2));
             Permanent cursePermanent = new Permanent(curse);
             cursePermanent.setAttachedTo(player2Id);
             cursePermanent.setChosenName("Grizzly Bears");
@@ -625,8 +611,7 @@ class CastingCostServiceTest {
             Card reducer = new Card();
             reducer.setName("Opponent Reducer");
             reducer.setType(CardType.CREATURE);
-            reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceCastCostForMatchingSpellsEffect(
+            reducer.addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                             new CardTypePredicate(CardType.CREATURE), 1, CostModificationScope.OPPONENT));
             gd.playerBattlefields.get(player2Id).add(new Permanent(reducer));
 
@@ -651,8 +636,7 @@ class CastingCostServiceTest {
             Card reducer = new Card();
             reducer.setName("Jhoira's Familiar");
             reducer.setType(CardType.CREATURE);
-            reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceCastCostForMatchingSpellsEffect(
+            reducer.addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                             new CardTypePredicate(CardType.ARTIFACT), 1, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
@@ -671,8 +655,7 @@ class CastingCostServiceTest {
             Card taxCard = new Card();
             taxCard.setName("Thorn of Amethyst");
             taxCard.setType(CardType.ARTIFACT);
-            taxCard.addEffect(EffectSlot.STATIC,
-                    new IncreaseSpellCostEffect(new CardTypePredicate(CardType.INSTANT), 1,
+            taxCard.addStaticEffect(new IncreaseSpellCostEffect(new CardTypePredicate(CardType.INSTANT), 1,
                             CostModificationScope.ALL));
             gd.playerBattlefields.get(player2Id).add(new Permanent(taxCard));
 
@@ -704,7 +687,7 @@ class CastingCostServiceTest {
             retort.setType(CardType.INSTANT);
             retort.setManaCost("{1}{U}{U}");
             var predicate = new PermanentHasSubtypePredicate(CardSubtype.WIZARD);
-            retort.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+            retort.addStaticEffect(new ConditionalEffect(
                     new ControlsPermanent(predicate), new ReduceOwnCastCostEffect(new Fixed(1))));
 
             // ControlsPermanent conditions evaluate through the FilterContext-aware overload; the battlefield
@@ -736,7 +719,7 @@ class CastingCostServiceTest {
             blasphemousAct.setName("Blasphemous Act");
             blasphemousAct.setType(CardType.SORCERY);
             blasphemousAct.setManaCost("{8}{R}");
-            blasphemousAct.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+            blasphemousAct.addStaticEffect(new ReduceOwnCastCostEffect(
                     new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER)));
 
             assertThat(svc.getCastCostModifier(gd, player1Id, blasphemousAct)).isEqualTo(-2);
@@ -749,16 +732,14 @@ class CastingCostServiceTest {
             Card thalia = new Card();
             thalia.setName("Thalia");
             thalia.setType(CardType.CREATURE);
-            thalia.addEffect(EffectSlot.STATIC,
-                    new IncreaseSpellCostEffect(instantOrSorcery(), 1, CostModificationScope.OPPONENT));
+            thalia.addStaticEffect(new IncreaseSpellCostEffect(instantOrSorcery(), 1, CostModificationScope.OPPONENT));
             gd.playerBattlefields.get(player2Id).add(new Permanent(thalia));
 
             // Player has a SELF-scoped reducer for instants: -1
             Card familiar = new Card();
             familiar.setName("Reducer");
             familiar.setType(CardType.ARTIFACT);
-            familiar.addEffect(EffectSlot.STATIC,
-                    new ReduceCastCostForMatchingSpellsEffect(
+            familiar.addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                             new CardTypePredicate(CardType.INSTANT), 1, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(familiar));
 
@@ -781,8 +762,7 @@ class CastingCostServiceTest {
             Card warchief = new Card();
             warchief.setName("Goblin Warchief");
             warchief.setType(CardType.CREATURE);
-            warchief.addEffect(EffectSlot.STATIC,
-                    new ReduceCastCostForMatchingSpellsEffect(
+            warchief.addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                             new CardSubtypePredicate(CardSubtype.GOBLIN), 1, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(warchief));
 
@@ -819,8 +799,7 @@ class CastingCostServiceTest {
             Card thalia = new Card();
             thalia.setName("Thalia");
             thalia.setType(CardType.CREATURE);
-            thalia.addEffect(EffectSlot.STATIC,
-                    new IncreaseSpellCostEffect(new CardTypePredicate(CardType.INSTANT), 2,
+            thalia.addStaticEffect(new IncreaseSpellCostEffect(new CardTypePredicate(CardType.INSTANT), 2,
                             CostModificationScope.OPPONENT));
             gd.playerBattlefields.get(player2Id).add(new Permanent(thalia));
 
@@ -828,8 +807,7 @@ class CastingCostServiceTest {
             Card familiar = new Card();
             familiar.setName("Reducer");
             familiar.setType(CardType.ARTIFACT);
-            familiar.addEffect(EffectSlot.STATIC,
-                    new ReduceCastCostForMatchingSpellsEffect(
+            familiar.addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                             new CardTypePredicate(CardType.INSTANT), 3, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(familiar));
 
@@ -852,8 +830,7 @@ class CastingCostServiceTest {
             Card reducer = new Card();
             reducer.setName("Big Reducer");
             reducer.setType(CardType.ENCHANTMENT);
-            reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
+            reducer.addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(new CardTypePredicate(CardType.CREATURE),
                             new Fixed(5), CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
             evaluateCardTypePredicates();
@@ -876,14 +853,14 @@ class CastingCostServiceTest {
             Card trinisphere = new Card();
             trinisphere.setName("Trinisphere");
             trinisphere.setType(CardType.ARTIFACT);
-            trinisphere.addEffect(EffectSlot.STATIC, new MinimumSpellCostEffect(3));
+            trinisphere.addStaticEffect(new MinimumSpellCostEffect(3));
             gd.playerBattlefields.get(player1Id).add(new Permanent(trinisphere));
 
             Card spell = new Card();
             spell.setName("Reduced Spell");
             spell.setType(CardType.CREATURE);
             spell.setManaCost("{1}{G}");
-            spell.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new Fixed(5)));
+            spell.addStaticEffect(new ReduceOwnCastCostEffect(new Fixed(5)));
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
 
@@ -894,9 +871,8 @@ class CastingCostServiceTest {
         void minimumSpellCostIsAppliedAfterColoredReductions() {
             evaluateCardTypePredicates();
             Card artifact = new Card();
-            artifact.addEffect(EffectSlot.STATIC, new MinimumSpellCostEffect(3));
-            artifact.addEffect(EffectSlot.STATIC,
-                    new com.github.laxika.magicalvibes.model.effect.ReduceColoredCastCostForMatchingSpellsEffect(
+            artifact.addStaticEffect(new MinimumSpellCostEffect(3));
+            artifact.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.ReduceColoredCastCostForMatchingSpellsEffect(
                             new CardTypePredicate(CardType.CREATURE),
                             new com.github.laxika.magicalvibes.model.ManaCost("{B}"), CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(artifact));
@@ -913,7 +889,7 @@ class CastingCostServiceTest {
             Card trinisphere = new Card();
             trinisphere.setName("Trinisphere");
             trinisphere.setType(CardType.ARTIFACT);
-            trinisphere.addEffect(EffectSlot.STATIC, new MinimumSpellCostEffect(3));
+            trinisphere.addStaticEffect(new MinimumSpellCostEffect(3));
             Permanent permanent = new Permanent(trinisphere);
             permanent.tap();
             gd.playerBattlefields.get(player1Id).add(permanent);
@@ -944,7 +920,7 @@ class CastingCostServiceTest {
             blasphemousAct.setName("Blasphemous Act");
             blasphemousAct.setType(CardType.SORCERY);
             blasphemousAct.setManaCost("{8}{R}");
-            blasphemousAct.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+            blasphemousAct.addStaticEffect(new ReduceOwnCastCostEffect(
                     new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER)));
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
@@ -961,7 +937,7 @@ class CastingCostServiceTest {
             Card spell = new Card();
             spell.setName("Hurkyl's Final Meditation");
             spell.setType(CardType.INSTANT);
-            spell.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+            spell.addStaticEffect(new ConditionalEffect(
                     new NotControllerTurn(), new IncreaseOwnCastCostEffect(3)));
 
             assertThat(svc.getCastCostModifier(gd, player1Id, spell)).isZero();
@@ -977,8 +953,7 @@ class CastingCostServiceTest {
             Card taxCard = new Card();
             taxCard.setName("Thalia");
             taxCard.setType(CardType.CREATURE);
-            taxCard.addEffect(EffectSlot.STATIC,
-                    new IncreaseSpellCostEffect(new CardTypePredicate(CardType.INSTANT), 1,
+            taxCard.addStaticEffect(new IncreaseSpellCostEffect(new CardTypePredicate(CardType.INSTANT), 1,
                             CostModificationScope.OPPONENT));
             gd.playerBattlefields.get(player2Id).add(new Permanent(taxCard));
             evaluateCardTypePredicates();
@@ -1003,7 +978,7 @@ class CastingCostServiceTest {
         void equipCostReductionAppliesOnlyToEquipAbilities() {
             Card steelshaper = new Card();
             steelshaper.setName("Auriok Steelshaper");
-            steelshaper.addEffect(EffectSlot.STATIC, new ReduceEquipCostEffect(1));
+            steelshaper.addStaticEffect(new ReduceEquipCostEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(steelshaper));
 
             Permanent equipment = new Permanent(new Card());
@@ -1024,7 +999,7 @@ class CastingCostServiceTest {
         @DisplayName("Conditional equip cost reduction applies only when its condition is met")
         void conditionalEquipCostReductionChecksItsCondition() {
             Card nahiri = new Card();
-            nahiri.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+            nahiri.addStaticEffect(new ConditionalEffect(
                     new ControllerTurn(), new ReduceEquipCostEffect(1)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(nahiri));
 
@@ -1049,7 +1024,7 @@ class CastingCostServiceTest {
         @DisplayName("Symmetric activated-ability reductions are not counted as controller-scoped reductions")
         void symmetricReductionIsNotCountedTwice() {
             Card trainingGrounds = new Card();
-            trainingGrounds.addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+            trainingGrounds.addStaticEffect(new ReduceActivatedAbilityCostEffect(
                     new PermanentIsCreaturePredicate(), 2));
             gd.playerBattlefields.get(player1Id).add(new Permanent(trainingGrounds));
 
@@ -1070,7 +1045,7 @@ class CastingCostServiceTest {
         @DisplayName("A symmetric reduction can make an activated ability free")
         void symmetricReductionCanMakeAbilityFree() {
             Card reducer = new Card();
-            reducer.addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+            reducer.addStaticEffect(new ReduceActivatedAbilityCostEffect(
                     new PermanentIsCreaturePredicate(), 2));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
@@ -1089,7 +1064,7 @@ class CastingCostServiceTest {
         @DisplayName("A reduction can require one mana to remain")
         void reductionCanRequireOneManaToRemain() {
             Card reducer = new Card();
-            reducer.addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+            reducer.addStaticEffect(new ReduceActivatedAbilityCostEffect(
                     new PermanentIsCreaturePredicate(), 2, true, true));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
@@ -1108,7 +1083,7 @@ class CastingCostServiceTest {
         @DisplayName("Dynamic symmetric activated-ability reductions use the reducing permanent")
         void dynamicSymmetricReductionUsesReducingPermanent() {
             Card reducer = new Card();
-            reducer.addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+            reducer.addStaticEffect(new ReduceActivatedAbilityCostEffect(
                     new PermanentAllOfPredicate(List.of(
                             new PermanentIsCreaturePredicate(),
                             new PermanentControlledBySourceControllerPredicate())),
@@ -1132,7 +1107,7 @@ class CastingCostServiceTest {
         @DisplayName("Other-only equip cost reduction excludes the source Equipment")
         void otherOnlyEquipCostReductionExcludesSourceEquipment() {
             Card whip = new Card();
-            whip.addEffect(EffectSlot.STATIC, new ReduceEquipCostEffect(1, true));
+            whip.addStaticEffect(new ReduceEquipCostEffect(1, true));
             Permanent reducer = new Permanent(whip);
             gd.playerBattlefields.get(player1Id).add(reducer);
 
@@ -1157,8 +1132,7 @@ class CastingCostServiceTest {
         @DisplayName("Targeted Equipment ability reduction applies only to the reducing permanent")
         void targetedEquipmentAbilityCostReductionUsesChosenTarget() {
             Card aspirant = new Card();
-            aspirant.addEffect(EffectSlot.STATIC,
-                    new ReduceActivatedAbilityCostForTargetingSourceEffect(1));
+            aspirant.addStaticEffect(new ReduceActivatedAbilityCostForTargetingSourceEffect(1));
             Permanent reducer = new Permanent(aspirant);
             gd.playerBattlefields.get(player1Id).add(reducer);
 
@@ -1180,8 +1154,7 @@ class CastingCostServiceTest {
         @DisplayName("Attached-target Equip reduction follows the source Aura's attachment")
         void attachedTargetEquipReductionUsesSourceAttachment() {
             Card strongBack = new Card();
-            strongBack.addEffect(EffectSlot.STATIC,
-                    new ReduceEquipCostForTargetingAttachedPermanentEffect(3));
+            strongBack.addStaticEffect(new ReduceEquipCostForTargetingAttachedPermanentEffect(3));
             Permanent reducer = new Permanent(strongBack);
             Permanent enchantedCreature = new Permanent(new Card());
             reducer.setAttachedTo(enchantedCreature.getId());
@@ -1210,11 +1183,11 @@ class CastingCostServiceTest {
         @DisplayName("Uses only cycling reducers controlled by the activating player")
         void usesOnlyControllerCyclingReducers() {
             Card playerReducer = new Card();
-            playerReducer.addEffect(EffectSlot.STATIC, new ReduceCyclingCostEffect(2));
+            playerReducer.addStaticEffect(new ReduceCyclingCostEffect(2));
             gd.playerBattlefields.get(player1Id).add(new Permanent(playerReducer));
 
             Card opponentReducer = new Card();
-            opponentReducer.addEffect(EffectSlot.STATIC, new ReduceCyclingCostEffect(3));
+            opponentReducer.addStaticEffect(new ReduceCyclingCostEffect(3));
             gd.playerBattlefields.get(player2Id).add(new Permanent(opponentReducer));
 
             assertThat(svc.getCyclingAbilityCostReduction(gd, player1Id)).isEqualTo(2);
@@ -1229,11 +1202,11 @@ class CastingCostServiceTest {
         @DisplayName("Uses only ninjutsu reducers controlled by the activating player")
         void usesOnlyControllerNinjutsuReducers() {
             Card playerReducer = new Card();
-            playerReducer.addEffect(EffectSlot.STATIC, new ReduceNinjutsuCostEffect(2));
+            playerReducer.addStaticEffect(new ReduceNinjutsuCostEffect(2));
             gd.playerBattlefields.get(player1Id).add(new Permanent(playerReducer));
 
             Card opponentReducer = new Card();
-            opponentReducer.addEffect(EffectSlot.STATIC, new ReduceNinjutsuCostEffect(3));
+            opponentReducer.addStaticEffect(new ReduceNinjutsuCostEffect(3));
             gd.playerBattlefields.get(player2Id).add(new Permanent(opponentReducer));
 
             assertThat(svc.getNinjutsuAbilityCostReduction(gd, player1Id)).isEqualTo(2);
@@ -1252,8 +1225,7 @@ class CastingCostServiceTest {
             stomp.setName("Savage Stomp");
             stomp.setType(CardType.SORCERY);
             stomp.setManaCost("{2}{G}");
-            stomp.addEffect(EffectSlot.STATIC,
-                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(predicate, 2, true));
+            stomp.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(predicate, 2, true));
 
             Card dinoCard = new Card();
             dinoCard.setName("Dinosaur");
@@ -1275,8 +1247,7 @@ class CastingCostServiceTest {
         void targetBasedIncreaseApplies() {
             var predicate = new PermanentIsCreaturePredicate();
             Card spell = new Card();
-            spell.addEffect(EffectSlot.STATIC,
-                    new IncreaseOwnCastCostIfTargetingPermanentEffect(predicate, 3));
+            spell.addStaticEffect(new IncreaseOwnCastCostIfTargetingPermanentEffect(predicate, 3));
 
             Card creatureCard = new Card();
             creatureCard.setType(CardType.CREATURE);
@@ -1297,8 +1268,7 @@ class CastingCostServiceTest {
             stomp.setName("Savage Stomp");
             stomp.setType(CardType.SORCERY);
             stomp.setManaCost("{2}{G}");
-            stomp.addEffect(EffectSlot.STATIC,
-                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(predicate, 2, true));
+            stomp.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(predicate, 2, true));
 
             Card bearCard = new Card();
             bearCard.setName("Bear");
@@ -1321,8 +1291,7 @@ class CastingCostServiceTest {
             response.setName("Ajani's Response");
             response.setType(CardType.INSTANT);
             response.setManaCost("{4}{W}");
-            response.addEffect(EffectSlot.STATIC,
-                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(predicate, 3));
+            response.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(predicate, 3));
 
             Card bearCard = new Card();
             bearCard.setName("Bear");
@@ -1346,8 +1315,7 @@ class CastingCostServiceTest {
             Card mark = new Card();
             mark.setName("Hunter's Mark");
             mark.setType(CardType.INSTANT);
-            mark.addEffect(EffectSlot.STATIC,
-                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
+            mark.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
                             predicate, 3, false, 1));
 
             Permanent source = new Permanent(new Card());
@@ -1369,8 +1337,7 @@ class CastingCostServiceTest {
             Card killian = new Card();
             killian.setName("Killian, Ink Duelist");
             killian.setType(CardType.CREATURE);
-            killian.addEffect(EffectSlot.STATIC,
-                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
+            killian.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
                             predicate, 2));
             gd.playerBattlefields.get(player1Id).add(new Permanent(killian));
 
@@ -1396,8 +1363,7 @@ class CastingCostServiceTest {
         void battlefieldSourceRelativeReductionAppliesOnlyToSource() {
             var predicate = new PermanentIsSourcePermanentPredicate();
             Card sourceCard = new Card();
-            sourceCard.addEffect(EffectSlot.STATIC,
-                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
+            sourceCard.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
                             predicate, 2, true));
             Permanent source = new Permanent(sourceCard);
             Permanent other = new Permanent(new Card());
@@ -1434,8 +1400,7 @@ class CastingCostServiceTest {
             brushOff.setName("Brush Off");
             brushOff.setType(CardType.INSTANT);
             brushOff.setManaCost("{2}{U}{U}");
-            brushOff.addEffect(EffectSlot.STATIC,
-                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect(predicate, 2));
+            brushOff.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect(predicate, 2));
 
             Card targetInstant = new Card();
             targetInstant.setName("Target Bolt");
@@ -1464,8 +1429,7 @@ class CastingCostServiceTest {
             notOfThisWorld.setName("Not of This World");
             notOfThisWorld.setType(CardType.INSTANT);
             notOfThisWorld.setManaCost("{7}");
-            notOfThisWorld.addEffect(EffectSlot.STATIC,
-                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect(
+            notOfThisWorld.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect(
                             predicate, 7));
 
             Card targetSpell = new Card();
@@ -1493,8 +1457,7 @@ class CastingCostServiceTest {
             stomp.setName("Savage Stomp");
             stomp.setType(CardType.SORCERY);
             stomp.setManaCost("{2}{G}");
-            stomp.addEffect(EffectSlot.STATIC,
-                    new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
+            stomp.addStaticEffect(new com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect(
                             new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR), 2, true));
 
             assertThat(svc.computeTargetBasedCostReduction(gd, player1Id, stomp, List.of())).isZero();
@@ -1506,7 +1469,7 @@ class CastingCostServiceTest {
             Card thaumaturge = new Card();
             thaumaturge.setName("Battlefield Thaumaturge");
             thaumaturge.setType(CardType.CREATURE);
-            thaumaturge.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostPerTargetEffect(
+            thaumaturge.addStaticEffect(new ReduceOwnCastCostPerTargetEffect(
                     new PermanentIsCreaturePredicate(), 1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(thaumaturge));
 
@@ -1532,7 +1495,7 @@ class CastingCostServiceTest {
         @DisplayName("Target-count reduction counts every target occurrence")
         void targetCountReductionCountsEveryTargetOccurrence() {
             Card hinata = new Card();
-            hinata.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostForEachTargetEffect(1));
+            hinata.addStaticEffect(new ReduceOwnCastCostForEachTargetEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(hinata));
 
             Card spell = new Card();
@@ -1547,8 +1510,7 @@ class CastingCostServiceTest {
         void graveyardCardReductionApplies() {
             var predicate = new CardTypePredicate(CardType.CREATURE);
             Card spell = new Card();
-            spell.addEffect(EffectSlot.STATIC,
-                    new ReduceOwnCastCostIfTargetingGraveyardCardEffect(predicate, 3));
+            spell.addStaticEffect(new ReduceOwnCastCostIfTargetingGraveyardCardEffect(predicate, 3));
 
             Card creature = new Card();
             creature.setType(CardType.CREATURE);
@@ -1576,8 +1538,7 @@ class CastingCostServiceTest {
             Card kopala = new Card();
             kopala.setName("Kopala, Warden of Waves");
             kopala.setType(CardType.CREATURE);
-            kopala.addEffect(EffectSlot.STATIC,
-                    new IncreaseOpponentCostForTargetingControlledPermanentEffect(predicate, 2));
+            kopala.addStaticEffect(new IncreaseOpponentCostForTargetingControlledPermanentEffect(predicate, 2));
             gd.playerBattlefields.get(player1Id).add(new Permanent(kopala));
 
             Card merfolk = new Card();
@@ -1602,8 +1563,7 @@ class CastingCostServiceTest {
             Card kopala = new Card();
             kopala.setName("Kopala, Warden of Waves");
             kopala.setType(CardType.CREATURE);
-            kopala.addEffect(EffectSlot.STATIC,
-                    new IncreaseOpponentCostForTargetingControlledPermanentEffect(predicate, 2));
+            kopala.addStaticEffect(new IncreaseOpponentCostForTargetingControlledPermanentEffect(predicate, 2));
             gd.playerBattlefields.get(player1Id).add(new Permanent(kopala));
 
             Card bear = new Card();
@@ -1628,8 +1588,7 @@ class CastingCostServiceTest {
             Card kopala = new Card();
             kopala.setName("Kopala, Warden of Waves");
             kopala.setType(CardType.CREATURE);
-            kopala.addEffect(EffectSlot.STATIC,
-                    new IncreaseOpponentCostForTargetingControlledPermanentEffect(predicate, 2));
+            kopala.addStaticEffect(new IncreaseOpponentCostForTargetingControlledPermanentEffect(predicate, 2));
             gd.playerBattlefields.get(player1Id).add(new Permanent(kopala));
 
             Card merfolk = new Card();
@@ -1646,8 +1605,7 @@ class CastingCostServiceTest {
         void sourceRelativePredicateAndSpellOnlyScope() {
             var predicate = new PermanentIsSourcePermanentPredicate();
             Card boreal = new Card();
-            boreal.addEffect(EffectSlot.STATIC,
-                    new IncreaseOpponentCostForTargetingControlledPermanentEffect(predicate, 2, false));
+            boreal.addStaticEffect(new IncreaseOpponentCostForTargetingControlledPermanentEffect(predicate, 2, false));
             Permanent source = new Permanent(boreal);
             Permanent other = new Permanent(new Card());
             gd.playerBattlefields.get(player1Id).add(source);
@@ -1676,8 +1634,7 @@ class CastingCostServiceTest {
     void targetingSpellCostModifierIncludesOpponentReduction() {
         var predicate = new PermanentIsSourcePermanentPredicate();
         Card witch = new Card();
-        witch.addEffect(EffectSlot.STATIC,
-                new ReduceOpponentCostForTargetingControlledPermanentEffect(predicate, 1));
+        witch.addStaticEffect(new ReduceOpponentCostForTargetingControlledPermanentEffect(predicate, 1));
         Permanent source = new Permanent(witch);
         gd.playerBattlefields.get(player1Id).add(source);
 
@@ -1693,7 +1650,7 @@ class CastingCostServiceTest {
     @DisplayName("Opponent target-count tax applies once per target and not to the controller")
     void targetingSpellCostModifierIncludesOpponentTargetCountTax() {
         Card hinata = new Card();
-        hinata.addEffect(EffectSlot.STATIC, new IncreaseOpponentCastCostPerTargetEffect(1));
+        hinata.addStaticEffect(new IncreaseOpponentCastCostPerTargetEffect(1));
         gd.playerBattlefields.get(player1Id).add(new Permanent(hinata));
         List<UUID> targetIds = List.of(UUID.randomUUID(), UUID.randomUUID());
 
@@ -1705,7 +1662,7 @@ class CastingCostServiceTest {
     @DisplayName("Targeted cost reduction applies once to targeted spells")
     void targetingSpellCostModifierIncludesTargetedReduction() {
         Card highTroller = new Card();
-        highTroller.addEffect(EffectSlot.STATIC, new ReduceTargetedCostEffect(2));
+        highTroller.addStaticEffect(new ReduceTargetedCostEffect(2));
         gd.playerBattlefields.get(player1Id).add(new Permanent(highTroller));
         List<UUID> targetIds = List.of(UUID.randomUUID(), UUID.randomUUID());
 
@@ -1717,7 +1674,7 @@ class CastingCostServiceTest {
     @DisplayName("Targeted cost reduction applies to targeted activated abilities")
     void activationCostModifierIncludesTargetedReduction() {
         Card highTroller = new Card();
-        highTroller.addEffect(EffectSlot.STATIC, new ReduceTargetedCostEffect(2));
+        highTroller.addStaticEffect(new ReduceTargetedCostEffect(2));
         gd.playerBattlefields.get(player1Id).add(new Permanent(highTroller));
 
         Permanent source = new Permanent(new Card());
@@ -1738,8 +1695,7 @@ class CastingCostServiceTest {
     void targetingSpellCostModifierIncludesSpellSelfIncrease() {
         var predicate = new PermanentHasSubtypePredicate(CardSubtype.DRAGON);
         Card spell = new Card();
-        spell.addEffect(EffectSlot.STATIC,
-                new IncreaseOwnCastCostIfTargetingPermanentEffect(predicate, 2));
+        spell.addStaticEffect(new IncreaseOwnCastCostIfTargetingPermanentEffect(predicate, 2));
         Permanent dragon = new Permanent(new Card());
 
         when(gameQueryService.findPermanentById(gd, dragon.getId())).thenReturn(dragon);
@@ -1754,7 +1710,7 @@ class CastingCostServiceTest {
         gd.playerIds.add(player1Id);
         gd.playerIds.add(player2Id);
         Card curse = new Card();
-        curse.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingEnchantedPlayerEffect(1));
+        curse.addStaticEffect(new ReduceOwnCastCostIfTargetingEnchantedPlayerEffect(1));
         Permanent aura = new Permanent(curse);
         aura.setAttachedTo(player2Id);
         gd.playerBattlefields.get(player1Id).add(aura);
@@ -1767,8 +1723,7 @@ class CastingCostServiceTest {
     @DisplayName("Aura spell reduction follows the source Aura's attachment")
     void auraSpellTargetReductionUsesSourceAttachment() {
         Card strongBack = new Card();
-        strongBack.addEffect(EffectSlot.STATIC,
-                new ReduceAuraCastCostForTargetingAttachedPermanentEffect(3));
+        strongBack.addStaticEffect(new ReduceAuraCastCostForTargetingAttachedPermanentEffect(3));
         Permanent reducer = new Permanent(strongBack);
         Permanent enchantedCreature = new Permanent(new Card());
         reducer.setAttachedTo(enchantedCreature.getId());
@@ -1796,7 +1751,7 @@ class CastingCostServiceTest {
             Card torch = new Card();
             torch.setName("Kaervek's Torch");
             torch.setType(CardType.SORCERY);
-            torch.addEffect(EffectSlot.STATIC, new IncreaseCostOfSpellsTargetingThisSpellEffect(2));
+            torch.addStaticEffect(new IncreaseCostOfSpellsTargetingThisSpellEffect(2));
 
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, torch, player1Id,
                     torch.getName(), List.of(), 1, List.of());
@@ -1866,8 +1821,7 @@ class CastingCostServiceTest {
     @Test
     void warpAlternativeSelectionHonorsSourceZone() {
         Card source = new Card();
-        source.addEffect(EffectSlot.STATIC,
-                AlternativeCostForSpellsEffect.warp("{2}{R}", new CardTruePredicate()));
+        source.addStaticEffect(AlternativeCostForSpellsEffect.warp("{2}{R}", new CardTruePredicate()));
         gd.playerBattlefields.get(player1Id).add(new Permanent(source));
 
         Card spell = new Card();

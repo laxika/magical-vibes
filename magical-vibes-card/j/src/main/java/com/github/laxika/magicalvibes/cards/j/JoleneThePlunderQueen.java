@@ -26,7 +26,7 @@ public class JoleneThePlunderQueen extends Card {
                 new ConditionalEffect(
                         new PlayerAttacksOneOrMoreOfYourOpponents(),
                         new CreateTokenForTriggeringPlayerEffect(CreateTokenEffect.ofTreasureToken(1))));
-        addEffect(EffectSlot.STATIC, new AddTokenCreationEffect(1, CardSubtype.TREASURE));
+        addStaticEffect(new AddTokenCreationEffect(1, CardSubtype.TREASURE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 public class PurpleWorm extends Card {
 
     public PurpleWorm() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new Morbid(), new ReduceOwnCastCostEffect(new Fixed(2))));
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
     }

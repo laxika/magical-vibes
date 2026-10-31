@@ -28,7 +28,7 @@ public class DugganPrivateDetective extends Card {
 
     public DugganPrivateDetective() {
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofClueToken(1));
         addEffect(EffectSlot.ON_ATTACK, CreateTokenEffect.ofClueToken(1));
 

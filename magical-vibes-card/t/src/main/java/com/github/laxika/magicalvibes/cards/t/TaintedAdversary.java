@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaAnyNumberOfTimesPutCountersOnSelfEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MID", collectorNumber = "124")
@@ -29,7 +29,7 @@ public class TaintedAdversary extends Card {
                 "Zombie", 2, 2, CardColor.BLACK, null,
                 List.of(CardSubtype.ZOMBIE), Set.of(Keyword.DECAYED), Set.of(),
                 false, false,
-                Map.of(EffectSlot.STATIC, new CantBlockEffect()),
+                List.of(StaticAbility.of(new CantBlockEffect())),
                 List.of(), false, false, false, 0, Set.of());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PayManaAnyNumberOfTimesPutCountersOnSelfEffect(

@@ -18,8 +18,8 @@ public class CouncilOfTheAbsolute extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseCardNameOnEnterEffect(List.of(CardType.CREATURE, CardType.LAND)));
         // Your opponents can't cast spells with the chosen name.
-        addEffect(EffectSlot.STATIC, new SpellsWithChosenNameCantBeCastEffect(true));
+        addStaticEffect(new SpellsWithChosenNameCantBeCastEffect(true));
         // Spells with the chosen name you cast cost {2} less to cast.
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForChosenNameSpellsEffect(2));
+        addStaticEffect(new ReduceCastCostForChosenNameSpellsEffect(2));
     }
 }

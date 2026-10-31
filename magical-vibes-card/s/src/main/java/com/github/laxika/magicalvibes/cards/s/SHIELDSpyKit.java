@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 public class SHIELDSpyKit extends Card {
 
     public SHIELDSpyKit() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(new AttacksAlone(),
                 SequenceEffect.of(
                         new UntapPermanentsEffect(TapUntapScope.TRIGGERING),

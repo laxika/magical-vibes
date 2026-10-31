@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "66")
@@ -41,7 +41,7 @@ public class CallousBloodmage extends Card {
                 CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),
                 List.of(CardSubtype.PEST), Set.of(), Set.of(),
                 false, false,
-                Map.of(EffectSlot.ON_DEATH, new GainLifeEffect(1)),
+                List.of(LegacySlots.triggered(EffectSlot.ON_DEATH, new GainLifeEffect(1))),
                 List.of(), false, false, false, 0, Set.of());
     }
 }

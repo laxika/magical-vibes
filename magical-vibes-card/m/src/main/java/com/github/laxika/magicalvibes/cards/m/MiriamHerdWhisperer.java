@@ -22,7 +22,7 @@ public class MiriamHerdWhisperer extends Card {
     public MiriamHerdWhisperer() {
         Set<CardSubtype> mountsAndVehicles = Set.of(CardSubtype.MOUNT, CardSubtype.VEHICLE);
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerTurn(),
                 new GrantKeywordEffect(
                         Keyword.HEXPROOF,

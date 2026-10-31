@@ -29,8 +29,7 @@ public class LostInTheMaze extends Card {
                                 CounterType.STUN, 1,
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
 
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ALL_OWN_CREATURES,
                         new PermanentIsTappedPredicate()));
     }
 }

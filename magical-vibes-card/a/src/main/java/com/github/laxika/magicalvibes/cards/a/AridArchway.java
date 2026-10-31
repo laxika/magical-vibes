@@ -28,7 +28,7 @@ public class AridArchway extends Card {
 
     public AridArchway() {
         // This land enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // When this land enters, return a land you control to its owner's hand. If another Desert
         // was returned this way, surveil 1.

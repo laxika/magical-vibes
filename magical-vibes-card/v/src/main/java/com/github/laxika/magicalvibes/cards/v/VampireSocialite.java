@@ -31,7 +31,7 @@ public class VampireSocialite extends Card {
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, otherVampires)));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new OpponentLostLifeThisTurn(1),
                 new ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype.VAMPIRE, 1)));
     }

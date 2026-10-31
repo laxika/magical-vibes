@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackTargetScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -24,8 +23,7 @@ import java.util.Set;
 public class TheEternalWanderer extends Card {
 
     public TheEternalWanderer() {
-        addEffect(EffectSlot.STATIC,
-                new MaximumCombatCreaturesEffect(1, Integer.MAX_VALUE, CombatAttackTargetScope.SOURCE_PERMANENT));
+        addStaticEffect(new MaximumCombatCreaturesEffect(1, Integer.MAX_VALUE, CombatAttackTargetScope.SOURCE_PERMANENT));
 
         var artifactOrCreature = new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(

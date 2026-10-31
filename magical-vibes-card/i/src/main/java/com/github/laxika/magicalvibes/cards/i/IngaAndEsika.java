@@ -23,10 +23,8 @@ import java.util.List;
 public class IngaAndEsika extends Card {
 
     public IngaAndEsika() {
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
-        addEffect(EffectSlot.STATIC,
-                new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 true,
                                 null,

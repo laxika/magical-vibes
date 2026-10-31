@@ -21,7 +21,7 @@ public class SpiderGirlLegacyHero extends Card {
 
     public SpiderGirlLegacyHero() {
         // During your turn, Spider-Girl has flying.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
 
         // When Spider-Girl leaves the battlefield, create a 1/1 green and white Human Citizen creature token.

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -8,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CrumblingSanctuaryDamageRepla
 import com.github.laxika.magicalvibes.model.effect.NefariousLichDamageReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndExileFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndMillEffect;
-import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -287,7 +285,7 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
 
     private static boolean printedOnBattlefield(List<Permanent> battlefield,
                                                 Class<? extends CardEffect> effectType) {
-        return battlefield.stream().anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+        return battlefield.stream().anyMatch(permanent -> permanent.getCard().getStaticEffects().stream()
                 .anyMatch(effectType::isInstance));
     }
 }

@@ -26,8 +26,7 @@ public class MizzixOfTheIzmagnus extends Card {
                 new CardTypePredicate(CardType.INSTANT),
                 new CardTypePredicate(CardType.SORCERY)));
 
-        addEffect(EffectSlot.STATIC,
-                new ReduceCastCostForMatchingSpellsEffect(instantOrSorcery,
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(instantOrSorcery,
                         new ControllerExperienceCounters(), CostModificationScope.SELF));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(instantOrSorcery,

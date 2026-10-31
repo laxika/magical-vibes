@@ -21,10 +21,10 @@ public class CaptainAmericaSuperSoldier extends Card {
     public CaptainAmericaSuperSoldier() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.SHIELD),
                 new GrantControllerKeywordEffect(Keyword.HEXPROOF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.SHIELD),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_CREATURES,
                         new PermanentHasSubtypePredicate(CardSubtype.HERO))));

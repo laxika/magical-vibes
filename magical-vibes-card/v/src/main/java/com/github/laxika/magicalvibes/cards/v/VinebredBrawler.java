@@ -21,7 +21,7 @@ import java.util.List;
 public class VinebredBrawler extends Card {
 
     public VinebredBrawler() {
-        addEffect(EffectSlot.STATIC, new MustBeBlockedIfAbleEffect());
+        addStaticEffect(new MustBeBlockedIfAbleEffect());
 
         PermanentPredicate targetFilter = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

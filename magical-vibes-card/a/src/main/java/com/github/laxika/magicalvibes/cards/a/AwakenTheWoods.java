@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "BRO", collectorNumber = "170")
@@ -20,6 +19,6 @@ public class AwakenTheWoods extends Card {
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, new XValue(), "Forest Dryad", 1, 1,
                 CardColor.GREEN, null, List.of(CardSubtype.FOREST, CardSubtype.DRYAD), Set.of(), Set.of(CardType.LAND),
-                false, false, Map.of(), List.of(), false, false, false, 0, Set.of()));
+                false, false, List.of(), List.of(), false, false, false, 0, Set.of()));
     }
 }

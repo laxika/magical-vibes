@@ -22,12 +22,12 @@ import java.util.List;
 public class IchormoonGauntlet extends Card {
 
     public IchormoonGauntlet() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(0, List.of(new ProliferateEffect()), "[0]: Proliferate."),
                 GrantScope.OWN_PERMANENTS,
                 new PermanentIsPlaneswalkerPredicate()
         ));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(-12, List.of(new ControllerExtraTurnEffect(1)),
                         "[-12]: Take an extra turn after this one."),
                 GrantScope.OWN_PERMANENTS,

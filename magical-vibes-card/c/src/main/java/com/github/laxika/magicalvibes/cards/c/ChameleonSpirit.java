@@ -16,7 +16,6 @@ public class ChameleonSpirit extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
         PermanentCount matchingOpponentPermanents = new PermanentCount(
                 new PermanentHasSourceChosenColorPredicate(), CountScope.OPPONENTS);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(matchingOpponentPermanents, matchingOpponentPermanents));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(matchingOpponentPermanents, matchingOpponentPermanents));
     }
 }

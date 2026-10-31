@@ -18,7 +18,7 @@ import java.util.List;
 public class UnderworldCharger extends Card {
 
     public UnderworldCharger() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addCastingOption(new GraveyardCast(null, "{4}{B}", List.of(
                 new ExileNCardsFromGraveyardCastingCost(null, "other cards", 3)), null, false, false, true));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new SourceWasCastWithEscape(),

@@ -30,7 +30,7 @@ public class ThePhasingOfZhalfir extends Card {
             new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
 
     public ThePhasingOfZhalfir() {
-        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
+        addStaticEffect(new ReadAheadEffect(false));
         addChapterPhaseOut(EffectSlot.SAGA_CHAPTER_I);
         addChapterPhaseOut(EffectSlot.SAGA_CHAPTER_II);
 

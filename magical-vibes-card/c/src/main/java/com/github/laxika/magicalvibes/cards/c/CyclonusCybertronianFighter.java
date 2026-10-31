@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfThenEffect;
 public class CyclonusCybertronianFighter extends Card {
 
     public CyclonusCybertronianFighter() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,

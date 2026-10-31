@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -34,7 +33,7 @@ public class DarkImpostor extends Card {
         ));
 
         // Dark Impostor has all activated abilities of all creature cards exiled with it.
-        addEffect(EffectSlot.STATIC, new GainActivatedAbilitiesOfExiledCardsEffect(
+        addStaticEffect(new GainActivatedAbilitiesOfExiledCardsEffect(
                 false, new CardTypePredicate(CardType.CREATURE), exileAbilityLink));
     }
 }

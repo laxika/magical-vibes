@@ -18,7 +18,7 @@ import java.util.List;
 public class FolkHero extends Card {
 
     public FolkHero() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 OncePerTurnTriggerEffect.perGrant(new SpellCastTriggerEffect(
                         new CardSharesCreatureTypeWithSourcePredicate(),

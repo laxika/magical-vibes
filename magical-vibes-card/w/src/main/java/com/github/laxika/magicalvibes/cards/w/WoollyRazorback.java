@@ -23,11 +23,9 @@ public class WoollyRazorback extends Card {
                 new EnterWithCountersEffect(CounterType.ICE, new Fixed(3)));
 
         SourceCounterThreshold hasIceCounter = new SourceCounterThreshold(1, CounterType.ICE);
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(hasIceCounter,
+        addStaticEffect(new ConditionalEffect(hasIceCounter,
                         new GrantKeywordEffect(Keyword.DEFENDER, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(hasIceCounter, new PreventAllCombatDamageBySelfEffect()));
+        addStaticEffect(new ConditionalEffect(hasIceCounter, new PreventAllCombatDamageBySelfEffect()));
 
         addEffect(EffectSlot.ON_BLOCK, new RemoveCounterFromSourceEffect(CounterType.ICE, 1),
                 TriggerMode.ONCE_PER_BLOCK);

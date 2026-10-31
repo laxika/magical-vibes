@@ -27,7 +27,7 @@ import java.util.List;
 public class PowerDepot extends Card {
 
     public PowerDepot() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
         addActivatedAbility(new ActivatedAbility(

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -21,7 +20,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class KnightOfStromgald extends Card {
 
     public KnightOfStromgald() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
         addActivatedAbility(new ActivatedAbility(false, "{B}", List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)), "{B}: This creature gains first strike until end of turn."));
         addActivatedAbility(new ActivatedAbility(false, "{B}{B}", List.of(new BoostSelfEffect(1, 0)), "{B}{B}: This creature gets +1/+0 until end of turn."));
     }

@@ -22,7 +22,7 @@ public class LaviniaOfTheTenth extends Card {
 
     public LaviniaOfTheTenth() {
         // Protection from red
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.RED)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.RED)));
 
         // When Lavinia enters, detain each nonland permanent your opponents control with mana value 4 or less.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LockMatchingPermanentsEffect(

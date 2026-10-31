@@ -23,7 +23,7 @@ public class BloodsporeThrinax extends Card {
 
         // Each other creature you control enters with an additional X +1/+1 counters on it,
         // where X is the number of +1/+1 counters on this creature.
-        addEffect(EffectSlot.STATIC, new ControlledPermanentsEnterWithAdditionalCountersByAmountEffect(
+        addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersByAmountEffect(
                 new PermanentIsCreaturePredicate(),
                 new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)));
     }

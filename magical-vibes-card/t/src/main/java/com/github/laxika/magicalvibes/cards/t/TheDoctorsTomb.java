@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RedistributePlayerLifeTotalsE
 public class TheDoctorsTomb extends Card {
 
     public TheDoctorsTomb() {
-        addEffect(EffectSlot.STATIC, new ExileCreaturesInsteadOfDyingWithLifeLossEffect(2));
+        addStaticEffect(new ExileCreaturesInsteadOfDyingWithLifeLossEffect(2));
         addEffect(EffectSlot.CHAOS_TRIGGERED, new RedistributePlayerLifeTotalsEffect());
     }
 }

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class JourneyToOblivion extends Card {
 
     public JourneyToOblivion() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new PartySize()));
+        addStaticEffect(new ReduceOwnCastCostEffect(new PartySize()));
         target(TargetFilters.nonlandPermanentAnOpponentControls())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ExileTargetPermanentUntilSourceLeavesEffect());

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.turn;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
@@ -401,7 +400,7 @@ public class UntapStepService {
             return false;
         }
         return gameData.planechase.faceUp.stream()
-                .anyMatch(object -> object.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(object -> object.getCard().getStaticEffects().stream()
                         .anyMatch(effect -> effect instanceof AllPermanentsUntapDuringEachPlayersUntapStepEffect));
     }
 
@@ -428,7 +427,7 @@ public class UntapStepService {
 
     private boolean hasSelfCrossPlayerUntap(GameData gameData, Permanent source, UUID controllerId, TurnStep step) {
         return !gameQueryService.hasLostPrintedAbilities(gameData, source)
-                && source.getCard().getEffects(EffectSlot.STATIC).stream()
+                && source.getCard().getStaticEffects().stream()
                 .anyMatch(effect -> isActiveSelfCrossPlayerUntap(gameData, source, controllerId, step, effect));
     }
 
@@ -503,7 +502,7 @@ public class UntapStepService {
     private boolean hasEnchantedCrossPlayerUntap(GameData gameData, Permanent host) {
         return gameData.anyPermanentMatches(aura -> aura.isAttached()
                 && aura.getAttachedTo().equals(host.getId())
-                && aura.getCard().getEffects(EffectSlot.STATIC).stream()
+                && aura.getCard().getStaticEffects().stream()
                         .anyMatch(e -> e instanceof UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect untap
                                 && untap.scope() == TapUntapScope.ENCHANTED
                                 && untap.step() == TurnStep.UNTAP));
@@ -516,11 +515,11 @@ public class UntapStepService {
      */
     public boolean playersSkipUntapStepApplies(GameData gameData) {
         boolean planarEffectApplies = gameData.planechase != null && gameData.planechase.faceUp.stream()
-                .anyMatch(object -> object.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(object -> object.getCard().getStaticEffects().stream()
                         .anyMatch(effect -> effect instanceof PlayersSkipUntapStepEffect));
         return planarEffectApplies || gameData.anyPermanentMatches(p ->
                 !gameQueryService.hasLostAllAbilities(gameData, p)
-                        && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        && p.getCard().getStaticEffects().stream()
                         .anyMatch(e -> e instanceof PlayersSkipUntapStepEffect));
     }
 
@@ -568,7 +567,7 @@ public class UntapStepService {
     public List<StaticOrbEffect> bindingUntapRestrictions(GameData gameData, UUID activePlayerId) {
         List<StaticOrbEffect> active = new ArrayList<>();
         gameData.forEachPermanent((controllerId, p) -> {
-            for (CardEffect e : p.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect e : p.getCard().getStaticEffects()) {
                 if (e instanceof StaticOrbEffect orb
                         && !gameQueryService.hasLostPrintedAbilities(gameData, p)
                         && appliesToUntapStep(orb, activePlayerId, controllerId)
@@ -705,7 +704,7 @@ public class UntapStepService {
     private boolean applyUntapReplacement(GameData gameData, Permanent permanent,
                                           UUID permanentControllerId, Card sourceCard,
                                           UUID sourceControllerId) {
-        for (CardEffect effect : sourceCard.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : sourceCard.getStaticEffects()) {
             if (!(effect instanceof UntapStepReplacementEffect replacement)) {
                 continue;
             }
@@ -762,17 +761,17 @@ public class UntapStepService {
         boolean ownLockApplies = !permanent.isFaceDown()
                 && !gameQueryService.hasLostAllAbilities(gameData, permanent)
                 && (hasActiveCounterLock(permanent, permanent,
-                        permanent.getCard().getEffects(EffectSlot.STATIC), TapUntapScope.SELF)
+                        permanent.getCard().getStaticEffects(), TapUntapScope.SELF)
                 // Granted, not printed: Mindbender Spores gives the creature it blocks
                 // "doesn't untap during your untap step if it has a fungus counter on it".
                 || hasActiveCounterLock(permanent, permanent,
-                        permanent.getPersistentTriggeredEffects(EffectSlot.STATIC), TapUntapScope.SELF));
+                        permanent.getPersistentStaticEffects(), TapUntapScope.SELF));
         return ownLockApplies || gameData.anyPermanentMatches(source -> source.isAttached()
                         && source.getAttachedTo().equals(permanent.getId())
                         && (hasActiveCounterLock(source, permanent,
-                                source.getCard().getEffects(EffectSlot.STATIC), TapUntapScope.ENCHANTED)
+                                source.getCard().getStaticEffects(), TapUntapScope.ENCHANTED)
                         || hasActiveCounterLock(source, permanent,
-                                source.getPersistentTriggeredEffects(EffectSlot.STATIC), TapUntapScope.ENCHANTED)));
+                                source.getPersistentStaticEffects(), TapUntapScope.ENCHANTED)));
     }
 
     private static boolean hasActiveCounterLock(Permanent source, Permanent attached,
@@ -790,7 +789,7 @@ public class UntapStepService {
 
     private boolean matchingStaticPreventsUntap(GameData gameData, Permanent permanent) {
         return gameData.anyPermanentMatches(source -> !gameQueryService.hasLostAllAbilities(gameData, source)
-                && source.getCard().getEffects(EffectSlot.STATIC).stream()
+                && source.getCard().getStaticEffects().stream()
                 .anyMatch(e -> e instanceof MatchingPermanentsDoesntUntapEffect lock
                         // Source-relative filters (An-Zerrin Ruins' chosen creature type) need the
                         // locking permanent as the filter's source, not just the game state.
@@ -807,7 +806,7 @@ public class UntapStepService {
                 if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
                     continue;
                 }
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     collectActiveCrossPlayerUntapEffects(gameData, permanent, playerId, step, effect, result);
                 }
             }

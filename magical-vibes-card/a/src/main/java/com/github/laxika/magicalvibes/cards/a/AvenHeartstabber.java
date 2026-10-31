@@ -19,7 +19,7 @@ import java.util.Set;
 public class AvenHeartstabber extends Card {
 
     public AvenHeartstabber() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new DistinctManaValuesAmongCardsInGraveyardAtLeast(5),
                 new StaticBoostEffect(2, 2, Set.of(Keyword.DEATHTOUCH), GrantScope.SELF)));
         addEffect(EffectSlot.ON_DEATH, SequenceEffect.of(

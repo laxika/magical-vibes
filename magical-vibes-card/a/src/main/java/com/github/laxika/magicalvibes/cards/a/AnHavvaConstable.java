@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -24,7 +23,7 @@ public class AnHavvaConstable extends Card {
         // Toughness is 1 plus the number of green creatures on the battlefield. The printed
         // "1+*" toughness loads with a base of 0, so the "1 plus" is supplied here alongside
         // the green-creature count. It counts itself while on the battlefield.
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new Fixed(2),
                 new Sum(List.of(
                         new Fixed(1),

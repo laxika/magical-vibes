@@ -32,7 +32,7 @@ public class PolukranosUnchained extends Card {
                 new SourceWasCastWithEscape(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(6))));
 
-        addEffect(EffectSlot.STATIC, PreventDamageAndRemovePlusOnePlusOneCountersEffect.onlyWhileCountered());
+        addStaticEffect(PreventDamageAndRemovePlusOnePlusOneCountersEffect.onlyWhileCountered());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

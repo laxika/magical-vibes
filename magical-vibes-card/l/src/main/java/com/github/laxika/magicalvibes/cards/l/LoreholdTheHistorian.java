@@ -16,7 +16,7 @@ import java.util.List;
 public class LoreholdTheHistorian extends Card {
 
     public LoreholdTheHistorian() {
-        addEffect(EffectSlot.STATIC, new GrantMiracleToCardsInHandEffect(
+        addStaticEffect(new GrantMiracleToCardsInHandEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))),

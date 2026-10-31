@@ -29,7 +29,7 @@ import java.util.List;
 public class BardClass extends Card {
 
     public BardClass() {
-        addEffect(EffectSlot.STATIC, new ControlledPermanentsEnterWithAdditionalCountersEffect(
+        addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)
@@ -48,7 +48,7 @@ public class BardClass extends Card {
                 "this Class is level 1"
         ));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
                 new ReduceColoredCastCostForMatchingSpellsEffect(
                         new CardSupertypePredicate(CardSupertype.LEGENDARY),

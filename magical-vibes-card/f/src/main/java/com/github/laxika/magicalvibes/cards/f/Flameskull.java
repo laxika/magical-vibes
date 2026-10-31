@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSourceAndTopCardChooseOn
 public class Flameskull extends Card {
 
     public Flameskull() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_DEATH, new ExileSourceAndTopCardChooseOneMayPlayUntilNextTurnEffect());
     }
 }

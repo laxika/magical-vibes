@@ -20,7 +20,7 @@ import java.util.List;
 public class PostmortemProfessor extends Card {
 
     public PostmortemProfessor() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_ATTACK, new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
         addEffect(EffectSlot.ON_ATTACK, new GainLifeEffect(1));
 

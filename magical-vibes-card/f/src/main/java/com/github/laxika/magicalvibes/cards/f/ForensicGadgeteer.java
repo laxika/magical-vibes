@@ -23,7 +23,7 @@ public class ForensicGadgeteer extends Card {
                 new CardTypePredicate(CardType.ARTIFACT),
                 List.of(CreateTokenEffect.ofClueToken(1))));
 
-        addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+        addStaticEffect(new ReduceActivatedAbilityCostEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentControlledBySourceControllerPredicate())),

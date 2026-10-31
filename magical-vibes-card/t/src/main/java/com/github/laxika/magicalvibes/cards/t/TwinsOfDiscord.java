@@ -25,8 +25,7 @@ public class TwinsOfDiscord extends Card {
                 new ChooseManaValueParityAtResolutionEffect(),
                 new CreaturesOfChosenManaValueParityCantBlockThisTurnEffect()));
 
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new OpponentDealtDamageThisTurn(1),
+        addStaticEffect(new ConditionalEffect(new OpponentDealtDamageThisTurn(1),
                         new ControlledPermanentsEnterWithAdditionalCountersEffect(
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),

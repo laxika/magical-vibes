@@ -11,6 +11,6 @@ public class Realmwright extends Card {
 
     public Realmwright() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseBasicLandTypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new GrantChosenBasicLandTypeToOwnLandsEffect());
+        addStaticEffect(new GrantChosenBasicLandTypeToOwnLandsEffect());
     }
 }

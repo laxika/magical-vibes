@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -20,7 +19,7 @@ import java.util.List;
 public class NoctisPrinceOfLucis extends Card {
 
     public NoctisPrinceOfLucis() {
-        addEffect(EffectSlot.STATIC, new CastSpellsFromGraveyardEffect(
+        addStaticEffect(new CastSpellsFromGraveyardEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.ARTIFACT),
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)))),

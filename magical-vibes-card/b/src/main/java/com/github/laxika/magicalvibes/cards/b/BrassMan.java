@@ -17,7 +17,7 @@ public class BrassMan extends Card {
 
     public BrassMan() {
         // This creature doesn't untap during your untap step.
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // At the beginning of your upkeep, you may pay {1}. If you do, untap this creature.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayPayManaEffect(

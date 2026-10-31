@@ -20,8 +20,8 @@ public class DrachNyen extends Card {
         target(TargetFilters.creature(), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentAndImprintEffect());
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new AttachedBoostEffect(
                 new TotalPowerOfCardsExiledWithSource(), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

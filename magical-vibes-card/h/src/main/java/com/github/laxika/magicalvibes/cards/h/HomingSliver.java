@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantHandActivatedAbilityToCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -23,7 +22,7 @@ public class HomingSliver extends Card {
                 "Slivercycling {3} ({3}, Discard this card: Search your library for a Sliver card, "
                         + "reveal it, put it into your hand, then shuffle.)");
         addHandActivatedAbility(slivercycling);
-        addEffect(EffectSlot.STATIC, new GrantHandActivatedAbilityToCardsEffect(
+        addStaticEffect(new GrantHandActivatedAbilityToCardsEffect(
                 slivercycling, new CardSubtypePredicate(CardSubtype.SLIVER)));
     }
 }

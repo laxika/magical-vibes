@@ -14,9 +14,9 @@ public class SchemingFence extends Card {
 
     public SchemingFence() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseNonlandPermanentOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect(
+        addStaticEffect(new ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect(
                 new PermanentIsChosenPermanentPredicate()));
-        addEffect(EffectSlot.STATIC, new GainActivatedAbilitiesOfChosenPermanentEffect());
-        addEffect(EffectSlot.STATIC, new SpendManaAsAnyColorForActivatedAbilitiesEffect());
+        addStaticEffect(new GainActivatedAbilitiesOfChosenPermanentEffect());
+        addStaticEffect(new SpendManaAsAnyColorForActivatedAbilitiesEffect());
     }
 }

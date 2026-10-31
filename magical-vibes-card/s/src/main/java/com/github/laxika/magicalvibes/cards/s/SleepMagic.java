@@ -16,7 +16,7 @@ public class SleepMagic extends Card {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new TapPermanentsEffect(TapUntapScope.ENCHANTED))
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted())
+                .addStaticEffect(DoesntUntapEffect.enchanted())
                 .addEffect(EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
                         new SacrificeSelfEffect());
     }

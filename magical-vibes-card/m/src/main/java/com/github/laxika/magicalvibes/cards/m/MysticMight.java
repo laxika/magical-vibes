@@ -20,7 +20,7 @@ public class MysticMight extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{1}{U}"));
 
         // Enchant land you control — grants "{T}: Target creature gets +2/+2 until end of turn."
-        target(TargetFilters.landYouControl()).addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        target(TargetFilters.landYouControl()).addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,

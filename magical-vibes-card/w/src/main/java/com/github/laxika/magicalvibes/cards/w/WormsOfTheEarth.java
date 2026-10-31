@@ -17,9 +17,9 @@ import java.util.EnumSet;
 public class WormsOfTheEarth extends Card {
 
     public WormsOfTheEarth() {
-        addEffect(EffectSlot.STATIC, new PlayersCantPlayLandsIfPermanentCountEffect(
+        addStaticEffect(new PlayersCantPlayLandsIfPermanentCountEffect(
                 0, new PermanentTruePredicate()));
-        addEffect(EffectSlot.STATIC, new CardsCantEnterBattlefieldFromZonesEffect(
+        addStaticEffect(new CardsCantEnterBattlefieldFromZonesEffect(
                 new CardTypePredicate(CardType.LAND),
                 EnumSet.complementOf(EnumSet.of(Zone.BATTLEFIELD))));
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED, new WormsOfTheEarthEffect());

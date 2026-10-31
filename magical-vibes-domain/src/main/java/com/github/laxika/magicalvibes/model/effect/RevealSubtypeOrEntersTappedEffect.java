@@ -11,7 +11,7 @@ import java.util.Set;
  * Amphitheater — reveal a Giant card.) Multiple subtypes are accepted when the card text says
  * "an [subtype] or [subtype] card."
  * <p>
- * Placed in {@link com.github.laxika.magicalvibes.model.EffectSlot#STATIC}. Handled during
+ * Added as a static ability. Handled during
  * battlefield entry by {@code BattlefieldEntryService}: if the controller has no card with the
  * subtype in hand the permanent enters tapped automatically; otherwise the controller is prompted
  * (a "you may" choice) to reveal — declining taps the permanent.

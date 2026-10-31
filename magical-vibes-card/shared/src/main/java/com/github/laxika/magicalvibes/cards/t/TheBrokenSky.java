@@ -16,7 +16,7 @@ import java.util.Set;
 public class TheBrokenSky extends Card {
 
     public TheBrokenSky() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, Set.of(Keyword.LIFELINK),
+        addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.LIFELINK),
                 GrantScope.OWN_CREATURES, new PermanentIsTokenPredicate()));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new CreateTokenEffect(
                 1, "Spirit", 1, 1, CardColor.WHITE,

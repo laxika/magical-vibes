@@ -18,7 +18,7 @@ public class CaptiveAudience extends Card {
 
     public CaptiveAudience() {
         // "enters under the control of an opponent of your choice" is a replacement, not a trigger
-        addEffect(EffectSlot.STATIC, new ChooseOpponentGainsControlOfSourceEffect());
+        addStaticEffect(new ChooseOpponentGainsControlOfSourceEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ChooseModeNotYetChosenEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Your life total becomes 4",

@@ -14,7 +14,7 @@ public class MessengerHawk extends Card {
 
     public MessengerHawk() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, CreateTokenEffect.ofClueToken(1));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerDrewAtLeastCardsThisTurn(2),
                 new StaticBoostEffect(2, 0, GrantScope.SELF)));
     }

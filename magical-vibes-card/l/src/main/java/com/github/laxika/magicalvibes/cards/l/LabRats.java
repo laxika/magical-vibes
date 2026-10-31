@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -19,7 +18,7 @@ import java.util.Set;
 public class LabRats extends Card {
 
     public LabRats() {
-        addEffect(EffectSlot.STATIC, new BuybackEffect("{4}"));
+        addStaticEffect(new BuybackEffect("{4}"));
         addSpellEffect(new CreateTokenEffect("Rat", 1, 1, CardColor.BLACK,
                 List.of(CardSubtype.RAT), Set.of(), Set.of()));
         addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));

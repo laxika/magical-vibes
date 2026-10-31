@@ -24,7 +24,7 @@ public class MidnightEntourage extends Card {
 
     public MidnightEntourage() {
         // Other Aetherborn you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.AETHERBORN))));
 
         // Whenever this creature or another Aetherborn you control dies, you draw a card and you

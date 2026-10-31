@@ -17,6 +17,6 @@ public class Gloomshrieker extends Card {
                 .filter(new CardIsPermanentPredicate())
                 .targetGraveyard(true)
                 .build());
-        addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect(true));
+        addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect(true));
     }
 }

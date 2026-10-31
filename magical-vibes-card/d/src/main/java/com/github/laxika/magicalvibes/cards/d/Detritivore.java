@@ -33,7 +33,7 @@ public class Detritivore extends Card {
                         new CardNotPredicate(new CardSupertypePredicate(CardSupertype.BASIC))
                 )),
                 CountScope.OPPONENTS);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 nonbasicLandCardsInOpponentsGraveyards,
                 nonbasicLandCardsInOpponentsGraveyards));
 

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.RiotEffect;
 public class BurningTreeVandal extends Card {
 
     public BurningTreeVandal() {
-        addEffect(EffectSlot.STATIC, new RiotEffect());
+        addStaticEffect(new RiotEffect());
 
         // Whenever this creature attacks, you may discard a card. If you do, draw a card.
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(

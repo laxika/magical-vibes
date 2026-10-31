@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredic
 public class RienneAngelOfRebirth extends Card {
 
     public RienneAngelOfRebirth() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
                 new PermanentIsMulticoloredPredicate()));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(

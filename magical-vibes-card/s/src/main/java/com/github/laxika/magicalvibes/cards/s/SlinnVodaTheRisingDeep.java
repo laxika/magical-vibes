@@ -22,7 +22,7 @@ public class SlinnVodaTheRisingDeep extends Card {
 
     public SlinnVodaTheRisingDeep() {
         // Kicker {1}{U}
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{U}"));
+        addStaticEffect(new KickerEffect("{1}{U}"));
 
         // When Slinn Voda, the Rising Deep enters, if it was kicked, return all
         // creatures to their owners' hands except for Merfolk, Krakens, Leviathans,

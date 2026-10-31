@@ -26,10 +26,10 @@ public class GlacialChasm extends Card {
                 new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER));
 
         // Creatures you control can't attack — no creature is ever exempt.
-        addEffect(EffectSlot.STATIC, new ControlledCreaturesCantAttackUnlessPredicateEffect(
+        addStaticEffect(new ControlledCreaturesCantAttackUnlessPredicateEffect(
                 new PermanentNotPredicate(new PermanentTruePredicate())));
 
         // Prevent all damage that would be dealt to you.
-        addEffect(EffectSlot.STATIC, new PreventAllDamageToControllerEffect());
+        addStaticEffect(new PreventAllDamageToControllerEffect());
     }
 }

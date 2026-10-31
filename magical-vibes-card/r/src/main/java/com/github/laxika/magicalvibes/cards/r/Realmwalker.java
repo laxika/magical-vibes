@@ -18,8 +18,7 @@ public class Realmwalker extends Card {
 
     public Realmwalker() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
-        addEffect(EffectSlot.STATIC,
-                new AllowCastFromTopOfLibraryEffect(new CardHasSourceChosenSubtypePredicate()));
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new AllowCastFromTopOfLibraryEffect(new CardHasSourceChosenSubtypePredicate()));
     }
 }

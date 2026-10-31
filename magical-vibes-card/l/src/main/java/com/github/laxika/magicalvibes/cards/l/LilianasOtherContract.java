@@ -15,7 +15,7 @@ public class LilianasOtherContract extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(3));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseLifeEffect(3));
-        addEffect(EffectSlot.STATIC, new ReplaceControllerLossWithExileAndReturnTransformedEffect());
+        addStaticEffect(new ReplaceControllerLossWithExileAndReturnTransformedEffect());
     }
 
     @Override

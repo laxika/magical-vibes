@@ -48,7 +48,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class PathOfAncestry extends Card {
 
     public PathOfAncestry() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

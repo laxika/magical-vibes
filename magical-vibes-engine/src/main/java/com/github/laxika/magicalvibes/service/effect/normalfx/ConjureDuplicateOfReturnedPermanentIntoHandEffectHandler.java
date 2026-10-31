@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -35,7 +34,7 @@ public class ConjureDuplicateOfReturnedPermanentIntoHandEffectHandler implements
 
         Card duplicate = returnedCard.createConjuredCopy();
         duplicate.setOwnerId(entry.getControllerId());
-        duplicate.addEffect(EffectSlot.STATIC, new PerpetualAnyManaTypeToCastSelfEffect());
+        duplicate.addStaticEffect(new PerpetualAnyManaTypeToCastSelfEffect());
         duplicate.freeze();
 
         gameData.addCardToHand(entry.getControllerId(), duplicate);

@@ -14,7 +14,7 @@ public class BitingTether extends Card {
     public BitingTether() {
         target(TargetFilters.creature())
                 // You control enchanted creature.
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect())
+                .addStaticEffect(new ControlEnchantedCreatureEffect())
 
                 // At the beginning of your upkeep, put a -1/-1 counter on enchanted creature.
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCounterOnReferencedPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE));

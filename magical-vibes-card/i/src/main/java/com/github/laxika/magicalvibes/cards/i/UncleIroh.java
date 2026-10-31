@@ -16,7 +16,7 @@ public class UncleIroh extends Card {
     public UncleIroh() {
         addEffect(EffectSlot.ON_ATTACK,
                 new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 1));
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.LESSON), 1, CostModificationScope.SELF));
     }
 }

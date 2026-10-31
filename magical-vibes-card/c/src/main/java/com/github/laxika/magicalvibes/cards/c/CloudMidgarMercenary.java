@@ -27,7 +27,7 @@ public class CloudMidgarMercenary extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.EQUIPMENT)));
 
-        addEffect(EffectSlot.STATIC, new AdditionalTriggeredAbilityEffect(
+        addStaticEffect(new AdditionalTriggeredAbilityEffect(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsSourcePermanentPredicate(),
                         new PermanentAllOfPredicate(List.of(

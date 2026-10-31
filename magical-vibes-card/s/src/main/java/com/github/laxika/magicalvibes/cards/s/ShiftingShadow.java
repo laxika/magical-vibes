@@ -15,8 +15,7 @@ public class ShiftingShadow extends Card {
 
     public ShiftingShadow() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
                         new DestroyEnchantedCreatureThenRevealUntilCreatureAndAttachSourceAuraEffect(true));
     }

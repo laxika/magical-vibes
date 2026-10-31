@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SOS", collectorNumber = "91")
@@ -32,7 +32,7 @@ public class MoseoVeinsNewDean extends Card {
                 CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),
                 List.of(CardSubtype.PEST), Set.of(), Set.of(),
                 false, false,
-                Map.of(EffectSlot.ON_ATTACK, new GainLifeEffect(1)),
+                List.of(LegacySlots.triggered(EffectSlot.ON_ATTACK, new GainLifeEffect(1))),
                 List.of(), false, false, false, 0, Set.of()));
 
         // Infusion — At the beginning of your end step, if you gained life this turn, return up to

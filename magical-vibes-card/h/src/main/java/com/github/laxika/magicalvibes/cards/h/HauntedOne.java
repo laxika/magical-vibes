@@ -27,7 +27,7 @@ public class HauntedOne extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentOwnedBySourceControllerPredicate()));
 
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
                 new TriggeringPermanentConditionalEffect(new PermanentIsSourceCardPredicate(),
                         new BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEffect(

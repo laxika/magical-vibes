@@ -26,7 +26,7 @@ import java.util.List;
 public class DoranBesiegedByTime extends Card {
 
     public DoranBesiegedByTime() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardToughnessGreaterThanPowerPredicate())),

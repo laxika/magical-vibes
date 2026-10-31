@@ -17,7 +17,6 @@ public class ValiantEmberkin extends Card {
         target.addEffect(EffectSlot.ON_ATTACK,
                 new PerpetuallyBoostTargetCreatureEffect(1, 0));
 
-        addEffect(EffectSlot.STATIC,
-                AdditionalTriggeredAbilityEffect.forAllyCreatureBecomesTarget());
+        addStaticEffect(AdditionalTriggeredAbilityEffect.forAllyCreatureBecomesTarget());
     }
 }

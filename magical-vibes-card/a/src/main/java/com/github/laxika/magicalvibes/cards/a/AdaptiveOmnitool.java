@@ -21,7 +21,7 @@ public class AdaptiveOmnitool extends Card {
     public AdaptiveOmnitool() {
         PermanentCount artifactsYouControl =
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 artifactsYouControl, artifactsYouControl, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK,
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(

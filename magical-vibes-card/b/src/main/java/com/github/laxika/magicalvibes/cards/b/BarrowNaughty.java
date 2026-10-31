@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -20,7 +19,7 @@ import java.util.Set;
 public class BarrowNaughty extends Card {
 
     public BarrowNaughty() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsAnotherPermanent(new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.FAERIE))),
                 new StaticBoostEffect(0, 0, Set.of(Keyword.LIFELINK), GrantScope.SELF)));
 

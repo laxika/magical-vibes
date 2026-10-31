@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "JUD", collectorNumber = "88")
@@ -24,7 +23,7 @@ public class FirecatBlitz extends Card {
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE, new XValue(), "Elemental Cat", 1, 1,
                 CardColor.RED, null, List.of(CardSubtype.ELEMENTAL, CardSubtype.CAT),
-                Set.of(Keyword.HASTE), Set.of(), false, false, Map.of(), List.of(),
+                Set.of(Keyword.HASTE), Set.of(), false, false, List.of(), List.of(),
                 false, true, false, 0, Set.of()));
         addCastingOption(new FlashbackCast(List.of(
                 new ManaCastingCost("{R}{R}"),

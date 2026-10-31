@@ -15,7 +15,7 @@ import java.util.List;
 public class UnchartedHaven extends Card {
 
     public UnchartedHaven() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
         addActivatedAbility(new ActivatedAbility(true, null,
                 List.of(new AwardChosenColorManaEffect()),

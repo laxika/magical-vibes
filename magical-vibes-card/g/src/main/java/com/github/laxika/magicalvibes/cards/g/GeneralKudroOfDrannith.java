@@ -28,7 +28,7 @@ public class GeneralKudroOfDrannith extends Card {
         var humanFilter = new PermanentHasSubtypePredicate(CardSubtype.HUMAN);
         var humanCreatureFilter = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(), humanFilter));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, humanFilter));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, humanFilter));
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.HUMAN),
                         new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD,

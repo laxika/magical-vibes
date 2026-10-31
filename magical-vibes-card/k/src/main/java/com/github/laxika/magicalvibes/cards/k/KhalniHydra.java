@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -19,7 +18,7 @@ import java.util.Set;
 public class KhalniHydra extends Card {
 
     public KhalniHydra() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnColoredCastCostEffect(ManaColor.GREEN,
+        addStaticEffect(new ReduceOwnColoredCastCostEffect(ManaColor.GREEN,
                 new PermanentCount(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentColorInPredicate(Set.of(CardColor.GREEN)))), CountScope.CONTROLLER)));

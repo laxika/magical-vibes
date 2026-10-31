@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.StormEffect;
 public class HazeOfRage extends Card {
 
     public HazeOfRage() {
-        addEffect(EffectSlot.STATIC, new BuybackEffect("{2}"));
+        addStaticEffect(new BuybackEffect("{2}"));
         addSpellEffect(new BoostAllOwnCreaturesEffect(1, 0));
         addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
         addEffect(EffectSlot.ON_SELF_CAST, new StormEffect());

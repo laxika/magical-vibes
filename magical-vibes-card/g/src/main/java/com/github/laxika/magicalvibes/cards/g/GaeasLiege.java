@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.IfSourceAttacking;
@@ -31,7 +30,7 @@ public class GaeasLiege extends Card {
         DynamicAmount forests = new IfSourceAttacking(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.FOREST), CountScope.DEFENDING_PLAYER),
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.FOREST), CountScope.CONTROLLER));
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(forests, forests));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(forests, forests));
 
         // {T}: Target land becomes a Forest until this creature leaves the battlefield.
         addActivatedAbility(new ActivatedAbility(

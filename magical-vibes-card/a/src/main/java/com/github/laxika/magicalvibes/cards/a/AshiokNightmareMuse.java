@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.effect.CastUpToNSpellsFromOpponentsExileEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfEachOpponentEffect;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEff
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "208")
@@ -29,7 +29,9 @@ public class AshiokNightmareMuse extends Card {
                 CardType.CREATURE, 1, "Nightmare", 2, 3,
                 CardColor.BLUE, Set.of(CardColor.BLUE, CardColor.BLACK),
                 List.of(CardSubtype.NIGHTMARE), Set.of(), Set.of(), false, false,
-                Map.of(EffectSlot.ON_ATTACK, nightmareTrigger, EffectSlot.ON_BLOCK, nightmareTrigger),
+                List.of(
+                        LegacySlots.triggered(EffectSlot.ON_ATTACK, nightmareTrigger),
+                        LegacySlots.triggered(EffectSlot.ON_BLOCK, nightmareTrigger)),
                 List.of(), false, false, false, 0, Set.of());
 
         addActivatedAbility(new ActivatedAbility(

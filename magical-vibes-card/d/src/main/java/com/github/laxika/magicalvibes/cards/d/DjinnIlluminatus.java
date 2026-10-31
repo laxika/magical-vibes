@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -18,7 +17,7 @@ import java.util.List;
 public class DjinnIlluminatus extends Card {
 
     public DjinnIlluminatus() {
-        addEffect(EffectSlot.STATIC, new GrantSpellCastingAbilityToSpellsEffect(
+        addStaticEffect(new GrantSpellCastingAbilityToSpellsEffect(
                 Keyword.REPLICATE, new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)))));

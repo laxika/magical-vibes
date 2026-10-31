@@ -26,7 +26,7 @@ public class MillicentRestlessRevenant extends Card {
     private static final CreateTokenEffect SPIRIT_TOKEN = CreateTokenEffect.whiteSpirit(1);
 
     public MillicentRestlessRevenant() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SPIRIT), CountScope.CONTROLLER)));
 
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, SPIRIT_TOKEN);

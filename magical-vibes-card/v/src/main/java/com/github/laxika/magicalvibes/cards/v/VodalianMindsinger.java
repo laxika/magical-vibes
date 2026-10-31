@@ -25,7 +25,7 @@ import java.util.List;
 public class VodalianMindsinger extends Card {
 
     public VodalianMindsinger() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{R}"));
+        addStaticEffect(new KickerEffect("{1}{R}"));
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{1}{G}"), true, 1));
 
         PermanentPredicateTargetFilter targetFilter = new PermanentPredicateTargetFilter(

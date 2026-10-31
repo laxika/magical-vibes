@@ -19,7 +19,7 @@ import java.util.List;
 public class GoblinSharpshooter extends Card {
 
     public GoblinSharpshooter() {
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
         addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new UntapPermanentsEffect(TapUntapScope.SELF));
         addActivatedAbility(new ActivatedAbility(
                 true,

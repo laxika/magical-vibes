@@ -27,7 +27,7 @@ public class MikaeusTheUnhallowed extends Card {
                 new DestroyDamageSourcePermanentEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1, 1, Set.of(Keyword.UNDYING), GrantScope.OWN_CREATURES,
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN))));
     }

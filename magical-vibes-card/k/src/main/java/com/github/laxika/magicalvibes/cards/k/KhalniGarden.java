@@ -23,7 +23,7 @@ import java.util.Set;
 public class KhalniGarden extends Card {
 
     public KhalniGarden() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 "Plant", 0, 1, CardColor.GREEN, List.of(CardSubtype.PLANT), Set.of(), Set.of()));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));

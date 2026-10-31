@@ -23,8 +23,8 @@ import java.util.Set;
 public class IllustriousWanderglyph extends Card {
 
     public IllustriousWanderglyph() {
-        addEffect(EffectSlot.STATIC, new AscendEffect());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerHasCityBlessing(),
+        addStaticEffect(new AscendEffect());
+        addStaticEffect(new ConditionalEffect(new ControllerHasCityBlessing(),
                 new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),

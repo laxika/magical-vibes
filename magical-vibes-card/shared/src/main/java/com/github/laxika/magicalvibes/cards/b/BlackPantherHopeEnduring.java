@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 public class BlackPantherHopeEnduring extends Card {
 
     public BlackPantherHopeEnduring() {
-        addEffect(EffectSlot.STATIC, new PreventAllDamageEffect());
+        addStaticEffect(new PreventAllDamageEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(1));
     }
 }

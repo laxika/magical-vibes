@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "167")
@@ -37,7 +36,7 @@ public class BlotOutTheSky extends Card {
                 Set.of(),
                 false,
                 true,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 false,

@@ -21,7 +21,7 @@ import java.util.Set;
 public class WhirlingDervish extends Card {
 
     public WhirlingDervish() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
 
         // At the beginning of each end step, if this creature dealt damage to an opponent this turn,
         // put a +1/+1 counter on it.

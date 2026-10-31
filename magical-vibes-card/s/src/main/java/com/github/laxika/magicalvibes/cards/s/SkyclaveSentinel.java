@@ -16,10 +16,10 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 public class SkyclaveSentinel extends Card {
 
     public SkyclaveSentinel() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{4}"));
+        addStaticEffect(new KickerEffect("{4}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.PLUS_ONE_PLUS_ONE),
                 new CanAttackAsThoughNoDefenderEffect()));
     }

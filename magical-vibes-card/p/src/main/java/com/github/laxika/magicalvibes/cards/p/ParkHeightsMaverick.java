@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 public class ParkHeightsMaverick extends Card {
 
     public ParkHeightsMaverick() {
-        addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(
+        addStaticEffect(new CanBeBlockedOnlyByFilterEffect(
                 new PermanentPowerAtLeastPredicate(3),
                 "creatures with power 3 or greater"
         ));

@@ -12,6 +12,6 @@ public class BloodSun extends Card {
 
     public BloodSun() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
-        addEffect(EffectSlot.STATIC, new LosesAllNonManaAbilitiesEffect(GrantScope.ALL_LANDS));
+        addStaticEffect(new LosesAllNonManaAbilitiesEffect(GrantScope.ALL_LANDS));
     }
 }

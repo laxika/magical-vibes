@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class IymrithDesertDoom extends Card {
 
     public IymrithDesertDoom() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SourceUntapped(),
+        addStaticEffect(new ConditionalEffect(new SourceUntapped(),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                         new CounterUnlessPaysEffect(4),

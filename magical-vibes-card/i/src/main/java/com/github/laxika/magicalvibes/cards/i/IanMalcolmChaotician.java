@@ -25,7 +25,6 @@ public class IanMalcolmChaotician extends Card {
 
         // During each player's turn, that player may cast a non-owned spell exiled with Ian Malcolm;
         // mana of any type can be spent to cast it.
-        addEffect(EffectSlot.STATIC,
-                AllowCastFromCardsExiledWithSourceEffect.activePlayerNonOwnedWithAnyMana());
+        addStaticEffect(AllowCastFromCardsExiledWithSourceEffect.activePlayerNonOwnedWithAnyMana());
     }
 }

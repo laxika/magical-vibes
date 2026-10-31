@@ -17,6 +17,6 @@ public class GroundSeal extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
 
         // Cards in graveyards can't be the targets of spells or abilities.
-        addEffect(EffectSlot.STATIC, new GraveyardCardsCantBeTargetedEffect());
+        addStaticEffect(new GraveyardCardsCantBeTargetedEffect());
     }
 }

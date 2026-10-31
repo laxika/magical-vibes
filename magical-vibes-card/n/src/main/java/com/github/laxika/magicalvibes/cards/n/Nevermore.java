@@ -14,6 +14,6 @@ public class Nevermore extends Card {
 
     public Nevermore() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameOnEnterEffect(List.of(CardType.LAND)));
-        addEffect(EffectSlot.STATIC, new SpellsWithChosenNameCantBeCastEffect());
+        addStaticEffect(new SpellsWithChosenNameCantBeCastEffect());
     }
 }

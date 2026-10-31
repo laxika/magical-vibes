@@ -20,9 +20,8 @@ import java.util.Set;
 public class SwordOfSinewAndSteel extends Card {
 
     public SwordOfSinewAndSteel() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.RED), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.RED), GrantScope.EQUIPPED_CREATURE));
 
         setAllowSharedTargets(true);
         target(new PermanentPredicateTargetFilter(

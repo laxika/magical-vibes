@@ -54,7 +54,7 @@ public class DomriChaosBringer extends Card {
                                 List.of(new CreateTokenEffect(
                                         CardType.CREATURE, 1, "Beast", 4, 4, CardColor.RED,
                                         Set.of(CardColor.RED, CardColor.GREEN), List.of(CardSubtype.BEAST),
-                                        Set.of(Keyword.TRAMPLE), Set.of(), false, false, java.util.Map.of(),
+                                        Set.of(Keyword.TRAMPLE), Set.of(), false, false, List.of(),
                                         List.of(), false, false, false, 0, Set.of())),
                                 EMBLEM_TEXT)),
                         EMBLEM_TEXT)),

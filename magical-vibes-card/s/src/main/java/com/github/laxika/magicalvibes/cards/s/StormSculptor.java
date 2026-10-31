@@ -12,7 +12,7 @@ public class StormSculptor extends Card {
 
     public StormSculptor() {
         // This creature can't be blocked.
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
 
         // When this creature enters, return a creature you control to its owner's hand.
         // Non-targeting choice at resolution; may (and alone, must) return itself.

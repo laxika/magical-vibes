@@ -27,7 +27,7 @@ public class GoblinShrine extends Card {
     public GoblinShrine() {
         target(TargetFilters.land());
 
-        addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+        addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.BASIC),

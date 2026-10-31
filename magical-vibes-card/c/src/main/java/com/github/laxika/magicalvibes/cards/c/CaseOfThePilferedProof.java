@@ -44,6 +44,6 @@ public class CaseOfThePilferedProof extends Card {
                                 new NotCondition(new SourceIsSolved())
                         )), new SolveSourceEffect()));
 
-        addEffect(EffectSlot.STATIC, new AddClueTokenToTokenCreationEffect());
+        addStaticEffect(new AddClueTokenToTokenCreationEffect());
     }
 }

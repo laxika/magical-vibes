@@ -21,7 +21,7 @@ public class GiftOfParadise extends Card {
     public GiftOfParadise() {
         // Enchant land — grants "{T}: Add two mana of any one color."
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(true, null, List.of(new AwardAnyColorManaEffect(2)),
                                 "{T}: Add two mana of any one color."),
                         GrantScope.ENCHANTED_PERMANENT

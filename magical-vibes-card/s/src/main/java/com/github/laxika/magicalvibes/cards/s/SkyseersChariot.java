@@ -19,7 +19,7 @@ public class SkyseersChariot extends Card {
     public SkyseersChariot() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseCardNameOnEnterEffect(List.of(CardType.LAND)));
-        addEffect(EffectSlot.STATIC, new IncreaseActivatedAbilityCostEffect(
+        addStaticEffect(new IncreaseActivatedAbilityCostEffect(
                 new PermanentHasSourceChosenNamePredicate(), 2));
 
         addActivatedAbility(new ActivatedAbility(

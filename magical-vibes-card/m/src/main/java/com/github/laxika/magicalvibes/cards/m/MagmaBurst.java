@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -13,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class MagmaBurst extends Card {
 
     public MagmaBurst() {
-        addEffect(EffectSlot.STATIC, new KickerEffect(2, new PermanentIsLandPredicate(), "two lands"));
+        addStaticEffect(new KickerEffect(2, new PermanentIsLandPredicate(), "two lands"));
         addSpellEffect(new DealDamageToAnyTargetEffect(3));
         targetWhenKicked(null, 0, 0, 1, 1)
                 .addSpellEffect(new ConditionalEffect(new Kicked(),

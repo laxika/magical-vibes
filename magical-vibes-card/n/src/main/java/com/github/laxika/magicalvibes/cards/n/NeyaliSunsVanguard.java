@@ -25,7 +25,7 @@ public class NeyaliSunsVanguard extends Card {
         PermanentAllOfPredicate attackingToken = new PermanentAllOfPredicate(List.of(
                 new PermanentIsTokenPredicate(),
                 new PermanentIsAttackingPredicate()));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.DOUBLE_STRIKE, GrantScope.ALL_OWN_CREATURES, attackingToken));
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER,
                 new ConditionalEffect(

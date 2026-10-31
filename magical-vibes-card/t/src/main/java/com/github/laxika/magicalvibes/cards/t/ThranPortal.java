@@ -17,11 +17,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 public class ThranPortal extends Card {
 
     public ThranPortal() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCount(3, new PermanentIsLandPredicate()), new EntersTappedEffect()));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseBasicLandTypeOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new SourceBecomesChosenBasicLandTypeEffect(true));
-        addEffect(EffectSlot.STATIC, new AddActivatedAbilityCostEffect(
+        addStaticEffect(new SourceBecomesChosenBasicLandTypeEffect(true));
+        addStaticEffect(new AddActivatedAbilityCostEffect(
                 new PermanentIsSourceCardPredicate(), new PayLifeCost(1)));
     }
 }

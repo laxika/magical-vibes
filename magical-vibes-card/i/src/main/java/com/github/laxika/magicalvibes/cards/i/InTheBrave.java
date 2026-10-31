@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasEnduringStory;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -20,8 +19,8 @@ import java.util.Set;
 public class InTheBrave extends Card {
 
     public InTheBrave() {
-        addEffect(EffectSlot.STATIC, new StoriedEffect());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new StoriedEffect());
+        addStaticEffect(new ConditionalEffect(
                 new ControllerHasEnduringStory(),
                 new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), GrantScope.SELF)));
         addActivatedAbility(new ActivatedAbility(

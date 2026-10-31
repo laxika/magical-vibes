@@ -42,7 +42,7 @@ public class GrantedTriggeredAbilitySupport {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent source : battlefield) {
                 if (!source.isAttached() || !permanentId.equals(source.getAttachedTo())) continue;
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : source.getCard().getStaticEffects()) {
                     if (effect instanceof GrantTriggeredAbilityEffect grant
                             && grant.slot() == slot
                             && ATTACHMENT_SCOPES.contains(grant.scope())) {
@@ -86,7 +86,7 @@ public class GrantedTriggeredAbilitySupport {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent source : battlefield) {
                 if (!source.isAttached() || !permanent.getId().equals(source.getAttachedTo())) continue;
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : source.getCard().getStaticEffects()) {
                     if (!(effect instanceof GrantTriggeredAbilityEffect grant)
                             || grant.slot() != slot
                             || !ATTACHMENT_SCOPES.contains(grant.scope())

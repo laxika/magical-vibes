@@ -31,6 +31,6 @@ public class AnafenzaTheForemost extends Card {
         )).addEffect(EffectSlot.ON_ATTACK,
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
 
-        addEffect(EffectSlot.STATIC, new ExileOpponentCreatureCardsInsteadOfGraveyardEffect());
+        addStaticEffect(new ExileOpponentCreatureCardsInsteadOfGraveyardEffect());
     }
 }

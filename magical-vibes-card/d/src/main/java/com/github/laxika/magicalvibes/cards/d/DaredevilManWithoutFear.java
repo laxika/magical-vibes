@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class DaredevilManWithoutFear extends Card {
 
     public DaredevilManWithoutFear() {
-        addEffect(EffectSlot.STATIC, new LookAtTopCardOfOwnLibraryEffect());
+        addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, new MayEffect(
                 new ExileTopCardMayPlayThisTurnAndBoostSelfIfMatchingEffect(
                         new CardSubtypePredicate(CardSubtype.HERO), 2, 1),

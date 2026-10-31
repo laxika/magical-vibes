@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -31,7 +30,7 @@ import java.util.List;
 public class InscriptionOfRuin extends Card {
 
     public InscriptionOfRuin() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{B}{B}"));
+        addStaticEffect(new KickerEffect("{2}{B}{B}"));
 
         var opponent = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

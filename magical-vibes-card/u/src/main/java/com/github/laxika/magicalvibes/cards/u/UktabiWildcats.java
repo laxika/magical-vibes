@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -23,7 +22,7 @@ public class UktabiWildcats extends Card {
         // Uktabi Wildcats's power and toughness are each equal to the number of Forests you control.
         PermanentCount forestsYouControl =
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.FOREST), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(forestsYouControl, forestsYouControl));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(forestsYouControl, forestsYouControl));
 
         // {G}, Sacrifice a Forest: Regenerate this creature.
         addActivatedAbility(new ActivatedAbility(

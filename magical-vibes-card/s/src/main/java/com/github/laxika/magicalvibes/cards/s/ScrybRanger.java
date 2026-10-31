@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -21,7 +20,7 @@ import java.util.Set;
 public class ScrybRanger extends Card {
 
     public ScrybRanger() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLUE)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLUE)));
         // Return a Forest you control to its owner's hand: Untap target creature.
         // Activate only once each turn.
         addActivatedAbility(new ActivatedAbility(

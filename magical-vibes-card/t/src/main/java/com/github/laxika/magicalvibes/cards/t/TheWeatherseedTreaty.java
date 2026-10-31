@@ -24,7 +24,7 @@ import java.util.Set;
 public class TheWeatherseedTreaty extends Card {
 
     public TheWeatherseedTreaty() {
-        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
+        addStaticEffect(new ReadAheadEffect(false));
         addEffect(EffectSlot.SAGA_CHAPTER_I,
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
 

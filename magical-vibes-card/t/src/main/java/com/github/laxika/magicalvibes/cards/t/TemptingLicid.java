@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LicidBecomeAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
@@ -24,7 +23,7 @@ public class TemptingLicid extends Card {
                         + " creature. Attach it to target creature. You may pay {G} to end this effect.",
                 TargetFilters.creature()
         ));
-        addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+        addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentTruePredicate(),
                 new MustBeBlockedByAllCreaturesEffect(),
                 null

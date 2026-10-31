@@ -32,7 +32,7 @@ public class NamelessRace extends Card {
                 new CardsInGraveyard(new CardColorPredicate(CardColor.WHITE), CountScope.OPPONENTS));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PayAnyAmountOfLifeOnEnterEffect(maximumLifePayment));
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new ChosenNumberOnSource(), new ChosenNumberOnSource()));
     }
 }

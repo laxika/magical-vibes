@@ -20,7 +20,7 @@ import java.util.Set;
 public class TeysaEnvoyOfGhosts extends Card {
 
     public TeysaEnvoyOfGhosts() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromCardTypesEffect(Set.of(CardType.CREATURE)));
+        addStaticEffect(new ProtectionFromCardTypesEffect(Set.of(CardType.CREATURE)));
 
         // Whenever a creature deals combat damage to you, destroy that creature. Create a 1/1
         // white and black Spirit creature token with flying. The trigger's stack entry binds the

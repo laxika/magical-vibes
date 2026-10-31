@@ -17,7 +17,7 @@ import java.util.List;
 public class Timbermare extends Card {
 
     public Timbermare() {
-        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{5}{G}"));
+        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{5}{G}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(
                 TapUntapScope.ALL_CREATURES,
                 new PermanentAllOfPredicate(List.of(

@@ -12,7 +12,7 @@ public class AprilONeilKunoichiTrainee extends Card {
 
     public AprilONeilKunoichiTrainee() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(2));
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtLeastPredicate(3)));
     }
 }

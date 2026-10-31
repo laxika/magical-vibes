@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 public class ResplendentGriffin extends Card {
 
     public ResplendentGriffin() {
-        addEffect(EffectSlot.STATIC, new AscendEffect());
+        addStaticEffect(new AscendEffect());
         addEffect(EffectSlot.ON_ATTACK, new ConditionalEffect(
                 new ControllerHasCityBlessing(), new PutCountersOnSourceEffect(1, 1, 1)));
     }

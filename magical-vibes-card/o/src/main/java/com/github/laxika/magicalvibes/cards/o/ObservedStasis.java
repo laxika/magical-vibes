@@ -32,7 +32,7 @@ public class ObservedStasis extends Card {
                         )),
                         CountScope.ATTACHED_CONTROLLER
                 )))
-                .addEffect(EffectSlot.STATIC, new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect());
+                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect());
     }
 }

@@ -35,7 +35,7 @@ public class SoulcatchersAerie extends Card {
                                 new CardSubtypePredicate(CardSubtype.BIRD),
                                 new CardIsTokenPredicate())),
                         new PutCountersOnSelfEffect(CounterType.FEATHER)));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+        addStaticEffect(new StaticBoostEffect(
                 1,
                 1,
                 Set.of(),

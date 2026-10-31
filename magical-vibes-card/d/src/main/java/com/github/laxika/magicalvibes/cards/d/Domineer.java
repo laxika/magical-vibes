@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -20,6 +19,6 @@ public class Domineer extends Card {
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate())),
                 "Target must be an artifact creature"))
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+                .addStaticEffect(new ControlEnchantedCreatureEffect());
     }
 }

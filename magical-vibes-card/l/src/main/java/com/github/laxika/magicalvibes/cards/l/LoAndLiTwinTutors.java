@@ -22,10 +22,9 @@ public class LoAndLiTwinTutors extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SearchLibraryEffect(new CardAnyOfPredicate(List.of(
                 new CardSubtypePredicate(CardSubtype.LESSON),
                 new CardSubtypePredicate(CardSubtype.NOBLE)))));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.NOBLE)));
-        addEffect(EffectSlot.STATIC,
-                GrantLifelinkToControllerSpellsByColorEffect.forCardPredicate(
+        addStaticEffect(GrantLifelinkToControllerSpellsByColorEffect.forCardPredicate(
                         new CardSubtypePredicate(CardSubtype.LESSON)));
     }
 }

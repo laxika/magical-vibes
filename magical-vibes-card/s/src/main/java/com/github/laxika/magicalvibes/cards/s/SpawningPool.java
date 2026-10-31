@@ -21,7 +21,7 @@ import java.util.Set;
 public class SpawningPool extends Card {
 
     public SpawningPool() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.BLACK));
         // {1}{B}: Spawning Pool becomes a 1/1 black Skeleton creature with "{B}: Regenerate this creature" until end of turn. It's still a land.
         addActivatedAbility(new ActivatedAbility(

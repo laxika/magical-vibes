@@ -27,7 +27,7 @@ public class ObsidianCharmaw extends Card {
         PermanentPredicate colorlessProducingLand = new PermanentAllOfPredicate(List.of(
                 new PermanentIsLandPredicate(),
                 new PermanentCouldProduceManaPredicate(ManaColor.COLORLESS)));
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(colorlessProducingLand, CountScope.OPPONENTS)));
 
         PermanentPredicate nonbasicOpponentLand = new PermanentAllOfPredicate(List.of(

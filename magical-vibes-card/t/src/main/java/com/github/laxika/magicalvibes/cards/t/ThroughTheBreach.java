@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
@@ -28,6 +27,6 @@ public class ThroughTheBreach extends Card {
         ));
 
         // Splice onto Arcane {2}{R}{R}
-        addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{2}{R}{R}"));
+        addStaticEffect(new SpliceEffect(CardSubtype.ARCANE, "{2}{R}{R}"));
     }
 }

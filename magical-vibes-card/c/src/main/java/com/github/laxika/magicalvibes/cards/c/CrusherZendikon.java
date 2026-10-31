@@ -19,9 +19,9 @@ public class CrusherZendikon extends Card {
 
     public CrusherZendikon() {
         target(TargetFilters.land())
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentBecomesCreatureEffect(
+                .addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(
                         4, 2, CardColor.RED, List.of(CardSubtype.BEAST)))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+                .addStaticEffect(new GrantKeywordEffect(
                         Keyword.TRAMPLE, GrantScope.ENCHANTED_PERMANENT));
 
         addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,

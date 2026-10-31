@@ -27,7 +27,7 @@ public class BeastmasterAscension extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new MayEffect(new PutCountersOnSourceCardEffect(CounterType.QUEST),
                         "Put a quest counter on Beastmaster Ascension?"));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(7, CounterType.QUEST),
                 new StaticBoostEffect(5, 5, GrantScope.ALL_OWN_CREATURES)));
     }

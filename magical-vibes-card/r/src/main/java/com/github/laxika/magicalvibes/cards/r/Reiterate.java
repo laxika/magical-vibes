@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
@@ -19,7 +18,7 @@ import java.util.Set;
 public class Reiterate extends Card {
 
     public Reiterate() {
-        addEffect(EffectSlot.STATIC, new BuybackEffect("{3}"));
+        addStaticEffect(new BuybackEffect("{3}"));
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
                 "Target must be an instant or sorcery spell."

@@ -10,6 +10,6 @@ public class BenalishKnightCounselor extends Card {
 
     public BenalishKnightCounselor() {
         // Enlist is loaded from Scryfall and handled during attacker declaration.
-        addEffect(EffectSlot.STATIC, new GrantAdditionalPlusOnePlusOneCounterToNextCreatureSpellEffect());
+        addEffect(EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS, new GrantAdditionalPlusOnePlusOneCounterToNextCreatureSpellEffect());
     }
 }

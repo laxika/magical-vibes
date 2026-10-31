@@ -19,7 +19,7 @@ public class StennParanoidPartisan extends Card {
     public StennParanoidPartisan() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardTypeOnEnterEffect(
                 List.of(CardType.CREATURE, CardType.LAND)));
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardHasSourceChosenCardTypePredicate(), 1, CostModificationScope.SELF));
         addActivatedAbility(new ActivatedAbility(
                 false,

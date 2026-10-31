@@ -18,7 +18,7 @@ import java.util.List;
 public class ArchangelOfWrath extends Card {
 
     public ArchangelOfWrath() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{B}"));
+        addStaticEffect(new KickerEffect("{B}"));
         addCastingCost(RepeatableAdditionalManaCost.singlePayment(List.of("{R}")));
 
         targetWhenKicked(null, 0, 0, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

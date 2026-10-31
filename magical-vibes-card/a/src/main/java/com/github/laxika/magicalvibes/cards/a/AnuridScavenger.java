@@ -16,7 +16,7 @@ import java.util.Set;
 public class AnuridScavenger extends Card {
 
     public AnuridScavenger() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ForcedCostOrElseEffect(
                 new PutCardFromGraveyardOnBottomOfLibraryCost(),
                 List.of(new SacrificeSelfEffect()),

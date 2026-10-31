@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
 
@@ -10,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDu
 public class TidalBarracuda extends Card {
 
     public TidalBarracuda() {
-        addEffect(EffectSlot.STATIC, new GrantFlashToCardTypeEffect(null, true));
-        addEffect(EffectSlot.STATIC, new OpponentsCantCastOrActivateDuringYourTurnEffect(false));
+        addStaticEffect(new GrantFlashToCardTypeEffect(null, true));
+        addStaticEffect(new OpponentsCantCastOrActivateDuringYourTurnEffect(false));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
@@ -15,8 +14,7 @@ public class BoneyardMycodrax extends Card {
     public BoneyardMycodrax() {
         CardsInGraveyard otherCreaturesInGraveyard = new CardsInGraveyard(
                 new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER, true);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(otherCreaturesInGraveyard, otherCreaturesInGraveyard));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(otherCreaturesInGraveyard, otherCreaturesInGraveyard));
 
         // Scavenge {4}{B}
         addScavenge("{4}{B}");

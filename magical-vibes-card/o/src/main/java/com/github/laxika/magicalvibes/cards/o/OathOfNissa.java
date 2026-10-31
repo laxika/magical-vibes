@@ -23,7 +23,6 @@ public class OathOfNissa extends Card {
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardTypePredicate(CardType.LAND),
                                 new CardTypePredicate(CardType.PLANESWALKER)))));
-        addEffect(EffectSlot.STATIC,
-                new SpendAnyManaTypeToCastEffect(Set.of(CardType.PLANESWALKER)));
+        addStaticEffect(new SpendAnyManaTypeToCastEffect(Set.of(CardType.PLANESWALKER)));
     }
 }

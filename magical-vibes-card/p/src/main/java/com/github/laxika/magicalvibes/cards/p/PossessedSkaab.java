@@ -29,6 +29,6 @@ public class PossessedSkaab extends Card {
                 .build());
 
         // If this creature would die, exile it instead.
-        addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect(true));
+        addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect(true));
     }
 }

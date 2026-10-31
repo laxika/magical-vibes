@@ -25,7 +25,7 @@ import java.util.List;
 public class LaviniaAzoriusRenegade extends Card {
 
     public LaviniaAzoriusRenegade() {
-        addEffect(EffectSlot.STATIC, new OpponentsCantCastSpellsWithManaValueGreaterThanEffect(
+        addStaticEffect(new OpponentsCantCastSpellsWithManaValueGreaterThanEffect(
                 new PermanentCount(new PermanentIsLandPredicate(), CountScope.TARGET_PLAYER),
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))));
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, SpellCastTriggerEffect.withIntervening(

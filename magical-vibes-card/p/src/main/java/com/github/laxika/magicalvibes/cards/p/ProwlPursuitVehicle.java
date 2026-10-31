@@ -29,7 +29,7 @@ public class ProwlPursuitVehicle extends Card {
 
     public ProwlPursuitVehicle() {
         // Living metal: during your turn, this Vehicle is also a creature.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
                 new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
 

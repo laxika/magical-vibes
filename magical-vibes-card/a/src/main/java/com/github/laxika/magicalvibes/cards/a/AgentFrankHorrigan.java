@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 public class AgentFrankHorrigan extends Card {
 
     public AgentFrankHorrigan() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceAttackedThisTurn(),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
 

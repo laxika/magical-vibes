@@ -25,7 +25,7 @@ import java.util.List;
 public class AzureBeastbinder extends Card {
 
     public AzureBeastbinder() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtLeastPredicate(2)));
 
         PermanentPredicate targetPermanent = new PermanentAllOfPredicate(List.of(

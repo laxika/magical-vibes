@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.cost;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -206,7 +205,7 @@ public class AdditionalSpellCostService {
         if (card == null) {
             return null;
         }
-        return card.getEffects(EffectSlot.STATIC).stream()
+        return card.getStaticEffects().stream()
                 .filter(RemoveCountersForCostReductionEffect.class::isInstance)
                 .map(RemoveCountersForCostReductionEffect.class::cast)
                 .findFirst()
@@ -661,7 +660,7 @@ public class AdditionalSpellCostService {
                         gameData, permanent, PayLifeToReduceColoredCastCostEffect.class)) {
                     continue;
                 }
-                List<PayLifeToReduceColoredCastCostEffect> applicable = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                List<PayLifeToReduceColoredCastCostEffect> applicable = permanent.getCard().getStaticEffects().stream()
                         .filter(PayLifeToReduceColoredCastCostEffect.class::isInstance)
                         .map(PayLifeToReduceColoredCastCostEffect.class::cast)
                         .filter(effect -> appliesToCaster(effect.scope(), sourceControllerId, playerId))
@@ -2133,7 +2132,7 @@ public class AdditionalSpellCostService {
                         gameData, permanent, PayLifeToReduceColoredCastCostEffect.class)) {
                     continue;
                 }
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     if (!(effect instanceof PayLifeToReduceColoredCastCostEffect payLifeEffect)
                             || !appliesToCaster(payLifeEffect.scope(), sourceControllerId, playerId)
                             || !predicateEvaluationService.matchesCardPredicate(

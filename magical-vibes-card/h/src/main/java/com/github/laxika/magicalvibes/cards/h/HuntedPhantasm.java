@@ -19,7 +19,7 @@ import java.util.Set;
 public class HuntedPhantasm extends Card {
 
     public HuntedPhantasm() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"

@@ -15,9 +15,9 @@ public class ThranPowerSuit extends Card {
 
     public ThranPowerSuit() {
         AttachmentsOnSource attachments = new AttachmentsOnSource(true, true);
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 attachments, attachments, GrantScope.EQUIPPED_CREATURE, true));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(2), GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

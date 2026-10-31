@@ -19,7 +19,7 @@ import java.util.List;
 public class OscorpIndustries extends Card {
 
     public OscorpIndustries() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_SELF_ENTERS_FROM_GRAVEYARD, new LoseLifeEffect(2));
         addActivatedAbility(new ActivatedAbility(
                 true,

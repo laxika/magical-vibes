@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -18,7 +17,7 @@ import java.util.Set;
 public class WhiteShieldCrusader extends Card {
 
     public WhiteShieldCrusader() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
         addActivatedAbility(new ActivatedAbility(false, "{W}",
                 List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
                 "{W}: This creature gains flying until end of turn."));

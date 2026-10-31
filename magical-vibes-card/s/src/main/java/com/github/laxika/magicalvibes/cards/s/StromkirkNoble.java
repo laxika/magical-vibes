@@ -14,7 +14,7 @@ public class StromkirkNoble extends Card {
 
     public StromkirkNoble() {
         // Stromkirk Noble can't be blocked by Humans
-        addEffect(EffectSlot.STATIC, new CanBeBlockedOnlyByFilterEffect(
+        addStaticEffect(new CanBeBlockedOnlyByFilterEffect(
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)),
                 "non-Human creatures"
         ));

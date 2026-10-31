@@ -13,7 +13,7 @@ public class CapturedByLagacs extends Card {
 
     public CapturedByLagacs() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect());
+                .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect());
 
         target(TargetFilters.creature(), 0, 2)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

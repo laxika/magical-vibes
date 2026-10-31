@@ -23,7 +23,7 @@ import java.util.Set;
 public class TheloniteHermit extends Card {
 
     public TheloniteHermit() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasSubtypePredicate(CardSubtype.SAPROLING)));
         addMorph("{3}{G}{G}");
         addEffect(EffectSlot.ON_TURNED_FACE_UP, new CreateTokenEffect(

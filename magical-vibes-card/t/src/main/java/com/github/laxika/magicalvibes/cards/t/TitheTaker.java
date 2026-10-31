@@ -23,9 +23,9 @@ import java.util.Set;
 public class TitheTaker extends Card {
 
     public TitheTaker() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new IncreaseSpellCostEffect(new CardTruePredicate(), 1, CostModificationScope.OPPONENT)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 IncreaseActivatedAbilityCostEffect.opponentNonMana(new PermanentTruePredicate(), 1)));
         addEffect(EffectSlot.ON_DEATH, new CreateTokenEffect(
                 1, "Spirit", 1, 1, CardColor.WHITE,

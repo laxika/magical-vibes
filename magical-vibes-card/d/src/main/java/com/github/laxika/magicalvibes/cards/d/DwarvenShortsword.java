@@ -25,7 +25,7 @@ public class DwarvenShortsword extends Card {
                         List.of(CardSubtype.DWARF), Set.of(), Set.of()),
                 new AttachMatchingEquipmentToCreatedPermanentEffect(
                         new PermanentIsSourcePermanentPredicate())));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

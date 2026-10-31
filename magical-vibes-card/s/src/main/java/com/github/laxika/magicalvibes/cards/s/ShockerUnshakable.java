@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class ShockerUnshakable extends Card {
 
     public ShockerUnshakable() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
 
         DealDamageToTargetCreatureEffect creatureDamage = new DealDamageToTargetCreatureEffect(2);

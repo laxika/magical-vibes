@@ -17,14 +17,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "OTJ", collectorNumber = "128")
 public class HellspurPosseBoss extends Card {
 
     public HellspurPosseBoss() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE,
                 GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(
@@ -36,7 +35,7 @@ public class HellspurPosseBoss extends Card {
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 CardType.CREATURE, 2, "Mercenary", 1, 1, CardColor.RED, null,
-                List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, Map.of(),
+                List.of(CardSubtype.MERCENARY), Set.of(), Set.of(), false, false, List.of(),
                 List.of(new ActivatedAbility(
                         true,
                         null,

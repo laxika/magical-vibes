@@ -13,7 +13,7 @@ public class Purity extends Card {
         // Flying is auto-loaded from Scryfall.
         // "If noncombat damage would be dealt to you, prevent that damage. You gain life equal
         // to the damage prevented this way."
-        addEffect(EffectSlot.STATIC, new PreventNoncombatDamageToControllerAndGainLifeEffect());
+        addStaticEffect(new PreventNoncombatDamageToControllerAndGainLifeEffect());
         // "When Purity is put into a graveyard from anywhere, shuffle it into its owner's library."
         addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, new ShuffleSelfFromGraveyardIntoLibraryEffect());
     }

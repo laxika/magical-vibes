@@ -32,7 +32,7 @@ import java.util.Set;
 public class UnctusGrandMetatect extends Card {
 
     public UnctusGrandMetatect() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentIsSourceCardPredicate(),
@@ -44,7 +44,7 @@ public class UnctusGrandMetatect extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 ))));
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentIsArtifactPredicate()));
 
         addActivatedAbility(new ActivatedAbility(

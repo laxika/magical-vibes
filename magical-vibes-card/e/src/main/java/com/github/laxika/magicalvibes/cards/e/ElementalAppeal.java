@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BoostCreatedTokensEffect;
@@ -14,14 +13,13 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ZEN", collectorNumber = "123")
 public class ElementalAppeal extends Card {
 
     public ElementalAppeal() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{5}"));
+        addStaticEffect(new KickerEffect("{5}"));
         addSpellEffect(new CreateTokenEffect(
                 CardType.CREATURE,
                 1,
@@ -35,7 +33,7 @@ public class ElementalAppeal extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(),
+                List.of(),
                 List.of(),
                 false,
                 true,

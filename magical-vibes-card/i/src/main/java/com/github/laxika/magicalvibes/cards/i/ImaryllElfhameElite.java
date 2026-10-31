@@ -17,6 +17,6 @@ public class ImaryllElfhameElite extends Card {
         PermanentCount otherElvesYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.ELF), CountScope.CONTROLLER, true);
         addEffect(EffectSlot.ON_ATTACK, new BoostSelfEffect(otherElvesYouControl, otherElvesYouControl));
-        addEffect(EffectSlot.STATIC, new AssignCombatDamageAsThoughUnblockedEffect());
+        addStaticEffect(new AssignCombatDamageAsThoughUnblockedEffect());
     }
 }

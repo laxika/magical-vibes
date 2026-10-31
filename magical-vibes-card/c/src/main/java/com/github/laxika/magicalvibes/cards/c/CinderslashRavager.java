@@ -21,7 +21,7 @@ import java.util.List;
 public class CinderslashRavager extends Card {
 
     public CinderslashRavager() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentHasCountersPredicate(CounterType.OIL), CountScope.CONTROLLER)));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToEachMatchingPermanentEffect(

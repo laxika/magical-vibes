@@ -13,7 +13,7 @@ public class KrosanDruid extends Card {
 
     public KrosanDruid() {
         // Kicker {4}{G}
-        addEffect(EffectSlot.STATIC, new KickerEffect("{4}{G}"));
+        addStaticEffect(new KickerEffect("{4}{G}"));
 
         // When this creature enters, if it was kicked, you gain 10 life.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(), 

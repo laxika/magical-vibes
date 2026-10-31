@@ -42,7 +42,7 @@ public class ShaunFatherOfSynths extends Card {
         CreateTokenCopyOfTargetPermanentEffect synthCopy = new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(CardSubtype.SYNTH), Set.of(CardType.ARTIFACT), null, null, Map.of(),
                 false, false, false, true, false, false, null, Set.of(),
-                false, Map.of(), List.of(), false, true, new Fixed(1), false, Set.of(), true
+                false, List.of(), List.of(), false, true, new Fixed(1), false, Set.of(), true
         );
 
         target(new ControlledPermanentPredicateTargetFilter(

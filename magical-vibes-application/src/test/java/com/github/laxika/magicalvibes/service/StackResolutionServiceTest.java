@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -623,7 +623,7 @@ class StackResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(targetPerm);
 
             Card aura = createAura("Control Aura");
-            aura.addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+            aura.addStaticEffect(new ControlEnchantedCreatureEffect());
             StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, aura,
                     PLAYER1_ID, aura.getName(), List.of(), 0, targetId, null);
             gd.stack.addLast(entry);

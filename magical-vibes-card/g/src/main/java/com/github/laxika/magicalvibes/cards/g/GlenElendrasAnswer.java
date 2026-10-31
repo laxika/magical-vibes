@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterOpponentsSpellsAndAbilitiesEffect;
@@ -17,7 +16,7 @@ import java.util.Set;
 public class GlenElendrasAnswer extends Card {
 
     public GlenElendrasAnswer() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         addSpellEffect(new CounterOpponentsSpellsAndAbilitiesEffect(
                 new CreateTokenEffect(1, "Faerie", 1, 1, CardColor.BLUE,
                         Set.of(CardColor.BLUE, CardColor.BLACK), List.of(CardSubtype.FAERIE),

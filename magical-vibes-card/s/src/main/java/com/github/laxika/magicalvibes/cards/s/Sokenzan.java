@@ -20,8 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class Sokenzan extends Card {
 
     public Sokenzan() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_CREATURES));
         addEffect(EffectSlot.CHAOS_TRIGGERED, SequenceEffect.of(
                 new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES),
                 ConditionalEffect.unless(new ControllerMainPhase(), new AdditionalCombatMainPhaseEffect(1))));

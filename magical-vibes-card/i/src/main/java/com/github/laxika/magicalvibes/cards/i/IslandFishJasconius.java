@@ -26,7 +26,7 @@ public class IslandFishJasconius extends Card {
 
     public IslandFishJasconius() {
         // "This creature doesn't untap during your untap step."
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // "At the beginning of your upkeep, you may pay {U}{U}{U}. If you do, untap this creature."
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayPayManaEffect(
@@ -35,7 +35,7 @@ public class IslandFishJasconius extends Card {
                 "Pay {U}{U}{U} to untap Island Fish Jasconius?"));
 
         // "This creature can't attack unless defending player controls an Island."
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new DefendingPlayerControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                 "an Island"
         ));

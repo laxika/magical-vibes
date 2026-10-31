@@ -21,7 +21,7 @@ public class UnstableMutation extends Card {
     public UnstableMutation() {
         target(TargetFilters.creature())
                 // Enchanted creature gets +3/+3.
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
 
                 // At the beginning of the upkeep of enchanted creature's controller,
                 // put a -1/-1 counter on that creature.

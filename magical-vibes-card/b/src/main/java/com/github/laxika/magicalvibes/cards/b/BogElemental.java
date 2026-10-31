@@ -14,7 +14,7 @@ import java.util.Set;
 public class BogElemental extends Card {
 
     public BogElemental() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new SacrificeUnlessSacrificeOwnPermanentEffect(
                 new PermanentIsLandPredicate(), "a land"));
     }

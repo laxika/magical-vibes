@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -47,7 +46,7 @@ public class EnchantedPermanentToughnessBecomesLoyaltyEffectHandler implements S
             for (Permanent candidate : battlefield) {
                 if (candidate.isAttached()
                         && candidate.getAttachedTo().equals(context.target().getId())
-                        && candidate.getCard().getEffects(EffectSlot.STATIC).stream()
+                        && candidate.getCard().getStaticEffects().stream()
                         .anyMatch(EnchantedPermanentToughnessBecomesLoyaltyEffect.class::isInstance)) {
                     return candidate.getId().equals(context.source().getId());
                 }

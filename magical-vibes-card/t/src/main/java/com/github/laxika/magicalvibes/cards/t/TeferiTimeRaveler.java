@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect;
@@ -26,7 +25,7 @@ import java.util.List;
 public class TeferiTimeRaveler extends Card {
 
     public TeferiTimeRaveler() {
-        addEffect(EffectSlot.STATIC, new OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect());
+        addStaticEffect(new OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

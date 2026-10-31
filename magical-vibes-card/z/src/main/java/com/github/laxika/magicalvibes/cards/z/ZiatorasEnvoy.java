@@ -22,7 +22,7 @@ public class ZiatorasEnvoy extends Card {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new LookAtTopCardMayPlayLandOrCastFreeEffect(new EventValue()));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
                 new CastForAlternateCost(), new DrawCardEffect(1)));

@@ -1590,7 +1590,7 @@ public class LibraryChoiceHandlerService {
             UUID pileSourceId = librarySearch.sourcePermanentId();
             exileService.exileCardFaceDown(gameData, deckOwnerId, chosenCard, pileSourceId, playerId);
             Permanent pileSource = gameQueryService.findPermanentById(gameData, pileSourceId);
-            if (pileSource != null && pileSource.getCard().getEffects(EffectSlot.STATIC).stream()
+            if (pileSource != null && pileSource.getCard().getStaticEffects().stream()
                     .anyMatch(cardEffect -> cardEffect instanceof AllowCastFromCardsExiledWithSourceEffect pilePermission
                             && pilePermission.persistsAfterSourceLeaves())) {
                 gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
@@ -5970,7 +5970,7 @@ public class LibraryChoiceHandlerService {
      * for the searching player rather than read as the card's unset printed value.
      */
     private Integer searchPower(GameData gameData, Card card, UUID controllerId) {
-        var cda = card.getEffects(EffectSlot.STATIC).stream()
+        var cda = card.getStaticEffects().stream()
                 .filter(com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect.class::isInstance)
                 .map(com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect.class::cast)
                 .findFirst()

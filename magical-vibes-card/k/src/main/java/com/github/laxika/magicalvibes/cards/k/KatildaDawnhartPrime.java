@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -23,8 +22,7 @@ import java.util.Set;
 public class KatildaDawnhartPrime extends Card {
 
     public KatildaDawnhartPrime() {
-        addEffect(EffectSlot.STATIC,
-                new ProtectionFromSubtypesEffect(Set.of(CardSubtype.WEREWOLF)));
+        addStaticEffect(new ProtectionFromSubtypesEffect(Set.of(CardSubtype.WEREWOLF)));
 
         ActivatedAbility manaAbility = new ActivatedAbility(
                 true,
@@ -32,7 +30,7 @@ public class KatildaDawnhartPrime extends Card {
                 List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.SOURCE_PERMANENT_COLORS)),
                 "{T}: Add one mana of any of this creature's colors."
         );
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 manaAbility,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));

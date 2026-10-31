@@ -8,8 +8,7 @@ import java.util.Set;
  * slot on one card into stack objects. {@link Card#addEffect} builds the card's legacy triggered
  * abilities by it. The values come from the Grouping column of {@code effect-slot-inventory.md};
  * slots grouped there as <em>split</em>, <em>varies</em> or <em>none</em> are {@link #EACH}, and
- * their collectors still partition the slot's effects themselves. Not used for {@code STATIC} or
- * {@code COMMAND_ZONE_STATIC}, which hold static abilities.
+ * their collectors still partition the slot's effects themselves.
  */
 enum LegacySlotGrouping {
 

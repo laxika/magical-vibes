@@ -20,7 +20,7 @@ import java.util.List;
 public class FalkenrathForebear extends Card {
 
     public FalkenrathForebear() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, CreateTokenEffect.ofBloodToken(1));
 
         addGraveyardActivatedAbility(new ActivatedAbility(

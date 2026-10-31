@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class GargosViciousWatcher extends Card {
 
     public GargosViciousWatcher() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.HYDRA), 4, CostModificationScope.SELF));
 
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)

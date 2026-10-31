@@ -21,7 +21,7 @@ public class Glimmerlight extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CreateTokenEffect(
                 1, "Glimmer", 1, 1, CardColor.WHITE, List.of(CardSubtype.GLIMMER), Set.of(),
                 Set.of(CardType.ENCHANTMENT)));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

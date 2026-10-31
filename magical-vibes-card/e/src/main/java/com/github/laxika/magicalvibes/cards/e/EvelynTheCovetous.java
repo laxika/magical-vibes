@@ -17,7 +17,6 @@ public class EvelynTheCovetous extends Card {
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.VAMPIRE),
                         new ExileTopCardOfEachPlayersLibraryWithCollectionCounterEffect()));
-        addEffect(EffectSlot.STATIC,
-                AllowCastFromCardsExiledWithSourceEffect.forCollectionCounters(true));
+        addStaticEffect(AllowCastFromCardsExiledWithSourceEffect.forCollectionCounters(true));
     }
 }

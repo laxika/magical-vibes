@@ -38,7 +38,7 @@ public class ClementTheWorrywort extends Card {
                 .addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, ReturnToHandEffect.target());
 
         PermanentPredicate frogFilter = new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.FROG));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,
@@ -47,7 +47,7 @@ public class ClementTheWorrywort extends Card {
                         "{T}: Add {G}. Spend this mana only to cast a creature spell."),
                 GrantScope.ALL_OWN_CREATURES,
                 frogFilter));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,

@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DSK", collectorNumber = "241")
@@ -41,7 +40,7 @@ public class ZimoneAllQuestioning extends Card {
                                 CardType.CREATURE, 1, "Primo, the Indivisible", 0, 0,
                                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.BLUE),
                                 List.of(CardSubtype.FRACTAL), Set.of(), Set.of(),
-                                false, false, Map.of(), List.of(), false, false, true, 0, Set.of()),
+                                false, false, List.of(), List.of(), false, false, true, 0, Set.of()),
                         new PutCountersOnCreatedPermanentsEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE, landsYouControl))));
     }

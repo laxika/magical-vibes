@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -12,9 +13,11 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -722,8 +725,10 @@ public class TokenCopySupport {
      * of the token does not inherit them.
      */
     private static Permanent withGrantedDeathEffects(Permanent token, CreateTokenCopyOfTargetPermanentEffect effect) {
-        if (effect.additionalSlotEffects() != null) {
-            effect.additionalSlotEffects().getOrDefault(EffectSlot.ON_DEATH, List.of())
+        if (effect.additionalAbilities() != null) {
+            effect.additionalAbilities().stream()
+                    .filter(ability -> LegacySlots.slotOf(ability) == EffectSlot.ON_DEATH)
+                    .flatMap(ability -> LegacySlots.effectsOf(ability).stream())
                     .forEach(death -> token.addPersistentTriggeredEffect(EffectSlot.ON_DEATH, death));
         }
         return token;
@@ -1093,6 +1098,7 @@ public class TokenCopySupport {
 
         tokenCard.addCastingCostsAndSpellEffectsFrom(sourceCard,
                 copied -> !hasPTOverride || !copied.isPowerToughnessDefining());
+        tokenCard.addStaticAbilitiesFrom(sourceCard, copied -> !hasPTOverride || !copied.isPowerToughnessDefining());
         for (EffectSlot slot : EffectSlot.values()) {
             for (EffectRegistration registration : sourceCard.getEffectRegistrations(slot)) {
                 if (hasPTOverride && registration.effect().isPowerToughnessDefining()) {
@@ -1101,22 +1107,27 @@ public class TokenCopySupport {
                 tokenCard.addEffect(slot, registration.effect(), registration.triggerMode());
             }
         }
-        if (effect.additionalSlotEffects() != null) {
-            effect.additionalSlotEffects().forEach((slot, effects) -> {
-                if (deathGrantsOnPermanent && slot == EffectSlot.ON_DEATH) {
-                    return;
+        if (effect.additionalAbilities() != null) {
+            for (Ability ability : effect.additionalAbilities()) {
+                if (ability instanceof StaticAbility statik) {
+                    statik.effects().forEach(additionalEffect -> tokenCard.addStaticEffect(statik.zones(), additionalEffect));
+                    continue;
                 }
-                effects.forEach(additionalEffect -> tokenCard.addEffect(slot, additionalEffect,
+                EffectSlot slot = LegacySlots.slotOf(ability);
+                if (deathGrantsOnPermanent && slot == EffectSlot.ON_DEATH) {
+                    continue;
+                }
+                LegacySlots.effectsOf(ability).forEach(additionalEffect -> tokenCard.addEffect(slot, additionalEffect,
                         com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT));
-            });
+            }
         }
         for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
             tokenCard.addActivatedAbility(ability);
         }
         tokenCard.copyTargetingFrom(sourceCard);
-        if (targetingSourceCard != null && effect.additionalSlotEffects() != null) {
-            List<CardEffect> additionalEffects =
-                    effect.additionalSlotEffects().values().stream().flatMap(List::stream).toList();
+        if (targetingSourceCard != null && effect.additionalAbilities() != null) {
+            List<CardEffect> additionalEffects = effect.additionalAbilities().stream()
+                    .flatMap(ability -> LegacySlots.effectsOf(ability).stream()).toList();
             tokenCard.appendSpellTargetingForEffectsFrom(targetingSourceCard, additionalEffects);
         }
         return tokenCard;

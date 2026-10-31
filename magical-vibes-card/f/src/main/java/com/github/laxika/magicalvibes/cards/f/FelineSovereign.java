@@ -25,8 +25,8 @@ public class FelineSovereign extends Card {
     public FelineSovereign() {
         PermanentHasSubtypePredicate cats = new PermanentHasSubtypePredicate(CardSubtype.CAT);
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, cats));
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, cats));
+        addStaticEffect(new GrantEffectEffect(
                 new ProtectionFromSubtypesEffect(Set.of(CardSubtype.DOG)), GrantScope.OWN_CREATURES, cats));
 
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,

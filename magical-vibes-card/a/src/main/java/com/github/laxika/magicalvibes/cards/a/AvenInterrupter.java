@@ -20,7 +20,7 @@ public class AvenInterrupter extends Card {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryTruePredicate(), "Target must be a spell."))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetSpellAndPlotEffect());
-        addEffect(EffectSlot.STATIC, new IncreaseSpellCostEffect(
+        addStaticEffect(new IncreaseSpellCostEffect(
                 new CardTruePredicate(), 2, CostModificationScope.OPPONENT,
                 Set.of(Zone.GRAVEYARD, Zone.EXILE)));
     }

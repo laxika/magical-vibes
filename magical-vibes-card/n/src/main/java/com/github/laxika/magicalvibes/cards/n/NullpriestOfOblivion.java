@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class NullpriestOfOblivion extends Card {
 
     public NullpriestOfOblivion() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}{B}"));
+        addStaticEffect(new KickerEffect("{3}{B}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)

@@ -21,8 +21,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class WondrousCrucible extends Card {
 
     public WondrousCrucible() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.WARD, GrantScope.OWN_PERMANENTS));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantKeywordEffect(Keyword.WARD, GrantScope.OWN_PERMANENTS));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                 new CounterUnlessPaysEffect(2), GrantScope.OWN_PERMANENTS));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, SequenceEffect.of(

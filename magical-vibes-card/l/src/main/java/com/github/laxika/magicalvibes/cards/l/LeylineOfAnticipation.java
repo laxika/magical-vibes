@@ -17,6 +17,6 @@ public class LeylineOfAnticipation extends Card {
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with " + "Leyline of Anticipation" + " on the battlefield?"
         ));
-        addEffect(EffectSlot.STATIC, new GrantFlashToCardTypeEffect(null));
+        addStaticEffect(new GrantFlashToCardTypeEffect(null));
     }
 }

@@ -21,7 +21,7 @@ import java.util.List;
 public class SunBlessedHealer extends Card {
 
     public SunBlessedHealer() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{W}"));
+        addStaticEffect(new KickerEffect("{1}{W}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)

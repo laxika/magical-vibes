@@ -14,7 +14,7 @@ public class ThreefoldSignal extends Card {
 
     public ThreefoldSignal() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ScryEffect(3));
-        addEffect(EffectSlot.STATIC, new GrantSpellCastingAbilityToSpellsEffect(
+        addStaticEffect(new GrantSpellCastingAbilityToSpellsEffect(
                 Keyword.REPLICATE, 3, new CardHasExactlyNColorsPredicate(3)));
     }
 }

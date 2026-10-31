@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 public class VensersJournal extends Card {
 
     public VensersJournal() {
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
+        addStaticEffect(new NoMaximumHandSizeEffect());
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new GainLifeEffect(new CardsInHand(CountScope.CONTROLLER)));
     }
 }

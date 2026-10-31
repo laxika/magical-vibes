@@ -21,7 +21,7 @@ import java.util.List;
 public class Sunderflock extends Card {
 
     public Sunderflock() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new GreatestManaValueAmongControlled(new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(true),
                 ReturnToHandEffect.allPermanentsMatching(new PermanentAllOfPredicate(List.of(

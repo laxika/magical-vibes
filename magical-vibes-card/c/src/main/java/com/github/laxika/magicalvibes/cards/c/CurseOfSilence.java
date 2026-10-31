@@ -21,7 +21,7 @@ public class CurseOfSilence extends Card {
 
     public CurseOfSilence() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new IncreaseCastCostForChosenNameSpellsEffect(2));
+        addStaticEffect(new IncreaseCastCostForChosenNameSpellsEffect(2));
         addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new SpellCastTriggerEffect(
                         null,
                         List.of(new MayEffect(new SacrificeSelfThenEffect(new DrawCardEffect()),

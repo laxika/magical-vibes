@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SNC", collectorNumber = "56")
@@ -35,6 +35,6 @@ public class ReservoirKraken extends Card {
                 List.of(CardSubtype.FISH),
                 Set.of(),
                 Set.of(),
-                Map.of(EffectSlot.STATIC, new CantBeBlockedEffect()));
+                List.of(StaticAbility.of(new CantBeBlockedEffect())));
     }
 }

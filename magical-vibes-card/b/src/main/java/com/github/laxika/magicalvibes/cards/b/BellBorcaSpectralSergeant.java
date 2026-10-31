@@ -14,7 +14,7 @@ public class BellBorcaSpectralSergeant extends Card {
 
     public BellBorcaSpectralSergeant() {
         addEffect(EffectSlot.ON_ANY_CARD_EXILED, new NoteManaValueOfExiledCardsEffect());
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(
+        addStaticEffect(new SetPowerToughnessToAmountEffect(
                 new GreatestManaValueNotedForSourceThisTurn(), new Fixed(5)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new ExileTopCardMayPlayThisTurnEffect(false));
     }

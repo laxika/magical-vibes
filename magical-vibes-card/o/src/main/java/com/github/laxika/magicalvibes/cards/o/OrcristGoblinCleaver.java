@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class OrcristGoblinCleaver extends Card {
 
     public OrcristGoblinCleaver() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new CreateTokenPerChosenTypeCountEffect(CreateTokenEffect.ofTreasureToken(1)));
         addActivatedAbility(new EquipActivatedAbility("{3}"));

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentReceivedPlusOnePlusO
 public class BeastEruditeAerialist extends Card {
 
     public BeastEruditeAerialist() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.FLYING,
                 GrantScope.SELF,
                 new PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate(true)));

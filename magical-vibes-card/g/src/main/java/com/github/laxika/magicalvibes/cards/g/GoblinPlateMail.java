@@ -18,8 +18,7 @@ public class GoblinPlateMail extends Card {
     public GoblinPlateMail() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AmassGoblinsEffect(1));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AttachSourceEquipmentToChosenPermanentEffect());
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 0, Set.of(Keyword.MENACE), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.MENACE), GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }
 }

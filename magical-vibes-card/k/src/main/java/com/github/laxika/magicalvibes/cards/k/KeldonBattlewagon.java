@@ -18,7 +18,7 @@ import java.util.List;
 public class KeldonBattlewagon extends Card {
 
     public KeldonBattlewagon() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_ATTACK, new SacrificeAtEndOfCombatEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,

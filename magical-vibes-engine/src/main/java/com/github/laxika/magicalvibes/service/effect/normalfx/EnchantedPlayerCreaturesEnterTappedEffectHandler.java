@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPlayerCreaturesEnterTappedEffect;
@@ -28,7 +27,7 @@ public class EnchantedPlayerCreaturesEnterTappedEffectHandler {
             if (enteringPermanent.isTapped() || !enteringControllerId.equals(source.getAttachedTo())) {
                 return;
             }
-            boolean applies = source.getCard().getEffects(EffectSlot.STATIC).stream()
+            boolean applies = source.getCard().getStaticEffects().stream()
                     .anyMatch(effect -> effect instanceof EnchantedPlayerCreaturesEnterTappedEffect);
             if (applies) {
                 enteringPermanent.tap();

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsUpkeepSacrificeUnlessPayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
@@ -20,7 +19,6 @@ public class EnergyFlux extends Card {
 
     public EnergyFlux() {
         // All artifacts have "At the beginning of your upkeep, sacrifice this artifact unless you pay {2}."
-        addEffect(EffectSlot.STATIC,
-                new AllPermanentsUpkeepSacrificeUnlessPayEffect(new PermanentIsArtifactPredicate(), "{2}"));
+        addStaticEffect(new AllPermanentsUpkeepSacrificeUnlessPayEffect(new PermanentIsArtifactPredicate(), "{2}"));
     }
 }

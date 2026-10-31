@@ -14,7 +14,7 @@ public class ReinsOfTheVinesteed extends Card {
     public ReinsOfTheVinesteed() {
         target(TargetFilters.creature())
                 // Enchanted creature gets +2/+2.
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
 
                 // When enchanted creature dies, you may return this card from your graveyard to the
                 // battlefield attached to a creature that shares a creature type with that creature.

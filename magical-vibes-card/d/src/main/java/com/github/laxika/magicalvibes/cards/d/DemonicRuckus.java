@@ -19,7 +19,7 @@ public class DemonicRuckus extends Card {
 
     public DemonicRuckus() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(
+                .addStaticEffect(new StaticBoostEffect(
                         1, 1, Set.of(Keyword.MENACE, Keyword.TRAMPLE), GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_DEATH, new DrawCardEffect(1));
 

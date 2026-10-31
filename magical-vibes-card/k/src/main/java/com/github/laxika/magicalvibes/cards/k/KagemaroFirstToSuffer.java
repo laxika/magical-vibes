@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -18,7 +17,7 @@ public class KagemaroFirstToSuffer extends Card {
 
     public KagemaroFirstToSuffer() {
         CardsInHand handSize = new CardsInHand(CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(handSize, handSize));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(handSize, handSize));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}",

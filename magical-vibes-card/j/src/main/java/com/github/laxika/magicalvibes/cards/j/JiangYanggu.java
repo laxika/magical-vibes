@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "GS1", collectorNumber = "22")
@@ -49,7 +48,7 @@ public class JiangYanggu extends Card {
                         new CreateTokenEffect(
                                 CardType.CREATURE, 1, "Mowu", 3, 3,
                                 CardColor.GREEN, null, List.of(CardSubtype.DOG), Set.of(), Set.of(),
-                                false, false, Map.of(), List.of(), false, false, true, 0, Set.of())
+                                false, false, List.of(), List.of(), false, false, true, 0, Set.of())
                 )),
                 "−1: If you don't control a creature named Mowu, create Mowu, a legendary 3/3 green Dog creature token."
         ));

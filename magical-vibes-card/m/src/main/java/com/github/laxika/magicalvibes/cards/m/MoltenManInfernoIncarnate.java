@@ -37,7 +37,7 @@ public class MoltenManInfernoIncarnate extends Card {
 
         PermanentCount mountains = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(mountains, mountains));
+        addStaticEffect(new BoostSelfEffect(mountains, mountains));
 
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD,
                 new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), SacrificeRecipient.CONTROLLER));

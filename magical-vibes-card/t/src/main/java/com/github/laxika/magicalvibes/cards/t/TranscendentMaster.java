@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -30,18 +29,18 @@ public class TranscendentMaster extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF));
-        addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.LIFELINK, GrantScope.SELF));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.LIFELINK, GrantScope.SELF));
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(6, CounterType.LEVEL),
                 new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(6, CounterType.LEVEL),
                 new SetBasePowerToughnessEffect(6, 6, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(12, CounterType.LEVEL),
                 new SetBasePowerToughnessEffect(9, 9, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(12, CounterType.LEVEL),
                 new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
     }

@@ -31,8 +31,7 @@ public class MonasterySiege extends Card {
                                 new DrawCardEffect(1),
                                 new DiscardEffect(1, DiscardRecipient.CONTROLLER))));
 
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new SourceHasChosenMode(DRAGONS),
+        addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(DRAGONS),
                         IncreaseOpponentCostForTargetingControlledPermanentEffect
                                 .forControllerAndControlledPermanents(2)));
     }

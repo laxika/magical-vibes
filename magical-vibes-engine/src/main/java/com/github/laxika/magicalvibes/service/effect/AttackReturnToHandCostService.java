@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -53,7 +52,7 @@ public class AttackReturnToHandCostService {
 
         Map<PermanentPredicate, Integer> totals = new LinkedHashMap<>();
         for (Permanent attacker : attackers) {
-            for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : attacker.getCard().getStaticEffects()) {
                 if (effect instanceof CantAttackUnlessReturnToHandEffect returnCost) {
                     totals.merge(returnCost.filter(), returnCost.count(), Integer::sum);
                 }
@@ -76,7 +75,7 @@ public class AttackReturnToHandCostService {
         }
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
-            for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : attacker.getCard().getStaticEffects()) {
                 if (effect instanceof CantAttackUnlessReturnToHandEffect returnCost) {
                     totals.merge(returnCost.filter(), returnCost.count(), Integer::sum);
                 }

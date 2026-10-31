@@ -34,7 +34,7 @@ public class DefilerOfFlesh extends Card {
 
     public DefilerOfFlesh() {
         CardAllOfPredicate blackPermanentFilter = blackPermanentSpell();
-        addEffect(EffectSlot.STATIC, new PayLifeToReduceColoredCastCostEffect(
+        addStaticEffect(new PayLifeToReduceColoredCastCostEffect(
                 blackPermanentFilter, "{B}", 2, CostModificationScope.SELF));
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 blackPermanentFilter,

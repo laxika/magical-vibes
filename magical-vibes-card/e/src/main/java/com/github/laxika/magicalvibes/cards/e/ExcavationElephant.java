@@ -17,7 +17,7 @@ public class ExcavationElephant extends Card {
 
     public ExcavationElephant() {
         // Kicker {1}{W}
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{W}"));
+        addStaticEffect(new KickerEffect("{1}{W}"));
 
         // When this creature enters, if it was kicked, return target artifact card
         // from your graveyard to your hand.

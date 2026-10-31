@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CanBlockCreaturesWithShadowEffect;
 
 /**
@@ -15,6 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockCreaturesWithShadowEf
 public class WallOfDiffusion extends Card {
 
     public WallOfDiffusion() {
-        addEffect(EffectSlot.STATIC, new CanBlockCreaturesWithShadowEffect());
+        addStaticEffect(new CanBlockCreaturesWithShadowEffect());
     }
 }

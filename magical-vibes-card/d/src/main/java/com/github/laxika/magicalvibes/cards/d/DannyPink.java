@@ -33,7 +33,7 @@ public class DannyPink extends Card {
                 .addEffect(EffectSlot.ON_ATTACK,
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_SELF_COUNTERS_PUT,
                 new OncePerTurnTriggerEffect(new DrawCardEffect(1)),
                 GrantScope.ALL_OWN_CREATURES));

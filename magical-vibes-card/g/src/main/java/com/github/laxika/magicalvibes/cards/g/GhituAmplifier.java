@@ -20,7 +20,7 @@ import java.util.List;
 public class GhituAmplifier extends Card {
 
     public GhituAmplifier() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{U}"));
+        addStaticEffect(new KickerEffect("{2}{U}"));
         targetWhenKicked(TargetFilters.creatureAnOpponentControls(), 0, 0, 1, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ConditionalEffect(new Kicked(), ReturnToHandEffect.target()));

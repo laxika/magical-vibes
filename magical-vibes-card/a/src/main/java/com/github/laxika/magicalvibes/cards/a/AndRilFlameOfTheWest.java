@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "HOC", collectorNumber = "39")
@@ -25,16 +24,16 @@ import java.util.Set;
 public class AndRilFlameOfTheWest extends Card {
 
     public AndRilFlameOfTheWest() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 1, GrantScope.EQUIPPED_CREATURE));
 
         CreateTokenEffect spirits = new CreateTokenEffect(
                 CardType.CREATURE, 2, "Spirit", 1, 1, CardColor.WHITE, null,
                 List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of(),
-                false, true, Map.of(), List.of(), false, false, false, 0, Set.of());
+                false, true, List.of(), List.of(), false, false, false, 0, Set.of());
         CreateTokenEffect attackingSpirits = new CreateTokenEffect(
                 CardType.CREATURE, 2, "Spirit", 1, 1, CardColor.WHITE, null,
                 List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of(),
-                true, false, Map.of(), List.of(), false, false, false, 0, Set.of());
+                true, false, List.of(), List.of(), false, false, false, 0, Set.of());
         addEffect(EffectSlot.ON_ATTACK, new ConditionalReplacementEffect(
                 new EnchantedPermanentMatches(
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),

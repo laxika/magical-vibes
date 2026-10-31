@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
@@ -28,7 +27,7 @@ public class SepharaSkysBlade extends Card {
                 new TapUntappedPermanentsCost(4, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasKeywordPredicate(Keyword.FLYING)))))));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.INDESTRUCTIBLE,
                 GrantScope.OWN_CREATURES,
                 new PermanentHasKeywordPredicate(Keyword.FLYING)));

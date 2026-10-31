@@ -28,7 +28,7 @@ public class FaithUnbroken extends Card {
                 )),
                 "Target must be a creature you control"
         ))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
 
         // When this Aura enters, exile target creature an opponent controls until this Aura leaves.
         target(TargetFilters.creatureAnOpponentControls())

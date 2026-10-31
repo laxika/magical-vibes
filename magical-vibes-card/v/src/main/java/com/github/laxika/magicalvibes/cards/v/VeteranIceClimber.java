@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class VeteranIceClimber extends Card {
 
     public VeteranIceClimber() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"

@@ -18,7 +18,7 @@ public class TimberlineRidge extends Card {
 
     public TimberlineRidge() {
         // This land doesn't untap during your untap step if it has a depletion counter on it.
-        addEffect(EffectSlot.STATIC, new DoesntUntapWithCounterEffect(CounterType.DEPLETION));
+        addStaticEffect(new DoesntUntapWithCounterEffect(CounterType.DEPLETION));
 
         // At the beginning of your upkeep, remove a depletion counter from this land.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new RemoveCounterFromSourceEffect(CounterType.DEPLETION, 1));

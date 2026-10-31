@@ -15,7 +15,7 @@ public class KarametrasFavor extends Card {
 
     public KarametrasFavor() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         ManaAbilities.tapForAnyColor(),
                         GrantScope.ENCHANTED_PERMANENT
                 ))

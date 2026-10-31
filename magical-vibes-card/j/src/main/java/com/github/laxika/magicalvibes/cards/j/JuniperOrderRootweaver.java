@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class JuniperOrderRootweaver extends Card {
 
     public JuniperOrderRootweaver() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{G}"));
+        addStaticEffect(new KickerEffect("{G}"));
         targetWhenKicked(TargetFilters.creatureYouControl(), 0, 0, 1, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new ConditionalEffect(new Kicked(),

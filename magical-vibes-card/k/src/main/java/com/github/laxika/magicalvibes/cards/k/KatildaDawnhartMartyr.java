@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.DisturbCast;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
@@ -28,10 +27,8 @@ public class KatildaDawnhartMartyr extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.SPIRIT),
                         new PermanentIsEnchantmentPredicate())),
                 CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC,
-                new ProtectionFromSubtypesEffect(Set.of(CardSubtype.VAMPIRE)));
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(spiritsOrEnchantments, spiritsOrEnchantments));
+        addStaticEffect(new ProtectionFromSubtypesEffect(Set.of(CardSubtype.VAMPIRE)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(spiritsOrEnchantments, spiritsOrEnchantments));
         addCastingOption(new DisturbCast("{3}{W}{W}"));
     }
 

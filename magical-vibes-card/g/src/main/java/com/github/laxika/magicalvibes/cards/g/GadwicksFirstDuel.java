@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
@@ -19,7 +20,6 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "51")
@@ -51,8 +51,7 @@ public class GadwicksFirstDuel extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(EffectSlot.STATIC,
-                        new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE)),
+                List.of(StaticAbility.of(new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE))),
                 List.of(),
                 false,
                 false,

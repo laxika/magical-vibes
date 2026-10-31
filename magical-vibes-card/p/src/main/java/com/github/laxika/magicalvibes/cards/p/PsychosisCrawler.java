@@ -23,7 +23,7 @@ public class PsychosisCrawler extends Card {
 
     public PsychosisCrawler() {
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
         addEffect(EffectSlot.ON_CONTROLLER_DRAWS, new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
     }
 }

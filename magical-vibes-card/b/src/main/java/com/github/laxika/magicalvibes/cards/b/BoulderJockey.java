@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtE
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MB2", collectorNumber = "324")
@@ -36,7 +35,7 @@ public class BoulderJockey extends Card {
                                 Set.of(CardType.ARTIFACT),
                                 true,
                                 false,
-                                Map.of(),
+                                List.of(),
                                 List.of(),
                                 false,
                                 false,

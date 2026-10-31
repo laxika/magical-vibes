@@ -28,12 +28,12 @@ public class HarmonicSliver extends Card {
         DestroyTargetPermanentEffect destroyArtifactOrEnchantment =
                 new DestroyTargetPermanentEffect(artifactOrEnchantment);
 
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 destroyArtifactOrEnchantment,
                 GrantScope.ALL_CREATURES,
                 sliver));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 destroyArtifactOrEnchantment,
                 GrantScope.SELF,

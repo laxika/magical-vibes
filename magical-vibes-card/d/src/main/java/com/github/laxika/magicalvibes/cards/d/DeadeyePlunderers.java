@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
@@ -22,7 +21,7 @@ public class DeadeyePlunderers extends Card {
         // Deadeye Plunderers gets +1/+1 for each artifact you control.
         PermanentCount artifactsYouControl =
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(artifactsYouControl, artifactsYouControl));
+        addStaticEffect(new BoostSelfEffect(artifactsYouControl, artifactsYouControl));
 
         // {2}{U}{B}: Create a Treasure token.
         addActivatedAbility(new ActivatedAbility(

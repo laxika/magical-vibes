@@ -13,7 +13,7 @@ public class ValorOfTheWorthy extends Card {
 
     public ValorOfTheWorthy() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD, CreateTokenEffect.whiteSpirit(1));
     }
 }

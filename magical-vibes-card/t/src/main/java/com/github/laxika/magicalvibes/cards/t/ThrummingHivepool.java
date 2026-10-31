@@ -20,9 +20,9 @@ import java.util.Set;
 public class ThrummingHivepool extends Card {
 
     public ThrummingHivepool() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SLIVER), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.DOUBLE_STRIKE, Keyword.HASTE),
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));

@@ -13,7 +13,7 @@ public class AminatouVeilPiercer extends Card {
 
     public AminatouVeilPiercer() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new SurveilEffect(2));
-        addEffect(EffectSlot.STATIC, new GrantMiracleReducedByManaCostEffect(
+        addStaticEffect(new GrantMiracleReducedByManaCostEffect(
                 new CardTypePredicate(CardType.ENCHANTMENT), 4));
     }
 }

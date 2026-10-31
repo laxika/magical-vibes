@@ -45,7 +45,7 @@ public class AnimateDead extends Card {
                 .build());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReanimateEnchantedCreatureCardEffect(false));
         // "Enchanted creature gets -1/-0."
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(-1, 0, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(-1, 0, GrantScope.ENCHANTED_CREATURE));
         // "When this Aura leaves the battlefield, that creature's controller sacrifices it."
         addEffect(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD, new SacrificeEnchantedCreatureOnLeaveEffect());
     }

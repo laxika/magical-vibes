@@ -31,7 +31,7 @@ public class ManaVault extends Card {
 
     public ManaVault() {
         // This artifact doesn't untap during your untap step.
-        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
+        addStaticEffect(DoesntUntapEffect.self());
 
         // At the beginning of your upkeep, you may pay {4}. If you do, untap this artifact.
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayPayManaEffect(

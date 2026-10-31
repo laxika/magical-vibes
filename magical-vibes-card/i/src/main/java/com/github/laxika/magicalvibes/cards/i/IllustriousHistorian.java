@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "STX", collectorNumber = "109")
@@ -36,7 +35,7 @@ public class IllustriousHistorian extends Card {
                                 Set.of(),
                                 false,
                                 true,
-                                Map.of(),
+                                List.of(),
                                 List.of(),
                                 false,
                                 false,

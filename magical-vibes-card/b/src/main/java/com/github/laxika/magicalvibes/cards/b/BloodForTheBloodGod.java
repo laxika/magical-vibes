@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -16,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 public class BloodForTheBloodGod extends Card {
 
     public BloodForTheBloodGod() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new CreatureDeathsThisTurn(CountScope.ANY_PLAYER)));
         addSpellEffect(new DiscardHandEffect());
         addSpellEffect(new DrawCardEffect(8));

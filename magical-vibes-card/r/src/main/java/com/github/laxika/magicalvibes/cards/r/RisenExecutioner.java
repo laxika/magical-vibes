@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
@@ -22,10 +21,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class RisenExecutioner extends Card {
 
     public RisenExecutioner() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new CantBlockEffect());
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new CastFromZone(Zone.GRAVEYARD),
                 new IncreaseOwnCastCostEffect(new CardsInGraveyard(
                         new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER, true))));

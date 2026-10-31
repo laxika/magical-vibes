@@ -20,11 +20,11 @@ public class ElephantGrass extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{1}"));
 
         // Black creatures can't attack you — exemption is nonblack, so black is hard-denied.
-        addEffect(EffectSlot.STATIC, new CreaturesCantAttackControllerUnlessPredicateEffect(
+        addStaticEffect(new CreaturesCantAttackControllerUnlessPredicateEffect(
                 new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))));
 
         // Nonblack creatures can't attack you unless their controller pays {2} for each.
         // Uniform tax from the defender; black attackers are already barred above.
-        addEffect(EffectSlot.STATIC, RequirePaymentToAttackEffect.playerOnly(2));
+        addStaticEffect(RequirePaymentToAttackEffect.playerOnly(2));
     }
 }

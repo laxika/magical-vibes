@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class BeornTheFierce extends Card {
 
     public BeornTheFierce() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.BEAR)));
 
         target(TargetFilters.creatureYouControl(), 0, 1)

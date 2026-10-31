@@ -23,7 +23,7 @@ import java.util.List;
 public class ThePrideOfHullClade extends Card {
 
     public ThePrideOfHullClade() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new Max(new Fixed(0), new TotalToughnessOfControlledCreatures())));
 
         addActivatedAbility(new ActivatedAbility(

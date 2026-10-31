@@ -20,7 +20,7 @@ public class Abduction extends Card {
         .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new UntapPermanentsEffect(TapUntapScope.ENCHANTED));
 
         // You control enchanted creature.
-        addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+        addStaticEffect(new ControlEnchantedCreatureEffect());
 
         // When enchanted creature dies, return that card to the battlefield under its owner's control.
         addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,

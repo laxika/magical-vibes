@@ -11,6 +11,6 @@ public class HarshJudgment extends Card {
 
     public HarshJudgment() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseColorOnEnterEffect());
-        addEffect(EffectSlot.STATIC, new RedirectChosenColorSpellDamageToControllerEffect());
+        addStaticEffect(new RedirectChosenColorSpellDamageToControllerEffect());
     }
 }

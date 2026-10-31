@@ -17,6 +17,6 @@ public class DarkFavor extends Card {
         // Enchant creature; on entry the Aura's controller loses 1 life, and the enchanted creature gets +3/+1.
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseLifeEffect(1))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 1, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(3, 1, GrantScope.ENCHANTED_CREATURE));
     }
 }

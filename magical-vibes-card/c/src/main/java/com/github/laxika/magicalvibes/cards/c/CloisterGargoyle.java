@@ -16,9 +16,9 @@ public class CloisterGargoyle extends Card {
 
     public CloisterGargoyle() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new VentureIntoDungeonEffect());
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerHasCompletedDungeon(),
+        addStaticEffect(new ConditionalEffect(new ControllerHasCompletedDungeon(),
                 new StaticBoostEffect(3, 0, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerHasCompletedDungeon(),
+        addStaticEffect(new ConditionalEffect(new ControllerHasCompletedDungeon(),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
     }
 }

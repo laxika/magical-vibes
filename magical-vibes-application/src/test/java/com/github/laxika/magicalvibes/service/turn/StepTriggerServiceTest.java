@@ -708,8 +708,7 @@ class StepTriggerServiceTest {
         void globalUpkeepGrantCanRequireLifePayment() {
             gd.turnNumber = 2;
             Card grantCard = createCardWithName("Vile Consumption");
-            grantCard.addEffect(EffectSlot.STATIC,
-                    new AllPermanentsUpkeepSacrificeUnlessPayEffect(new PermanentIsCreaturePredicate(), 1));
+            grantCard.addStaticEffect(new AllPermanentsUpkeepSacrificeUnlessPayEffect(new PermanentIsCreaturePredicate(), 1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(grantCard));
 
             Card creatureCard = createCardWithName("Creature");

@@ -15,7 +15,7 @@ import java.util.Set;
 public class KeymasterRogue extends Card {
 
     public KeymasterRogue() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new BouncePermanentOnUpkeepEffect(
                 BouncePermanentOnUpkeepEffect.Scope.SOURCE_CONTROLLER,
                 Set.of(new ControlledPermanentPredicateTargetFilter(

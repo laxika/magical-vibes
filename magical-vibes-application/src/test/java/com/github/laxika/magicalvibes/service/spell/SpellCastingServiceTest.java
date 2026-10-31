@@ -569,7 +569,7 @@ class SpellCastingServiceTest {
 
         Card spliced = createInstant("Spliced Spell", "{1}");
         spliced.target(TargetFilters.creature()).addSpellEffect(new DrawCardEffect());
-        spliced.addEffect(EffectSlot.STATIC, new SpliceEffect(CardSubtype.ARCANE, "{1}"));
+        spliced.addStaticEffect(new SpliceEffect(CardSubtype.ARCANE, "{1}"));
 
         UUID firstTarget = UUID.randomUUID();
         UUID secondTarget = UUID.randomUUID();
@@ -983,7 +983,7 @@ class SpellCastingServiceTest {
             Card sorcery = createSorcery("Test Stomp", "{2}{G}");
             sorcery.target(2, 2);
             var predicate = new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR);
-            sorcery.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(predicate, 2, true));
+            sorcery.addStaticEffect(new ReduceOwnCastCostIfTargetingPermanentEffect(predicate, 2, true));
             setHand(player1Id, List.of(sorcery));
             addMana(player1Id, ManaColor.GREEN, 1);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
@@ -1030,7 +1030,7 @@ class SpellCastingServiceTest {
             Card instant = createInstant("Test Response", "{4}{W}");
             instant.target(1, 1);
             var predicate = new PermanentIsTappedPredicate();
-            instant.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(predicate, 3));
+            instant.addStaticEffect(new ReduceOwnCastCostIfTargetingPermanentEffect(predicate, 3));
             setHand(player1Id, List.of(instant));
             addMana(player1Id, ManaColor.WHITE, 2);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
@@ -1056,7 +1056,7 @@ class SpellCastingServiceTest {
             instant.target(1, 1);
             var predicate = new com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate(
                     java.util.Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL));
-            instant.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingStackEntryEffect(predicate, 2));
+            instant.addStaticEffect(new ReduceOwnCastCostIfTargetingStackEntryEffect(predicate, 2));
             setHand(player1Id, List.of(instant));
             addMana(player1Id, ManaColor.BLUE, 2);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
@@ -1629,7 +1629,7 @@ class SpellCastingServiceTest {
         @DisplayName("Pays X kicker cost from pool")
         void paysXKickerCost() {
             Card card = createCreature("Test Kicker Creature", "{4}{G}{G}");
-            card.addEffect(EffectSlot.STATIC, new KickerEffect("{X}"));
+            card.addStaticEffect(new KickerEffect("{X}"));
             setHand(player1Id, List.of(card));
             addMana(player1Id, ManaColor.GREEN, 9);
             when(actionAvailabilityService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));

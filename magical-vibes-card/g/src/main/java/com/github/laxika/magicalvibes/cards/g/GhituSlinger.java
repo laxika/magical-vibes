@@ -12,6 +12,6 @@ public class GhituSlinger extends Card {
 
     public GhituSlinger() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DealDamageToAnyTargetEffect(2));
-        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{2}{R}"));
+        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{2}{R}"));
     }
 }

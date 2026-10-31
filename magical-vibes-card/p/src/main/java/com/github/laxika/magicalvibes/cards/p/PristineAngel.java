@@ -24,11 +24,11 @@ import java.util.Set;
 public class PristineAngel extends Card {
 
     public PristineAngel() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
                 new GrantEffectEffect(
                         new ProtectionFromCardTypesEffect(Set.of(CardType.ARTIFACT)), GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
                 new ProtectionFromColorsEffect(Set.of(
                         CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN))));

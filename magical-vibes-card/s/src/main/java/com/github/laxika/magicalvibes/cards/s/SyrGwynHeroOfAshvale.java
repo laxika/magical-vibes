@@ -23,7 +23,7 @@ public class SyrGwynHeroOfAshvale extends Card {
                         new PermanentIsEquippedPredicate(),
                         SequenceEffect.of(new DrawCardEffect(1), new LoseLifeEffect(1))));
 
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new EquipActivatedAbility("{0}",
                         new PermanentHasSubtypePredicate(CardSubtype.KNIGHT),
                         "Target must be a Knight you control"),

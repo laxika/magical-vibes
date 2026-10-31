@@ -27,8 +27,7 @@ public class RighteousValkyrie extends Card {
                                 new CardSubtypePredicate(CardSubtype.ANGEL),
                                 new CardSubtypePredicate(CardSubtype.CLERIC))),
                         new GainLifeEqualToToughnessEffect()));
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                         new ControllerLifeAtLeast(7, true),
                         new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES)));
     }

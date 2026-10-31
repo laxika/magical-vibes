@@ -17,7 +17,7 @@ import java.util.Set;
 public class OakhameAdversary extends Card {
 
     public OakhameAdversary() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new OpponentControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.GREEN))),
                 new ReduceOwnCastCostEffect(new Fixed(2))));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(1));

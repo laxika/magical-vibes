@@ -19,7 +19,7 @@ public class AnowonTheRuinThief extends Card {
 
     public AnowonTheRuinThief() {
         // Other Rogues you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.ROGUE)));
 
         // Whenever one or more Rogues you control deal combat damage to a player, that player mills

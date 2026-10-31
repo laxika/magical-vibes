@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -26,7 +25,7 @@ public class PackRat extends Card {
         // Pack Rat's power and toughness are each equal to the number of Rats you control (it counts itself).
         DynamicAmount rats = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.RAT), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(rats, rats));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(rats, rats));
 
         // {2}{B}, Discard a card: Create a token that's a copy of this creature.
         addActivatedAbility(new ActivatedAbility(

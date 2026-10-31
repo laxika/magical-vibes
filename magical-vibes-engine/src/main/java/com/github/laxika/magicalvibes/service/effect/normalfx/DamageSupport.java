@@ -6,11 +6,8 @@ import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.service.CreatureDamageStep;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
-import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.model.SaturatingMath;
-import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
@@ -43,7 +40,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndExileFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndMillEffect;
@@ -1483,7 +1479,7 @@ public class DamageSupport {
             if (permanent.getChosenColor() == null || !sourceColors.contains(permanent.getChosenColor())) {
                 continue;
             }
-            boolean hasRedirect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+            boolean hasRedirect = permanent.getCard().getStaticEffects().stream()
                     .anyMatch(RedirectChosenColorSpellDamageToControllerEffect.class::isInstance);
             if (hasRedirect) {
                 return entry.getControllerId();
@@ -2102,7 +2098,7 @@ public class DamageSupport {
         boolean controllersTurn = playerId.equals(gameData.activePlayerId);
         boolean hasEffect = battlefield.stream().anyMatch(p ->
                 !gameQueryService.hasLostPrintedAbilities(gameData, p)
-                        && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        && p.getCard().getStaticEffects().stream()
                         .anyMatch(e -> isControllerAllDamagePreventionActive(
                                 gameData, playerId, p, e, controllersTurn)));
         return hasEffect ? damage : 0;
@@ -2136,7 +2132,7 @@ public class DamageSupport {
         if (battlefield == null) return 0;
 
         boolean hasEffect = battlefield.stream().anyMatch(p ->
-                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                p.getCard().getStaticEffects().stream()
                         .anyMatch(e -> e instanceof PreventAllDamageToControllerAndExileFromGraveyardEffect));
         if (!hasEffect) return 0;
 
@@ -2201,7 +2197,7 @@ public class DamageSupport {
         if (battlefield == null) return 0;
 
         boolean hasEffect = battlefield.stream().anyMatch(p ->
-                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                p.getCard().getStaticEffects().stream()
                         .anyMatch(NefariousLichDamageReplacementEffect.class::isInstance));
         if (!hasEffect) return 0;
 
@@ -2262,7 +2258,7 @@ public class DamageSupport {
 
         boolean hasEffect = gameData.playerBattlefields.values().stream()
                 .flatMap(Collection::stream)
-                .anyMatch(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(permanent -> permanent.getCard().getStaticEffects().stream()
                         .anyMatch(CrumblingSanctuaryDamageReplacementEffect.class::isInstance));
         if (!hasEffect) return 0;
 
@@ -2328,7 +2324,7 @@ public class DamageSupport {
     /** The permanents {@code playerId} controls that turn damage to them into counters on themselves. */
     public List<Permanent> damageToControllerCounterReplacementSources(GameData gameData, UUID playerId) {
         return gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                .filter(permanent -> permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(permanent -> permanent.getCard().getStaticEffects().stream()
                         .anyMatch(DamageToControllerCounterReplacementEffect.class::isInstance))
                 .toList();
     }
@@ -2337,7 +2333,7 @@ public class DamageSupport {
     public int applyDamageToControllerCounterReplacement(GameData gameData, UUID playerId, Permanent source,
                                                          int damage) {
         if (damage <= 0) return 0;
-        DamageToControllerCounterReplacementEffect replacement = source.getCard().getEffects(EffectSlot.STATIC)
+        DamageToControllerCounterReplacementEffect replacement = source.getCard().getStaticEffects()
                 .stream()
                 .filter(DamageToControllerCounterReplacementEffect.class::isInstance)
                 .map(DamageToControllerCounterReplacementEffect.class::cast)

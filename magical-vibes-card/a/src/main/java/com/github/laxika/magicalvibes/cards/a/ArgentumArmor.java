@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 public class ArgentumArmor extends Card {
 
     public ArgentumArmor() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(6, 6, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(6, 6, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK, new DestroyTargetPermanentEffect(false));
         addActivatedAbility(new EquipActivatedAbility("{6}"));
     }

@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
@@ -82,17 +85,17 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
         // "If it doesn't have [ability], it gains that ability" — grant at most once (Musician).
         // Some abilities intentionally add another instance each time they resolve (Bushido).
         if (e.skipIfAlreadyPresent()
-                && (alreadyHasGrantedEffect(target, e.slot(), e.grantedEffect())
+                && (alreadyHasGrantedEffect(target, e.grantedAbility(), e.grantedEffect())
                 || alreadyHasRampage(gameData, target, e.slot(), e.grantedEffect()))) {
             return;
         }
 
         if (e.duration() == EffectDuration.UNTIL_END_OF_TURN) {
-            target.addTemporaryTriggeredEffect(e.slot(), e.grantedEffect());
+            target.addTemporaryAbility(e.grantedAbility());
         } else if (e.duration() == EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP) {
-            target.addUntilNextUpkeepTriggeredEffect(entry.getControllerId(), e.slot(), e.grantedEffect());
+            target.addUntilNextUpkeepAbility(entry.getControllerId(), e.grantedAbility());
         } else {
-            target.addPersistentTriggeredEffect(e.slot(), e.grantedEffect());
+            target.addPersistentAbility(e.grantedAbility());
         }
 
         String durationText = switch (e.duration()) {
@@ -102,16 +105,22 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
         };
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
-                .text(" grants a " + e.slot().name() + " ability to ")
+                .text(" grants a " + LegacySlots.label(e.grantedAbility()) + " ability to ")
                 .card(target.getCard())
                 .text(durationText + ".")
                 .build());
         log.info("Game {} - {} grants {} effect to {}{}",
-                gameData.id, entry.getCard().getName(), e.slot().name(),
+                gameData.id, entry.getCard().getName(), LegacySlots.label(e.grantedAbility()),
                 target.getCard().getName(), durationText);
     }
 
-    private static boolean alreadyHasGrantedEffect(Permanent target, EffectSlot slot, CardEffect granted) {
+    private static boolean alreadyHasGrantedEffect(Permanent target, Ability ability, CardEffect granted) {
+        if (ability instanceof StaticAbility) {
+            return target.getCard().getStaticEffects().contains(granted)
+                    || target.getPersistentStaticEffects().contains(granted)
+                    || target.getTemporaryStaticEffects().contains(granted);
+        }
+        EffectSlot slot = LegacySlots.slotOf(ability);
         if (target.getCard().getEffects(slot).contains(granted)) {
             return true;
         }

@@ -18,6 +18,6 @@ public class MesmerizingDose extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ProliferateEffect())
                 // Enchanted creature doesn't untap during its controller's untap step.
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+                .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

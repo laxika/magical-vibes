@@ -25,7 +25,7 @@ import java.util.Set;
 public class HiveOfTheEyeTyrant extends Card {
 
     public HiveOfTheEyeTyrant() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCount(2, new PermanentIsLandPredicate()),
                 new EntersTappedEffect()));
 

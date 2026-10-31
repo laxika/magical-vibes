@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
@@ -22,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class RiteOfReplication extends Card {
 
     public RiteOfReplication() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{5}"));
+        addStaticEffect(new KickerEffect("{5}"));
         target(TargetFilters.creature()).addSpellEffect(new ConditionalReplacementEffect(
                 new Kicked(),
                 new CreateTokenCopyOfTargetPermanentEffect(),

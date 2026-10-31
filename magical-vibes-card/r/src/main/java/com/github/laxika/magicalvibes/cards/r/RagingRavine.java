@@ -30,7 +30,7 @@ import java.util.Set;
 public class RagingRavine extends Card {
 
     public RagingRavine() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

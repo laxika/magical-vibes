@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class PhyrexianMissionary extends Card {
 
     public PhyrexianMissionary() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{B}"));
+        addStaticEffect(new KickerEffect("{1}{B}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)

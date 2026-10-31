@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 public class ArchfiendOfDespair extends Card {
 
     public ArchfiendOfDespair() {
-        addEffect(EffectSlot.STATIC, new OpponentsCantGainLifeEffect());
+        addStaticEffect(new OpponentsCantGainLifeEffect());
         addEffect(EffectSlot.END_STEP_TRIGGERED, new EachOpponentLosesLifeEqualToLifeLostThisTurn());
     }
 }

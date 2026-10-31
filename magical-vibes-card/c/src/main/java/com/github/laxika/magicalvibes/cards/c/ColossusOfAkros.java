@@ -3,9 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -28,9 +26,9 @@ public class ColossusOfAkros extends Card {
                 "{10}: Monstrosity 10."
         ));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(monstrous,
+        addStaticEffect(new ConditionalEffect(monstrous,
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(monstrous,
+        addStaticEffect(new ConditionalEffect(monstrous,
                 new CanAttackAsThoughNoDefenderEffect()));
     }
 }

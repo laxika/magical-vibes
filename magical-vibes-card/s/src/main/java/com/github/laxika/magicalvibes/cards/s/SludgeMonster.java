@@ -39,10 +39,8 @@ public class SludgeMonster extends Card {
                 new PermanentHasCountersPredicate(CounterType.SLIME),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HORROR))
         ));
-        addEffect(EffectSlot.STATIC,
-                new LosesAllAbilitiesEffect(GrantScope.ALL_CREATURES_INCLUDING_SELF, affectedCreature));
-        addEffect(EffectSlot.STATIC,
-                new SetBasePowerToughnessEffect(2, 2, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+        addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ALL_CREATURES_INCLUDING_SELF, affectedCreature));
+        addStaticEffect(new SetBasePowerToughnessEffect(2, 2, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                         affectedCreature));
     }
 }

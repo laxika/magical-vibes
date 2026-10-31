@@ -17,7 +17,7 @@ public class Cactarantula extends Card {
 
     public Cactarantula() {
         // This spell costs {1} less to cast if you control a Desert.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
                 new ReduceOwnCastCostEffect(new Fixed(1))));
 

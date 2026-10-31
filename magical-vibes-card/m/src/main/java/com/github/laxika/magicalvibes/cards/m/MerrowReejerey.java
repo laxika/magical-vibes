@@ -23,7 +23,7 @@ public class MerrowReejerey extends Card {
 
     public MerrowReejerey() {
         // Other Merfolk creatures you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MERFOLK))));
 
         // Whenever you cast a Merfolk spell, you may tap or untap target permanent.

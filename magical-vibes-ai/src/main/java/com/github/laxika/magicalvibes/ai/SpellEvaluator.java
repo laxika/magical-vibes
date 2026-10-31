@@ -51,7 +51,6 @@ import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -894,7 +893,7 @@ public class SpellEvaluator {
 
         // Check if this equipment grants a meaningful P/T boost
         double equipBoost = 0;
-        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof StaticCreatureBoostEffect boost
                     && boost.scope() == GrantScope.EQUIPPED_CREATURE) {
                 equipBoost += boost.powerBoost() * 3.0 + boost.toughnessBoost() * 1.5;
@@ -941,7 +940,7 @@ public class SpellEvaluator {
     private double anthemWithWideBoardBonus(GameData gameData, Card card, List<Permanent> aiBattlefield) {
         // Check if this card has an anthem/lord static boost
         double perCreatureBoost = 0;
-        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof StaticCreatureBoostEffect boost) {
                 GrantScope scope = boost.scope();
                 if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_OWN_CREATURES
@@ -1033,7 +1032,7 @@ public class SpellEvaluator {
         double value = 0;
         boolean isBeneficial = false;
 
-        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+        for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof StaticCreatureBoostEffect boost
                     && (boost.scope() == GrantScope.ENCHANTED_CREATURE || boost.scope() == GrantScope.EQUIPPED_CREATURE)) {
                 isBeneficial = true;

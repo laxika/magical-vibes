@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -16,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class TimelyInterference extends Card {
 
     public TimelyInterference() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{R}"));
+        addStaticEffect(new KickerEffect("{1}{R}"));
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(-1, 0))
                 .addSpellEffect(new ConditionalEffect(new Kicked(),

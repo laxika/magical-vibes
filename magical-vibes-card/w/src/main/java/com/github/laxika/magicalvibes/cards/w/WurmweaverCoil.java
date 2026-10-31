@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -29,7 +28,7 @@ public class WurmweaverCoil extends Card {
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN))));
 
         target(new PermanentPredicateTargetFilter(greenCreature, "Target must be a green creature"))
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(6, 6, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(6, 6, GrantScope.ENCHANTED_CREATURE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

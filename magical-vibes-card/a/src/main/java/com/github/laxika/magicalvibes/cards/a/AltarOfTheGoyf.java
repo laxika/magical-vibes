@@ -24,7 +24,7 @@ public class AltarOfTheGoyf extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS, new ConditionalEffect(new AttacksAlone(),
                 new BoostTargetCreatureEffect(cardTypes, cardTypes)));
 
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE, GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.LHURGOYF)));
     }

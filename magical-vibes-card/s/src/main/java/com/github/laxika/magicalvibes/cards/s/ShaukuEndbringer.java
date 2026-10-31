@@ -21,7 +21,7 @@ public class ShaukuEndbringer extends Card {
     public ShaukuEndbringer() {
         // Shauku can't attack if there's another creature on the battlefield. Expressed as the
         // inverse: it may attack only while at most one creature (itself) is on any battlefield.
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+        addStaticEffect(new CantAttackUnlessEffect(
                 new AnyPlayerControlsPermanentCountAtMost(1, new PermanentIsCreaturePredicate()),
                 "no other creature is on the battlefield"
         ));

@@ -16,6 +16,6 @@ public class KeldonVandals extends Card {
                 new PermanentIsArtifactPredicate(),
                 "Target must be an artifact"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{2}{R}"));
+        addStaticEffect(new RegisterEchoAtNextUpkeepEffect("{2}{R}"));
     }
 }

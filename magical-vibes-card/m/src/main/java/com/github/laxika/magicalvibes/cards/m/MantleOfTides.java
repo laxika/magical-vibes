@@ -17,7 +17,7 @@ public class MantleOfTides extends Card {
                 .addEffect(EffectSlot.ON_CONTROLLER_DRAWS_SECOND_CARD,
                         new AttachSourceEquipmentToTargetCreatureEffect());
 
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

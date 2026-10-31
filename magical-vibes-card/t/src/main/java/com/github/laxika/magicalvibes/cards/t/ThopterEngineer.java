@@ -32,7 +32,7 @@ public class ThopterEngineer extends Card {
 
         // Haste for artifact creatures you control, including Thopter Engineer itself when it is an
         // artifact (e.g. from Liquimetal Coating).
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(

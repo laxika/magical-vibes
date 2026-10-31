@@ -22,11 +22,10 @@ public class SuperSoldierSerum extends Card {
 
     public SuperSoldierSerum() {
         target(TargetFilters.creature());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2,
+        addStaticEffect(new StaticBoostEffect(2, 2,
                 Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE), GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.SOLDIER, GrantScope.ENCHANTED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantSupertypeToEnchantedPermanentEffect(CardSupertype.LEGENDARY));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.SOLDIER, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new GrantSupertypeToEnchantedPermanentEffect(CardSupertype.LEGENDARY));
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),

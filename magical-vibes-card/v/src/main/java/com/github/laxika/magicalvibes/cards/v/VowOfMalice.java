@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -18,9 +17,8 @@ public class VowOfMalice extends Card {
 
     public VowOfMalice() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackControllerEffect());
+                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new EnchantedCreatureCantAttackControllerEffect());
     }
 }

@@ -26,7 +26,7 @@ import java.util.Set;
 public class StormscapeBattlemage extends Card {
 
     public StormscapeBattlemage() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{B}"));
+        addStaticEffect(new KickerEffect("{2}{B}"));
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{W}"), true, 1));
 
         targetWhenKicked(new PermanentPredicateTargetFilter(

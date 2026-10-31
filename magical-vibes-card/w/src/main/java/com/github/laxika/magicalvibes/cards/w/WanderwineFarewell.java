@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "83")
@@ -27,7 +26,7 @@ public class WanderwineFarewell extends Card {
                                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)),
                                 new CreateTokenEffect(CardType.CREATURE, new EventValue(), "Merfolk", 1, 1,
                                         CardColor.WHITE, Set.of(CardColor.WHITE, CardColor.BLUE),
-                                        List.of(CardSubtype.MERFOLK), Set.of(), Set.of(), false, false, Map.of(),
+                                        List.of(CardSubtype.MERFOLK), Set.of(), Set.of(), false, false, List.of(),
                                         List.of(), false, false, false, 0, Set.of()))));
     }
 }

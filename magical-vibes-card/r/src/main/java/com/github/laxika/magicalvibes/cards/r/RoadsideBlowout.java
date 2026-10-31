@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -31,7 +30,7 @@ public class RoadsideBlowout extends Card {
                 creatureOrVehicle,
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
 
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(
+        addStaticEffect(new ReduceOwnCastCostIfTargetingPermanentEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentMaxManaValuePredicate(1),
                         new PermanentMinManaValuePredicate(1))), 2));

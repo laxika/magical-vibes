@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -24,7 +23,7 @@ import java.util.List;
 public class GiadaFontOfHope extends Card {
 
     public GiadaFontOfHope() {
-        addEffect(EffectSlot.STATIC, new ControlledCreaturesEnterWithAdditionalCountersEffect(
+        addStaticEffect(new ControlledCreaturesEnterWithAdditionalCountersEffect(
                 CardSubtype.ANGEL,
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ANGEL), CountScope.CONTROLLER)
         ));

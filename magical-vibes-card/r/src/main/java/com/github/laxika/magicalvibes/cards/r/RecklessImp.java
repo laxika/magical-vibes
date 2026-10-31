@@ -15,7 +15,7 @@ public class RecklessImp extends Card {
 
     public RecklessImp() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{B}"))));
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnSelfToHandIfDashCostPaidEffect());
     }
 }

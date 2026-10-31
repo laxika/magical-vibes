@@ -18,7 +18,7 @@ import java.util.List;
 public class GhostOfRamirezDePietro extends Card {
 
     public GhostOfRamirezDePietro() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentToughnessAtLeastPredicate(3)))));

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageToOpponentsAndTheirPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -15,8 +14,7 @@ import java.util.List;
 public class SolphimMayhemDominus extends Card {
 
     public SolphimMayhemDominus() {
-        addEffect(EffectSlot.STATIC,
-                new DoubleControllerDamageToOpponentsAndTheirPermanentsEffect(true));
+        addStaticEffect(new DoubleControllerDamageToOpponentsAndTheirPermanentsEffect(true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -47,7 +47,7 @@ public class MaralenFaeAscendant extends Card {
                                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))),
                         exileTopTwo));
 
-        addEffect(EffectSlot.STATIC, new AllowCastFromCardsExiledWithSourceEffect(
+        addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false,
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                 false,

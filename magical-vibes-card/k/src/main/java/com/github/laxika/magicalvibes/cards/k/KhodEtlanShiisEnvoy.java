@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -18,10 +17,10 @@ import java.util.Set;
 public class KhodEtlanShiisEnvoy extends Card {
 
     public KhodEtlanShiisEnvoy() {
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.ISLAND, GrantScope.ALL_LANDS_INCLUDING_SELF));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ISLAND, GrantScope.ALL_LANDS_INCLUDING_SELF));
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapFor(ManaColor.BLUE), GrantScope.ALL_LANDS_INCLUDING_SELF));
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(
                         CardSubtype.HOMARID,
                         CardSubtype.CAMARID,

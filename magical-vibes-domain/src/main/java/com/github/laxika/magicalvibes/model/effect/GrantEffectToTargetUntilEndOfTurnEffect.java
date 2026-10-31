@@ -35,8 +35,18 @@ public record GrantEffectToTargetUntilEndOfTurnEffect(
         this(slot, grantedEffect, delayedTrigger, false);
     }
 
+    /** The grant of {@code grantedAbility}, such as a static ability, which has no slot. */
+    public GrantEffectToTargetUntilEndOfTurnEffect(Ability grantedAbility, boolean delayedTrigger) {
+        this(grantedAbility, delayedTrigger, false);
+    }
+
     public GrantEffectToTargetUntilEndOfTurnEffect(EffectSlot slot, CardEffect grantedEffect) {
         this(slot, grantedEffect, false);
+    }
+
+    /** The grant of {@code grantedAbility}, such as a static ability, which has no slot. */
+    public GrantEffectToTargetUntilEndOfTurnEffect(Ability grantedAbility) {
+        this(grantedAbility, false);
     }
 
     @Override

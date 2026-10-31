@@ -17,7 +17,7 @@ import java.util.List;
 public class ShadowInTheWarp extends Card {
 
     public ShadowInTheWarp() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForFirstMatchingSpellEachTurnEffect(
+        addStaticEffect(new ReduceCastCostForFirstMatchingSpellEachTurnEffect(
                 new CardTypePredicate(CardType.CREATURE), 2));
 
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL, SpellCastTriggerEffect.nth(

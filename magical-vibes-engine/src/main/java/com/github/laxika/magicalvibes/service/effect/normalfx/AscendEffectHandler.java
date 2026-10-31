@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AscendEffect;
@@ -44,7 +43,7 @@ public class AscendEffectHandler implements NormalEffectHandlerBean {
                         .filter(perm -> !perm.isFaceDown())
                         .filter(perm -> !gameQueryService.hasLostAllAbilities(gameData, perm))
                         .map(Permanent::getCard)
-                        .filter(card -> card.getEffects(EffectSlot.STATIC).stream()
+                        .filter(card -> card.getStaticEffects().stream()
                                 .anyMatch(AscendEffect.class::isInstance))
                         .findFirst()
                         .orElse(null);
@@ -68,7 +67,7 @@ public class AscendEffectHandler implements NormalEffectHandlerBean {
 
         Card ascendSource = gameData.planechase.faceUp.stream()
                 .map(PlanarObject::getCard)
-                .filter(card -> card.getEffects(EffectSlot.STATIC).stream()
+                .filter(card -> card.getStaticEffects().stream()
                         .anyMatch(AscendEffect.class::isInstance))
                 .findFirst()
                 .orElse(null);

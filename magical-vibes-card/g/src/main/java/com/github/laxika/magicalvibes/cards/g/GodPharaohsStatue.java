@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 public class GodPharaohsStatue extends Card {
 
     public GodPharaohsStatue() {
-        addEffect(EffectSlot.STATIC, new IncreaseSpellCostEffect(
+        addStaticEffect(new IncreaseSpellCostEffect(
                 new CardTruePredicate(), 2, CostModificationScope.OPPONENT));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));

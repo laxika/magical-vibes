@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.BendingType;
@@ -3075,7 +3076,7 @@ public class AbilityActivationService {
                     || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                 continue;
             }
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof FirstCardCycledFreeEffect) {
                     return permanent.getId();
                 }
@@ -3103,7 +3104,7 @@ public class AbilityActivationService {
             if (gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                 continue;
             }
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof FreeCyclingEffect freeCycling && handSize >= freeCycling.minCardsInHand()) {
                     return true;
                 }
@@ -11099,7 +11100,7 @@ public class AbilityActivationService {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
                 if (!hasName.test(p.getChosenName())) continue;
                 if (gameQueryService.hasLostAllAbilities(gameData, p)) continue;
-                var lockEffect = p.getCard().getEffects(EffectSlot.STATIC).stream()
+                var lockEffect = p.getCard().getStaticEffects().stream()
                         .filter(e -> e instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect)
                         .map(e -> (ActivatedAbilitiesOfChosenNameCantBeActivatedEffect) e)
                         .findFirst().orElse(null);

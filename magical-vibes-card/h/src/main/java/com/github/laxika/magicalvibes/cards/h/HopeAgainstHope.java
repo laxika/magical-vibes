@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -22,9 +21,9 @@ public class HopeAgainstHope extends Card {
     public HopeAgainstHope() {
         var creaturesYouControl = new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+                .addStaticEffect(new DynamicStaticBoostEffect(
                         creaturesYouControl, creaturesYouControl, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new EnchantedPermanentConditionalEffect(
+                .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ENCHANTED_CREATURE),
                         null));

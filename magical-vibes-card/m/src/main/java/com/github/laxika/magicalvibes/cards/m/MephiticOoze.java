@@ -16,7 +16,7 @@ public class MephiticOoze extends Card {
     public MephiticOoze() {
         PermanentCount artifactsYouControl =
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new BoostSelfEffect(artifactsYouControl, new Fixed(0)));
+        addStaticEffect(new BoostSelfEffect(artifactsYouControl, new Fixed(0)));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE, new DestroyTargetPermanentEffect(true));
     }
 }

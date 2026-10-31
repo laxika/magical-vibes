@@ -21,9 +21,8 @@ import java.util.List;
 public class NukaNukeLauncher extends Card {
 
     public NukaNukeLauncher() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK,
                 new RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect(
                         EffectSlot.ON_ANY_PLAYER_CASTS_SPELL,

@@ -31,7 +31,7 @@ public class MadameVastra extends Card {
                 null,
                 MayChoicePlayer.TARGET_PLAYER));
 
-        addEffect(EffectSlot.STATIC, new MustBeBlockedIfAbleEffect());
+        addStaticEffect(new MustBeBlockedIfAbleEffect());
         addEffect(EffectSlot.ON_DAMAGED_CREATURE_DIES, SequenceEffect.of(
                 CreateTokenEffect.ofClueToken(1),
                 CreateTokenEffect.ofFoodToken(1)));

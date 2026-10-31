@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "185")
@@ -35,7 +34,7 @@ public class MorcantsEyes extends Card {
                                 new CardsInGraveyard(new CardSubtypePredicate(CardSubtype.ELF), CountScope.CONTROLLER),
                                 "Elf", 2, 2, CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),
                                 List.of(CardSubtype.ELF), Set.of(), Set.of(),
-                                false, false, Map.of(), List.of(), false, false, false, 0, Set.of()
+                                false, false, List.of(), List.of(), false, false, false, 0, Set.of()
                         )
                 ),
                 "{4}{G}{G}, Sacrifice this enchantment: Create X 2/2 black and green Elf creature tokens, where X is the number of Elf cards in your graveyard.",

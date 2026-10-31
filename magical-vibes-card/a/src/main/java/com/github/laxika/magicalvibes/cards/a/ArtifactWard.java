@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventArtifactDamageToEnchantedCreatureEffect;
@@ -19,10 +18,10 @@ public class ArtifactWard extends Card {
 
     public ArtifactWard() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+                .addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                         new PermanentIsArtifactPredicate()))
-                .addEffect(EffectSlot.STATIC, new PreventArtifactDamageToEnchantedCreatureEffect())
-                .addEffect(EffectSlot.STATIC, new AttachedPermanentRestrictionEffect(
+                .addStaticEffect(new PreventArtifactDamageToEnchantedCreatureEffect())
+                .addStaticEffect(new AttachedPermanentRestrictionEffect(
                         TargetingRestrictionEffect.fromAbilitySourceCardTypes(Set.of(CardType.ARTIFACT))));
     }
 }

@@ -14,7 +14,7 @@ import java.util.List;
 public class BohnBeguilingBalladeer extends Card {
 
     public BohnBeguilingBalladeer() {
-        addEffect(EffectSlot.STATIC, new GrantForetellToNonlandCardsInHandEffect());
+        addStaticEffect(new GrantForetellToNonlandCardsInHandEffect());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, SpellCastTriggerEffect.nth(
                 2,
                 null,

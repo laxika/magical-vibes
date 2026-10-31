@@ -31,7 +31,7 @@ public class Nettlecyst extends Card {
                 new PermanentIsEnchantmentPredicate()));
         PermanentCount artifactsAndEnchantmentsYouControl = new PermanentCount(
                 artifactOrEnchantment, CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 artifactsAndEnchantmentsYouControl,
                 artifactsAndEnchantmentsYouControl,
                 GrantScope.EQUIPPED_CREATURE));

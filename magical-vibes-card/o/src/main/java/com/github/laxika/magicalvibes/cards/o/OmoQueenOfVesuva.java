@@ -51,9 +51,8 @@ public class OmoQueenOfVesuva extends Card {
                 .addEffect(EffectSlot.ON_ATTACK,
                         new PutCounterOnTargetPermanentEffect(CounterType.EVERYTHING));
 
-        addEffect(EffectSlot.STATIC, new GrantAllCreatureTypesToOwnCreaturesEffect(
+        addStaticEffect(new GrantAllCreatureTypesToOwnCreaturesEffect(
                 GrantScope.ALL_CREATURES_INCLUDING_SELF, NONLAND_CREATURE));
-        CardSubtype.rulesLandTypes().forEach(subtype -> addEffect(EffectSlot.STATIC,
-                new GrantSubtypeEffect(subtype, GrantScope.ALL_PERMANENTS, false, LAND)));
+        CardSubtype.rulesLandTypes().forEach(subtype -> addStaticEffect(new GrantSubtypeEffect(subtype, GrantScope.ALL_PERMANENTS, false, LAND)));
     }
 }

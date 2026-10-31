@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -38,6 +37,6 @@ public class HorobisWhisper extends Card {
                         new DestroyTargetPermanentEffect()));
 
         // Splice onto Arcane—Exile four cards from your graveyard.
-        addEffect(EffectSlot.STATIC, SpliceEffect.exilingGraveyard(CardSubtype.ARCANE, 4));
+        addStaticEffect(SpliceEffect.exilingGraveyard(CardSubtype.ARCANE, 4));
     }
 }

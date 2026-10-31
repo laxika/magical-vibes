@@ -20,8 +20,7 @@ public class InfiniteHourglass extends Card {
     public InfiniteHourglass() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.TIME));
 
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 0, GrantScope.ALL_CREATURES_INCLUDING_SELF, CounterType.TIME));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ALL_CREATURES_INCLUDING_SELF, CounterType.TIME));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

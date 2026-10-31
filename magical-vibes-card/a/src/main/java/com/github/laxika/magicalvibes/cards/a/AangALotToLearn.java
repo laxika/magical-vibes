@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class AangALotToLearn extends Card {
 
     public AangALotToLearn() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.LESSON)),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new PutCountersOnSourceEffect(1, 1, 1));

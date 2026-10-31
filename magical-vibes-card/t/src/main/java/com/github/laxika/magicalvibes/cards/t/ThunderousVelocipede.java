@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterWithAdditionalCountersByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
@@ -23,8 +22,7 @@ public class ThunderousVelocipede extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
 
-        addEffect(EffectSlot.STATIC,
-                new ControlledPermanentsEnterWithAdditionalCountersByManaValueEffect(
+        addStaticEffect(new ControlledPermanentsEnterWithAdditionalCountersByManaValueEffect(
                         creatureOrVehicle, 4, 1, 3));
 
         addActivatedAbility(new ActivatedAbility(

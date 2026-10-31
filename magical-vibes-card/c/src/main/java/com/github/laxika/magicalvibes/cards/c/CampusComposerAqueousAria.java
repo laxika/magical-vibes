@@ -24,7 +24,7 @@ public class CampusComposerAqueousAria extends Card {
         setBackFaceCard(prepareSpell);
 
         // This creature enters prepared.
-        addEffect(EffectSlot.STATIC, new BecomePreparedEffect());
+        addStaticEffect(new BecomePreparedEffect());
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(2));
     }
 

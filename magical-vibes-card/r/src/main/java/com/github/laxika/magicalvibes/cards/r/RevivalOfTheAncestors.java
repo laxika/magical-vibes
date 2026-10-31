@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "TDM", collectorNumber = "218")
@@ -29,7 +28,7 @@ public class RevivalOfTheAncestors extends Card {
         // Chapter I: three 1/1 white Spirit tokens, without flying (unlike CreateTokenEffect.whiteSpirit).
         addEffect(EffectSlot.SAGA_CHAPTER_I, new CreateTokenEffect(CardType.CREATURE, 3, "Spirit", 1, 1,
                 CardColor.WHITE, null, List.of(CardSubtype.SPIRIT), Set.of(), Set.of(), false, false,
-                Map.of(), List.of(), false, false, false, 0, Set.of()));
+                List.of(), List.of(), false, false, false, 0, Set.of()));
         addEffect(EffectSlot.SAGA_CHAPTER_II,
                 DistributeCountersAmongTargetsEffect.chosenAmongTargetCreatures(
                         CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3), new PermanentAllOfPredicate(List.of(

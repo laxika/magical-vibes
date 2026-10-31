@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -15,7 +14,7 @@ import java.util.List;
 public class LilianasUndeadMinion extends Card {
 
     public LilianasUndeadMinion() {
-        addEffect(EffectSlot.STATIC, new CantLoseGameEffect(false));
+        addStaticEffect(new CantLoseGameEffect(false));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.AdditionalMillForOpponentsEffect;
@@ -21,9 +20,9 @@ import java.util.List;
 public class TheWaterCrystal extends Card {
 
     public TheWaterCrystal() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardColorPredicate(CardColor.BLUE), 1, CostModificationScope.SELF));
-        addEffect(EffectSlot.STATIC, new AdditionalMillForOpponentsEffect(4));
+        addStaticEffect(new AdditionalMillForOpponentsEffect(4));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}{U}{U}",

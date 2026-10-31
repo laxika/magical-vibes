@@ -18,7 +18,7 @@ import java.util.List;
 public class UnderworldRageHound extends Card {
 
     public UnderworldRageHound() {
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
 
         addCastingOption(new GraveyardCast(null, "{3}{R}", List.of(
                 new ExileNCardsFromGraveyardCastingCost(null, "other cards", 3)), null, false, false, true));

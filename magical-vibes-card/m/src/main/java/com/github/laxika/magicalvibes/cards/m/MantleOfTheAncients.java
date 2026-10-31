@@ -33,7 +33,7 @@ public class MantleOfTheAncients extends Card {
                         auraOrEquipment));
 
         Scaled onePerAttachment = new Scaled(new AttachmentsOnSource(true, true), 1);
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 onePerAttachment, onePerAttachment, GrantScope.ENCHANTED_CREATURE, true));
     }
 }

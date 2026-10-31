@@ -35,10 +35,8 @@ public class AssassinGauntlet extends Card {
                                 TapUntapScope.TARGET_PLAYERS_PERMANENTS,
                                 new PermanentIsCreaturePredicate()));
 
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantTriggeredAbilityEffect(
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                         SequenceEffect.of(
                                 new DrawCardEffect(1),

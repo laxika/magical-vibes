@@ -19,6 +19,7 @@ public record AbilityZones(Set<Zone> zones) {
     public static final AbilityZones BATTLEFIELD = of(Zone.BATTLEFIELD);
     public static final AbilityZones GRAVEYARD = of(Zone.GRAVEYARD);
     public static final AbilityZones HAND = of(Zone.HAND);
+    public static final AbilityZones STACK = of(Zone.STACK);
     public static final AbilityZones EXILE = of(Zone.EXILE);
     public static final AbilityZones COMMAND = of(Zone.COMMAND);
 

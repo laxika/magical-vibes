@@ -22,7 +22,7 @@ import java.util.List;
 public class KashiTribeElite extends Card {
 
     public KashiTribeElite() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.SHROUD,
                 GrantScope.OWN_CREATURES,
                 new PermanentAllOfPredicate(List.of(

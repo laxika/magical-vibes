@@ -22,7 +22,6 @@ public class RustingGolem extends Card {
                 new RemoveCounterOrSacrificeSelfEffect(CounterType.FADE));
 
         DynamicAmount fadeCounters = new CountersOnSource(CounterType.FADE);
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(fadeCounters, fadeCounters));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(fadeCounters, fadeCounters));
     }
 }

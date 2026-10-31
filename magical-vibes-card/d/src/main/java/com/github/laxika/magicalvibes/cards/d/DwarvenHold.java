@@ -21,8 +21,8 @@ public class DwarvenHold extends Card {
 
     public DwarvenHold() {
         // This land enters tapped, and its controller may choose not to untap it.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-        addEffect(EffectSlot.STATIC, new MayNotUntapDuringUntapStepEffect());
+        addStaticEffect(new EntersTappedEffect());
+        addStaticEffect(new MayNotUntapDuringUntapStepEffect());
 
         // At the beginning of your upkeep, if this land is tapped, put a storage counter on it.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,

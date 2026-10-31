@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
@@ -20,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 public class RazorvergeThicket extends Card {
 
     public RazorvergeThicket() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new ControlsPermanentCount(3, new PermanentIsLandPredicate()), new EntersTappedEffect()));
 
         // {T}: Add {G}.

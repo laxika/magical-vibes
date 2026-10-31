@@ -16,7 +16,7 @@ public class BillowingShriekmass extends Card {
 
     public BillowingShriekmass() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MillEffect(3, MillRecipient.CONTROLLER));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, new CardTruePredicate()),
                 new StaticBoostEffect(2, 1, GrantScope.SELF)));
     }

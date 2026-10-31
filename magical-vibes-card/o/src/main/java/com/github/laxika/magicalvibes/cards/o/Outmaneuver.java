@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,9 +22,6 @@ public class Outmaneuver extends Card {
                         new PermanentIsBlockedPredicate()
                 )),
                 "Targets must be blocked creatures"
-        ), 100).addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
-                EffectSlot.STATIC,
-                new AssignCombatDamageAsThoughUnblockedEffect(true)
-        ));
+        ), 100).addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(new AssignCombatDamageAsThoughUnblockedEffect(true))));
     }
 }

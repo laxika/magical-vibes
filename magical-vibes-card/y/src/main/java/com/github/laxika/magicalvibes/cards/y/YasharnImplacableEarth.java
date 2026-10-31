@@ -16,6 +16,6 @@ public class YasharnImplacableEarth extends Card {
     public YasharnImplacableEarth() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SearchLibraryForOneCardOfEachSubtypeEffect(
                 List.of(CardSubtype.FOREST, CardSubtype.PLAINS), null, LibrarySearchDestination.HAND, true));
-        addEffect(EffectSlot.STATIC, new PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect());
+        addStaticEffect(new PlayersCantPayLifeOrSacrificeNonlandPermanentsEffect());
     }
 }

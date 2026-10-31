@@ -17,6 +17,6 @@ public class OutfittedJouster extends Card {
                 new ConjureCardToBattlefieldEffect("M15", "213"),
                 new AttachCreatedEquipmentToSourceEffect()));
 
-        addEffect(EffectSlot.STATIC, new PreventDamageAndSacrificeAttachedEquipmentEffect());
+        addStaticEffect(new PreventDamageAndSacrificeAttachedEquipmentEffect());
     }
 }

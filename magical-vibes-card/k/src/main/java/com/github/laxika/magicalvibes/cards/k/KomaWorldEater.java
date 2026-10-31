@@ -19,7 +19,7 @@ import java.util.Set;
 public class KomaWorldEater extends Card {
 
     public KomaWorldEater() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         addEffect(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, new CounterUnlessPaysEffect(4));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new CreateTokenEffect(4, "Koma's Coil", 3, 3, CardColor.BLUE,

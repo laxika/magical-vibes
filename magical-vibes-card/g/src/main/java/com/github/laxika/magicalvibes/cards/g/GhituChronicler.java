@@ -18,7 +18,7 @@ public class GhituChronicler extends Card {
 
     public GhituChronicler() {
         // Kicker {3}{R}
-        addEffect(EffectSlot.STATIC, new KickerEffect("{3}{R}"));
+        addStaticEffect(new KickerEffect("{3}{R}"));
 
         // When this creature enters, if it was kicked, return target instant or sorcery card
         // from your graveyard to your hand.

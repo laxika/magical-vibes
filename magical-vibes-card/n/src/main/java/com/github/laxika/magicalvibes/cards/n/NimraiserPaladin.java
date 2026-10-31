@@ -17,7 +17,7 @@ import java.util.List;
 public class NimraiserPaladin extends Card {
 
     public NimraiserPaladin() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(2));
+        addStaticEffect(new ToxicEffect(2));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)

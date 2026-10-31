@@ -24,7 +24,7 @@ public class HeraldOfWar extends Card {
         // Whenever this creature attacks, put a +1/+1 counter on it
         addEffect(EffectSlot.ON_ATTACK, new PutCountersOnSourceEffect(1, 1, 1));
         // Angel spells and Human spells you cast cost {1} less to cast for each +1/+1 counter on this creature
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.ANGEL),
                         new CardSubtypePredicate(CardSubtype.HUMAN)

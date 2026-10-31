@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -24,7 +23,7 @@ import java.util.List;
 public class ValleyRally extends Card {
 
     public ValleyRally() {
-        addEffect(EffectSlot.STATIC, new GiftEffect(0));
+        addStaticEffect(new GiftEffect(0));
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 TargetOpponentCreatesTokenEffect.gift(foodToken())));
         addSpellEffect(new BoostAllOwnCreaturesEffect(2, 0));

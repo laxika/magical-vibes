@@ -14,7 +14,7 @@ public class PriceOfKnowledge extends Card {
 
     public PriceOfKnowledge() {
         // Players have no maximum hand size.
-        addEffect(EffectSlot.STATIC, new PlayersHaveNoMaximumHandSizeEffect());
+        addStaticEffect(new PlayersHaveNoMaximumHandSizeEffect());
 
         // At the beginning of each opponent's upkeep, this enchantment deals damage to that
         // player equal to the number of cards in that player's hand.

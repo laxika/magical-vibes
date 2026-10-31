@@ -28,14 +28,14 @@ public class HenryWuInGenGeneticist extends Card {
         PermanentHasSubtypePredicate human = new PermanentHasSubtypePredicate(CardSubtype.HUMAN);
         // "Henry Wu and other Human creatures you control have exploit." Henry itself has it regardless of
         // its creature types, so it is granted to the source separately from the Human filter on the others.
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.EXPLOIT, GrantScope.SELF));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(Keyword.EXPLOIT, GrantScope.SELF));
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.EXPLOIT, GrantScope.OWN_CREATURES, human));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?"),
                 GrantScope.SELF));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_ENTER_BATTLEFIELD,
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?"),
                 GrantScope.OWN_CREATURES, human));

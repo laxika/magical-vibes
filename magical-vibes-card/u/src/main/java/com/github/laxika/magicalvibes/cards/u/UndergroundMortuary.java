@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 public class UndergroundMortuary extends Card {
 
     public UndergroundMortuary() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SurveilEffect(1));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLACK));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));

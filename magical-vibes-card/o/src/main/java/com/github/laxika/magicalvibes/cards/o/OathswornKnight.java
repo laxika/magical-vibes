@@ -16,8 +16,7 @@ public class OathswornKnight extends Card {
     public OathswornKnight() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
-        addEffect(EffectSlot.STATIC,
-                new PreventDamageAndRemovePlusOnePlusOneCountersEffect(true, null, false, true));
+        addStaticEffect(new MustAttackEffect());
+        addStaticEffect(new PreventDamageAndRemovePlusOnePlusOneCountersEffect(true, null, false, true));
     }
 }

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -15,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class RazeToTheGround extends Card {
 
     public RazeToTheGround() {
-        addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
+        addStaticEffect(new CantBeCounteredEffect());
         target(TargetFilters.artifact())
                 .addSpellEffect(new DestroyTargetPermanentThenEffect(
                         EventStat.NONE,

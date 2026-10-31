@@ -22,7 +22,7 @@ import java.util.List;
 public class NecrogenRotpriest extends Card {
 
     public NecrogenRotpriest() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(2));
+        addStaticEffect(new ToxicEffect(2));
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(
                         new PermanentHasKeywordPredicate(Keyword.TOXIC),

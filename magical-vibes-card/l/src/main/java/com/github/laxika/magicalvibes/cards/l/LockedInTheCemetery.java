@@ -19,6 +19,6 @@ public class LockedInTheCemetery extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                         new GraveyardCardThreshold(5, null),
                         new TapPermanentsEffect(TapUntapScope.ENCHANTED)))
-                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted());
+                .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.p.PettyTheft;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -21,7 +20,7 @@ public class BrazenBorrower extends Card {
     public BrazenBorrower() {
         setBackFaceCard(new PettyTheft());
         addCastingOption(new AdventureCast("{1}{U}"));
-        addEffect(EffectSlot.STATIC, new CanBlockOnlyIfAttackerMatchesPredicateEffect(
+        addStaticEffect(new CanBlockOnlyIfAttackerMatchesPredicateEffect(
                 new PermanentHasKeywordPredicate(Keyword.FLYING),
                 "creatures with flying"
         ));

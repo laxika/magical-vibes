@@ -24,17 +24,12 @@ public class HonestWork extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.ENCHANTED))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RemoveAllCountersFromEnchantedCreatureEffect())
-                .addEffect(EffectSlot.STATIC,
-                        new SetNameEffect("Humble Merchant", GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantSubtypeEffect(CardSubtype.CITIZEN, GrantScope.ENCHANTED_CREATURE, true))
-                .addEffect(EffectSlot.STATIC,
-                        new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantActivatedAbilityEffect(
+                .addStaticEffect(new SetNameEffect("Humble Merchant", GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.CITIZEN, GrantScope.ENCHANTED_CREATURE, true))
+                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                                 ManaAbilities.tapFor(ManaColor.COLORLESS),
                                 GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC,
-                        new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
     }
 }

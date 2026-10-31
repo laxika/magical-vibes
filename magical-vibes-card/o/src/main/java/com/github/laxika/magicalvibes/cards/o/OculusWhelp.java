@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredica
 public class OculusWhelp extends Card {
 
     public OculusWhelp() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentIsTransformedPredicate()),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_DEATH, new DrawCardEffect(1), GrantScope.SELF)));

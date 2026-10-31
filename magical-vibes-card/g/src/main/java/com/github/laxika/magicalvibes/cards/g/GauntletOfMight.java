@@ -20,7 +20,7 @@ import java.util.Set;
 public class GauntletOfMight extends Card {
 
     public GauntletOfMight() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentColorInPredicate(Set.of(CardColor.RED))));
         addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND,
                 new AddManaWhenLandOfSubtypeTappedForManaEffect(CardSubtype.MOUNTAIN, ManaColor.RED));

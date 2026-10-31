@@ -19,7 +19,7 @@ public class PsychicPossession extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ));
-        addEffect(EffectSlot.STATIC, new SkipDrawStepEffect());
+        addStaticEffect(new SkipDrawStepEffect());
         addEffect(EffectSlot.ON_ENCHANTED_PLAYER_DRAWS,
                 new MayEffect(new DrawCardEffect(), "Draw a card?"));
     }

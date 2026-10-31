@@ -27,7 +27,7 @@ import java.util.Set;
 public class FishingPole extends Card {
 
     public FishingPole() {
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         "{1}",

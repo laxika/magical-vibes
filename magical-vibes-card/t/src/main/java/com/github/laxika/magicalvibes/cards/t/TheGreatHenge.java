@@ -27,7 +27,7 @@ import java.util.List;
 public class TheGreatHenge extends Card {
 
     public TheGreatHenge() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(new GreatestPowerAmongControlled()));
+        addStaticEffect(new ReduceOwnCastCostEffect(new GreatestPowerAmongControlled()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

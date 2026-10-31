@@ -24,19 +24,19 @@ import java.util.List;
 public class Rakavolver extends Card {
 
     public Rakavolver() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{1}{W}"));
+        addStaticEffect(new KickerEffect("{1}{W}"));
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{U}"), true, 1));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Kicked(),
+        addStaticEffect(new ConditionalEffect(new Kicked(),
                 new GrantTriggeredAbilityEffect(EffectSlot.ON_SELF_DEALS_DAMAGE,
                         new GainLifeEffect(new EventValue()), GrantScope.SELF)));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{U}"),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new RepeatedAdditionalCostPaid("{U}"),
+        addStaticEffect(new ConditionalEffect(new RepeatedAdditionalCostPaid("{U}"),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
     }
 }

@@ -17,7 +17,7 @@ public class HallsOfMist extends Card {
 
         // Creatures that attacked during their controller's last turn can't attack — global, so the
         // exemption is "did not attack during its controller's previous turn".
-        addEffect(EffectSlot.STATIC, new CreaturesCantAttackUnlessPredicateEffect(
+        addStaticEffect(new CreaturesCantAttackUnlessPredicateEffect(
                 new PermanentNotPredicate(new PermanentAttackedDuringControllersLastTurnPredicate())));
     }
 }

@@ -16,7 +16,7 @@ public class HammerOfRuin extends Card {
 
     public HammerOfRuin() {
         // Equipped creature gets +2/+0.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature deals combat damage to a player, you may destroy target
         // Equipment that player controls.

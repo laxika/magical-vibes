@@ -20,7 +20,7 @@ public class MemorialToGlory extends Card {
 
     public MemorialToGlory() {
         // Memorial to Glory enters the battlefield tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         // {T}: Add {W}.
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.WHITE));
         // {3}{W}, {T}, Sacrifice Memorial to Glory: Create two 1/1 white Soldier creature tokens.

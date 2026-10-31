@@ -22,7 +22,7 @@ import java.util.List;
 public class PrimevalProtector extends Card {
 
     public PrimevalProtector() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.OPPONENTS)));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PutCounterOnEachMatchingPermanentEffect(

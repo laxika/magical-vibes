@@ -17,8 +17,8 @@ public class PetrifiedHamlet extends Card {
 
     public PetrifiedHamlet() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseCardNameAtResolutionEffect(CardType.LAND));
-        addEffect(EffectSlot.STATIC, new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect());
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect());
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapFor(ManaColor.COLORLESS),
                 GrantScope.ALL_LANDS_INCLUDING_SELF,
                 new PermanentHasSourceChosenNamePredicate()));

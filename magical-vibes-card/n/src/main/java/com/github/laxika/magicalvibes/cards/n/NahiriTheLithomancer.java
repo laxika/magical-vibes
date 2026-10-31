@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAndAttachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromHandOrGraveyardOntoBattlefieldEffect;
@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "45")
@@ -46,8 +45,7 @@ public class NahiriTheLithomancer extends Card {
                 CardType.ARTIFACT, 1, "Stoneforged Blade", 0, 0,
                 null, null, List.of(CardSubtype.EQUIPMENT), Set.of(Keyword.INDESTRUCTIBLE), Set.of(),
                 false, false,
-                Map.of(EffectSlot.STATIC,
-                        new StaticBoostEffect(5, 5, Set.of(Keyword.DOUBLE_STRIKE), GrantScope.EQUIPPED_CREATURE)),
+                List.of(StaticAbility.of(new StaticBoostEffect(5, 5, Set.of(Keyword.DOUBLE_STRIKE), GrantScope.EQUIPPED_CREATURE))),
                 List.of(new EquipActivatedAbility("{0}")),
                 false, false, false, 0, Set.of());
         addActivatedAbility(new ActivatedAbility(

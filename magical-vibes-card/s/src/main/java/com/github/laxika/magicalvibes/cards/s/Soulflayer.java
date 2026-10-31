@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsExiledWithSourceEffect;
@@ -16,7 +15,7 @@ public class Soulflayer extends Card {
 
     public Soulflayer() {
         addCastingCost(new DelveCost());
-        addEffect(EffectSlot.STATIC, new GainKeywordsOfCreatureCardsExiledWithSourceEffect(
+        addStaticEffect(new GainKeywordsOfCreatureCardsExiledWithSourceEffect(
                 Set.of(
                         Keyword.FLYING,
                         Keyword.FIRST_STRIKE,

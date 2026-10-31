@@ -17,7 +17,7 @@ public class SleepersRobe extends Card {
 
     public SleepersRobe() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FEAR, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.FEAR, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                         new ConditionalEffect(new AttackedTargetIsOpponent(),
                                 new MayEffect(new DrawCardEffect(1), "Draw a card?")));

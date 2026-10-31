@@ -23,7 +23,7 @@ public class BrassKnuckles extends Card {
     public BrassKnuckles() {
         addEffect(EffectSlot.ON_SELF_CAST,
                 new CopyThisSpellIfConditionEffect(new AllOf(List.of()), true));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new EquippedCreatureHasAtLeastEquipment(2),
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.EQUIPPED_CREATURE)));
         addActivatedAbility(new EquipActivatedAbility("{1}"));

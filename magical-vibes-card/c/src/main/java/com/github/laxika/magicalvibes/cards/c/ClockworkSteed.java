@@ -30,8 +30,7 @@ public class ClockworkSteed extends Card {
 
         // This creature can't be blocked by artifact creatures. Blockers are creatures, so an artifact
         // blocker is an artifact creature.
-        addEffect(EffectSlot.STATIC,
-                new CantBeBlockedByCreaturesMatchingPredicateEffect(new PermanentIsArtifactPredicate()));
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(new PermanentIsArtifactPredicate()));
 
         addEffect(EffectSlot.END_OF_COMBAT_TRIGGERED,
                 new ConditionalEffect(new SourceAttackedOrBlockedThisCombat(),

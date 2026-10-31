@@ -24,7 +24,7 @@ public class StrataScythe extends Card {
 
         // Equipped creature gets +1/+1 for each land on the battlefield with the
         // same name as the exiled card.
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 new LandsMatchingImprintedName(),
                 new LandsMatchingImprintedName(),
                 GrantScope.EQUIPPED_CREATURE));

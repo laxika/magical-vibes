@@ -28,6 +28,6 @@ public class BannerOfKinship extends Card {
                 new PermanentCount(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSourceChosenSubtypePredicate())), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenSubtypeEffect(1, 1, CounterType.FELLOWSHIP));
+        addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(1, 1, CounterType.FELLOWSHIP));
     }
 }

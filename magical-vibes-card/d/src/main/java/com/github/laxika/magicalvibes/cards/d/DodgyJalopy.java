@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -25,8 +24,7 @@ public class DodgyJalopy extends Card {
     public DodgyJalopy() {
         GreatestManaValueAmongControlled greatestCreatureManaValue =
                 new GreatestManaValueAmongControlled(new PermanentIsCreaturePredicate());
-        addEffect(EffectSlot.STATIC,
-                new SetPowerToughnessToAmountEffect(greatestCreatureManaValue, new Fixed(5)));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(greatestCreatureManaValue, new Fixed(5)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

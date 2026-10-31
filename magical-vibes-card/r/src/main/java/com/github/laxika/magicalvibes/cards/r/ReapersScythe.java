@@ -28,12 +28,11 @@ public class ReapersScythe extends Card {
                         List.of(CardSubtype.HERO), Set.of(), Set.of())));
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new PutCountersOnSelfEffect(CounterType.SOUL, new PlayersWhoLostLifeThisTurn()));
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 new CountersOnSource(CounterType.SOUL),
                 new CountersOnSource(CounterType.SOUL),
                 GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC,
-                new GrantSubtypeEffect(CardSubtype.ASSASSIN, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ASSASSIN, GrantScope.EQUIPPED_CREATURE));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

@@ -30,7 +30,7 @@ public class FirebenderAscensionTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsTrigger(value = FirebenderAscensionEffect.class, slot = EffectSlot.STATIC)
+    @CollectsTrigger(value = FirebenderAscensionEffect.class, slot = EffectSlot.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS)
     private boolean handleFirebenderAscensionTrigger(TriggerMatchContext match,
                                                       FirebenderAscensionEffect effect,
                                                       TriggerContext context) {

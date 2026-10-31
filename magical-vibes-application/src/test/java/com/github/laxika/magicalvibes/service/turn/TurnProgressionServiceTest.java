@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -668,7 +667,7 @@ class TurnProgressionServiceTest {
         @DisplayName("Skips a queued extra turn while a Nexus replacement remains on the battlefield")
         void skipsExtraTurnWithNexusReplacement() {
             Card nexus = new Card();
-            nexus.addEffect(EffectSlot.STATIC, new UginNexusReplacementEffect());
+            nexus.addStaticEffect(new UginNexusReplacementEffect());
             gd.playerBattlefields.get(player1Id).add(new Permanent(nexus));
             gd.extraTurns.addLast(player1Id);
             int turnBefore = gd.turnNumber;
@@ -684,7 +683,7 @@ class TurnProgressionServiceTest {
         @DisplayName("Skips an opponent's extra turn with an opponent-only replacement")
         void skipsOpponentsExtraTurnWithOpponentOnlyReplacement() {
             Card stranglehold = new Card();
-            stranglehold.addEffect(EffectSlot.STATIC, new SkipExtraTurnReplacementEffect());
+            stranglehold.addStaticEffect(new SkipExtraTurnReplacementEffect());
             gd.playerBattlefields.get(player1Id).add(new Permanent(stranglehold));
             gd.extraTurns.addLast(player2Id);
             int turnBefore = gd.turnNumber;
@@ -700,7 +699,7 @@ class TurnProgressionServiceTest {
         @DisplayName("Does not skip the controller's extra turn with an opponent-only replacement")
         void doesNotSkipControllersExtraTurnWithOpponentOnlyReplacement() {
             Card stranglehold = new Card();
-            stranglehold.addEffect(EffectSlot.STATIC, new SkipExtraTurnReplacementEffect());
+            stranglehold.addStaticEffect(new SkipExtraTurnReplacementEffect());
             gd.playerBattlefields.get(player1Id).add(new Permanent(stranglehold));
             gd.extraTurns.addLast(player1Id);
 

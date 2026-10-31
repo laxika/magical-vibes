@@ -31,8 +31,7 @@ public class CaseOfTheGatewayExpress extends Card {
                         new NotCondition(new SourceIsSolved())
                 )), new SolveSourceEffect()));
 
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(new SourceIsSolved(),
+        addStaticEffect(new ConditionalEffect(new SourceIsSolved(),
                         new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES)));
     }
 }

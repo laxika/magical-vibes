@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 public class NorinSwiftSurvivalist extends Card {
 
     public NorinSwiftSurvivalist() {
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURE_BECOMES_BLOCKED,
                 new MayEffect(new ExileTriggeringCreatureMayPlayThisTurnEffect(),
                         "Exile that creature and play it this turn?"));

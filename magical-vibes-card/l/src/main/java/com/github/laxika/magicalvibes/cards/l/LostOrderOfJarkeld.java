@@ -24,6 +24,6 @@ public class LostOrderOfJarkeld extends Card {
         var pt = new Sum(
                 new Fixed(1),
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CHOSEN_PLAYER));
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(pt, pt));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(pt, pt));
     }
 }

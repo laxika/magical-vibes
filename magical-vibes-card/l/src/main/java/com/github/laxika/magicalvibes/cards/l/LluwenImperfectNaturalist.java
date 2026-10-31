@@ -35,7 +35,7 @@ public class LluwenImperfectNaturalist extends Card {
                                 new CardsInGraveyard(new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER),
                                 "Worm", 1, 1, CardColor.BLACK,
                                 Set.of(CardColor.BLACK, CardColor.GREEN), List.of(CardSubtype.WORM),
-                                Set.of(), Set.of(), false, false, java.util.Map.of(), List.of(),
+                                Set.of(), Set.of(), false, false, List.of(), List.of(),
                                 false, false, false, 0, Set.of())
                 ),
                 "{2}{B/G}{B/G}{B/G}, {T}, Discard a land card: Create a 1/1 black and green Worm creature token for each land card in your graveyard."

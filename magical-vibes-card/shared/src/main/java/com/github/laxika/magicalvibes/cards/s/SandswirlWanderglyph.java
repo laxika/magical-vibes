@@ -14,6 +14,6 @@ public class SandswirlWanderglyph extends Card {
         addEffect(EffectSlot.ON_OPPONENT_CASTS_SPELL,
                 new SpellCastTriggerEffect(null,
                         List.of(new OpponentCantAttackSourceControllerThisTurnEffect()), true));
-        addEffect(EffectSlot.STATIC, new OpponentsCantCastSpellsIfAttackedThisTurnEffect(true));
+        addStaticEffect(new OpponentsCantCastSpellsIfAttackedThisTurnEffect(true));
     }
 }

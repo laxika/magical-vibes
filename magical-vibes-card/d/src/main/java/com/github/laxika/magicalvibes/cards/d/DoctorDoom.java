@@ -31,7 +31,7 @@ public class DoctorDoom extends Card {
                 2, "Doombot", 3, 3, null,
                 List.of(CardSubtype.ROBOT, CardSubtype.VILLAIN), Set.of(), Set.of(CardType.ARTIFACT)));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentAnyOfPredicate(List.of(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),

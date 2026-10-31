@@ -22,9 +22,9 @@ import java.util.List;
 public class TheTarrasque extends Card {
 
     public TheTarrasque() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new WasCast(),
+        addStaticEffect(new ConditionalEffect(new WasCast(),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new WasCast(),
+        addStaticEffect(new ConditionalEffect(new WasCast(),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
                         new CounterUnlessPaysEffect(10), GrantScope.SELF)));

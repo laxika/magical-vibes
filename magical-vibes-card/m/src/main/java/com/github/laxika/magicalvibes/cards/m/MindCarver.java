@@ -17,8 +17,8 @@ public class MindCarver extends Card {
     public MindCarver() {
         target(TargetFilters.creatureYouControl())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new AttachSourceEquipmentToTargetCreatureEffect());
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new ConditionalEffect(
                 new OpponentGraveyardAtLeast(8),
                 new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE)));
         addActivatedAbility(new EquipActivatedAbility("{2}{B}"));

@@ -22,12 +22,11 @@ import java.util.List;
 public class EddymurkCrab extends Card {
 
     public EddymurkCrab() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+        addStaticEffect(new ReduceOwnCastCostEffect(
                 new CardsInGraveyard(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))), CountScope.CONTROLLER)));
-        addEffect(EffectSlot.STATIC,
-                new ConditionalReplacementEffect(new NotControllerTurn(), new EntersTappedEffect()));
+        addStaticEffect(new ConditionalReplacementEffect(new NotControllerTurn(), new EntersTappedEffect()));
 
         target(TargetFilters.creature(), 0, 2)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

@@ -16,8 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class SallySparrow extends Card {
 
     public SallySparrow() {
-        addEffect(EffectSlot.STATIC,
-                new GrantFlashToCardTypeEffect(new CardTypePredicate(CardType.CREATURE)));
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardTypePredicate(CardType.CREATURE)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_LEAVES_BATTLEFIELD,
                 new OncePerTurnTriggerEffect(CreateTokenEffect.ofClueToken(1)));
     }

@@ -27,7 +27,7 @@ public class UrzaAssemblesTheTitans extends Card {
                 new CardMaxManaValuePredicate(6)
         ));
 
-        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
+        addStaticEffect(new ReadAheadEffect(false));
 
         addEffect(EffectSlot.SAGA_CHAPTER_I, new ScryEffect(4));
         addEffect(EffectSlot.SAGA_CHAPTER_I, new MayEffect(

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
@@ -32,7 +31,7 @@ import java.util.Set;
 public class FugitiveDroid extends Card {
 
     public FugitiveDroid() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new PermanentEnteredThisTurn(new CardTypePredicate(CardType.ARTIFACT), 1),
                 new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
 

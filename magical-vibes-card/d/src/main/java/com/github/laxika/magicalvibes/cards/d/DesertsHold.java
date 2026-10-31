@@ -34,7 +34,7 @@ public class DesertsHold extends Card {
                         new GainLifeEffect(3)));
 
         // Enchanted creature can't attack or block, and its activated abilities can't be activated.
-        addEffect(EffectSlot.STATIC, new EnchantedCreatureCantAttackOrBlockEffect());
-        addEffect(EffectSlot.STATIC, new EnchantedCreatureCantActivateAbilitiesEffect());
+        addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect());
+        addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect());
     }
 }

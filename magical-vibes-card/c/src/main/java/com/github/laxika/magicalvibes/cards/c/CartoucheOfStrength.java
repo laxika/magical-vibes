@@ -31,8 +31,8 @@ public class CartoucheOfStrength extends Card {
                 "Target must be a creature you control"
         ))
                 // Enchanted creature gets +1/+1 and has trample.
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE));
 
         // When this Aura enters, you may have enchanted creature fight target creature an opponent controls.
         target(TargetFilters.creatureAnOpponentControls())

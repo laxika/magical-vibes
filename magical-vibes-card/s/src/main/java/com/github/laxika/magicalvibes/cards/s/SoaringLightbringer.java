@@ -12,12 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlaye
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DSC", collectorNumber = "11")
@@ -28,13 +26,13 @@ public class SoaringLightbringer extends Card {
         var enchantmentCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsEnchantmentPredicate(),
                 new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.FLYING, GrantScope.OWN_CREATURES, enchantmentCreature));
 
         CreateTokenEffect glimmerToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Glimmer", 1, 1, CardColor.WHITE, null,
                 List.of(CardSubtype.GLIMMER), Set.of(), Set.of(CardType.ENCHANTMENT),
-                true, false, Map.of(), List.of(), false, false, false, 0, Set.of());
+                true, false, List.of(), List.of(), false, false, false, 0, Set.of());
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER,
                 new CreateTokenForTriggeringPlayerEffect(glimmerToken, true));
     }

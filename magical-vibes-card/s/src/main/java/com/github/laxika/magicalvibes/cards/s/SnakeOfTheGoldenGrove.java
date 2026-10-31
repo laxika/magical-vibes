@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 public class SnakeOfTheGoldenGrove extends Card {
 
     public SnakeOfTheGoldenGrove() {
-        addEffect(EffectSlot.STATIC, new TributeEffect(3));
+        addStaticEffect(new TributeEffect(3));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TributeNotPaidEffect(new GainLifeEffect(4)));
     }
 }

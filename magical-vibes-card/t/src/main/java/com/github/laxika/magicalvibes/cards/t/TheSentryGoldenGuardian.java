@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
@@ -16,7 +17,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MSH", collectorNumber = "35")
@@ -36,7 +36,7 @@ public class TheSentryGoldenGuardian extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.of(EffectSlot.STATIC, (CardEffect) new MustAttackEffect()),
+                List.of(StaticAbility.of((CardEffect) new MustAttackEffect())),
                 List.of(),
                 false,
                 false,

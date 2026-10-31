@@ -37,7 +37,7 @@ public class SproutingGoblin extends Card {
                 ))
         ));
 
-        addEffect(EffectSlot.STATIC, new KickerEffect("{G}"));
+        addStaticEffect(new KickerEffect("{G}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new Kicked(),
                         new SearchLibraryEffect(landWithBasicLandType, LibrarySearchDestination.HAND)));

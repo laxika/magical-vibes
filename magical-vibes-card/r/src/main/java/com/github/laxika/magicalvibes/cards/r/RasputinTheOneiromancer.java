@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
@@ -21,7 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromSourceCost;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "DMC", collectorNumber = "40")
@@ -52,8 +52,7 @@ public class RasputinTheOneiromancer extends Card {
                         new RemoveCounterFromSourceCost(1, CounterType.DREAM),
                         new CreateTokenEffect(1, "Knight", 2, 2, CardColor.WHITE,
                                 List.of(CardSubtype.KNIGHT), Set.of(), Set.of(),
-                                Map.of(EffectSlot.STATIC,
-                                        new ProtectionFromColorsEffect(Set.of(CardColor.RED))))
+                                List.of(StaticAbility.of(new ProtectionFromColorsEffect(Set.of(CardColor.RED)))))
                 ),
                 "{T}, Remove a dream counter from Rasputin: Create a 2/2 white Knight creature token with protection from red."
         ));

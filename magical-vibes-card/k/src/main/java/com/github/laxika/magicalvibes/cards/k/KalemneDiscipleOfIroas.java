@@ -27,7 +27,7 @@ public class KalemneDiscipleOfIroas extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(qualifyingCreatureSpell,
                         List.of(new ExperienceCountersEffect(1))));
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 new ControllerExperienceCounters(),
                 new ControllerExperienceCounters(),
                 GrantScope.SELF));

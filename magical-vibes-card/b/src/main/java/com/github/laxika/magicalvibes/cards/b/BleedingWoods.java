@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
@@ -18,7 +17,7 @@ import java.util.List;
 public class BleedingWoods extends Card {
 
     public BleedingWoods() {
-        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+        addStaticEffect(new ConditionalReplacementEffect(
                 new NotCondition(new AnyOf(List.of(
                         new ControllerLifeAtMost(13),
                         new AnOpponentLifeAtMost(13)))), new EntersTappedEffect()));

@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 public class OhranFrostfang extends Card {
 
     public OhranFrostfang() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.DEATHTOUCH,
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsAttackingPredicate()));

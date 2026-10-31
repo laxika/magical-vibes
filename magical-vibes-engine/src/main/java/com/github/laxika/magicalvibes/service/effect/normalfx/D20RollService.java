@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -62,7 +61,7 @@ public class D20RollService {
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
                 if (gameQueryService != null && gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-                for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     if (effect instanceof RollWithAdvantageEffect) {
                         diceCount++;
                     }

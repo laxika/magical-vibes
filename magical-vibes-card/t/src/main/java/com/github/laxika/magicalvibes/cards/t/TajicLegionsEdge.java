@@ -32,7 +32,7 @@ public class TajicLegionsEdge extends Card {
                 .addEffect(EffectSlot.ON_ATTACK,
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
 
-        addEffect(EffectSlot.STATIC, PreventDamageToCreaturesEffect.otherCreaturesYouControl(true));
+        addStaticEffect(PreventDamageToCreaturesEffect.otherCreaturesYouControl(true));
 
         addActivatedAbility(new ActivatedAbility(false, "{R}{W}",
                 List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)),

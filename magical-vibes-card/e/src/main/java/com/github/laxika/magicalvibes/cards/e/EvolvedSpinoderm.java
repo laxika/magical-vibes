@@ -30,10 +30,10 @@ public class EvolvedSpinoderm extends Card {
                         new NotCondition(new SourceCounterThreshold(1, CounterType.OIL)),
                         new SacrificeSelfEffect())));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new SourceCounterThreshold(3, CounterType.OIL)),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.OIL),
                 new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
     }

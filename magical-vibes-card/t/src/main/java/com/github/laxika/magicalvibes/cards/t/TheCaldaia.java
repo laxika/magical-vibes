@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class TheCaldaia extends Card {
 
     public TheCaldaia() {
-        addEffect(EffectSlot.STATIC, new GrantBlitzToSpellsEffect(
+        addStaticEffect(new GrantBlitzToSpellsEffect(
                 "{3}", new CardTypePredicate(CardType.CREATURE)));
         addEffect(EffectSlot.CHAOS_TRIGGERED, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)

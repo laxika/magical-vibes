@@ -24,7 +24,7 @@ import java.util.List;
 public class ZabazTheGlimmerwasp extends Card {
 
     public ZabazTheGlimmerwasp() {
-        addEffect(EffectSlot.STATIC, new AddOnePlusOneCountersToModularAbilityEffect());
+        addStaticEffect(new AddOnePlusOneCountersToModularAbilityEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));
         addEffect(EffectSlot.ON_DEATH,

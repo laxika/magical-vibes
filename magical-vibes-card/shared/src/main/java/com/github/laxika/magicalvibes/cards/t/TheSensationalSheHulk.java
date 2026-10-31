@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 public class TheSensationalSheHulk extends Card {
 
     public TheSensationalSheHulk() {
-        addEffect(EffectSlot.STATIC, new OpponentsCantCastOrActivateDuringYourTurnEffect(false));
+        addStaticEffect(new OpponentsCantCastOrActivateDuringYourTurnEffect(false));
         addEffect(EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE, new TriggeringPermanentConditionalEffect(
                 new PermanentControlledBySourceControllerPredicate(),
                 OncePerTurnTriggerEffect.markOnAcceptance(new MayEffect(

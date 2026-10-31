@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsDuring
 public class MarisiBreakerOfTheCoil extends Card {
 
     public MarisiBreakerOfTheCoil() {
-        addEffect(EffectSlot.STATIC, new OpponentsCantCastSpellsDuringCombatEffect());
+        addStaticEffect(new OpponentsCantCastSpellsDuringCombatEffect());
         addEffect(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                 new AllyCombatDamageTriggerEffect(null,
                         new GoadCreaturesTargetPlayerControlsUntilNextTurnEffect()));

@@ -18,7 +18,7 @@ import java.util.List;
 public class SlaughterSinger extends Card {
 
     public SlaughterSinger() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(2));
+        addStaticEffect(new ToxicEffect(2));
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new TriggeringPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(

@@ -17,8 +17,8 @@ import java.util.Set;
 public class MaceOfDisruption extends Card {
 
     public MaceOfDisruption() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(0, 2, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new StaticBoostEffect(0, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantEffectEffect(
                 new ProtectionFromSubtypesEffect(Set.of(CardSubtype.DEMON, CardSubtype.DEVIL)),
                 GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_ATTACK, new PerpetuallyBoostEquippedCreatureIfNameSharedEffect(1, 0));

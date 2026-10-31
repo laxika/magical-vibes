@@ -19,7 +19,7 @@ import java.util.List;
 public class CunningGeysermage extends Card {
 
     public CunningGeysermage() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{2}{U}"));
+        addStaticEffect(new KickerEffect("{2}{U}"));
         targetWhenKicked(new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),

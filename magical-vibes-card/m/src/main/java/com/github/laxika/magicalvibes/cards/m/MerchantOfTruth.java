@@ -22,7 +22,7 @@ public class MerchantOfTruth extends Card {
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, CreateTokenEffect.ofClueToken(1));
         addEffect(EffectSlot.ON_DEATH, new ConditionalEffect(
                 new NotCondition(new SourceIsToken()), CreateTokenEffect.ofClueToken(1)));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.EXALTED,
                 GrantScope.OWN_PERMANENTS,
                 new PermanentHasSubtypePredicate(CardSubtype.CLUE)));

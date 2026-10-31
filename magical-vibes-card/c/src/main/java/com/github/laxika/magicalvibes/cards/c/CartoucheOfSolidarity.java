@@ -36,7 +36,7 @@ public class CartoucheOfSolidarity extends Card {
                         "Warrior", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.WARRIOR), Set.of(Keyword.VIGILANCE), Set.of()))
                 // Enchanted creature gets +1/+1 and has first strike.
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ENCHANTED_CREATURE));
     }
 }

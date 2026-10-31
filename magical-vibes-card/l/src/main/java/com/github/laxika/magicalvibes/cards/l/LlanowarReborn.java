@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToEnteri
 public class LlanowarReborn extends Card {
 
     public LlanowarReborn() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1)));

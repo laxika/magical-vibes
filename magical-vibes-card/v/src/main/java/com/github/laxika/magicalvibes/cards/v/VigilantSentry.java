@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -25,7 +24,7 @@ public class VigilantSentry extends Card {
 
     public VigilantSentry() {
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new StaticBoostEffect(1, 1, GrantScope.SELF)));
 
         PermanentPredicateTargetFilter attackingOrBlockingCreature = new PermanentPredicateTargetFilter(
@@ -35,7 +34,7 @@ public class VigilantSentry extends Card {
                                 new PermanentIsAttackingPredicate(),
                                 new PermanentIsBlockingPredicate())))),
                 "Target must be an attacking or blocking creature");
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 true,

@@ -16,7 +16,7 @@ public class ThoughtboundPhantasm extends Card {
     public ThoughtboundPhantasm() {
         addEffect(EffectSlot.ON_CONTROLLER_SURVEILS,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.PLUS_ONE_PLUS_ONE),
                 new CanAttackAsThoughNoDefenderEffect()));
     }

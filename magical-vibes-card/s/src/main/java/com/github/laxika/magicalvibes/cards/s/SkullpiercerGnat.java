@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 public class SkullpiercerGnat extends Card {
 
     public SkullpiercerGnat() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
+        addStaticEffect(new ToxicEffect(1));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new PerpetuallyGivePoisonCounterOnCastToRandomNonlandCardInDamagedHandEffect());
     }

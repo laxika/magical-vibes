@@ -22,7 +22,7 @@ import java.util.Set;
 public class ElegantEdgecrafters extends Card {
 
     public ElegantEdgecrafters() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtMostPredicate(2)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, fabricateTwo());
     }

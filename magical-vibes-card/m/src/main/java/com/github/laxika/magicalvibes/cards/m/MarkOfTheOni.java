@@ -17,7 +17,7 @@ public class MarkOfTheOni extends Card {
     public MarkOfTheOni() {
         // Enchant creature. You control enchanted creature.
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new ControlEnchantedCreatureEffect());
+                .addStaticEffect(new ControlEnchantedCreatureEffect());
 
         // At the beginning of the end step, if you control no Demons, sacrifice this Aura.
         addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(

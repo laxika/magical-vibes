@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 public class VolatileRig extends Card {
 
     public VolatileRig() {
-        addEffect(EffectSlot.STATIC, new MustAttackEffect());
+        addStaticEffect(new MustAttackEffect());
         addEffect(EffectSlot.ON_DEALT_DAMAGE,
                 new FlipCoinWinEffect(null, new SacrificeSelfEffect()));
         addEffect(EffectSlot.ON_DEATH,

@@ -18,7 +18,7 @@ import java.util.List;
 public class TheDestinedWarrior extends Card {
 
     public TheDestinedWarrior() {
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardAnyOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.CLERIC),
                         new CardSubtypePredicate(CardSubtype.ROGUE),

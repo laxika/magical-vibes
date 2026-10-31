@@ -20,7 +20,7 @@ import java.util.List;
 public class ProwlerMisguidedMentor extends Card {
 
     public ProwlerMisguidedMentor() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtMostPredicate(2)));
 
         target(new PermanentPredicateTargetFilter(

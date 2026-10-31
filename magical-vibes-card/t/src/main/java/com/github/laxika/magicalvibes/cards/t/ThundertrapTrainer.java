@@ -20,7 +20,7 @@ import java.util.List;
 public class ThundertrapTrainer extends Card {
 
     public ThundertrapTrainer() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{4}", false));
+        addStaticEffect(new KickerEffect("{4}", false));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

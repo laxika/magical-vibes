@@ -18,7 +18,7 @@ public class MaleficScythe extends Card {
     public MaleficScythe() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.SOUL, new Fixed(1)));
-        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+        addStaticEffect(new AttachedBoostEffect(
                 new CountersOnSource(CounterType.SOUL),
                 new CountersOnSource(CounterType.SOUL),
                 GrantScope.EQUIPPED_CREATURE));

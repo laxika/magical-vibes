@@ -29,7 +29,7 @@ import java.util.Set;
 public class EbonyFly extends Card {
 
     public EbonyFly() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));
 
         List<CardEffect> animationBranches = List.of(

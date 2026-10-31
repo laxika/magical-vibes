@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileOneFromTopCardsFaceDownWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
@@ -22,8 +21,7 @@ import java.util.Set;
 public class VivienChampionOfTheWilds extends Card {
 
     public VivienChampionOfTheWilds() {
-        addEffect(EffectSlot.STATIC,
-                new GrantFlashToCardTypeEffect(new CardTypePredicate(CardType.CREATURE)));
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardTypePredicate(CardType.CREATURE)));
 
         addActivatedAbility(new ActivatedAbility(
                 false, null,

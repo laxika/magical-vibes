@@ -13,8 +13,8 @@ public class MornsongAria extends Card {
 
     public MornsongAria() {
         // Players can't draw cards or gain life.
-        addEffect(EffectSlot.STATIC, new PlayersCannotDrawCardsEffect());
-        addEffect(EffectSlot.STATIC, new PlayersCantGainLifeEffect());
+        addStaticEffect(new PlayersCannotDrawCardsEffect());
+        addStaticEffect(new PlayersCantGainLifeEffect());
 
         // At the beginning of each player's draw step, that player loses 3 life, searches their
         // library for a card, puts it into their hand, then shuffles.

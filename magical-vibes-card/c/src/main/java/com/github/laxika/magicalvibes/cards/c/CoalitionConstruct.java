@@ -15,7 +15,7 @@ public class CoalitionConstruct extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
 
         // Coalition Construct is the chosen type in addition to its other types.
-        addEffect(EffectSlot.STATIC, GrantChosenSubtypeToOwnCreaturesEffect.toSelf());
+        addStaticEffect(GrantChosenSubtypeToOwnCreaturesEffect.toSelf());
 
         // Other creatures you control of the chosen type and creature cards of that type in your
         // hand perpetually get +1/+1.

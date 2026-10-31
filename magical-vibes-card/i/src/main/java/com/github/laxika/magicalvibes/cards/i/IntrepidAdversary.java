@@ -15,7 +15,6 @@ public class IntrepidAdversary extends Card {
     public IntrepidAdversary() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new PayManaAnyNumberOfTimesPutCountersOnSelfEffect("{1}{W}", CounterType.VALOR));
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES, CounterType.VALOR));
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES, CounterType.VALOR));
     }
 }

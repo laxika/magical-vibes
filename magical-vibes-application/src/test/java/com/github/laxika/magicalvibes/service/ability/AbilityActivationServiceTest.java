@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.ability;
 
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -2236,7 +2237,7 @@ class AbilityActivationServiceTest {
         needleCard.setName("Pithing Needle");
         needleCard.setType(CardType.ARTIFACT);
         needleCard.setManaCost("{1}");
-        needleCard.addEffect(EffectSlot.STATIC, new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect(false));
+        needleCard.addStaticEffect(new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect(false));
         Permanent needle = new Permanent(needleCard);
         needle.setSummoningSick(false);
         needle.setChosenName(cardName);

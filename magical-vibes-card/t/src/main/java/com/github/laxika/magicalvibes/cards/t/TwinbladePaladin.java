@@ -18,7 +18,7 @@ public class TwinbladePaladin extends Card {
     public TwinbladePaladin() {
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerLifeAtLeast(25),
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF)));
     }

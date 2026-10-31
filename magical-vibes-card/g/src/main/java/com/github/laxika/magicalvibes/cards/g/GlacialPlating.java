@@ -15,7 +15,6 @@ public class GlacialPlating extends Card {
     public GlacialPlating() {
         target(TargetFilters.creature())
                 .addEffect(EffectSlot.UPKEEP_TRIGGERED, new CumulativeUpkeepEffect("{S}"))
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE, CounterType.AGE));
+                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE, CounterType.AGE));
     }
 }

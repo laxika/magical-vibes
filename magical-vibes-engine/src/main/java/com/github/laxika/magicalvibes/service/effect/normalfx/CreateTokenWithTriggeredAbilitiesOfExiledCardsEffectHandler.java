@@ -91,7 +91,7 @@ public class CreateTokenWithTriggeredAbilitiesOfExiledCardsEffectHandler impleme
 
     private boolean isTriggeredAbilitySlot(EffectSlot slot) {
         return switch (slot) {
-            case ON_TAP, STATIC, MAY_SKIP_DRAW_STEP_DRAW, MULLIGAN_ACTION -> false;
+            case ON_TAP, MAY_SKIP_DRAW_STEP_DRAW, MULLIGAN_ACTION -> false;
             default -> true;
         };
     }

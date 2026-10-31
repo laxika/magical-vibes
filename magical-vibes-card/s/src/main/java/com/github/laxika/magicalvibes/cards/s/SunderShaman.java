@@ -16,7 +16,7 @@ import java.util.List;
 public class SunderShaman extends Card {
 
     public SunderShaman() {
-        addEffect(EffectSlot.STATIC, new CanBeBlockedByAtMostNCreaturesEffect(1));
+        addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
                 new DestroyPermanentDamagedPlayerControlsEffect(
                         new PermanentAnyOfPredicate(List.of(

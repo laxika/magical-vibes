@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "GRN", collectorNumber = "180")
@@ -29,7 +28,7 @@ public class IzoniThousandEyed extends Card {
                 CardType.CREATURE,
                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
                 "Insect", 1, 1, CardColor.BLACK, Set.of(CardColor.BLACK, CardColor.GREEN),
-                List.of(CardSubtype.INSECT), Set.of(), Set.of(), false, false, Map.of(), List.of(),
+                List.of(CardSubtype.INSECT), Set.of(), Set.of(), false, false, List.of(), List.of(),
                 false, false, false, 0, Set.of()));
 
         addActivatedAbility(new ActivatedAbility(

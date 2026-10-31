@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
@@ -19,7 +18,7 @@ import java.util.Set;
 public class CodieVociferousCodex extends Card {
 
     public CodieVociferousCodex() {
-        addEffect(EffectSlot.STATIC, new CantCastSpellTypeEffect(Set.of(
+        addStaticEffect(new CantCastSpellTypeEffect(Set.of(
                 CardType.ARTIFACT,
                 CardType.BATTLE,
                 CardType.CREATURE,

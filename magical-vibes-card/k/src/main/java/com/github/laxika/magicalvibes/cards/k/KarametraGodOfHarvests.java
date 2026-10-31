@@ -29,7 +29,7 @@ import java.util.Set;
 public class KarametraGodOfHarvests extends Card {
 
     public KarametraGodOfHarvests() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorsAtLeast(
                         Set.of(ManaColor.GREEN, ManaColor.WHITE), 7)),
                 new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));

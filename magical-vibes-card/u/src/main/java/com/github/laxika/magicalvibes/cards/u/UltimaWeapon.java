@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class UltimaWeapon extends Card {
 
     public UltimaWeapon() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(7, 7, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(7, 7, GrantScope.EQUIPPED_CREATURE));
         target(TargetFilters.creatureAnOpponentControls())
                 .addEffect(EffectSlot.ON_ATTACK, new DestroyTargetPermanentEffect());
         addActivatedAbility(new EquipActivatedAbility("{7}"));

@@ -16,7 +16,7 @@ public class VoidstoneGargoyle extends Card {
     public VoidstoneGargoyle() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ChooseCardNameOnEnterEffect(List.of(CardType.LAND)));
-        addEffect(EffectSlot.STATIC, new SpellsWithChosenNameCantBeCastEffect());
-        addEffect(EffectSlot.STATIC, new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect(true));
+        addStaticEffect(new SpellsWithChosenNameCantBeCastEffect());
+        addStaticEffect(new ActivatedAbilitiesOfChosenNameCantBeActivatedEffect(true));
     }
 }

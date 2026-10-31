@@ -24,14 +24,14 @@ import java.util.List;
 public class DivinersWand extends Card {
 
     public DivinersWand() {
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_CONTROLLER_DRAWS,
                 SequenceEffect.of(new BoostSelfEffect(1, 1),
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
                 GrantScope.EQUIPPED_CREATURE));
 
         // Equipped creature has "{4}: Draw a card."
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
                         "{4}",

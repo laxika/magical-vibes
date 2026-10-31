@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SNC", collectorNumber = "24")
@@ -29,7 +28,7 @@ public class RabbleRousing extends Card {
                 CardType.CREATURE, new XValue(), "Citizen", 1, 1,
                 CardColor.GREEN, Set.of(CardColor.GREEN, CardColor.WHITE),
                 List.of(CardSubtype.CITIZEN), Set.of(), Set.of(), false, false,
-                Map.of(), List.of(), false, false, false, 0, Set.of());
+                List.of(), List.of(), false, false, false, 0, Set.of());
         addEffect(EffectSlot.ON_ALLY_CREATURES_ATTACK, SequenceEffect.of(
                 citizen,
                 new ConditionalEffect(new ControlsPermanentCount(10, new PermanentIsCreaturePredicate()),

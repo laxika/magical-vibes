@@ -17,9 +17,8 @@ public class RuneOfFlight extends Card {
     public RuneOfFlight() {
         target(TargetFilters.permanent())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1))
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+                .addStaticEffect(new GrantKeywordEffect(
                         Keyword.FLYING, GrantScope.ENCHANTED_PERMANENT, new PermanentIsCreaturePredicate()))
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect(Keyword.FLYING));
+                .addStaticEffect(new GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect(Keyword.FLYING));
     }
 }

@@ -26,7 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 public class SentinelSarahLyons extends Card {
 
     public SentinelSarahLyons() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new PermanentEnteredThisTurn(new CardTypePredicate(CardType.ARTIFACT), 1),
                 new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES)));
 

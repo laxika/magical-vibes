@@ -24,7 +24,7 @@ public class DreamTides extends Card {
                 new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.GREEN)))));
 
         // Creatures don't untap during their controllers' untap steps.
-        addEffect(EffectSlot.STATIC, new MatchingPermanentsDoesntUntapEffect(new PermanentIsCreaturePredicate()));
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(new PermanentIsCreaturePredicate()));
 
         // At the beginning of each player's upkeep, that player may choose any number of tapped
         // nongreen creatures they control and pay {2} for each creature chosen this way. If the

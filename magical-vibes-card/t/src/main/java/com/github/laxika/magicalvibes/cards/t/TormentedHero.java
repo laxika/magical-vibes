@@ -16,7 +16,7 @@ import java.util.List;
 public class TormentedHero extends Card {
 
     public TormentedHero() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 null,
                 List.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT, true)),

@@ -22,7 +22,7 @@ public class CultivatorColossus extends Card {
         // Cultivator Colossus's power and toughness are each equal to the number of lands you control.
         PermanentCount landsYouControl =
                 new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl));
 
         // When this creature enters, you may put a land card from your hand onto the battlefield tapped.
         // If you do, draw a card and repeat this process.

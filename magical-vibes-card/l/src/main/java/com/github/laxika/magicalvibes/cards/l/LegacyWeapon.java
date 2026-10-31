@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
 
@@ -15,7 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class LegacyWeapon extends Card {
 
     public LegacyWeapon() {
-        addEffect(EffectSlot.STATIC, new ShuffleIntoLibraryReplacementEffect());
+        addStaticEffect(new ShuffleIntoLibraryReplacementEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{W}{U}{B}{R}{G}",

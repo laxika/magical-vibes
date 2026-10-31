@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplacementEffect;
 
@@ -12,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplac
 public class BenevolentGeist extends Card {
 
     public BenevolentGeist() {
-        addEffect(EffectSlot.STATIC, new ControllerSpellsCantBeCounteredEffect(true));
-        addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect());
+        addStaticEffect(new ControllerSpellsCantBeCounteredEffect(true));
+        addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 }

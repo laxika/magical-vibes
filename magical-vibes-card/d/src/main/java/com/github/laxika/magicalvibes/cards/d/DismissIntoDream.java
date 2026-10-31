@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 public class DismissIntoDream extends Card {
 
     public DismissIntoDream() {
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.ILLUSION, GrantScope.OPPONENT_CREATURES));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ILLUSION, GrantScope.OPPONENT_CREATURES));
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                   EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
                   new SacrificeSelfEffect(),
                   GrantScope.OPPONENT_CREATURES));

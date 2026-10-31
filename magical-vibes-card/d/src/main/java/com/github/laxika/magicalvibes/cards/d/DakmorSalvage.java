@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 public class DakmorSalvage extends Card {
 
     public DakmorSalvage() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLACK));
         addEffect(EffectSlot.GRAVEYARD_DRAW_REPLACEMENT, new DredgeEffect(2));
     }

@@ -25,7 +25,7 @@ public class CryptolithFragment extends Card {
         setBackFaceCard(new AuroraOfEmrakul());
 
         // This artifact enters tapped.
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         // {T}: Add one mana of any color. Each player loses 1 life.
         addActivatedAbility(new ActivatedAbility(

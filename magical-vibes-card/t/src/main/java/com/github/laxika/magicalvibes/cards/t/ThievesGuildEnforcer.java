@@ -37,8 +37,7 @@ public class ThievesGuildEnforcer extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.ROGUE),
                                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
                         new MillEffect(2, MillRecipient.EACH_OPPONENT)));
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                         new OpponentGraveyardAtLeast(8),
                         new StaticBoostEffect(2, 1, Set.of(Keyword.DEATHTOUCH), GrantScope.SELF)));
     }

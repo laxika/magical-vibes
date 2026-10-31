@@ -137,7 +137,7 @@ public class PlanechaseService {
             if (query.hasLostPrintedAbilities(game, permanent)) {
                 continue;
             }
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof RollPlanarDieWithAdvantageEffect) {
                     count++;
                 }
@@ -238,7 +238,7 @@ public class PlanechaseService {
                     || query.computeStaticBonus(game, source).losesAllAbilities()) {
                 continue;
             }
-            if (source.getCard().getEffects(EffectSlot.STATIC).stream()
+            if (source.getCard().getStaticEffects().stream()
                     .anyMatch(PlaneswalkTopTwoReplacementEffect.class::isInstance)) {
                 replacementActive = true;
                 break;

@@ -19,7 +19,7 @@ public class FindThePath extends Card {
     public FindThePath() {
         target(TargetFilters.land())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new VentureIntoDungeonEffect())
-                .addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+                .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(true, null, List.of(new AwardManaEffect(ManaColor.GREEN, 2)),
                                 "{T}: Add {G}{G}."),
                         GrantScope.ENCHANTED_PERMANENT

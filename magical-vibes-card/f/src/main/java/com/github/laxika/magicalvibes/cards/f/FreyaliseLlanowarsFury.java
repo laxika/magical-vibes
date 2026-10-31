@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SLD", collectorNumber = "1598")
@@ -49,7 +48,7 @@ public class FreyaliseLlanowarsFury extends Card {
                         Set.of(),
                         false,
                         false,
-                        Map.of(),
+                        List.of(),
                         List.of(ManaAbilities.tapFor(ManaColor.GREEN)),
                         false,
                         false,

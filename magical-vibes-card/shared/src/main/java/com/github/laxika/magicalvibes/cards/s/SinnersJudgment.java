@@ -17,6 +17,6 @@ public class SinnersJudgment extends Card {
                 new PutCountersOnSelfEffect(CounterType.JUDGMENT),
                 ConditionalEffect.unless(new SourceCounterThreshold(3, CounterType.JUDGMENT),
                         new EnchantedPlayerLosesGameEffect())));
-        addEffect(EffectSlot.STATIC, new ExileInsteadOfGraveyardReplacementEffect());
+        addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 }

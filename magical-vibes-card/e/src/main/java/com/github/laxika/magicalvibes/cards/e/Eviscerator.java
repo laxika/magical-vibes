@@ -13,7 +13,7 @@ import java.util.Set;
 public class Eviscerator extends Card {
 
     public Eviscerator() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LoseLifeEffect(5));
     }
 }

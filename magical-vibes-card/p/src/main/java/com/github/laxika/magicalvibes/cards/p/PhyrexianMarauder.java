@@ -17,10 +17,9 @@ public class PhyrexianMarauder extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         // This creature can't block.
-        addEffect(EffectSlot.STATIC, new CantBlockEffect());
+        addStaticEffect(new CantBlockEffect());
         // This creature can't attack unless you pay {1} for each +1/+1 counter on it.
         // Read at declare-attackers time by CombatAttackService via AttackCostEffect.
-        addEffect(EffectSlot.STATIC,
-                new CantAttackUnlessPaysPerCounterEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
+        addStaticEffect(new CantAttackUnlessPaysPerCounterEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

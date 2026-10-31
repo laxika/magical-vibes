@@ -20,8 +20,7 @@ import java.util.List;
 public class BreathOfTheSleepless extends Card {
 
     public BreathOfTheSleepless() {
-        addEffect(EffectSlot.STATIC,
-                new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.SPIRIT)));
+        addStaticEffect(new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.SPIRIT)));
         target(TargetFilters.creature(), 0, 1)
                 .addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                         new SpellCastTriggerEffect(

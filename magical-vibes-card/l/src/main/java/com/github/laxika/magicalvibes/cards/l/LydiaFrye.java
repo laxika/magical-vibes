@@ -19,7 +19,7 @@ import java.util.List;
 public class LydiaFrye extends Card {
 
     public LydiaFrye() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedByCreaturesMatchingPredicateEffect(
+        addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtLeastPredicate(3)));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new SurveilEffect(new PermanentCount(

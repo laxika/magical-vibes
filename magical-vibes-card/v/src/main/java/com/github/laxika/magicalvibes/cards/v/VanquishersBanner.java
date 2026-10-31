@@ -23,7 +23,7 @@ public class VanquishersBanner extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseSubtypeOnEnterEffect());
 
         // Creatures you control of the chosen type get +1/+1.
-        addEffect(EffectSlot.STATIC, new BoostCreaturesOfChosenSubtypeEffect(1, 1));
+        addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(1, 1));
 
         // Whenever you cast a creature spell of the chosen type, draw a card.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new ChosenSubtypeSpellCastTriggerEffect(

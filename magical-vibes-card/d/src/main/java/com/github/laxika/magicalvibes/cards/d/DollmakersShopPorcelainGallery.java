@@ -43,7 +43,7 @@ public class DollmakersShopPorcelainGallery extends Card {
         CreateTokenEffect toyToken = new CreateTokenEffect(
                 1, "Toy", 1, 1, CardColor.WHITE, List.of(CardSubtype.TOY), Set.of(),
                 Set.of(CardType.ARTIFACT));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(0),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ALLY_CREATURES_ATTACK_PLAYER,
@@ -52,7 +52,7 @@ public class DollmakersShopPorcelainGallery extends Card {
 
         PermanentCount creaturesYouControl = new PermanentCount(
                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
                 new SetBasePowerToughnessToAmountEffect(
                         creaturesYouControl, creaturesYouControl, GrantScope.ALL_OWN_CREATURES)));

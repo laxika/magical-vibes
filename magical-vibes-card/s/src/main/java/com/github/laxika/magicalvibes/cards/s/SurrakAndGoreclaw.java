@@ -16,7 +16,7 @@ import java.util.List;
 public class SurrakAndGoreclaw extends Card {
 
     public SurrakAndGoreclaw() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
         addEffect(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
                 new PutCountersOnEnteringCreatureEffect(1, false,
                         List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))));

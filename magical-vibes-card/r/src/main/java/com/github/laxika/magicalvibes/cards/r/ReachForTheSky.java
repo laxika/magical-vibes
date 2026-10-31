@@ -16,8 +16,7 @@ public class ReachForTheSky extends Card {
 
     public ReachForTheSky() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new StaticBoostEffect(3, 2, Set.of(Keyword.REACH), GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(3, 2, Set.of(Keyword.REACH), GrantScope.ENCHANTED_CREATURE));
         addEffect(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, new DrawCardEffect(1));
     }
 }

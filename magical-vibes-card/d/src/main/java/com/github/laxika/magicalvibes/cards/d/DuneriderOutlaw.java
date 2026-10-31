@@ -17,7 +17,7 @@ import java.util.Set;
 public class DuneriderOutlaw extends Card {
 
     public DuneriderOutlaw() {
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.GREEN)));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.GREEN)));
         addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
                 new SelfDealtDamageToOpponentThisTurn(),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)));

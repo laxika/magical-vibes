@@ -20,9 +20,9 @@ public class Bloodcurdler extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MillEffect(1, MillRecipient.CONTROLLER));
 
         var threshold = new GraveyardCardThreshold(7, null);
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new StaticBoostEffect(1, 1, GrantScope.SELF)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(threshold,
+        addStaticEffect(new ConditionalEffect(threshold,
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                         new ExileGraveyardCardsEffect(2, GraveyardExileScope.OWN),

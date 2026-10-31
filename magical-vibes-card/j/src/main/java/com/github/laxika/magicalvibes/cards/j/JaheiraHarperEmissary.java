@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -62,10 +61,8 @@ public class JaheiraHarperEmissary extends Card {
     }
 
     public static void addHexproofFromArtifactsAndEnchantments(Card card) {
-        card.addEffect(EffectSlot.STATIC,
-                TargetingRestrictionEffect.hexproofFromCardTypes(PROTECTED_CARD_TYPES));
-        card.addEffect(EffectSlot.STATIC,
-                new TargetingRestrictionEffect(TargetingSourceKind.ABILITIES, true, Set.of(),
+        card.addStaticEffect(TargetingRestrictionEffect.hexproofFromCardTypes(PROTECTED_CARD_TYPES));
+        card.addStaticEffect(new TargetingRestrictionEffect(TargetingSourceKind.ABILITIES, true, Set.of(),
                         TargetColorMode.ANY, PROTECTED_CARD_TYPES));
     }
 

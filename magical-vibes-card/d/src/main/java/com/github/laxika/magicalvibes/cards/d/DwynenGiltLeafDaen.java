@@ -25,7 +25,7 @@ public class DwynenGiltLeafDaen extends Card {
 
     public DwynenGiltLeafDaen() {
         // Other Elf creatures you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF))));
 
         // Whenever Dwynen attacks, you gain 1 life for each attacking Elf you control.

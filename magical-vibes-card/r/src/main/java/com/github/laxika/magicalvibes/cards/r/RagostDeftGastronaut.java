@@ -26,9 +26,9 @@ import java.util.List;
 public class RagostDeftGastronaut extends Card {
 
     public RagostDeftGastronaut() {
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(
+        addStaticEffect(new GrantSubtypeEffect(
                 CardSubtype.FOOD, GrantScope.OWN_PERMANENTS, false, new PermanentIsArtifactPredicate()));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
+        addStaticEffect(new GrantActivatedAbilityEffect(
                 foodAbility(), GrantScope.OWN_PERMANENTS, new PermanentIsArtifactPredicate()));
 
         addActivatedAbility(new ActivatedAbility(

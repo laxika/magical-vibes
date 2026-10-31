@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -15,9 +14,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class VibratingSphere extends Card {
 
     public VibratingSphere() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new StaticBoostEffect(2, 0, GrantScope.ALL_OWN_CREATURES)));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new NotControllerTurn(),
+        addStaticEffect(new ConditionalEffect(new NotControllerTurn(),
                 new StaticBoostEffect(0, -2, GrantScope.ALL_OWN_CREATURES)));
     }
 }

@@ -23,8 +23,8 @@ public class MarinaVendrellsGrimoire extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new WasCast(), new DrawCardEffect(5)));
 
-        addEffect(EffectSlot.STATIC, new NoMaximumHandSizeEffect());
-        addEffect(EffectSlot.STATIC, new CantLoseGameFromLifeEffect());
+        addStaticEffect(new NoMaximumHandSizeEffect());
+        addStaticEffect(new CantLoseGameFromLifeEffect());
 
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new DrawCardsEqualToLifeGainedEffect());
         addEffect(EffectSlot.ON_CONTROLLER_LOSES_LIFE, SequenceEffect.of(

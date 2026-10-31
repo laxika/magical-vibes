@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
@@ -48,7 +47,7 @@ public class SpecializeWilsonEffectHandler implements NormalEffectHandlerBean {
         WilsonBearComrade.setFaceCharacteristics(specialized, specialize.color());
         WilsonBearComrade.addWardAbility(specialized);
         if (specialize.color() == CardColor.BLUE) {
-            specialized.addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+            specialized.addStaticEffect(new CantBeBlockedEffect());
         }
         specialized.addGraveyardActivatedAbility(
                 WilsonBearComrade.graveyardAbility(specialize.color()));

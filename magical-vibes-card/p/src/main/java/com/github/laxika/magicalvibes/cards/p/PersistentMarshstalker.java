@@ -24,7 +24,7 @@ public class PersistentMarshstalker extends Card {
     public PersistentMarshstalker() {
         PermanentCount otherRats = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.RAT), CountScope.CONTROLLER, true);
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 otherRats, new Fixed(0), GrantScope.SELF));
 
         addEffect(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK,

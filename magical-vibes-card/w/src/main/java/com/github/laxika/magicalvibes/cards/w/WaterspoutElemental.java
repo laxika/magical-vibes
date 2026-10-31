@@ -26,7 +26,7 @@ public class WaterspoutElemental extends Card {
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
         ));
 
-        addEffect(EffectSlot.STATIC, new KickerEffect("{U}"));
+        addStaticEffect(new KickerEffect("{U}"));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 ReturnToHandEffect.allPermanentsMatching(otherCreature)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),

@@ -24,7 +24,7 @@ public class DreamcallerSiren extends Card {
         // Flash and Flying are loaded from Scryfall
 
         // This creature can block only creatures with flying.
-        addEffect(EffectSlot.STATIC, new CanBlockOnlyIfAttackerMatchesPredicateEffect(
+        addStaticEffect(new CanBlockOnlyIfAttackerMatchesPredicateEffect(
                 new PermanentHasKeywordPredicate(Keyword.FLYING),
                 "creatures with flying"
         ));

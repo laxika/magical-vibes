@@ -25,7 +25,7 @@ import java.util.Set;
 public class HowlsquadHeavy extends Card {
 
     public HowlsquadHeavy() {
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE,
                 GrantScope.OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)));

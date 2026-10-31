@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "114")
@@ -25,7 +24,7 @@ public class Skeletonize extends Card {
         // 1/1 black Skeleton token with "{B}: Regenerate this token."
         CreateTokenEffect skeletonToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Skeleton", 1, 1, CardColor.BLACK, null,
-                List.of(CardSubtype.SKELETON), Set.<Keyword>of(), Set.<CardType>of(), false, false, Map.of(),
+                List.of(CardSubtype.SKELETON), Set.<Keyword>of(), Set.<CardType>of(), false, false, List.of(),
                 List.of(new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()), "{B}: Regenerate this token.")),
                 false, false, false, 0, Set.<Keyword>of());
 

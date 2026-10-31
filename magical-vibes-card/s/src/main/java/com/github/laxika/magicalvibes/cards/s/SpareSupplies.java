@@ -14,7 +14,7 @@ import java.util.List;
 public class SpareSupplies extends Card {
 
     public SpareSupplies() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DrawCardEffect(1));
         addActivatedAbility(new ActivatedAbility(
                 true,

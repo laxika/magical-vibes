@@ -17,8 +17,7 @@ import java.util.Set;
 public class AllOutAssault extends Card {
 
     public AllOutAssault() {
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(1, 1, Set.of(Keyword.DEATHTOUCH), GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.DEATHTOUCH), GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new ConditionalEffect(new ControllerMainPhase(), new AdditionalCombatMainPhaseEffect(1)));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

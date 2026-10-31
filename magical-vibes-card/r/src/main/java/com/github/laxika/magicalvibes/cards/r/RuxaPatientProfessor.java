@@ -37,8 +37,8 @@ public class RuxaPatientProfessor extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, returnCreature);
         addEffect(EffectSlot.ON_ATTACK, returnCreature);
         PermanentHasNoAbilitiesPredicate noAbilities = new PermanentHasNoAbilitiesPredicate();
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, noAbilities));
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(
+        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, noAbilities));
+        addStaticEffect(new GrantEffectEffect(
                 new AssignCombatDamageAsThoughUnblockedEffect(),
                 GrantScope.ALL_OWN_CREATURES,
                 noAbilities));

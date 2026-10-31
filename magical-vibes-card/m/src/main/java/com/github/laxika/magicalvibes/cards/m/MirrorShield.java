@@ -19,15 +19,14 @@ import java.util.Set;
 public class MirrorShield extends Card {
 
     public MirrorShield() {
-        addEffect(EffectSlot.STATIC,
-                new StaticBoostEffect(0, 2, Set.of(Keyword.HEXPROOF), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(0, 2, Set.of(Keyword.HEXPROOF), GrantScope.EQUIPPED_CREATURE));
 
         CardEffect destroyDeathtouchCreature = new TriggeringPermanentConditionalEffect(
                 new PermanentHasKeywordPredicate(Keyword.DEATHTOUCH),
                 new DestroyCombatOpponentEffect(false), false, true);
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BLOCK, destroyDeathtouchCreature, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantTriggeredAbilityEffect(
+        addStaticEffect(new GrantTriggeredAbilityEffect(
                 EffectSlot.ON_BECOMES_BLOCKED, destroyDeathtouchCreature, GrantScope.EQUIPPED_CREATURE));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));

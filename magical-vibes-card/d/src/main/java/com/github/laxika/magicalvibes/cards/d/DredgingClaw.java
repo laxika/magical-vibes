@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class DredgingClaw extends Card {
 
     public DredgingClaw() {
-        addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.ON_CREATURE_ENTERS_FROM_GRAVEYARD,
                 new AttachSourceEquipmentToEnteringCreatureEffect());
         addActivatedAbility(new EquipActivatedAbility("{1}{B}"));

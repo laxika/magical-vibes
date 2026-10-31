@@ -14,8 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 public class SproutbackTrudge extends Card {
 
     public SproutbackTrudge() {
-        addEffect(EffectSlot.STATIC,
-                new ReduceOwnCastCostEffect(new LifeGainedThisTurn(CountScope.CONTROLLER)));
+        addStaticEffect(new ReduceOwnCastCostEffect(new LifeGainedThisTurn(CountScope.CONTROLLER)));
         addEffect(EffectSlot.GRAVEYARD_CONTROLLER_END_STEP_TRIGGERED,
                 new ConditionalEffect(new GainedLifeThisTurn(), new CastSourceCardFromGraveyardEffect()));
     }

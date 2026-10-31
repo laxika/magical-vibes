@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTriggeringSpellIntoHandEffect;
@@ -19,7 +18,7 @@ import java.util.List;
 public class SpellchainScatter extends Card {
 
     public SpellchainScatter() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{U}"));
+        addStaticEffect(new KickerEffect("{U}"));
 
         CardAnyOfPredicate instantOrSorcery = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.INSTANT),

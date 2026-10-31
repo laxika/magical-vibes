@@ -26,7 +26,7 @@ public class KondasHatamoto extends Card {
         addEffect(EffectSlot.ON_BECOMES_BLOCKED,
                 new BushidoEffect(1));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                         new PermanentHasSubtypePredicate(CardSubtype.SAMURAI)

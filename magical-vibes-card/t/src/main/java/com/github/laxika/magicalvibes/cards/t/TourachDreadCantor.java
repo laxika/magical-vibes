@@ -22,8 +22,8 @@ import java.util.Set;
 public class TourachDreadCantor extends Card {
 
     public TourachDreadCantor() {
-        addEffect(EffectSlot.STATIC, new KickerEffect("{B}{B}"));
-        addEffect(EffectSlot.STATIC, new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
+        addStaticEffect(new KickerEffect("{B}{B}"));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
         addEffect(EffectSlot.ON_OPPONENT_DISCARDS,
                 new PutCountersOnSourceEffect(1, 1, 1));
 

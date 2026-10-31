@@ -19,7 +19,7 @@ public class PathOfBravery extends Card {
 
     public PathOfBravery() {
         // As long as your life total is greater than or equal to your starting life total, creatures you control get +1/+1.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerLifeAtLeast(0, true),
                 new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES)));
 

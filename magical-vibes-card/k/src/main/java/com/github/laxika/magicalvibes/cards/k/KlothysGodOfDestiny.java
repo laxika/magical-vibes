@@ -26,7 +26,7 @@ import java.util.Set;
 public class KlothysGodOfDestiny extends Card {
 
     public KlothysGodOfDestiny() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorsAtLeast(
                         Set.of(ManaColor.RED, ManaColor.GREEN), 7)),
                 new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));

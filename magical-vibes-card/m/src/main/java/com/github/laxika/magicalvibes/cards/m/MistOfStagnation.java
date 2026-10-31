@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 public class MistOfStagnation extends Card {
 
     public MistOfStagnation() {
-        addEffect(EffectSlot.STATIC, new MatchingPermanentsDoesntUntapEffect(new PermanentTruePredicate()));
+        addStaticEffect(new MatchingPermanentsDoesntUntapEffect(new PermanentTruePredicate()));
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
                 new UntapPermanentsForAmountEffect(
                         new CardsInGraveyard(null, CountScope.TARGET_PLAYER),

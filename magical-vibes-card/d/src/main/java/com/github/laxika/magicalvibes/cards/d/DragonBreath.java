@@ -23,8 +23,7 @@ public class DragonBreath extends Card {
 
     public DragonBreath() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC,
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

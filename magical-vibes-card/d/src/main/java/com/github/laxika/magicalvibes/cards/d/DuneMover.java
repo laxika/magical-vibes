@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 public class DuneMover extends Card {
 
     public DuneMover() {
-        addEffect(EffectSlot.STATIC, new ToxicEffect(1));
+        addStaticEffect(new ToxicEffect(1));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new MayEffect(
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.TOP_OF_LIBRARY),
                 "Search your library for a basic land card?"));

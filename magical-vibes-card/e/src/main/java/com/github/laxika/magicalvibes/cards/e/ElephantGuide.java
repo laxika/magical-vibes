@@ -22,7 +22,7 @@ public class ElephantGuide extends Card {
 
     public ElephantGuide() {
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.STATIC, new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
                 .addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
                         new CreateTokenEffect("Elephant", 3, 3, CardColor.GREEN,
                                 List.of(CardSubtype.ELEPHANT), Set.of(), Set.of()));

@@ -17,7 +17,7 @@ public class EvolvingAdaptive extends Card {
     public EvolvingAdaptive() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.OIL, new Fixed(1)));
-        addEffect(EffectSlot.STATIC, new DynamicStaticBoostEffect(
+        addStaticEffect(new DynamicStaticBoostEffect(
                 new CountersOnSource(CounterType.OIL),
                 new CountersOnSource(CounterType.OIL),
                 GrantScope.SELF));

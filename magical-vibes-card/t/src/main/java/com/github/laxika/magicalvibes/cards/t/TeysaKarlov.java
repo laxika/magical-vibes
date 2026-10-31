@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -23,9 +22,8 @@ import java.util.Set;
 public class TeysaKarlov extends Card {
 
     public TeysaKarlov() {
-        addEffect(EffectSlot.STATIC,
-                new AdditionalCreatureDeathTriggerEffect(new PermanentTruePredicate()));
-        addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
+        addStaticEffect(new AdditionalCreatureDeathTriggerEffect(new PermanentTruePredicate()));
+        addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.VIGILANCE, Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsTokenPredicate()));
     }

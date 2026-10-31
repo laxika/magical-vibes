@@ -28,7 +28,7 @@ import java.util.Set;
 public class RestlessSpire extends Card {
 
     public RestlessSpire() {
-        addEffect(EffectSlot.STATIC, new EntersTappedEffect());
+        addStaticEffect(new EntersTappedEffect());
 
         addActivatedAbility(new ActivatedAbility(
                 true,

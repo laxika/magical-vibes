@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -24,11 +23,11 @@ public class EtherealArmor extends Card {
         // Enchant creature
         target(TargetFilters.creature())
                 // Enchanted creature gets +1/+1 for each enchantment you control
-                .addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                .addStaticEffect(new AttachedBoostEffect(
                         new PermanentCount(new PermanentIsEnchantmentPredicate(), CountScope.CONTROLLER),
                         new PermanentCount(new PermanentIsEnchantmentPredicate(), CountScope.CONTROLLER),
                         GrantScope.ENCHANTED_CREATURE))
                 // and has first strike
-                .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ENCHANTED_CREATURE));
     }
 }

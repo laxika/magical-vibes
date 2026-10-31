@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 public class IllvoiInfiltrator extends Card {
 
     public IllvoiInfiltrator() {
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControllerCastTwoOrMoreSpellsThisTurn(new CardTruePredicate()),
                 new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(1));

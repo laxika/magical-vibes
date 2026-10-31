@@ -9,11 +9,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "137")
@@ -40,7 +38,7 @@ public class DragonEgg extends Card {
                 Set.of(),
                 false,
                 false,
-                Map.<EffectSlot, CardEffect>of(),
+                List.of(),
                 List.of(new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)),
                         "{R}: This token gets +1/+0 until end of turn.")),
                 false,

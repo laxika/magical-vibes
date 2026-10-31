@@ -18,7 +18,7 @@ public class WestvaleCultLeader extends Card {
     public WestvaleCultLeader() {
         PermanentCount creaturesYouControl =
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(creaturesYouControl, creaturesYouControl));
+        addStaticEffect(new SetPowerToughnessToAmountEffect(creaturesYouControl, creaturesYouControl));
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new CreateTokenEffect(1, "Human Cleric", 1, 1,

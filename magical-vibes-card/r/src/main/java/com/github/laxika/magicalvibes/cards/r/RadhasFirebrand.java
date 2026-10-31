@@ -33,7 +33,7 @@ public class RadhasFirebrand extends Card {
                 "Target must be a creature defending player controls with power less than Radha's Firebrand's power"))
                 .addEffect(EffectSlot.ON_ATTACK, new CantBlockThisTurnEffect(TapUntapScope.TARGET));
 
-        addEffect(EffectSlot.STATIC, new ReduceActivatedAbilityCostEffect(
+        addStaticEffect(new ReduceActivatedAbilityCostEffect(
                 new PermanentIsSourcePermanentPredicate(),
                 new BasicLandTypesAmongControlledLands(),
                 false));

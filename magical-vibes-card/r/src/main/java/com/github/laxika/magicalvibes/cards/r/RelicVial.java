@@ -30,7 +30,7 @@ public class RelicVial extends Card {
                 "{2}, {T}, Sacrifice a creature: Draw a card."
         ));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.CLERIC)),
                 new GrantTriggeredAbilityEffect(
                         EffectSlot.ON_ALLY_CREATURE_DIES,

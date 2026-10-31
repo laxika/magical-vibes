@@ -40,7 +40,7 @@ public class RivazOfTheClaw extends Card {
                 "{T}: Add two mana in any combination of colors. Spend this mana only to cast Dragon creature spells."
         ));
 
-        addEffect(EffectSlot.STATIC, new PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
+        addStaticEffect(new PlayLandOrCastPermanentFromGraveyardOncePerTurnEffect(
                 dragonCreature, null));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(

@@ -22,7 +22,7 @@ import java.util.List;
 public class SilentHallcreeper extends Card {
 
     public SilentHallcreeper() {
-        addEffect(EffectSlot.STATIC, new CantBeBlockedEffect());
+        addStaticEffect(new CantBeBlockedEffect());
 
         ControlledPermanentPredicateTargetFilter anotherCreatureYouControl =
                 new ControlledPermanentPredicateTargetFilter(

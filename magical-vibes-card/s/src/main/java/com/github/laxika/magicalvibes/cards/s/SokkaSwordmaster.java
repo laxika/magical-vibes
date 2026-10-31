@@ -20,7 +20,7 @@ public class SokkaSwordmaster extends Card {
     public SokkaSwordmaster() {
         PermanentCount alliesYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.ALLY), CountScope.CONTROLLER);
-        addEffect(EffectSlot.STATIC, new ReduceCastCostForMatchingSpellsEffect(
+        addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.EQUIPMENT), alliesYouControl, CostModificationScope.SELF));
 
         target(new ControlledPermanentPredicateTargetFilter(

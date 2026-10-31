@@ -49,8 +49,7 @@ public class SurgicalSuiteHospitalRoom extends Card {
         var attackingCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsAttackingPredicate(),
                 new PermanentIsCreaturePredicate()));
-        addEffect(EffectSlot.STATIC,
-                new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                         new SourceRoomDoorUnlocked(1),
                         new GrantTriggeredAbilityEffect(
                                 EffectSlot.ON_ALLY_CREATURES_ATTACK,

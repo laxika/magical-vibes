@@ -28,18 +28,18 @@ import java.util.Set;
 public class TidalInfluence extends Card {
 
     public TidalInfluence() {
-        addEffect(EffectSlot.STATIC, new CantCastSpellsWithSourceNameEffect());
+        addStaticEffect(new CantCastSpellsWithSourceNameEffect());
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                 new EnterWithCountersEffect(CounterType.TIDE, new Fixed(1)));
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.TIDE));
 
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.TIDE),
                         new NotCondition(new SourceCounterThreshold(2, CounterType.TIDE)))),
                 new StaticBoostEffect(-2, 0, GrantScope.ALL_CREATURES,
                         new PermanentColorInPredicate(Set.of(CardColor.BLUE)))));
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+        addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(3, CounterType.TIDE),
                         new NotCondition(new SourceCounterThreshold(4, CounterType.TIDE)))),
