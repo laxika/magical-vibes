@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Getter
-public class ActivatedAbility {
+public non-sealed class ActivatedAbility implements Ability {
     /** The optional discard from hand is a special action and creates no stack object. */
     private boolean discardSourceAsSpecialAction;
 

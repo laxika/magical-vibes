@@ -15,7 +15,7 @@ re-check them with a grep before acting on them.
 | Step | Title | Status |
 |---|---|---|
 | 1 | Slot inventory and baseline | done |
-| 2 | Ability model types | open |
+| 2 | Ability model types | done |
 | 3 | `Card` stores abilities behind the slot adapter | open |
 | 4 | Granted, temporary and delayed triggers store abilities | open |
 | 5 | Spell abilities leave the enum | open |
@@ -919,6 +919,173 @@ a card test that resolves the case through the engine before it is changed.
   `ON_SELF_BECOMES_CREWED`
 
 **Tests changed:** none. Step 1 changes no engine or card code.
+
+### Step 2
+
+**Types.** Nothing outside the new types' own tests uses them yet.
+
+- `model.Ability`: a sealed marker interface that permits `SpellAbility`, `ActivatedAbility`,
+  `TriggeredAbility` and `StaticAbility`. It has to live in `model`: a sealed type in the unnamed module
+  can only permit classes of its own package, and `ActivatedAbility` is there. `ActivatedAbility` is now
+  `non-sealed` and implements `Ability`; nothing else about it changed.
+- `model.SpellAbility(List<EffectRegistration> effects)`.
+- `model.StaticAbility(List<CardEffect> effects, AbilityZones zones)`. Its one-argument constructor
+  gives the battlefield.
+- `model.TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions options, List<EffectRegistration> effects)`.
+  Its convenience constructor takes one `Trigger` and uses that trigger's default zones.
+- `model.AbilityZones(Set<Zone> zones)`, with `of(...)`, `functionsIn(Zone)` and constants for the
+  battlefield, graveyard, hand, exile and command zone.
+- `model.trigger.Trigger`: a sealed interface with `defaultZones()`, the battlefield unless a trigger
+  overrides it (CR 113.6, 113.6k). For now it permits only `LegacySlotTrigger(EffectSlot slot)`.
+- `model.trigger.TriggerCondition(Trigger trigger, AbilityZones zones)`.
+- `model.trigger.TriggerOptions(Condition interveningIf, TriggerLimit limit, TriggerMultiplicity multiplicity)`,
+  with `DEFAULT` and the withers `withInterveningIf`, `withLimit` and `withMultiplicity`.
+- `TriggerLimit`: `NONE`, `ONCE_EACH_TURN`, `DO_ONLY_ONCE_EACH_TURN` (CR 603.2h) and `ONCE`.
+- `TriggerMultiplicity`: `EACH` (CR 603.2c) and `ONE_OR_MORE`.
+
+**Invariants, each with a unit test.**
+
+- Every list and set is an unmodifiable copy. Every ability has at least one effect, a triggered ability
+  has at least one condition, and `AbilityZones` has at least one zone.
+- The first effect of a spell or triggered ability can't be marked simultaneous with the effect before
+  it, because the effect before it would be in another stack object. **Step 3 must keep each
+  `addSimultaneousEffects` group inside one ability**, even in slots whose collectors group as *each*.
+- Every registration in a spell ability has `TriggerMode.NORMAL`. That is true of every card today: no
+  `SPELL` registration has a mode.
+- `LegacySlotTrigger` accepts every slot except `SPELL`, `STATIC` and `COMMAND_ZONE_STATIC`. Step 3
+  therefore builds a `SpellAbility` for `SPELL`, and a `StaticAbility` for the battlefield (`STATIC`) or
+  the command zone (`COMMAND_ZONE_STATIC`). The other non-trigger slots (`ON_TAP`, `ON_SACRIFICE`, the
+  replacement, special-action and `GRANT_*` slots) go into legacy triggered abilities until steps 7 and 8.
+- A `LegacySlotTrigger` is the only condition of its ability, and that ability's options are `DEFAULT`.
+  Its collectors and wrapper effects stay the one source of its trigger-level properties.
+- `LegacySlotTrigger.defaultZones()` reads the slot name's prefix: `GRAVEYARD_`, `COMMAND_ZONE_`,
+  `EXILE_`, `EXILED_` or `HAND_`, and the battlefield otherwise. Nothing reads it yet. The collectors still
+  decide where a legacy slot works, and some unprefixed slots look in other zones (the inventory's Zone
+  column).
+
+**Where this differs from the Design.**
+
+- **A triggered ability has a list of trigger conditions, each with its own zones**, not one `Trigger`.
+  CR 113.6k (checked) lets the trigger conditions of one ability function in different zones (Absolver
+  Thrull: "When this creature enters or the creature it haunts dies"). "Whenever this creature enters or
+  attacks" is also one ability, and a "triggers only once each turn" limit covers both conditions. Today
+  such a card registers in two slots and has two abilities; the step that moves the second family can
+  merge them.
+- **`TriggerMultiplicity` has two values.** The `TriggerMode` values don't each become a multiplicity.
+  Which occurrences one event contains (a creature, a token, a blocker, a counter) is a property of the
+  event, decided when its family moves. For example, "becomes blocked by a creature" triggers once for
+  each blocker (**CR 509.3d**, checked), but "becomes blocked" triggers once (**CR 509.3c**, checked):
+  those are two trigger events, not two multiplicities. Mapping for step 14:
+  - `NORMAL`, `PER_COUNTER`, `PER_TOKEN` and `PER_BLOCKER` become `EACH`. Step 13.5 checks the counter
+    event's occurrences against the card rulings.
+  - `ONCE_PER_BATCH`, `ONCE_PER_BLOCK` and `LIBRARY_ARRIVALS_BATCHED` become `ONE_OR_MORE` over step 9's
+    event batches.
+  - `INDEPENDENT` becomes a separate `TriggeredAbility`. It describes grouping, not an option.
+  - `TOKEN_CREATION` becomes a token-creation trigger event, not an enters trigger.
+- **Limits.** `OnceOnlyTriggerEffect` becomes `ONCE`. `OncePerTurnTriggerEffect` becomes `ONCE_EACH_TURN`,
+  or `DO_ONLY_ONCE_EACH_TURN` when `markOnAcceptance` is set. Its `first…` flags are trigger conditions,
+  not limits, and `OncePerTurnPerCreatureTriggerEffect` is one too. Examples:
+  - Deathless Knight (`ELD` 208): "When you gain life for the first time each turn".
+  - Stalwart Successor (`TDM` 227): "if it's the first time counters have been put on that creature this
+    turn" is an intervening "if".
+
+  Step 14 makes them `Trigger` filters or intervening-if conditions.
+- **Effects are `EffectRegistration`s**, reused rather than replaced. They keep the simultaneous flag,
+  which the Design asks for, and the legacy `TriggerMode` until step 14 deletes it, so step 3's
+  `getEffectRegistrations(slot)` is a lossless view. `StaticAbility` holds plain `CardEffect`s: no
+  `STATIC` or `COMMAND_ZONE_STATIC` registration has a mode or a simultaneous flag today.
+- **`SpellAbility` has no target groups yet.** About 2,600 `target(…).addEffect(EffectSlot.…)` calls in
+  card classes bind effects in 85 slots. Most are `SPELL` (1,311), then `ON_ENTER_BATTLEFIELD` (577),
+  `STATIC` (155, mostly the enchant target of Aura spells) and `ON_ATTACK` (125). A target group therefore
+  belongs to whichever ability holds the bound effects. Step 5 adds an immutable target-group record to
+  `SpellAbility`, and the other slots' bindings stay on `Card` until their families move.
+- **`SPELL` also holds casting costs of permanent spells**, such as `RepeatableAdditionalManaCost` for
+  multikicker (Zethi, Arcane Blademaster; Zephyrim; Wolfbriar Elemental). These are not spell abilities,
+  which only instants and sorceries have (CR 113.3a). Step 5 must find every one and give it another home.
+- `Ability` declares no methods. `SpellAbility` has no zones because it always works on the stack.
+  `ActivatedAbility` gets zones in step 7.
+
+**Authoring API.** These names are settled. The number in parentheses is the step that adds each one.
+
+| Today | Target |
+|---|---|
+| `addEffect(EffectSlot.SPELL, e)` | `addSpellEffect(e)` (5) |
+| `addSimultaneousEffects(EffectSlot.SPELL, a, b)` | `addSimultaneousSpellEffects(a, b)` (5) |
+| `target(f).addEffect(EffectSlot.SPELL, e)` | `target(f).addSpellEffect(e)` (5) |
+| `getEffects(EffectSlot.SPELL)` | `getSpellAbility()` and `getSpellEffects()` (5) |
+| `addEffect(EffectSlot.STATIC, e)` | `addStaticEffect(e)` (6) |
+| `addEffect(EffectSlot.COMMAND_ZONE_STATIC, e)` | `addStaticEffect(AbilityZones.COMMAND, e)` (6) |
+| `getEffects(EffectSlot.STATIC)` | `getStaticEffects(Zone.BATTLEFIELD)` (6) |
+| `addEffect(EffectSlot.ON_…, e)` | `addTrigger(Triggers.…(…), e…)` (10 to 13) |
+| a zone prefix or a trigger-level wrapper | `addTrigger(TriggerCondition, TriggerOptions, e…)` (10 to 14) |
+| several conditions, or simultaneous effects | `addTriggeredAbility(TriggeredAbility)` (first step that needs it) |
+| `getEffects(EffectSlot.ON_…)` | `getTriggeredAbilities()` (10) |
+
+- The effects of one `addTrigger` call are one ability, in order.
+- `Triggers` in `model.trigger` has one static factory per trigger event (`dies`, `enters`, `leaves`,
+  `upkeep`, `castsSpell`, `becomesTarget`, …). Each returns its event family's `Trigger` record.
+- How the event's object relates to the source is an `ObjectRelation` enum in `model.trigger`:
+  - `THIS`;
+  - `YOU_CONTROL` and `ANY`, which include this only if it matches the filter ("a creature you control");
+  - `ANOTHER_YOU_CONTROL` and `ANOTHER`;
+  - `THIS_OR_ANOTHER_YOU_CONTROL` and `THIS_OR_ANOTHER`: this counts whatever its characteristics, and the
+    filter applies only to the other objects ("this creature or another Cleric");
+  - `OPPONENT_CONTROLS`, `ENCHANTED` and `EQUIPPED`.
+- For players, the existing `PlayerRelation` is used, extended as step 13.1 needs.
+- Step 10 adds `Triggers`, `ObjectRelation` and the first event family record, the zone-change trigger.
+
+**Three cards converted by hand**, as the target for the scripts:
+
+- **Char** (`RAV` 117, step 5): "Char deals 4 damage to any target and 2 damage to you."
+
+  ```
+  before: addSimultaneousEffects(EffectSlot.SPELL,
+                  new DealDamageToAnyTargetEffect(4),
+                  new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER));
+  after:  addSimultaneousSpellEffects(
+                  new DealDamageToAnyTargetEffect(4),
+                  new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER));
+  ```
+
+  The card holds one `SpellAbility` with two registrations, the second marked simultaneous with the first.
+  `SpellAbilityTest` builds exactly this.
+- **Rotlung Reanimator** (`ONS` 164, steps 10 and 11): "Whenever this creature or another Cleric dies,
+  create a 2/2 black Zombie creature token."
+
+  ```
+  before: addEffect(EffectSlot.ON_DEATH, CreateTokenEffect.blackZombie(1));
+          addEffect(EffectSlot.ON_ANY_CREATURE_DIES, new TriggeringCardConditionalEffect(
+                  new CardSubtypePredicate(CardSubtype.CLERIC), CreateTokenEffect.blackZombie(1)));
+  after:  addTrigger(Triggers.dies(ObjectRelation.THIS_OR_ANOTHER,
+                          new PermanentHasSubtypePredicate(CardSubtype.CLERIC)),
+                  CreateTokenEffect.blackZombie(1));
+  ```
+
+  Today the card has two abilities, though its Oracle text has one. After the change it has one
+  `TriggeredAbility`: one battlefield condition, `DEFAULT` options, and one effect. A wrath that destroys
+  it and two other Clerics still triggers it three times (**CR 603.10a**, checked).
+- **Arden Angel** (`SLD` 1344, step 13.1): "At the beginning of your upkeep, if Arden Angel is in your
+  graveyard, roll a four-sided die. If the result is 1, return Arden Angel from your graveyard to the
+  battlefield."
+
+  ```
+  before: addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
+                  new ConditionalEffect(new SourceCardInGraveyard(),
+                          new RollD4Effect(new ReturnSourceCardFromGraveyardToBattlefieldEffect(false))));
+  after:  addTrigger(new TriggerCondition(Triggers.upkeep(PlayerRelation.SELF), AbilityZones.GRAVEYARD),
+                  TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInGraveyard()),
+                  new RollD4Effect(new ReturnSourceCardFromGraveyardToBattlefieldEffect(false)));
+  ```
+
+  Its effect moves it out of the graveyard, so it functions only there (**CR 113.6m**, checked). The
+  `GRAVEYARD_` prefix becomes the condition's zones, and the intervening-if `ConditionalEffect` becomes
+  the option, checked again on resolution (CR 603.4).
+
+**Tests changed:** none. New tests in `magical-vibes-application` (`model/` and `model/trigger/`):
+`AbilityZonesTest`, `SpellAbilityTest`, `StaticAbilityTest`, `TriggeredAbilityTest`,
+`LegacySlotTriggerTest`, `TriggerConditionTest` and `TriggerOptionsTest`. The inventory was not
+regenerated, because step 2 moves no slot. Its count of 53 domain types that hold an `EffectSlot` now
+leaves out `LegacySlotTrigger`, which step 16 deletes.
 
 ## Prompt
 
