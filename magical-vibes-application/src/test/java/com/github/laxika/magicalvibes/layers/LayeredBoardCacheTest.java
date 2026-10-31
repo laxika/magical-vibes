@@ -110,6 +110,21 @@ class LayeredBoardCacheTest extends BaseCardTest {
     }
 
     @Test
+    void abilityReplacedInPlaceOnAnUnfrozenCardInvalidates() {
+        // The card keeps the same number of abilities, so only their identities show the change.
+        Permanent bear = add(player1, new GrizzlyBears());
+        Card mutableBear = TestCards.mutableCard(bear);
+        mutableBear.addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
+
+        mutableBear.removeEffectsIf(GrantKeywordEffect.class::isInstance);
+        mutableBear.addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
+
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
     void swappingInAnotherFrozenCardInvalidates() {
         // A frozen card is hashed by identity alone, which is exactly what an L1 copy swap changes.
         Permanent bear = add(player1, new GrizzlyBears());

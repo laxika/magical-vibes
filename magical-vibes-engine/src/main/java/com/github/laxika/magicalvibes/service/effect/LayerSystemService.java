@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -987,8 +988,7 @@ public class LayerSystemService {
      * The card identity (L1 copy swaps change the instance) plus, for an unfrozen card only, the
      * printed values the pass seeds from: a frozen card's mutators all throw, so its identity
      * already covers its contents, while an unfrozen one (a clone's runtime copy card, a test's
-     * {@code TestCards.mutableCard}) can change in place behind the same identity. Skipping the
-     * frozen case matters: walking the effect slots costs ~500 steps per card per fingerprint.
+     * {@code TestCards.mutableCard}) can change in place behind the same identity.
      */
     private static long hashCard(long h, Card card) {
         h = mix(h, System.identityHashCode(card));
@@ -1005,12 +1005,13 @@ public class LayerSystemService {
         h = hashEnums(h, card.getKeywords());
         h = hashEnums(h, card.getAdditionalTypes());
         h = hashEnums(h, card.getSupertypes());
-        // Every slot's size, the static slot and the layer-6 chosen-as-enters protection seed
-        // (ON_ENTER_BATTLEFIELD) included; slots that never held an effect are skipped.
-        long[] slotSizes = {h};
-        card.forEachEffectSlotSize((slot, size) ->
-                slotSizes[0] = mix(mix(slotSizes[0], slot.ordinal()), size));
-        h = slotSizes[0];
+        // Every ability, the static ones and the layer-6 chosen-as-enters protection seed (an
+        // ON_ENTER_BATTLEFIELD ability) included. Abilities are immutable and a change replaces
+        // one, so its identity covers its contents.
+        h = mix(h, card.getAbilities().size());
+        for (Ability ability : card.getAbilities()) {
+            h = mix(h, System.identityHashCode(ability));
+        }
         h = mix(h, card.getActivatedAbilities().size());
         h = mix(h, card.getGraveyardActivatedAbilities().size());
         h = mix(h, card.getHandActivatedAbilities().size());

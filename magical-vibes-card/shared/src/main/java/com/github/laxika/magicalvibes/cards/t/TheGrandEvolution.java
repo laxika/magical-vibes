@@ -24,11 +24,11 @@ public class TheGrandEvolution extends Card {
         addEffect(EffectSlot.SAGA_CHAPTER_I,
                 new MillControllerAndPutMilledCreaturesOntoBattlefieldEffect(10, 2));
 
-        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(TargetFilters.creatureYouControl()));
         target(TargetFilters.creatureYouControl(), 0, 99)
                 .addEffect(EffectSlot.SAGA_CHAPTER_II,
                         DistributeCountersAmongTargetsEffect.chosenAmongTargetCreatures(
                                 CounterType.PLUS_ONE_PLUS_ONE, new Fixed(7)));
+        setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(TargetFilters.creatureYouControl()));
 
         addEffect(EffectSlot.SAGA_CHAPTER_III, SequenceEffect.of(
                 new GrantActivatedAbilityEffect(

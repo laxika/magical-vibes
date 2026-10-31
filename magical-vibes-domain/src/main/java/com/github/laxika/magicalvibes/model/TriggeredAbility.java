@@ -20,14 +20,18 @@ import java.util.Objects;
  *                   effects instead, so its options are {@link TriggerOptions#DEFAULT}.
  * @param effects    the effects in the order they resolve, at least one. Effects marked simultaneous
  *                   happen at the same time as the effect before them, so the first one can't be.
+ * @param chapterTargets the targets of a Saga chapter ability, or {@link SagaChapterTargets#NONE}.
+ *                   The targets of other triggered abilities are still bound on the {@link Card}.
  */
 public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions options,
-                               List<EffectRegistration> effects) implements Ability {
+                               List<EffectRegistration> effects, SagaChapterTargets chapterTargets)
+        implements Ability {
 
     public TriggeredAbility {
         conditions = List.copyOf(Objects.requireNonNull(conditions, "conditions"));
         Objects.requireNonNull(options, "options");
         effects = List.copyOf(Objects.requireNonNull(effects, "effects"));
+        Objects.requireNonNull(chapterTargets, "chapterTargets");
         if (conditions.isEmpty()) {
             throw new IllegalArgumentException("A triggered ability needs at least one trigger condition");
         }
@@ -48,8 +52,24 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         }
     }
 
+    /** An ability that isn't a Saga chapter ability. */
+    public TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions options,
+                            List<EffectRegistration> effects) {
+        this(conditions, options, effects, SagaChapterTargets.NONE);
+    }
+
     /** An ability with one trigger condition, which functions from {@code trigger}'s default zones. */
     public TriggeredAbility(Trigger trigger, TriggerOptions options, List<EffectRegistration> effects) {
         this(List.of(new TriggerCondition(trigger)), options, effects);
+    }
+
+    /** This ability with {@code effects} in place of its effects. */
+    public TriggeredAbility withEffects(List<EffectRegistration> effects) {
+        return new TriggeredAbility(conditions, options, effects, chapterTargets);
+    }
+
+    /** This ability with {@code chapterTargets} in place of its Saga chapter targets. */
+    public TriggeredAbility withChapterTargets(SagaChapterTargets chapterTargets) {
+        return new TriggeredAbility(conditions, options, effects, chapterTargets);
     }
 }

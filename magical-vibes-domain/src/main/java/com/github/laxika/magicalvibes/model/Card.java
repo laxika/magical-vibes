@@ -57,13 +57,14 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringArtifactControllerC
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentControllerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringRoomDoorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import lombok.AccessLevel;
 import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -71,10 +72,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.ObjIntConsumer;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 @Getter
 public class Card {
@@ -343,20 +346,15 @@ public class Card {
      */
     private PermanentPredicate attachRestriction;
 
+    /**
+     * The spell, triggered and static abilities, in the order they were added; see
+     * {@link #getAbilities()}. The elements are immutable, so a change replaces an element.
+     */
     @Getter(AccessLevel.NONE)
-    private Map<EffectSlot, List<EffectRegistration>> effectRegistrations = new EnumMap<>(EffectSlot.class);
-    /** Cached effect-only lists, invalidated on addEffect. */
+    private List<Ability> abilities = new ArrayList<>();
+    /** The per-slot view of {@link #abilities}, built on first use and dropped whenever they change. */
     @Getter(AccessLevel.NONE)
-    private Map<EffectSlot, List<CardEffect>> effectCache = new EnumMap<>(EffectSlot.class);
-    /** Per-chapter target filters for Saga cards (e.g. "target creature an opponent controls"). */
-    @Getter(AccessLevel.NONE)
-    private Map<EffectSlot, Set<TargetFilter>> sagaChapterTargetFilters = new EnumMap<>(EffectSlot.class);
-    /** Per-chapter target groups for Saga abilities with more than one target. */
-    @Getter(AccessLevel.NONE)
-    private Map<EffectSlot, List<SagaChapterTargetGroup>> sagaChapterTargetGroups = new EnumMap<>(EffectSlot.class);
-    /** Saga chapters whose single target is mandatory (no "up to one"), so it cannot be skipped. */
-    @Getter(AccessLevel.NONE)
-    private Set<EffectSlot> sagaChaptersWithRequiredTarget = java.util.EnumSet.noneOf(EffectSlot.class);
+    private volatile SlotIndex slotIndex;
     private List<ActivatedAbility> activatedAbilities = new ArrayList<>();
     private List<ActivatedAbility> graveyardActivatedAbilities = new ArrayList<>();
     /** Abilities activatable while this card is in its owner's hand (e.g. Reinforce). */
@@ -502,13 +500,9 @@ public class Card {
         this.flashCastCondition = source.flashCastCondition;
         this.flashCastTargetPredicate = source.flashCastTargetPredicate;
         this.attachRestriction = source.attachRestriction;
-        source.effectRegistrations.forEach((slot, regs) ->
-                this.effectRegistrations.put(slot, new ArrayList<>(regs)));
-        // effectCache intentionally left empty — rebuilt lazily by getEffects()
-        this.sagaChapterTargetFilters.putAll(source.sagaChapterTargetFilters);
-        this.sagaChaptersWithRequiredTarget.addAll(source.sagaChaptersWithRequiredTarget);
-        source.sagaChapterTargetGroups.forEach((slot, groups) ->
-                this.sagaChapterTargetGroups.put(slot, List.copyOf(groups)));
+        this.abilities = new ArrayList<>(source.abilities);
+        // The index holds no reference to its card, so the copy shares it until either changes.
+        this.slotIndex = source.slotIndex;
         this.activatedAbilities = new ArrayList<>(source.activatedAbilities);
         this.graveyardActivatedAbilities = new ArrayList<>(source.graveyardActivatedAbilities);
         this.handActivatedAbilities = new ArrayList<>(source.handActivatedAbilities);
@@ -554,22 +548,12 @@ public class Card {
                 ? Set.of()
                 : EnumSet.copyOf(textSource.keywords);
 
-        copy.effectRegistrations.clear();
-        textSource.effectRegistrations.forEach((slot, registrations) ->
-                copy.effectRegistrations.put(slot, new ArrayList<>(registrations)));
-        copy.effectCache.clear();
+        copy.abilities = new ArrayList<>(textSource.abilities);
+        copy.slotIndex = textSource.slotIndex;
 
         copy.spellTargets.clear();
         copy.effectTargetIndexMap.clear();
         copy.copyTargetingFrom(textSource);
-
-        copy.sagaChapterTargetFilters.clear();
-        copy.sagaChapterTargetFilters.putAll(textSource.sagaChapterTargetFilters);
-        copy.sagaChaptersWithRequiredTarget.clear();
-        copy.sagaChaptersWithRequiredTarget.addAll(textSource.sagaChaptersWithRequiredTarget);
-        copy.sagaChapterTargetGroups.clear();
-        textSource.sagaChapterTargetGroups.forEach((slot, groups) ->
-                copy.sagaChapterTargetGroups.put(slot, List.copyOf(groups)));
 
         copy.activatedAbilities = new ArrayList<>(textSource.activatedAbilities);
         copy.graveyardActivatedAbilities = new ArrayList<>(textSource.graveyardActivatedAbilities);
@@ -654,14 +638,8 @@ public class Card {
         this.castCondition = face.castCondition;
         this.flashCastCondition = face.flashCastCondition;
         this.attachRestriction = face.attachRestriction;
-        this.effectRegistrations.clear();
-        face.effectRegistrations.forEach((slot, regs) ->
-                this.effectRegistrations.put(slot, new ArrayList<>(regs)));
-        this.effectCache.clear();
-        this.sagaChapterTargetFilters.clear();
-        this.sagaChapterTargetFilters.putAll(face.sagaChapterTargetFilters);
-        this.sagaChaptersWithRequiredTarget.clear();
-        this.sagaChaptersWithRequiredTarget.addAll(face.sagaChaptersWithRequiredTarget);
+        this.abilities = new ArrayList<>(face.abilities);
+        this.slotIndex = face.slotIndex;
         this.activatedAbilities = new ArrayList<>(face.activatedAbilities);
         this.graveyardActivatedAbilities = new ArrayList<>(face.graveyardActivatedAbilities);
         this.handActivatedAbilities = new ArrayList<>(face.handActivatedAbilities);
@@ -891,11 +869,8 @@ public class Card {
         morphLifeCost = null;
         spellTargets.clear();
         effectTargetIndexMap.clear();
-        effectRegistrations.clear();
-        effectCache.clear();
-        sagaChapterTargetFilters.clear();
-        sagaChapterTargetGroups.clear();
-        sagaChaptersWithRequiredTarget.clear();
+        abilities.clear();
+        slotIndex = null;
         activatedAbilities.clear();
         graveyardActivatedAbilities.clear();
         handActivatedAbilities.clear();
@@ -915,13 +890,10 @@ public class Card {
     /** Clears the rules text and ability registrations on a mutable runtime copy. */
     public void clearRulesTextAndAbilities() {
         assertMutable();
-        effectRegistrations.clear();
-        effectCache.clear();
+        abilities.clear();
+        slotIndex = null;
         spellTargets.clear();
         effectTargetIndexMap.clear();
-        sagaChapterTargetFilters.clear();
-        sagaChapterTargetGroups.clear();
-        sagaChaptersWithRequiredTarget.clear();
         activatedAbilities.clear();
         graveyardActivatedAbilities.clear();
         handActivatedAbilities.clear();
@@ -1533,32 +1505,33 @@ public class Card {
 
     // ── Effect management ───────────────────────────────────────────
 
-    public List<CardEffect> getEffects(EffectSlot slot) {
-        List<CardEffect> cached = effectCache.get(slot);
-        if (cached != null) return cached;
-        List<EffectRegistration> regs = effectRegistrations.get(slot);
-        if (regs == null) return List.of();
-        List<CardEffect> effects = new ArrayList<>(regs.size());
-        for (EffectRegistration reg : regs) {
-            effects.add(reg.effect());
-        }
-        List<CardEffect> unmodifiable = Collections.unmodifiableList(effects);
-        effectCache.put(slot, unmodifiable);
-        return unmodifiable;
-    }
-
-    public List<EffectRegistration> getEffectRegistrations(EffectSlot slot) {
-        return effectRegistrations.getOrDefault(slot, List.of());
-    }
-
     /**
-     * Visits, in slot order, every slot that has held registered effects with how many it holds now
-     * — the structural view the layer board-cache fingerprint hashes for an unfrozen card. Not cheap:
-     * iterating the {@code EnumMap} walks all ~500 {@link EffectSlot}s, even for a card with a single
-     * ability.
+     * The card's spell, triggered and static abilities, in the order they were added. Activated
+     * abilities are still in the per-zone lists ({@link #getActivatedAbilities()} and the others).
+     *
+     * <p>Until each family leaves {@link EffectSlot}, these are built from slot registrations by
+     * {@link #addEffect(EffectSlot, CardEffect, TriggerMode)} and {@link #addSimultaneousEffects}:
+     * {@code SPELL} effects form one {@link SpellAbility}, each {@code STATIC} or
+     * {@code COMMAND_ZONE_STATIC} effect is a {@link StaticAbility} of the battlefield or the command
+     * zone, and every other slot's effects form {@link TriggeredAbility}s with a
+     * {@link LegacySlotTrigger}, grouped as that slot's collectors group them
+     * ({@link LegacySlotGrouping}). The collectors still read the slot views, so the grouping changes
+     * nothing yet.
      */
-    public void forEachEffectSlotSize(ObjIntConsumer<EffectSlot> visitor) {
-        effectRegistrations.forEach((slot, registrations) -> visitor.accept(slot, registrations.size()));
+    public List<Ability> getAbilities() {
+        return Collections.unmodifiableList(abilities);
+    }
+
+    /** The effects of every ability in {@code slot}, in the order they were added. */
+    public List<CardEffect> getEffects(EffectSlot slot) {
+        SlotView view = slotIndex().find(slot);
+        return view == null ? List.of() : view.effects();
+    }
+
+    /** The registrations of every ability in {@code slot}, in the order they were added. */
+    public List<EffectRegistration> getEffectRegistrations(EffectSlot slot) {
+        SlotView view = slotIndex().find(slot);
+        return view == null ? List.of() : view.registrations();
     }
 
     public void removeKeyword(Keyword keyword) {
@@ -1572,23 +1545,35 @@ public class Card {
 
     /** Removes every registered effect matching {@code filter} from every slot, such as a copy exception's omissions. */
     public void removeEffectsIf(Predicate<CardEffect> filter) {
+        removeSlotEffectsIf((slot, effect) -> filter.test(effect));
+    }
+
+    /**
+     * Removes every registered effect for which {@code filter} holds, given the effect's slot. An
+     * ability left without effects is removed; an effect that was simultaneous with a removed one
+     * becomes the first of its ability, so it is no longer marked simultaneous.
+     */
+    public void removeSlotEffectsIf(BiPredicate<EffectSlot, CardEffect> filter) {
         assertMutable();
-        effectRegistrations.values().forEach(registrations -> registrations.removeIf(reg -> filter.test(reg.effect())));
-        effectCache.clear();
+        List<Ability> kept = new ArrayList<>(abilities.size());
+        for (Ability ability : abilities) {
+            Ability rest = withoutEffects(ability, filter);
+            if (rest != null) {
+                kept.add(rest);
+            }
+        }
+        abilities = kept;
+        slotIndex = null;
     }
 
     public void addEffect(EffectSlot slot, CardEffect effect) {
-        assertMutable();
-        validateEffectSlotType(slot, effect);
-        effectRegistrations.computeIfAbsent(slot, k -> new ArrayList<>()).add(new EffectRegistration(effect));
-        effectCache.remove(slot);
+        addEffect(slot, effect, TriggerMode.NORMAL);
     }
 
     public void addEffect(EffectSlot slot, CardEffect effect, TriggerMode triggerMode) {
         assertMutable();
         validateEffectSlotType(slot, effect);
-        effectRegistrations.computeIfAbsent(slot, k -> new ArrayList<>()).add(new EffectRegistration(effect, triggerMode));
-        effectCache.remove(slot);
+        addRegistrations(slot, List.of(new EffectRegistration(effect, triggerMode)));
     }
 
     /**
@@ -1597,7 +1582,7 @@ public class Card {
      * of it. Every separate effect is otherwise its own event. Effects bound to different target
      * groups are attached with {@code SpellTarget.bindEffect} first and added here. Steps inside a
      * wrapper effect or an activated ability's effect list go in a
-     * {@code SequenceEffect.simultaneous} instead.
+     * {@code SequenceEffect.simultaneous} instead. The effects are always one ability.
      */
     public void addSimultaneousEffects(EffectSlot slot, CardEffect... effects) {
         addSimultaneousEffects(slot, TriggerMode.NORMAL, effects);
@@ -1608,18 +1593,18 @@ public class Card {
         if (effects.length < 2) {
             throw new IllegalArgumentException("Simultaneous effects need at least two effects, got " + effects.length);
         }
-        List<EffectRegistration> regs = effectRegistrations.computeIfAbsent(slot, k -> new ArrayList<>());
+        List<EffectRegistration> group = new ArrayList<>(effects.length);
         for (int i = 0; i < effects.length; i++) {
             validateEffectSlotType(slot, effects[i]);
-            regs.add(new EffectRegistration(effects[i], triggerMode, i > 0));
+            group.add(new EffectRegistration(effects[i], triggerMode, i > 0));
         }
-        effectCache.remove(slot);
+        addRegistrations(slot, group);
     }
 
     /** Whether {@code effect} is registered as happening at the same time as the effect before it. */
     public boolean isSimultaneousWithPrevious(CardEffect effect) {
-        for (List<EffectRegistration> regs : effectRegistrations.values()) {
-            for (EffectRegistration reg : regs) {
+        for (SlotView view : slotIndex().views()) {
+            for (EffectRegistration reg : view.registrations()) {
                 if (reg.effect() == effect) {
                     return reg.simultaneousWithPrevious();
                 }
@@ -1632,6 +1617,205 @@ public class Card {
         if (slot == EffectSlot.STATE_TRIGGERED && !(effect instanceof StateTriggerEffect)) {
             throw new IllegalArgumentException(
                     "STATE_TRIGGERED slot requires StateTriggerEffect, got " + effect.getClass().getSimpleName());
+        }
+    }
+
+    /**
+     * Adds {@code group}, one registration or a group of simultaneous ones, to the ability of
+     * {@code slot} that it joins, or as a new ability. A group always stays in one ability.
+     */
+    private void addRegistrations(EffectSlot slot, List<EffectRegistration> group) {
+        EffectRegistration first = group.getFirst();
+        switch (slot) {
+            case SPELL -> {
+                int index = indexOfFirstAbility(slot);
+                if (index < 0) {
+                    abilities.add(new SpellAbility(group));
+                } else {
+                    abilities.set(index, new SpellAbility(
+                            concat(((SpellAbility) abilities.get(index)).effects(), group)));
+                }
+            }
+            case STATIC, COMMAND_ZONE_STATIC -> {
+                if (group.size() > 1 || first.triggerMode() != TriggerMode.NORMAL) {
+                    throw new IllegalArgumentException("A static ability neither triggers nor has simultaneous "
+                            + "effects, but " + first.effect().getClass().getSimpleName() + " was added to " + slot
+                            + " with trigger mode " + first.triggerMode() + " in a group of " + group.size());
+                }
+                abilities.add(new StaticAbility(List.of(first.effect()),
+                        slot == EffectSlot.STATIC ? AbilityZones.BATTLEFIELD : AbilityZones.COMMAND));
+            }
+            default -> {
+                int index = switch (LegacySlotGrouping.of(slot)) {
+                    case EACH -> -1;
+                    case ALL -> indexOfFirstAbility(slot);
+                    case ALL_BUT_INDEPENDENT -> first.triggerMode() == TriggerMode.INDEPENDENT
+                            ? -1
+                            : indexOfSharedAbility(slot);
+                };
+                if (index < 0) {
+                    abilities.add(new TriggeredAbility(new LegacySlotTrigger(slot), TriggerOptions.DEFAULT, group));
+                } else {
+                    TriggeredAbility ability = (TriggeredAbility) abilities.get(index);
+                    abilities.set(index, ability.withEffects(concat(ability.effects(), group)));
+                }
+            }
+        }
+        slotIndex = null;
+    }
+
+    private int indexOfFirstAbility(EffectSlot slot) {
+        for (int i = 0; i < abilities.size(); i++) {
+            if (slotOf(abilities.get(i)) == slot) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** The ability of an all-but-independent slot that its non-independent registrations share. */
+    private int indexOfSharedAbility(EffectSlot slot) {
+        for (int i = 0; i < abilities.size(); i++) {
+            if (abilities.get(i) instanceof TriggeredAbility ability && slotOf(ability) == slot
+                    && ability.effects().getFirst().triggerMode() != TriggerMode.INDEPENDENT) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static List<EffectRegistration> concat(List<EffectRegistration> head, List<EffectRegistration> tail) {
+        List<EffectRegistration> all = new ArrayList<>(head.size() + tail.size());
+        all.addAll(head);
+        all.addAll(tail);
+        return all;
+    }
+
+    /** {@code ability} without the effects {@code filter} removes, itself if none, or null if it has none left. */
+    private static Ability withoutEffects(Ability ability, BiPredicate<EffectSlot, CardEffect> filter) {
+        EffectSlot slot = slotOf(ability);
+        return switch (ability) {
+            case SpellAbility spell -> {
+                List<EffectRegistration> kept = keptRegistrations(spell.effects(), slot, filter);
+                yield kept == spell.effects() ? spell : kept.isEmpty() ? null : new SpellAbility(kept);
+            }
+            case TriggeredAbility triggered -> {
+                List<EffectRegistration> kept = keptRegistrations(triggered.effects(), slot, filter);
+                yield kept == triggered.effects() ? triggered : kept.isEmpty() ? null : triggered.withEffects(kept);
+            }
+            case StaticAbility statik -> {
+                List<CardEffect> kept = statik.effects().stream()
+                        .filter(effect -> !filter.test(slot, effect))
+                        .toList();
+                yield kept.size() == statik.effects().size() ? statik
+                        : kept.isEmpty() ? null : new StaticAbility(kept, statik.zones());
+            }
+            case ActivatedAbility activated -> activated;
+        };
+    }
+
+    /**
+     * {@code registrations} without those {@code filter} removes, the same list if it removes none.
+     * The first one left is no longer marked simultaneous, since the effect before it is gone.
+     */
+    private static List<EffectRegistration> keptRegistrations(List<EffectRegistration> registrations,
+                                                              EffectSlot slot,
+                                                              BiPredicate<EffectSlot, CardEffect> filter) {
+        List<EffectRegistration> kept = new ArrayList<>(registrations.size());
+        for (EffectRegistration reg : registrations) {
+            if (!filter.test(slot, reg.effect())) {
+                kept.add(reg);
+            }
+        }
+        if (kept.size() == registrations.size()) {
+            return registrations;
+        }
+        if (!kept.isEmpty() && kept.getFirst().simultaneousWithPrevious()) {
+            EffectRegistration first = kept.getFirst();
+            kept.set(0, new EffectRegistration(first.effect(), first.triggerMode(), false));
+        }
+        return kept;
+    }
+
+    /**
+     * The {@link EffectSlot} whose views show {@code ability}: {@code SPELL}, {@code STATIC} or
+     * {@code COMMAND_ZONE_STATIC}, or a triggered ability's legacy slot.
+     */
+    private static EffectSlot slotOf(Ability ability) {
+        return switch (ability) {
+            case SpellAbility spell -> EffectSlot.SPELL;
+            case StaticAbility statik -> statik.zones().functionsIn(Zone.COMMAND)
+                    ? EffectSlot.COMMAND_ZONE_STATIC
+                    : EffectSlot.STATIC;
+            case TriggeredAbility triggered -> switch (triggered.conditions().getFirst().trigger()) {
+                case LegacySlotTrigger legacy -> legacy.slot();
+            };
+            case ActivatedAbility activated -> throw new IllegalStateException(
+                    "Activated abilities are kept in their own lists, not in a slot");
+        };
+    }
+
+    private SlotIndex slotIndex() {
+        SlotIndex index = slotIndex;
+        if (index == null) {
+            index = SlotIndex.of(abilities);
+            slotIndex = index;
+        }
+        return index;
+    }
+
+    /**
+     * One slot's view: the registrations and effects of its abilities in the order they were added,
+     * and the slot's first triggered ability, which holds a Saga chapter's targets.
+     */
+    private record SlotView(EffectSlot slot, List<EffectRegistration> registrations, List<CardEffect> effects,
+                            TriggeredAbility firstTriggeredAbility) {
+    }
+
+    /**
+     * The views of every slot that holds abilities, in slot order. It is immutable and refers to no
+     * card, so frozen cards and their copies can share it across threads; two threads that both
+     * build it build the same index.
+     */
+    private record SlotIndex(List<SlotView> views) {
+
+        static SlotIndex of(List<Ability> abilities) {
+            Map<EffectSlot, List<Ability>> bySlot = new TreeMap<>();
+            for (Ability ability : abilities) {
+                bySlot.computeIfAbsent(slotOf(ability), slot -> new ArrayList<>()).add(ability);
+            }
+            List<SlotView> views = new ArrayList<>(bySlot.size());
+            bySlot.forEach((slot, slotAbilities) -> {
+                List<EffectRegistration> registrations = new ArrayList<>();
+                TriggeredAbility firstTriggered = null;
+                for (Ability ability : slotAbilities) {
+                    switch (ability) {
+                        case SpellAbility spell -> registrations.addAll(spell.effects());
+                        case TriggeredAbility triggered -> {
+                            registrations.addAll(triggered.effects());
+                            if (firstTriggered == null) {
+                                firstTriggered = triggered;
+                            }
+                        }
+                        case StaticAbility statik -> statik.effects()
+                                .forEach(effect -> registrations.add(new EffectRegistration(effect)));
+                        case ActivatedAbility activated -> {
+                        }
+                    }
+                }
+                views.add(new SlotView(slot, List.copyOf(registrations),
+                        registrations.stream().map(EffectRegistration::effect).toList(), firstTriggered));
+            });
+            return new SlotIndex(List.copyOf(views));
+        }
+
+        SlotView find(EffectSlot slot) {
+            for (SlotView view : views) {
+                if (view.slot() == slot) {
+                    return view;
+                }
+            }
+            return null;
         }
     }
 
@@ -1835,32 +2019,59 @@ public class Card {
         return this;
     }
 
+    /**
+     * Sets the filters of the single target of the Saga chapter ability in {@code slot}. The
+     * chapter's effects must be added first, since the targets are held by its ability.
+     */
     public void setSagaChapterTargetFilter(EffectSlot slot, Set<TargetFilter> filters) {
         assertMutable();
-        sagaChapterTargetFilters.put(slot, filters);
+        changeChapterTargets(slot, targets -> targets.withFilters(filters));
     }
 
     public Set<TargetFilter> getSagaChapterTargetFilters(EffectSlot slot) {
-        return sagaChapterTargetFilters.getOrDefault(slot, Set.of());
+        return chapterTargets(slot).filters();
     }
 
-    /** Marks a Saga chapter's single target as mandatory: it must be chosen whenever a legal one exists. */
+    /**
+     * Marks a Saga chapter's single target as mandatory: it must be chosen whenever a legal one
+     * exists. The chapter's effects must be added first.
+     */
     public void setSagaChapterTargetRequired(EffectSlot slot) {
         assertMutable();
-        sagaChaptersWithRequiredTarget.add(slot);
+        changeChapterTargets(slot, SagaChapterTargets::withRequired);
     }
 
     public boolean isSagaChapterTargetRequired(EffectSlot slot) {
-        return sagaChaptersWithRequiredTarget.contains(slot);
+        return chapterTargets(slot).required();
     }
 
+    /** Sets the target groups of a Saga chapter with more than one target. The chapter's effects must be added first. */
     public void setSagaChapterTargetGroups(EffectSlot slot, List<SagaChapterTargetGroup> groups) {
         assertMutable();
-        sagaChapterTargetGroups.put(slot, List.copyOf(groups));
+        changeChapterTargets(slot, targets -> targets.withGroups(groups));
     }
 
     public List<SagaChapterTargetGroup> getSagaChapterTargetGroups(EffectSlot slot) {
-        return sagaChapterTargetGroups.getOrDefault(slot, List.of());
+        return chapterTargets(slot).groups();
+    }
+
+    private SagaChapterTargets chapterTargets(EffectSlot slot) {
+        SlotView view = slotIndex().find(slot);
+        return view == null || view.firstTriggeredAbility() == null
+                ? SagaChapterTargets.NONE
+                : view.firstTriggeredAbility().chapterTargets();
+    }
+
+    private void changeChapterTargets(EffectSlot slot, UnaryOperator<SagaChapterTargets> change) {
+        for (int i = 0; i < abilities.size(); i++) {
+            if (abilities.get(i) instanceof TriggeredAbility ability && slotOf(ability) == slot) {
+                abilities.set(i, ability.withChapterTargets(change.apply(ability.chapterTargets())));
+                slotIndex = null;
+                return;
+            }
+        }
+        throw new IllegalStateException("'" + name + "' has no ability in " + slot
+                + " to hold its targets; add the chapter's effects before its targets");
     }
 
     public void addActivatedAbility(ActivatedAbility ability) {

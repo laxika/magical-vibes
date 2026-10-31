@@ -843,9 +843,9 @@ battlefield composition/order, player life totals, every pass-read `Permanent` f
 counters, chosen values, P/T modifiers/overrides, animation state, granted/removed
 keywords/colors/subtypes/types, lose-all flags, text replacements, persistent granted
 activated abilities), the current `Card` identity (L1 copy swaps) plus, for unfrozen cards only,
-printed values and effect-slot sizes (insurance for `TestCards.mutableCard` and clone runtime
-copies; a frozen card's mutators throw, so identity covers it — and walking the ~500-constant
-`EffectSlot` `EnumMap` per card was a third of every fingerprint), the floating effects, graveyard/exile contents (CDA
+printed values and the identity of each of its abilities (insurance for `TestCards.mutableCard` and
+clone runtime copies; abilities are immutable and a change replaces one; a frozen card's mutators
+throw, so identity covers it), the floating effects, graveyard/exile contents (CDA
 scan inputs) and hand sizes, and `timestampCounter`. **The canonical input list lives in the
 `computeBoardFingerprint` javadoc — extend it whenever the pass starts reading a new input.**
 A stale fingerprint can only produce a false MISS (safe recompute); a false HIT requires a

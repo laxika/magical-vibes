@@ -16,7 +16,7 @@ re-check them with a grep before acting on them.
 |---|---|---|
 | 1 | Slot inventory and baseline | done |
 | 2 | Ability model types | done |
-| 3 | `Card` stores abilities behind the slot adapter | open |
+| 3 | `Card` stores abilities behind the slot adapter | done |
 | 4 | Granted, temporary and delayed triggers store abilities | open |
 | 5 | Spell abilities leave the enum | open |
 | 6 | Static abilities leave the enum | open |
@@ -1086,6 +1086,101 @@ a card test that resolves the case through the engine before it is changed.
 `LegacySlotTriggerTest`, `TriggerConditionTest` and `TriggerOptionsTest`. The inventory was not
 regenerated, because step 2 moves no slot. Its count of 53 domain types that hold an `EffectSlot` now
 leaves out `LegacySlotTrigger`, which step 16 deletes.
+
+### Step 3
+
+**Storage.** `Card.abilities` is a `List<Ability>` in the order abilities were added, and
+`Card.getAbilities()` returns it read-only. It holds no activated abilities: those stay in the four per-zone
+lists until step 7. The slot `EnumMap`, its effect cache and the three Saga side maps are gone. A `Card` has
+79 instance fields now, not 82 (`CardFreezeTest`). It also no longer allocates four `EnumMap`s of about 515
+entries each.
+
+**How `addEffect`, `addSimultaneousEffects` and `SpellTarget.addEffect` build abilities.** `SpellTarget` is
+unchanged: it already calls `Card.addEffect`.
+
+- `SPELL`: one `SpellAbility` holds every registration.
+- `STATIC` and `COMMAND_ZONE_STATIC`: each effect is its own `StaticAbility`, with zones `BATTLEFIELD` or
+  `COMMAND`. A trigger mode or a simultaneous group is rejected there. No card or engine path adds one.
+- Every other slot: `TriggeredAbility`s with a `LegacySlotTrigger` and `DEFAULT` options. The new
+  package-private `model.LegacySlotGrouping` decides the grouping. It was generated from the TSV's Grouping
+  column:
+  - `ALL`: 94 slots (the TSV's *all* minus `SPELL`). These include `ON_TAP`, `ON_SACRIFICE`, the eight
+    `GRANT_*` slots, `ON_BLOCK` and the six `SAGA_CHAPTER_*` slots.
+  - `ALL_BUT_INDEPENDENT`: 4 slots.
+  - `EACH`: everything else, *split*, *varies* and *none* included.
+
+  The step 1 recommendation counted the four *all-but-independent* slots twice: once to build from the
+  Grouping column, once in "the 49" to keep one per registration. They use their real grouping, which is
+  well defined.
+- A group from `addSimultaneousEffects` always goes into one ability, whatever the slot's grouping. Joining
+  an existing ability replaces that element with a new record, so the ability keeps its position, which is
+  where its first registration was.
+
+**The slot views.** `getEffects(slot)` and `getEffectRegistrations(slot)` read a `SlotIndex`. It is built
+lazily from the list, held in a `volatile` field, and dropped by every mutator. It is immutable and refers
+to no card, so copies share it until one of them changes. The old cache was a plain `EnumMap` that frozen
+cards filled in from several threads. A view lists the registrations of the slot's abilities in list order.
+That equals the order they were added, with one exception. In an *all-but-independent* slot, a plain
+registration added after an `INDEPENDENT` one is listed before it. No card does that: the only cards with
+`INDEPENDENT` in those slots, Champions from Beyond and Barbed Foliage, use it on every registration.
+`isSimultaneousWithPrevious` searches the slots in ordinal order, as before. A `STATIC` view builds plain
+`NORMAL` registrations.
+
+**Changes outside `Card`.** The step's Done-when says nothing outside `Card` and `SpellTarget` changes.
+These did, each because the step's own bullets needed it:
+
+- `getEffectRegistrations` is now read-only. Before, it handed out the internal list, and two handlers
+  edited it in place:
+  - `ReturnSourceAsAuraEffectHandler` now calls the new `Card.removeSlotEffectsIf(BiPredicate<EffectSlot, CardEffect>)`.
+  - `ExileTargetCreatureCardThenConjureSkeletonDuplicateEffectHandler` now calls `removeEffectsIf`.
+
+  No other caller edits the returned list; the grep covered every module, tests included.
+- `LayerSystemService.hashCard`: `forEachEffectSlotSize` is gone. An unfrozen card now hashes the number of
+  its abilities and the identity of each one. Abilities are immutable and a change replaces one, so this
+  also catches a change that keeps the count, which slot sizes missed:
+  `LayeredBoardCacheTest#abilityReplacedInPlaceOnAnUnfrozenCardInvalidates`. `LAYER_SYSTEM.md` is updated.
+- `TriggeredAbility` gets a fourth component, `SagaChapterTargets chapterTargets`, a new record of the
+  filters, groups and required flag. There is also a three-argument constructor that gives
+  `SagaChapterTargets.NONE`, plus `withEffects` and `withChapterTargets`. The `setSagaChapterTarget…`
+  setters now change the chapter's ability, so the chapter's effects must be added first; otherwise they
+  throw. `CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md` says so.
+- One card set a chapter target before adding the chapter's effect: The Grand Evolution (`shared`), in
+  chapter II. One line was moved by hand, which wasn't worth a script.
+
+**Behaviour changes, all at edges that no current card or test reaches.**
+
+- `removeEffectsIf` drops abilities left with no effects. When it removes the first effect of a
+  simultaneous group, the next effect is no longer marked simultaneous. Before, that effect stayed marked
+  and joined whatever effect came before it in the slot.
+- `createRuntimeCopyWithFace` now takes the face's Saga chapter target groups with its abilities. Before,
+  it copied the face's filters and required flags but kept the original card's groups.
+
+**For later steps.**
+
+- Engine copy paths (`CopySupport`, `PermanentCopierService`, `TokenCopySupport`, `MutationSupport` and
+  others) still rebuild a card by calling `addEffect(slot, effect, mode)` slot by slot over
+  `EffectSlot.values()`. Each copy's abilities are therefore in slot order, not the source's order, and
+  lose the simultaneous flag, as they did before. The step that makes copies copy abilities (CR 707.2)
+  fixes both.
+- Cross-slot grouping isn't represented. One example: the three `ON_CREATURE_ATTACKS_YOU…` slots share one
+  stack object on one card. It stays in the collector until that family moves.
+- `slotOf` in `Card` switches over `Trigger`, which permits only `LegacySlotTrigger`. When step 10 adds
+  another kind, that switch stops compiling. Abilities with a real trigger have no slot view, and the
+  views should skip them.
+
+**Tests changed.**
+
+- `CardFreezeTest`: field count 82 → 79.
+- New `CardAbilitiesTest` (`magical-vibes-application`, `model/`): grouping per slot kind, simultaneous
+  groups, the read-only views, removal, Saga chapter targets, runtime copies and clearing.
+- New `LayeredBoardCacheTest#abilityReplacedInPlaceOnAnUnfrozenCardInvalidates`.
+
+**Test runs.** These are not card failures. The application tests run for this step (`StepTriggerServiceTest`,
+`CardImmutabilityArchTest`, `SimulationCopyCompletenessTest`, `LayeredBoardCacheTest`, the step 2 type tests)
+fail in exactly 18 cases, and the same 18 fail at HEAD without the change.
+The card test classes of every Saga, every card with `addSimultaneousEffects` or `ON_BLOCK`, the
+`INDEPENDENT` attack-trigger cards and the cards behind the two changed handlers (547 classes, 4,651 tests)
+all pass. The full card suite was not run here.
 
 ## Prompt
 

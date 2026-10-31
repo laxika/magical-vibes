@@ -97,15 +97,8 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
         copy.setPower(null);
         copy.setToughness(null);
         if (retainedAbility != null || losesOtherAbilities) {
-            for (EffectSlot slot : EffectSlot.values()) {
-                if (retainedAbility == null && auraStaticEffect == null && slot == EffectSlot.STATIC) {
-                    continue;
-                }
-                var registrations = copy.getEffectRegistrations(slot);
-                if (!registrations.isEmpty()) {
-                    registrations.clear();
-                }
-            }
+            boolean keepsStaticEffects = retainedAbility == null && auraStaticEffect == null;
+            copy.removeSlotEffectsIf((slot, effect) -> !keepsStaticEffects || slot != EffectSlot.STATIC);
             copy.getActivatedAbilities().clear();
             copy.getGraveyardActivatedAbilities().clear();
             copy.getHandActivatedAbilities().clear();
