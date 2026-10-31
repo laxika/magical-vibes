@@ -91,7 +91,7 @@ class MuYanlingSkyDancerTest extends BaseCardTest {
 
         assertThat(island.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(shock);
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 

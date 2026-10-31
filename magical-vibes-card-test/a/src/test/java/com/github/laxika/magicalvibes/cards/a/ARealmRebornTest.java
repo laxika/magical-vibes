@@ -57,9 +57,9 @@ class ARealmRebornTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ARealmReborn());
         harness.addToBattlefield(player2, new Forest());
 
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 
     @ParameterizedTest

@@ -132,7 +132,7 @@ class UnderworldConnectionsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         harness.assertLife(player1, lifeBefore - 1);
         land.untap();
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

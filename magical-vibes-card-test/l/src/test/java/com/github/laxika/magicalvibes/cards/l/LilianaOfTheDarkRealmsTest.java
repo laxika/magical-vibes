@@ -139,10 +139,10 @@ class LilianaOfTheDarkRealmsTest extends BaseCardTest {
         assertThat(swamp.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         harness.forceActivePlayer(player2);
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         harness.forceActivePlayer(player1);
         Permanent laterSwamp = addSwamp(player1);

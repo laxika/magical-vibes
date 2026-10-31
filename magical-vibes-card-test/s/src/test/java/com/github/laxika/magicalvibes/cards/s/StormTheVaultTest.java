@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import java.util.List;
+
 import com.github.laxika.magicalvibes.cards.d.DireFleetDaredevil;
 import com.github.laxika.magicalvibes.cards.g.GleamingBarrier;
 import com.github.laxika.magicalvibes.cards.v.VaultOfCatlacan;
@@ -11,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -21,6 +24,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({StormTheVault.class, VaultOfCatlacan.class, SunSentinel.class, GleamingBarrier.class,
         DireFleetDaredevil.class})
 class StormTheVaultTest extends BaseCardTest {
+
+    @BeforeEach
+    void emptyOpeningHands() {
+        // A card in the random opening hand can stop auto-passing mid-combat, which these step-driven tests can't follow.
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+    }
 
     @Test
     @DisplayName("Creates one Treasure when multiple creatures deal combat damage to a player")
@@ -147,6 +157,10 @@ class StormTheVaultTest extends BaseCardTest {
         Permanent treasure = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(perm -> perm.getCard().getSubtypes().contains(CardSubtype.TREASURE))
                 .findFirst().orElseThrow();
+        // Passing through combat can run on into later steps; sacrifice the Treasure in a known one.
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         harness.activateAbility(player1, indexOf(player1, treasure), 0, null, null);
         harness.handleListChoice(player1, "GREEN");

@@ -237,7 +237,7 @@ class MysticMightTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Mystic Might");
         assertThatThrownBy(() ->
-                harness.activateAbility(player1, 0, 0, null, warrior.getId()))
+                harness.activateAbility(player1, 0, 1, null, warrior.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(enchanted.forest().isTapped()).isFalse();
         assertThat(warrior.getPowerModifier()).isZero();

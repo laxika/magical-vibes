@@ -169,7 +169,8 @@ class ForbiddenLoreTest extends BaseCardTest {
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
 
         forest.untap();
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, bears.getId(), null))
+        // The Forest keeps only its own mana ability (CR 305.6).
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 0, bears.getId(), null))
                 .isInstanceOf(IllegalStateException.class);
     }
 

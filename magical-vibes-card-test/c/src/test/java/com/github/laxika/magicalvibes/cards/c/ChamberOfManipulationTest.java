@@ -113,7 +113,7 @@ class ChamberOfManipulationTest extends BaseCardTest {
         Permanent aura = findPermanent(player1, "Chamber of Manipulation");
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, creature.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

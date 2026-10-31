@@ -41,9 +41,9 @@ class GreatDivideGuideTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GreatDivideGuide());
         harness.addToBattlefield(player2, new Forest());
 
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 
     @Test
@@ -96,8 +96,9 @@ class GreatDivideGuideTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("no activated ability");
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        // The Forest keeps only its own mana ability (CR 305.6).
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 }

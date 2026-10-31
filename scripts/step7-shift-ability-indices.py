@@ -66,7 +66,8 @@ def rewrite(src):
         args, close = split_args(src, m.end() - 1)
         new_args = list(args)
         if name == 'activateAbility':
-            zoned = len(args) == 5 and 'Zone' in args[4]
+            # (player, permanent, xValue, target, zone) when the fourth argument is an id or the fifth a zone.
+            zoned = len(args) == 5 and ('Zone' in args[4] or re.search(r'Id\b|getId\(\)', args[3]) is not None)
             if len(args) == 4 or zoned:
                 new_args.insert(2, ' 1')
             elif len(args) in (5, 6):

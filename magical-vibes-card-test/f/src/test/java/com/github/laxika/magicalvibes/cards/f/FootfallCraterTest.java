@@ -102,9 +102,9 @@ class FootfallCraterTest extends BaseCardTest {
         aura.setAttachedTo(forest.getId());
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 
     @Test

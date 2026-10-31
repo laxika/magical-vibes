@@ -56,7 +56,7 @@ class TinStreetMarketTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(aura);
         harness.setHand(player1, List.of(new GrizzlyBears()));
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(land.isTapped()).isFalse();
     }

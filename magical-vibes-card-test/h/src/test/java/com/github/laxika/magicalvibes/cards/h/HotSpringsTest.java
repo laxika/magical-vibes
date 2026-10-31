@@ -76,7 +76,7 @@ class HotSpringsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 

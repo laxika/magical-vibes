@@ -137,9 +137,9 @@ class AnimalBoneyardTest extends BaseCardTest {
         Permanent aura = findPermanent(player1, "Animal Boneyard");
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 
     @Test

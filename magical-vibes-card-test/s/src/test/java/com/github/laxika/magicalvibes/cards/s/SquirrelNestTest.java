@@ -93,7 +93,7 @@ class SquirrelNestTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
         assertThatThrownBy(() -> harness.activateAbility(
-                player1, gd.playerBattlefields.get(player1.getId()).indexOf(forest), null, null))
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(forest), 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
 

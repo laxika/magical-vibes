@@ -2389,88 +2389,25 @@ public class PredicateEvaluationService {
                         > gameQueryService.getEffectivePower(gameData, permanent);
             }
             case PermanentHasSupertypePredicate hasSupertypePredicate -> {
+                // The layered state alone misses a supertype an effect gave or took away outside the layer pass
+                // (Arcum's Weathervane, Melting), so it is read only while static abilities are being assembled.
                 CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
-                if (layered != null) {
+                if (layered != null && (gameData == null || GameQueryService.isStaticEvaluationActive())) {
                     yield layered.hasSupertype(hasSupertypePredicate.supertype());
                 }
                 yield gameQueryService.hasEffectiveSupertype(gameData, permanent, hasSupertypePredicate.supertype());
             }
-            case PermanentColorInPredicate colorInPredicate -> {
-                // While a CR 613 layered pass is active, colors come from the layer-5 state
-                // (answering from the state also avoids recursing into computeStaticBonus for
-                // the permanent whose bonus is being assembled right now).
-                CharacteristicState layeredColors = LayerSystemService.activeStateFor(permanent.getId());
-                if (layeredColors != null) {
-                    yield layeredColors.getColors().stream().anyMatch(colorInPredicate.colors()::contains);
-                }
-                if (gameData != null) {
-                    yield gameQueryService.getEffectiveColors(gameData, permanent).stream()
-                            .anyMatch(colorInPredicate.colors()::contains);
-                }
-                if (permanent.isColorOverridden()) {
-                    yield permanent.getTransientColors().stream().anyMatch(colorInPredicate.colors()::contains);
-                }
-                yield permanent.getEffectiveColors().stream().anyMatch(colorInPredicate.colors()::contains)
-                        || permanent.getTransientColors().stream().anyMatch(colorInPredicate.colors()::contains)
-                        || permanent.getGrantedColors().stream().anyMatch(colorInPredicate.colors()::contains);
-            }
-            case PermanentIsMonocoloredPredicate ignored -> {
-                // Monocolored = exactly one effective colour (colourless and multicoloured don't match).
-                // Colours come from the same sources as PermanentColorInPredicate above.
-                CharacteristicState layeredColors = LayerSystemService.activeStateFor(permanent.getId());
-                if (layeredColors != null) {
-                    yield layeredColors.getColors().size() == 1;
-                }
-                if (gameData != null) {
-                    yield gameQueryService.getEffectiveColors(gameData, permanent).size() == 1;
-                }
-                if (permanent.isColorOverridden()) {
-                    yield permanent.getTransientColors().size() == 1;
-                }
-                Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
-                combined.addAll(permanent.getEffectiveColors());
-                combined.addAll(permanent.getTransientColors());
-                combined.addAll(permanent.getGrantedColors());
-                yield combined.size() == 1;
-            }
-            case PermanentIsColorlessPredicate ignored -> {
-                // Colourless = zero effective colours.
-                // Colours come from the same sources as PermanentIsMonocoloredPredicate above.
-                CharacteristicState layeredColors = LayerSystemService.activeStateFor(permanent.getId());
-                if (layeredColors != null) {
-                    yield layeredColors.getColors().isEmpty();
-                }
-                if (gameData != null) {
-                    yield gameQueryService.getEffectiveColors(gameData, permanent).isEmpty();
-                }
-                if (permanent.isColorOverridden()) {
-                    yield permanent.getTransientColors().isEmpty();
-                }
-                Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
-                combined.addAll(permanent.getEffectiveColors());
-                combined.addAll(permanent.getTransientColors());
-                combined.addAll(permanent.getGrantedColors());
-                yield combined.isEmpty();
-            }
-            case PermanentIsMulticoloredPredicate ignored -> {
-                // Multicolored = two or more effective colours (colourless and monocoloured don't match).
-                // Colours come from the same sources as PermanentIsMonocoloredPredicate above.
-                CharacteristicState layeredColors = LayerSystemService.activeStateFor(permanent.getId());
-                if (layeredColors != null) {
-                    yield layeredColors.getColors().size() >= 2;
-                }
-                if (gameData != null) {
-                    yield gameQueryService.getEffectiveColors(gameData, permanent).size() >= 2;
-                }
-                if (permanent.isColorOverridden()) {
-                    yield permanent.getTransientColors().size() >= 2;
-                }
-                Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
-                combined.addAll(permanent.getEffectiveColors());
-                combined.addAll(permanent.getTransientColors());
-                combined.addAll(permanent.getGrantedColors());
-                yield combined.size() >= 2;
-            }
+            case PermanentColorInPredicate colorInPredicate ->
+                    colorsForPredicate(gameData, permanent).stream().anyMatch(colorInPredicate.colors()::contains);
+            case PermanentIsMonocoloredPredicate ignored ->
+                    // Monocolored = exactly one effective colour (colourless and multicoloured don't match).
+                    colorsForPredicate(gameData, permanent).size() == 1;
+            case PermanentIsColorlessPredicate ignored ->
+                    // Colourless = zero effective colours.
+                    colorsForPredicate(gameData, permanent).isEmpty();
+            case PermanentIsMulticoloredPredicate ignored ->
+                    // Multicolored = two or more effective colours (colourless and monocoloured don't match).
+                    colorsForPredicate(gameData, permanent).size() >= 2;
             case PermanentHasExactlyTwoColorsPredicate ignored -> {
                 CharacteristicState layeredColors = LayerSystemService.activeStateFor(permanent.getId());
                 if (layeredColors != null) {
@@ -4673,6 +4610,31 @@ public class PredicateEvaluationService {
             }
         }
         return false;
+    }
+
+    /**
+     * The colours the colour predicates read. While static abilities are being assembled (a CR 613 board build or a
+     * static bonus), they come from the layered state, since asking for the bonus of the permanent being assembled
+     * would recurse. Otherwise they are the permanent's effective colours, conditional static grants included: the
+     * layered state alone misses those (a threshold creature that "is black"), and a target re-checked on
+     * resolution inside a query scope would keep its old colour.
+     */
+    private Set<CardColor> colorsForPredicate(GameData gameData, Permanent permanent) {
+        CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+        if (layered != null && (gameData == null || GameQueryService.isStaticEvaluationActive())) {
+            return layered.getColors();
+        }
+        if (gameData != null) {
+            return gameQueryService.getEffectiveColors(gameData, permanent);
+        }
+        if (permanent.isColorOverridden()) {
+            return permanent.getTransientColors();
+        }
+        Set<CardColor> combined = EnumSet.noneOf(CardColor.class);
+        combined.addAll(permanent.getEffectiveColors());
+        combined.addAll(permanent.getTransientColors());
+        combined.addAll(permanent.getGrantedColors());
+        return combined;
     }
 
     private static boolean hasOutOfBandManaAbility(Permanent permanent) {

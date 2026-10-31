@@ -121,7 +121,7 @@ class CausticTarTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Caustic Tar"));
 
         harness.assertInGraveyard(player1, "Caustic Tar");
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(forest.isTapped()).isFalse();
     }

@@ -99,7 +99,7 @@ class SpawningGroundsTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .destroyPermanentToGraveyard(gd, aura));
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(land.isTapped()).isFalse();
         assertThat(countPermanents(player1, "Beast")).isZero();

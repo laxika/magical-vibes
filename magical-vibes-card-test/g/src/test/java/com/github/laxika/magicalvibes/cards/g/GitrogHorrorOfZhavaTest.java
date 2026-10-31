@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.FieldOfRuin;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -65,7 +66,9 @@ class GitrogHorrorOfZhavaTest extends BaseCardTest {
         Permanent forest = harness.enterBattlefieldAndReturn(player1, new Forest());
         resolveAllTriggers();
 
-        assertThat(gs.getEffectiveActivatedAbilities(gd, forest)).hasSize(1);
+        // The granted ability, then the Forest's own mana ability (CR 305.6).
+        assertThat(gs.getEffectiveActivatedAbilities(gd, forest)).hasSize(2)
+                .endsWith(ManaAbilities.intrinsic(ManaColor.GREEN));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         forest.setSummoningSick(false);

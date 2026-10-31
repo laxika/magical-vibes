@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.DwarvenCastleGuard;
 import com.github.laxika.magicalvibes.cards.e.EsperTerra;
 import com.github.laxika.magicalvibes.cards.f.FireMagic;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.SidequestCatchAFish;
 import com.github.laxika.magicalvibes.cards.s.SummonGFIfrit;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -23,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TerraMagicalAdept.class, EsperTerra.class, SidequestCatchAFish.class,
+@CardUsed({Island.class, TerraMagicalAdept.class, EsperTerra.class, SidequestCatchAFish.class,
         CookingCampsite.class, Forest.class, DwarvenCastleGuard.class, SummonGFIfrit.class, FireMagic.class})
 class TerraMagicalAdeptTest extends BaseCardTest {
 
@@ -261,6 +262,12 @@ class TerraMagicalAdeptTest extends BaseCardTest {
 
     @Test
     void copiedEnchantmentSurvivesOpponentsEndStepUntilYourNextEndStep() {
+        // The copied Sidequest asks at each upkeep only when the top card is an artifact or creature; keep the random
+        // opening hand and library out of these step-driven passes.
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        harness.setLibrary(player2, List.of(new Island(), new Island(), new Island()));
         addEsperTerraWithLore(0);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new SidequestCatchAFish());
         advanceToNextChapter();

@@ -58,6 +58,8 @@ class KappaTechWreckerTest extends BaseCardTest {
         Permanent damagedPlayerCreature = addCreatureReady(player2, new GrizzlyBears());
 
         resolveCombat();
+        // Aura of Silence's ability gives its controller something to do, so priority stops before the trigger resolves.
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -145,6 +147,8 @@ class KappaTechWreckerTest extends BaseCardTest {
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new AuraOfSilence());
 
         resolveCombat();
+        // Aura of Silence's ability gives its controller something to do, so priority stops before the trigger resolves.
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

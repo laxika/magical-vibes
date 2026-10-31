@@ -36,9 +36,9 @@ class BootleggersStashTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 
     @Test
@@ -48,9 +48,9 @@ class BootleggersStashTest extends BaseCardTest {
         forest.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).remove(stash);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no activated ability");
+                .hasMessageContaining("Invalid ability index");
     }
 
     @Test

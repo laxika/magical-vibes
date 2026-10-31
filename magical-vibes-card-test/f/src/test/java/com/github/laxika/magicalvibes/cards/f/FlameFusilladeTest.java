@@ -44,7 +44,7 @@ class FlameFusilladeTest extends BaseCardTest {
 
         harness.addToBattlefield(player1, new Forest());
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, player2.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 1, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
