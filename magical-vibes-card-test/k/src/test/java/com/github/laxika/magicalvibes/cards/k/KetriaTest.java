@@ -44,6 +44,9 @@ class KetriaTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+        // The random opening hand can hold a Pacifism, which the hand assertions would see.
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
     }
 
     @ParameterizedTest
