@@ -1,16 +1,14 @@
 package com.github.laxika.magicalvibes.model.replacement;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -37,7 +35,7 @@ import java.util.function.Predicate;
  * @param power             the evaluated power of the tokens
  * @param toughness         the evaluated toughness of the tokens
  * @param sourceSetCode     the set code of the source creating the tokens
- * @param additionalEffects extra effects the created tokens of {@link #token()} gain, never {@code null}
+ * @param additionalAbilities extra abilities the created tokens of {@link #token()} gain, never {@code null}
  * @param creatureToken     whether the tokens of {@link #token()} are creatures, which decides whether creature-only effects apply
  * @param addedTokens       the other tokens created by the same event: the blueprint's simultaneous tokens and the
  *                          tokens replacement effects added, one group per distinct blueprint in a canonical order
@@ -48,7 +46,7 @@ import java.util.function.Predicate;
  */
 public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> appliedKeys, CreateTokenEffect token,
                                  int power, int toughness, String sourceSetCode,
-                                 Map<EffectSlot, List<EffectRegistration>> additionalEffects,
+                                 List<Ability> additionalAbilities,
                                  boolean creatureToken, List<TokenGroup> addedTokens, Card copyOf,
                                  TokenCopyBatch copyBatch) implements ReplacementEvent {
 
@@ -117,22 +115,22 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
 
     public TokenCreationEvent {
         appliedKeys = Set.copyOf(appliedKeys);
-        additionalEffects = additionalEffects == null ? Map.of() : additionalEffects;
+        additionalAbilities = additionalAbilities == null ? List.of() : List.copyOf(additionalAbilities);
         addedTokens = canonical(addedTokens == null ? List.of() : addedTokens);
     }
 
     public TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> appliedKeys, CreateTokenEffect token,
                               int power, int toughness, String sourceSetCode,
-                              Map<EffectSlot, List<EffectRegistration>> additionalEffects, boolean creatureToken) {
-        this(controllerId, tokenCount, appliedKeys, token, power, toughness, sourceSetCode, additionalEffects,
+                              List<Ability> additionalAbilities, boolean creatureToken) {
+        this(controllerId, tokenCount, appliedKeys, token, power, toughness, sourceSetCode, additionalAbilities,
                 creatureToken, List.of(), null, null);
     }
 
     public TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> appliedKeys, CreateTokenEffect token,
                               int power, int toughness, String sourceSetCode,
-                              Map<EffectSlot, List<EffectRegistration>> additionalEffects, boolean creatureToken,
+                              List<Ability> additionalAbilities, boolean creatureToken,
                               List<TokenGroup> addedTokens) {
-        this(controllerId, tokenCount, appliedKeys, token, power, toughness, sourceSetCode, additionalEffects,
+        this(controllerId, tokenCount, appliedKeys, token, power, toughness, sourceSetCode, additionalAbilities,
                 creatureToken, addedTokens, null, null);
     }
 
@@ -142,7 +140,7 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
      */
     public static TokenCreationEvent copies(UUID controllerId, int count, Card copyOf, CreateTokenEffect kind,
                                             boolean creatureToken, String sourceSetCode, TokenCopyBatch batch) {
-        return new TokenCreationEvent(controllerId, count, Set.of(), kind, 0, 0, sourceSetCode, Map.of(),
+        return new TokenCreationEvent(controllerId, count, Set.of(), kind, 0, 0, sourceSetCode, List.of(),
                 creatureToken, List.of(), copyOf, batch);
     }
 
@@ -202,23 +200,23 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
 
     public TokenCreationEvent withTokenCount(int newTokenCount) {
         return new TokenCreationEvent(controllerId, newTokenCount, appliedKeys, token, power, toughness,
-                sourceSetCode, additionalEffects, creatureToken, addedTokens, copyOf, copyBatch);
+                sourceSetCode, additionalAbilities, creatureToken, addedTokens, copyOf, copyBatch);
     }
 
     public TokenCreationEvent withAddedTokens(List<TokenGroup> newAddedTokens) {
         return new TokenCreationEvent(controllerId, tokenCount, appliedKeys, token, power, toughness,
-                sourceSetCode, additionalEffects, creatureToken, newAddedTokens, copyOf, copyBatch);
+                sourceSetCode, additionalAbilities, creatureToken, newAddedTokens, copyOf, copyBatch);
     }
 
     /**
      * This event creating its {@link #tokenCount()} tokens from {@code newToken} instead, a replacement that changes
      * what is created (Divine Visitation, Fisher's Talent): the replaced tokens' abilities, including the
-     * {@link #additionalEffects()} they would have been created with, are gone.
+     * {@link #additionalAbilities()} they would have been created with, are gone.
      */
     public TokenCreationEvent withToken(CreateTokenEffect newToken, int newPower, int newToughness,
                                         boolean newCreatureToken) {
         return new TokenCreationEvent(controllerId, tokenCount, appliedKeys, newToken, newPower, newToughness,
-                sourceSetCode, Map.of(), newCreatureToken, addedTokens, copyOf, copyBatch);
+                sourceSetCode, List.of(), newCreatureToken, addedTokens, copyOf, copyBatch);
     }
 
     /** This event with {@code count} more tokens of {@code blueprint}. */
@@ -233,12 +231,12 @@ public record TokenCreationEvent(UUID controllerId, int tokenCount, Set<String> 
         Set<String> keys = new HashSet<>(appliedKeys);
         keys.add(key);
         return new TokenCreationEvent(controllerId, tokenCount, keys, token, power, toughness,
-                sourceSetCode, additionalEffects, creatureToken, addedTokens, copyOf, copyBatch);
+                sourceSetCode, additionalAbilities, creatureToken, addedTokens, copyOf, copyBatch);
     }
 
     @Override
     public TokenCreationEvent withoutAppliedKeys() {
         return new TokenCreationEvent(controllerId, tokenCount, Set.of(), token, power, toughness,
-                sourceSetCode, additionalEffects, creatureToken, addedTokens, copyOf, copyBatch);
+                sourceSetCode, additionalAbilities, creatureToken, addedTokens, copyOf, copyBatch);
     }
 }

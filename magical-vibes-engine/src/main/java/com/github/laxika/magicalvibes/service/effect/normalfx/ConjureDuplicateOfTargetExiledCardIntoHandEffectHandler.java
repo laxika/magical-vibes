@@ -25,9 +25,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -113,15 +111,6 @@ public class ConjureDuplicateOfTargetExiledCardIntoHandEffectHandler implements 
         CardEffect drain = SequenceEffect.of(
                 new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(2));
-        gameData.perpetualTriggeredAbilityGrants.compute(cardId, (ignored, existing) -> {
-            java.util.Map<EffectSlot, List<CardEffect>> updated = new java.util.EnumMap<>(EffectSlot.class);
-            if (existing != null) {
-                existing.forEach((slot, effects) -> updated.put(slot, new ArrayList<>(effects)));
-            }
-            updated.computeIfAbsent(EffectSlot.ON_ENTER_BATTLEFIELD, ignoredSlot -> new ArrayList<>())
-                    .add(drain);
-            updated.replaceAll((slot, effects) -> List.copyOf(effects));
-            return java.util.Map.copyOf(updated);
-        });
+        gameData.grantPerpetualAbility(cardId, EffectSlot.ON_ENTER_BATTLEFIELD, drain);
     }
 }

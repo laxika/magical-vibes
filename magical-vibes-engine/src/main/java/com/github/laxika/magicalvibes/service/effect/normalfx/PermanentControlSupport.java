@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -89,7 +91,8 @@ public class PermanentControlSupport {
     }
 
     public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, Map<EffectSlot, List<EffectRegistration>> additionalEffects) {
-        return createOrdered(gameData, controllerId, token, amount, sourceSetCode, power, toughness, additionalEffects);
+        return createOrdered(gameData, controllerId, token, amount, sourceSetCode, power, toughness,
+                additionalEffects == null ? List.of() : LegacySlots.registrationAbilities(additionalEffects));
     }
 
     /**
@@ -99,13 +102,13 @@ public class PermanentControlSupport {
      */
     private List<UUID> createOrdered(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount,
                                      String sourceSetCode, int power, int toughness,
-                                     Map<EffectSlot, List<EffectRegistration>> additionalEffects) {
+                                     List<Ability> additionalAbilities) {
         if (amount <= 0) {
             return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness,
-                    true, true, true, additionalEffects);
+                    true, true, true, additionalAbilities);
         }
         var outcome = replacementOrderService.run(gameData, new TokenCreationEvent(
-                controllerId, amount, Set.of(), token, power, toughness, sourceSetCode, additionalEffects,
+                controllerId, amount, Set.of(), token, power, toughness, sourceSetCode, additionalAbilities,
                 token.primaryType() == CardType.CREATURE, simultaneousTokenGroups(token)));
         if (outcome instanceof ReplacementOrderService.Outcome.Completed<TokenCreationEvent> completed) {
             return applyCreateTokenAfterReplacementOrder(gameData, completed.event());
@@ -122,7 +125,7 @@ public class PermanentControlSupport {
     public List<UUID> applyCreateTokenAfterReplacementOrder(GameData gameData, TokenCreationEvent event) {
         return applyCreateToken(gameData, event.controllerId(), event.token(), event.tokenCount(),
                 event.sourceSetCode(), event.power(), event.toughness(), true, true, true,
-                event.additionalEffects(), event.tokenCount(), event.addedTokens());
+                event.additionalAbilities(), event.tokenCount(), event.addedTokens());
     }
 
     private static List<TokenCreationEvent.TokenGroup> simultaneousTokenGroups(CreateTokenEffect token) {
@@ -140,11 +143,11 @@ public class PermanentControlSupport {
                                         String sourceSetCode, int power, int toughness,
                                         boolean applyAdditionalReplacements, boolean applyTokenMultiplier,
         boolean fireTokenTriggers) {
-        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, applyAdditionalReplacements, applyTokenMultiplier, fireTokenTriggers, Map.of());
+        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, applyAdditionalReplacements, applyTokenMultiplier, fireTokenTriggers, List.of());
     }
 
-    private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, Map<EffectSlot, List<EffectRegistration>> additionalEffects) {
-        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, applyAdditionalReplacements, applyTokenMultiplier, fireTokenTriggers, additionalEffects, -1, null);
+    private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, List<Ability> additionalAbilities) {
+        return applyCreateToken(gameData, controllerId, token, amount, sourceSetCode, power, toughness, applyAdditionalReplacements, applyTokenMultiplier, fireTokenTriggers, additionalAbilities, -1, null);
     }
 
     /**
@@ -152,7 +155,7 @@ public class PermanentControlSupport {
      * in a fixed order; {@code orderedAddedTokens} are then the event's other tokens, which replace the blueprint's
      * simultaneous tokens and every addition and Academy Manufactor replacement.
      */
-    private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, Map<EffectSlot, List<EffectRegistration>> additionalEffects, int orderedAmount, List<TokenCreationEvent.TokenGroup> orderedAddedTokens) {
+    private List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode, int power, int toughness, boolean applyAdditionalReplacements, boolean applyTokenMultiplier, boolean fireTokenTriggers, List<Ability> additionalAbilities, int orderedAmount, List<TokenCreationEvent.TokenGroup> orderedAddedTokens) {
         boolean ordered = orderedAddedTokens != null;
         boolean fixedAdditions = applyAdditionalReplacements && !ordered;
         List<UUID> createdIds = new ArrayList<>();
@@ -324,12 +327,8 @@ public class PermanentControlSupport {
             int blueprintPower = fixedStat(tokenBlueprint.power(), tokenBlueprint);
             int blueprintToughness = fixedStat(tokenBlueprint.toughness(), tokenBlueprint);
             Card tokenCard = TokenCardFactory.create(tokenBlueprint, blueprintPower, blueprintToughness, sourceSetCode);
-            if (originalBlueprint && additionalEffects != null) {
-                for (var additional : additionalEffects.entrySet()) {
-                    for (var registration : additional.getValue()) {
-                        tokenCard.addEffect(additional.getKey(), registration.effect(), registration.triggerMode());
-                    }
-                }
+            if (originalBlueprint) {
+                additionalAbilities.forEach(tokenCard::addAbility);
             }
             if (!ordered) {
                 tokenCard = TokenCreationReplacementSupport.replaceCreatureTokenIfApplicable(

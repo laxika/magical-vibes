@@ -1957,10 +1957,10 @@ public class TriggerCollectionService {
                 .forEach(grant -> selfCastEffects.add(new MayEffect(
                         new DemonstrateEffect(), "Copy " + spellCard.getName() + "?")));
         selfCastEffects.addAll(spellCard.getEffects(EffectSlot.ON_SELF_CAST));
-        Map<EffectSlot, List<CardEffect>> perpetualGrants =
-                gameData.perpetualTriggeredAbilityGrants.get(spellCard.getId());
-        if (perpetualGrants != null) {
-            for (CardEffect grantedAbility : perpetualGrants.getOrDefault(EffectSlot.ON_SELF_CAST, List.of())) {
+        List<CardEffect> perpetualSelfCastEffects =
+                gameData.perpetualAbilityEffects(spellCard.getId(), EffectSlot.ON_SELF_CAST);
+        if (!perpetualSelfCastEffects.isEmpty()) {
+            for (CardEffect grantedAbility : perpetualSelfCastEffects) {
                 if (!grantedAbility.targetSpec().equals(com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE)
                         || grantedAbility instanceof CopyThisSpellIfConditionEffect) {
                     selfCastEffects.add(grantedAbility);

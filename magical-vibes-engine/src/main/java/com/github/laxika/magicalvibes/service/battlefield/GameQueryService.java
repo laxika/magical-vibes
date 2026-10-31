@@ -2696,9 +2696,7 @@ public class GameQueryService {
             return List.of();
         }
         List<CardEffect> effects = new ArrayList<>(card.getEffects(slot));
-        effects.addAll(gameData.perpetualTriggeredAbilityGrants
-                .getOrDefault(card.getId(), Map.of())
-                .getOrDefault(slot, List.of()));
+        effects.addAll(gameData.perpetualAbilityEffects(card.getId(), slot));
         return List.copyOf(effects);
     }
 

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,11 +14,8 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -132,18 +128,7 @@ public class PerpetuallyGrantKeywordToMatchingCardsEffectHandler implements Norm
         if (effect.triggeredAbilitySlot() == null) {
             return;
         }
-        gameData.perpetualTriggeredAbilityGrants.compute(cardId, (ignored, existing) -> {
-            Map<EffectSlot, List<CardEffect>> updated = new EnumMap<>(EffectSlot.class);
-            if (existing != null) {
-                existing.forEach((slot, effects) -> updated.put(slot, new ArrayList<>(effects)));
-            }
-            // Each grant is its own instance of the ability (CR 113.2c), so repeated grants stack.
-            List<CardEffect> effects = updated.computeIfAbsent(effect.triggeredAbilitySlot(),
-                    ignoredSlot -> new ArrayList<>());
-            effects.add(effect.triggeredAbility());
-            updated.replaceAll((slot, slotEffects) -> List.copyOf(slotEffects));
-            return Map.copyOf(updated);
-        });
+        gameData.grantPerpetualAbility(cardId, effect.triggeredAbilitySlot(), effect.triggeredAbility());
     }
 
     private void addPersistentTriggeredAbility(Permanent permanent,

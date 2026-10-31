@@ -4220,15 +4220,23 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /** Chooses a card in hand to receive a perpetual triggered ability. */
-    record PerpetualTriggeredAbilityCardChoice(UUID playerId, java.util.List<Integer> validIndices,
-                                               String prompt, EffectSlot slot,
-                                               java.util.List<CardEffect> grantedEffects,
+    record PerpetualTriggeredAbilityCardChoice(UUID playerId,
+                                               java.util.List<Integer> validIndices,
+                                               String prompt,
+                                               java.util.List<Ability> grantedAbilities,
                                                CardPredicate filter)
             implements PendingInteraction, HandChoice {
 
-        public PerpetualTriggeredAbilityCardChoice {
+        /** The grant as the slot and effects that stand for it. */
+        public PerpetualTriggeredAbilityCardChoice(UUID playerId,
+                                                   java.util.List<Integer> validIndices,
+                                                   String prompt,
+                                                   EffectSlot slot,
+                                                   java.util.List<CardEffect> grantedEffects,
+                                                   CardPredicate filter) {
             validIndices = java.util.List.copyOf(validIndices);
             grantedEffects = java.util.List.copyOf(grantedEffects);
+            this(playerId, validIndices, prompt, LegacySlots.abilities(slot, grantedEffects), filter);
         }
 
         @Override
@@ -4239,6 +4247,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
+
+        /** The slot of {@link #grantedAbilities}. */
+        public EffectSlot slot() {
+            return LegacySlots.slotOf(grantedAbilities.getFirst());
+        }
+
+        /** The effects of {@link #grantedAbilities}, in order. */
+        public java.util.List<CardEffect> grantedEffects() {
+            return grantedAbilities.stream().flatMap(ability -> LegacySlots.effectsOf(ability).stream()).toList();
         }
     }
 
@@ -4264,18 +4282,28 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /** Chooses up to a bounded number of hand cards to receive a perpetual triggered ability. */
-    record PerpetualTriggeredAbilityCardsChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                                String prompt, int maxCount, EffectSlot slot,
-                                                java.util.List<CardEffect> grantedEffects,
+    record PerpetualTriggeredAbilityCardsChoice(UUID playerId,
+                                                java.util.List<UUID> validCardIds,
+                                                String prompt,
+                                                int maxCount,
+                                                java.util.List<Ability> grantedAbilities,
                                                 CardPredicate filter)
             implements PendingInteraction {
 
-        public PerpetualTriggeredAbilityCardsChoice {
+        /** The grant as the slot and effects that stand for it. */
+        public PerpetualTriggeredAbilityCardsChoice(UUID playerId,
+                                                    java.util.List<UUID> validCardIds,
+                                                    String prompt,
+                                                    int maxCount,
+                                                    EffectSlot slot,
+                                                    java.util.List<CardEffect> grantedEffects,
+                                                    CardPredicate filter) {
             validCardIds = java.util.List.copyOf(validCardIds);
             if (maxCount < 1) {
                 throw new IllegalArgumentException("maxCount must be positive");
             }
             grantedEffects = java.util.List.copyOf(grantedEffects);
+            this(playerId, validCardIds, prompt, maxCount, LegacySlots.abilities(slot, grantedEffects), filter);
         }
 
         @Override
@@ -4287,6 +4315,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0,
                     Math.min(maxCount, validCardIds.size()));
+        }
+
+        /** The slot of {@link #grantedAbilities}. */
+        public EffectSlot slot() {
+            return LegacySlots.slotOf(grantedAbilities.getFirst());
+        }
+
+        /** The effects of {@link #grantedAbilities}, in order. */
+        public java.util.List<CardEffect> grantedEffects() {
+            return grantedAbilities.stream().flatMap(ability -> LegacySlots.effectsOf(ability).stream()).toList();
         }
     }
 

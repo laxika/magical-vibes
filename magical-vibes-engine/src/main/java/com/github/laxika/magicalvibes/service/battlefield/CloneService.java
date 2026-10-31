@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -50,7 +52,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -297,7 +298,7 @@ public class CloneService {
         gameData.cloneOperation.additionalColorsOverride = Set.of();
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = copyEffect.additionalCreatureOnlyCharacteristics();
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
-        gameData.cloneOperation.additionalSlotEffects = copyEffect.additionalSlotEffects();
+        gameData.cloneOperation.additionalAbilities = LegacySlots.abilities(copyEffect.additionalSlotEffects());
         gameData.cloneOperation.reflexiveEffects = copyEffect.reflexiveEffects();
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent =
                 copyEffect.shieldCounterIfControllerControlsCopiedPermanent();
@@ -359,7 +360,7 @@ public class CloneService {
         gameData.cloneOperation.additionalColorsOverride = Set.of();
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = Set.of();
-        gameData.cloneOperation.additionalSlotEffects = Map.of();
+        gameData.cloneOperation.additionalAbilities = List.of();
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.copyColor = true;
         gameData.cloneOperation.entersTapped = false;
@@ -419,7 +420,7 @@ public class CloneService {
         gameData.cloneOperation.additionalColorsOverride = Set.of();
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = copyEffect.additionalSubtypesOverride();
-        gameData.cloneOperation.additionalSlotEffects = Map.of();
+        gameData.cloneOperation.additionalAbilities = List.of();
         gameData.cloneOperation.grantHasteUntilEndOfTurn = copyEffect.grantHaste();
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.copyUntilEndOfTurn = false;
@@ -503,7 +504,7 @@ public class CloneService {
         gameData.cloneOperation.additionalColorsOverride = Set.of(CardColor.BLACK);
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = Set.of(CardSubtype.ZOMBIE);
-        gameData.cloneOperation.additionalSlotEffects = Map.of();
+        gameData.cloneOperation.additionalAbilities = List.of();
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
         gameData.cloneOperation.copyColor = true;
         gameData.cloneOperation.entersTapped = false;
@@ -641,7 +642,7 @@ public class CloneService {
         Set<CardColor> additionalColorsOverride = gameData.cloneOperation.additionalColorsOverride;
         boolean additionalCreatureOnlyCharacteristics = gameData.cloneOperation.additionalCreatureOnlyCharacteristics;
         Set<CardSubtype> additionalSubtypesOverride = gameData.cloneOperation.additionalSubtypesOverride;
-        Map<EffectSlot, List<CardEffect>> additionalSlotEffects = gameData.cloneOperation.additionalSlotEffects;
+        List<Ability> additionalAbilities = gameData.cloneOperation.additionalAbilities;
         boolean grantHasteUntilEndOfTurn = gameData.cloneOperation.grantHasteUntilEndOfTurn;
         List<CardEffect> reflexiveEffects = gameData.cloneOperation.reflexiveEffects;
         boolean shieldCounterIfControllerControlsCopiedPermanent =
@@ -687,7 +688,7 @@ public class CloneService {
         gameData.cloneOperation.additionalColorsOverride = Set.of();
         gameData.cloneOperation.additionalCreatureOnlyCharacteristics = false;
         gameData.cloneOperation.additionalSubtypesOverride = Set.of();
-        gameData.cloneOperation.additionalSlotEffects = Map.of();
+        gameData.cloneOperation.additionalAbilities = List.of();
         gameData.cloneOperation.grantHasteUntilEndOfTurn = false;
         gameData.cloneOperation.reflexiveEffects = List.of();
         gameData.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent = false;
@@ -751,8 +752,7 @@ public class CloneService {
                 applyRemovedSupertypes(perm.getCard(), removedSupertypesOverride);
                 // "except it's an [subtype] in addition to its other types and it has ..." (Phantasmal Image)
                 applyAdditionalSubtypes(perm.getCard(), additionalSubtypesOverride);
-                additionalSlotEffects.forEach((slot, effects) ->
-                        effects.forEach(effect -> perm.getCard().addEffect(slot, effect)));
+                additionalAbilities.forEach(perm.getCard()::addAbility);
                 // Vizier of Many Faces embalm exception: a token that re-clones stays a token (so it
                 // still ceases to exist on death), and the white / no-mana-cost / added-Zombie
                 // transformation is re-applied on top of the freshly copied card — but only for an

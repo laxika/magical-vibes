@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -12,17 +14,32 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * {@link com.github.laxika.magicalvibes.model.Permanent#addTemporaryTriggeredEffect(EffectSlot, CardEffect)}
  * and cleared at cleanup by {@link com.github.laxika.magicalvibes.model.Permanent#resetModifiers()}.
  *
- * @param slot          the trigger slot to grant (e.g. {@link EffectSlot#ON_COMBAT_DAMAGE_TO_PLAYER})
- * @param grantedEffect the effect to fire when the trigger condition is met
+ * @param grantedAbility the granted ability
  * @param filter        optional filter limiting the snapshot of creatures receiving the trigger
  */
 public record GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
-        EffectSlot slot,
-        CardEffect grantedEffect,
+        Ability grantedAbility,
         PermanentPredicate filter
 ) implements CardEffect {
 
+    /** The grant as the slot and effect that stand for it. */
+    public GrantEffectToOwnCreaturesUntilEndOfTurnEffect(EffectSlot slot,
+                                                         CardEffect grantedEffect,
+                                                         PermanentPredicate filter) {
+        this(LegacySlots.grant(slot, grantedEffect), filter);
+    }
+
     public GrantEffectToOwnCreaturesUntilEndOfTurnEffect(EffectSlot slot, CardEffect grantedEffect) {
         this(slot, grantedEffect, null);
+    }
+
+    /** The slot of {@link #grantedAbility}, or {@code null} when there is none. */
+    public EffectSlot slot() {
+        return grantedAbility == null ? null : LegacySlots.slotOf(grantedAbility);
+    }
+
+    /** The effect of {@link #grantedAbility}, or {@code null} when there is none. */
+    public CardEffect grantedEffect() {
+        return grantedAbility == null ? null : LegacySlots.effectsOf(grantedAbility).getFirst();
     }
 }

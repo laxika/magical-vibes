@@ -470,10 +470,8 @@ public class StackResolutionService {
         perm.setGrantedBloodthirst(entry.getGrantedBloodthirst());
         // Devour granted while the spell was on the stack (Jund).
         perm.setGrantedDevour(entry.getGrantedDevour());
-        entry.getGrantedTriggeredEffectsOnEntry().forEach((slot, effects) ->
-                effects.forEach(effect -> perm.addTemporaryTriggeredEffect(slot, effect)));
-        entry.getPersistentTriggeredEffectsOnEntry().forEach((slot, effects) ->
-                effects.forEach(effect -> perm.addPersistentTriggeredEffect(slot, effect)));
+        entry.getGrantedAbilitiesOnEntry().forEach(perm::addTemporaryAbility);
+        entry.getPersistentAbilitiesOnEntry().forEach(perm::addPersistentAbility);
         // Mirage flash clause: cast at a time a sorcery couldn't have been cast, so its controller
         // sacrifices the permanent it becomes at the beginning of the next cleanup step.
         if (entry.isCastWhenSorceryCouldNotBeCast() && card.getEffects(EffectSlot.STATIC).stream()

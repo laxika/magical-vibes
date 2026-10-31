@@ -12,10 +12,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** Resolves Snarlfang Vermin's self-replicating suspect ability. */
@@ -59,19 +56,7 @@ public class SuspectAndPerpetuallyGrantAbilityToTargetCreatureEffectHandler
             return;
         }
         UUID cardId = target.getOriginalCard().getId();
-        gameData.perpetualTriggeredAbilityGrants.compute(cardId, (ignored, existing) -> {
-            Map<EffectSlot, List<CardEffect>> updated = new EnumMap<>(EffectSlot.class);
-            if (existing != null) {
-                existing.forEach((slot, effects) -> updated.put(slot, new ArrayList<>(effects)));
-            }
-            List<CardEffect> effects = updated.computeIfAbsent(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE,
-                    ignoredSlot -> new ArrayList<>());
-            if (!effects.contains(grantedAbility)) {
-                effects.add(grantedAbility);
-            }
-            updated.replaceAll((slot, slotEffects) -> List.copyOf(slotEffects));
-            return Map.copyOf(updated);
-        });
+        gameData.grantPerpetualAbilityOnce(cardId, EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE, grantedAbility);
 
         if (!target.getPersistentTriggeredEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE)
                 .contains(grantedAbility)) {

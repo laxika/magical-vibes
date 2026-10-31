@@ -12,13 +12,24 @@ import java.util.UUID;
  * end-of-next-turn triggers, and triggers that expire at the beginning of the controller's next
  * turn.
  * The optional watched permanent identifies a particular object for a delayed event trigger.
+ *
+ * @param ability the ability, one effect in a legacy slot
  */
-public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, EffectSlot slot,
-                                              CardEffect effect, TargetFilter targetFilter,
+public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
+                                              TargetFilter targetFilter,
                                               boolean untilEndOfNextTurn, boolean untilNextTurn,
                                               int registrationTurnNumber,
                                               UUID expirationPlayerId,
                                               UUID watchedPermanentId) {
+
+    public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, EffectSlot slot,
+                                           CardEffect effect, TargetFilter targetFilter,
+                                           boolean untilEndOfNextTurn, boolean untilNextTurn,
+                                           int registrationTurnNumber, UUID expirationPlayerId,
+                                           UUID watchedPermanentId) {
+        this(controllerId, sourceCard, LegacySlots.triggered(slot, effect), targetFilter, untilEndOfNextTurn,
+                untilNextTurn, registrationTurnNumber, expirationPlayerId, watchedPermanentId);
+    }
 
     public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, EffectSlot slot,
                                            CardEffect effect, TargetFilter targetFilter,
@@ -46,5 +57,15 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
                                            int registrationTurnNumber) {
         this(controllerId, sourceCard, slot, effect, targetFilter, untilEndOfNextTurn,
                 untilNextTurn, registrationTurnNumber, null);
+    }
+
+    /** The legacy slot whose collectors decide when {@link #ability} triggers. */
+    public EffectSlot slot() {
+        return LegacySlots.slotOf(ability);
+    }
+
+    /** The effect of {@link #ability}. */
+    public CardEffect effect() {
+        return ability.effects().getFirst().effect();
     }
 }

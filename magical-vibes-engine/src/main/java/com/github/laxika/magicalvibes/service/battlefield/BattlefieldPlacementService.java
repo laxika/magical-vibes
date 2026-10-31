@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
@@ -19,6 +20,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -1525,23 +1527,20 @@ public class BattlefieldPlacementService {
         if (permanent.getOriginalCard() == null) {
             return;
         }
-        Map<EffectSlot, List<CardEffect>> grants = gameData.perpetualTriggeredAbilityGrants
-                .get(permanent.getOriginalCard().getId());
-        if (grants == null) {
-            return;
-        }
+        List<Ability> grants = gameData.perpetualAbilities(permanent.getOriginalCard().getId());
         // Repeated grants of the same ability are separate instances (CR 113.2c): top the permanent up to
         // the number of grants instead of collapsing equal abilities into one.
-        grants.forEach((slot, effects) -> {
-            for (CardEffect effect : new java.util.LinkedHashSet<>(effects)) {
-                long granted = effects.stream().filter(effect::equals).count();
+        for (Ability ability : new java.util.LinkedHashSet<>(grants)) {
+            EffectSlot slot = LegacySlots.slotOf(ability);
+            for (CardEffect effect : new java.util.LinkedHashSet<>(LegacySlots.effectsOf(ability))) {
+                long granted = LegacySlots.effectsIn(grants, slot).stream().filter(effect::equals).count();
                 long present = permanent.getPersistentTriggeredEffects(slot).stream()
                         .filter(effect::equals).count();
                 for (long i = present; i < granted; i++) {
                     permanent.addPersistentTriggeredEffect(slot, effect);
                 }
             }
-        });
+        }
     }
 
     private void applyPerpetualCardCharacteristics(GameData gameData, Permanent permanent) {

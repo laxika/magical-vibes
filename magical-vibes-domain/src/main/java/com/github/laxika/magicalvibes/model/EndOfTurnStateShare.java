@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -94,13 +93,6 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
                 case LIST -> delta.put(field, listMinus(listValue(current), listValue(old), false));
                 case IDENTITY_LIST -> delta.put(field, listMinus(listValue(current), listValue(old), true));
                 case COUNTS -> delta.put(field, combineCounts(countsValue(current), countsValue(old), -1));
-                case SLOT_LISTS -> {
-                    Map<EffectSlot, List<CardEffect>> added = new EnumMap<>(EffectSlot.class);
-                    Map<EffectSlot, List<CardEffect>> oldSlots = slotValue(old);
-                    slotValue(current).forEach((slot, effects) ->
-                            added.put(slot, listMinus(effects, oldSlots.getOrDefault(slot, List.of()), false)));
-                    delta.put(field, added);
-                }
             }
         }
         return new EndOfTurnStateShare(delta);
@@ -134,13 +126,6 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
                     combined.put(field, concat);
                 }
                 case COUNTS -> combined.put(field, combineCounts(countsValue(mine), countsValue(theirs), 1));
-                case SLOT_LISTS -> {
-                    Map<EffectSlot, List<CardEffect>> merged = new EnumMap<>(EffectSlot.class);
-                    slotValue(mine).forEach((slot, effects) -> merged.put(slot, new ArrayList<>(effects)));
-                    slotValue(theirs).forEach((slot, effects) ->
-                            merged.computeIfAbsent(slot, s -> new ArrayList<>()).addAll(effects));
-                    combined.put(field, merged);
-                }
             }
         }
         return new EndOfTurnStateShare(combined);
@@ -175,13 +160,6 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
                     Map<Object, Integer> kept = new HashMap<>();
                     countsValue(mine).forEach((key, count) ->
                             kept.put(key, Math.max(0, Math.min(count, nowCounts.getOrDefault(key, 0)))));
-                    capped.put(field, kept);
-                }
-                case SLOT_LISTS -> {
-                    Map<EffectSlot, List<CardEffect>> kept = new EnumMap<>(EffectSlot.class);
-                    Map<EffectSlot, List<CardEffect>> nowSlots = slotValue(now);
-                    slotValue(mine).forEach((slot, effects) ->
-                            kept.put(slot, listIntersection(effects, nowSlots.getOrDefault(slot, List.of()), false)));
                     capped.put(field, kept);
                 }
             }
@@ -236,11 +214,6 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
         return (Map<K, Integer>) countsValue(values.get(field));
     }
 
-    /** Reads the {@code SLOT_LISTS} field (empty when absent). */
-    public Map<EffectSlot, List<CardEffect>> slotLists(EndOfTurnStateField field) {
-        return slotValue(values.get(field));
-    }
-
     private static Object immutableCopy(EndOfTurnStateField field, Object value) {
         if (value == null) {
             return null;
@@ -259,15 +232,6 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
                     }
                 });
                 yield counts.isEmpty() ? null : Map.copyOf(counts);
-            }
-            case SLOT_LISTS -> {
-                Map<EffectSlot, List<CardEffect>> slots = new EnumMap<>(EffectSlot.class);
-                slotValue(value).forEach((slot, effects) -> {
-                    if (!effects.isEmpty()) {
-                        slots.put(slot, List.copyOf(effects));
-                    }
-                });
-                yield slots.isEmpty() ? null : Collections.unmodifiableMap(slots);
             }
         };
     }
@@ -296,11 +260,6 @@ public record EndOfTurnStateShare(Map<EndOfTurnStateField, Object> values) {
         Map<Object, Integer> combined = new HashMap<>(first);
         second.forEach((key, count) -> combined.merge(key, sign * count, SaturatingMath::add));
         return combined;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<EffectSlot, List<CardEffect>> slotValue(Object value) {
-        return value == null ? Map.of() : (Map<EffectSlot, List<CardEffect>>) value;
     }
 
     /** {@code from} with one occurrence of each element of {@code removed} taken out. */

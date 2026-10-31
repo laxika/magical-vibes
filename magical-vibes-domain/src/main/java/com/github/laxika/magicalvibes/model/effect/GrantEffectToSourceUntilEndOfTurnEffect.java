@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 
 /**
  * When resolved, grants the source permanent itself a temporary triggered ability until end of
@@ -11,11 +13,24 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
  * {@link com.github.laxika.magicalvibes.model.Permanent#addTemporaryTriggeredEffect(EffectSlot, CardEffect)}
  * and cleared at cleanup by {@link com.github.laxika.magicalvibes.model.Permanent#resetModifiers()}.
  *
- * @param slot          the trigger slot to grant
- * @param grantedEffect the effect to fire when the trigger condition is met
+ * @param grantedAbility the granted ability
  */
 public record GrantEffectToSourceUntilEndOfTurnEffect(
-        EffectSlot slot,
-        CardEffect grantedEffect
+        Ability grantedAbility
 ) implements CardEffect {
+
+    /** The grant as the slot and effect that stand for it. */
+    public GrantEffectToSourceUntilEndOfTurnEffect(EffectSlot slot, CardEffect grantedEffect) {
+        this(LegacySlots.grant(slot, grantedEffect));
+    }
+
+    /** The slot of {@link #grantedAbility}, or {@code null} when there is none. */
+    public EffectSlot slot() {
+        return grantedAbility == null ? null : LegacySlots.slotOf(grantedAbility);
+    }
+
+    /** The effect of {@link #grantedAbility}, or {@code null} when there is none. */
+    public CardEffect grantedEffect() {
+        return grantedAbility == null ? null : LegacySlots.effectsOf(grantedAbility).getFirst();
+    }
 }

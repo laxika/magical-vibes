@@ -40,8 +40,7 @@ class LurkingSpinecrawlerTest extends BaseCardTest {
         ManaCost incorporation = gd.perpetualManaCostIncreases.get(chosen.getId());
         assertThat(incorporation.countColorSymbols(ManaColor.BLACK)).isEqualTo(1);
         assertThat(incorporation.getGenericCost()).isEqualTo(1);
-        assertThat(gd.perpetualTriggeredAbilityGrants.get(chosen.getId()))
-                .containsKey(EffectSlot.ON_SELF_CAST);
+        assertThat(gd.perpetualAbilityEffects(chosen.getId(), EffectSlot.ON_SELF_CAST)).isNotEmpty();
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);

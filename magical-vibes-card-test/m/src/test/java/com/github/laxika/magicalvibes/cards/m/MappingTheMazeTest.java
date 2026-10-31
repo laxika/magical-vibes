@@ -34,8 +34,7 @@ class MappingTheMazeTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
         assertThat(gd.perpetualManaCostIncreases).containsKey(chosen.getId());
-        assertThat(gd.perpetualTriggeredAbilityGrants.get(chosen.getId()))
-                .containsKey(com.github.laxika.magicalvibes.model.EffectSlot.ON_SELF_CAST);
+        assertThat(gd.perpetualAbilityEffects(chosen.getId(), com.github.laxika.magicalvibes.model.EffectSlot.ON_SELF_CAST)).isNotEmpty();
         harness.assertInHand(player1, "Lightning Helix");
         harness.assertNotInGraveyard(player1, "Lightning Helix");
     }

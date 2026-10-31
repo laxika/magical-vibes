@@ -107,7 +107,7 @@ public enum EndOfTurnStateField {
     EXILE_INSTEAD_OF_DIE(Kind.FLAG),
     EXILE_INSTEAD_OF_DIE_SOURCE_PERMANENT_ID(Kind.VALUE),
     DAMAGE_TO_OPPONENT_CREATURE_BOUNCE(Kind.FLAG),
-    TEMPORARY_TRIGGERED_EFFECTS(Kind.SLOT_LISTS),
+    TEMPORARY_ABILITIES(Kind.LIST),
     SADDLED(Kind.FLAG),
     ANIMATED_UNTIL_END_OF_TURN(Kind.FLAG),
     ANIMATED_POWER(Kind.VALUE),
@@ -410,9 +410,7 @@ public enum EndOfTurnStateField {
          *  shields): each player keeps their per-key delta, never more than what is left for that key. */
         COUNTS,
         /** A list compared by identity (CR 611.2c effect instances). */
-        IDENTITY_LIST,
-        /** An {@link EffectSlot}-keyed map of lists: each added element is credited to the active player. */
-        SLOT_LISTS
+        IDENTITY_LIST
     }
 
     private final Kind kind;

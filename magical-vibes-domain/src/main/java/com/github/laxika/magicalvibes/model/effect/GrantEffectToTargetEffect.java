@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 
 /**
  * When resolved, grants the targeted permanent a triggered ability for the given slot.
@@ -13,8 +15,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
  * <p>Example: Balduvian Shaman grants {@link EffectSlot#UPKEEP_TRIGGERED} +
  * {@link CumulativeUpkeepEffect} indefinitely.
  *
- * @param slot           the trigger slot to grant
- * @param grantedEffect  the effect to fire when the trigger condition is met
+ * @param grantedAbility the granted ability
  * @param duration       how long the grant lasts
  * @param scope          which permanent receives the ability: {@link GrantScope#TARGET} (the chosen
  *                       target), {@link GrantScope#SELF} (the source permanent), or
@@ -23,12 +24,20 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
  *                       Genju cycle's granted "whenever this creature deals damage" ability)
  */
 public record GrantEffectToTargetEffect(
-        EffectSlot slot,
-        CardEffect grantedEffect,
+        Ability grantedAbility,
         EffectDuration duration,
         boolean skipIfAlreadyPresent,
         GrantScope scope
 ) implements CardEffect {
+
+    /** The grant as the slot and effect that stand for it. */
+    public GrantEffectToTargetEffect(EffectSlot slot,
+                                     CardEffect grantedEffect,
+                                     EffectDuration duration,
+                                     boolean skipIfAlreadyPresent,
+                                     GrantScope scope) {
+        this(LegacySlots.grant(slot, grantedEffect), duration, skipIfAlreadyPresent, scope);
+    }
 
     /** Indefinite grant (Balduvian Shaman). */
     public GrantEffectToTargetEffect(EffectSlot slot, CardEffect grantedEffect) {
@@ -66,5 +75,15 @@ public record GrantEffectToTargetEffect(
     @Override
     public TargetSpec targetSpec() {
         return scope == GrantScope.TARGET ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
+    }
+
+    /** The slot of {@link #grantedAbility}, or {@code null} when there is none. */
+    public EffectSlot slot() {
+        return grantedAbility == null ? null : LegacySlots.slotOf(grantedAbility);
+    }
+
+    /** The effect of {@link #grantedAbility}, or {@code null} when there is none. */
+    public CardEffect grantedEffect() {
+        return grantedAbility == null ? null : LegacySlots.effectsOf(grantedAbility).getFirst();
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyCreatureCardInGraveyardOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -45,7 +44,7 @@ public class CloneOperationState {
     public boolean additionalCreatureOnlyCharacteristics;
     // Phantasmal Image: "except it's an Illusion in addition to its other types and it has ..." — only when copying.
     public Set<CardSubtype> additionalSubtypesOverride = Set.of();
-    public Map<EffectSlot, List<CardEffect>> additionalSlotEffects = Map.of();
+    public List<Ability> additionalAbilities = List.of();
     public List<CardEffect> reflexiveEffects = List.of();
     // Undercover Operative: a shield counter when the copied permanent is controlled by its controller.
     public boolean shieldCounterIfControllerControlsCopiedPermanent;

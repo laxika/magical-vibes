@@ -667,10 +667,12 @@ public class StackEntry {
     @Setter private int grantedBloodthirst;
     /** Numeric devour grant carried by this creature spell while it is on the stack. */
     @Setter private int grantedDevour;
-    /** Triggered abilities granted to the permanent as this spell enters the battlefield. */
-    private final Map<EffectSlot, List<CardEffect>> grantedTriggeredEffectsOnEntry = new EnumMap<>(EffectSlot.class);
-    /** Triggered abilities granted indefinitely to the permanent as this spell enters the battlefield. */
-    private final Map<EffectSlot, List<CardEffect>> persistentTriggeredEffectsOnEntry = new EnumMap<>(EffectSlot.class);
+    /** Abilities granted until end of turn to the permanent as this spell enters the battlefield. */
+    @Getter(AccessLevel.NONE)
+    private final List<Ability> grantedAbilitiesOnEntry = new ArrayList<>();
+    /** Abilities granted indefinitely to the permanent as this spell enters the battlefield. */
+    @Getter(AccessLevel.NONE)
+    private final List<Ability> persistentAbilitiesOnEntry = new ArrayList<>();
     /** Additional loyalty counters granted to a planeswalker spell before it enters. */
     @Setter private int grantedAdditionalLoyaltyCounters;
     /** Explicit starting loyalty for a copied planeswalker spell, when the copy defines one. */
@@ -1189,10 +1191,8 @@ public class StackEntry {
         this.grantedKeywordsWhileOnStack.addAll(source.grantedKeywordsWhileOnStack);
         this.grantedBloodthirst = source.grantedBloodthirst;
         this.grantedDevour = source.grantedDevour;
-        source.grantedTriggeredEffectsOnEntry.forEach((slot, effects) ->
-                this.grantedTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
-        source.persistentTriggeredEffectsOnEntry.forEach((slot, effects) ->
-                this.persistentTriggeredEffectsOnEntry.put(slot, new ArrayList<>(effects)));
+        this.grantedAbilitiesOnEntry.addAll(source.grantedAbilitiesOnEntry);
+        this.persistentAbilitiesOnEntry.addAll(source.persistentAbilitiesOnEntry);
         this.grantedAdditionalLoyaltyCounters = source.grantedAdditionalLoyaltyCounters;
         this.startingLoyalty = source.startingLoyalty;
         this.drawnCardIdsThisResolution.addAll(source.drawnCardIdsThisResolution);
@@ -1201,19 +1201,21 @@ public class StackEntry {
     }
 
     public void addGrantedTriggeredEffectOnEntry(EffectSlot slot, CardEffect effect) {
-        grantedTriggeredEffectsOnEntry.computeIfAbsent(slot, ignored -> new ArrayList<>()).add(effect);
+        grantedAbilitiesOnEntry.add(LegacySlots.ability(slot, effect));
     }
 
-    public Map<EffectSlot, List<CardEffect>> getGrantedTriggeredEffectsOnEntry() {
-        return grantedTriggeredEffectsOnEntry;
+    /** The abilities the permanent this spell becomes gains until end of turn as it enters. */
+    public List<Ability> getGrantedAbilitiesOnEntry() {
+        return Collections.unmodifiableList(grantedAbilitiesOnEntry);
     }
 
     public void addPersistentTriggeredEffectOnEntry(EffectSlot slot, CardEffect effect) {
-        persistentTriggeredEffectsOnEntry.computeIfAbsent(slot, ignored -> new ArrayList<>()).add(effect);
+        persistentAbilitiesOnEntry.add(LegacySlots.ability(slot, effect));
     }
 
-    public Map<EffectSlot, List<CardEffect>> getPersistentTriggeredEffectsOnEntry() {
-        return persistentTriggeredEffectsOnEntry;
+    /** The abilities the permanent this spell becomes gains indefinitely as it enters. */
+    public List<Ability> getPersistentAbilitiesOnEntry() {
+        return Collections.unmodifiableList(persistentAbilitiesOnEntry);
     }
 
     public int getCounterCount(CounterType counterType) {

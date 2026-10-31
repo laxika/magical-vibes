@@ -38,10 +38,8 @@ class PassTheTorchTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         var selected = gd.playerHands.get(player1.getId()).get(0);
-        assertThat(gd.perpetualTriggeredAbilityGrants.get(selected.getId()))
-                .containsKey(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
-        assertThat(gd.perpetualTriggeredAbilityGrants.get(selected.getId())
-                .get(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))
+        assertThat(gd.perpetualAbilityEffects(selected.getId(), EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).isNotEmpty();
+        assertThat(gd.perpetualAbilityEffects(selected.getId(), EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))
                 .anyMatch(CastTargetInstantOrSorceryFromGraveyardEffect.class::isInstance);
     }
 }

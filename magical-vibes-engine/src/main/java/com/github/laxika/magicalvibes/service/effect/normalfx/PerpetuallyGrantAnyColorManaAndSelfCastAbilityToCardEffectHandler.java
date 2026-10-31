@@ -7,10 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffect;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -31,18 +27,6 @@ public class PerpetuallyGrantAnyColorManaAndSelfCastAbilityToCardEffectHandler
         }
 
         gameData.perpetualAnyColorManaForCastCardIds.add(cardId);
-        gameData.perpetualTriggeredAbilityGrants.compute(cardId, (ignored, existing) -> {
-            Map<EffectSlot, List<CardEffect>> updated = new EnumMap<>(EffectSlot.class);
-            if (existing != null) {
-                existing.forEach((slot, effects) -> updated.put(slot, new ArrayList<>(effects)));
-            }
-            List<CardEffect> selfCastEffects = updated.computeIfAbsent(EffectSlot.ON_SELF_CAST,
-                    ignoredSlot -> new ArrayList<>());
-            if (!selfCastEffects.contains(grant.selfCastAbility())) {
-                selfCastEffects.add(grant.selfCastAbility());
-            }
-            updated.replaceAll((slot, effects) -> List.copyOf(effects));
-            return Map.copyOf(updated);
-        });
+        gameData.grantPerpetualAbilityOnce(cardId, EffectSlot.ON_SELF_CAST, grant.selfCastAbility());
     }
 }

@@ -54,12 +54,16 @@ class CardAbilitiesTest {
     }
 
     @Test
-    void aStaticEffectCanNeitherTriggerNorBeSimultaneous() {
-        assertThatThrownBy(() -> card.addEffect(EffectSlot.STATIC, DRAW_ONE, TriggerMode.INDEPENDENT))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> card.addSimultaneousEffects(EffectSlot.STATIC, DRAW_ONE, DRAW_TWO))
-                .isInstanceOf(IllegalArgumentException.class);
-        assertThat(card.getAbilities()).isEmpty();
+    void aStaticEffectKeepsNoTriggerModeAndStaysItsOwnAbility() {
+        card.addEffect(EffectSlot.STATIC, DRAW_ONE, TriggerMode.INDEPENDENT);
+        card.addSimultaneousEffects(EffectSlot.STATIC, GAIN_ONE, GAIN_TWO);
+
+        assertThat(card.getAbilities()).containsExactly(
+                new StaticAbility(List.of(DRAW_ONE)),
+                new StaticAbility(List.of(GAIN_ONE)),
+                new StaticAbility(List.of(GAIN_TWO)));
+        assertThat(card.getEffectRegistrations(EffectSlot.STATIC)).containsExactly(
+                new EffectRegistration(DRAW_ONE), new EffectRegistration(GAIN_ONE), new EffectRegistration(GAIN_TWO));
     }
 
     @Test

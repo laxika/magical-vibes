@@ -19,9 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** Resolves Flames of Moradin's artifact destruction and modified nontoken duplicates. */
@@ -77,15 +75,6 @@ public class DestroyTargetArtifactsThenConjurePerpetualCopiesIntoHandEffectHandl
     }
 
     private void addPerpetualEndStepSacrifice(GameData gameData, UUID cardId) {
-        gameData.perpetualTriggeredAbilityGrants.compute(cardId, (ignored, existing) -> {
-            Map<EffectSlot, List<CardEffect>> updated = new EnumMap<>(EffectSlot.class);
-            if (existing != null) {
-                existing.forEach((slot, effects) -> updated.put(slot, new ArrayList<>(effects)));
-            }
-            updated.computeIfAbsent(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                    ignoredSlot -> new ArrayList<>()).add(new SacrificeSelfEffect());
-            updated.replaceAll((slot, effects) -> List.copyOf(effects));
-            return Map.copyOf(updated);
-        });
+        gameData.grantPerpetualAbility(cardId, EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new SacrificeSelfEffect());
     }
 }

@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 @Getter
 public class Permanent {
@@ -440,25 +441,27 @@ public class Permanent {
      *  restriction on this permanent. Multiple activations have independent durations.
      */
     private final Set<UUID> cantPhaseOutUntilUpkeepsOf = new HashSet<>();
-    /** Triggered effects temporarily granted by one-shot effects until end of turn
-     *  (e.g. Verdant Rebirth granting ON_DEATH → ReturnSourceCardFromGraveyardToOwnerHandEffect).
-     *  Keyed by EffectSlot so the trigger collection system can look up effects for the relevant slot.
-     *  Cleared every turn by {@link #resetModifiers()}. */
-    private final Map<EffectSlot, List<CardEffect>> temporaryTriggeredEffects = new EnumMap<>(EffectSlot.class);
-    /** Triggered effects granted for the rest of the current combat. Cleared by {@link #clearCombatState()}. */
-    private final Map<EffectSlot, List<CardEffect>> combatTriggeredEffects = new EnumMap<>(EffectSlot.class);
-    /** Triggered effects granted indefinitely by one-shot effects (e.g. Balduvian Shaman granting
-     *  {@code UPKEEP_TRIGGERED} + {@code CumulativeUpkeepEffect}). Survives {@link #resetModifiers()}. */
-    private final Map<EffectSlot, List<CardEffect>> persistentTriggeredEffects = new EnumMap<>(EffectSlot.class);
+    /** Abilities temporarily granted by one-shot effects until end of turn (e.g. Verdant Rebirth
+     *  granting an {@code ON_DEATH} ability with ReturnSourceCardFromGraveyardToOwnerHandEffect), mostly
+     *  triggered and sometimes static. Cleared every turn by {@link #resetModifiers()}. */
+    @Getter(AccessLevel.NONE)
+    private final List<Ability> temporaryAbilities = new ArrayList<>();
+    /** Abilities granted for the rest of the current combat. Cleared by {@link #clearCombatState()}. */
+    @Getter(AccessLevel.NONE)
+    private final List<Ability> combatAbilities = new ArrayList<>();
+    /** Abilities granted indefinitely by one-shot effects (e.g. Balduvian Shaman granting an
+     *  {@code UPKEEP_TRIGGERED} ability with CumulativeUpkeepEffect). Survives {@link #resetModifiers()}. */
+    @Getter(AccessLevel.NONE)
+    private final List<Ability> persistentAbilities = new ArrayList<>();
     /** "When this creature dies" delayed triggers created by a resolving ability (CR 603.7). Unlike
-     *  {@link #persistentTriggeredEffects} they are not abilities of the permanent, so losing all
+     *  {@link #persistentAbilities} they are not abilities of the permanent, so losing all
      *  abilities does not stop them. */
     private final List<CardEffect> delayedDeathEffects = new ArrayList<>();
-    /** Triggered effects granted until the next upkeep of the player whose effect created them.
-     *  The expiry player is stored separately from the permanent's current controller because the
-     *  duration belongs to the resolving ability's controller. */
-    private final Map<EffectSlot, Map<UUID, List<CardEffect>>> untilNextUpkeepTriggeredEffects =
-            new EnumMap<>(EffectSlot.class);
+    /** Abilities granted until the next upkeep of the player whose effect created them, keyed by
+     *  that player. The expiry player is stored separately from the permanent's current controller
+     *  because the duration belongs to the resolving ability's controller. */
+    @Getter(AccessLevel.NONE)
+    private final Map<UUID, List<Ability>> untilNextUpkeepAbilities = new HashMap<>();
     @Setter private boolean basePowerToughnessOverriddenUntilEndOfTurn;
     @Setter private int basePowerOverride;
     @Setter private int baseToughnessOverride;
@@ -1141,19 +1144,12 @@ public class Permanent {
         this.hasDamageToOpponentCreatureBounce = source.hasDamageToOpponentCreatureBounce;
         this.echoDamageRedirectionActive = source.echoDamageRedirectionActive;
         this.cantPhaseOutUntilUpkeepsOf.addAll(source.cantPhaseOutUntilUpkeepsOf);
-        source.temporaryTriggeredEffects.forEach((slot, effects) ->
-                this.temporaryTriggeredEffects.put(slot, new ArrayList<>(effects)));
-        source.combatTriggeredEffects.forEach((slot, effects) ->
-                this.combatTriggeredEffects.put(slot, new ArrayList<>(effects)));
-        source.persistentTriggeredEffects.forEach((slot, effects) ->
-                this.persistentTriggeredEffects.put(slot, new ArrayList<>(effects)));
+        this.temporaryAbilities.addAll(source.temporaryAbilities);
+        this.combatAbilities.addAll(source.combatAbilities);
+        this.persistentAbilities.addAll(source.persistentAbilities);
         this.delayedDeathEffects.addAll(source.delayedDeathEffects);
-        source.untilNextUpkeepTriggeredEffects.forEach((slot, effectsByPlayer) -> {
-            Map<UUID, List<CardEffect>> copiedEffectsByPlayer = new HashMap<>();
-            effectsByPlayer.forEach((playerId, effects) ->
-                    copiedEffectsByPlayer.put(playerId, new ArrayList<>(effects)));
-            this.untilNextUpkeepTriggeredEffects.put(slot, copiedEffectsByPlayer);
-        });
+        source.untilNextUpkeepAbilities.forEach((playerId, abilities) ->
+                this.untilNextUpkeepAbilities.put(playerId, new ArrayList<>(abilities)));
         this.sacrificeAtNextCleanup = source.sacrificeAtNextCleanup;
         this.returnToHandAtNextCleanup = source.returnToHandAtNextCleanup;
         this.returnToHandAtNextUntapPlayerId = source.returnToHandAtNextUntapPlayerId;
@@ -1634,7 +1630,7 @@ public class Permanent {
         this.blocking = false;
         this.blockingTargets.clear();
         this.blockingTargetIds.clear();
-        this.combatTriggeredEffects.clear();
+        this.combatAbilities.clear();
         this.mustBlockIdsUntilEndOfCombat.clear();
         this.bandId = null;
         this.cantBlockThisCombat = false;
@@ -2042,17 +2038,23 @@ public class Permanent {
     }
 
     public void addTemporaryTriggeredEffect(EffectSlot slot, CardEffect effect) {
-        temporaryTriggeredEffects.computeIfAbsent(slot, k -> new ArrayList<>()).add(effect);
+        addTemporaryAbility(LegacySlots.ability(slot, effect));
+    }
+
+    /** Grants {@code ability} until end of turn. */
+    public void addTemporaryAbility(Ability ability) {
+        temporaryAbilities.add(ability);
     }
 
     /** Drops every temporarily granted ability; used when a later-timestamp effect removes all abilities. */
     public void clearTemporaryTriggeredEffects() {
-        temporaryTriggeredEffects.clear();
+        temporaryAbilities.clear();
     }
 
+    /** The effects in {@code slot} of the abilities granted until end of turn, end of combat or next upkeep. */
     public List<CardEffect> getTemporaryTriggeredEffects(EffectSlot slot) {
-        List<CardEffect> effects = temporaryTriggeredEffects.getOrDefault(slot, List.of());
-        List<CardEffect> untilEndOfCombat = combatTriggeredEffects.getOrDefault(slot, List.of());
+        List<CardEffect> effects = LegacySlots.effectsIn(temporaryAbilities, slot);
+        List<CardEffect> untilEndOfCombat = LegacySlots.effectsIn(combatAbilities, slot);
         List<CardEffect> untilNextUpkeep = getUntilNextUpkeepTriggeredEffects(slot);
         if (untilEndOfCombat.isEmpty() && untilNextUpkeep.isEmpty()) {
             return effects;
@@ -2066,7 +2068,7 @@ public class Permanent {
     }
 
     public void addCombatTriggeredEffect(EffectSlot slot, CardEffect effect) {
-        combatTriggeredEffects.computeIfAbsent(slot, k -> new ArrayList<>()).add(effect);
+        combatAbilities.add(LegacySlots.ability(slot, effect));
     }
 
     public void setTransformed(boolean transformed) {
@@ -2077,7 +2079,18 @@ public class Permanent {
     }
 
     public void addPersistentTriggeredEffect(EffectSlot slot, CardEffect effect) {
-        persistentTriggeredEffects.computeIfAbsent(slot, k -> new ArrayList<>()).add(effect);
+        addPersistentAbility(LegacySlots.ability(slot, effect));
+    }
+
+    /** Grants {@code ability} indefinitely. */
+    public void addPersistentAbility(Ability ability) {
+        persistentAbilities.add(ability);
+    }
+
+    /** Removes the indefinitely granted abilities in {@code slot} whose effect matches {@code filter}. */
+    public void removePersistentTriggeredEffectsIf(EffectSlot slot, Predicate<CardEffect> filter) {
+        persistentAbilities.removeIf(ability -> LegacySlots.slotOf(ability) == slot
+                && LegacySlots.effectsOf(ability).stream().anyMatch(filter));
     }
 
     public void addDelayedDeathEffect(CardEffect effect) {
@@ -2088,30 +2101,28 @@ public class Permanent {
         return List.copyOf(delayedDeathEffects);
     }
 
+    /** The effects in {@code slot} of the abilities granted indefinitely. */
     public List<CardEffect> getPersistentTriggeredEffects(EffectSlot slot) {
-        return persistentTriggeredEffects.getOrDefault(slot, List.of());
+        return LegacySlots.effectsIn(persistentAbilities, slot);
     }
 
     public void addUntilNextUpkeepTriggeredEffect(UUID expiryPlayerId, EffectSlot slot, CardEffect effect) {
-        untilNextUpkeepTriggeredEffects
-                .computeIfAbsent(slot, ignored -> new HashMap<>())
+        untilNextUpkeepAbilities
                 .computeIfAbsent(expiryPlayerId, ignored -> new ArrayList<>())
-                .add(effect);
+                .add(LegacySlots.ability(slot, effect));
     }
 
     private List<CardEffect> getUntilNextUpkeepTriggeredEffects(EffectSlot slot) {
-        Map<UUID, List<CardEffect>> effectsByPlayer = untilNextUpkeepTriggeredEffects.get(slot);
-        if (effectsByPlayer == null || effectsByPlayer.isEmpty()) {
+        if (untilNextUpkeepAbilities.isEmpty()) {
             return List.of();
         }
         List<CardEffect> effects = new ArrayList<>();
-        effectsByPlayer.values().forEach(effects::addAll);
+        untilNextUpkeepAbilities.values().forEach(abilities -> effects.addAll(LegacySlots.effectsIn(abilities, slot)));
         return effects;
     }
 
     public void clearUntilNextUpkeepTriggeredEffects(UUID expiryPlayerId) {
-        untilNextUpkeepTriggeredEffects.values().forEach(effectsByPlayer -> effectsByPlayer.remove(expiryPlayerId));
-        untilNextUpkeepTriggeredEffects.values().removeIf(Map::isEmpty);
+        untilNextUpkeepAbilities.remove(expiryPlayerId);
     }
 
     public void preventPhaseOutUntilUpkeepOf(UUID playerId) {
@@ -2230,7 +2241,7 @@ public class Permanent {
         this.exileInsteadOfDieThisTurn = false;
         this.exileInsteadOfDieSourcePermanentId = null;
         this.hasDamageToOpponentCreatureBounce = false;
-        this.temporaryTriggeredEffects.clear();
+        this.temporaryAbilities.clear();
         this.saddled = false;
         this.animatedUntilEndOfTurn = false;
         this.animatedUntilEndOfCombat = false;
@@ -2324,7 +2335,7 @@ public class Permanent {
             case EXILE_INSTEAD_OF_DIE -> exileInsteadOfDieThisTurn;
             case EXILE_INSTEAD_OF_DIE_SOURCE_PERMANENT_ID -> exileInsteadOfDieSourcePermanentId;
             case DAMAGE_TO_OPPONENT_CREATURE_BOUNCE -> hasDamageToOpponentCreatureBounce;
-            case TEMPORARY_TRIGGERED_EFFECTS -> temporaryTriggeredEffects;
+            case TEMPORARY_ABILITIES -> temporaryAbilities;
             case SADDLED -> saddled;
             case ANIMATED_UNTIL_END_OF_TURN -> animatedUntilEndOfTurn;
             case ANIMATED_POWER -> animatedPower;
@@ -2413,8 +2424,7 @@ public class Permanent {
             case EXILE_INSTEAD_OF_DIE -> exileInsteadOfDieThisTurn = true;
             case EXILE_INSTEAD_OF_DIE_SOURCE_PERMANENT_ID -> exileInsteadOfDieSourcePermanentId = (UUID) value;
             case DAMAGE_TO_OPPONENT_CREATURE_BOUNCE -> hasDamageToOpponentCreatureBounce = true;
-            case TEMPORARY_TRIGGERED_EFFECTS -> ((Map<EffectSlot, List<CardEffect>>) value).forEach((slot, effects) ->
-                    temporaryTriggeredEffects.computeIfAbsent(slot, s -> new ArrayList<>()).addAll(effects));
+            case TEMPORARY_ABILITIES -> temporaryAbilities.addAll((List<Ability>) value);
             case SADDLED -> saddled = true;
             case ANIMATED_UNTIL_END_OF_TURN -> animatedUntilEndOfTurn = true;
             case ANIMATED_POWER -> animatedPower = (Integer) value;

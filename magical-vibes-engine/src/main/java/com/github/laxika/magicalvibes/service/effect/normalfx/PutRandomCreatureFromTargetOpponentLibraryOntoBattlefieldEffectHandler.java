@@ -23,7 +23,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -106,16 +105,7 @@ public class PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHand
     private void rememberPerpetualWard(GameData gameData, UUID cardId, CounterUnlessPaysEffect ward) {
         gameData.perpetualCardKeywords.merge(cardId, Set.of(Keyword.WARD),
                 PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHandler::mergeKeywords);
-        gameData.perpetualTriggeredAbilityGrants.compute(cardId, (ignored, existing) -> {
-            Map<EffectSlot, List<CardEffect>> updated = new java.util.EnumMap<>(EffectSlot.class);
-            if (existing != null) {
-                existing.forEach((slot, effects) -> updated.put(slot, new ArrayList<>(effects)));
-            }
-            updated.computeIfAbsent(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                    ignoredSlot -> new ArrayList<>()).add(ward);
-            updated.replaceAll((slot, effects) -> List.copyOf(effects));
-            return Map.copyOf(updated);
-        });
+        gameData.grantPerpetualAbility(cardId, EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, ward);
     }
 
     private static Set<Keyword> mergeKeywords(Set<Keyword> existing, Set<Keyword> added) {

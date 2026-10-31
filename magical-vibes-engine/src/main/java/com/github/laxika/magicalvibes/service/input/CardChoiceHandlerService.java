@@ -104,7 +104,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -358,16 +357,7 @@ public class CardChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        gameData.perpetualTriggeredAbilityGrants.compute(selectedCard.getId(), (ignored, existing) -> {
-            Map<EffectSlot, List<CardEffect>> updated = new EnumMap<>(EffectSlot.class);
-            if (existing != null) {
-                existing.forEach((slot, effects) -> updated.put(slot, new ArrayList<>(effects)));
-            }
-            updated.computeIfAbsent(choice.slot(), ignoredSlot -> new ArrayList<>())
-                    .addAll(choice.grantedEffects());
-            updated.replaceAll((slot, effects) -> List.copyOf(effects));
-            return Map.copyOf(updated);
-        });
+        choice.grantedEffects().forEach(granted -> gameData.grantPerpetualAbility(selectedCard.getId(), choice.slot(), granted));
         gameLogService.append(gameData, GameLog.cardThen(
                 selectedCard, " perpetually gains the triggered ability."));
 
@@ -401,16 +391,7 @@ public class CardChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
         for (Card selectedCard : selectedCards) {
-            gameData.perpetualTriggeredAbilityGrants.compute(selectedCard.getId(), (ignored, existing) -> {
-                Map<EffectSlot, List<CardEffect>> updated = new EnumMap<>(EffectSlot.class);
-                if (existing != null) {
-                    existing.forEach((slot, effects) -> updated.put(slot, new ArrayList<>(effects)));
-                }
-                updated.computeIfAbsent(choice.slot(), ignoredSlot -> new ArrayList<>())
-                        .addAll(choice.grantedEffects());
-                updated.replaceAll((slot, effects) -> List.copyOf(effects));
-                return Map.copyOf(updated);
-            });
+            choice.grantedEffects().forEach(granted -> gameData.grantPerpetualAbility(selectedCard.getId(), choice.slot(), granted));
             gameLogService.append(gameData, GameLog.cardThen(
                     selectedCard, " perpetually gains the triggered ability."));
         }

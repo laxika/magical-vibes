@@ -1601,6 +1601,32 @@ public class Card {
         addRegistrations(slot, group);
     }
 
+    /**
+     * Adds {@code ability} the way {@link #addEffect} and {@link #addSimultaneousEffects} add its
+     * effects, so it joins an ability of its slot that it would have joined as registrations.
+     */
+    public void addAbility(Ability ability) {
+        assertMutable();
+        EffectSlot slot = slotOf(ability);
+        List<EffectRegistration> registrations = switch (ability) {
+            case SpellAbility spell -> spell.effects();
+            case TriggeredAbility triggered -> triggered.effects();
+            case StaticAbility statik -> statik.effects().stream().map(EffectRegistration::new).toList();
+            case ActivatedAbility activated -> throw new IllegalArgumentException(
+                    "Activated abilities are added with addActivatedAbility");
+        };
+        List<EffectRegistration> group = new ArrayList<>();
+        for (EffectRegistration registration : registrations) {
+            if (!registration.simultaneousWithPrevious() && !group.isEmpty()) {
+                addRegistrations(slot, group);
+                group = new ArrayList<>();
+            }
+            validateEffectSlotType(slot, registration.effect());
+            group.add(registration);
+        }
+        addRegistrations(slot, group);
+    }
+
     /** Whether {@code effect} is registered as happening at the same time as the effect before it. */
     public boolean isSimultaneousWithPrevious(CardEffect effect) {
         for (SlotView view : slotIndex().views()) {
@@ -1628,22 +1654,28 @@ public class Card {
         EffectRegistration first = group.getFirst();
         switch (slot) {
             case SPELL -> {
+                // A spell ability doesn't trigger either, so its effects keep no trigger mode.
+                List<EffectRegistration> spellGroup = group.stream()
+                        .map(registration -> registration.triggerMode() == TriggerMode.NORMAL ? registration
+                                : new EffectRegistration(registration.effect(), TriggerMode.NORMAL,
+                                registration.simultaneousWithPrevious()))
+                        .toList();
                 int index = indexOfFirstAbility(slot);
                 if (index < 0) {
-                    abilities.add(new SpellAbility(group));
+                    abilities.add(new SpellAbility(spellGroup));
                 } else {
                     abilities.set(index, new SpellAbility(
-                            concat(((SpellAbility) abilities.get(index)).effects(), group)));
+                            concat(((SpellAbility) abilities.get(index)).effects(), spellGroup)));
                 }
             }
             case STATIC, COMMAND_ZONE_STATIC -> {
-                if (group.size() > 1 || first.triggerMode() != TriggerMode.NORMAL) {
-                    throw new IllegalArgumentException("A static ability neither triggers nor has simultaneous "
-                            + "effects, but " + first.effect().getClass().getSimpleName() + " was added to " + slot
-                            + " with trigger mode " + first.triggerMode() + " in a group of " + group.size());
+                // A static ability doesn't trigger, so a trigger mode means nothing here (token copies add
+                // their "except it has" effects as INDEPENDENT in every slot), and each effect stays its
+                // own static ability.
+                for (EffectRegistration registration : group) {
+                    abilities.add(new StaticAbility(List.of(registration.effect()),
+                            slot == EffectSlot.STATIC ? AbilityZones.BATTLEFIELD : AbilityZones.COMMAND));
                 }
-                abilities.add(new StaticAbility(List.of(first.effect()),
-                        slot == EffectSlot.STATIC ? AbilityZones.BATTLEFIELD : AbilityZones.COMMAND));
             }
             default -> {
                 int index = switch (LegacySlotGrouping.of(slot)) {
@@ -1737,22 +1769,8 @@ public class Card {
         return kept;
     }
 
-    /**
-     * The {@link EffectSlot} whose views show {@code ability}: {@code SPELL}, {@code STATIC} or
-     * {@code COMMAND_ZONE_STATIC}, or a triggered ability's legacy slot.
-     */
     private static EffectSlot slotOf(Ability ability) {
-        return switch (ability) {
-            case SpellAbility spell -> EffectSlot.SPELL;
-            case StaticAbility statik -> statik.zones().functionsIn(Zone.COMMAND)
-                    ? EffectSlot.COMMAND_ZONE_STATIC
-                    : EffectSlot.STATIC;
-            case TriggeredAbility triggered -> switch (triggered.conditions().getFirst().trigger()) {
-                case LegacySlotTrigger legacy -> legacy.slot();
-            };
-            case ActivatedAbility activated -> throw new IllegalStateException(
-                    "Activated abilities are kept in their own lists, not in a slot");
-        };
+        return LegacySlots.slotOf(ability);
     }
 
     private SlotIndex slotIndex() {

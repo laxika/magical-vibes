@@ -61,7 +61,7 @@ public class ExiledCreatureCopyOnEnterService {
         operation.additionalKeywordsOverride = java.util.Set.of();
         operation.additionalColorsOverride = java.util.Set.of();
         operation.additionalSubtypesOverride = java.util.Set.of();
-        operation.additionalSlotEffects = java.util.Map.of();
+        operation.additionalAbilities = List.of();
         operation.shieldCounterIfControllerControlsCopiedPermanent = false;
         operation.copyColor = true;
         operation.copyUntilEndOfTurn = false;

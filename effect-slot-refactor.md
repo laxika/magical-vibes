@@ -17,7 +17,7 @@ re-check them with a grep before acting on them.
 | 1 | Slot inventory and baseline | done |
 | 2 | Ability model types | done |
 | 3 | `Card` stores abilities behind the slot adapter | done |
-| 4 | Granted, temporary and delayed triggers store abilities | open |
+| 4 | Granted, temporary and delayed triggers store abilities | done |
 | 5 | Spell abilities leave the enum | open |
 | 6 | Static abilities leave the enum | open |
 | 7 | Activated and mana abilities in one list | open |
@@ -1181,6 +1181,133 @@ fail in exactly 18 cases, and the same 18 fail at HEAD without the change.
 The card test classes of every Saga, every card with `addSimultaneousEffects` or `ON_BLOCK`, the
 `INDEPENDENT` attack-trigger cards and the cards behind the two changed handlers (547 classes, 4,651 tests)
 all pass. The full card suite was not run here.
+
+### Step 4
+
+**Granted abilities are `Ability` values, not just `TriggeredAbility`s.** The granted maps also hold
+static abilities. Toxic and protection, for example, are read through
+`getTemporaryTriggeredEffects(EffectSlot.STATIC)` and `getPersistentTriggeredEffects(EffectSlot.STATIC)`, and
+three cards grant `STATIC` effects through `GrantEffectTo…`. So every holder stores an `Ability`. The new
+`model.LegacySlots` is the one place that maps a slot and an effect to an ability and back:
+
+- `ability(slot, effect)`: a `SpellAbility`, a `StaticAbility` of the battlefield or the command zone, or a
+  `TriggeredAbility` with a `LegacySlotTrigger`;
+- `grant` is the null-tolerant form, for optional grants;
+- `abilities(...)` and `registrationAbilities(...)`, which keep trigger modes and put a simultaneous
+  registration in the ability of the one before it;
+- `triggered`, `slotOf`, `effectsOf` and `effectsIn(abilities, slot)`.
+
+`Card.slotOf` now delegates to `LegacySlots.slotOf`. The class goes away with `EffectSlot` in step 16.
+
+**Runtime state converted.** No runtime state is keyed by `EffectSlot` any more.
+
+- `Permanent`: the four maps are now `temporaryAbilities`, `combatAbilities` and `persistentAbilities`
+  (`List<Ability>`) and `untilNextUpkeepAbilities` (`Map<UUID, List<Ability>>`, keyed by the expiry player).
+  They are hidden from Lombok. The readers keep their signatures (`getTemporaryTriggeredEffects(slot)`,
+  `getPersistentTriggeredEffects(slot)`, the `add…TriggeredEffect(slot, effect)` adders). There are new
+  `addTemporaryAbility`, `addPersistentAbility` and `removePersistentTriggeredEffectsIf(slot, filter)`.
+  `getPersistentTriggeredEffects` now returns a read-only copy. `RemovePerpetualTriggeredAbilityEffectHandler`
+  used to edit the list it returned, and now calls `removePersistentTriggeredEffectsIf`. A permanent no
+  longer allocates four `EnumMap`s of about 515 entries each, which matters for simulation copies.
+- `EndOfTurnStateField.TEMPORARY_TRIGGERED_EFFECTS` (kind `SLOT_LISTS`) became `TEMPORARY_ABILITIES` (kind
+  `LIST`), and the `SLOT_LISTS` kind and `EndOfTurnStateShare.slotLists` are gone. `LIST` compares
+  elements with `equals`, as `SLOT_LISTS` did within each slot. Abilities are value records, so the
+  per-player shares split and recombine the same way.
+- `StackEntry`:
+  - `grantedAbilitiesOnEntry` and `persistentAbilitiesOnEntry` are `List<Ability>`, with read-only getters
+    `getGrantedAbilitiesOnEntry()` and `getPersistentAbilitiesOnEntry()`.
+  - `StackResolutionService` passes them to the new `Permanent` adders.
+  - The dead default `CastSpellsFromGraveyardPermission.grantedTriggeredEffectsOnEntry()` had no overrides
+    or readers and is deleted. `ORACLE_TEXT_EFFECT_MAP.md` named it for Serra Paragon, which actually uses
+    `entryTriggeredAbilityGrant()`; the entry is corrected.
+- `GameData.perpetualTriggeredAbilityGrants` is now a `Map<UUID, List<Ability>>` of immutable lists. It
+  has helpers:
+  - `grantPerpetualAbility(cardId, slot, effect)`: repeated grants stack, CR 113.2c (checked).
+  - `grantPerpetualAbilityOnce`: the old "add if absent" writers.
+  - `removePerpetualAbilitiesIf`, `perpetualAbilities(cardId)` and `perpetualAbilityEffects(cardId, slot)`.
+
+  The 20 writing sites (in 19 handlers) were each a copy-the-map-and-merge block;
+  `scripts/step4-perpetual-grant-writers.py` rewrote 19 of them. The random-hand-card handler declares a
+  local inside its block, so the script refuses it and it was converted by hand, as were the one removal
+  (`computeIfPresent`) and the four readers. The simulation copy now shares
+  the immutable lists.
+- `TemporaryGlobalTriggeredAbility` holds a `TriggeredAbility ability`. Its existing constructors keep their
+  signatures, and `slot()` and `effect()` are derived, so its twenty-odd readers are unchanged.
+- `CloneOperationState.additionalSlotEffects` became `additionalAbilities` (`List<Ability>`).
+  `TokenCreationEvent.additionalEffects` became `additionalAbilities`. Both are converted from the effect
+  records' slot maps where they are filled: `CloneService`, and `PermanentControlSupport.createOrdered`,
+  whose public `applyCreateToken(…, Map<EffectSlot, List<EffectRegistration>>)` keeps its signature. They
+  are added to the new card through the new `Card.addAbility(Ability)`. That method adds an ability the way
+  its registrations would be added, so it follows the slot grouping of step 3.
+
+**Effect and interaction records converted, by `scripts/step4-grant-records.py`.** Each one now holds
+`Ability grantedAbility`, or `List<Ability> grantedAbilities` for the list forms. It keeps a constructor with
+its old component list. A compact constructor that read the old components became that constructor's
+prologue, which Java 25 allows before `this(…)`. Accessors under the old names derive the slot and effect,
+so card classes and handlers did not change. The records:
+
+- the `GrantEffectTo…` family (10) and `GrantTriggeredAbility{,ToCastSpell,ToCreatedPermanents}Effect`;
+- `PerpetuallyGrant…` (10), `Choose{Card,Cards}FromHandToPerpetuallyGrantTriggeredAbilityEffect` and
+  `SeekLibraryAndPerpetuallyModifySoughtCardEffect`;
+- `RegisterGlobalTriggeredAbility…` (3);
+- `PendingInteraction.PerpetualTriggeredAbilityCardChoice` and `…CardsChoice`.
+
+**Not converted, and why.**
+
+- The `…TriggerWatcher` records and the emblem effects hold no slot, only an effect with a fixed event.
+  Wrapping them in a `LegacySlotTrigger` would mean inventing a slot. They get real `Trigger`s when their
+  event families move (steps 11 to 13).
+- Records that name a slot as a selector, not as an ability: `BecomeCopy…`'s `retainedEffectSlot` ("the
+  copy keeps this card's abilities in slot X") and `RemovePerpetualTriggeredAbilityEffect`'s slot and
+  effect type.
+- The slot-keyed "additional abilities" maps in copy and token records (`additionalSlotEffects`,
+  `CreateTokenEffect`'s token effects, `Conjure…`, `TurnFaceUpCopyEffect`). These are card data that card
+  classes build with `Map.of(EffectSlot.…, …)`, and they hold `SPELL` and `STATIC` effects as well as
+  triggers. Steps 5 and 6 should give them `List<Ability>` along with the authoring API. Where their
+  contents reach runtime state, they are converted to abilities (above).
+
+**For later steps.**
+
+- The compatibility constructors and derived accessors on the converted records are the adapters; delete
+  them when card classes construct abilities directly. `LegacySlots.grant` keeps the old behaviour, where a
+  missing slot or effect meant no grant.
+- A list-form record (`grantedAbilities`) derives `slot()` from its first ability, so it now needs at least
+  one effect. Every current card passes one or more.
+- `effect-slot-inventory.md` is the step 1 snapshot and was not regenerated. Its "Runtime state keyed by
+  EffectSlot" section lists the fields this step removed.
+
+**A step 3 regression, fixed here.** Step 3 made `Card` reject a `STATIC` registration with a trigger mode,
+on the grounds that no card adds one. But `TokenCopySupport` adds a token copy's "except it has" effects as
+`INDEPENDENT` in every slot, `STATIC` included. Three card test classes broke, and step 3's test selection
+missed them: Firion, Wild Rose Warrior; Dollhouse of Horrors; and Brenard, Ginger Sculptor. A static or spell
+ability doesn't trigger, so `Card` and `LegacySlots` now drop the trigger mode of a `STATIC`,
+`COMMAND_ZONE_STATIC` or `SPELL` registration, and every static effect is its own ability, even in a
+simultaneous group. The only paths whose behaviour changes are the ones that threw. Nothing reads the trigger
+mode of a static or spell registration. `CardAbilitiesTest#aStaticEffectKeepsNoTriggerModeAndStaysItsOwnAbility`
+replaces the step 3 test that asserted the rejection.
+
+**Tests changed.**
+
+- `CardAbilitiesTest`: `aStaticEffectCanNeitherTriggerNorBeSimultaneous` became
+  `aStaticEffectKeepsNoTriggerModeAndStaysItsOwnAbility` (the regression above).
+- `PassTheTorchTest`, `MappingTheMazeTest` and `LurkingSpinecrawlerTest` read the perpetual-grant map's old
+  shape, and now read `perpetualAbilityEffects(cardId, slot)`. They were changed by
+  `scripts/step4-perpetual-grant-tests.py`.
+- New `GrantedAbilitiesTest` (`magical-vibes-application`, `model/`): the `LegacySlots` conversions and
+  views, `Card.addAbility`, the `Permanent` durations and removal, the `StackEntry` on-entry abilities, the
+  `GameData` perpetual-grant helpers, a converted grant record and `TemporaryGlobalTriggeredAbility`.
+- `GameDataDeepCopyTest` (`magical-vibes-ai`): a permanent's granted abilities and the perpetual grants
+  survive a simulation copy and stay independent.
+
+**Test runs.** Application tests run for this step: `GrantedAbilitiesTest`, `CardAbilitiesTest`,
+`CardFreezeTest`, `LayeredBoardCacheTest`, `SimulationCopyCompletenessTest`, `CardImmutabilityArchTest`,
+`StepTriggerServiceTest`, `TurnCleanupServiceTest` and `UntapStepServiceTest`. They fail in 29 cases, and
+the same 29 fail at HEAD without the change: the 18 of step 3, plus 11 in `TurnCleanupServiceTest` and
+`UntapStepServiceTest`. `GameDataDeepCopyTest` passes.
+The card test classes of every card that uses a converted record, or an effect whose handler calls a
+changed grant API, plus the card tests that read granted state, were run: 1,026 classes and 8,561 tests.
+All pass except the 15 tests of the regression above, which pass after the fix. The full card suite was
+not run here.
 
 ## Prompt
 

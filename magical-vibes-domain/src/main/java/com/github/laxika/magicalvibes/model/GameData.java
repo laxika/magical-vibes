@@ -514,9 +514,12 @@ public class GameData {
     public final Map<UUID, List<CardEffect>> perpetualTriggeredAbilities = new ConcurrentHashMap<>();
     /** Perpetually removed printed triggered abilities keyed by the affected card's identity. */
     public final Map<UUID, Set<CardEffect>> perpetuallyRemovedTriggeredAbilities = new ConcurrentHashMap<>();
-    /** Perpetual triggered-ability grants reapplied when the affected card enters the battlefield. */
-    public final Map<UUID, Map<EffectSlot, List<CardEffect>>> perpetualTriggeredAbilityGrants =
-            new ConcurrentHashMap<>();
+    /**
+     * Perpetually granted abilities keyed by the affected card's identity, each an immutable list
+     * in grant order; reapplied when the card enters the battlefield. Change them through
+     * {@link #grantPerpetualAbility} and {@link #removePerpetualAbilitiesIf}.
+     */
+    public final Map<UUID, List<Ability>> perpetualTriggeredAbilityGrants = new ConcurrentHashMap<>();
     /** Perpetual graveyard-activated abilities keyed by the affected card's identity. */
     public final Map<UUID, List<ActivatedAbility>> perpetualGraveyardAbilities = new ConcurrentHashMap<>();
     /** Perpetual card types keyed by the affected card's identity. */
@@ -9933,11 +9936,7 @@ public class GameData {
                 copy.perpetualTriggeredAbilities.put(cardId, List.copyOf(effects)));
         this.perpetuallyRemovedTriggeredAbilities.forEach((cardId, effects) ->
                 copy.perpetuallyRemovedTriggeredAbilities.put(cardId, Set.copyOf(effects)));
-        this.perpetualTriggeredAbilityGrants.forEach((cardId, effectsBySlot) -> {
-            Map<EffectSlot, List<CardEffect>> copied = new EnumMap<>(EffectSlot.class);
-            effectsBySlot.forEach((slot, effects) -> copied.put(slot, List.copyOf(effects)));
-            copy.perpetualTriggeredAbilityGrants.put(cardId, Map.copyOf(copied));
-        });
+        copy.perpetualTriggeredAbilityGrants.putAll(this.perpetualTriggeredAbilityGrants);
         this.perpetualGraveyardAbilities.forEach((cardId, abilities) ->
                 copy.perpetualGraveyardAbilities.put(cardId, List.copyOf(abilities)));
         this.perpetualCardTypes.forEach((cardId, types) ->
@@ -10771,7 +10770,7 @@ public class GameData {
         copy.cloneOperation.additionalColorsOverride = this.cloneOperation.additionalColorsOverride;
         copy.cloneOperation.additionalCreatureOnlyCharacteristics = this.cloneOperation.additionalCreatureOnlyCharacteristics;
         copy.cloneOperation.additionalSubtypesOverride = this.cloneOperation.additionalSubtypesOverride;
-        copy.cloneOperation.additionalSlotEffects = this.cloneOperation.additionalSlotEffects;
+        copy.cloneOperation.additionalAbilities = this.cloneOperation.additionalAbilities;
         copy.cloneOperation.reflexiveEffects = this.cloneOperation.reflexiveEffects;
         copy.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent =
                 this.cloneOperation.shieldCounterIfControllerControlsCopiedPermanent;
@@ -11453,4 +11452,50 @@ public class GameData {
                                               Map<UUID, List<DamageBonusGrant>> to) {
         from.forEach((key, grants) -> to.put(key, new CopyOnWriteArrayList<>(grants)));
     }
+
+    /**
+     * Perpetually grants the card {@code cardId} the ability that {@code effect} in {@code slot}
+     * stands for. Each grant is its own instance of the ability (CR 113.2c), so a repeated grant
+     * stacks.
+     */
+    public void grantPerpetualAbility(UUID cardId, EffectSlot slot, CardEffect effect) {
+        Ability ability = LegacySlots.ability(slot, effect);
+        perpetualTriggeredAbilityGrants.merge(cardId, List.of(ability), GameData::concatAbilities);
+    }
+
+    /** Like {@link #grantPerpetualAbility}, but does nothing when the card already has an equal grant. */
+    public void grantPerpetualAbilityOnce(UUID cardId, EffectSlot slot, CardEffect effect) {
+        Ability ability = LegacySlots.ability(slot, effect);
+        perpetualTriggeredAbilityGrants.merge(cardId, List.of(ability),
+                (existing, added) -> existing.contains(ability) ? existing : concatAbilities(existing, added));
+    }
+
+    /** Removes the perpetual grants of the card {@code cardId} in {@code slot} whose effect matches {@code filter}. */
+    public void removePerpetualAbilitiesIf(UUID cardId, EffectSlot slot, Predicate<CardEffect> filter) {
+        perpetualTriggeredAbilityGrants.computeIfPresent(cardId, (ignored, existing) -> {
+            List<Ability> kept = existing.stream()
+                    .filter(ability -> LegacySlots.slotOf(ability) != slot
+                            || LegacySlots.effectsOf(ability).stream().noneMatch(filter))
+                    .toList();
+            return kept.isEmpty() ? null : kept;
+        });
+    }
+
+    /** The perpetual grants of the card {@code cardId}, in grant order. */
+    public List<Ability> perpetualAbilities(UUID cardId) {
+        return perpetualTriggeredAbilityGrants.getOrDefault(cardId, List.of());
+    }
+
+    /** The effects in {@code slot} of the perpetual grants of the card {@code cardId}, in grant order. */
+    public List<CardEffect> perpetualAbilityEffects(UUID cardId, EffectSlot slot) {
+        return LegacySlots.effectsIn(perpetualAbilities(cardId), slot);
+    }
+
+    private static List<Ability> concatAbilities(List<Ability> existing, List<Ability> added) {
+        List<Ability> all = new ArrayList<>(existing.size() + added.size());
+        all.addAll(existing);
+        all.addAll(added);
+        return List.copyOf(all);
+    }
+
 }

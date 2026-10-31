@@ -624,10 +624,10 @@ public final class TokenCreationReplacementSupport {
                 groups.add(TokenCreationEvent.TokenGroup.substitutes(substitute, group.count(), group.copyOf()));
             }
             return new TokenCreationEvent(event.controllerId(), 0, event.appliedKeys(), substitute, cat ? 2 : 3,
-                    cat ? 2 : 1, event.sourceSetCode(), Map.of(), true, groups, event.copyOf(), event.copyBatch());
+                    cat ? 2 : 1, event.sourceSetCode(), List.of(), true, groups, event.copyOf(), event.copyBatch());
         }
         return new TokenCreationEvent(event.controllerId(), event.amount(), event.appliedKeys(),
-                jinnieFayToken(event.token(), 1, cat), cat ? 2 : 3, cat ? 2 : 1, event.sourceSetCode(), Map.of(),
+                jinnieFayToken(event.token(), 1, cat), cat ? 2 : 3, cat ? 2 : 1, event.sourceSetCode(), List.of(),
                 true, List.of());
     }
 

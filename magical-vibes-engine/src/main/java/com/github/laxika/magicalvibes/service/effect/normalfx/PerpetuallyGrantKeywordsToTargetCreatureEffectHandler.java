@@ -11,11 +11,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -68,16 +65,6 @@ public class PerpetuallyGrantKeywordsToTargetCreatureEffectHandler implements No
 
     private void addPerpetualTriggeredAbility(GameData gameData, UUID cardId, EffectSlot slot,
                                                CardEffect triggeredAbility) {
-        gameData.perpetualTriggeredAbilityGrants.compute(cardId, (ignored, existing) -> {
-            Map<EffectSlot, List<CardEffect>> updated = new EnumMap<>(EffectSlot.class);
-            if (existing != null) {
-                existing.forEach((existingSlot, effects) ->
-                        updated.put(existingSlot, new ArrayList<>(effects)));
-            }
-            List<CardEffect> effects = updated.computeIfAbsent(slot, ignoredSlot -> new ArrayList<>());
-            effects.add(triggeredAbility);
-            updated.replaceAll((existingSlot, slotEffects) -> List.copyOf(slotEffects));
-            return Map.copyOf(updated);
-        });
+        gameData.grantPerpetualAbility(cardId, slot, triggeredAbility);
     }
 }

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.LegacySlots;
 
 /**
  * When resolved, grants the targeted creature a temporary triggered ability until end of turn.
@@ -11,17 +13,23 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
  * <p>Example: Verdant Rebirth grants {@link EffectSlot#ON_DEATH} +
  * {@link ReturnSourceCardFromGraveyardToOwnerHandEffect} until end of turn.
  *
- * @param slot           the trigger slot to grant (e.g. {@link EffectSlot#ON_DEATH})
- * @param grantedEffect  the effect to fire when the trigger condition is met
+ * @param grantedAbility the granted ability
  * @param delayedTrigger registers a spell-sourced delayed trigger watching the target instead
  *                       of granting that permanent an ability
  */
 public record GrantEffectToTargetUntilEndOfTurnEffect(
-        EffectSlot slot,
-        CardEffect grantedEffect,
+        Ability grantedAbility,
         boolean delayedTrigger,
         boolean anyPermanent
 ) implements CardEffect {
+
+    /** The grant as the slot and effect that stand for it. */
+    public GrantEffectToTargetUntilEndOfTurnEffect(EffectSlot slot,
+                                                   CardEffect grantedEffect,
+                                                   boolean delayedTrigger,
+                                                   boolean anyPermanent) {
+        this(LegacySlots.grant(slot, grantedEffect), delayedTrigger, anyPermanent);
+    }
 
     public GrantEffectToTargetUntilEndOfTurnEffect(EffectSlot slot, CardEffect grantedEffect, boolean delayedTrigger) {
         this(slot, grantedEffect, delayedTrigger, false);
@@ -34,5 +42,15 @@ public record GrantEffectToTargetUntilEndOfTurnEffect(
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(anyPermanent ? TargetPredicates.permanent() : TargetPredicates.creature());
+    }
+
+    /** The slot of {@link #grantedAbility}, or {@code null} when there is none. */
+    public EffectSlot slot() {
+        return grantedAbility == null ? null : LegacySlots.slotOf(grantedAbility);
+    }
+
+    /** The effect of {@link #grantedAbility}, or {@code null} when there is none. */
+    public CardEffect grantedEffect() {
+        return grantedAbility == null ? null : LegacySlots.effectsOf(grantedAbility).getFirst();
     }
 }

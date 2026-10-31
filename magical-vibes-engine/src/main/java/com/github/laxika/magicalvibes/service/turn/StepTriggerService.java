@@ -2099,9 +2099,7 @@ public class StepTriggerService {
             Card card = exiledEntry.card();
             List<CardEffect> upkeepEffects = new ArrayList<>(
                     card.getEffects(EffectSlot.EXILED_UPKEEP_TRIGGERED));
-            upkeepEffects.addAll(gameData.perpetualTriggeredAbilityGrants
-                    .getOrDefault(card.getId(), Map.of())
-                    .getOrDefault(EffectSlot.EXILED_UPKEEP_TRIGGERED, List.of()));
+            upkeepEffects.addAll(gameData.perpetualAbilityEffects(card.getId(), EffectSlot.EXILED_UPKEEP_TRIGGERED));
 
             for (CardEffect effect : upkeepEffects) {
                 if (effect instanceof ConditionalEffect conditional

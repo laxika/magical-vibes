@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -82,15 +81,6 @@ public class SeekLibraryAndPerpetuallyModifySoughtCardEffectHandler
 
     private static void addPerpetualTriggeredAbility(GameData gameData, UUID cardId,
                                                       EffectSlot slot, CardEffect ability) {
-        gameData.perpetualTriggeredAbilityGrants.compute(cardId, (ignored, existing) -> {
-            Map<EffectSlot, List<CardEffect>> updated = new java.util.EnumMap<>(EffectSlot.class);
-            if (existing != null) {
-                existing.forEach((existingSlot, effects) ->
-                        updated.put(existingSlot, new ArrayList<>(effects)));
-            }
-            updated.computeIfAbsent(slot, ignoredSlot -> new ArrayList<>()).add(ability);
-            updated.replaceAll((existingSlot, slotEffects) -> List.copyOf(slotEffects));
-            return Map.copyOf(updated);
-        });
+        gameData.grantPerpetualAbility(cardId, slot, ability);
     }
 }

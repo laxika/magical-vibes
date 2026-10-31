@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.ai;
+
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.DepartureSnapshot;
 import com.github.laxika.magicalvibes.model.DepartureStage;
 import com.github.laxika.magicalvibes.model.EachPlayerRummageState;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,6 +29,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StagedHandExile;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -110,6 +113,43 @@ class GameDataDeepCopyTest {
         // Original should be unaffected
         Permanent origPerm = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(origPerm.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps a permanent's granted abilities, and the copy's grants stay its own")
+    void deepCopyPreservesGrantedAbilitiesIndependently() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent origPerm = gd.playerBattlefields.get(player1.getId()).getFirst();
+        origPerm.addTemporaryTriggeredEffect(EffectSlot.ON_DEATH, new DrawCardEffect(1));
+        origPerm.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED, new DrawCardEffect(2));
+        origPerm.addUntilNextUpkeepTriggeredEffect(player1.getId(), EffectSlot.ON_ATTACK, new DrawCardEffect(3));
+
+        GameData copy = gd.simulationCopy();
+        Permanent copyPerm = copy.playerBattlefields.get(player1.getId()).getFirst();
+        copyPerm.addPersistentTriggeredEffect(EffectSlot.UPKEEP_TRIGGERED, new DrawCardEffect(4));
+        copyPerm.clearUntilNextUpkeepTriggeredEffects(player1.getId());
+
+        assertThat(copyPerm.getTemporaryTriggeredEffects(EffectSlot.ON_DEATH)).containsExactly(new DrawCardEffect(1));
+        assertThat(copyPerm.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED))
+                .containsExactly(new DrawCardEffect(2), new DrawCardEffect(4));
+        assertThat(origPerm.getPersistentTriggeredEffects(EffectSlot.UPKEEP_TRIGGERED))
+                .containsExactly(new DrawCardEffect(2));
+        assertThat(origPerm.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK)).containsExactly(new DrawCardEffect(3));
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps perpetual ability grants, and the copy's grants stay its own")
+    void deepCopyPreservesPerpetualGrantsIndependently() {
+        Card card = new GrizzlyBears();
+        gd.grantPerpetualAbility(card.getId(), EffectSlot.ON_SELF_CAST, new DrawCardEffect(1));
+
+        GameData copy = gd.simulationCopy();
+        copy.grantPerpetualAbility(card.getId(), EffectSlot.ON_SELF_CAST, new DrawCardEffect(2));
+
+        assertThat(copy.perpetualAbilityEffects(card.getId(), EffectSlot.ON_SELF_CAST))
+                .containsExactly(new DrawCardEffect(1), new DrawCardEffect(2));
+        assertThat(gd.perpetualAbilityEffects(card.getId(), EffectSlot.ON_SELF_CAST))
+                .containsExactly(new DrawCardEffect(1));
     }
 
     @Test
